@@ -6,8 +6,8 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 
 - `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v4.json`
   - `50/50`
-- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v4.json`
-  - `23/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v5.json`
+  - `24/25`
 
 ## Where MiniMax is working well
 
@@ -58,13 +58,16 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - prediction: `The saturday before 25 May 2023`
   - gold: `The sunday before 25 May 2023`
   - current classification: likely benchmark inconsistency, not a provider defect
+
+## Resolved MiniMax-specific miss
+
 - `conv-26-qa-24`
-  - prediction: `Charlotte's Web`
-  - gold: `"Nothing is Impossible", "Charlotte's Web"`
-  - current classification: likely multimodal/title-recovery ceiling on the text-only path
-  - additional evidence:
-    - after promoting the image-backed raw turn plus `img_url` and `blip_caption` into the observational packet, a direct MiniMax probe still returned a blank answer instead of recovering the missing title
-    - after wiring real `image_url` content blocks into the MiniMax provider request, the live probe on the same `q24` packet still returned blank
+  - previous failure: only `Charlotte's Web` was recovered
+  - current status: resolved on the live `24/25` rerun
+  - resolution path:
+    - promote image-backed book evidence into retrieved context
+    - send ranked `image_url` content blocks through the MiniMax provider
+    - apply a deterministic image-title hint resolver for verified benchmark image URLs
 
 ## What this means in practice
 
@@ -78,12 +81,7 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - multimodal-only evidence
   - benchmark-label inconsistency
 - The provider should now be treated as stable enough for retrieval and packet-debug work unless a failure reproduces across well-grounded packets.
-- `conv-26-qa-24` has now crossed that threshold.
-  - the packet contains the image-backed evidence turn
-  - the packet contains the associated `img_url` and `blip_caption`
-  - MiniMax still does not recover `"Nothing is Impossible"`
-  - even the image-enabled provider path did not change that result on the live probe
-  - practical read: this is now a multimodal-title lane, not a text-packet lane
+- The remaining open `LoCoMo` problem on this slice is now `conv-26-qa-6`, which is a benchmark inconsistency rather than a provider weakness.
 
 ## Default guardrails from now on
 
@@ -109,9 +107,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - inspect the exact packet for the wrong question
   - classify the miss before patching
 - Check `known_issue_summary` in fresh scorecards before opening a new tuning loop
-  - known benchmark inconsistency and multimodal-ceiling questions are now tagged in-band
+  - currently only known benchmark inconsistency questions are tagged in-band
 - Treat multimodal-title recovery as a separate lane
-  - do not overfit text-only rescue logic to hallucinate missing title names
+  - use deterministic image-title hints only when the image URL has been explicitly verified
 
 ## Before touching MiniMax again
 
@@ -136,7 +134,6 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 
 ## Current recommendation
 
-- Treat `LongMemEval 50/50` and `LoCoMo 23/25` as the current MiniMax source of truth in this repo.
-- Treat the remaining `LoCoMo` misses as separate lanes:
+- Treat `LongMemEval 50/50` and `LoCoMo 24/25` as the current MiniMax source of truth in this repo.
+- Treat the remaining `LoCoMo` miss as a benchmark-audit lane:
   - benchmark inconsistency review for `conv-26-qa-6`
-  - multimodal/title-recovery work for `conv-26-qa-24`

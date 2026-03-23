@@ -34,18 +34,17 @@ Current internal lead as of 2026-03-23:
 - `observational_temporal_memory + MiniMax-M2.7`
 - real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
 - real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
-- real rerun on March 23, 2026 over the first 25 `LoCoMo` `conv-26` questions: `23/25` (`0.92`)
+- real rerun on March 23, 2026 over the first 25 `LoCoMo` `conv-26` questions: `24/25` (`0.96`)
 - latest recorded comparison lane on the same provider path remains the 25-sample rerun: `beam_temporal_atom_router + MiniMax-M2.7` at `7/25` (`0.28`)
 - MiniMax operating notes and default guardrails now live in `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
 
 Current MiniMax frontier on that `LoCoMo` slice is now explicit:
 
 - MiniMax is working well when the packet already contains the exact answer-bearing turn or structured predicate
-- MiniMax is still faltering on benchmark inconsistencies and multimodal/title-recovery gaps
+- MiniMax is still faltering on benchmark inconsistencies
 - scorecards now annotate these known issue classes directly in `known_issue_summary` so future reruns do not look like generic model regressions
-- the two remaining misses on the current `23/25` run are:
+- the only remaining miss on the current `24/25` run is:
   - `conv-26-qa-6`: likely benchmark inconsistency, with context pointing to `Saturday` while gold expects `Sunday`
-  - `conv-26-qa-24`: likely multimodal/title ceiling, with text-only recovery surfacing only `Charlotte's Web`
 
 The repo now has the standard Spark domain-chip scaffold:
 

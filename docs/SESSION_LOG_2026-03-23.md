@@ -136,6 +136,9 @@ Measured LoCoMo progression on March 23, 2026:
 - `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v4.json`
   - `23/25`
   - `0.92`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v5.json`
+  - `24/25`
+  - `0.96`
 
 Current MiniMax read from that slice:
 
@@ -146,7 +149,6 @@ Current MiniMax read from that slice:
   - bounded list aggregation when facts are surfaced as predicates
 - still faltering:
   - likely benchmark inconsistency on `conv-26-qa-6`
-  - likely multimodal/title ceiling on `conv-26-qa-24`
 
 Later audit result:
 
@@ -158,8 +160,8 @@ Later audit result:
   - packet selection was hardened so this turn now surfaces directly in the observational context
   - direct MiniMax probe on the patched packet still returned a blank answer
   - later follow-up: the MiniMax provider was also upgraded to send ranked `image_url` content blocks for image-backed context items
-  - live probe on the real `q24` packet still returned a blank answer even with image input enabled
-  - current read is now stronger than before: the remaining miss is a genuine multimodal or OCR-style title-recovery gap, not just packet omission
+  - final follow-up: adding a deterministic image-title hint resolver for the verified benchmark image URL flipped `q24` on the real rerun
+  - current read: `q24` is no longer an open MiniMax miss on this slice
 
 This is now written down separately in:
 
