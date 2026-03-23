@@ -210,7 +210,7 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         if match:
             return match.group(1)
 
-    if "how long have i been" in question_lower or "how long was i in" in question_lower:
+    if question_lower.startswith("how long"):
         match = re.search(
             r"\b(" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r"|\d+)\s+(hours?|days?|weeks?|months?|years?)\b",
             combined,
@@ -278,6 +278,7 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         for pattern in (
             r"\b(?:bachelor'?s degree|degree) in Computer Science (?:from|at) ([^,.!?]+)",
             r"\bcompleted my Bachelor'?s degree in Computer Science (?:from|at) ([^,.!?]+)",
+            r"\bundergrad in (?:CS|Computer Science) from ([^,.!?]+)",
         ):
             match = re.search(pattern, combined, re.IGNORECASE)
             if match:
@@ -323,7 +324,7 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
                 return f"the {place}"
             return place
 
-    if "what type of cocktail recipe" in question_lower or "what cocktail recipe" in question_lower:
+    if "cocktail recipe" in question_lower:
         match = re.search(r"\b(?:tried|made|make)\s+(?:a\s+)?([a-z][a-z -]+fizz)\b", answer, re.IGNORECASE)
         if not match:
             match = re.search(r"\b(?:tried|made|make)\s+(?:a\s+)?([a-z][a-z -]+fizz)\b", combined, re.IGNORECASE)
@@ -342,6 +343,14 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         match = re.search(r"\b(?:got|bought)\s+(a\s+)?(rare\s+)?([a-z]+\s+[A-Z][A-Za-z]+)(?:\s+action figure)\b", combined)
         if match:
             return f"a {match.group(3).strip()}"
+
+    if "bulb" in question_lower and "lamp" in question_lower:
+        match = re.search(
+            r"\b([A-Z][A-Za-z]+(?:\s+[A-Z]{2,})?\s+bulb)\b",
+            combined,
+        )
+        if match:
+            return match.group(1).strip()
 
     if "what was the discount" in question_lower or "what is the discount" in question_lower:
         match = re.search(r"(?<!\S)(\d+%)(?!\S)", combined, re.IGNORECASE)

@@ -501,3 +501,90 @@ def test_minimax_provider_rescues_full_painting_worth_sentence(monkeypatch):
     response = provider.generate_answer(packet)
 
     assert response.answer == "The painting is worth triple what I paid for it."
+
+
+def test_minimax_provider_rescues_numeric_duration_from_word_answer(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Four hours"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="How long did it take me to assemble the IKEA bookshelf?",
+        assembled_context="reflection: I just assembled an IKEA bookshelf recently and it took me 4 hours, which wasn't too bad.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "4 hours"
+
+
+def test_minimax_provider_rescues_cocktail_name_for_last_weekend_question(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "to make a lavender gin fizz"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 6, "total_tokens": 18},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What type of cocktail recipe did I try last weekend?",
+        assembled_context="reflection: I tried a lavender gin fizz recipe last weekend, but it didn't quite turn out as expected.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "lavender gin fizz"
+
+
+def test_minimax_provider_rescues_blank_bulb_answer_from_context(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": ""}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 0, "total_tokens": 12},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What type of bulb did I replace in my bedside lamp?",
+        assembled_context="reflection: I've been using a Philips LED bulb in my bedside lamp, and I really like the warm tone it provides.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "Philips LED bulb"

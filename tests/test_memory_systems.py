@@ -174,6 +174,21 @@ def test_extract_memory_atoms_captures_benchmark_specific_patterns():
                         speaker="user",
                         text="Do you have any recommendations for a good collar brand or type that would suit a Golden Retriever like Max?",
                     ),
+                    NormalizedTurn(
+                        turn_id="s1:t9",
+                        speaker="user",
+                        text="I completed my undergrad in CS from UCLA, which has a great reputation in the industry.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="s1:t10",
+                        speaker="user",
+                        text="I've been listening to their songs a lot on Spotify lately.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="s1:t11",
+                        speaker="user",
+                        text="I actually visited Fushimi Inari Shrine when I was in Japan a few months ago. I spent two weeks traveling solo around the country and it was an incredible experience.",
+                    ),
                 ],
             )
         ],
@@ -198,4 +213,54 @@ def test_extract_memory_atoms_captures_benchmark_specific_patterns():
     assert ("previous_occupation", "marketing specialist at a small startup") in pairs
     assert ("bike_count", "three") in pairs
     assert ("dog_breed", "Golden Retriever") in pairs
+    assert ("computer_science_degree_institution", "UCLA") in pairs
+    assert ("music_service", "Spotify") in pairs
+    assert ("trip_duration", "two weeks") in pairs
     assert all(atom.metadata.get("speaker") != "assistant" or atom.predicate != "raw_turn" for atom in atoms)
+
+
+def test_observational_memory_keeps_destination_specific_trip_duration():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LongMemEval",
+        sample_id="sample-trip-duration",
+        sessions=[
+            NormalizedSession(
+                session_id="s1",
+                timestamp="2024-01-01",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="s1:t1",
+                        speaker="user",
+                        text="I visited Fushimi Inari Shrine when I was in Japan a few months ago. I spent two weeks traveling solo around the country and it was incredible.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="s1:t2",
+                        speaker="user",
+                        text="I recently had an amazing seafood paella in Barcelona while I was on a week-long vacation with my family.",
+                    ),
+                ],
+            )
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="How long was I in Japan for?",
+                category="single-session-user",
+                expected_answers=["two weeks"],
+                evidence_session_ids=["s1"],
+                evidence_turn_ids=["s1:t1"],
+            )
+        ],
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=4)
+
+    assert any("Japan" in item.text and "two weeks" in item.text for item in packets[0].retrieved_context_items)
+    assert packets[0].assembled_context.count("two weeks") >= 1

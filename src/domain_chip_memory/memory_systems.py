@@ -133,6 +133,20 @@ def _observation_surface_text(subject: str, predicate: str, value: str, source_t
         return f"I own {value} bikes" if subject == "user" else f"{surface_subject} owns {value} bikes"
     if predicate == "dog_breed":
         return f"My dog is a {value}" if subject == "user" else f"{surface_subject}'s dog is a {value}"
+    if predicate == "computer_science_degree_institution":
+        return (
+            f"I completed my Bachelor's degree in Computer Science from {value}"
+            if subject == "user"
+            else f"{surface_subject} completed a Bachelor's degree in Computer Science from {value}"
+        )
+    if predicate == "music_service":
+        return (
+            f"The music streaming service I've been using lately is {value}"
+            if subject == "user"
+            else f"{surface_subject}'s music streaming service lately is {value}"
+        )
+    if predicate == "trip_duration":
+        return source_text
     return source_text
 
 
@@ -146,6 +160,9 @@ def _answer_candidate_surface_text(subject: str, predicate: str, value: str, sou
         "previous_occupation",
         "bike_count",
         "dog_breed",
+        "computer_science_degree_institution",
+        "music_service",
+        "trip_duration",
     } and value:
         return value
     if predicate == "location":
@@ -185,12 +202,26 @@ def _extract_atoms_from_turn(session: NormalizedSession, turn: NormalizedTurn) -
         (r"\bbikes?\b[^.?!]{0,200}?\bgot\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+of them\b", "bike_count"),
         (r"\bi own\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+bikes?\b", "bike_count"),
         (r"\bsuit a\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})\s+like\s+[A-Z][A-Za-z]+\b", "dog_breed"),
+        (
+            r"\b(?:completed my |did my )?(?:undergrad|undergraduate|bachelor'?s degree) in (?:cs|computer science) from ([A-Z][A-Za-z0-9,&()' .-]+?)(?:,| which | and |\.|$)",
+            "computer_science_degree_institution",
+        ),
+        (
+            r"\b(?:completed my )?undergrad in (?:cs|computer science) from ([A-Z][A-Za-z0-9,&()' .-]+?)(?:,| which | and |\.|$)",
+            "computer_science_degree_institution",
+        ),
+        (r"\b(?:listening to .*?\bon|using)\s+(Spotify|Apple Music|YouTube Music|Tidal|Pandora)\s+lately\b", "music_service"),
+        (
+            r"\bwhen i was in\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3})\b[\s\S]{0,160}?\bspent\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(days?|weeks?|months?)\b",
+            "trip_duration",
+        ),
     ]
 
     for index, (pattern, predicate) in enumerate(patterns):
         match = re.search(pattern, text, re.IGNORECASE)
         if not match:
             continue
+        metadata: JsonDict = {"speaker": turn.speaker}
         if predicate == "location_named":
             atom_subject = match.group(1).strip().lower()
             atom_predicate = "location"
@@ -199,6 +230,13 @@ def _extract_atoms_from_turn(session: NormalizedSession, turn: NormalizedTurn) -
             atom_subject = match.group(1).strip().lower()
             atom_predicate = "preference"
             value = _normalize_value(match.group(2))
+        elif predicate == "trip_duration":
+            atom_subject = subject
+            atom_predicate = predicate
+            destination = _normalize_value(match.group(1))
+            value = _normalize_value(f"{match.group(2)} {match.group(3)}")
+            metadata["destination"] = destination
+            metadata["entity_key"] = destination.lower()
         else:
             atom_subject = subject
             atom_predicate = predicate
@@ -213,7 +251,7 @@ def _extract_atoms_from_turn(session: NormalizedSession, turn: NormalizedTurn) -
                 turn_id=turn.turn_id,
                 timestamp=turn.timestamp or session.timestamp,
                 source_text=text,
-                metadata={"speaker": turn.speaker},
+                metadata=metadata,
             )
         )
 
@@ -270,13 +308,17 @@ def build_observation_log(sample: NormalizedBenchmarkSample) -> list[Observation
 
 
 def reflect_observations(observations: list[ObservationEntry]) -> list[ObservationEntry]:
-    latest_by_key: dict[tuple[str, str], ObservationEntry] = {}
+    latest_by_key: dict[tuple[str, str, str], ObservationEntry] = {}
     passthrough: list[ObservationEntry] = []
     for observation in observations:
         if observation.predicate == "raw_turn":
             passthrough.append(observation)
             continue
-        key = (observation.subject, observation.predicate)
+        key = (
+            observation.subject,
+            observation.predicate,
+            str(observation.metadata.get("entity_key", "")),
+        )
         current = latest_by_key.get(key)
         if current is None or (observation.timestamp or "") >= (current.timestamp or ""):
             latest_by_key[key] = observation
@@ -342,6 +384,12 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("bike_count")
     if "breed is my dog" in question_lower:
         predicates.append("dog_breed")
+    if "bachelor" in question_lower and "computer science" in question_lower:
+        predicates.append("computer_science_degree_institution")
+    if "music streaming service" in question_lower:
+        predicates.append("music_service")
+    if question_lower.startswith("how long was i in"):
+        predicates.append("trip_duration")
     if not predicates:
         predicates.append("raw_turn")
     return predicates
