@@ -450,7 +450,9 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
             re.IGNORECASE,
         )
         if match:
-            return f"{match.group(1)} {match.group(2)}"
+            raw_count = match.group(1).lower()
+            count = raw_count if raw_count.isdigit() else str(COUNT_WORD_TO_INT.get(raw_count, raw_count))
+            return f"{count} {match.group(2)}"
 
     if "what is the name of my" in question_lower:
         match = re.search(r"\bname is ([A-Z][A-Za-z]+)\b", combined, re.IGNORECASE)
