@@ -36,8 +36,10 @@ Current internal lead as of 2026-03-23:
 - real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
 - real rerun on March 23, 2026 over the first 25 `LoCoMo` `conv-26` questions: `24/25` (`0.96`)
   - audited scorecard view on the same artifact: `24/24` (`1.00`) after excluding the one known benchmark inconsistency
-- latest bounded `LoCoMo` comparison lane on the same provider path: `beam_temporal_atom_router + MiniMax-M2.7` at `6/25` (`0.24`)
-  - audited scorecard view on the same slice: `6/24` (`0.25`)
+- bounded `LoCoMo` same-provider ladder on the same first-25 `conv-26` slice:
+  - `observational_temporal_memory`: `24/25` raw, `24/24` audited
+  - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
+  - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
 - MiniMax operating notes and default guardrails now live in `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
 
 Current MiniMax frontier on that `LoCoMo` slice is now explicit:

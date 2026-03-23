@@ -12,6 +12,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - `artifacts/benchmark_runs/locomo10_temporal_atom_router_minimax_limit1_question25_rerun.json`
   - `6/25`
   - audited view: `6/24`
+- `artifacts/benchmark_runs/locomo10_dual_store_minimax_limit1_question25_rerun.json`
+  - `23/25`
+  - audited view: `23/24`
 
 ## Where MiniMax is working well
 
@@ -84,6 +87,8 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - audited scorecard: `24/24`
 - The same provider on the weaker substrate is nowhere close:
   - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
+- The stronger alternate substrate stays competitive on the same provider:
+  - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
 - When MiniMax fails today, the first suspicion should be:
   - missing evidence turn
   - missing structured predicate

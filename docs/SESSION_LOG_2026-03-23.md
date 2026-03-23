@@ -146,6 +146,11 @@ Measured LoCoMo progression on March 23, 2026:
   - `0.24`
   - audited scorecard view: `6/24`
   - audited accuracy: `0.25`
+- `artifacts/benchmark_runs/locomo10_dual_store_minimax_limit1_question25_rerun.json`
+  - `23/25`
+  - `0.92`
+  - audited scorecard view: `23/24`
+  - audited accuracy: `0.9583`
 
 Current MiniMax read from that slice:
 
@@ -161,6 +166,7 @@ Current MiniMax read from that slice:
   - audited provider score is now `24/24` after excluding the known benchmark inconsistency
 - current same-provider comparison on that slice:
   - `observational_temporal_memory`: `24/25` raw, `24/24` audited
+  - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
   - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
 
 Later audit result:
