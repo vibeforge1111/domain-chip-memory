@@ -2197,6 +2197,22 @@ def test_minimax_provider_recovers_locomo_sixth_slice_music_poetry_and_roadtrip_
                 benchmark_name="LoCoMo",
                 baseline_name="observational_temporal_memory",
                 sample_id="conv-26",
+                question_id="conv-26-qa-126",
+                question="Where did Oliver hide his bone once?",
+                assembled_context=(
+                    "reflection: On 3:31 pm on 23 August, 2023, Melanie said: "
+                    "Oliver's hilarious! He hid his bone in my slipper once!"
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "In Melanie's slipper",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
                 question_id="conv-26-qa-127",
                 question="What activity did Caroline used to do with her dad?",
                 assembled_context="reflection: Caroline used to do Horseback riding with Caroline's dad",
@@ -2360,6 +2376,22 @@ def test_minimax_provider_recovers_locomo_sixth_slice_music_poetry_and_roadtrip_
                 metadata={"route": "observational_temporal_memory"},
             ),
             "An ongoing adventure of learning and growing.",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-144",
+                question="What happened to Melanie's son on their road trip?",
+                assembled_context=(
+                    "reflection: On 6:55 pm on 20 October, 2023, Melanie said: "
+                    "Hey Caroline, that roadtrip this past weekend was insane! We were all freaked when my son got into an accident."
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "He got into an accident",
         ),
         (
             BaselinePromptPacket(

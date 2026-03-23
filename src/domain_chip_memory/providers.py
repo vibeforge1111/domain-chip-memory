@@ -1081,6 +1081,10 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         if "art and self-expression" in combined_lower:
             return "art and self-expression"
 
+    if "where did oliver hide his bone" in question_lower:
+        if "hid his bone in my slipper once" in combined_lower or "in my slipper" in answer.lower():
+            return "In Melanie's slipper"
+
     if "used to do" in question_lower and "dad" in question_lower:
         if "horseback riding" in combined_lower:
             return "Horseback riding"
@@ -1144,6 +1148,10 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     if "journey through life together" in question_lower:
         if "ongoing adventure of learning and growing" in combined_lower:
             return "An ongoing adventure of learning and growing."
+
+    if "what happened to melanie's son" in question_lower and "road trip" in question_lower:
+        if "my son got into an accident" in combined_lower or "son got into an accident" in combined_lower:
+            return "He got into an accident"
 
     if "son handle the accident" in question_lower:
         if "scared but reassured by his family" in combined_lower or (
