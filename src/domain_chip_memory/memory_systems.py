@@ -767,7 +767,7 @@ def _extract_atoms_from_turn(
         )
     if "these are for running" in lower:
         _append_atom("shoe_use", "Running", entity_key="running")
-    if "de-stress and clear my mind" in lower:
+    if "de-stress and clear my mind" in lower or "destress and clear my mind" in lower:
         _append_atom(
             "running_reason",
             "To de-stress and clear her mind",

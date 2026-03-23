@@ -1222,10 +1222,18 @@ def _compact_context(question: str, context: str, *, max_lines: int = 8) -> str:
     if len(lines) <= max_lines:
         return context
 
+    answer_candidate_lines = [line for line in lines if line.lower().startswith("answer_candidate:")]
+    reserved = answer_candidate_lines[:max_lines]
+    remaining_slots = max_lines - len(reserved)
+    if remaining_slots <= 0:
+        return "\n".join(reserved)
+
     question_lower = question.lower()
     tokens = _question_tokens(question)
     scored: list[tuple[float, int, str]] = []
     for idx, line in enumerate(lines):
+        if line in reserved:
+            continue
         lower = line.lower()
         token_score = sum(1 for token in tokens if token in lower)
         if not token_score and not any(marker in lower for marker in {"answer_candidate:", "reflection:", "memory:"}):
@@ -1244,11 +1252,12 @@ def _compact_context(question: str, context: str, *, max_lines: int = 8) -> str:
         scored.append((token_score + bonus, idx, line))
 
     if not scored:
-        return "\n".join(lines[:max_lines])
+        selected = [line for line in lines if line not in reserved][:remaining_slots]
+        return "\n".join([*selected, *reserved])
 
-    top = sorted(scored, key=lambda item: (-item[0], item[1]))[:max_lines]
+    top = sorted(scored, key=lambda item: (-item[0], item[1]))[:remaining_slots]
     selected = [line for _, _, line in sorted(top, key=lambda item: item[1])]
-    return "\n".join(selected)
+    return "\n".join([*selected, *reserved])
 
 
 def _expand_answer_from_context(question: str, answer: str, context: str) -> str:

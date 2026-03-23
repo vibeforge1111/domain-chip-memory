@@ -1671,6 +1671,7 @@ def test_locomo_question_relevant_window_surfaces_fifth_slice_object_and_meaning
     assert "Caroline wants to create a safe and inviting place for people to grow" in packet_by_id["conv-26-qa-101"].assembled_context
     assert "Caroline has kids' books - classics, stories from different cultures, educational books in the library" in packet_by_id["conv-26-qa-103"].assembled_context
     assert "Caroline took away Lessons on self-acceptance and finding support from the book" in packet_by_id["conv-26-qa-106"].assembled_context
+    assert "Melanie got into running To de-stress and clear her mind" in packet_by_id["conv-26-qa-108"].assembled_context
     assert "Melanie made pots at the pottery workshop" in packet_by_id["conv-26-qa-110"].assembled_context
     assert "Melanie made a cup with a dog face on it at the pottery workshop" in packet_by_id["conv-26-qa-110"].assembled_context
     assert "Melanie's family painted a sunset with a palm tree" in packet_by_id["conv-26-qa-113"].assembled_context
