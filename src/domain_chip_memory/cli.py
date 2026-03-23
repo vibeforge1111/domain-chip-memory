@@ -70,6 +70,7 @@ def main() -> None:
     run_longmemeval.add_argument("--limit", type=int)
     run_longmemeval.add_argument("--top-k-sessions", type=int, default=2)
     run_longmemeval.add_argument("--fallback-sessions", type=int, default=1)
+    run_longmemeval.add_argument("--write")
 
     run_locomo = subparsers.add_parser("run-locomo-baseline", help="Run a baseline over a LoCoMo JSON file.")
     run_locomo.add_argument("data_file")
@@ -78,6 +79,7 @@ def main() -> None:
     run_locomo.add_argument("--limit", type=int)
     run_locomo.add_argument("--top-k-sessions", type=int, default=2)
     run_locomo.add_argument("--fallback-sessions", type=int, default=1)
+    run_locomo.add_argument("--write")
 
     run_goodai = subparsers.add_parser("run-goodai-baseline", help="Run a baseline over GoodAI config and definitions.")
     run_goodai.add_argument("config_file")
@@ -88,6 +90,7 @@ def main() -> None:
     run_goodai.add_argument("--limit", type=int)
     run_goodai.add_argument("--top-k-sessions", type=int, default=2)
     run_goodai.add_argument("--fallback-sessions", type=int, default=1)
+    run_goodai.add_argument("--write")
 
     compare_longmemeval = subparsers.add_parser("compare-longmemeval-local", help="Run all default systems over a LongMemEval JSON file and emit a compact comparison.")
     compare_longmemeval.add_argument("data_file")
@@ -222,28 +225,30 @@ def main() -> None:
 
     if args.command == "run-longmemeval-baseline":
         samples = load_longmemeval_json(args.data_file, limit=args.limit)
-        _print(
-            run_baseline(
-                samples,
-                baseline_name=args.baseline,
-                provider=get_provider(args.provider),
-                top_k_sessions=args.top_k_sessions,
-                fallback_sessions=args.fallback_sessions,
-            )
+        payload = run_baseline(
+            samples,
+            baseline_name=args.baseline,
+            provider=get_provider(args.provider),
+            top_k_sessions=args.top_k_sessions,
+            fallback_sessions=args.fallback_sessions,
         )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
         return
 
     if args.command == "run-locomo-baseline":
         samples = load_locomo_json(args.data_file, limit=args.limit)
-        _print(
-            run_baseline(
-                samples,
-                baseline_name=args.baseline,
-                provider=get_provider(args.provider),
-                top_k_sessions=args.top_k_sessions,
-                fallback_sessions=args.fallback_sessions,
-            )
+        payload = run_baseline(
+            samples,
+            baseline_name=args.baseline,
+            provider=get_provider(args.provider),
+            top_k_sessions=args.top_k_sessions,
+            fallback_sessions=args.fallback_sessions,
         )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
         return
 
     if args.command == "run-goodai-baseline":
@@ -254,15 +259,16 @@ def main() -> None:
             dataset_name=args.dataset_name,
             limit=args.limit,
         )
-        _print(
-            run_baseline(
-                samples,
-                baseline_name=args.baseline,
-                provider=get_provider(args.provider),
-                top_k_sessions=args.top_k_sessions,
-                fallback_sessions=args.fallback_sessions,
-            )
+        payload = run_baseline(
+            samples,
+            baseline_name=args.baseline,
+            provider=get_provider(args.provider),
+            top_k_sessions=args.top_k_sessions,
+            fallback_sessions=args.fallback_sessions,
         )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
         return
 
     if args.command == "compare-longmemeval-local":

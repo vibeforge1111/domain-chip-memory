@@ -1,5 +1,8 @@
+import json
+import sys
 from pathlib import Path
 
+from domain_chip_memory import cli
 from domain_chip_memory.baselines import build_baseline_contract_summary
 from domain_chip_memory.adapters import build_adapter_contract_summary
 from domain_chip_memory.canonical_configs import get_canonical_configs
@@ -75,3 +78,50 @@ def test_candidate_comparison_summary_runs():
     payload = run_candidate_comparison(demo_samples(), provider=get_provider("heuristic_v1"))
     assert payload["systems"]["beam_temporal_atom_router"]["overall"]["total"] >= 1
     assert "question_ids" not in payload["systems"]["beam_temporal_atom_router"]["run_manifest"]
+
+
+def test_run_longmemeval_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "longmemeval.json"
+    output_file = tmp_path / "artifacts" / "scorecard.json"
+    data_file.write_text(
+        json.dumps(
+            [
+                {
+                    "question_id": "q-1",
+                    "question_type": "knowledge-update",
+                    "question": "Where do I live now?",
+                    "answer": "Dubai",
+                    "question_date": "2024-05-01",
+                    "haystack_session_ids": ["s1", "s2"],
+                    "haystack_dates": ["2024-04-01", "2024-04-20"],
+                    "haystack_sessions": [
+                        [{"role": "user", "content": "I live in London."}],
+                        [{"role": "user", "content": "I moved to Dubai."}],
+                    ],
+                    "answer_session_ids": ["s2"],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-longmemeval-baseline",
+            str(data_file),
+            "--baseline",
+            "observational_temporal_memory",
+            "--provider",
+            "heuristic_v1",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["overall"]["total"] == 1
+    assert payload["predictions"][0]["predicted_answer"].lower() == "dubai"
