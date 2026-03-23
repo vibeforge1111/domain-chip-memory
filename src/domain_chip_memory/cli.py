@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from .adapters import build_adapter_contract_summary
@@ -25,6 +26,7 @@ from .sample_data import demo_samples
 from .scorecards import build_scorecard_contract_summary
 from .baselines import build_full_context_packets, build_lexical_packets
 from .watchtower import build_watchtower_summary
+from .contracts import NormalizedBenchmarkSample
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -34,6 +36,16 @@ def _write_json(path: Path, payload: dict) -> None:
 
 def _print(payload: dict | list[dict]) -> None:
     print(json.dumps(payload, indent=2))
+
+
+def _limit_questions(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    question_limit: int | None,
+) -> list[NormalizedBenchmarkSample]:
+    if question_limit is None:
+        return samples
+    return [replace(sample, questions=sample.questions[:question_limit]) for sample in samples]
 
 
 def main() -> None:
@@ -77,6 +89,7 @@ def main() -> None:
     run_locomo.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "dual_store_event_calendar_hybrid"), default="full_context")
     run_locomo.add_argument("--provider", default="heuristic_v1")
     run_locomo.add_argument("--limit", type=int)
+    run_locomo.add_argument("--question-limit", type=int)
     run_locomo.add_argument("--top-k-sessions", type=int, default=2)
     run_locomo.add_argument("--fallback-sessions", type=int, default=1)
     run_locomo.add_argument("--write")
@@ -104,6 +117,7 @@ def main() -> None:
     compare_locomo.add_argument("data_file")
     compare_locomo.add_argument("--provider", default="heuristic_v1")
     compare_locomo.add_argument("--limit", type=int)
+    compare_locomo.add_argument("--question-limit", type=int)
     compare_locomo.add_argument("--top-k-sessions", type=int, default=2)
     compare_locomo.add_argument("--fallback-sessions", type=int, default=1)
     compare_locomo.add_argument("--write")
@@ -238,7 +252,10 @@ def main() -> None:
         return
 
     if args.command == "run-locomo-baseline":
-        samples = load_locomo_json(args.data_file, limit=args.limit)
+        samples = _limit_questions(
+            load_locomo_json(args.data_file, limit=args.limit),
+            question_limit=args.question_limit,
+        )
         payload = run_baseline(
             samples,
             baseline_name=args.baseline,
@@ -285,7 +302,10 @@ def main() -> None:
         return
 
     if args.command == "compare-locomo-local":
-        samples = load_locomo_json(args.data_file, limit=args.limit)
+        samples = _limit_questions(
+            load_locomo_json(args.data_file, limit=args.limit),
+            question_limit=args.question_limit,
+        )
         payload = run_candidate_comparison(
             samples,
             provider=get_provider(args.provider),

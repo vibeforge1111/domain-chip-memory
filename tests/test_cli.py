@@ -125,3 +125,64 @@ def test_run_longmemeval_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["overall"]["total"] == 1
     assert payload["predictions"][0]["predicted_answer"].lower() == "dubai"
+
+
+def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "locomo.json"
+    output_file = tmp_path / "artifacts" / "locomo_scorecard.json"
+    data_file.write_text(
+        json.dumps(
+            [
+                {
+                    "sample_id": "locomo-1",
+                    "conversation": {
+                        "speaker_a": "Alice",
+                        "speaker_b": "Bob",
+                        "session_1_date_time": "2024-01-01",
+                        "session_1": [
+                            {"speaker": "Alice", "dia_id": "d1", "text": "I like jazz."},
+                            {"speaker": "Bob", "dia_id": "d2", "text": "I like chess."},
+                        ],
+                    },
+                    "qa": [
+                        {
+                            "question": "What music does Alice like?",
+                            "answer": "jazz",
+                            "category": "single-hop",
+                            "evidence": ["d1"],
+                        },
+                        {
+                            "question": "What does Bob like?",
+                            "answer": "chess",
+                            "category": "single-hop",
+                            "evidence": ["d2"],
+                        },
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-locomo-baseline",
+            str(data_file),
+            "--baseline",
+            "full_context",
+            "--provider",
+            "heuristic_v1",
+            "--question-limit",
+            "1",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["overall"]["total"] == 1
+    assert payload["run_manifest"]["question_count"] == 1
