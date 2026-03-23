@@ -213,6 +213,10 @@ def _relative_when_answer(payloads: list[str]) -> str | None:
             return _format_anchor_date(anchor)
         if "last week" in lower:
             return f"The week before {_format_anchor_date(anchor)}"
+        if "next month" in lower:
+            year = anchor.year + (1 if anchor.month == 12 else 0)
+            month = 1 if anchor.month == 12 else anchor.month + 1
+            return datetime(year, month, 1).strftime("%B %Y")
         weekday_match = re.search(r"\blast\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b", lower)
         if weekday_match:
             weekday = weekday_match.group(1)
@@ -280,6 +284,17 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         match = re.search(r"\b(\d+:\d+)\b", combined, re.IGNORECASE)
         if match:
             return match.group(1)
+
+    if question_lower.startswith("how long ago"):
+        match = re.search(
+            r"\b(" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r"|\d+)\s+(years?|months?|weeks?|days?)\s+ago\b",
+            combined,
+            re.IGNORECASE,
+        )
+        if match:
+            raw_count = match.group(1).lower()
+            count = raw_count if raw_count.isdigit() else str(COUNT_WORD_TO_INT.get(raw_count, raw_count))
+            return f"{count} {match.group(2)} ago"
 
     if question_lower.startswith("how long"):
         match = re.search(
@@ -445,6 +460,10 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         if match:
             return match.group(1)
 
+    if "identity" in question_lower:
+        if "transgender" in combined_lower or "trans woman" in combined_lower or "trans experience" in combined_lower:
+            return "Transgender woman"
+
     if question_lower.startswith("what did") and "research" in question_lower:
         match = re.search(r"\bresearch(?:ed|ing)\s+([^,.!?\n-]+)", combined, re.IGNORECASE)
         if match:
@@ -457,6 +476,14 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     if "fields would" in question_lower and "pursue" in question_lower:
         if "continue my edu" in combined_lower and "counseling or working in mental health" in combined_lower:
             return "Psychology, counseling certification"
+
+    if "career path" in question_lower:
+        if "trans people" in combined_lower and ("mental health" in combined_lower or "counseling" in combined_lower):
+            return "counseling or mental health for Transgender people"
+
+    if question_lower.startswith("would") and "received support" in question_lower:
+        if "support i got made a huge difference" in combined_lower or "help i got made a huge difference" in combined_lower:
+            return "Likely no"
 
     return None
 

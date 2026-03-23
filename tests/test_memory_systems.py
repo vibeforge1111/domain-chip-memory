@@ -494,3 +494,98 @@ def test_locomo_structured_predicates_surface_remaining_slice_facts():
     assert "relationship status is Single" in assembled
     assert "school event last week" in assembled
     assert "met up with friends, family, and mentors last week" in assembled
+
+
+def test_locomo_structured_predicates_capture_duration_location_and_museum_time():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-additional-structured",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="7:55 pm on 9 June, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d1",
+                        speaker="Caroline",
+                        text="I've known these friends for 4 years, since I moved from my home country, Sweden.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="10:37 am on 27 June, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d2",
+                        speaker="Caroline",
+                        text="I'm thinking of working with trans people, helping them accept themselves and supporting their mental health.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_3",
+                timestamp="8:18 pm on 6 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d3",
+                        speaker="Melanie",
+                        text="Yesterday I took the kids to the museum - it was so cool spending time with them.",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="How long has Caroline had her current group of friends for?",
+                category="2",
+                expected_answers=["4 years"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d1"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q2",
+                question="Where did Caroline move from 4 years ago?",
+                category="1",
+                expected_answers=["Sweden"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d1"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q3",
+                question="What career path has Caroline decided to persue?",
+                category="1",
+                expected_answers=["counseling or mental health for Transgender people"],
+                evidence_session_ids=["session_2"],
+                evidence_turn_ids=["d2"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q4",
+                question="When did Melanie go to the museum?",
+                category="2",
+                expected_answers=["5 July 2023"],
+                evidence_session_ids=["session_3"],
+                evidence_turn_ids=["d3"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+    assembled = "\n".join(packet.assembled_context for packet in packets)
+    assert "4 years" in assembled
+    assert "Sweden" in assembled
+    assert "counseling or mental health for Transgender people" in assembled
+    assert "went to the museum yesterday" in assembled

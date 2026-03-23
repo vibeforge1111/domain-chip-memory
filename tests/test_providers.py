@@ -781,3 +781,67 @@ def test_minimax_provider_rescues_relationship_status_from_context(monkeypatch):
     response = provider.generate_answer(packet)
 
     assert response.answer == "Single"
+
+
+def test_minimax_provider_rescues_next_month_from_timestamped_context(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": ""}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 0, "total_tokens": 12},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-7",
+        question="When is Melanie planning on going camping?",
+        assembled_context=(
+            "reflection: On 1:14 pm on 25 May, 2023, Melanie said: "
+            "We're thinking about going camping next month."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "June 2023"
+
+
+def test_minimax_provider_rescues_how_long_ago_shape(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "ten years"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 2, "total_tokens": 14},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-13",
+        question="How long ago was Caroline's 18th birthday?",
+        assembled_context=(
+            "reflection: On 10:37 am on 27 June, 2023, Caroline said: "
+            "A friend made it for my 18th birthday ten years ago."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "10 years ago"

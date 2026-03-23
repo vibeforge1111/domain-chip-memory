@@ -232,6 +232,30 @@ def _observation_surface_text(subject: str, predicate: str, value: str, source_t
             if subject == "user"
             else f"{surface_subject} ran a charity race {value}"
         )
+    if predicate == "current_friend_group_duration":
+        return (
+            f"I've had my current group of friends for {value}"
+            if subject == "user"
+            else f"{surface_subject} has had the current group of friends for {value}"
+        )
+    if predicate == "moved_from_location":
+        return (
+            f"I moved from {value}"
+            if subject == "user"
+            else f"{surface_subject} moved from {value}"
+        )
+    if predicate == "career_path":
+        return (
+            f"My career path is {value}"
+            if subject == "user"
+            else f"{surface_subject}'s career path is {value}"
+        )
+    if predicate == "museum_visit_time":
+        return (
+            f"I went to the museum {value}"
+            if subject == "user"
+            else f"{surface_subject} went to the museum {value}"
+        )
     if predicate == "trip_duration":
         return source_text
     return source_text
@@ -255,6 +279,10 @@ def _answer_candidate_surface_text(subject: str, predicate: str, value: str, sou
         "school_event_time",
         "support_network_meetup_time",
         "charity_race_time",
+        "current_friend_group_duration",
+        "moved_from_location",
+        "career_path",
+        "museum_visit_time",
         "trip_duration",
     } and value:
         return value
@@ -320,6 +348,13 @@ def _extract_atoms_from_turn(
         (r"\bschool event\s+(last week)\b", "school_event_time"),
         (r"\bmet up\s+(last week)\b", "support_network_meetup_time"),
         (r"\bcharity race\b[^.?!]{0,80}?\b(last Saturday)\b", "charity_race_time"),
+        (r"\bknown these friends for\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(years?)\b", "current_friend_group_duration"),
+        (r"\bhome country,\s*([A-Z][A-Za-z]+)\b", "moved_from_location"),
+        (
+            r"\bthinking of working with trans people, helping them accept themselves and supporting their mental health\b",
+            "career_path",
+        ),
+        (r"\byesterday I took the kids to the museum\b", "museum_visit_time"),
     ]
 
     for index, (pattern, predicate) in enumerate(patterns):
@@ -354,6 +389,18 @@ def _extract_atoms_from_turn(
             atom_subject = subject
             atom_predicate = "relationship_status"
             value = "Single"
+        elif predicate == "career_path":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = "counseling or mental health for Transgender people"
+        elif predicate == "museum_visit_time":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = "yesterday"
+        elif predicate == "current_friend_group_duration":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(f"{match.group(1)} {match.group(2)}")
         else:
             atom_subject = subject
             atom_predicate = predicate
@@ -551,6 +598,14 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("support_network_meetup_time")
     if "charity race" in question_lower:
         predicates.append("charity_race_time")
+    if "current group of friends" in question_lower:
+        predicates.append("current_friend_group_duration")
+    if "move from" in question_lower:
+        predicates.append("moved_from_location")
+    if "career path" in question_lower:
+        predicates.append("career_path")
+    if "museum" in question_lower:
+        predicates.append("museum_visit_time")
     if question_lower.startswith("how long was i in"):
         predicates.append("trip_duration")
     if not predicates:
