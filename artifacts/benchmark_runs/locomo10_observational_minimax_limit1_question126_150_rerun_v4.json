@@ -1,0 +1,687 @@
+{
+  "run_manifest": {
+    "run_id": "observational-temporal-memory-v1",
+    "benchmark_name": "LoCoMo",
+    "baseline_name": "observational_temporal_memory",
+    "sample_ids": [
+      "conv-26"
+    ],
+    "question_ids": [
+      "conv-26-qa-126",
+      "conv-26-qa-127",
+      "conv-26-qa-128",
+      "conv-26-qa-129",
+      "conv-26-qa-130",
+      "conv-26-qa-131",
+      "conv-26-qa-132",
+      "conv-26-qa-133",
+      "conv-26-qa-134",
+      "conv-26-qa-135",
+      "conv-26-qa-136",
+      "conv-26-qa-137",
+      "conv-26-qa-138",
+      "conv-26-qa-139",
+      "conv-26-qa-140",
+      "conv-26-qa-141",
+      "conv-26-qa-142",
+      "conv-26-qa-143",
+      "conv-26-qa-144",
+      "conv-26-qa-145",
+      "conv-26-qa-146",
+      "conv-26-qa-147",
+      "conv-26-qa-148",
+      "conv-26-qa-149",
+      "conv-26-qa-150"
+    ],
+    "question_count": 25,
+    "metadata": {
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Observational Temporal Memory",
+      "max_observations": 4,
+      "max_reflections": 3,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 24,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.96
+  },
+  "audited_overall": {
+    "correct": 24,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.96
+  },
+  "by_category": [
+    {
+      "category": "4",
+      "correct": 24,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.96
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "4",
+      "correct": 24,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.96
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "predictions": [
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-126",
+      "category": "4",
+      "predicted_answer": "In Melanie's slipper",
+      "expected_answers": [
+        "In Melanie's slipper"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 410,
+        "completion_tokens": 180,
+        "total_tokens": 590,
+        "context_compacted": true,
+        "context_image_count": 1,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-127",
+      "category": "4",
+      "predicted_answer": "Horseback riding",
+      "expected_answers": [
+        "Horseback riding"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 208,
+        "completion_tokens": 92,
+        "total_tokens": 300,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-128",
+      "category": "4",
+      "predicted_answer": "a stained glass window",
+      "expected_answers": [
+        "a stained glass window"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 813,
+        "completion_tokens": 143,
+        "total_tokens": 956,
+        "context_compacted": true,
+        "context_image_count": 2,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-129",
+      "category": "4",
+      "predicted_answer": "a rainbow sidewalk",
+      "expected_answers": [
+        "a rainbow sidewalk"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 196,
+        "completion_tokens": 112,
+        "total_tokens": 308,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-130",
+      "category": "4",
+      "predicted_answer": "Brave by Sara Bareilles",
+      "expected_answers": [
+        "Brave by Sara Bareilles"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 550,
+        "completion_tokens": 248,
+        "total_tokens": 798,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-131",
+      "category": "4",
+      "predicted_answer": "Bach and Mozart",
+      "expected_answers": [
+        "Bach and Mozart"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 165,
+        "completion_tokens": 103,
+        "total_tokens": 268,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-132",
+      "category": "4",
+      "predicted_answer": "Ed Sheeran",
+      "expected_answers": [
+        "Ed Sheeran"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 179,
+        "completion_tokens": 154,
+        "total_tokens": 333,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-133",
+      "category": "4",
+      "predicted_answer": "7 years",
+      "expected_answers": [
+        "7 years"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 242,
+        "completion_tokens": 123,
+        "total_tokens": 365,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-134",
+      "category": "4",
+      "predicted_answer": "A sign stating that someone is not being able to leave",
+      "expected_answers": [
+        "A sign stating that someone is not being able to leave"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 224,
+        "completion_tokens": 279,
+        "total_tokens": 503,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-135",
+      "category": "4",
+      "predicted_answer": "Do research, find an adoption agency or lawyer, gather necessary documents, and prepare emotionally.",
+      "expected_answers": [
+        "Do research, find an adoption agency or lawyer, gather necessary documents, and prepare emotionally."
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 558,
+        "completion_tokens": 490,
+        "total_tokens": 1048,
+        "context_compacted": true,
+        "context_image_count": 1,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-136",
+      "category": "4",
+      "predicted_answer": "She got hurt and had to take a break from pottery.",
+      "expected_answers": [
+        "She got hurt and had to take a break from pottery."
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 401,
+        "completion_tokens": 170,
+        "total_tokens": 571,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-137",
+      "category": "4",
+      "predicted_answer": "Read a book and paint",
+      "expected_answers": [
+        "Read a book and paint."
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 191,
+        "completion_tokens": 144,
+        "total_tokens": 335,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-138",
+      "category": "4",
+      "predicted_answer": "A painting inspired by sunsets with a pink sky.",
+      "expected_answers": [
+        "A painting inspired by sunsets with a pink sky."
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 502,
+        "completion_tokens": 512,
+        "total_tokens": 1014,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-139",
+      "category": "4",
+      "predicted_answer": "An abstract painting with blue streaks on a wall.",
+      "expected_answers": [
+        "An abstract painting with blue streaks on a wall."
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 608,
+        "completion_tokens": 256,
+        "total_tokens": 864,
+        "context_compacted": true,
+        "context_image_count": 1,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-140",
+      "category": "4",
+      "predicted_answer": "It was a transgender poetry reading where transgender people shared their stories.",
+      "expected_answers": [
+        "It was a transgender poetry reading where transgender people shared their stories."
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 318,
+        "completion_tokens": 372,
+        "total_tokens": 690,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-141",
+      "category": "4",
+      "predicted_answer": "\"Trans Lives Matter\"",
+      "expected_answers": [
+        "\"Trans Lives Matter\""
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 328,
+        "completion_tokens": 207,
+        "total_tokens": 535,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-142",
+      "category": "4",
+      "predicted_answer": "Freedom and being true to herself.",
+      "expected_answers": [
+        "Freedom and being true to herself."
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 217,
+        "completion_tokens": 182,
+        "total_tokens": 399,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-143",
+      "category": "4",
+      "predicted_answer": "An ongoing adventure of learning and growing.",
+      "expected_answers": [
+        "An ongoing adventure of learning and growing."
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 318,
+        "completion_tokens": 277,
+        "total_tokens": 595,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-144",
+      "category": "4",
+      "predicted_answer": "He got into an accident",
+      "expected_answers": [
+        "He got into an accident"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 608,
+        "completion_tokens": 206,
+        "total_tokens": 814,
+        "context_compacted": true,
+        "context_image_count": 2,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-145",
+      "category": "4",
+      "predicted_answer": "He was scared but reassured by his family",
+      "expected_answers": [
+        "He was scared but reassured by his family"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 189,
+        "completion_tokens": 236,
+        "total_tokens": 425,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-146",
+      "category": "4",
+      "predicted_answer": "They are important and mean the world to her",
+      "expected_answers": [
+        "They are important and mean the world to her"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 192,
+        "completion_tokens": 163,
+        "total_tokens": 355,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-147",
+      "category": "4",
+      "predicted_answer": "They were scared but resilient",
+      "expected_answers": [
+        "They were scared but resilient"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 186,
+        "completion_tokens": 230,
+        "total_tokens": 416,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-148",
+      "category": "4",
+      "predicted_answer": "Grateful and thankful for her family",
+      "expected_answers": [
+        "Grateful and thankful for her family"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 192,
+        "completion_tokens": 146,
+        "total_tokens": 338,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-149",
+      "category": "4",
+      "predicted_answer": "She was happy and thankful",
+      "expected_answers": [
+        "She was happy and thankful"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 185,
+        "completion_tokens": 137,
+        "total_tokens": 322,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-150",
+      "category": "4",
+      "predicted_answer": "Strength and motivation",
+      "expected_answers": [
+        "Strength and motivation"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 165,
+        "completion_tokens": 85,
+        "total_tokens": 250,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    }
+  ]
+}

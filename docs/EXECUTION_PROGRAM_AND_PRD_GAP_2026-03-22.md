@@ -289,6 +289,9 @@ Current active lane:
 - latest adjacent bounded `LoCoMo` rerun on `conv-26` questions `101-125`:
   - `observational_temporal_memory`: `25/25` raw, `25/25` audited
   - measured progression: `1/25 -> 23/25 -> 25/25`
+- latest adjacent bounded `LoCoMo` rerun on `conv-26` questions `126-150`:
+  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
+  - measured progression: `3/25 -> 23/25 -> 24/25 -> 25/25`
 
 Immediate next build steps:
 
@@ -297,9 +300,11 @@ Immediate next build steps:
 3. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question51_75_rerun_v4.json` as the current source-of-truth artifact for the third bounded `LoCoMo` slice.
 4. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question76_100_rerun_v4.json` as the current source-of-truth artifact for the fourth bounded `LoCoMo` slice.
 5. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question101_125_rerun_v3.json` as the current source-of-truth artifact for the fifth bounded `LoCoMo` slice.
-6. Preserve the measured `q76-100` progression (`4/25 -> 23/25 -> 24/25 -> 25/25`) as the reference for family/adoption/counseling fact surfacing plus answer normalization hardening.
-7. Preserve the measured `q101-125` progression (`1/25 -> 23/25 -> 25/25`) as the reference for object/meaning predicate surfacing plus compaction hardening.
-8. Move the same provider path onto the next bounded `LoCoMo` slice (`q126-150`) instead of continuing to tune the now-closed `q101-125` slice.
+6. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question126_150_rerun_v5.json` as the current source-of-truth artifact for the sixth bounded `LoCoMo` slice.
+7. Preserve the measured `q76-100` progression (`4/25 -> 23/25 -> 24/25 -> 25/25`) as the reference for family/adoption/counseling fact surfacing plus answer normalization hardening.
+8. Preserve the measured `q101-125` progression (`1/25 -> 23/25 -> 25/25`) as the reference for object/meaning predicate surfacing plus compaction hardening.
+9. Preserve the measured `q126-150` progression (`3/25 -> 23/25 -> 24/25 -> 25/25`) as the reference for profile/music, poetry, and roadtrip predicate surfacing plus final answer-shape normalization.
+10. Move the same provider path onto the next bounded `LoCoMo` slice (`q151-175`) instead of continuing to tune the now-closed `q126-150` slice.
 
 ## Sources
 

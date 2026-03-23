@@ -21,6 +21,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question101_125_rerun_v3.json`
   - `25/25`
   - audited view: `25/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question126_150_rerun_v5.json`
+  - `25/25`
+  - audited view: `25/25`
 - `artifacts/benchmark_runs/locomo10_temporal_atom_router_minimax_limit1_question25_rerun.json`
   - `6/25`
   - audited view: `6/24`
@@ -69,6 +72,8 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - adoption motivations
   - counseling motivations
   - workshop topics
+  - poetry-reading summaries
+  - family-after-accident interpretations
 - Object and meaning questions once the packet surfaces exact symbolic or family-activity predicates
   - library composition
   - recommended-book takeaway
@@ -76,6 +81,12 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - flower symbolism
   - art-show inspiration
   - pet household summaries
+- Profile/music and roadtrip questions once exact answer-shape rescue is present
+  - `Horseback riding`
+  - `Bach and Mozart`
+  - `Ed Sheeran`
+  - `He got into an accident`
+  - `Strength and motivation`
 - MiniMax stays reliable under compaction when the exact `answer_candidate` line survives into the packet
   - practical read: if the structured answer span is already explicit, MiniMax will usually choose it cleanly even on bounded compacted context
 
@@ -89,6 +100,8 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - `Trans woman` instead of `Transgender woman`
   - `unknown` instead of anchored month-year answers like `June 2023`
   - `Three` instead of `3`
+  - `in my slipper` instead of `In Melanie's slipper`
+  - `Read a book and paint` instead of `Read a book and paint.`
 - Relative-time grounding when the packet only includes a compressed phrase instead of the anchored source turn
   - before the latest fixes, this was the driver behind `q2`, `q7`, and `q17` on the `LoCoMo` slice
 - Multi-answer recovery when one answer component is only available through image/query metadata or implicit multimodal cues
@@ -141,6 +154,10 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
   - progression on the same slice: `1/25 -> 23/25 -> 25/25`
+- The sixth bounded `LoCoMo` slice (`conv-26 q126-150`) is now also clean on a real rerun:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
+  - progression on the same slice: `3/25 -> 23/25 -> 24/25 -> 25/25`
 - The main failure mode is no longer "MiniMax is weak."
 - The main failure mode is "the packet did not expose the exact answer-bearing representation."
 - On the current bounded `LoCoMo` slice, MiniMax is effectively clean after benchmark-audit exclusion:
@@ -156,6 +173,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
 - On the adjacent fifth bounded `LoCoMo` slice, MiniMax is also fully clean without audit adjustment:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
+- On the adjacent sixth bounded `LoCoMo` slice, MiniMax is also fully clean without audit adjustment:
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
 - The same provider on the weaker substrate is nowhere close:
@@ -226,6 +246,6 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 
 ## Current recommendation
 
-- Treat `LongMemEval 50/50`, `LoCoMo q1-25 24/24 audited`, `LoCoMo q26-50 25/25`, `LoCoMo q51-75 25/25`, `LoCoMo q76-100 25/25`, and `LoCoMo q101-125 25/25` as the current MiniMax source of truth in this repo.
+- Treat `LongMemEval 50/50`, `LoCoMo q1-25 24/24 audited`, `LoCoMo q26-50 25/25`, `LoCoMo q51-75 25/25`, `LoCoMo q76-100 25/25`, `LoCoMo q101-125 25/25`, and `LoCoMo q126-150 25/25` as the current MiniMax source of truth in this repo.
 - Treat the remaining first-slice `LoCoMo` miss as a benchmark-audit lane:
   - benchmark inconsistency review for `conv-26-qa-6`

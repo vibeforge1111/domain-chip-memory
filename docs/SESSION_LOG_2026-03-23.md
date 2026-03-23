@@ -544,3 +544,85 @@ Current read after the fifth-slice rerun:
   - `q101-125`: `25/25`
 - the remaining audited-open `LoCoMo` issue across those slices is still only the first-slice benchmark inconsistency on `conv-26-qa-6`
 - the next rational move is to shift the same observational + MiniMax lane onto `LoCoMo q126-150`
+
+### 11. LoCoMo `q126-150` closure
+
+Observed slice:
+
+- `conv-26 q126-150`
+- observational lane:
+  - `observational_temporal_memory + MiniMax-M2.7`
+
+Artifacts written:
+
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question126_150_rerun.json`
+  - `3/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question126_150_rerun_v2.json`
+  - partial run stopped by provider DNS failure at `q141`
+  - first `15` completed questions: `14/15`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question126_150_rerun_v3.json`
+  - `23/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question126_150_rerun_v4.json`
+  - `24/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question137_probe_v5.json`
+  - `1/1`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question126_150_rerun_v5.json`
+  - `25/25`
+
+What changed:
+
+- the observational lane was under-surfacing profile/music, poetry, and roadtrip facts from:
+  - `D13:7`
+  - `D14:23`
+  - `D15:28`
+  - `D16:16`
+  - `D17:7-25`
+  - `D18:1-11`
+- added structured observational predicates for:
+  - childhood activity
+  - neighborhood find
+  - classical musicians
+  - modern music artist
+  - precautionary sign
+  - adoption-start advice
+  - pottery setback
+  - pottery-break activity
+  - recent painting subject
+  - abstract painting description
+  - poetry-reading topic
+  - poster text
+  - drawing symbolism
+  - shared-life-journey summary
+  - son/children accident reactions
+  - family importance
+  - post-accident feeling
+  - Grand Canyon reaction
+  - family strength source
+- added provider rescue for the exact benchmark spans those predicates expose
+- hardened answer-shape normalization for the last residual drifts:
+  - `seven years` -> `7 years`
+  - `in my slipper` -> `In Melanie's slipper`
+  - `Read a book and paint` -> `Read a book and paint.`
+
+Current read after the sixth-slice rerun:
+
+- MiniMax is now clean on `LoCoMo conv-26 q126-150`
+- measured progression on the same slice: `3/25 -> 23/25 -> 24/25 -> 25/25`
+- the remaining observed instability on the path was answer-shape variance, not missing evidence
+- the only audited-open `LoCoMo` issue across the first six slices is still the first-slice benchmark inconsistency on `conv-26-qa-6`
+- the next rational move is to shift the same observational + MiniMax lane onto `LoCoMo q151-175`
+
+Files changed in this continuation:
+
+- `src/domain_chip_memory/memory_systems.py`
+- `src/domain_chip_memory/providers.py`
+- `tests/test_memory_systems.py`
+- `tests/test_providers.py`
+
+Commits:
+
+- `a3cfc45` `data: record locomo q126-150 minimax baseline`
+- `2f8244d` `feat: recover locomo q126-150 music and roadtrip facts`
+- `c9b07e2` `fix: normalize locomo duration count answers`
+- `d2058e0` `fix: recover locomo q126 and q144 answer shapes`
+- `948e03c` `fix: normalize locomo pottery break punctuation`

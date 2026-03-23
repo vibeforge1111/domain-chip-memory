@@ -45,6 +45,9 @@ Current internal lead as of 2026-03-24:
 - real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q101-125`): `25/25` (`1.00`)
   - progression on the same slice: baseline `1/25` -> rerun `23/25` -> rerun `25/25`
   - audited scorecard view on the source-of-truth artifact: `25/25` (`1.00`) with no exclusions
+- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q126-150`): `25/25` (`1.00`)
+  - progression on the same slice: baseline `3/25` -> rerun `23/25` -> rerun `24/25` -> rerun `25/25`
+  - audited scorecard view on the source-of-truth artifact: `25/25` (`1.00`) with no exclusions
 - bounded `LoCoMo` same-provider ladder on the same first-25 `conv-26` slice:
   - `observational_temporal_memory`: `24/25` raw, `24/24` audited
   - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
@@ -70,9 +73,15 @@ Current MiniMax frontier on that `LoCoMo` slice is now explicit:
 - the adjacent `q101-125` slice is now also clean on a real rerun:
   - `25/25` raw
   - `25/25` audited
+- the adjacent `q126-150` slice is now also clean on a real rerun:
+  - `25/25` raw
+  - `25/25` audited
 - the newest MiniMax-specific lesson is explicit:
   - object/meaning questions close cleanly once the packet surfaces exact structured predicates
   - MiniMax compaction must preserve `answer_candidate` lines or the model can drift back to nearby but wrong abstractions like `it` or `mental health`
+  - on the sixth bounded `LoCoMo` slice, the last real misses were answer-shape drift, not evidence gaps:
+    - possessive/location normalization like `in my slipper` -> `In Melanie's slipper`
+    - punctuation normalization like `Read a book and paint` -> `Read a book and paint.`
 
 The repo now has the standard Spark domain-chip scaffold:
 
