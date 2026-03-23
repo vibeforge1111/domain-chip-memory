@@ -280,14 +280,16 @@ Current active lane:
   - `observational_temporal_memory`: `24/25` raw, `24/24` audited
   - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
   - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
+- latest adjacent bounded `LoCoMo` rerun on `conv-26` questions `26-50`:
+  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
 
 Immediate next build steps:
 
 1. Treat `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v4.json` as the current source-of-truth artifact for the expanded `LongMemEval_s` slice.
-2. Refresh the doctrine surfaces and strategy packet to add the real `50/50` result and preserve the measured progression (`33/50 -> 44/50 -> 48/50 -> 50/50`).
-3. Re-run `beam_temporal_atom_router + MiniMax-M2.7` or `dual_store_event_calendar_hybrid + MiniMax-M2.7` on the same 50-sample slice if we want an updated apples-to-apples comparison after the latest retrieval and answer-path fixes.
-4. Shift the same provider path onto `LoCoMo` now that the larger `LongMemEval` slice is clean.
-5. Keep the 25-sample comparison artifact as the current lightweight comparison checkpoint until the 50-sample comparison rerun exists.
+2. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question26_50_rerun_v9.json` as the current source-of-truth artifact for the second bounded `LoCoMo` slice.
+3. Preserve the measured `q26-50` progression (`22/25 -> 24/25 -> 24/25 -> 25/25`) as the reference for temporal packet hardening.
+4. Move the same provider path onto the next bounded `LoCoMo` slice (`q51-75`) instead of continuing to tune the now-closed `q26-50` slice.
+5. Re-run `beam_temporal_atom_router + MiniMax-M2.7` or `dual_store_event_calendar_hybrid + MiniMax-M2.7` on the same expanded slices only if we need a fresh apples-to-apples substrate gap after the latest observational fixes.
 
 ## Sources
 

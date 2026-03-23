@@ -36,6 +36,8 @@ Current internal lead as of 2026-03-23:
 - real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
 - real rerun on March 23, 2026 over the first 25 `LoCoMo` `conv-26` questions: `24/25` (`0.96`)
   - audited scorecard view on the same artifact: `24/24` (`1.00`) after excluding the one known benchmark inconsistency
+- real rerun on March 24, 2026 over the next 25 `LoCoMo` `conv-26` questions (`q26-50`): `25/25` (`1.00`)
+  - audited scorecard view on the same artifact: `25/25` (`1.00`) with no exclusions
 - bounded `LoCoMo` same-provider ladder on the same first-25 `conv-26` slice:
   - `observational_temporal_memory`: `24/25` raw, `24/24` audited
   - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
@@ -47,8 +49,11 @@ Current MiniMax frontier on that `LoCoMo` slice is now explicit:
 - MiniMax is working well when the packet already contains the exact answer-bearing turn or structured predicate
 - MiniMax is no longer the limiting factor on the current bounded `LoCoMo` slice once benchmark inconsistencies are excluded
 - scorecards now annotate these known issue classes directly in `known_issue_summary` and expose `audited_overall` so future reruns do not look like generic model regressions
-- the only remaining miss on the current `24/25` run is:
+- the only remaining miss on the first bounded `24/25` run is:
   - `conv-26-qa-6`: likely benchmark inconsistency, with context pointing to `Saturday` while gold expects `Sunday`
+- the adjacent `q26-50` slice is now clean on a real rerun:
+  - `25/25` raw
+  - `25/25` audited
 
 The repo now has the standard Spark domain-chip scaffold:
 

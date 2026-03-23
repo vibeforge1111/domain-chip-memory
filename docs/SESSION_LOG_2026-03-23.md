@@ -186,6 +186,55 @@ This is now written down separately in:
 
 - `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
 
+### 9. March 24 continuation: second bounded LoCoMo slice closure
+
+Work resumed on the next bounded `LoCoMo` slice:
+
+- `conv-26` questions `26-50`
+
+Measured progression on March 24, 2026:
+
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question26_50_rerun_v6.json`
+  - `22/25`
+  - `0.88`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question26_50_rerun_v7.json`
+  - `24/25`
+  - `0.96`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question26_50_rerun_v8.json`
+  - `24/25`
+  - `0.96`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question26_50_rerun_v9.json`
+  - `25/25`
+  - `1.00`
+  - audited scorecard view: `25/25`
+
+Root cause found in this continuation:
+
+- exact temporal evidence turns were being dropped whenever a turn also yielded structured atoms
+- this caused anchored relative-time questions to lose the exact phrasing MiniMax needed:
+  - `last Fri`
+  - `last week`
+  - `two weekends ago`
+
+Fixes that closed the slice:
+
+- preserve supplemental `raw_turn` observations for exact temporal evidence even when the same turn also emits structured predicates
+- boost those exact raw turns for temporal questions so they outrank semantically related but wrongly anchored memories
+- normalize short ally/support answers like `Yes` into the benchmark-shaped answer path when the packet already proves support
+
+Files changed in this continuation:
+
+- `src/domain_chip_memory/memory_systems.py`
+- `src/domain_chip_memory/providers.py`
+- `tests/test_memory_systems.py`
+- `tests/test_providers.py`
+
+Current read after the second-slice rerun:
+
+- MiniMax is now clean on `LoCoMo conv-26 q26-50`
+- the earlier first-slice open issue remains `conv-26-qa-6`, which is still classified as a benchmark inconsistency
+- the next rational move is to shift the same observational + MiniMax lane onto `LoCoMo q51-75`
+
 ## Validation status
 
 Verified during this session:

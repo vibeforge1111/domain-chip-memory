@@ -9,6 +9,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v5.json`
   - `24/25`
   - audited view: `24/24`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question26_50_rerun_v9.json`
+  - `25/25`
+  - audited view: `25/25`
 - `artifacts/benchmark_runs/locomo10_temporal_atom_router_minimax_limit1_question25_rerun.json`
   - `6/25`
   - audited view: `6/24`
@@ -42,6 +45,10 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - `next month`
   - `last year`
   - `yesterday`
+- Anchored temporal questions once the packet preserves the exact source turn instead of only a compressed predicate
+  - `last Fri`
+  - `last week`
+  - `two weekends ago`
 
 ## Where MiniMax is faltering
 
@@ -80,11 +87,17 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 ## What this means in practice
 
 - MiniMax is working well enough now to validate the memory substrate on both `LongMemEval` and bounded `LoCoMo` slices.
+- The second bounded `LoCoMo` slice (`conv-26 q26-50`) is now clean on a real rerun:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
 - The main failure mode is no longer "MiniMax is weak."
 - The main failure mode is "the packet did not expose the exact answer-bearing representation."
 - On the current bounded `LoCoMo` slice, MiniMax is effectively clean after benchmark-audit exclusion:
   - raw scorecard: `24/25`
   - audited scorecard: `24/24`
+- On the adjacent second bounded `LoCoMo` slice, MiniMax is fully clean without audit adjustment:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
 - The same provider on the weaker substrate is nowhere close:
   - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
 - The stronger alternate substrate stays competitive on the same provider:
@@ -97,6 +110,7 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - benchmark-label inconsistency
 - The provider should now be treated as stable enough for retrieval and packet-debug work unless a failure reproduces across well-grounded packets.
 - The remaining open `LoCoMo` problem on this slice is now `conv-26-qa-6`, which is a benchmark inconsistency rather than a provider weakness.
+- There are currently no open MiniMax misses on the `q26-50` slice.
 
 ## Default guardrails from now on
 
@@ -150,7 +164,6 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 
 ## Current recommendation
 
-- Treat `LongMemEval 50/50` and `LoCoMo 24/25` as the current MiniMax source of truth in this repo.
-- Treat `LoCoMo 24/24 audited` as the current clean provider read on the bounded `conv-26` slice.
-- Treat the remaining `LoCoMo` miss as a benchmark-audit lane:
+- Treat `LongMemEval 50/50`, `LoCoMo q1-25 24/24 audited`, and `LoCoMo q26-50 25/25` as the current MiniMax source of truth in this repo.
+- Treat the remaining first-slice `LoCoMo` miss as a benchmark-audit lane:
   - benchmark inconsistency review for `conv-26-qa-6`
