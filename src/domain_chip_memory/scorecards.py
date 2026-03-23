@@ -98,9 +98,10 @@ def build_scorecard(
     known_issue_counts: Counter[str] = Counter()
     for prediction in predictions:
         prediction_dict = prediction.to_dict()
+        prediction_dict.setdefault("metadata", {}).pop("known_issue", None)
         known_issue = get_known_benchmark_issue(prediction.question_id)
         if known_issue:
-            prediction_dict.setdefault("metadata", {})["known_issue"] = known_issue
+            prediction_dict["metadata"]["known_issue"] = known_issue
             known_issue_rows.append(
                 {
                     "question_id": prediction.question_id,

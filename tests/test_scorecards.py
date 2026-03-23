@@ -83,7 +83,7 @@ def test_build_scorecard_flags_known_benchmark_issues():
         ],
     )
 
-    assert scorecard["known_issue_summary"]["total_flagged"] == 2
-    assert scorecard["known_issue_summary"]["incorrect_flagged"] == 2
+    assert scorecard["known_issue_summary"]["total_flagged"] == 1
+    assert scorecard["known_issue_summary"]["incorrect_flagged"] == 1
     assert scorecard["predictions"][0]["metadata"]["known_issue"]["classification"] == "benchmark_inconsistency"
-    assert scorecard["predictions"][1]["metadata"]["known_issue"]["classification"] == "multimodal_title_ceiling"
+    assert "known_issue" not in scorecard["predictions"][1]["metadata"]
