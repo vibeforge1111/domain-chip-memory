@@ -845,3 +845,90 @@ def test_minimax_provider_rescues_how_long_ago_shape(monkeypatch):
     response = provider.generate_answer(packet)
 
     assert response.answer == "10 years ago"
+
+
+def test_minimax_provider_rescues_locomo_list_and_inference_shapes(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "unknown"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    activities_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-16",
+        question="What activities does Melanie partake in?",
+        assembled_context=(
+            "reflection: Melanie partakes in pottery\n"
+            "reflection: Melanie partakes in camping\n"
+            "reflection: Melanie partakes in painting\n"
+            "reflection: Melanie partakes in swimming"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    camp_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-19",
+        question="Where has Melanie camped?",
+        assembled_context=(
+            "reflection: Melanie camped at the beach\n"
+            "reflection: Melanie camped at the mountains\n"
+            "reflection: Melanie camped at the forest"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    kids_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-20",
+        question="What do Melanie's kids like?",
+        assembled_context=(
+            "reflection: Melanie's kids like dinosaurs\n"
+            "reflection: Melanie's kids like nature"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    bookshelf_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-23",
+        question="Would Caroline likely have Dr. Seuss books on her bookshelf?",
+        assembled_context="reflection: Caroline collects classic children's books",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    destress_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-25",
+        question="What does Melanie do to destress?",
+        assembled_context=(
+            "reflection: Melanie de-stresses by Running\n"
+            "reflection: Melanie de-stresses by pottery"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    assert provider.generate_answer(activities_packet).answer == "pottery, camping, painting, swimming"
+    assert provider.generate_answer(camp_packet).answer == "beach, mountains, forest"
+    assert provider.generate_answer(kids_packet).answer == "dinosaurs, nature"
+    assert provider.generate_answer(bookshelf_packet).answer == "Yes, since she collects classic children's books"
+    assert provider.generate_answer(destress_packet).answer == "Running, pottery"

@@ -589,3 +589,195 @@ def test_locomo_structured_predicates_capture_duration_location_and_museum_time(
     assert "Sweden" in assembled
     assert "counseling or mental health for Transgender people" in assembled
     assert "went to the museum yesterday" in assembled
+
+
+def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-lists",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="1:56 pm on 8 May, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d1",
+                        speaker="Melanie",
+                        text="Yeah, I painted that lake sunrise last year! It's special to me.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d2",
+                        speaker="Melanie",
+                        text="I'm off to go swimming with the kids. Talk to you soon!",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="10:37 am on 27 June, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d3",
+                        speaker="Melanie",
+                        text="Actually, I just took my fam camping in the mountains last week - it was a really nice time together!",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d4",
+                        speaker="Melanie",
+                        text="The 2 younger kids love nature. It was so special having these moments together as a family.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_3",
+                timestamp="1:36 pm on 3 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d5",
+                        speaker="Melanie",
+                        text="I just signed up for a pottery class yesterday. It's like therapy for me, letting me express myself and get creative.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_4",
+                timestamp="8:18 pm on 6 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d6",
+                        speaker="Melanie",
+                        text="Yesterday I took the kids to the museum - it was so cool spending time with them and seeing their eyes light up!",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d7",
+                        speaker="Melanie",
+                        text="They were stoked for the dinosaur exhibit!",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d8",
+                        speaker="Caroline",
+                        text="I've got lots of kids' books- classics, stories from different cultures, educational books, all of that.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d9",
+                        speaker="Melanie",
+                        text='I loved reading "Charlotte\'s Web" as a kid.',
+                    ),
+                    NormalizedTurn(
+                        turn_id="d10",
+                        speaker="Melanie",
+                        text="Here's a pic of my family camping at the beach. We love it, it brings us closer!",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_5",
+                timestamp="4:33 pm on 12 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d11",
+                        speaker="Melanie",
+                        text="I've been running farther to de-stress, which has been great for my headspace.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_6",
+                timestamp="12:09 am on 13 September, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d12",
+                        speaker="Melanie",
+                        text="We even went on another camping trip in the forest.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_7",
+                timestamp="9:55 am on 22 October, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d13",
+                        speaker="Melanie",
+                        text="That must have been tough for you, Caroline. You're so strong and inspiring.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d14",
+                        speaker="Caroline",
+                        text="Thanks, Melanie. I want to help anyone who needs it.",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="What activities does Melanie partake in?",
+                category="1",
+                expected_answers=["pottery, camping, painting, swimming"],
+                evidence_session_ids=["session_1", "session_2", "session_3"],
+                evidence_turn_ids=["d1", "d2", "d3", "d5"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q2",
+                question="Where has Melanie camped?",
+                category="1",
+                expected_answers=["beach, mountains, forest"],
+                evidence_session_ids=["session_2", "session_4", "session_6"],
+                evidence_turn_ids=["d3", "d10", "d12"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q3",
+                question="What do Melanie's kids like?",
+                category="1",
+                expected_answers=["dinosaurs, nature"],
+                evidence_session_ids=["session_2", "session_4"],
+                evidence_turn_ids=["d4", "d7"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q4",
+                question="Would Caroline likely have Dr. Seuss books on her bookshelf?",
+                category="3",
+                expected_answers=["Yes, since she collects classic children's books"],
+                evidence_session_ids=["session_4"],
+                evidence_turn_ids=["d8"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q5",
+                question="What does Melanie do to destress?",
+                category="1",
+                expected_answers=["Running, pottery"],
+                evidence_session_ids=["session_3", "session_5"],
+                evidence_turn_ids=["d5", "d11"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "partakes in pottery" in packet_by_id["q1"].assembled_context
+    assert "partakes in camping" in packet_by_id["q1"].assembled_context
+    assert "partakes in painting" in packet_by_id["q1"].assembled_context
+    assert "partakes in swimming" in packet_by_id["q1"].assembled_context
+    assert "camped at the beach" in packet_by_id["q2"].assembled_context
+    assert "camped at the mountains" in packet_by_id["q2"].assembled_context
+    assert "camped at the forest" in packet_by_id["q2"].assembled_context
+    assert "kids like dinosaurs" in packet_by_id["q3"].assembled_context
+    assert "kids like nature" in packet_by_id["q3"].assembled_context
+    assert "collects classic children's books" in packet_by_id["q4"].assembled_context
+    assert "de-stresses by Running" in packet_by_id["q5"].assembled_context
+    assert "de-stresses by pottery" in packet_by_id["q5"].assembled_context

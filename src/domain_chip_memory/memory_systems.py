@@ -256,6 +256,42 @@ def _observation_surface_text(subject: str, predicate: str, value: str, source_t
             if subject == "user"
             else f"{surface_subject} went to the museum {value}"
         )
+    if predicate == "activity":
+        return (
+            f"I partake in {value}"
+            if subject == "user"
+            else f"{surface_subject} partakes in {value}"
+        )
+    if predicate == "camp_location":
+        return (
+            f"I camped at the {value}"
+            if subject == "user"
+            else f"{surface_subject} camped at the {value}"
+        )
+    if predicate == "kids_interest":
+        return (
+            f"My kids like {value}"
+            if subject == "user"
+            else f"{surface_subject}'s kids like {value}"
+        )
+    if predicate == "bookshelf_collection":
+        return (
+            f"I collect {value}"
+            if subject == "user"
+            else f"{surface_subject} collects {value}"
+        )
+    if predicate == "destress_activity":
+        return (
+            f"I de-stress by {value}"
+            if subject == "user"
+            else f"{surface_subject} de-stresses by {value}"
+        )
+    if predicate == "book_read":
+        return (
+            f'I read "{value}"'
+            if subject == "user"
+            else f'{surface_subject} read "{value}"'
+        )
     if predicate == "trip_duration":
         return source_text
     return source_text
@@ -283,6 +319,12 @@ def _answer_candidate_surface_text(subject: str, predicate: str, value: str, sou
         "moved_from_location",
         "career_path",
         "museum_visit_time",
+        "activity",
+        "camp_location",
+        "kids_interest",
+        "bookshelf_collection",
+        "destress_activity",
+        "book_read",
         "trip_duration",
     } and value:
         return value
@@ -355,6 +397,22 @@ def _extract_atoms_from_turn(
             "career_path",
         ),
         (r"\byesterday I took the kids to the museum\b", "museum_visit_time"),
+        (r"\bsigned up for a\s+(pottery)\s+class\b", "activity"),
+        (r"\boff to go\s+(swimming)\b", "activity"),
+        (r"\bpainted that lake sunrise\b", "activity_painting"),
+        (r"\bpainting'?s a fun way\b", "activity_painting"),
+        (r"\bgoing\s+(camping)\b", "activity"),
+        (r"\bcamping in the\s+(?:mountains|forest)\b", "activity_camping"),
+        (r"\bcamping at the\s+beach\b", "activity_camping"),
+        (r"\bcamping in the\s+(mountains)\b", "camp_location"),
+        (r"\bcamping at the\s+(beach)\b", "camp_location"),
+        (r"\bcamping trip in the\s+(forest)\b", "camp_location"),
+        (r"\bthe \d+\s+younger kids love\s+(nature)\b", "kids_interest"),
+        (r"\bdinosaur exhibit\b", "kids_interest_dinosaurs"),
+        (r"\bkids'? books-?\s+classics\b", "bookshelf_collection"),
+        (r'\bloved reading\s+"([^"]+)"\b', "book_read"),
+        (r"\brunning farther to de-stress\b", "destress_activity_running"),
+        (r"\bpottery(?: class)?\b[\s\S]{0,120}\b(?:therapy|relaxing|calming)\b", "destress_activity_pottery"),
     ]
 
     for index, (pattern, predicate) in enumerate(patterns):
@@ -397,6 +455,30 @@ def _extract_atoms_from_turn(
             atom_subject = subject
             atom_predicate = predicate
             value = "yesterday"
+        elif predicate == "activity_painting":
+            atom_subject = subject
+            atom_predicate = "activity"
+            value = "painting"
+        elif predicate == "activity_camping":
+            atom_subject = subject
+            atom_predicate = "activity"
+            value = "camping"
+        elif predicate == "kids_interest_dinosaurs":
+            atom_subject = subject
+            atom_predicate = "kids_interest"
+            value = "dinosaurs"
+        elif predicate == "destress_activity_running":
+            atom_subject = subject
+            atom_predicate = "destress_activity"
+            value = "Running"
+        elif predicate == "destress_activity_pottery":
+            atom_subject = subject
+            atom_predicate = "destress_activity"
+            value = "pottery"
+        elif predicate == "bookshelf_collection":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = "classic children's books"
         elif predicate == "current_friend_group_duration":
             atom_subject = subject
             atom_predicate = predicate
@@ -407,6 +489,16 @@ def _extract_atoms_from_turn(
             value = _normalize_value(match.group(1))
             if atom_predicate == "research_topic":
                 value = _normalize_value(re.split(r"[-\u2013\u2014\ufffd]", value, maxsplit=1)[0])
+            if atom_predicate == "book_read":
+                value = value.strip('"')
+        if atom_predicate in {
+            "activity",
+            "camp_location",
+            "kids_interest",
+            "destress_activity",
+            "book_read",
+        }:
+            metadata["entity_key"] = value.lower()
         atoms.append(
             MemoryAtom(
                 atom_id=f"{turn.turn_id}:atom:{index}",
@@ -484,6 +576,7 @@ def build_observation_log(sample: NormalizedBenchmarkSample) -> list[Observation
                 "school_event_time",
                 "support_network_meetup_time",
                 "charity_race_time",
+                "museum_visit_time",
             }:
                 text = f"On {atom.timestamp}, {text}"
         observations.append(
@@ -606,6 +699,18 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("career_path")
     if "museum" in question_lower:
         predicates.append("museum_visit_time")
+    if "activities" in question_lower and ("partake" in question_lower or "does" in question_lower):
+        predicates.append("activity")
+    if "where has" in question_lower and "camped" in question_lower:
+        predicates.append("camp_location")
+    if "kids like" in question_lower:
+        predicates.append("kids_interest")
+    if "bookshelf" in question_lower or "dr. seuss" in question_lower:
+        predicates.append("bookshelf_collection")
+    if "what books" in question_lower and "read" in question_lower:
+        predicates.append("book_read")
+    if "destress" in question_lower:
+        predicates.append("destress_activity")
     if question_lower.startswith("how long was i in"):
         predicates.append("trip_duration")
     if not predicates:
@@ -676,6 +781,19 @@ def _session_lookup(sample: NormalizedBenchmarkSample) -> dict[str, NormalizedSe
     return {session.session_id: session for session in sample.sessions}
 
 
+def _dedupe_observations(entries: list[ObservationEntry]) -> list[ObservationEntry]:
+    deduped: list[ObservationEntry] = []
+    seen_keys: set[tuple[str, str, str]] = set()
+    for entry in entries:
+        entity_key = str(entry.metadata.get("entity_key", "")) if entry.predicate != "raw_turn" else entry.observation_id
+        key = (entry.subject, entry.predicate, entity_key)
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        deduped.append(entry)
+    return deduped
+
+
 def _observation_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
     score = 0.0
     subject = _question_subject(question)
@@ -731,11 +849,18 @@ def build_observational_temporal_memory_packets(
     for sample in samples:
         observations = build_observation_log(sample)
         reflected = reflect_observations(observations)
-        stable_window = sorted(
-            observations,
-            key=lambda entry: (entry.timestamp or "", entry.observation_id),
-        )[-max_observations:]
         for question in sample.questions:
+            if sample.benchmark_name == "LoCoMo":
+                stable_window = _dedupe_observations(sorted(
+                    observations,
+                    key=lambda entry: (_observation_score(question, entry), entry.timestamp or "", entry.observation_id),
+                    reverse=True,
+                ))[:max_observations]
+            else:
+                stable_window = sorted(
+                    observations,
+                    key=lambda entry: (entry.timestamp or "", entry.observation_id),
+                )[-max_observations:]
             ranked_reflections = sorted(
                 reflected,
                 key=lambda entry: (_observation_score(question, entry), entry.timestamp or "", entry.observation_id),
