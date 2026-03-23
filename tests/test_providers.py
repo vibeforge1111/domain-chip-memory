@@ -1277,3 +1277,30 @@ def test_minimax_provider_rescues_second_locomo_slice_shapes(monkeypatch):
     assert provider.generate_answer(outdoors_packet).answer == "National park; she likes the outdoors"
     assert provider.generate_answer(birthday_packet).answer == "13 August"
     assert provider.generate_answer(pride_fest_packet).answer == "2022"
+
+
+def test_minimax_provider_normalizes_supportive_yes_answer(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Yes, she appears supportive."}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-47",
+        question="Would Melanie be considered an ally to the transgender community?",
+        assembled_context="reflection: Melanie has been very supportive throughout Caroline's journey.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    assert provider.generate_answer(packet).answer == "Yes, she is supportive"

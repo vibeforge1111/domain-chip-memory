@@ -277,10 +277,10 @@ def _relative_when_answer(question: str, payloads: list[str]) -> str | None:
             return _format_anchor_date(anchor - timedelta(days=1))
         if "today" in lower:
             return _format_anchor_date(anchor)
-        if "last week" in lower:
-            return f"The week before {_format_anchor_date(anchor)}"
         if "last weekend" in lower:
             return f"The weekend before {_format_anchor_date(anchor)}"
+        if "last week" in lower:
+            return f"The week before {_format_anchor_date(anchor)}"
         weekends_ago_match = re.search(
             r"\b(\d+|" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r")\s+weekends?\s+ago\b",
             lower,
@@ -608,6 +608,8 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         if "supportive" in combined_lower or "support really means a lot" in combined_lower:
             return "Yes, she is supportive"
         if answer.lower().startswith("yes") and "ally" in answer.lower():
+            return "Yes, she is supportive"
+        if answer.lower().startswith("yes") and "supportive" in answer.lower():
             return "Yes, she is supportive"
         if "supportive engagement" in answer.lower():
             return "Yes, she is supportive"

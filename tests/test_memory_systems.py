@@ -812,7 +812,7 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
                     NormalizedTurn(
                         turn_id="d12",
                         speaker="Melanie",
-                        text="We even went on another camping trip in the forest.",
+                        text="We even went on another camping trip in the forest and went hiking together.",
                     ),
                 ],
             ),
@@ -888,6 +888,15 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
                 evidence_turn_ids=["d9", "d15"],
                 metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
             ),
+            NormalizedQuestion(
+                question_id="q7",
+                question="What activities has Melanie done with her family?",
+                category="1",
+                expected_answers=["Pottery, painting, camping, museum, swimming, hiking"],
+                evidence_session_ids=["session_1", "session_2", "session_3", "session_4"],
+                evidence_turn_ids=["d2", "d3", "d5", "d6", "d10", "d12"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
         ],
         metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
     )
@@ -910,6 +919,12 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
     assert 'read "Charlotte\'s Web"' in packet_by_id["q6"].assembled_context
     assert "This book I read last year reminds me to always pursue my dreams" in packet_by_id["q6"].assembled_context
     assert "image_caption: a photography of a book cover with a gold coin on it" in packet_by_id["q6"].assembled_context
+    assert "partakes in pottery" in packet_by_id["q7"].assembled_context
+    assert "partakes in painting" in packet_by_id["q7"].assembled_context
+    assert "partakes in camping" in packet_by_id["q7"].assembled_context
+    assert "partakes in museum" in packet_by_id["q7"].assembled_context
+    assert "partakes in swimming" in packet_by_id["q7"].assembled_context
+    assert "partakes in hiking" in packet_by_id["q7"].assembled_context
     image_items = [
         item
         for item in packet_by_id["q6"].retrieved_context_items
