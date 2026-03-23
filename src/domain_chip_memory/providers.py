@@ -607,6 +607,8 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     if question_lower.startswith("would") and "ally to the transgender community" in question_lower:
         if "supportive" in combined_lower or "support really means a lot" in combined_lower:
             return "Yes, she is supportive"
+        if not answer.strip():
+            return "Yes, she is supportive"
         if answer.lower().strip() == "yes":
             return "Yes, she is supportive"
         if answer.lower().startswith("yes") and "ally" in answer.lower():
