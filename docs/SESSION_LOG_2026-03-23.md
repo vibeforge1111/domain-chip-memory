@@ -157,6 +157,8 @@ Later audit result:
   - evidence turn `D7:8` is an image-backed book mention with `img_url` and `blip_caption`
   - packet selection was hardened so this turn now surfaces directly in the observational context
   - direct MiniMax probe on the patched packet still returned a blank answer
+  - later follow-up: the MiniMax provider was also upgraded to send ranked `image_url` content blocks for image-backed context items
+  - live probe on the real `q24` packet still returned a blank answer even with image input enabled
   - current read is now stronger than before: the remaining miss is a genuine multimodal or OCR-style title-recovery gap, not just packet omission
 
 This is now written down separately in:

@@ -62,7 +62,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - prediction: `Charlotte's Web`
   - gold: `"Nothing is Impossible", "Charlotte's Web"`
   - current classification: likely multimodal/title-recovery ceiling on the text-only path
-  - additional evidence: after promoting the image-backed raw turn plus `img_url` and `blip_caption` into the observational packet, a direct MiniMax probe still returned a blank answer instead of recovering the missing title
+  - additional evidence:
+    - after promoting the image-backed raw turn plus `img_url` and `blip_caption` into the observational packet, a direct MiniMax probe still returned a blank answer instead of recovering the missing title
+    - after wiring real `image_url` content blocks into the MiniMax provider request, the live probe on the same `q24` packet still returned blank
 
 ## What this means in practice
 
@@ -80,6 +82,7 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - the packet contains the image-backed evidence turn
   - the packet contains the associated `img_url` and `blip_caption`
   - MiniMax still does not recover `"Nothing is Impossible"`
+  - even the image-enabled provider path did not change that result on the live probe
   - practical read: this is now a multimodal-title lane, not a text-packet lane
 
 ## Default guardrails from now on
