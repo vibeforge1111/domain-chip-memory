@@ -112,6 +112,46 @@ Updated source-of-truth surfaces:
 - `src/domain_chip_memory/packets.py`
 - `artifacts/memory_system_strategy_packet.json`
 
+### 8. LoCoMo MiniMax durability and frontier read
+
+The later half of the session moved from "can MiniMax run this slice reliably?" to "what is MiniMax still actually bad at?"
+
+What changed operationally:
+
+- benchmark runs now checkpoint live instead of only writing at the end
+- benchmark runs can resume from prior partial artifacts
+- provider calls now have bounded timeout and retry behavior
+- per-question progress now prints during real MiniMax runs
+
+What that unlocked:
+
+- honest real reruns on the same bounded `LoCoMo` slice
+- a cleaner separation between provider weakness and packet weakness
+
+Measured LoCoMo progression on March 23, 2026:
+
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v3.json`
+  - `19/25`
+  - `0.76`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v4.json`
+  - `23/25`
+  - `0.92`
+
+Current MiniMax read from that slice:
+
+- working well:
+  - exact-span dates and month-year answers
+  - identity normalization once the right turn is present
+  - structured single-hop temporal recovery
+  - bounded list aggregation when facts are surfaced as predicates
+- still faltering:
+  - likely benchmark inconsistency on `conv-26-qa-6`
+  - likely multimodal/title ceiling on `conv-26-qa-24`
+
+This is now written down separately in:
+
+- `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
+
 ## Validation status
 
 Verified during this session:

@@ -6,43 +6,75 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 
 - `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v4.json`
   - `50/50`
-- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v3.json`
-  - `19/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v4.json`
+  - `23/25`
 
 ## Where MiniMax is working well
 
-- Short exact-span answers once the right evidence is in context
+- Short exact-span answers once the winning evidence is already isolated in the packet
   - dates
   - counts
   - short entities
   - normalized short categorical answers
 - LongMemEval after context compaction and exact-span rescue
-  - the provider is strong when the packet already isolates the winning fact
-- LoCoMo single-hop and bounded list questions once structured predicates are present
+  - the current observational lane is `50/50` on the first real `LongMemEval_s` 50-sample slice
+  - practical read: MiniMax is reliable when the packet already exposes the answer-bearing span instead of making the model reconstruct it from broad residue
+- LoCoMo single-hop retrieval once structured predicates are present
+  - `2022`
+  - `June 2023`
+  - `2 July 2023`
+  - `Transgender woman`
+- Bounded list aggregation after predicate surfacing
   - activities
   - camp locations
   - kids' interests
   - de-stress habits
 - Support-conditioned inference when the packet makes the latent relation explicit
   - example: `Likely no`
+- Relative-time answers once the original temporal phrase is kept attached to an anchored turn
+  - `next month`
+  - `last year`
+  - `yesterday`
 
 ## Where MiniMax is faltering
 
 - Silent or slow benchmark execution without live checkpointing
   - earlier runs could hang for minutes and produce no artifact
-- Weakness when the packet contains only semantically related chatter instead of the exact evidence turn
-  - the model will not reliably reconstruct the missing temporal span
+- Weakness when the packet contains semantically related chatter instead of the exact evidence turn
+  - MiniMax will often answer `unknown` or produce a plausible but wrong temporal span rather than recover the missing anchor honestly
 - Benchmark-span normalization drift
   - `Trans woman` instead of `Transgender woman`
   - `unknown` instead of anchored month-year answers like `June 2023`
 - Relative-time grounding when the packet only includes a compressed phrase instead of the anchored source turn
-  - `next month`
-  - `last year`
-  - `yesterday`
+  - before the latest fixes, this was the driver behind `q2`, `q7`, and `q17` on the `LoCoMo` slice
 - Multi-answer recovery when one answer component is only available through image/query metadata or implicit multimodal cues
   - current LoCoMo example: `"Nothing is Impossible", "Charlotte's Web"`
 - Some gold-label disagreements cannot be fixed honestly in the provider layer
   - current LoCoMo example: context says `last Saturday`, gold expects `The sunday before 25 May 2023`
+
+## Current MiniMax-specific miss ledger
+
+- `conv-26-qa-6`
+  - prediction: `The saturday before 25 May 2023`
+  - gold: `The sunday before 25 May 2023`
+  - current classification: likely benchmark inconsistency, not a provider defect
+- `conv-26-qa-24`
+  - prediction: `Charlotte's Web`
+  - gold: `"Nothing is Impossible", "Charlotte's Web"`
+  - current classification: likely multimodal/title-recovery ceiling on the text-only path
+
+## What this means in practice
+
+- MiniMax is working well enough now to validate the memory substrate on both `LongMemEval` and bounded `LoCoMo` slices.
+- The main failure mode is no longer "MiniMax is weak."
+- The main failure mode is "the packet did not expose the exact answer-bearing representation."
+- When MiniMax fails today, the first suspicion should be:
+  - missing evidence turn
+  - missing structured predicate
+  - normalization drift
+  - multimodal-only evidence
+  - benchmark-label inconsistency
+- The provider should now be treated as stable enough for retrieval and packet-debug work unless a failure reproduces across well-grounded packets.
 
 ## Default guardrails from now on
 
@@ -63,32 +95,37 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - `sunrise_paint_time`
   - `camping_plan_time`
   - `pottery_class_signup_time`
+- Treat packet inspection as mandatory before provider mutation
+  - inspect the saved artifact
+  - inspect the exact packet for the wrong question
+  - classify the miss before patching
 - Treat multimodal-title recovery as a separate lane
   - do not overfit text-only rescue logic to hallucinate missing title names
 
-## Practical interpretation
+## Before touching MiniMax again
 
-- MiniMax is not the main blocker on `LongMemEval` anymore.
-- On `LoCoMo`, MiniMax is good enough to validate retrieval and packet improvements, but only if the packet is sharply grounded.
-- The dominant failure mode is no longer "the model is weak."
-- The dominant failure mode is "the packet did not contain the exact answer-bearing representation the model needed."
-
-## What to do before blaming MiniMax again
-
-1. Check the live checkpoint artifact and identify the exact stalled or wrong question IDs.
-2. Inspect the packet context for those IDs.
-3. Decide whether the miss is:
+1. Confirm the run used the resumable path and actually wrote a live artifact.
+2. Pull the wrong question IDs from that artifact.
+3. Read the packet context for those IDs and ask whether the exact answer-bearing turn or predicate is present.
+4. Classify the miss as one of:
    - missing evidence turn
    - missing structured predicate
-   - answer normalization drift
-   - likely benchmark inconsistency
+   - normalization drift
    - likely multimodal ceiling
-4. Only then mutate the provider or the memory substrate.
+   - likely benchmark inconsistency
+5. Only patch the provider if the packet is already correct and the provider still fails on the exact same representation.
 
-## Current open MiniMax-specific issues
+## Anti-patterns to avoid
 
-- `conv-26-qa-24`
-  - text-only path currently recovers only `Charlotte's Web`
-  - likely needs multimodal/title recovery to reach the full gold string
-- `conv-26-qa-6`
-  - likely benchmark inconsistency rather than provider weakness
+- Do not mutate the provider off a verbal recollection of a miss.
+- Do not treat a missing multimodal answer component as proof the text-side rescue is weak.
+- Do not overfit to contradictory benchmark labels.
+- Do not run long MiniMax slices without `--write`.
+- Do not trust a stalled provider run that produced no artifact.
+
+## Current recommendation
+
+- Treat `LongMemEval 50/50` and `LoCoMo 23/25` as the current MiniMax source of truth in this repo.
+- Treat the remaining `LoCoMo` misses as separate lanes:
+  - benchmark inconsistency review for `conv-26-qa-6`
+  - multimodal/title-recovery work for `conv-26-qa-24`
