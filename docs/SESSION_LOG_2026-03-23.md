@@ -82,8 +82,9 @@ Current larger real slice:
   - real rerun on March 23, 2026 after retrieval and answer-path fixes: `25/25`
   - `1.00` accuracy
 - `beam_temporal_atom_router + MiniMax-M2.7` on same slice:
-  - `3/25`
-  - `0.12` accuracy
+  - previous saved artifact was `3/25` (`0.12`)
+  - real rerun on March 23, 2026: `7/25`
+  - `0.28` accuracy
 
 This is the current internal lead lane.
 
@@ -117,6 +118,10 @@ Verified during this session:
   - `artifacts/benchmark_runs/longmemeval_observational_minimax_limit25_rerun.json`
   - `25/25`
   - `1.00`
+- real comparison rerun artifact written:
+  - `artifacts/benchmark_runs/longmemeval_temporal_atom_router_minimax_limit25_rerun.json`
+  - `7/25`
+  - `0.28`
 
 ## Current lead and next move
 
