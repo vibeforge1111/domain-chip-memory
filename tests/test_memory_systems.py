@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from domain_chip_memory.loaders import load_locomo_json
 from domain_chip_memory.memory_systems import (
     build_beam_ready_temporal_atom_router_packets,
     build_dual_store_event_calendar_hybrid_packets,
@@ -1646,3 +1649,34 @@ def test_locomo_question_relevant_window_surfaces_fourth_slice_family_and_counse
     assert "Caroline attended LGBTQ+ counseling workshop" in packet_by_id["q16"].assembled_context
     assert "Caroline's workshop discussed therapeutic methods and how to best work with trans people" in packet_by_id["q17"].assembled_context
     assert "Caroline was motivated by her own journey and the support she received, and how counseling improved her life" in packet_by_id["q18"].assembled_context
+
+
+def test_locomo_question_relevant_window_surfaces_fifth_slice_object_and_meaning_facts():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-26"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=sample.questions[100:125],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_observational_temporal_memory_packets([subset], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "Caroline wants to create a safe and inviting place for people to grow" in packet_by_id["conv-26-qa-101"].assembled_context
+    assert "Caroline has kids' books - classics, stories from different cultures, educational books in the library" in packet_by_id["conv-26-qa-103"].assembled_context
+    assert "Caroline took away Lessons on self-acceptance and finding support from the book" in packet_by_id["conv-26-qa-106"].assembled_context
+    assert "Melanie made pots at the pottery workshop" in packet_by_id["conv-26-qa-110"].assembled_context
+    assert "Melanie made a cup with a dog face on it at the pottery workshop" in packet_by_id["conv-26-qa-110"].assembled_context
+    assert "Melanie's family painted a sunset with a palm tree" in packet_by_id["conv-26-qa-113"].assembled_context
+    assert "Flowers are important to Melanie because They remind her to appreciate the small moments and were a part of her wedding decor" in packet_by_id["conv-26-qa-116"].assembled_context
+    assert "Caroline's art-show painting was inspired by visiting an LGBTQ center and wanting to capture unity and strength" in packet_by_id["conv-26-qa-117"].assembled_context
+    assert "Melanie saw the Perseid meteor shower while camping" in packet_by_id["conv-26-qa-119"].assembled_context
+    assert "Matt Patterson performed at Melanie's daughter's birthday" in packet_by_id["conv-26-qa-122"].assembled_context
+    assert "Caroline has a guinea pig" in packet_by_id["conv-26-qa-124"].assembled_context
+    assert "Melanie has Two cats and a dog" in packet_by_id["conv-26-qa-125"].assembled_context
