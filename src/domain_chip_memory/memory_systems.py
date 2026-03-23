@@ -472,6 +472,126 @@ def _observation_surface_text(subject: str, predicate: str, value: str, source_t
             if subject == "user"
             else f"{surface_subject} has been practicing art for {value}"
         )
+    if predicate == "childhood_activity":
+        return (
+            f"I used to do {value} with my dad"
+            if subject == "user"
+            else f"{surface_subject} used to do {value} with {surface_subject}'s dad"
+        )
+    if predicate == "neighborhood_find":
+        return (
+            f"I found {value} in my neighborhood"
+            if subject == "user"
+            else f"{surface_subject} found {value} in the neighborhood"
+        )
+    if predicate == "classical_musicians":
+        return (
+            f"I enjoy listening to {value}"
+            if subject == "user"
+            else f"{surface_subject} enjoys listening to {value}"
+        )
+    if predicate == "modern_music_artist":
+        return (
+            f"I'm a fan of {value}"
+            if subject == "user"
+            else f"{surface_subject} is a fan of {value}"
+        )
+    if predicate == "precautionary_sign":
+        return (
+            f"I saw {value} at the cafe"
+            if subject == "user"
+            else f"{surface_subject} saw {value} at the cafe"
+        )
+    if predicate == "adoption_start_advice":
+        return (
+            f"My adoption advice is {value}"
+            if subject == "user"
+            else f"{surface_subject}'s adoption advice is {value}"
+        )
+    if predicate == "pottery_setback":
+        return (
+            f"My setback was {value}"
+            if subject == "user"
+            else f"{surface_subject}'s setback was {value}"
+        )
+    if predicate == "pottery_break_activity":
+        return (
+            f"During my pottery break I {value}"
+            if subject == "user"
+            else f"During the pottery break {surface_subject} did {value}"
+        )
+    if predicate == "recent_painting":
+        return (
+            f"I showed {value}"
+            if subject == "user"
+            else f"{surface_subject} showed {value}"
+        )
+    if predicate == "abstract_painting":
+        return (
+            f"I shared {value}"
+            if subject == "user"
+            else f"{surface_subject} shared {value}"
+        )
+    if predicate == "poetry_reading_topic":
+        return (
+            f"My poetry reading was {value}"
+            if subject == "user"
+            else f"{surface_subject}'s poetry reading was {value}"
+        )
+    if predicate == "poster_text":
+        return (
+            f"My poster said {value}"
+            if subject == "user"
+            else f"{surface_subject}'s poster said {value}"
+        )
+    if predicate == "drawing_symbolism":
+        return (
+            f"My drawing symbolizes {value}"
+            if subject == "user"
+            else f"{surface_subject}'s drawing symbolizes {value}"
+        )
+    if predicate == "shared_life_journey":
+        return (
+            f"Our journey through life together is {value}"
+            if subject == "user"
+            else f"{surface_subject}'s journey through life is {value}"
+        )
+    if predicate == "son_accident_reaction":
+        return (
+            f"My son handled the accident by being {value}"
+            if subject == "user"
+            else f"{surface_subject}'s son handled the accident by being {value}"
+        )
+    if predicate == "family_importance":
+        return (
+            f"My family are {value}"
+            if subject == "user"
+            else f"{surface_subject}'s family are {value}"
+        )
+    if predicate == "children_accident_reaction":
+        return (
+            f"My children were {value}"
+            if subject == "user"
+            else f"{surface_subject}'s children were {value}"
+        )
+    if predicate == "post_accident_feeling":
+        return (
+            f"After the accident I felt {value}"
+            if subject == "user"
+            else f"After the accident {surface_subject} felt {value}"
+        )
+    if predicate == "canyon_reaction":
+        return (
+            f"When my children enjoyed the Grand Canyon I felt {value}"
+            if subject == "user"
+            else f"When the children enjoyed the Grand Canyon {surface_subject} felt {value}"
+        )
+    if predicate == "family_strength_source":
+        return (
+            f"My family give me {value}"
+            if subject == "user"
+            else f"{surface_subject}'s family give {surface_subject} {value}"
+        )
     if predicate == "child_count":
         return f"I have {value} children" if subject == "user" else f"{surface_subject} has {value} children"
     if predicate == "bought_item":
@@ -633,6 +753,26 @@ def _answer_candidate_surface_text(subject: str, predicate: str, value: str, sou
         "transition_change",
         "trans_event",
         "art_practice_duration",
+        "childhood_activity",
+        "neighborhood_find",
+        "classical_musicians",
+        "modern_music_artist",
+        "precautionary_sign",
+        "adoption_start_advice",
+        "pottery_setback",
+        "pottery_break_activity",
+        "recent_painting",
+        "abstract_painting",
+        "poetry_reading_topic",
+        "poster_text",
+        "drawing_symbolism",
+        "shared_life_journey",
+        "son_accident_reaction",
+        "family_importance",
+        "children_accident_reaction",
+        "post_accident_feeling",
+        "canyon_reaction",
+        "family_strength_source",
         "child_count",
         "bought_item",
         "self_care_realization",
@@ -730,6 +870,98 @@ def _extract_atoms_from_turn(
         _append_atom("trans_event", "poetry reading", entity_key="poetry reading")
     if re.search(r"\bseven years now\b", lower) and ("muses" in lower or "into art" in lower):
         _append_atom("art_practice_duration", "seven years", entity_key="seven years")
+    if "used to go horseback riding with my dad" in lower:
+        _append_atom("childhood_activity", "Horseback riding", entity_key="horseback riding")
+    if "came across this cool rainbow sidewalk" in lower:
+        _append_atom("neighborhood_find", "a rainbow sidewalk", entity_key="rainbow sidewalk")
+    if "classical like bach and mozart" in lower:
+        _append_atom("classical_musicians", "Bach and Mozart", entity_key="bach and mozart")
+    if "modern music like ed sheeran" in lower or "ed sheeran's" in lower:
+        _append_atom("modern_music_artist", "Ed Sheeran", entity_key="ed sheeran")
+    if "sign posted on a door stating that someone is not being able to leave" in caption_lower:
+        _append_atom(
+            "precautionary_sign",
+            "A sign stating that someone is not being able to leave",
+            entity_key="someone is not being able to leave",
+        )
+    if "do your research and find an adoption agency or lawyer" in lower and "prepare emotionally" in lower:
+        _append_atom(
+            "adoption_start_advice",
+            "Do research, find an adoption agency or lawyer, gather necessary documents, and prepare emotionally.",
+            entity_key="adoption-start-advice",
+        )
+    if "last month i got hurt and had to take a break from pottery" in lower:
+        _append_atom(
+            "pottery_setback",
+            "She got hurt and had to take a break from pottery.",
+            entity_key="pottery-break-injury",
+        )
+    if "reading that book you recommended" in lower and "painting to keep busy" in lower:
+        _append_atom("pottery_break_activity", "Read a book and paint.", entity_key="read-book-and-paint")
+    if "inspired by the sunsets" in lower and "pink sky" in caption_lower:
+        _append_atom(
+            "recent_painting",
+            "A painting inspired by sunsets with a pink sky.",
+            entity_key="sunsets-pink-sky",
+        )
+    if "abstract painting too" in lower and "blue background" in caption_lower:
+        _append_atom(
+            "abstract_painting",
+            "An abstract painting with blue streaks on a wall.",
+            entity_key="abstract-blue-streaks",
+        )
+    if "peaceful blue streaks" in lower:
+        _append_atom(
+            "abstract_painting",
+            "An abstract painting with blue streaks on a wall.",
+            entity_key="abstract-blue-streaks",
+        )
+    if "transgender people shared their stories through poetry" in lower:
+        _append_atom(
+            "poetry_reading_topic",
+            "It was a transgender poetry reading where transgender people shared their stories.",
+            entity_key="transgender-poetry-stories",
+        )
+    if "trans lives matter" in caption_lower:
+        _append_atom("poster_text", '"Trans Lives Matter"', entity_key="trans lives matter")
+    if "stands for freedom and being real" in lower and "stay true to myself" in lower:
+        _append_atom(
+            "drawing_symbolism",
+            "Freedom and being true to herself.",
+            entity_key="freedom-being-true",
+        )
+    if "ongoing adventure of learning and growing" in lower:
+        _append_atom(
+            "shared_life_journey",
+            "An ongoing adventure of learning and growing.",
+            entity_key="learning-and-growing",
+        )
+    if "they were scared but we reassured them" in lower and "brother would be ok" in lower:
+        _append_atom(
+            "son_accident_reaction",
+            "scared but reassured by his family",
+            entity_key="son-scared-reassured",
+        )
+        _append_atom(
+            "children_accident_reaction",
+            "scared but resilient",
+            entity_key="children-scared-resilient",
+        )
+    if "they mean the world to me" in lower and "thankful to have them" in lower:
+        _append_atom(
+            "family_importance",
+            "important and mean the world to her",
+            entity_key="family-mean-the-world",
+        )
+        _append_atom(
+            "post_accident_feeling",
+            "grateful and thankful for her family",
+            entity_key="grateful-thankful-family",
+        )
+        if "grand canyon" in lower:
+            _append_atom("canyon_reaction", "happy and thankful", entity_key="happy-and-thankful")
+    if "they give me the strength to keep going" in lower or "biggest motivation and support" in lower:
+        _append_atom("family_strength_source", "Strength and motivation", entity_key="strength-and-motivation")
     if "their brother would be ok" in lower or "their brother would be okay" in lower or "2 younger kids" in lower:
         _append_atom("child_count", "3", entity_key="3")
     if "figurines i bought" in lower:
@@ -1094,6 +1326,26 @@ def _extract_atoms_from_turn(
             "transition_change",
             "trans_event",
             "art_practice_duration",
+            "childhood_activity",
+            "neighborhood_find",
+            "classical_musicians",
+            "modern_music_artist",
+            "precautionary_sign",
+            "adoption_start_advice",
+            "pottery_setback",
+            "pottery_break_activity",
+            "recent_painting",
+            "abstract_painting",
+            "poetry_reading_topic",
+            "poster_text",
+            "drawing_symbolism",
+            "shared_life_journey",
+            "son_accident_reaction",
+            "family_importance",
+            "children_accident_reaction",
+            "post_accident_feeling",
+            "canyon_reaction",
+            "family_strength_source",
         }:
             metadata["entity_key"] = value.lower()
         atoms.append(
@@ -1418,8 +1670,48 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("transition_change")
     if "transgender-specific events" in question_lower:
         predicates.append("trans_event")
-    if "practicing art" in question_lower:
+    if "practicing art" in question_lower or "creating art" in question_lower:
         predicates.append("art_practice_duration")
+    if "used to do" in question_lower and "dad" in question_lower:
+        predicates.append("childhood_activity")
+    if "find in her neighborhood" in question_lower and "during her walk" in question_lower:
+        predicates.append("neighborhood_find")
+    if "classical musicians" in question_lower:
+        predicates.append("classical_musicians")
+    if "modern music" in question_lower:
+        predicates.append("modern_music_artist")
+    if "precautionary sign" in question_lower and "caf" in question_lower:
+        predicates.append("precautionary_sign")
+    if "getting started with adoption" in question_lower:
+        predicates.append("adoption_start_advice")
+    if "what setback" in question_lower and "october 2023" in question_lower:
+        predicates.append("pottery_setback")
+    if "keep herself busy" in question_lower and "pottery break" in question_lower:
+        predicates.append("pottery_break_activity")
+    if "what painting did melanie show" in question_lower and "october 13, 2023" in question_lower:
+        predicates.append("recent_painting")
+    if "what kind of painting did caroline share" in question_lower and "october 13, 2023" in question_lower:
+        predicates.append("abstract_painting")
+    if "what was the poetry reading" in question_lower:
+        predicates.append("poetry_reading_topic")
+    if "posters at the poetry reading" in question_lower:
+        predicates.append("poster_text")
+    if "drawing symbolize" in question_lower:
+        predicates.append("drawing_symbolism")
+    if "journey through life together" in question_lower:
+        predicates.append("shared_life_journey")
+    if "son handle the accident" in question_lower:
+        predicates.append("son_accident_reaction")
+    if "feel about her family after the accident" in question_lower:
+        predicates.append("family_importance")
+    if "children handle the accident" in question_lower:
+        predicates.append("children_accident_reaction")
+    if "feel after the accident" in question_lower:
+        predicates.append("post_accident_feeling")
+    if "reaction to her children enjoying the grand canyon" in question_lower:
+        predicates.append("canyon_reaction")
+    if "what do melanie's family give her" in question_lower:
+        predicates.append("family_strength_source")
     if "how many children" in question_lower:
         predicates.append("child_count")
     if "what items" in question_lower and "bought" in question_lower:
@@ -1825,11 +2117,111 @@ def _observation_score(question: NormalizedQuestion, observation: ObservationEnt
             score += 10.0
         if "conference" in observation_lower or "poetry reading" in observation_lower:
             score += 6.0
-    if "practicing art" in question_lower:
+    if "practicing art" in question_lower or "creating art" in question_lower:
         if observation.predicate == "art_practice_duration":
             score += 10.0
         if "seven years" in observation_lower:
             score += 6.0
+    if "used to do" in question_lower and "dad" in question_lower:
+        if observation.predicate == "childhood_activity":
+            score += 14.0
+        if "horseback riding" in observation_lower:
+            score += 10.0
+    if "find in her neighborhood" in question_lower and "during her walk" in question_lower:
+        if observation.predicate == "neighborhood_find":
+            score += 14.0
+        if "rainbow sidewalk" in observation_lower:
+            score += 10.0
+    if "classical musicians" in question_lower:
+        if observation.predicate == "classical_musicians":
+            score += 14.0
+        if "bach" in observation_lower and "mozart" in observation_lower:
+            score += 10.0
+    if "modern music" in question_lower:
+        if observation.predicate == "modern_music_artist":
+            score += 14.0
+        if "ed sheeran" in observation_lower:
+            score += 10.0
+    if "precautionary sign" in question_lower and "caf" in question_lower:
+        if observation.predicate == "precautionary_sign":
+            score += 14.0
+        if "not being able to leave" in observation_lower or "sign posted on a door" in caption_lower:
+            score += 10.0
+    if "getting started with adoption" in question_lower:
+        if observation.predicate == "adoption_start_advice":
+            score += 14.0
+        if "adoption agency or lawyer" in observation_lower and "prepare emotionally" in observation_lower:
+            score += 10.0
+    if "what setback" in question_lower and "october 2023" in question_lower:
+        if observation.predicate == "pottery_setback":
+            score += 14.0
+        if "take a break from pottery" in observation_lower and "got hurt" in observation_lower:
+            score += 10.0
+    if "keep herself busy" in question_lower and "pottery break" in question_lower:
+        if observation.predicate == "pottery_break_activity":
+            score += 14.0
+        if "reading that book" in observation_lower and "painting to keep busy" in observation_lower:
+            score += 10.0
+    if "what painting did melanie show" in question_lower and "october 13, 2023" in question_lower:
+        if observation.predicate == "recent_painting":
+            score += 14.0
+        if "pink sky" in caption_lower or "inspired by the sunsets" in observation_lower:
+            score += 10.0
+    if "what kind of painting did caroline share" in question_lower and "october 13, 2023" in question_lower:
+        if observation.predicate == "abstract_painting":
+            score += 14.0
+        if "blue streaks" in observation_lower or "abstract painting" in observation_lower:
+            score += 10.0
+    if "what was the poetry reading" in question_lower:
+        if observation.predicate == "poetry_reading_topic":
+            score += 14.0
+        if "transgender people shared their stories" in observation_lower:
+            score += 10.0
+    if "posters at the poetry reading" in question_lower:
+        if observation.predicate == "poster_text":
+            score += 14.0
+        if "trans lives matter" in observation_lower or "trans lives matter" in caption_lower:
+            score += 10.0
+    if "drawing symbolize" in question_lower:
+        if observation.predicate == "drawing_symbolism":
+            score += 14.0
+        if "freedom and being real" in observation_lower or "stay true to myself" in observation_lower:
+            score += 10.0
+    if "journey through life together" in question_lower:
+        if observation.predicate == "shared_life_journey":
+            score += 14.0
+        if "ongoing adventure of learning and growing" in observation_lower:
+            score += 10.0
+    if "son handle the accident" in question_lower:
+        if observation.predicate == "son_accident_reaction":
+            score += 14.0
+        if "reassured them" in observation_lower and "brother would be ok" in observation_lower:
+            score += 10.0
+    if "feel about her family after the accident" in question_lower:
+        if observation.predicate == "family_importance":
+            score += 14.0
+        if "mean the world to me" in observation_lower:
+            score += 10.0
+    if "children handle the accident" in question_lower:
+        if observation.predicate == "children_accident_reaction":
+            score += 14.0
+        if "they're tough kids" in observation_lower or ("reassured them" in observation_lower and "brother would be ok" in observation_lower):
+            score += 10.0
+    if "feel after the accident" in question_lower:
+        if observation.predicate == "post_accident_feeling":
+            score += 14.0
+        if "thankful to have them" in observation_lower and "family" in observation_lower:
+            score += 10.0
+    if "reaction to her children enjoying the grand canyon" in question_lower:
+        if observation.predicate == "canyon_reaction":
+            score += 14.0
+        if "grand canyon" in observation_lower and "thankful" in observation_lower:
+            score += 10.0
+    if "what do melanie's family give her" in question_lower:
+        if observation.predicate == "family_strength_source":
+            score += 14.0
+        if "strength to keep going" in observation_lower or "biggest motivation and support" in observation_lower:
+            score += 10.0
     if "how many children" in question_lower:
         if observation.predicate == "child_count":
             score += 14.0

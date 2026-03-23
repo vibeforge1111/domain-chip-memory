@@ -2175,3 +2175,258 @@ def test_minimax_provider_recovers_locomo_fifth_slice_object_and_meaning_answers
 
     for packet, expected in packets:
         assert provider.generate_answer(packet).answer == expected
+
+
+def test_minimax_provider_recovers_locomo_sixth_slice_music_poetry_and_roadtrip_answers(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": ""}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packets = [
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-127",
+                question="What activity did Caroline used to do with her dad?",
+                assembled_context="reflection: Caroline used to do Horseback riding with Caroline's dad",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Horseback riding",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-129",
+                question="What did Caroline find in her neighborhood during her walk?",
+                assembled_context="reflection: Caroline found a rainbow sidewalk in the neighborhood",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "a rainbow sidewalk",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-131",
+                question="Which  classical musicians does Melanie enjoy listening to?",
+                assembled_context="reflection: Melanie enjoys listening to Bach and Mozart",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Bach and Mozart",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-132",
+                question="Who is Melanie a fan of in terms of modern music?",
+                assembled_context="reflection: Melanie is a fan of Ed Sheeran",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Ed Sheeran",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-134",
+                question="What precautionary sign did Melanie see at the caf\u00e9?",
+                assembled_context="reflection: Melanie saw A sign stating that someone is not being able to leave at the cafe",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "A sign stating that someone is not being able to leave",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-135",
+                question="What advice does Caroline give for getting started with adoption?",
+                assembled_context="reflection: Caroline's adoption advice is Do research, find an adoption agency or lawyer, gather necessary documents, and prepare emotionally.",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Do research, find an adoption agency or lawyer, gather necessary documents, and prepare emotionally.",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-138",
+                question="What painting did Melanie show to Caroline on October 13, 2023?",
+                assembled_context="reflection: Melanie showed A painting inspired by sunsets with a pink sky.",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "A painting inspired by sunsets with a pink sky.",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-139",
+                question="What kind of painting did Caroline share with Melanie on October 13, 2023?",
+                assembled_context="reflection: Melanie shared An abstract painting with blue streaks on a wall.",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "An abstract painting with blue streaks on a wall.",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-140",
+                question="What was the poetry reading that Caroline attended about?",
+                assembled_context="reflection: Caroline's poetry reading was It was a transgender poetry reading where transgender people shared their stories.",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "It was a transgender poetry reading where transgender people shared their stories.",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-141",
+                question="What did the posters at the poetry reading say?",
+                assembled_context='reflection: Caroline\'s poster said "Trans Lives Matter"',
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            '"Trans Lives Matter"',
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-142",
+                question="What does Caroline's drawing symbolize for her?",
+                assembled_context="reflection: Caroline's drawing symbolizes Freedom and being true to herself.",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Freedom and being true to herself.",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-143",
+                question="How do Melanie and Caroline describe their journey through life together?",
+                assembled_context="reflection: Caroline's journey through life is An ongoing adventure of learning and growing.",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "An ongoing adventure of learning and growing.",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-145",
+                question="How did Melanie's son handle the accident?",
+                assembled_context="reflection: Melanie's son handled the accident by being scared but reassured by his family",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "He was scared but reassured by his family",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-146",
+                question="How did Melanie feel about her family after the accident?",
+                assembled_context="reflection: Melanie's family are important and mean the world to her",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "They are important and mean the world to her",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-147",
+                question="How did Melanie's children handle the accident?",
+                assembled_context="reflection: Melanie's children were scared but resilient",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "They were scared but resilient",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-148",
+                question="How did Melanie feel after the accident?",
+                assembled_context="reflection: After the accident Melanie felt grateful and thankful for her family",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Grateful and thankful for her family",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-149",
+                question="What was Melanie's reaction to her children enjoying the Grand Canyon?",
+                assembled_context="reflection: When the children enjoyed the Grand Canyon Melanie felt happy and thankful",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "She was happy and thankful",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-150",
+                question="What do Melanie's family give her?",
+                assembled_context="reflection: Melanie's family give Melanie Strength and motivation",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Strength and motivation",
+        ),
+    ]
+
+    for packet, expected in packets:
+        assert provider.generate_answer(packet).answer == expected

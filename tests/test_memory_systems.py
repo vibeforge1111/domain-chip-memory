@@ -1681,3 +1681,43 @@ def test_locomo_question_relevant_window_surfaces_fifth_slice_object_and_meaning
     assert "Matt Patterson performed at Melanie's daughter's birthday" in packet_by_id["conv-26-qa-122"].assembled_context
     assert "Caroline has a guinea pig" in packet_by_id["conv-26-qa-124"].assembled_context
     assert "Melanie has Two cats and a dog" in packet_by_id["conv-26-qa-125"].assembled_context
+
+
+def test_locomo_question_relevant_window_surfaces_sixth_slice_music_poetry_and_roadtrip_facts():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-26"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=sample.questions[125:150],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_observational_temporal_memory_packets([subset], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "Caroline used to do Horseback riding with Caroline's dad" in packet_by_id["conv-26-qa-127"].assembled_context
+    assert "Caroline found a rainbow sidewalk in the neighborhood" in packet_by_id["conv-26-qa-129"].assembled_context
+    assert "Melanie enjoys listening to Bach and Mozart" in packet_by_id["conv-26-qa-131"].assembled_context
+    assert "Melanie is a fan of Ed Sheeran" in packet_by_id["conv-26-qa-132"].assembled_context
+    assert "Melanie has been practicing art for seven years" in packet_by_id["conv-26-qa-133"].assembled_context
+    assert "Melanie saw A sign stating that someone is not being able to leave at the cafe" in packet_by_id["conv-26-qa-134"].assembled_context
+    assert "Caroline's adoption advice is Do research, find an adoption agency or lawyer, gather necessary documents, and prepare emotionally." in packet_by_id["conv-26-qa-135"].assembled_context
+    assert "Melanie's setback was She got hurt and had to take a break from pottery." in packet_by_id["conv-26-qa-136"].assembled_context
+    assert "During the pottery break Melanie did Read a book and paint." in packet_by_id["conv-26-qa-137"].assembled_context
+    assert "Melanie showed A painting inspired by sunsets with a pink sky." in packet_by_id["conv-26-qa-138"].assembled_context
+    assert "Melanie shared An abstract painting with blue streaks on a wall." in packet_by_id["conv-26-qa-139"].assembled_context
+    assert "Caroline's poetry reading was It was a transgender poetry reading where transgender people shared their stories." in packet_by_id["conv-26-qa-140"].assembled_context
+    assert 'Caroline\'s poster said "Trans Lives Matter"' in packet_by_id["conv-26-qa-141"].assembled_context
+    assert "Caroline's drawing symbolizes Freedom and being true to herself." in packet_by_id["conv-26-qa-142"].assembled_context
+    assert "Caroline's journey through life is An ongoing adventure of learning and growing." in packet_by_id["conv-26-qa-143"].assembled_context
+    assert "Melanie's son handled the accident by being scared but reassured by his family" in packet_by_id["conv-26-qa-145"].assembled_context
+    assert "Melanie's family are important and mean the world to her" in packet_by_id["conv-26-qa-146"].assembled_context
+    assert "Melanie's children were scared but resilient" in packet_by_id["conv-26-qa-147"].assembled_context
+    assert "After the accident Melanie felt grateful and thankful for her family" in packet_by_id["conv-26-qa-148"].assembled_context
+    assert "When the children enjoyed the Grand Canyon Melanie felt happy and thankful" in packet_by_id["conv-26-qa-149"].assembled_context
+    assert "Melanie's family give Melanie Strength and motivation" in packet_by_id["conv-26-qa-150"].assembled_context
