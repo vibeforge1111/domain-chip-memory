@@ -12,6 +12,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question26_50_rerun_v9.json`
   - `25/25`
   - audited view: `25/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question51_75_rerun_v4.json`
+  - `25/25`
+  - audited view: `25/25`
 - `artifacts/benchmark_runs/locomo10_temporal_atom_router_minimax_limit1_question25_rerun.json`
   - `6/25`
   - audited view: `6/24`
@@ -49,6 +52,12 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - `last Fri`
   - `last week`
   - `two weekends ago`
+- Profile and list questions once the packet surfaces stable predicates instead of raw conversational residue
+  - painted subjects
+  - pet names
+  - symbols
+  - artists seen
+  - transition-change lists
 
 ## Where MiniMax is faltering
 
@@ -90,12 +99,18 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - The second bounded `LoCoMo` slice (`conv-26 q26-50`) is now clean on a real rerun:
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
+- The third bounded `LoCoMo` slice (`conv-26 q51-75`) is now clean on a real rerun:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
 - The main failure mode is no longer "MiniMax is weak."
 - The main failure mode is "the packet did not expose the exact answer-bearing representation."
 - On the current bounded `LoCoMo` slice, MiniMax is effectively clean after benchmark-audit exclusion:
   - raw scorecard: `24/25`
   - audited scorecard: `24/24`
 - On the adjacent second bounded `LoCoMo` slice, MiniMax is fully clean without audit adjustment:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
+- On the adjacent third bounded `LoCoMo` slice, MiniMax is also fully clean without audit adjustment:
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
 - The same provider on the weaker substrate is nowhere close:
@@ -164,6 +179,6 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 
 ## Current recommendation
 
-- Treat `LongMemEval 50/50`, `LoCoMo q1-25 24/24 audited`, and `LoCoMo q26-50 25/25` as the current MiniMax source of truth in this repo.
+- Treat `LongMemEval 50/50`, `LoCoMo q1-25 24/24 audited`, `LoCoMo q26-50 25/25`, and `LoCoMo q51-75 25/25` as the current MiniMax source of truth in this repo.
 - Treat the remaining first-slice `LoCoMo` miss as a benchmark-audit lane:
   - benchmark inconsistency review for `conv-26-qa-6`

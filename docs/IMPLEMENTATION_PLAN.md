@@ -70,6 +70,8 @@ Current lead lane as of 2026-03-23:
   - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
 - real rerun on March 24, 2026 over the next 25 `LoCoMo` `conv-26` questions (`q26-50`):
   - `observational_temporal_memory`: `25/25` raw, `25/25` audited
+- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q51-75`):
+  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
 
 Candidate components:
 

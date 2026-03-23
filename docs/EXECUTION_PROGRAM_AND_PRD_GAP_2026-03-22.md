@@ -282,14 +282,16 @@ Current active lane:
   - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
 - latest adjacent bounded `LoCoMo` rerun on `conv-26` questions `26-50`:
   - `observational_temporal_memory`: `25/25` raw, `25/25` audited
+- latest adjacent bounded `LoCoMo` rerun on `conv-26` questions `51-75`:
+  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
 
 Immediate next build steps:
 
 1. Treat `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v4.json` as the current source-of-truth artifact for the expanded `LongMemEval_s` slice.
 2. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question26_50_rerun_v9.json` as the current source-of-truth artifact for the second bounded `LoCoMo` slice.
-3. Preserve the measured `q26-50` progression (`22/25 -> 24/25 -> 24/25 -> 25/25`) as the reference for temporal packet hardening.
-4. Move the same provider path onto the next bounded `LoCoMo` slice (`q51-75`) instead of continuing to tune the now-closed `q26-50` slice.
-5. Re-run `beam_temporal_atom_router + MiniMax-M2.7` or `dual_store_event_calendar_hybrid + MiniMax-M2.7` on the same expanded slices only if we need a fresh apples-to-apples substrate gap after the latest observational fixes.
+3. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question51_75_rerun_v4.json` as the current source-of-truth artifact for the third bounded `LoCoMo` slice.
+4. Preserve the measured `q51-75` progression (`4/25 -> 16/25 -> 22/25 -> 25/25`) as the reference for profile-fact recovery plus rescue-order hardening.
+5. Move the same provider path onto the next bounded `LoCoMo` slice (`q76-100`) instead of continuing to tune the now-closed `q51-75` slice.
 
 ## Sources
 

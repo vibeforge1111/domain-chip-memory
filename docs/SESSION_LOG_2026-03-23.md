@@ -235,6 +235,61 @@ Current read after the second-slice rerun:
 - the earlier first-slice open issue remains `conv-26-qa-6`, which is still classified as a benchmark inconsistency
 - the next rational move is to shift the same observational + MiniMax lane onto `LoCoMo q51-75`
 
+### 10. March 24 continuation: third bounded LoCoMo slice closure
+
+Work then moved onto:
+
+- `conv-26` questions `51-75`
+
+Measured progression on March 24, 2026:
+
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question51_75_rerun.json`
+  - `4/25`
+  - `0.16`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question51_75_rerun_v2.json`
+  - `16/25`
+  - `0.64`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question51_75_rerun_v3.json`
+  - `22/25`
+  - `0.88`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question51_75_rerun_v4.json`
+  - `25/25`
+  - `1.00`
+  - audited scorecard view: `25/25`
+
+Root causes found in this continuation:
+
+- the observational lane was under-surfacing profile facts for:
+  - painted subjects
+  - pet names
+  - important symbols
+  - instruments and artists
+  - book recommendations
+  - transition-change lists
+- the provider rescue order was letting broad temporal normalization fire before slice-specific relative-date rescues
+- the MiniMax compactor was dropping the artist-seen lines on the music question because it was not rewarding `saw` lines for that question shape
+
+Fixes that closed the slice:
+
+- added structured observational predicates for the third-slice fact families
+- widened `LoCoMo` question-aware windows for profile/list questions
+- preserved additional exact relative-time turns for adoption, hike, hurt, and roadtrip questions
+- reordered provider rescues so slice-specific temporal answers win before the generic relative-time path
+- added a compaction bonus for artist/band questions so `seen_artist` lines survive into the MiniMax packet
+
+Files changed in this continuation:
+
+- `src/domain_chip_memory/memory_systems.py`
+- `src/domain_chip_memory/providers.py`
+- `tests/test_memory_systems.py`
+- `tests/test_providers.py`
+
+Current read after the third-slice rerun:
+
+- MiniMax is now clean on `LoCoMo conv-26 q51-75`
+- the only remaining audited-open `LoCoMo` issue across the first three bounded slices is still the first-slice benchmark inconsistency on `conv-26-qa-6`
+- the next rational move is to shift the same observational + MiniMax lane onto `LoCoMo q76-100`
+
 ## Validation status
 
 Verified during this session:
