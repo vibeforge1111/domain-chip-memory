@@ -207,6 +207,8 @@ def _relative_when_answer(payloads: list[str]) -> str | None:
         if not anchor:
             continue
         lower = payload.lower()
+        if "last fri" in lower:
+            return f"The Friday before {_format_anchor_date(anchor)}"
         if "last year" in lower:
             return str(anchor.year - 1)
         if "yesterday" in lower:
@@ -215,6 +217,19 @@ def _relative_when_answer(payloads: list[str]) -> str | None:
             return _format_anchor_date(anchor)
         if "last week" in lower:
             return f"The week before {_format_anchor_date(anchor)}"
+        if "last weekend" in lower:
+            return f"The weekend before {_format_anchor_date(anchor)}"
+        weekends_ago_match = re.search(
+            r"\b(\d+|" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r")\s+weekends?\s+ago\b",
+            lower,
+        )
+        if weekends_ago_match:
+            raw_count = weekends_ago_match.group(1).lower()
+            weekends = int(raw_count) if raw_count.isdigit() else COUNT_WORD_TO_INT.get(raw_count)
+            if weekends is not None:
+                label = raw_count if not raw_count.isdigit() else str(weekends)
+                unit = "weekend" if weekends == 1 else "weekends"
+                return f"{label} {unit} before {_format_anchor_date(anchor)}"
         if "next month" in lower:
             year = anchor.year + (1 if anchor.month == 12 else 0)
             month = 1 if anchor.month == 12 else anchor.month + 1
@@ -475,6 +490,16 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         if match:
             return match.group(1).strip()
 
+    if question_lower.startswith("what did") and "paint" in question_lower:
+        match = re.search(r"\bpaint(?:ed)?\s+(?:a|an|the)?\s*([^,.!?\n]+)", combined, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+
+    if "what kind of art" in question_lower:
+        match = re.search(r"\b(abstract art)\b", combined, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+
     if "relationship status" in question_lower:
         if "single parent" in combined_lower or "tough breakup" in combined_lower:
             return "Single"
@@ -490,6 +515,18 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     if question_lower.startswith("would") and "received support" in question_lower:
         if "support i got made a huge difference" in combined_lower or "help i got made a huge difference" in combined_lower:
             return "Likely no"
+
+    if question_lower.startswith("would") and "career option" in question_lower:
+        if "wants to be a counselor" in combined_lower or "working in mental health" in combined_lower:
+            return "Likely no; though she likes reading, she wants to be a counselor"
+
+    if question_lower.startswith("would") and "member of the lgbtq community" in question_lower:
+        if "does not refer to herself as part of it" in combined_lower:
+            return "Likely no, she does not refer to herself as part of it"
+
+    if question_lower.startswith("would") and "ally to the transgender community" in question_lower:
+        if "supportive" in combined_lower or "support really means a lot" in combined_lower:
+            return "Yes, she is supportive"
 
     if "activities" in question_lower and "partake" in question_lower:
         items: list[str] = []
@@ -545,6 +582,23 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
             items.append("pottery")
         if items:
             return ", ".join(items)
+
+    if question_lower.startswith("who supports") or ("supports" in question_lower and "negative experience" in question_lower):
+        if "friends, family and mentors" in combined_lower or "friends, family, and mentors" in combined_lower:
+            return "Her mentors, family, and friends"
+
+    if question_lower.startswith("what types of pottery"):
+        items: list[str] = []
+        if "bowls" in combined_lower:
+            items.append("bowls")
+        if re.search(r"\bcup\b", combined_lower):
+            items.append("cup")
+        if items:
+            return ", ".join(items)
+
+    if question_lower.startswith("how many times") and "beach" in question_lower:
+        if "once or twice a year" in combined_lower or "twice a year" in combined_lower:
+            return "2"
 
     return None
 

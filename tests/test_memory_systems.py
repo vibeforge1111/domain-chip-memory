@@ -917,3 +917,87 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
     ]
     assert image_items
     assert image_items[0].metadata["img_url"][0].endswith("Book-Cover-3D1.jpg")
+
+
+def test_locomo_question_relevant_window_surfaces_support_network_facts():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-support",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="1:50 pm on 17 August, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d12",
+                        speaker="Caroline",
+                        text=(
+                            "Recently, I had a not-so-great experience on a hike. "
+                            "It's been so helpful to have people around me who accept and support me, so I know I'll be ok!"
+                        ),
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="1:14 pm on 25 May, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d3",
+                        speaker="Caroline",
+                        text="My friends, family and mentors are my rocks - they motivate me and give me the strength to push on.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_3",
+                timestamp="9:55 am on 22 October, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d19",
+                        speaker="Caroline",
+                        text="Thanks, Melanie. Your support really means a lot.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d20",
+                        speaker="Melanie",
+                        text="Glad I could be there for you.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_4",
+                timestamp="3:19 pm on 28 August, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d21",
+                        speaker="Caroline",
+                        text="I felt fulfilled guiding and supporting them at the school event.",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q-support",
+                question="Who supports Caroline when she has a negative experience?",
+                category="1",
+                expected_answers=["Her mentors, family, and friends"],
+                evidence_session_ids=["session_1", "session_2"],
+                evidence_turn_ids=["d12", "d3"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+
+    assert "friends, family and mentors are my rocks" in packets[0].assembled_context.lower()

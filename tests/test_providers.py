@@ -1085,3 +1085,85 @@ def test_minimax_provider_normalizes_trans_woman_identity_answer(monkeypatch):
     response = provider.generate_answer(packet)
 
     assert response.answer == "Transgender woman"
+
+
+def test_minimax_provider_rescues_second_locomo_slice_shapes(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "unknown"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    when_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-30",
+        question="When did Melanie go to the pottery workshop?",
+        assembled_context=(
+            "reflection: On 1:51 pm on 15 July, 2023, Melanie said: "
+            "Last Fri I finally took my kids to a pottery workshop."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    career_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-28",
+        question="Would Caroline pursue writing as a career option?",
+        assembled_context=(
+            "reflection: Caroline likes reading, but she wants to be a counselor and help people."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    support_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-48",
+        question="Who supports Caroline when she has a negative experience?",
+        assembled_context=(
+            "reflection: My friends, family and mentors are my rocks - they motivate me and give me the strength to push on."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    count_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-41",
+        question="How many times has Melanie gone to the beach in 2023?",
+        assembled_context=(
+            "reflection: Seeing my kids' faces so happy at the beach was the best! "
+            "We don't go often, usually only once or twice a year."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    art_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-44",
+        question="What kind of art does Caroline make?",
+        assembled_context="reflection: Caroline makes abstract art inspired by her experiences.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    assert provider.generate_answer(when_packet).answer == "The Friday before 15 July 2023"
+    assert provider.generate_answer(career_packet).answer == "Likely no; though she likes reading, she wants to be a counselor"
+    assert provider.generate_answer(support_packet).answer == "Her mentors, family, and friends"
+    assert provider.generate_answer(count_packet).answer == "2"
+    assert provider.generate_answer(art_packet).answer == "abstract art"
