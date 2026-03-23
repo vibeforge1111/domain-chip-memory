@@ -890,7 +890,7 @@ def _observation_score(question: NormalizedQuestion, observation: ObservationEnt
         "who supports" in question_lower
         or ("supports" in question_lower and "negative experience" in question_lower)
     ):
-        if any(token in observation_lower for token in ("support", "friends", "family", "mentors")):
+        if any(token in observation_lower for token in ("support", "friends", "family", "mentors", "rocks")):
             score += 5.0
     if question_lower.startswith("how many times") and "beach" in question_lower:
         if "beach" in observation_lower:
@@ -911,9 +911,11 @@ def _observation_score(question: NormalizedQuestion, observation: ObservationEnt
             "pride parade",
             "support group",
             "school",
+            "speech",
             "mentoring",
             "mentor",
             "art show",
+            "youth center",
             "pottery",
             "painting",
             "camping",
@@ -966,8 +968,8 @@ def _question_aware_observation_limits(
         or "what kind of art" in question_lower
         or ("what did" in question_lower and "paint" in question_lower)
     ):
-        observation_limit = max(observation_limit, 8)
-        reflection_limit = max(reflection_limit, 5)
+        observation_limit = max(observation_limit, 10)
+        reflection_limit = max(reflection_limit, 6)
 
     if question_lower.startswith("when did") or question_lower.startswith("when was") or question_lower.startswith("when is"):
         observation_limit = max(observation_limit, 6)

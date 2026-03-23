@@ -1161,9 +1161,31 @@ def test_minimax_provider_rescues_second_locomo_slice_shapes(monkeypatch):
         retrieved_context_items=[],
         metadata={"route": "observational_temporal_memory"},
     )
+    ally_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-47",
+        question="Would Melanie be considered an ally to the transgender community?",
+        assembled_context="reflection: Melanie has been very supportive throughout Caroline's journey.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    pottery_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-49",
+        question="What types of pottery have Melanie and her kids made?",
+        assembled_context="reflection: They made a bowl together and later finished a cup with a dog face on it.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
 
     assert provider.generate_answer(when_packet).answer == "The Friday before 15 July 2023"
     assert provider.generate_answer(career_packet).answer == "Likely no; though she likes reading, she wants to be a counselor"
     assert provider.generate_answer(support_packet).answer == "Her mentors, family, and friends"
     assert provider.generate_answer(count_packet).answer == "2"
     assert provider.generate_answer(art_packet).answer == "abstract art"
+    assert provider.generate_answer(ally_packet).answer == "Yes, she is supportive"
+    assert provider.generate_answer(pottery_packet).answer == "bowls, cup"
