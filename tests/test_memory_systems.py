@@ -379,3 +379,118 @@ def test_locomo_phrase_match_beats_later_semantic_noise():
     ]
     assert reflection_lines
     assert "support group yesterday" in reflection_lines[0].lower()
+
+
+def test_locomo_structured_predicates_surface_remaining_slice_facts():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-structured",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="1:56 pm on 8 May, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d1",
+                        speaker="Caroline",
+                        text="Gonna continue my edu and check out career options, which is pretty exciting! I'm keen on counseling or working in mental health - I'd love to support those with similar issues.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="1:14 pm on 25 May, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d2",
+                        speaker="Caroline",
+                        text="Researching adoption agencies - it's been a dream to have a family and give a loving home to kids who need it.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d3",
+                        speaker="Caroline",
+                        text="It'll be tough as a single parent, but I'm up for the challenge!",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_3",
+                timestamp="7:55 pm on 9 June, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d4",
+                        speaker="Caroline",
+                        text="I wanted to tell you about my school event last week. It was awesome!",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d5",
+                        speaker="Caroline",
+                        text="Here's a pic from when we met up last week!",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="What fields would Caroline be likely to pursue in her educaton?",
+                category="3",
+                expected_answers=["Psychology, counseling certification"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d1"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q2",
+                question="What did Caroline research?",
+                category="1",
+                expected_answers=["Adoption agencies"],
+                evidence_session_ids=["session_2"],
+                evidence_turn_ids=["d2"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q3",
+                question="What is Caroline's relationship status?",
+                category="1",
+                expected_answers=["Single"],
+                evidence_session_ids=["session_2"],
+                evidence_turn_ids=["d3"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q4",
+                question="When did Caroline give a speech at a school?",
+                category="2",
+                expected_answers=["The week before 9 June 2023"],
+                evidence_session_ids=["session_3"],
+                evidence_turn_ids=["d4"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q5",
+                question="When did Caroline meet up with her friends, family, and mentors?",
+                category="2",
+                expected_answers=["The week before 9 June 2023"],
+                evidence_session_ids=["session_3"],
+                evidence_turn_ids=["d5"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+    assembled = "\n".join(packet.assembled_context for packet in packets)
+    assert "Psychology, counseling certification" in assembled
+    assert "adoption agencies" in assembled.lower()
+    assert "relationship status is Single" in assembled
+    assert "school event last week" in assembled
+    assert "met up with friends, family, and mentors last week" in assembled

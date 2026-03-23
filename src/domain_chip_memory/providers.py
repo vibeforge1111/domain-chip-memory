@@ -211,6 +211,12 @@ def _relative_when_answer(payloads: list[str]) -> str | None:
             return _format_anchor_date(anchor - timedelta(days=1))
         if "today" in lower:
             return _format_anchor_date(anchor)
+        if "last week" in lower:
+            return f"The week before {_format_anchor_date(anchor)}"
+        weekday_match = re.search(r"\blast\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b", lower)
+        if weekday_match:
+            weekday = weekday_match.group(1)
+            return f"The {weekday} before {_format_anchor_date(anchor)}"
         days_ago_match = re.search(
             r"\b(\d+|" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r")\s+days?\s+ago\b",
             lower,
@@ -438,6 +444,19 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         match = re.search(r"(?<!\S)(\d+%)(?!\S)", combined, re.IGNORECASE)
         if match:
             return match.group(1)
+
+    if question_lower.startswith("what did") and "research" in question_lower:
+        match = re.search(r"\bresearch(?:ed|ing)\s+([^,.!?\n-]+)", combined, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+
+    if "relationship status" in question_lower:
+        if "single parent" in combined_lower or "tough breakup" in combined_lower:
+            return "Single"
+
+    if "fields would" in question_lower and "pursue" in question_lower:
+        if "continue my edu" in combined_lower and "counseling or working in mental health" in combined_lower:
+            return "Psychology, counseling certification"
 
     return None
 

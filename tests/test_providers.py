@@ -685,3 +685,99 @@ def test_minimax_provider_rescues_yesterday_from_timestamped_context(monkeypatch
     response = provider.generate_answer(packet)
 
     assert response.answer == "7 May 2023"
+
+
+def test_minimax_provider_rescues_last_week_from_timestamped_context(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": ""}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 0, "total_tokens": 12},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-9",
+        question="When did Caroline give a speech at a school?",
+        assembled_context=(
+            "reflection: On 7:55 pm on 9 June, 2023, Caroline said: "
+            "I wanted to tell you about my school event last week. It was awesome!"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "The week before 9 June 2023"
+
+
+def test_minimax_provider_rescues_research_topic_from_context(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": ""}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 0, "total_tokens": 12},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-4",
+        question="What did Caroline research?",
+        assembled_context=(
+            "reflection: On 1:14 pm on 25 May, 2023, Caroline said: "
+            "Researching adoption agencies - it's been a dream to have a family."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "adoption agencies"
+
+
+def test_minimax_provider_rescues_relationship_status_from_context(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "unknown"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-8",
+        question="What is Caroline's relationship status?",
+        assembled_context=(
+            "reflection: On 1:14 pm on 25 May, 2023, Caroline said: "
+            "It'll be tough as a single parent, but I'm up for the challenge!"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "Single"

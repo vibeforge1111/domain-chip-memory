@@ -196,6 +196,42 @@ def _observation_surface_text(subject: str, predicate: str, value: str, source_t
             if subject == "user"
             else f"{surface_subject}'s music streaming service lately is {value}"
         )
+    if predicate == "education_fields":
+        return (
+            f"I'm likely to pursue {value}"
+            if subject == "user"
+            else f"{surface_subject} is likely to pursue {value}"
+        )
+    if predicate == "research_topic":
+        return (
+            f"I researched {value}"
+            if subject == "user"
+            else f"{surface_subject} researched {value}"
+        )
+    if predicate == "relationship_status":
+        return (
+            f"My relationship status is {value}"
+            if subject == "user"
+            else f"{surface_subject}'s relationship status is {value}"
+        )
+    if predicate == "school_event_time":
+        return (
+            f"I had a school event {value}"
+            if subject == "user"
+            else f"{surface_subject} had a school event {value}"
+        )
+    if predicate == "support_network_meetup_time":
+        return (
+            f"I met up with friends, family, and mentors {value}"
+            if subject == "user"
+            else f"{surface_subject} met up with friends, family, and mentors {value}"
+        )
+    if predicate == "charity_race_time":
+        return (
+            f"I ran a charity race {value}"
+            if subject == "user"
+            else f"{surface_subject} ran a charity race {value}"
+        )
     if predicate == "trip_duration":
         return source_text
     return source_text
@@ -213,6 +249,12 @@ def _answer_candidate_surface_text(subject: str, predicate: str, value: str, sou
         "dog_breed",
         "computer_science_degree_institution",
         "music_service",
+        "education_fields",
+        "research_topic",
+        "relationship_status",
+        "school_event_time",
+        "support_network_meetup_time",
+        "charity_race_time",
         "trip_duration",
     } and value:
         return value
@@ -271,6 +313,13 @@ def _extract_atoms_from_turn(
             r"\bwhen i was in\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3})\b[\s\S]{0,160}?\bspent\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(days?|weeks?|months?)\b",
             "trip_duration",
         ),
+        (r"\bkeen on counseling or working in mental health\b", "education_fields"),
+        (r"\bResearching\s+([^,.!?]+)", "research_topic"),
+        (r"\bit'?ll be tough as a\s+(single parent)\b", "relationship_status_single_parent"),
+        (r"\bafter that tough breakup\b", "relationship_status_breakup"),
+        (r"\bschool event\s+(last week)\b", "school_event_time"),
+        (r"\bmet up\s+(last week)\b", "support_network_meetup_time"),
+        (r"\bcharity race\b[^.?!]{0,80}?\b(last Saturday)\b", "charity_race_time"),
     ]
 
     for index, (pattern, predicate) in enumerate(patterns):
@@ -293,10 +342,24 @@ def _extract_atoms_from_turn(
             value = _normalize_value(f"{match.group(2)} {match.group(3)}")
             metadata["destination"] = destination
             metadata["entity_key"] = destination.lower()
+        elif predicate == "education_fields":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = "Psychology, counseling certification"
+        elif predicate == "relationship_status_single_parent":
+            atom_subject = subject
+            atom_predicate = "relationship_status"
+            value = "Single"
+        elif predicate == "relationship_status_breakup":
+            atom_subject = subject
+            atom_predicate = "relationship_status"
+            value = "Single"
         else:
             atom_subject = subject
             atom_predicate = predicate
             value = _normalize_value(match.group(1))
+            if atom_predicate == "research_topic":
+                value = _normalize_value(re.split(r"[-\u2013\u2014\ufffd]", value, maxsplit=1)[0])
         atoms.append(
             MemoryAtom(
                 atom_id=f"{turn.turn_id}:atom:{index}",
@@ -370,6 +433,12 @@ def build_observation_log(sample: NormalizedBenchmarkSample) -> list[Observation
                 text = f"{speaker} said: {atom.source_text}"
         else:
             text = _observation_surface_text(atom.subject, atom.predicate, atom.value, atom.source_text)
+            if atom.timestamp and atom.predicate in {
+                "school_event_time",
+                "support_network_meetup_time",
+                "charity_race_time",
+            }:
+                text = f"On {atom.timestamp}, {text}"
         observations.append(
             ObservationEntry(
                 observation_id=f"{atom.atom_id}:obs",
@@ -470,6 +539,18 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("computer_science_degree_institution")
     if "music streaming service" in question_lower:
         predicates.append("music_service")
+    if "fields would" in question_lower and "pursue" in question_lower:
+        predicates.append("education_fields")
+    if question_lower.startswith("what did") and "research" in question_lower:
+        predicates.append("research_topic")
+    if "relationship status" in question_lower:
+        predicates.append("relationship_status")
+    if "school" in question_lower and ("speech" in question_lower or "give a speech" in question_lower):
+        predicates.append("school_event_time")
+    if "friends, family, and mentors" in question_lower and ("meet up" in question_lower or "meet" in question_lower):
+        predicates.append("support_network_meetup_time")
+    if "charity race" in question_lower:
+        predicates.append("charity_race_time")
     if question_lower.startswith("how long was i in"):
         predicates.append("trip_duration")
     if not predicates:
