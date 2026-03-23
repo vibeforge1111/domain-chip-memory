@@ -33,7 +33,8 @@ Current internal lead as of 2026-03-23:
 
 - `observational_temporal_memory + MiniMax-M2.7`
 - real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
-- same-slice rerun comparison on March 23, 2026: `beam_temporal_atom_router + MiniMax-M2.7` at `7/25` (`0.28`)
+- real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
+- latest recorded comparison lane on the same provider path remains the 25-sample rerun: `beam_temporal_atom_router + MiniMax-M2.7` at `7/25` (`0.28`)
 
 The repo now has the standard Spark domain-chip scaffold:
 

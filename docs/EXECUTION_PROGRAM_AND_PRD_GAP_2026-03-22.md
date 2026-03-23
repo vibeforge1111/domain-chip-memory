@@ -275,15 +275,16 @@ Current active lane:
 
 - `observational_temporal_memory + MiniMax-M2.7`
 - real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
-- current same-slice comparison after the March 23, 2026 rerun: `beam_temporal_atom_router + MiniMax-M2.7` at `7/25` (`0.28`)
+- real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
+- latest same-provider comparison remains the 25-sample rerun: `beam_temporal_atom_router + MiniMax-M2.7` at `7/25` (`0.28`)
 
 Immediate next build steps:
 
-1. Treat `artifacts/benchmark_runs/longmemeval_observational_minimax_limit25_rerun.json` as the current source-of-truth artifact for this slice.
-2. Refresh the doctrine surfaces and strategy packet to remove the stale `13/25` claim.
-3. Re-run `beam_temporal_atom_router + MiniMax-M2.7` on the same 25-sample slice only if we need an updated apples-to-apples comparison after the latest answer-path fixes.
-4. Expand the lead system to a larger `LongMemEval` slice now that the 25-sample lane is clean.
-5. Shift the same provider path onto `LoCoMo` once the larger `LongMemEval` slice is recorded.
+1. Treat `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v4.json` as the current source-of-truth artifact for the expanded `LongMemEval_s` slice.
+2. Refresh the doctrine surfaces and strategy packet to add the real `50/50` result and preserve the measured progression (`33/50 -> 44/50 -> 48/50 -> 50/50`).
+3. Re-run `beam_temporal_atom_router + MiniMax-M2.7` or `dual_store_event_calendar_hybrid + MiniMax-M2.7` on the same 50-sample slice if we want an updated apples-to-apples comparison after the latest retrieval and answer-path fixes.
+4. Shift the same provider path onto `LoCoMo` now that the larger `LongMemEval` slice is clean.
+5. Keep the 25-sample comparison artifact as the current lightweight comparison checkpoint until the 50-sample comparison rerun exists.
 
 ## Sources
 

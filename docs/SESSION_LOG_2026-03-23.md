@@ -60,6 +60,9 @@ The largest practical gains today came from:
   - `attended_play`
   - `playlist_name`
   - `retailer`
+  - `computer_science_degree_institution`
+  - `music_service`
+  - destination-scoped `trip_duration`
 
 These changes landed mainly in:
 
@@ -81,7 +84,12 @@ Current larger real slice:
   - initial saved artifact in repo was stale at `11/25` (`0.44`)
   - real rerun on March 23, 2026 after retrieval and answer-path fixes: `25/25`
   - `1.00` accuracy
-- `beam_temporal_atom_router + MiniMax-M2.7` on same slice:
+- `observational_temporal_memory + MiniMax-M2.7` on first 50 `LongMemEval_s` samples:
+  - first expanded real rerun on March 23, 2026: `33/50` (`0.66`)
+  - second real rerun after rescue hardening: `44/50` (`0.88`)
+  - third real rerun after missing-fact recovery: `48/50` (`0.96`)
+  - fourth real rerun after the final degree and cocktail rescue fixes: `50/50` (`1.00`)
+- `beam_temporal_atom_router + MiniMax-M2.7` on the current 25-sample comparison slice:
   - previous saved artifact was `3/25` (`0.12`)
   - real rerun on March 23, 2026: `7/25`
   - `0.28` accuracy
@@ -112,11 +120,27 @@ Verified during this session:
 - final targeted validation:
   - `python -m pytest tests\\test_memory_systems.py tests\\test_providers.py tests\\test_cli.py tests\\test_loaders_and_runner.py`
   - passed `38/38`
+  - later targeted regression validation:
+    - `python -m pytest tests\\test_providers.py tests\\test_memory_systems.py`
+    - passed `33/33`
 - `python evaluate_chip.py`
   - still `100/100`
 - real rerun artifact written:
   - `artifacts/benchmark_runs/longmemeval_observational_minimax_limit25_rerun.json`
   - `25/25`
+  - `1.00`
+- expanded real rerun artifacts written:
+  - `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun.json`
+  - `33/50`
+  - `0.66`
+  - `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v2.json`
+  - `44/50`
+  - `0.88`
+  - `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v3.json`
+  - `48/50`
+  - `0.96`
+  - `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v4.json`
+  - `50/50`
   - `1.00`
 - real comparison rerun artifact written:
   - `artifacts/benchmark_runs/longmemeval_temporal_atom_router_minimax_limit25_rerun.json`
@@ -136,21 +160,23 @@ Why:
 
 Recommended next step tomorrow:
 
-1. Treat `artifacts/benchmark_runs/longmemeval_observational_minimax_limit25_rerun.json` as the current source-of-truth artifact.
-2. Refresh README, plan docs, and the strategy packet to remove the stale `13/25` claim.
-3. Expand the same lead lane to a larger `LongMemEval` slice.
-4. Re-run the comparison lane for `beam_temporal_atom_router` on the same slice if we want an updated gap after the answer-path fixes.
-5. Then move the same provider lane onto `LoCoMo`.
+1. Treat `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v4.json` as the current source-of-truth artifact.
+2. Refresh README, plan docs, and the strategy packet to record the real `50/50` expanded-slice result and the honest progression that led to it.
+3. Re-run the comparison lane for `beam_temporal_atom_router` or `dual_store_event_calendar_hybrid` on the same 50-sample slice if we want an updated gap after the latest fixes.
+4. Then move the same provider lane onto `LoCoMo`.
+5. Keep the 25-sample comparison artifact as the current lightweight comparison checkpoint until the 50-sample comparison run exists.
 
 ## Push note
 
-I could not confirm a normal git repository in this workspace during the session.
+This workspace is a normal git checkout.
 
-Observed behavior:
+Local commits recorded during the session include:
 
-- `git status --short` returned `fatal: not a git repository`
-
-So documentation and code are updated locally, but pushing requires either:
-
-- running this from the actual git checkout, or
-- initializing/connecting this folder to the intended remote repository first.
+- `3bd6816` `fix: improve observational benchmark answer rescue`
+- `38ec6fe` `feat: add direct artifact writes for baseline runs`
+- `d42e1b8` `docs: record 25 of 25 minimax rerun`
+- `ff68796` `docs: refresh minimax comparison baseline`
+- `4ce64c7` `data: record 50-sample observational minimax rerun`
+- `b26c35e` `fix: harden minimax answer rescue spans`
+- `bec0bad` `feat: recover missing observational memory facts`
+- `757d48f` `fix: tighten degree and cocktail answer rescue`

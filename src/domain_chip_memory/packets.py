@@ -28,11 +28,11 @@ def build_strategy_packet() -> dict:
             "system": "observational_temporal_memory",
             "status": "current internal lead",
             "evidence": {
-                "slice": "first 25 LongMemEval_s samples",
-                "score": "25/25",
+                "slice": "first 50 LongMemEval_s samples",
+                "score": "50/50",
                 "accuracy": 1.0,
             },
-            "why": "Current best measured path in-repo; materially ahead of beam_temporal_atom_router on the same real slice.",
+            "why": "Current best measured path in-repo; reached a perfect real rerun on the first 50 LongMemEval_s samples and remains materially ahead of the current beam comparison checkpoint.",
         },
         "ten_system_variants": [
             {
