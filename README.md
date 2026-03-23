@@ -40,6 +40,8 @@ Current internal lead as of 2026-03-23:
   - audited scorecard view on the same artifact: `25/25` (`1.00`) with no exclusions
 - real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q51-75`): `25/25` (`1.00`)
   - audited scorecard view on the same artifact: `25/25` (`1.00`) with no exclusions
+- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q76-100`): `25/25` (`1.00`)
+  - audited scorecard view on the same artifact: `25/25` (`1.00`) with no exclusions
 - bounded `LoCoMo` same-provider ladder on the same first-25 `conv-26` slice:
   - `observational_temporal_memory`: `24/25` raw, `24/24` audited
   - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
@@ -57,6 +59,9 @@ Current MiniMax frontier on that `LoCoMo` slice is now explicit:
   - `25/25` raw
   - `25/25` audited
 - the adjacent `q51-75` slice is now also clean on a real rerun:
+  - `25/25` raw
+  - `25/25` audited
+- the adjacent `q76-100` slice is now also clean on a real rerun:
   - `25/25` raw
   - `25/25` audited
 

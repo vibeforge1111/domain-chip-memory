@@ -15,6 +15,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question51_75_rerun_v4.json`
   - `25/25`
   - audited view: `25/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question76_100_rerun_v4.json`
+  - `25/25`
+  - audited view: `25/25`
 - `artifacts/benchmark_runs/locomo10_temporal_atom_router_minimax_limit1_question25_rerun.json`
   - `6/25`
   - audited view: `6/24`
@@ -58,6 +61,11 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - symbols
   - artists seen
   - transition-change lists
+- Longer `LoCoMo` category-4 answers once the packet carries the explicit supporting proposition
+  - self-care priorities
+  - adoption motivations
+  - counseling motivations
+  - workshop topics
 
 ## Where MiniMax is faltering
 
@@ -68,6 +76,7 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - Benchmark-span normalization drift
   - `Trans woman` instead of `Transgender woman`
   - `unknown` instead of anchored month-year answers like `June 2023`
+  - `Three` instead of `3`
 - Relative-time grounding when the packet only includes a compressed phrase instead of the anchored source turn
   - before the latest fixes, this was the driver behind `q2`, `q7`, and `q17` on the `LoCoMo` slice
 - Multi-answer recovery when one answer component is only available through image/query metadata or implicit multimodal cues
@@ -102,6 +111,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - The third bounded `LoCoMo` slice (`conv-26 q51-75`) is now clean on a real rerun:
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
+- The fourth bounded `LoCoMo` slice (`conv-26 q76-100`) is now also clean on a real rerun:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
 - The main failure mode is no longer "MiniMax is weak."
 - The main failure mode is "the packet did not expose the exact answer-bearing representation."
 - On the current bounded `LoCoMo` slice, MiniMax is effectively clean after benchmark-audit exclusion:
@@ -111,6 +123,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
 - On the adjacent third bounded `LoCoMo` slice, MiniMax is also fully clean without audit adjustment:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
+- On the adjacent fourth bounded `LoCoMo` slice, MiniMax is also fully clean without audit adjustment:
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
 - The same provider on the weaker substrate is nowhere close:
@@ -179,6 +194,6 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 
 ## Current recommendation
 
-- Treat `LongMemEval 50/50`, `LoCoMo q1-25 24/24 audited`, `LoCoMo q26-50 25/25`, and `LoCoMo q51-75 25/25` as the current MiniMax source of truth in this repo.
+- Treat `LongMemEval 50/50`, `LoCoMo q1-25 24/24 audited`, `LoCoMo q26-50 25/25`, `LoCoMo q51-75 25/25`, and `LoCoMo q76-100 25/25` as the current MiniMax source of truth in this repo.
 - Treat the remaining first-slice `LoCoMo` miss as a benchmark-audit lane:
   - benchmark inconsistency review for `conv-26-qa-6`

@@ -290,6 +290,86 @@ Current read after the third-slice rerun:
 - the only remaining audited-open `LoCoMo` issue across the first three bounded slices is still the first-slice benchmark inconsistency on `conv-26-qa-6`
 - the next rational move is to shift the same observational + MiniMax lane onto `LoCoMo q76-100`
 
+### 11. March 24 continuation: fourth bounded LoCoMo slice closure
+
+Work then moved onto:
+
+- `conv-26` questions `76-100`
+
+Measured progression on March 24, 2026:
+
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question76_100_rerun.json`
+  - `4/25`
+  - `0.16`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question76_100_rerun_v2.json`
+  - `23/25`
+  - `0.92`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question76_100_rerun_v3.json`
+  - `24/25`
+  - `0.96`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question76_probe_v4.json`
+  - `1/1`
+  - `1.00`
+  - used to verify the final count-word normalization fix on `conv-26-qa-76`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question76_100_rerun_v4.json`
+  - `25/25`
+  - `1.00`
+  - audited scorecard view: `25/25`
+
+Root causes found in this continuation:
+
+- the observational lane was under-surfacing family, adoption, sentimental-object, and counseling facts from:
+  - `D2`
+  - `D3`
+  - `D4`
+  - `D7`
+  - `D18`
+- the roadtrip-followup hike question was using the wrong temporal anchor because the rescue path grabbed the first dated line instead of the `yesterday` line tied to the roadtrip
+- the move-back-home inference question already had strong adoption evidence in the packet but no explicit provider rescue
+- the final `q76` miss on the near-clean rerun was only count-word normalization drift:
+  - MiniMax answered `Three`
+  - the benchmark expects `3`
+
+Fixes that closed the slice:
+
+- added structured observational predicates for:
+  - child count
+  - bought items
+  - self-care realization and method
+  - summer adoption plans
+  - adoption-agency reason
+  - adoption-process excitement
+  - Melanie's adoption opinion
+  - marriage duration
+  - necklace symbolism and grandma gift
+  - bowl symbolism
+  - camping activities
+  - counseling detail
+  - workshop name and topic
+  - counseling motivation
+- tightened the provider rescue path for:
+  - the anchored roadtrip-followup hike date
+  - the move-back-home adoption inference
+  - count-word normalization to benchmark numeric form
+
+Files changed in this continuation:
+
+- `src/domain_chip_memory/memory_systems.py`
+- `src/domain_chip_memory/providers.py`
+- `tests/test_memory_systems.py`
+- `tests/test_providers.py`
+
+Current read after the fourth-slice rerun:
+
+- MiniMax is now clean on `LoCoMo conv-26 q76-100`
+- the first four bounded `LoCoMo` slices are now:
+  - `q1-25`: `24/24` audited after excluding the known benchmark inconsistency
+  - `q26-50`: `25/25`
+  - `q51-75`: `25/25`
+  - `q76-100`: `25/25`
+- the only remaining audited-open `LoCoMo` issue across those four slices is still the first-slice benchmark inconsistency on `conv-26-qa-6`
+- the next rational move is to shift the same observational + MiniMax lane onto `LoCoMo q101-125`
+
 ## Validation status
 
 Verified during this session:

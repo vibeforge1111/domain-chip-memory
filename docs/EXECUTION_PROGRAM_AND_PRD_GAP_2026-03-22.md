@@ -284,14 +284,17 @@ Current active lane:
   - `observational_temporal_memory`: `25/25` raw, `25/25` audited
 - latest adjacent bounded `LoCoMo` rerun on `conv-26` questions `51-75`:
   - `observational_temporal_memory`: `25/25` raw, `25/25` audited
+- latest adjacent bounded `LoCoMo` rerun on `conv-26` questions `76-100`:
+  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
 
 Immediate next build steps:
 
 1. Treat `artifacts/benchmark_runs/longmemeval_observational_minimax_limit50_rerun_v4.json` as the current source-of-truth artifact for the expanded `LongMemEval_s` slice.
 2. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question26_50_rerun_v9.json` as the current source-of-truth artifact for the second bounded `LoCoMo` slice.
 3. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question51_75_rerun_v4.json` as the current source-of-truth artifact for the third bounded `LoCoMo` slice.
-4. Preserve the measured `q51-75` progression (`4/25 -> 16/25 -> 22/25 -> 25/25`) as the reference for profile-fact recovery plus rescue-order hardening.
-5. Move the same provider path onto the next bounded `LoCoMo` slice (`q76-100`) instead of continuing to tune the now-closed `q51-75` slice.
+4. Treat `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question76_100_rerun_v4.json` as the current source-of-truth artifact for the fourth bounded `LoCoMo` slice.
+5. Preserve the measured `q76-100` progression (`4/25 -> 23/25 -> 24/25 -> 25/25`) as the reference for family/adoption/counseling fact surfacing plus answer normalization hardening.
+6. Move the same provider path onto the next bounded `LoCoMo` slice (`q101-125`) instead of continuing to tune the now-closed `q76-100` slice.
 
 ## Sources
 
