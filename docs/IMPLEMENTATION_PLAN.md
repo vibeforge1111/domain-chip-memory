@@ -62,7 +62,7 @@ Goal:
 Current lead lane as of 2026-03-23:
 
 - `observational_temporal_memory + MiniMax-M2.7` is the active `LongMemEval` optimization path
-- internal real run on the first 25 `LongMemEval_s` samples: `13/25` (`0.52`)
+- real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
 - current comparison point on the same slice: `beam_temporal_atom_router + MiniMax-M2.7` at `3/25` (`0.12`)
 
 Candidate components:

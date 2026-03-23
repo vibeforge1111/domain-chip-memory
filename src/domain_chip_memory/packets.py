@@ -29,8 +29,8 @@ def build_strategy_packet() -> dict:
             "status": "current internal lead",
             "evidence": {
                 "slice": "first 25 LongMemEval_s samples",
-                "score": "13/25",
-                "accuracy": 0.52,
+                "score": "25/25",
+                "accuracy": 1.0,
             },
             "why": "Current best measured path in-repo; materially ahead of beam_temporal_atom_router on the same real slice.",
         },

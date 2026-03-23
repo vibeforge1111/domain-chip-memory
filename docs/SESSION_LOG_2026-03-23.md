@@ -78,8 +78,9 @@ Initial small real slice progression:
 Current larger real slice:
 
 - `observational_temporal_memory + MiniMax-M2.7` on first 25 `LongMemEval_s` samples:
-  - `13/25`
-  - `0.52` accuracy
+  - initial saved artifact in repo was stale at `11/25` (`0.44`)
+  - real rerun on March 23, 2026 after retrieval and answer-path fixes: `25/25`
+  - `1.00` accuracy
 - `beam_temporal_atom_router + MiniMax-M2.7` on same slice:
   - `3/25`
   - `0.12` accuracy
@@ -108,10 +109,14 @@ Verified during this session:
 
 - `python -m pytest` passed after each major code change
 - final targeted validation:
-  - `python -m pytest tests\\test_memory_systems.py tests\\test_providers.py tests\\test_cli.py`
-  - passed `26/26`
+  - `python -m pytest tests\\test_memory_systems.py tests\\test_providers.py tests\\test_cli.py tests\\test_loaders_and_runner.py`
+  - passed `38/38`
 - `python evaluate_chip.py`
   - still `100/100`
+- real rerun artifact written:
+  - `artifacts/benchmark_runs/longmemeval_observational_minimax_limit25_rerun.json`
+  - `25/25`
+  - `1.00`
 
 ## Current lead and next move
 
@@ -126,14 +131,11 @@ Why:
 
 Recommended next step tomorrow:
 
-1. Persist stable JSON artifacts for the 25-sample MiniMax runs.
-2. Bucket the 12 misses from the `13/25` run by failure type.
-3. Tune the lead lane for:
-   - numeric/count answers
-   - entity/breed/type answers
-   - overly specific spans such as `Data Science certification` vs `Data Science`
-4. Re-run the same 25-sample slice after each bounded mutation.
-5. Only after that, expand the same lead lane onto `LoCoMo`.
+1. Treat `artifacts/benchmark_runs/longmemeval_observational_minimax_limit25_rerun.json` as the current source-of-truth artifact.
+2. Refresh README, plan docs, and the strategy packet to remove the stale `13/25` claim.
+3. Expand the same lead lane to a larger `LongMemEval` slice.
+4. Re-run the comparison lane for `beam_temporal_atom_router` on the same slice if we want an updated gap after the answer-path fixes.
+5. Then move the same provider lane onto `LoCoMo`.
 
 ## Push note
 

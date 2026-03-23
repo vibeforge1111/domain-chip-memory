@@ -274,17 +274,16 @@ We should consider the program healthy if:
 Current active lane:
 
 - `observational_temporal_memory + MiniMax-M2.7`
-- real internal result on the first 25 `LongMemEval_s` samples: `13/25` (`0.52`)
+- real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
 - current same-slice comparison: `beam_temporal_atom_router + MiniMax-M2.7` at `3/25` (`0.12`)
 
 Immediate next build steps:
 
-1. Write the 25-sample scorecards into stable benchmark artifacts.
-2. Bucket the 12 remaining `observational_temporal_memory` misses by failure type.
-3. Optimize for exact-span entity, numeric, and short categorical answers before scaling to larger slices.
-4. Re-run the same 25-sample slice after each bounded mutation.
-5. Expand the lead system to a larger `LongMemEval` slice once the 25-sample miss rate improves.
-6. Only then shift the same provider path onto `LoCoMo`.
+1. Treat `artifacts/benchmark_runs/longmemeval_observational_minimax_limit25_rerun.json` as the current source-of-truth artifact for this slice.
+2. Refresh the doctrine surfaces and strategy packet to remove the stale `13/25` claim.
+3. Re-run `beam_temporal_atom_router + MiniMax-M2.7` on the same 25-sample slice only if we need an updated apples-to-apples comparison after the latest answer-path fixes.
+4. Expand the lead system to a larger `LongMemEval` slice now that the 25-sample lane is clean.
+5. Shift the same provider path onto `LoCoMo` once the larger `LongMemEval` slice is recorded.
 
 ## Sources
 
