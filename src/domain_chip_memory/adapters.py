@@ -131,6 +131,8 @@ class LoCoMoAdapter:
             )
 
         questions: list[NormalizedQuestion] = []
+        speaker_a = str(conversation.get("speaker_a", "speaker_a"))
+        speaker_b = str(conversation.get("speaker_b", "speaker_b"))
         for index, qa_item in enumerate(instance.get("qa", [])):
             evidence_turn_ids = [str(item) for item in qa_item.get("evidence", [])]
             evidence_session_ids = sorted(
@@ -144,7 +146,11 @@ class LoCoMoAdapter:
                     expected_answers=_normalize_expected_answers(qa_item.get("answer")),
                     evidence_session_ids=evidence_session_ids,
                     evidence_turn_ids=evidence_turn_ids,
-                    metadata={"source_format": "locomo_qa"},
+                    metadata={
+                        "source_format": "locomo_qa",
+                        "speaker_a": speaker_a,
+                        "speaker_b": speaker_b,
+                    },
                 )
             )
 

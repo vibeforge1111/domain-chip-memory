@@ -264,3 +264,118 @@ def test_observational_memory_keeps_destination_specific_trip_duration():
 
     assert any("Japan" in item.text and "two weeks" in item.text for item in packets[0].retrieved_context_items)
     assert packets[0].assembled_context.count("two weeks") >= 1
+
+
+def test_locomo_named_speakers_produce_timestamped_observations():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-named-speakers",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="1:56 pm on 8 May, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d1",
+                        speaker="Caroline",
+                        text="I went to a LGBTQ support group yesterday and it was so powerful.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d2",
+                        speaker="Melanie",
+                        text="Yeah, I painted that lake sunrise last year!",
+                    ),
+                ],
+            )
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="When did Caroline go to the LGBTQ support group?",
+                category="2",
+                expected_answers=["7 May 2023"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d1"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            )
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    atoms = extract_memory_atoms(sample)
+    assert any(atom.predicate == "raw_turn" and atom.subject == "caroline" for atom in atoms)
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+
+    assert "On 1:56 pm on 8 May, 2023, Caroline said:" in packets[0].assembled_context
+    assert "LGBTQ support group yesterday" in packets[0].assembled_context
+
+
+def test_locomo_phrase_match_beats_later_semantic_noise():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-ranking",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="1:56 pm on 8 May, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d1",
+                        speaker="Caroline",
+                        text="I went to a LGBTQ support group yesterday and it was so powerful.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d2",
+                        speaker="Caroline",
+                        text="The support I got from the LGBTQ community means a lot to me.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="1:50 pm on 17 August, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d3",
+                        speaker="Caroline",
+                        text="I want to keep fighting for LGBTQ rights and support others however I can.",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="When did Caroline go to the LGBTQ support group?",
+                category="2",
+                expected_answers=["7 May 2023"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d1"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            )
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+
+    reflection_lines = [
+        line for line in packets[0].assembled_context.splitlines() if line.startswith("reflection:")
+    ]
+    assert reflection_lines
+    assert "support group yesterday" in reflection_lines[0].lower()

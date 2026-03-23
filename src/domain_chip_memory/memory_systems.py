@@ -43,6 +43,27 @@ STOPWORDS = {
     "you",
 }
 
+IRREGULAR_TOKEN_NORMALIZATIONS = {
+    "went": "go",
+    "gone": "go",
+    "did": "do",
+    "done": "do",
+    "ran": "run",
+    "sang": "sing",
+    "bought": "buy",
+    "brought": "bring",
+    "thought": "think",
+    "felt": "feel",
+    "met": "meet",
+    "took": "take",
+    "taken": "take",
+    "made": "make",
+    "painted": "paint",
+    "studied": "study",
+    "moved": "move",
+    "spoke": "speak",
+}
+
 
 @dataclass(frozen=True)
 class MemoryAtom:
@@ -81,8 +102,38 @@ class EventCalendarEntry:
     metadata: JsonDict
 
 
+def _normalize_token(token: str) -> str:
+    normalized = token.lower()
+    if normalized in IRREGULAR_TOKEN_NORMALIZATIONS:
+        return IRREGULAR_TOKEN_NORMALIZATIONS[normalized]
+    if len(normalized) > 5 and normalized.endswith("ies"):
+        return normalized[:-3] + "y"
+    if len(normalized) > 5 and normalized.endswith("ing"):
+        return normalized[:-3]
+    if len(normalized) > 4 and normalized.endswith("ed"):
+        stem = normalized[:-2]
+        if len(stem) >= 2 and stem[-1] == stem[-2]:
+            stem = stem[:-1]
+        return stem
+    if len(normalized) > 4 and normalized.endswith("es"):
+        return normalized[:-2]
+    if len(normalized) > 3 and normalized.endswith("s") and not normalized.endswith("ss"):
+        return normalized[:-1]
+    return normalized
+
+
 def _tokenize(text: str) -> list[str]:
-    return [token for token in re.findall(r"[a-z0-9]+", text.lower()) if token not in STOPWORDS]
+    return [
+        normalized
+        for token in re.findall(r"[a-z0-9]+", text.lower())
+        for normalized in [_normalize_token(token)]
+        if normalized not in STOPWORDS
+    ]
+
+
+def _token_bigrams(text: str) -> set[tuple[str, str]]:
+    tokens = _tokenize(text)
+    return set(zip(tokens, tokens[1:]))
 
 
 def _serialize_session(session: NormalizedSession) -> str:
@@ -174,7 +225,12 @@ def _answer_candidate_surface_text(subject: str, predicate: str, value: str, sou
     return source_text
 
 
-def _extract_atoms_from_turn(session: NormalizedSession, turn: NormalizedTurn) -> list[MemoryAtom]:
+def _extract_atoms_from_turn(
+    session: NormalizedSession,
+    turn: NormalizedTurn,
+    *,
+    allow_raw_fallback: bool = False,
+) -> list[MemoryAtom]:
     text = turn.text.strip()
     lower = text.lower()
     subject = _canonical_subject(turn)
@@ -258,7 +314,7 @@ def _extract_atoms_from_turn(session: NormalizedSession, turn: NormalizedTurn) -
     if atoms:
         return atoms
 
-    if subject != "user":
+    if not allow_raw_fallback:
         return []
 
     # Fallback memory atom: keep the raw turn as a low-confidence fact candidate for retrieval.
@@ -279,9 +335,27 @@ def _extract_atoms_from_turn(session: NormalizedSession, turn: NormalizedTurn) -
 
 def extract_memory_atoms(sample: NormalizedBenchmarkSample) -> list[MemoryAtom]:
     atoms: list[MemoryAtom] = []
+    participant_speakers = {
+        str(sample.metadata.get("speaker_a", "")).strip().lower(),
+        str(sample.metadata.get("speaker_b", "")).strip().lower(),
+    }
     for session in sample.sessions:
         for turn in session.turns:
-            atoms.extend(_extract_atoms_from_turn(session, turn))
+            speaker_key = turn.speaker.strip().lower()
+            allow_raw_fallback = (
+                speaker_key == "user"
+                or (
+                    sample.benchmark_name == "LoCoMo"
+                    and speaker_key in participant_speakers
+                )
+            )
+            atoms.extend(
+                _extract_atoms_from_turn(
+                    session,
+                    turn,
+                    allow_raw_fallback=allow_raw_fallback,
+                )
+            )
     return atoms
 
 
@@ -289,7 +363,11 @@ def build_observation_log(sample: NormalizedBenchmarkSample) -> list[Observation
     observations: list[ObservationEntry] = []
     for atom in extract_memory_atoms(sample):
         if atom.predicate == "raw_turn":
-            text = atom.source_text
+            speaker = _subject_to_surface(atom.subject)
+            if atom.timestamp:
+                text = f"On {atom.timestamp}, {speaker} said: {atom.source_text}"
+            else:
+                text = f"{speaker} said: {atom.source_text}"
         else:
             text = _observation_surface_text(atom.subject, atom.predicate, atom.value, atom.source_text)
         observations.append(
@@ -352,6 +430,10 @@ def build_event_calendar(sample: NormalizedBenchmarkSample) -> list[EventCalenda
 
 def _question_subject(question: NormalizedQuestion) -> str:
     question_lower = question.question.lower()
+    for metadata_key in ("speaker_a", "speaker_b"):
+        speaker_name = str(question.metadata.get(metadata_key, "")).strip().lower()
+        if speaker_name and speaker_name in question_lower:
+            return speaker_name
     if "alice" in question_lower:
         return "alice"
     if "bob" in question_lower:
@@ -401,12 +483,15 @@ def _atom_score(question: NormalizedQuestion, atom: MemoryAtom) -> float:
     predicates = _question_predicates(question)
     question_tokens = set(_tokenize(question.question))
     atom_tokens = set(_tokenize(atom.source_text))
+    question_bigrams = _token_bigrams(question.question)
+    atom_bigrams = _token_bigrams(atom.source_text)
 
     if atom.subject == subject:
         score += 3.0
     if atom.predicate in predicates:
         score += 4.0
     score += float(len(question_tokens.intersection(atom_tokens)))
+    score += 1.5 * min(len(question_bigrams.intersection(atom_bigrams)), 3)
     if atom.timestamp:
         score += 0.001 * sum(ord(char) for char in atom.timestamp)
     if question.category in {"knowledge-update", "temporal", "temporal-reasoning"} and atom.timestamp:
@@ -461,11 +546,14 @@ def _observation_score(question: NormalizedQuestion, observation: ObservationEnt
     predicates = _question_predicates(question)
     question_tokens = set(_tokenize(question.question))
     observation_tokens = set(_tokenize(observation.text))
+    question_bigrams = _token_bigrams(question.question)
+    observation_bigrams = _token_bigrams(observation.text)
     if observation.subject == subject:
         score += 3.0
     if observation.predicate in predicates:
         score += 4.0
     score += float(len(question_tokens.intersection(observation_tokens)))
+    score += 1.5 * min(len(question_bigrams.intersection(observation_bigrams)), 3)
     if question.category in {"knowledge-update", "temporal", "temporal-reasoning"} and observation.timestamp:
         score += 1.0
     if observation.timestamp:
@@ -481,11 +569,14 @@ def _event_score(question: NormalizedQuestion, event: EventCalendarEntry) -> flo
     predicates = _question_predicates(question)
     question_tokens = set(_tokenize(question.question))
     event_tokens = set(_tokenize(event.text))
+    question_bigrams = _token_bigrams(question.question)
+    event_bigrams = _token_bigrams(event.text)
     if event.subject == subject:
         score += 3.0
     if event.predicate in predicates:
         score += 5.0
     score += float(len(question_tokens.intersection(event_tokens)))
+    score += 1.5 * min(len(question_bigrams.intersection(event_bigrams)), 3)
     if question.category in {"knowledge-update", "temporal", "temporal-reasoning"} and event.timestamp:
         score += 2.0
     if event.timestamp:

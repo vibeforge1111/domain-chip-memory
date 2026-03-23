@@ -72,6 +72,8 @@ def test_locomo_adapter_normalizes_conversation_and_qa():
     assert len(sample.sessions) == 2
     assert sample.questions[0].evidence_session_ids == ["session_2"]
     assert sample.questions[0].evidence_turn_ids == ["d3"]
+    assert sample.questions[0].metadata["speaker_a"] == "Alice"
+    assert sample.questions[0].metadata["speaker_b"] == "Bob"
 
 
 def test_goodai_adapter_normalizes_config_and_definition():
