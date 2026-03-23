@@ -2475,3 +2475,31 @@ def test_minimax_provider_recovers_locomo_sixth_slice_music_poetry_and_roadtrip_
 
     for packet, expected in packets:
         assert provider.generate_answer(packet).answer == expected
+
+
+def test_minimax_provider_normalizes_locomo_pottery_break_missing_period(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Read a book and paint"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-137",
+        question="What does Melanie do to keep herself busy during her pottery break?",
+        assembled_context="reflection: During the pottery break Melanie did Read a book and paint.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    assert provider.generate_answer(packet).answer == "Read a book and paint."

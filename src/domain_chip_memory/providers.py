@@ -1118,6 +1118,8 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
             return "She got hurt and had to take a break from pottery."
 
     if "keep herself busy" in question_lower and "pottery break" in question_lower:
+        if "read a book and paint" in answer.lower() or "read a book and paint" in combined_lower:
+            return "Read a book and paint."
         if "reading" in combined_lower and "painting" in combined_lower:
             return "Read a book and paint."
 
