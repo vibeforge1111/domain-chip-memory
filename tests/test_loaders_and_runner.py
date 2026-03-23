@@ -8,8 +8,9 @@ from domain_chip_memory.loaders import (
     load_locomo_json,
     load_longmemeval_json,
 )
-from domain_chip_memory.providers import build_provider_contract_summary, get_provider
+from domain_chip_memory.providers import ProviderResponse, build_provider_contract_summary, get_provider
 from domain_chip_memory.runner import build_runner_contract_summary, run_baseline
+from domain_chip_memory.scorecards import BaselinePrediction
 
 
 def test_longmemeval_loader_and_runner(tmp_path: Path):
@@ -248,3 +249,79 @@ def test_loader_provider_and_runner_contracts_exist():
     assert build_loader_contract_summary()["loaders"]
     assert build_provider_contract_summary()["providers"]
     assert build_runner_contract_summary()["supported_baselines"]
+
+
+def test_runner_can_resume_from_existing_predictions(tmp_path: Path):
+    data_file = tmp_path / "locomo.json"
+    data_file.write_text(
+        json.dumps(
+            [
+                {
+                    "sample_id": "locomo-1",
+                    "conversation": {
+                        "speaker_a": "Alice",
+                        "speaker_b": "Bob",
+                        "session_1_date_time": "2024-01-01",
+                        "session_1": [
+                            {"speaker": "Alice", "dia_id": "d1", "text": "I like jazz."},
+                            {"speaker": "Bob", "dia_id": "d2", "text": "I like chess."},
+                        ],
+                    },
+                    "qa": [
+                        {
+                            "question": "What music does Alice like?",
+                            "answer": "jazz",
+                            "category": "single-hop",
+                            "evidence": ["d1"],
+                        },
+                        {
+                            "question": "What does Bob like?",
+                            "answer": "chess",
+                            "category": "single-hop",
+                            "evidence": ["d2"],
+                        },
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    class _StubProvider:
+        name = "stub"
+
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def generate_answer(self, packet):
+            self.calls.append(packet.question_id)
+            return ProviderResponse(answer="chess", metadata={"provider_type": "stub"})
+
+    provider = _StubProvider()
+    progress_events: list[dict[str, object]] = []
+    samples = load_locomo_json(data_file)
+    scorecard = run_baseline(
+        samples,
+        baseline_name="full_context",
+        provider=provider,
+        existing_predictions=[
+            BaselinePrediction(
+                benchmark_name="LoCoMo",
+                baseline_name="full_context",
+                sample_id="locomo-1",
+                question_id="locomo-1-qa-1",
+                category="single-hop",
+                predicted_answer="jazz",
+                expected_answers=["jazz"],
+                is_correct=True,
+                metadata={"provider_name": "stub", "route": "full_context"},
+            )
+        ],
+        progress_callback=lambda manifest, predictions, event: progress_events.append(event),
+    )
+
+    assert provider.calls == ["locomo-1-qa-2"]
+    assert progress_events[0]["event"] == "resume"
+    assert progress_events[0]["completed"] == 1
+    assert scorecard["overall"]["total"] == 2
+    assert scorecard["overall"]["correct"] == 2

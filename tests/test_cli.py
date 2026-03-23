@@ -10,6 +10,7 @@ from domain_chip_memory.loaders import build_loader_contract_summary
 from domain_chip_memory.experiments import build_experiment_contract_summary, run_candidate_comparison
 from domain_chip_memory.memory_systems import build_memory_system_contract_summary
 from domain_chip_memory.packets import build_strategy_packet
+from domain_chip_memory.providers import ProviderResponse
 from domain_chip_memory.providers import build_provider_contract_summary
 from domain_chip_memory.providers import get_provider
 from domain_chip_memory.runner import build_runner_contract_summary
@@ -186,3 +187,111 @@ def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monke
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["overall"]["total"] == 1
     assert payload["run_manifest"]["question_count"] == 1
+
+
+def test_run_locomo_cli_can_resume_and_checkpoint_progress(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "locomo.json"
+    output_file = tmp_path / "artifacts" / "locomo_scorecard.json"
+    resume_file = tmp_path / "artifacts" / "resume_scorecard.json"
+    data_file.write_text(
+        json.dumps(
+            [
+                {
+                    "sample_id": "locomo-1",
+                    "conversation": {
+                        "speaker_a": "Alice",
+                        "speaker_b": "Bob",
+                        "session_1_date_time": "2024-01-01",
+                        "session_1": [
+                            {"speaker": "Alice", "dia_id": "d1", "text": "I like jazz."},
+                            {"speaker": "Bob", "dia_id": "d2", "text": "I like chess."},
+                        ],
+                    },
+                    "qa": [
+                        {
+                            "question": "What music does Alice like?",
+                            "answer": "jazz",
+                            "category": "single-hop",
+                            "evidence": ["d1"],
+                        },
+                        {
+                            "question": "What does Bob like?",
+                            "answer": "chess",
+                            "category": "single-hop",
+                            "evidence": ["d2"],
+                        },
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    resume_file.parent.mkdir(parents=True, exist_ok=True)
+    resume_file.write_text(
+        json.dumps(
+            {
+                "predictions": [
+                    {
+                        "benchmark_name": "LoCoMo",
+                        "baseline_name": "full_context",
+                        "sample_id": "locomo-1",
+                        "question_id": "locomo-1-qa-1",
+                        "category": "single-hop",
+                        "predicted_answer": "jazz",
+                        "expected_answers": ["jazz"],
+                        "is_correct": True,
+                        "metadata": {"provider_name": "stub", "route": "full_context"},
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class _StubProvider:
+        name = "stub"
+
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def generate_answer(self, packet):
+            self.calls.append(packet.question_id)
+            return ProviderResponse(answer="chess", metadata={"provider_type": "stub"})
+
+    provider = _StubProvider()
+    write_calls: list[Path] = []
+    original_write_json = cli._write_json
+
+    def tracking_write_json(path: Path, payload: dict) -> None:
+        write_calls.append(path)
+        original_write_json(path, payload)
+
+    monkeypatch.setattr(cli, "get_provider", lambda _: provider)
+    monkeypatch.setattr(cli, "_write_json", tracking_write_json)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-locomo-baseline",
+            str(data_file),
+            "--baseline",
+            "full_context",
+            "--provider",
+            "stub",
+            "--question-limit",
+            "2",
+            "--write",
+            str(output_file),
+            "--resume-from",
+            str(resume_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert provider.calls == ["locomo-1-qa-2"]
+    assert payload["overall"]["total"] == 2
+    assert payload["overall"]["correct"] == 2
+    assert len(write_calls) >= 2

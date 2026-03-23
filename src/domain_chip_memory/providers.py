@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from typing import Protocol
@@ -632,6 +633,8 @@ class OpenAIChatCompletionsProvider:
     enable_exact_span_rescue: bool = False
     extra_body: JsonDict = field(default_factory=dict)
     timeout_s: int = 120
+    max_retries: int = 0
+    retry_backoff_s: float = 1.0
     temperature: float = 0.0
     max_tokens: int = 128
 
@@ -670,15 +673,7 @@ class OpenAIChatCompletionsProvider:
             )
         return packet.assembled_context
 
-    def generate_answer(self, packet: BaselinePromptPacket) -> ProviderResponse:
-        prepared_context = self.prepare_context(packet)
-        payload = {
-            "model": self.model,
-            "messages": self.build_messages(packet),
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-        }
-        payload.update(self.extra_body)
+    def _request_chat_completion(self, payload: JsonDict) -> tuple[JsonDict, int]:
         body = json.dumps(payload).encode("utf-8")
         req = request.Request(
             url=f"{self.base_url.rstrip('/')}/chat/completions",
@@ -689,18 +684,38 @@ class OpenAIChatCompletionsProvider:
             },
             method="POST",
         )
-        try:
-            with request.urlopen(req, timeout=self.timeout_s) as response:
-                raw = response.read()
-        except error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="ignore")
-            raise RuntimeError(
-                f"OpenAI provider request failed with status {exc.code}: {detail[:400]}"
-            ) from exc
-        except error.URLError as exc:
-            raise RuntimeError(f"OpenAI provider request failed: {exc.reason}") from exc
+        attempt = 0
+        while True:
+            attempt += 1
+            try:
+                with request.urlopen(req, timeout=self.timeout_s) as response:
+                    raw = response.read()
+                return json.loads(raw.decode("utf-8")), attempt
+            except error.HTTPError as exc:
+                detail = exc.read().decode("utf-8", errors="ignore")
+                retriable = exc.code in {408, 409, 425, 429} or 500 <= exc.code < 600
+                if attempt > self.max_retries or not retriable:
+                    raise RuntimeError(
+                        f"OpenAI provider request failed after {attempt} attempt(s) with status {exc.code}: {detail[:400]}"
+                    ) from exc
+                time.sleep(self.retry_backoff_s * attempt)
+            except (error.URLError, TimeoutError, OSError) as exc:
+                if attempt > self.max_retries:
+                    raise RuntimeError(
+                        f"OpenAI provider request failed after {attempt} attempt(s): {exc}"
+                    ) from exc
+                time.sleep(self.retry_backoff_s * attempt)
 
-        parsed = json.loads(raw.decode("utf-8"))
+    def generate_answer(self, packet: BaselinePromptPacket) -> ProviderResponse:
+        prepared_context = self.prepare_context(packet)
+        payload = {
+            "model": self.model,
+            "messages": self.build_messages(packet),
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+        payload.update(self.extra_body)
+        parsed, attempts = self._request_chat_completion(payload)
         usage = parsed.get("usage", {})
         answer = _extract_openai_answer(parsed)
         if self.enable_exact_span_rescue:
@@ -714,6 +729,7 @@ class OpenAIChatCompletionsProvider:
                 "completion_tokens": usage.get("completion_tokens"),
                 "total_tokens": usage.get("total_tokens"),
                 "context_compacted": bool(self.compact_context_lines),
+                "request_attempts": attempts,
             },
         )
 
@@ -791,6 +807,9 @@ def get_provider(name: str) -> ModelProvider:
             compact_context_lines=8,
             enable_exact_span_rescue=True,
             extra_body={"reasoning_split": True},
+            timeout_s=45,
+            max_retries=2,
+            retry_backoff_s=2.0,
             temperature=0.3,
             max_tokens=512,
         )

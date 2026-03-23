@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import replace
 from pathlib import Path
 
@@ -23,7 +24,7 @@ from .packets import build_strategy_packet
 from .providers import build_provider_contract_summary, get_provider
 from .runner import build_runner_contract_summary, run_baseline
 from .sample_data import demo_samples
-from .scorecards import build_scorecard_contract_summary
+from .scorecards import BaselinePrediction, build_scorecard, build_scorecard_contract_summary
 from .baselines import build_full_context_packets, build_lexical_packets
 from .watchtower import build_watchtower_summary
 from .contracts import NormalizedBenchmarkSample
@@ -46,6 +47,85 @@ def _limit_questions(
     if question_limit is None:
         return samples
     return [replace(sample, questions=sample.questions[:question_limit]) for sample in samples]
+
+
+def _load_resume_predictions(path: Path | None) -> list[BaselinePrediction]:
+    if path is None or not path.exists():
+        return []
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    raw_predictions = payload.get("predictions", [])
+    if not isinstance(raw_predictions, list):
+        raise ValueError("Resume artifact must contain a predictions list.")
+    predictions: list[BaselinePrediction] = []
+    for item in raw_predictions:
+        if not isinstance(item, dict):
+            continue
+        predictions.append(
+            BaselinePrediction(
+                benchmark_name=str(item.get("benchmark_name", "")),
+                baseline_name=str(item.get("baseline_name", "")),
+                sample_id=str(item.get("sample_id", "")),
+                question_id=str(item.get("question_id", "")),
+                category=str(item.get("category", "")),
+                predicted_answer=str(item.get("predicted_answer", "")),
+                expected_answers=[str(answer) for answer in item.get("expected_answers", [])],
+                is_correct=bool(item.get("is_correct")),
+                metadata=dict(item.get("metadata", {})),
+            )
+        )
+    return predictions
+
+
+def _run_with_progress(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    baseline_name: str,
+    provider_name: str,
+    top_k_sessions: int,
+    fallback_sessions: int,
+    write_path: Path | None,
+    resume_path: Path | None,
+) -> dict:
+    existing_predictions = _load_resume_predictions(resume_path)
+
+    def progress_callback(manifest: dict, predictions: list[BaselinePrediction], event: dict) -> None:
+        if event["event"] == "resume":
+            print(
+                f"[resume] {event['completed']}/{event['total']} completed; {event['remaining']} remaining",
+                file=sys.stderr,
+            )
+        elif event["event"] == "start":
+            print(
+                f"[start] {event['index']}/{event['total']} {event['question_id']}",
+                file=sys.stderr,
+            )
+        elif event["event"] == "completed":
+            verdict = "correct" if event["is_correct"] else "wrong"
+            print(
+                f"[done] {event['completed']}/{event['total']} {event['question_id']} -> {verdict}",
+                file=sys.stderr,
+            )
+        elif event["event"] == "error":
+            print(
+                f"[error] {event['completed']}/{event['total']} stopped at {event['question_id']}: {event['error']}",
+                file=sys.stderr,
+            )
+        if write_path and event["event"] in {"resume", "completed", "error"}:
+            partial_payload = build_scorecard(manifest, predictions)
+            partial_payload["run_manifest"].setdefault("metadata", {})["completion_status"] = (
+                "complete" if len(predictions) >= int(manifest.get("question_count", len(predictions))) else "partial"
+            )
+            _write_json(write_path, partial_payload)
+
+    return run_baseline(
+        samples,
+        baseline_name=baseline_name,
+        provider=get_provider(provider_name),
+        top_k_sessions=top_k_sessions,
+        fallback_sessions=fallback_sessions,
+        existing_predictions=existing_predictions,
+        progress_callback=progress_callback,
+    )
 
 
 def main() -> None:
@@ -83,6 +163,7 @@ def main() -> None:
     run_longmemeval.add_argument("--top-k-sessions", type=int, default=2)
     run_longmemeval.add_argument("--fallback-sessions", type=int, default=1)
     run_longmemeval.add_argument("--write")
+    run_longmemeval.add_argument("--resume-from")
 
     run_locomo = subparsers.add_parser("run-locomo-baseline", help="Run a baseline over a LoCoMo JSON file.")
     run_locomo.add_argument("data_file")
@@ -93,6 +174,7 @@ def main() -> None:
     run_locomo.add_argument("--top-k-sessions", type=int, default=2)
     run_locomo.add_argument("--fallback-sessions", type=int, default=1)
     run_locomo.add_argument("--write")
+    run_locomo.add_argument("--resume-from")
 
     run_goodai = subparsers.add_parser("run-goodai-baseline", help="Run a baseline over GoodAI config and definitions.")
     run_goodai.add_argument("config_file")
@@ -104,6 +186,7 @@ def main() -> None:
     run_goodai.add_argument("--top-k-sessions", type=int, default=2)
     run_goodai.add_argument("--fallback-sessions", type=int, default=1)
     run_goodai.add_argument("--write")
+    run_goodai.add_argument("--resume-from")
 
     compare_longmemeval = subparsers.add_parser("compare-longmemeval-local", help="Run all default systems over a LongMemEval JSON file and emit a compact comparison.")
     compare_longmemeval.add_argument("data_file")
@@ -239,15 +322,18 @@ def main() -> None:
 
     if args.command == "run-longmemeval-baseline":
         samples = load_longmemeval_json(args.data_file, limit=args.limit)
-        payload = run_baseline(
+        write_path = Path(args.write) if args.write else None
+        payload = _run_with_progress(
             samples,
             baseline_name=args.baseline,
-            provider=get_provider(args.provider),
+            provider_name=args.provider,
             top_k_sessions=args.top_k_sessions,
             fallback_sessions=args.fallback_sessions,
+            write_path=write_path,
+            resume_path=Path(args.resume_from) if args.resume_from else None,
         )
         if args.write:
-            _write_json(Path(args.write), payload)
+            _write_json(write_path, payload)
         _print(payload)
         return
 
@@ -256,15 +342,18 @@ def main() -> None:
             load_locomo_json(args.data_file, limit=args.limit),
             question_limit=args.question_limit,
         )
-        payload = run_baseline(
+        write_path = Path(args.write) if args.write else None
+        payload = _run_with_progress(
             samples,
             baseline_name=args.baseline,
-            provider=get_provider(args.provider),
+            provider_name=args.provider,
             top_k_sessions=args.top_k_sessions,
             fallback_sessions=args.fallback_sessions,
+            write_path=write_path,
+            resume_path=Path(args.resume_from) if args.resume_from else None,
         )
         if args.write:
-            _write_json(Path(args.write), payload)
+            _write_json(write_path, payload)
         _print(payload)
         return
 
@@ -276,15 +365,18 @@ def main() -> None:
             dataset_name=args.dataset_name,
             limit=args.limit,
         )
-        payload = run_baseline(
+        write_path = Path(args.write) if args.write else None
+        payload = _run_with_progress(
             samples,
             baseline_name=args.baseline,
-            provider=get_provider(args.provider),
+            provider_name=args.provider,
             top_k_sessions=args.top_k_sessions,
             fallback_sessions=args.fallback_sessions,
+            write_path=write_path,
+            resume_path=Path(args.resume_from) if args.resume_from else None,
         )
         if args.write:
-            _write_json(Path(args.write), payload)
+            _write_json(write_path, payload)
         _print(payload)
         return
 

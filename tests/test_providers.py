@@ -5,6 +5,7 @@ import pytest
 from domain_chip_memory import providers
 from domain_chip_memory.providers import (
     OpenAIChatCompletionsProvider,
+    ProviderResponse,
     build_provider_contract_summary,
     get_provider,
 )
@@ -97,6 +98,8 @@ def test_get_provider_supports_minimax_pattern(monkeypatch):
     assert provider.include_packet_metadata is False
     assert provider.compact_context_lines == 8
     assert provider.enable_exact_span_rescue is True
+    assert provider.timeout_s == 45
+    assert provider.max_retries == 2
     assert provider.max_tokens == 512
     assert provider.temperature == 0.3
 
@@ -131,6 +134,57 @@ def test_openai_answer_extractor_strips_think_tags(monkeypatch):
 
     assert response.answer == "Business Administration"
     assert captured["payload"]["reasoning_split"] is True
+
+
+def test_openai_provider_retries_temporary_transport_failures(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_MODEL", "gpt-4.1-mini")
+    attempts = {"count": 0}
+
+    def fake_urlopen(req, timeout):
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise providers.error.URLError("temporary network failure")
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Dubai"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 2, "total_tokens": 14},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(providers.time, "sleep", lambda _: None)
+    provider = OpenAIChatCompletionsProvider(
+        model="gpt-4.1-mini",
+        api_key="test-key",
+        max_retries=1,
+    )
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="beam_temporal_atom_router",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="Where does the user live now?",
+        assembled_context="memory: I moved to Dubai.",
+        retrieved_context_items=[],
+        metadata={"route": "temporal_atom_router"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response == ProviderResponse(
+        answer="Dubai",
+        metadata={
+            "provider_type": "openai_chat_completions",
+            "model": "gpt-4.1-mini",
+            "prompt_tokens": 12,
+            "completion_tokens": 2,
+            "total_tokens": 14,
+            "context_compacted": False,
+            "request_attempts": 2,
+        },
+    )
+    assert attempts["count"] == 2
 
 
 def test_minimax_provider_expands_partial_duration_answer(monkeypatch):
