@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Benchmark Scorecard",
+  "type": "object",
+  "required": [
+    "generated_at",
+    "benchmark_family",
+    "public_targets",
+    "coverage_summary",
+    "verdict"
+  ],
+  "properties": {
+    "generated_at": {
+      "type": "string"
+    },
+    "benchmark_family": {
+      "type": "string"
+    },
+    "public_targets": {
+      "type": "array"
+    },
+    "coverage_summary": {
+      "type": "object"
+    },
+    "verdict": {
+      "type": "string"
+    }
+  }
+}
+

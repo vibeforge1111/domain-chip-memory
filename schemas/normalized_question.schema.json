@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Normalized Question",
+  "type": "object",
+  "required": [
+    "question_id",
+    "question",
+    "category",
+    "expected_answers",
+    "evidence_session_ids",
+    "evidence_turn_ids",
+    "should_abstain"
+  ],
+  "properties": {
+    "question_id": { "type": "string" },
+    "question": { "type": "string" },
+    "category": { "type": "string" },
+    "expected_answers": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_session_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_turn_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "question_date": { "type": ["string", "null"] },
+    "should_abstain": { "type": "boolean" },
+    "metadata": { "type": "object" }
+  }
+}

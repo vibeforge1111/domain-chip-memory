@@ -1,0 +1,144 @@
+{
+  "benchmark_name": "LongMemEval",
+  "sample_count": 25,
+  "question_count": 25,
+  "provider_name": "heuristic_v1",
+  "systems": {
+    "full_context": {
+      "run_manifest": {
+        "run_id": "full-context-v1",
+        "benchmark_name": "LongMemEval",
+        "baseline_name": "full_context",
+        "sample_count": 25,
+        "question_count": 25,
+        "metadata": {
+          "baseline_type": "deterministic_prompt_builder"
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 25,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "single-session-user",
+          "correct": 0,
+          "total": 25,
+          "accuracy": 0.0
+        }
+      ]
+    },
+    "lexical": {
+      "run_manifest": {
+        "run_id": "lexical-v1",
+        "benchmark_name": "LongMemEval",
+        "baseline_name": "lexical",
+        "sample_count": 25,
+        "question_count": 25,
+        "metadata": {
+          "baseline_type": "deterministic_lexical_retrieval",
+          "top_k_sessions": 2,
+          "fallback_sessions": 1
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 25,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "single-session-user",
+          "correct": 0,
+          "total": 25,
+          "accuracy": 0.0
+        }
+      ]
+    },
+    "beam_temporal_atom_router": {
+      "run_manifest": {
+        "run_id": "beam-temporal-atom-router-v1",
+        "benchmark_name": "LongMemEval",
+        "baseline_name": "beam_temporal_atom_router",
+        "sample_count": 25,
+        "question_count": 25,
+        "metadata": {
+          "baseline_type": "candidate_memory_system",
+          "system_name": "Beam-Ready Temporal Atom Router",
+          "top_k_atoms": 2,
+          "include_rehydrated_sessions": 1
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 25,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "single-session-user",
+          "correct": 0,
+          "total": 25,
+          "accuracy": 0.0
+        }
+      ]
+    },
+    "observational_temporal_memory": {
+      "run_manifest": {
+        "run_id": "observational-temporal-memory-v1",
+        "benchmark_name": "LongMemEval",
+        "baseline_name": "observational_temporal_memory",
+        "sample_count": 25,
+        "question_count": 25,
+        "metadata": {
+          "baseline_type": "candidate_memory_system",
+          "system_name": "Observational Temporal Memory",
+          "max_observations": 4,
+          "max_reflections": 3
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 25,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "single-session-user",
+          "correct": 0,
+          "total": 25,
+          "accuracy": 0.0
+        }
+      ]
+    },
+    "dual_store_event_calendar_hybrid": {
+      "run_manifest": {
+        "run_id": "dual-store-event-calendar-hybrid-v1",
+        "benchmark_name": "LongMemEval",
+        "baseline_name": "dual_store_event_calendar_hybrid",
+        "sample_count": 25,
+        "question_count": 25,
+        "metadata": {
+          "baseline_type": "candidate_memory_system",
+          "system_name": "Dual-Store Event Calendar Hybrid",
+          "max_observations": 4,
+          "top_k_events": 3
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 25,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "single-session-user",
+          "correct": 0,
+          "total": 25,
+          "accuracy": 0.0
+        }
+      ]
+    }
+  }
+}

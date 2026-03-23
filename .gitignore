@@ -1,0 +1,11 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+venv/
+.env
+benchmark_data/
+*.egg-info/
+research/realworld_validated/feedback_*.json
+artifacts/generated/
+_tmp_*/

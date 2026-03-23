@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-03-22T13:30:00Z",
+  "status": "open",
+  "discoveries": [
+    {
+      "id": "frontier-001",
+      "theme": "retrieval",
+      "hypothesis": "A temporal-first retrieval plan will outperform pure semantic search on LongMemEval knowledge updates."
+    },
+    {
+      "id": "frontier-002",
+      "theme": "evaluation",
+      "hypothesis": "ConvoMem needs a direct full-context baseline in every experiment because memory systems can lose below 150 conversations."
+    },
+    {
+      "id": "frontier-003",
+      "theme": "organization",
+      "hypothesis": "Agentic or graph-based memory organization only matters if it improves benchmark slices, not if it only improves interpretability."
+    }
+  ]
+}
+

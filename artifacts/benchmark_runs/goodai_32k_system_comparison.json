@@ -1,0 +1,729 @@
+{
+  "benchmark_name": "GoodAI LTM Benchmark",
+  "sample_count": 33,
+  "question_count": 33,
+  "provider_name": "heuristic_v1",
+  "systems": {
+    "full_context": {
+      "run_manifest": {
+        "run_id": "full-context-v1",
+        "benchmark_name": "GoodAI LTM Benchmark",
+        "baseline_name": "full_context",
+        "sample_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json",
+          "benchmark-v3-32k.yml:Colours:0.def.json",
+          "benchmark-v3-32k.yml:Colours:1.def.json",
+          "benchmark-v3-32k.yml:Colours:2.def.json",
+          "benchmark-v3-32k.yml:Jokes:0.def.json",
+          "benchmark-v3-32k.yml:Jokes:1.def.json",
+          "benchmark-v3-32k.yml:Jokes:2.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json",
+          "benchmark-v3-32k.yml:NameList:0.def.json",
+          "benchmark-v3-32k.yml:NameList:1.def.json",
+          "benchmark-v3-32k.yml:NameList:2.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json",
+          "benchmark-v3-32k.yml:Restaurant:0.def.json",
+          "benchmark-v3-32k.yml:Restaurant:1.def.json",
+          "benchmark-v3-32k.yml:Restaurant:2.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json",
+          "benchmark-v3-32k.yml:Shopping:0.def.json",
+          "benchmark-v3-32k.yml:Shopping:1.def.json",
+          "benchmark-v3-32k.yml:Shopping:2.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json"
+        ],
+        "question_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:0.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:1.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-3"
+        ],
+        "question_count": 33,
+        "metadata": {
+          "baseline_type": "deterministic_prompt_builder"
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 33,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "chapterbreak",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "colours",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "locations_directions",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "namelist",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "prospective_memory",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "sallyanne",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "shopping",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "spy_meeting",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "trigger_response",
+          "correct": 0,
+          "total": 9,
+          "accuracy": 0.0
+        }
+      ]
+    },
+    "lexical": {
+      "run_manifest": {
+        "run_id": "lexical-v1",
+        "benchmark_name": "GoodAI LTM Benchmark",
+        "baseline_name": "lexical",
+        "sample_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json",
+          "benchmark-v3-32k.yml:Colours:0.def.json",
+          "benchmark-v3-32k.yml:Colours:1.def.json",
+          "benchmark-v3-32k.yml:Colours:2.def.json",
+          "benchmark-v3-32k.yml:Jokes:0.def.json",
+          "benchmark-v3-32k.yml:Jokes:1.def.json",
+          "benchmark-v3-32k.yml:Jokes:2.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json",
+          "benchmark-v3-32k.yml:NameList:0.def.json",
+          "benchmark-v3-32k.yml:NameList:1.def.json",
+          "benchmark-v3-32k.yml:NameList:2.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json",
+          "benchmark-v3-32k.yml:Restaurant:0.def.json",
+          "benchmark-v3-32k.yml:Restaurant:1.def.json",
+          "benchmark-v3-32k.yml:Restaurant:2.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json",
+          "benchmark-v3-32k.yml:Shopping:0.def.json",
+          "benchmark-v3-32k.yml:Shopping:1.def.json",
+          "benchmark-v3-32k.yml:Shopping:2.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json"
+        ],
+        "question_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:0.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:1.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-3"
+        ],
+        "question_count": 33,
+        "metadata": {
+          "baseline_type": "deterministic_lexical_retrieval",
+          "top_k_sessions": 2,
+          "fallback_sessions": 1
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 33,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "chapterbreak",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "colours",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "locations_directions",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "namelist",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "prospective_memory",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "sallyanne",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "shopping",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "spy_meeting",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "trigger_response",
+          "correct": 0,
+          "total": 9,
+          "accuracy": 0.0
+        }
+      ]
+    },
+    "beam_temporal_atom_router": {
+      "run_manifest": {
+        "run_id": "beam-temporal-atom-router-v1",
+        "benchmark_name": "GoodAI LTM Benchmark",
+        "baseline_name": "beam_temporal_atom_router",
+        "sample_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json",
+          "benchmark-v3-32k.yml:Colours:0.def.json",
+          "benchmark-v3-32k.yml:Colours:1.def.json",
+          "benchmark-v3-32k.yml:Colours:2.def.json",
+          "benchmark-v3-32k.yml:Jokes:0.def.json",
+          "benchmark-v3-32k.yml:Jokes:1.def.json",
+          "benchmark-v3-32k.yml:Jokes:2.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json",
+          "benchmark-v3-32k.yml:NameList:0.def.json",
+          "benchmark-v3-32k.yml:NameList:1.def.json",
+          "benchmark-v3-32k.yml:NameList:2.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json",
+          "benchmark-v3-32k.yml:Restaurant:0.def.json",
+          "benchmark-v3-32k.yml:Restaurant:1.def.json",
+          "benchmark-v3-32k.yml:Restaurant:2.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json",
+          "benchmark-v3-32k.yml:Shopping:0.def.json",
+          "benchmark-v3-32k.yml:Shopping:1.def.json",
+          "benchmark-v3-32k.yml:Shopping:2.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json"
+        ],
+        "question_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:0.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:1.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-3"
+        ],
+        "question_count": 33,
+        "metadata": {
+          "baseline_type": "candidate_memory_system",
+          "system_name": "Beam-Ready Temporal Atom Router",
+          "top_k_atoms": 2,
+          "include_rehydrated_sessions": 1
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 33,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "chapterbreak",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "colours",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "locations_directions",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "namelist",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "prospective_memory",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "sallyanne",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "shopping",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "spy_meeting",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "trigger_response",
+          "correct": 0,
+          "total": 9,
+          "accuracy": 0.0
+        }
+      ]
+    },
+    "observational_temporal_memory": {
+      "run_manifest": {
+        "run_id": "observational-temporal-memory-v1",
+        "benchmark_name": "GoodAI LTM Benchmark",
+        "baseline_name": "observational_temporal_memory",
+        "sample_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json",
+          "benchmark-v3-32k.yml:Colours:0.def.json",
+          "benchmark-v3-32k.yml:Colours:1.def.json",
+          "benchmark-v3-32k.yml:Colours:2.def.json",
+          "benchmark-v3-32k.yml:Jokes:0.def.json",
+          "benchmark-v3-32k.yml:Jokes:1.def.json",
+          "benchmark-v3-32k.yml:Jokes:2.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json",
+          "benchmark-v3-32k.yml:NameList:0.def.json",
+          "benchmark-v3-32k.yml:NameList:1.def.json",
+          "benchmark-v3-32k.yml:NameList:2.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json",
+          "benchmark-v3-32k.yml:Restaurant:0.def.json",
+          "benchmark-v3-32k.yml:Restaurant:1.def.json",
+          "benchmark-v3-32k.yml:Restaurant:2.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json",
+          "benchmark-v3-32k.yml:Shopping:0.def.json",
+          "benchmark-v3-32k.yml:Shopping:1.def.json",
+          "benchmark-v3-32k.yml:Shopping:2.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json"
+        ],
+        "question_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:0.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:1.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-3"
+        ],
+        "question_count": 33,
+        "metadata": {
+          "baseline_type": "candidate_memory_system",
+          "system_name": "Observational Temporal Memory",
+          "max_observations": 4,
+          "max_reflections": 3
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 33,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "chapterbreak",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "colours",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "locations_directions",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "namelist",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "prospective_memory",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "sallyanne",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "shopping",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "spy_meeting",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "trigger_response",
+          "correct": 0,
+          "total": 9,
+          "accuracy": 0.0
+        }
+      ]
+    },
+    "dual_store_event_calendar_hybrid": {
+      "run_manifest": {
+        "run_id": "dual-store-event-calendar-hybrid-v1",
+        "benchmark_name": "GoodAI LTM Benchmark",
+        "baseline_name": "dual_store_event_calendar_hybrid",
+        "sample_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json",
+          "benchmark-v3-32k.yml:Colours:0.def.json",
+          "benchmark-v3-32k.yml:Colours:1.def.json",
+          "benchmark-v3-32k.yml:Colours:2.def.json",
+          "benchmark-v3-32k.yml:Jokes:0.def.json",
+          "benchmark-v3-32k.yml:Jokes:1.def.json",
+          "benchmark-v3-32k.yml:Jokes:2.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json",
+          "benchmark-v3-32k.yml:NameList:0.def.json",
+          "benchmark-v3-32k.yml:NameList:1.def.json",
+          "benchmark-v3-32k.yml:NameList:2.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json",
+          "benchmark-v3-32k.yml:Restaurant:0.def.json",
+          "benchmark-v3-32k.yml:Restaurant:1.def.json",
+          "benchmark-v3-32k.yml:Restaurant:2.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json",
+          "benchmark-v3-32k.yml:Shopping:0.def.json",
+          "benchmark-v3-32k.yml:Shopping:1.def.json",
+          "benchmark-v3-32k.yml:Shopping:2.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json"
+        ],
+        "question_ids": [
+          "benchmark-v3-32k.yml:ChapterBreak:12653258_1.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:47583370_7.def.json:q-1",
+          "benchmark-v3-32k.yml:ChapterBreak:90051444_0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Colours:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Locations Directions:2.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:0.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:1.def.json:q-1",
+          "benchmark-v3-32k.yml:NameList:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Prospective Memory:2.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:0.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:1.def.json:q-1",
+          "benchmark-v3-32k.yml:SallyAnne:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Shopping:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Spy Meeting:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:0.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:1.def.json:q-3",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-1",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-2",
+          "benchmark-v3-32k.yml:Trigger Response:2.def.json:q-3"
+        ],
+        "question_count": 33,
+        "metadata": {
+          "baseline_type": "candidate_memory_system",
+          "system_name": "Dual-Store Event Calendar Hybrid",
+          "max_observations": 4,
+          "top_k_events": 3
+        }
+      },
+      "overall": {
+        "correct": 0,
+        "total": 33,
+        "accuracy": 0.0
+      },
+      "by_category": [
+        {
+          "category": "chapterbreak",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "colours",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "locations_directions",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "namelist",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "prospective_memory",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "sallyanne",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "shopping",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "spy_meeting",
+          "correct": 0,
+          "total": 3,
+          "accuracy": 0.0
+        },
+        {
+          "category": "trigger_response",
+          "correct": 0,
+          "total": 9,
+          "accuracy": 0.0
+        }
+      ]
+    }
+  }
+}

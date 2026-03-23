@@ -1,0 +1,107 @@
+{
+  "schema_version": "spark-chip.v1",
+  "version": "0.1.0",
+  "chip_name": "domain-chip-memory",
+  "domain": "agent-memory",
+  "description": "Benchmark-first Spark domain chip for building and evaluating agent memory systems against LongMemEval, LoCoMo, and ConvoMem.",
+  "capabilities": [
+    "evaluate",
+    "suggest",
+    "packets",
+    "watchtower"
+  ],
+  "commands": {
+    "evaluate": [
+      "python",
+      "-m",
+      "domain_chip_memory.cli",
+      "evaluate"
+    ],
+    "packets": [
+      "python",
+      "-m",
+      "domain_chip_memory.cli",
+      "packets"
+    ],
+    "suggest": [
+      "python",
+      "-m",
+      "domain_chip_memory.cli",
+      "suggest"
+    ],
+    "watchtower": [
+      "python",
+      "-m",
+      "domain_chip_memory.cli",
+      "watchtower"
+    ]
+  },
+  "hooks": {
+    "evaluate": {
+      "kind": "chip-evaluate",
+      "description": "Score chip readiness across manifest, evidence, evaluation, attribution, and benchmark-target coverage."
+    },
+    "packets": {
+      "kind": "packet-builder",
+      "description": "Build benchmark scorecards, strategy packets, and watchtower summaries."
+    },
+    "suggest": {
+      "kind": "mutation-suggest",
+      "description": "Propose bounded benchmark-driven mutations from failure classes and target gaps."
+    },
+    "watchtower": {
+      "kind": "drift-detection",
+      "description": "Track benchmark coverage, public-leader targets, and missing research controls."
+    }
+  },
+  "io_protocol": {
+    "input": "benchmark_run_manifest.json",
+    "output": "benchmark_scorecard.json",
+    "schemas_dir": "schemas/",
+    "artifacts_dir": "artifacts/"
+  },
+  "frontier": {
+    "enabled": true,
+    "required_fields": [
+      "benchmark",
+      "component",
+      "mutation_family"
+    ],
+    "allowed_mutations": {
+      "benchmark": [
+        "longmemeval",
+        "locomo",
+        "convomem"
+      ],
+      "component": [
+        "ingestion",
+        "schema",
+        "retrieval",
+        "reasoning",
+        "evaluation"
+      ],
+      "mutation_family": [
+        "observer_split",
+        "memory_atom_shape",
+        "temporal_grounding",
+        "version_resolution",
+        "search_ensemble",
+        "answer_specialist",
+        "abstention_gate"
+      ]
+    },
+    "field_patterns": {
+      "benchmark": "^(longmemeval|locomo|convomem)$",
+      "component": "^(ingestion|schema|retrieval|reasoning|evaluation)$",
+      "mutation_family": "^[a-z0-9_-]{3,64}$"
+    },
+    "prompt_hints": [
+      "Optimize for benchmark truth, not architecture aesthetics.",
+      "Treat temporal reasoning and knowledge updates as first-class memory problems.",
+      "Do not count a benchmark win until the scoring path is reproducible.",
+      "Track open-source borrowing explicitly and preserve license boundaries."
+    ],
+    "web_search": true
+  }
+}
+

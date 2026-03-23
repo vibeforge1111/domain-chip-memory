@@ -1,0 +1,95 @@
+{
+  "candidate_trials": [
+    {
+      "name": "baseline",
+      "mutations": {}
+    },
+    {
+      "name": "temporal-first-retrieval",
+      "mutations": {
+        "benchmark": "longmemeval",
+        "component": "retrieval",
+        "mutation_family": "temporal_grounding"
+      }
+    }
+  ],
+  "eval_metric": "quality_score",
+  "multiple_metrics": [
+    "quality_score",
+    "benchmark_target_coverage",
+    "evidence_lane_coverage",
+    "attribution_readiness"
+  ],
+  "required_fields_set": [
+    "benchmark_name",
+    "target_type",
+    "source_url",
+    "status",
+    "win_condition",
+    "next_action"
+  ],
+  "field_patterns_set": {
+    "benchmark_scorecard": "benchmark_scorecard.json",
+    "watchtower_summary": "watchtower_summary.json",
+    "mutation_packet": "mutation_packet.json",
+    "strategy_packet": "memory_system_strategy_packet.json"
+  },
+  "chip": {
+    "path": ".",
+    "manifest": "spark-chip.json"
+  },
+  "commands": {
+    "evaluate": {
+      "kind": "chip-evaluate"
+    },
+    "watchtower": {
+      "kind": "refresh-watchtower",
+      "description": "Refresh benchmark coverage, public target status, and missing controls."
+    },
+    "packets": {
+      "kind": "build-packets",
+      "description": "Build benchmark scorecards and strategy packets."
+    },
+    "suggest": {
+      "kind": "suggest-mutations",
+      "description": "Propose next memory-system mutations from the benchmark target ledger."
+    }
+  },
+  "watchtower_pages": [
+    {
+      "label": "memory_watchtower",
+      "path": "artifacts/watchtower_summary.json"
+    },
+    {
+      "label": "memory_strategy_packet",
+      "path": "artifacts/memory_system_strategy_packet.json"
+    }
+  ],
+  "self_edit_config": {
+    "allowed_targets": [
+      "docs",
+      "schemas",
+      "templates",
+      "benchmark_registry",
+      "evaluation_policy"
+    ],
+    "requires_lineage_failures": 3,
+    "rollback_on_regression": true
+  },
+  "mission_docs": "docs/PRD.md",
+  "obsidian_vault": "research/",
+  "guardrails": {
+    "max_loop_iterations": 10,
+    "blocked_command_fragments": [
+      "rm -rf",
+      "format c:",
+      "del /s /q",
+      "drop table",
+      "truncate"
+    ]
+  },
+  "memory": {
+    "backend": "local"
+  }
+}
+

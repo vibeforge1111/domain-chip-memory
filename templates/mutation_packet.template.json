@@ -1,0 +1,20 @@
+{
+  "mutation_id": "mem-000",
+  "benchmark": "longmemeval",
+  "component": "retrieval",
+  "mutation_family": "temporal_router_combo",
+  "rationale": "",
+  "parent_baseline": "epi_atom",
+  "hypothesis_type": "combination",
+  "combined_components": [
+    "ATOM",
+    "TIME",
+    "ROUTE"
+  ],
+  "target_failure_slice": "knowledge-update",
+  "online_cost_delta": "small",
+  "latency_delta": "small",
+  "token_delta": "small",
+  "comparison_rule": "Compare against the direct parent baseline on the same benchmark slice.",
+  "keep_if": "Promote only if target slice improves and no major abstention or latency regression appears."
+}

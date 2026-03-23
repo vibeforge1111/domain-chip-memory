@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Baseline Prompt Packet",
+  "type": "object",
+  "required": [
+    "benchmark_name",
+    "baseline_name",
+    "sample_id",
+    "question_id",
+    "question",
+    "assembled_context",
+    "retrieved_context_items"
+  ],
+  "properties": {
+    "benchmark_name": { "type": "string" },
+    "baseline_name": { "type": "string" },
+    "sample_id": { "type": "string" },
+    "question_id": { "type": "string" },
+    "question": { "type": "string" },
+    "assembled_context": { "type": "string" },
+    "retrieved_context_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["session_id", "turn_ids", "score", "strategy", "text"],
+        "properties": {
+          "session_id": { "type": "string" },
+          "turn_ids": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "score": { "type": "number" },
+          "strategy": { "type": "string" },
+          "text": { "type": "string" },
+          "metadata": { "type": "object" }
+        }
+      }
+    },
+    "metadata": { "type": "object" }
+  }
+}

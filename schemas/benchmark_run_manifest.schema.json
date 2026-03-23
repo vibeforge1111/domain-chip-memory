@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Benchmark Run Manifest",
+  "type": "object",
+  "required": [
+    "run_id",
+    "benchmark_name",
+    "baseline_name",
+    "sample_ids",
+    "question_ids",
+    "question_count"
+  ],
+  "properties": {
+    "run_id": { "type": "string" },
+    "benchmark_name": { "type": "string" },
+    "baseline_name": { "type": "string" },
+    "sample_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "question_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "question_count": { "type": "integer" },
+    "metadata": { "type": "object" }
+  }
+}

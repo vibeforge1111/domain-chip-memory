@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Normalized Session",
+  "type": "object",
+  "required": ["session_id", "turns"],
+  "properties": {
+    "session_id": { "type": "string" },
+    "timestamp": { "type": ["string", "null"] },
+    "turns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["turn_id", "speaker", "text"],
+        "properties": {
+          "turn_id": { "type": "string" },
+          "speaker": { "type": "string" },
+          "text": { "type": "string" },
+          "timestamp": { "type": ["string", "null"] },
+          "metadata": { "type": "object" }
+        }
+      }
+    },
+    "metadata": { "type": "object" }
+  }
+}

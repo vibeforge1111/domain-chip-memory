@@ -1,0 +1,56 @@
+{
+  "generated_at": "2026-03-22T13:30:50Z",
+  "status": "discovery",
+  "benchmark_target_summary": {
+    "target_count": 3,
+    "pinned_threshold_count": 1,
+    "unpinned_threshold_count": 2
+  },
+  "docs_ready": {
+    "required": [
+      "PRD.md",
+      "ARCHITECTURE.md",
+      "IMPLEMENTATION_PLAN.md",
+      "BENCHMARK_STRATEGY.md",
+      "AUTOLOOP_FLYWHEEL.md",
+      "OPEN_SOURCE_ATTRIBUTION_PLAN.md"
+    ],
+    "present_count": 6,
+    "missing_count": 0,
+    "present": [
+      "PRD.md",
+      "ARCHITECTURE.md",
+      "IMPLEMENTATION_PLAN.md",
+      "BENCHMARK_STRATEGY.md",
+      "AUTOLOOP_FLYWHEEL.md",
+      "OPEN_SOURCE_ATTRIBUTION_PLAN.md"
+    ]
+  },
+  "frontier_gaps": [
+    "Capture exact leaderboard number from official benchmark or reproducible MemoryBench run.",
+    "Pin the benchmark definition, license, and current public numeric threshold."
+  ],
+  "recommended_next_mutations": [
+    {
+      "mutation_id": "mem-001",
+      "benchmark": "LongMemEval",
+      "component": "schema",
+      "mutation_family": "temporal_grounding",
+      "rationale": "Public frontier is most differentiated on knowledge updates and temporal reasoning."
+    },
+    {
+      "mutation_id": "mem-002",
+      "benchmark": "LongMemEval",
+      "component": "retrieval",
+      "mutation_family": "search_ensemble",
+      "rationale": "The strongest public systems all treat retrieval quality as the main unlock, not the final answer prompt."
+    },
+    {
+      "mutation_id": "mem-003",
+      "benchmark": "ConvoMem",
+      "component": "evaluation",
+      "mutation_family": "abstention_gate",
+      "rationale": "ConvoMem and LongMemEval both punish over-answering; abstention should be optimized explicitly."
+    }
+  ]
+}

@@ -1,0 +1,377 @@
+{
+  "generated_at": "2026-03-22T23:52:26Z",
+  "packet_type": "memory_system_strategy_packet",
+  "north_star": "Beat the strongest public agent-memory systems with a reproducible benchmark-native architecture.",
+  "benchmarks": [
+    {
+      "benchmark_name": "LongMemEval",
+      "dataset_scope": "LongMemEval_s",
+      "target_type": "exact_public_score",
+      "current_public_leader": "Chronos",
+      "reported_result": "95.60% overall with Chronos High; 92.60% overall with Chronos Low",
+      "win_condition": "Beat the best publicly sourced overall score with a reproducible run.",
+      "status": "pinned",
+      "source_url": "https://arxiv.org/abs/2603.16862",
+      "notes": "Chronos, submitted on March 17, 2026, is the highest public LongMemEvalS claim in the current source sweep. Mastra OM remains the strongest implementation-backed public claim at 94.87% with gpt-5-mini and 84.23% with gpt-4o.",
+      "next_action": "Treat Chronos as the frontier score target and Mastra OM as the strongest implementation-backed comparison point during reproduction."
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "dataset_scope": "QA task over locomo10 subset",
+      "target_type": "public_rank_claim",
+      "current_public_leader": "Supermemory",
+      "reported_result": "#1 claim, exact public score not pinned in reviewed source",
+      "win_condition": "Pin exact sourced threshold, then beat it on the same task definition.",
+      "status": "needs_threshold",
+      "source_url": "https://github.com/supermemoryai/supermemory",
+      "notes": "Public README claims #1, but exact numeric score was not visible in the source sweep.",
+      "next_action": "Capture exact leaderboard number from official benchmark or reproducible MemoryBench run."
+    },
+    {
+      "benchmark_name": "GoodAI LTM Benchmark",
+      "dataset_scope": "published benchmark configurations from 4k to 500k context spans",
+      "target_type": "benchmark_harness_target",
+      "current_public_leader": "GoodAI published agents and baselines",
+      "reported_result": "Living benchmark with published configs and reported GoodAI agent baselines; exact single frontier number depends on configuration.",
+      "win_condition": "Beat strong baselines inside the published harness on the chosen configuration set and preserve reproducibility.",
+      "status": "active_harness",
+      "source_url": "https://github.com/GoodAI/goodai-ltm-benchmark",
+      "notes": "Best used as an internal core stress benchmark for long-span conversational memory and continual-memory upkeep rather than as a single public leaderboard scalar.",
+      "next_action": "Choose the first canonical configuration set, reproduce the published baseline path, and lock the scorecard contract."
+    },
+    {
+      "benchmark_name": "BEAM",
+      "dataset_scope": "100 coherent conversations and 2,000 validated questions up to 10M tokens",
+      "target_type": "frontier_paper_benchmark",
+      "current_public_leader": "LIGHT framework from the paper",
+      "reported_result": "Paper reports LIGHT improving 3.5% to 12.69% over the strongest baselines depending on the backbone LLM.",
+      "win_condition": "Reproduce the benchmark definition faithfully once code or data access is pinned, then beat the strongest reported baseline on the chosen slice.",
+      "status": "paper_only",
+      "source_url": "https://arxiv.org/abs/2510.27246",
+      "notes": "High-value frontier benchmark for higher-context and million-token-scale memory pressure. Current source is the paper; implementation surface still needs pinning.",
+      "next_action": "Track public code or dataset release, then lock the benchmark adapter and scorecard contract."
+    }
+  ],
+  "experimental_frontier_claims": [
+    {
+      "system_name": "Supermemory ASMR",
+      "benchmark_name": "LongMemEval_s",
+      "reported_result": "~98.60% with an 8-variant ensemble; ~97.20% with a 12-variant decision forest; framed as ~99% frontier memory",
+      "claim_type": "pending_public_release",
+      "status": "not_yet_reproducible",
+      "source_url": "https://supermemory.ai/research/",
+      "notes": "User-provided Supermemory ASMR writeup describes a forthcoming experimental release rather than the main production engine. The architecture uses multi-agent ingestion, agentic search, and answer ensembles. Treat it as a high-signal frontier claim to learn from, not yet as a pinned reproducible benchmark bar.",
+      "next_action": "Track the promised public release, pin the exact implementation surface, then reproduce against the same LongMemEval_s path."
+    }
+  ],
+  "shadow_benchmarks": [
+    {
+      "benchmark_name": "ConvoMem",
+      "scope": "75,336 QA pairs across user facts, assistant facts, preferences, changing facts, implicit connections, and abstention",
+      "role": "shadow_regression_benchmark",
+      "why": "Guardrail against overbuilding retrieval when full context still works and against regressions on preferences, changing facts, and abstention.",
+      "source_url": "https://huggingface.co/datasets/Salesforce/ConvoMem",
+      "license": "CC BY-NC 4.0"
+    }
+  ],
+  "canonical_configs": [
+    {
+      "benchmark_name": "GoodAI LTM Benchmark",
+      "config_id": "benchmark-v3-32k.yml",
+      "status": "initial_canonical_config",
+      "rationale": "Program inference: 32k is the first serious long-span setting that remains practical for early reproducible baseline loops. 1k is too weak, while 120k+ is better suited for later stress promotion.",
+      "next_configs": [
+        "benchmark-v3-120k.yml",
+        "benchmark-v3-500k.yml"
+      ],
+      "source_url": "https://github.com/GoodAI/goodai-ltm-benchmark"
+    }
+  ],
+  "architecture_bets": [
+    "memory atoms with provenance",
+    "temporal and version relations",
+    "question-type-aware retrieval",
+    "stable observational compression for very large context windows",
+    "lightweight online path with offline consolidation",
+    "failure-slice mutation loop"
+  ],
+  "active_optimization_lane": {
+    "benchmark": "LongMemEval",
+    "provider": "MiniMax-M2.7",
+    "system": "observational_temporal_memory",
+    "status": "current internal lead",
+    "evidence": {
+      "slice": "first 25 LongMemEval_s samples",
+      "score": "13/25",
+      "accuracy": 0.52
+    },
+    "why": "Current best measured path in-repo; materially ahead of beam_temporal_atom_router on the same real slice."
+  },
+  "ten_system_variants": [
+    {
+      "variant_id": "variant-01",
+      "name": "Full-Context Control",
+      "family": "control",
+      "benchmark_posture": "use as an honesty baseline, not as the target architecture"
+    },
+    {
+      "variant_id": "variant-02",
+      "name": "Lexical Retrieval Memory",
+      "family": "retrieval",
+      "benchmark_posture": "cheap baseline that should lose once temporal pressure rises"
+    },
+    {
+      "variant_id": "variant-03",
+      "name": "Vector Semantic Retrieval Memory",
+      "family": "retrieval",
+      "benchmark_posture": "common production baseline, but weak on stale facts and time"
+    },
+    {
+      "variant_id": "variant-04",
+      "name": "Rolling Summary Memory",
+      "family": "compression",
+      "benchmark_posture": "lightweight but vulnerable to irreversible information loss"
+    },
+    {
+      "variant_id": "variant-05",
+      "name": "Temporal Atom Memory",
+      "family": "temporal_structured",
+      "benchmark_posture": "strong benchmark-native default for updates and supersession"
+    },
+    {
+      "variant_id": "variant-06",
+      "name": "Event Calendar Memory",
+      "family": "temporal_structured",
+      "benchmark_posture": "high-upside for temporal and multi-hop slices"
+    },
+    {
+      "variant_id": "variant-07",
+      "name": "Observational Stable-Window Memory",
+      "family": "compression_temporal",
+      "benchmark_posture": "important for BEAM-style pressure and stable prompt caching"
+    },
+    {
+      "variant_id": "variant-08",
+      "name": "Agentic Search Memory",
+      "family": "agentic_retrieval",
+      "benchmark_posture": "frontier claim lane only until lighter systems plateau"
+    },
+    {
+      "variant_id": "variant-09",
+      "name": "Relation Graph Memory",
+      "family": "relational",
+      "benchmark_posture": "second-wave path for multi-hop and entity-heavy slices"
+    },
+    {
+      "variant_id": "variant-10",
+      "name": "Dual-Store Consolidated Memory",
+      "family": "hybrid",
+      "benchmark_posture": "best long-range candidate once BEAM pressure starts to dominate"
+    }
+  ],
+  "initial_system_ladder": [
+    {
+      "system_id": "system-1",
+      "name": "Beam-Ready Temporal Atom Router",
+      "components": [
+        "EPI",
+        "ATOM",
+        "TIME",
+        "ROUTE",
+        "REHYDRATE",
+        "ABSTAIN"
+      ],
+      "purpose": "Lightweight default build for LongMemEval, LoCoMo, GoodAI, and early BEAM pressure."
+    },
+    {
+      "system_id": "system-2",
+      "name": "Observational Temporal Memory",
+      "components": [
+        "OBSERVE",
+        "REFLECT",
+        "TIME",
+        "PROFILE",
+        "ABSTAIN"
+      ],
+      "purpose": "Stable-window compressed memory candidate for large-context and BEAM-oriented runs."
+    },
+    {
+      "system_id": "system-3",
+      "name": "Dual-Store Event Calendar Hybrid",
+      "components": [
+        "OBSERVE",
+        "ATOM",
+        "TIME",
+        "EVENTS",
+        "ROUTE",
+        "REHYDRATE",
+        "RELATE",
+        "ABSTAIN"
+      ],
+      "purpose": "Highest-upside hybrid once the first two systems define the best lightweight ingredients."
+    }
+  ],
+  "remaining_work": [
+    "canonical scorecards per benchmark",
+    "full-context baseline",
+    "lexical baseline",
+    "semantic-atom baseline",
+    "temporal-semantic baseline",
+    "observational-memory baseline",
+    "beam-ready dual-store baseline",
+    "shadow benchmark checks",
+    "ablation runner",
+    "promotion and rollback logging over real runs"
+  ],
+  "combination_search_doctrine": [
+    "Start with a strong lightweight baseline before trying heavier combinations.",
+    "Add one component family at a time and compare against the direct parent baseline.",
+    "Prefer combinations that pair compact retrieval units with temporal disambiguation and selective routing.",
+    "Treat heavyweight online combinations as guilty until they beat the lightweight stack clearly."
+  ],
+  "candidate_combinations": [
+    {
+      "combo_id": "combo-a",
+      "components": [
+        "EPI",
+        "ATOM"
+      ],
+      "why": "Strong simple retrieval baseline with raw provenance."
+    },
+    {
+      "combo_id": "combo-b",
+      "components": [
+        "EPI",
+        "ATOM",
+        "TIME"
+      ],
+      "why": "Most defensible V1 core for changing facts and temporal reasoning."
+    },
+    {
+      "combo_id": "combo-c",
+      "components": [
+        "EPI",
+        "ATOM",
+        "TIME",
+        "ROUTE"
+      ],
+      "why": "Adds selective routing without a heavyweight online path."
+    },
+    {
+      "combo_id": "combo-g",
+      "components": [
+        "EPI",
+        "ATOM",
+        "TIME",
+        "PROFILE",
+        "ROUTE",
+        "REHYDRATE",
+        "ABSTAIN"
+      ],
+      "why": "Best current candidate for a serious benchmark-ready lightweight stack."
+    }
+  ],
+  "skeptical_combinations": [
+    {
+      "components": [
+        "GRAPH",
+        "SEARCH-AGENT"
+      ],
+      "risk": "retrieval complexity explosion before the lightweight baseline is exhausted"
+    },
+    {
+      "components": [
+        "SEARCH-AGENT",
+        "ANSWER-ENSEMBLE"
+      ],
+      "risk": "online latency and token blow-up"
+    }
+  ],
+  "priority_mutations": [
+    {
+      "mutation_id": "mem-001",
+      "benchmark": "LongMemEval",
+      "component": "schema",
+      "mutation_family": "temporal_grounding",
+      "rationale": "Public frontier is most differentiated on knowledge updates and temporal reasoning.",
+      "parent_baseline": "epi_atom",
+      "hypothesis_type": "single_component",
+      "combined_components": [
+        "ATOM",
+        "TIME"
+      ],
+      "target_failure_slice": "knowledge-update",
+      "online_cost_delta": "small",
+      "latency_delta": "small",
+      "token_delta": "none",
+      "comparison_rule": "Compare against semantic-atom retrieval without temporal logic.",
+      "keep_if": "Keep only if knowledge-update improves without a broad regression elsewhere."
+    },
+    {
+      "mutation_id": "mem-002",
+      "benchmark": "Cross-benchmark",
+      "component": "retrieval",
+      "mutation_family": "temporal_router_combo",
+      "rationale": "The strongest lightweight path is likely semantic atoms plus time-aware routing, not raw search complexity.",
+      "parent_baseline": "epi_atom_time",
+      "hypothesis_type": "combination",
+      "combined_components": [
+        "ATOM",
+        "TIME",
+        "ROUTE"
+      ],
+      "target_failure_slice": "mixed_history_generalization",
+      "online_cost_delta": "small",
+      "latency_delta": "small",
+      "token_delta": "small",
+      "comparison_rule": "Compare against the same atom-plus-time system with no query-aware routing.",
+      "keep_if": "Keep only if it improves LongMemEval and does not regress on short-history shadow slices where full context should still be strong."
+    },
+    {
+      "mutation_id": "mem-003",
+      "benchmark": "ConvoMem shadow",
+      "component": "evaluation",
+      "mutation_family": "abstention_gate",
+      "rationale": "The shadow benchmark and LongMemEval both punish over-answering; abstention should be optimized explicitly.",
+      "parent_baseline": "epi_atom_time_route",
+      "hypothesis_type": "combination",
+      "combined_components": [
+        "ATOM",
+        "TIME",
+        "ROUTE",
+        "ABSTAIN"
+      ],
+      "target_failure_slice": "abstention",
+      "online_cost_delta": "none",
+      "latency_delta": "none",
+      "token_delta": "none",
+      "comparison_rule": "Compare against the same retrieval stack without explicit abstention calibration.",
+      "keep_if": "Keep only if abstention improves without suppressing too many correct answers."
+    },
+    {
+      "mutation_id": "mem-004",
+      "benchmark": "LoCoMo",
+      "component": "retrieval",
+      "mutation_family": "relation_expansion_combo",
+      "rationale": "Relation expansion is one of the best second-wave additions once the temporal-semantic core is stable.",
+      "parent_baseline": "epi_atom_time_profile_route_rehydrate_abstain",
+      "hypothesis_type": "combination",
+      "combined_components": [
+        "ATOM",
+        "TIME",
+        "PROFILE",
+        "ROUTE",
+        "REHYDRATE",
+        "ABSTAIN",
+        "RELATE"
+      ],
+      "target_failure_slice": "multi-hop",
+      "online_cost_delta": "medium",
+      "latency_delta": "small",
+      "token_delta": "small",
+      "comparison_rule": "Compare against the same stack with relation expansion disabled.",
+      "keep_if": "Keep only if multi-hop and temporal LoCoMo slices rise enough to justify the extra retrieval work."
+    }
+  ],
+  "promotion_rule": "Do not promote a doctrine until it improves benchmark behavior and survives contradiction review."
+}

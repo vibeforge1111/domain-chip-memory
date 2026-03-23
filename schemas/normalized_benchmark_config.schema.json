@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Normalized Benchmark Config",
+  "type": "object",
+  "required": ["benchmark_name", "config_id", "run_name", "dataset_family_names"],
+  "properties": {
+    "benchmark_name": { "type": "string" },
+    "config_id": { "type": "string" },
+    "run_name": { "type": "string" },
+    "dataset_family_names": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "memory_span_tokens": { "type": ["integer", "null"] },
+    "dataset_examples": { "type": ["integer", "null"] },
+    "metadata": { "type": "object" }
+  }
+}

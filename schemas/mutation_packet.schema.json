@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Mutation Packet",
+  "type": "object",
+  "required": [
+    "mutation_id",
+    "benchmark",
+    "component",
+    "mutation_family",
+    "rationale",
+    "parent_baseline",
+    "hypothesis_type",
+    "comparison_rule"
+  ],
+  "properties": {
+    "mutation_id": {
+      "type": "string"
+    },
+    "benchmark": {
+      "type": "string"
+    },
+    "component": {
+      "type": "string"
+    },
+    "mutation_family": {
+      "type": "string"
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "parent_baseline": {
+      "type": "string"
+    },
+    "hypothesis_type": {
+      "type": "string",
+      "enum": ["single_component", "combination", "ablation"]
+    },
+    "combined_components": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target_failure_slice": {
+      "type": "string"
+    },
+    "online_cost_delta": {
+      "type": "string"
+    },
+    "latency_delta": {
+      "type": "string"
+    },
+    "token_delta": {
+      "type": "string"
+    },
+    "comparison_rule": {
+      "type": "string"
+    },
+    "keep_if": {
+      "type": "string"
+    }
+  }
+}

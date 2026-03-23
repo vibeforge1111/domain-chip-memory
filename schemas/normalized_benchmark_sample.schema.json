@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Normalized Benchmark Sample",
+  "type": "object",
+  "required": ["benchmark_name", "sample_id", "sessions", "questions"],
+  "properties": {
+    "benchmark_name": { "type": "string" },
+    "sample_id": { "type": "string" },
+    "sessions": {
+      "type": "array",
+      "items": { "$ref": "normalized_session.schema.json" }
+    },
+    "questions": {
+      "type": "array",
+      "items": { "$ref": "normalized_question.schema.json" }
+    },
+    "metadata": { "type": "object" }
+  }
+}
