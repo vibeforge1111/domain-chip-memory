@@ -462,7 +462,11 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
             return match.group(1)
 
     if "identity" in question_lower:
+        if answer.lower().strip() == "trans woman":
+            return "Transgender woman"
         if "transgender" in combined_lower or "trans woman" in combined_lower or "trans experience" in combined_lower:
+            return "Transgender woman"
+        if "gender identity" in combined_lower and "transition" in combined_lower:
             return "Transgender woman"
 
     if question_lower.startswith("what did") and "research" in question_lower:

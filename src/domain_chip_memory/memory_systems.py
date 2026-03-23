@@ -256,6 +256,30 @@ def _observation_surface_text(subject: str, predicate: str, value: str, source_t
             if subject == "user"
             else f"{surface_subject} went to the museum {value}"
         )
+    if predicate == "identity":
+        return (
+            f"My identity is {value}"
+            if subject == "user"
+            else f"{surface_subject}'s identity is {value}"
+        )
+    if predicate == "sunrise_paint_time":
+        return (
+            f"I painted a sunrise {value}"
+            if subject == "user"
+            else f"{surface_subject} painted a sunrise {value}"
+        )
+    if predicate == "camping_plan_time":
+        return (
+            f"I'm planning on going camping {value}"
+            if subject == "user"
+            else f"{surface_subject} is planning on going camping {value}"
+        )
+    if predicate == "pottery_class_signup_time":
+        return (
+            f"I signed up for a pottery class {value}"
+            if subject == "user"
+            else f"{surface_subject} signed up for a pottery class {value}"
+        )
     if predicate == "activity":
         return (
             f"I partake in {value}"
@@ -319,6 +343,10 @@ def _answer_candidate_surface_text(subject: str, predicate: str, value: str, sou
         "moved_from_location",
         "career_path",
         "museum_visit_time",
+        "identity",
+        "sunrise_paint_time",
+        "camping_plan_time",
+        "pottery_class_signup_time",
         "activity",
         "camp_location",
         "kids_interest",
@@ -397,6 +425,12 @@ def _extract_atoms_from_turn(
             "career_path",
         ),
         (r"\byesterday I took the kids to the museum\b", "museum_visit_time"),
+        (r"\bmy transgender journey\b", "identity"),
+        (r"\bexplore my gender identity\b", "identity"),
+        (r"\bduring my transition\b", "identity"),
+        (r"\bpainted that lake sunrise\s+(last year)\b", "sunrise_paint_time"),
+        (r"\bgoing camping\s+(next month)\b", "camping_plan_time"),
+        (r"\bsigned up for a pottery class\s+(yesterday)\b", "pottery_class_signup_time"),
         (r"\bsigned up for a\s+(pottery)\s+class\b", "activity"),
         (r"\boff to go\s+(swimming)\b", "activity"),
         (r"\bpainted that lake sunrise\b", "activity_painting"),
@@ -455,6 +489,14 @@ def _extract_atoms_from_turn(
             atom_subject = subject
             atom_predicate = predicate
             value = "yesterday"
+        elif predicate == "identity":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = "Transgender woman"
+        elif predicate in {"sunrise_paint_time", "camping_plan_time", "pottery_class_signup_time"}:
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(match.group(1))
         elif predicate == "activity_painting":
             atom_subject = subject
             atom_predicate = "activity"
@@ -492,6 +534,10 @@ def _extract_atoms_from_turn(
             if atom_predicate == "book_read":
                 value = value.strip('"')
         if atom_predicate in {
+            "identity",
+            "sunrise_paint_time",
+            "camping_plan_time",
+            "pottery_class_signup_time",
             "activity",
             "camp_location",
             "kids_interest",
@@ -577,6 +623,9 @@ def build_observation_log(sample: NormalizedBenchmarkSample) -> list[Observation
                 "support_network_meetup_time",
                 "charity_race_time",
                 "museum_visit_time",
+                "sunrise_paint_time",
+                "camping_plan_time",
+                "pottery_class_signup_time",
             }:
                 text = f"On {atom.timestamp}, {text}"
         observations.append(
@@ -699,6 +748,14 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("career_path")
     if "museum" in question_lower:
         predicates.append("museum_visit_time")
+    if "identity" in question_lower:
+        predicates.append("identity")
+    if "paint" in question_lower and "sunrise" in question_lower:
+        predicates.append("sunrise_paint_time")
+    if "planning on going camping" in question_lower or ("when is" in question_lower and "camping" in question_lower):
+        predicates.append("camping_plan_time")
+    if "sign up" in question_lower and "pottery class" in question_lower:
+        predicates.append("pottery_class_signup_time")
     if "activities" in question_lower and ("partake" in question_lower or "does" in question_lower):
         predicates.append("activity")
     if "where has" in question_lower and "camped" in question_lower:

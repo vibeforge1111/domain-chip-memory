@@ -34,7 +34,9 @@ Current internal lead as of 2026-03-23:
 - `observational_temporal_memory + MiniMax-M2.7`
 - real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
 - real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
+- real rerun on March 23, 2026 over the first 25 `LoCoMo` `conv-26` questions: `19/25` (`0.76`)
 - latest recorded comparison lane on the same provider path remains the 25-sample rerun: `beam_temporal_atom_router + MiniMax-M2.7` at `7/25` (`0.28`)
+- MiniMax operating notes and default guardrails now live in `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
 
 The repo now has the standard Spark domain-chip scaffold:
 
@@ -63,6 +65,7 @@ It does **not** yet contain official benchmark scoring or a production-grade mem
 - frontier systems comparative analysis: `docs/FRONTIER_MEMORY_SYSTEMS_COMPARATIVE_ANALYSIS_2026-03-22.md`
 - execution program and PRD gap: `docs/EXECUTION_PROGRAM_AND_PRD_GAP_2026-03-22.md`
 - memory variation map and three builds: `docs/MEMORY_VARIATION_MAP_AND_THREE_BUILDS_2026-03-23.md`
+- MiniMax operational notes: `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
 - session log for today: `docs/SESSION_LOG_2026-03-23.md`
 - benchmark substrate contracts: `docs/BENCHMARK_SUBSTRATE_CONTRACTS.md`
 - people and labs map: `research/research_grounded/ARXIV_PEOPLE_AND_LABS_MAP_2026-03-22.md`

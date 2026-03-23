@@ -591,6 +591,112 @@ def test_locomo_structured_predicates_capture_duration_location_and_museum_time(
     assert "went to the museum yesterday" in assembled
 
 
+def test_locomo_structured_predicates_capture_identity_and_temporal_signup_facts():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-identity-temporal",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="1:56 pm on 8 May, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d1",
+                        speaker="Melanie",
+                        text="Yeah, I painted that lake sunrise last year! It's special to me.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="1:14 pm on 25 May, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d2",
+                        speaker="Melanie",
+                        text="We're thinking about going camping next month.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_3",
+                timestamp="1:36 pm on 3 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d3",
+                        speaker="Melanie",
+                        text="I just signed up for a pottery class yesterday. It's like therapy for me, letting me express myself and get creative.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_4",
+                timestamp="7:55 pm on 9 June, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d4",
+                        speaker="Caroline",
+                        text="I wanted to tell you about my transgender journey and how far I've come since I started transitioning three years ago.",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="When did Melanie paint a sunrise?",
+                category="2",
+                expected_answers=["2022"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d1"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q2",
+                question="When is Melanie planning on going camping?",
+                category="2",
+                expected_answers=["June 2023"],
+                evidence_session_ids=["session_2"],
+                evidence_turn_ids=["d2"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q3",
+                question="When did Melanie sign up for a pottery class?",
+                category="2",
+                expected_answers=["2 July 2023"],
+                evidence_session_ids=["session_3"],
+                evidence_turn_ids=["d3"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q4",
+                question="What is Caroline's identity?",
+                category="1",
+                expected_answers=["Transgender woman"],
+                evidence_session_ids=["session_4"],
+                evidence_turn_ids=["d4"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+    assembled = "\n".join(packet.assembled_context for packet in packets)
+    assert "On 1:56 pm on 8 May, 2023, Melanie painted a sunrise last year" in assembled
+    assert "On 1:14 pm on 25 May, 2023, Melanie is planning on going camping next month" in assembled
+    assert "On 1:36 pm on 3 July, 2023, Melanie signed up for a pottery class yesterday" in assembled
+    assert "identity is Transgender woman" in assembled
+
+
 def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
     from domain_chip_memory.contracts import (
         NormalizedBenchmarkSample,

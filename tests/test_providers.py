@@ -986,3 +986,32 @@ def test_minimax_provider_rescues_locomo_list_and_inference_shapes(monkeypatch):
     assert provider.generate_answer(kids_packet).answer == "dinosaurs, nature"
     assert provider.generate_answer(bookshelf_packet).answer == "Yes, since she collects classic children's books"
     assert provider.generate_answer(destress_packet).answer == "Running, pottery"
+
+
+def test_minimax_provider_normalizes_trans_woman_identity_answer(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Trans woman"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 2, "total_tokens": 14},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-5",
+        question="What is Caroline's identity?",
+        assembled_context="reflection: Caroline's identity is Transgender woman",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "Transgender woman"
