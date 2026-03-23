@@ -410,7 +410,7 @@ def _extract_atoms_from_turn(
         (r"\bthe \d+\s+younger kids love\s+(nature)\b", "kids_interest"),
         (r"\bdinosaur exhibit\b", "kids_interest_dinosaurs"),
         (r"\bkids'? books-?\s+classics\b", "bookshelf_collection"),
-        (r'\bloved reading\s+"([^"]+)"\b', "book_read"),
+        (r'\bloved reading\s+"([^"]+)"', "book_read"),
         (r"\brunning farther to de-stress\b", "destress_activity_running"),
         (r"\bpottery(?: class)?\b[\s\S]{0,120}\b(?:therapy|relaxing|calming)\b", "destress_activity_pottery"),
     ]

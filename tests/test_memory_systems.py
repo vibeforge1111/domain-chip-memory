@@ -762,6 +762,15 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
                 evidence_turn_ids=["d5", "d11"],
                 metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
             ),
+            NormalizedQuestion(
+                question_id="q6",
+                question="What books has Melanie read?",
+                category="1",
+                expected_answers=['"Nothing is Impossible", "Charlotte\'s Web"'],
+                evidence_session_ids=["session_4"],
+                evidence_turn_ids=["d9"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
         ],
         metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
     )
@@ -781,3 +790,4 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
     assert "collects classic children's books" in packet_by_id["q4"].assembled_context
     assert "de-stresses by Running" in packet_by_id["q5"].assembled_context
     assert "de-stresses by pottery" in packet_by_id["q5"].assembled_context
+    assert 'read "Charlotte\'s Web"' in packet_by_id["q6"].assembled_context
