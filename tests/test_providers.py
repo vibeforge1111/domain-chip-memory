@@ -10,6 +10,7 @@ from domain_chip_memory.providers import (
     get_provider,
 )
 from domain_chip_memory.runs import BaselinePromptPacket
+from domain_chip_memory.runs import RetrievedContextItem
 
 
 class _FakeHTTPResponse:
@@ -78,6 +79,73 @@ def test_openai_provider_uses_env_model_and_chat_completions(monkeypatch):
     assert captured["timeout"] == 120
     assert captured["payload"]["model"] == "gpt-4.1-mini"
     assert captured["payload"]["messages"][1]["content"].startswith("Benchmark: LongMemEval")
+
+
+def test_minimax_provider_includes_context_image_urls(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(req, timeout):
+        captured["payload"] = json.loads(req.data.decode("utf-8"))
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Nothing is Impossible"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 2, "total_tokens": 14},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-24",
+        question="What books has Melanie read?",
+        assembled_context=(
+            "reflection: Melanie said this book she read last year reminds her to pursue her dreams.\n"
+            "reflection: Melanie read \"Charlotte's Web\""
+        ),
+        retrieved_context_items=[
+            RetrievedContextItem(
+                session_id="session_7",
+                turn_ids=["D7:8"],
+                score=9.0,
+                strategy="reflected_memory",
+                text="reflection: image-backed book turn",
+                metadata={
+                    "img_url": [
+                        "https://www.speakers.co.uk/microsites/tom-oliver/wp-content/uploads/2014/11/Book-Cover-3D1.jpg"
+                    ],
+                    "blip_caption": "a photography of a book cover with a gold coin on it",
+                },
+            ),
+            RetrievedContextItem(
+                session_id="session_6",
+                turn_ids=["D6:9"],
+                score=7.0,
+                strategy="reflected_memory",
+                text="reflection: Caroline is looking forward to reading to her future kids",
+                metadata={
+                    "img_url": [
+                        "https://i.pinimg.com/originals/02/94/c3/0294c3460b66d1fd50530e4bd5a2e1f5.jpg"
+                    ],
+                    "blip_caption": "a photo of a bookcase filled with books and toys",
+                },
+            ),
+        ],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "Nothing is Impossible"
+    assert response.metadata["context_image_count"] == 2
+    content = captured["payload"]["messages"][1]["content"]
+    assert isinstance(content, list)
+    assert content[0]["type"] == "text"
+    assert content[1]["type"] == "image_url"
+    assert content[1]["image_url"]["url"].endswith("Book-Cover-3D1.jpg")
 
 
 def test_provider_contract_summary_lists_openai():
@@ -181,6 +249,7 @@ def test_openai_provider_retries_temporary_transport_failures(monkeypatch):
             "completion_tokens": 2,
             "total_tokens": 14,
             "context_compacted": False,
+            "context_image_count": 0,
             "request_attempts": 2,
         },
     )

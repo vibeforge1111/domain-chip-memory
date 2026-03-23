@@ -950,6 +950,14 @@ def build_observational_temporal_memory_packets(
             retrieved_items: list[RetrievedContextItem] = []
             for entry in stable_window:
                 line = f"observation: {entry.text}"
+                item_metadata = {
+                    "timestamp": entry.timestamp,
+                    "predicate": entry.predicate,
+                    "subject": entry.subject,
+                }
+                for field_name in ("img_url", "blip_caption", "search_query"):
+                    if field_name in entry.metadata:
+                        item_metadata[field_name] = entry.metadata[field_name]
                 context_blocks.append(line)
                 retrieved_items.append(
                     RetrievedContextItem(
@@ -958,13 +966,21 @@ def build_observational_temporal_memory_packets(
                         score=0.25,
                         strategy="observation_log",
                         text=line,
-                        metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
+                        metadata=item_metadata,
                     )
                 )
 
             context_blocks.append("reflected_memory:")
             for entry in ranked_reflections:
                 line = f"reflection: {entry.text}"
+                item_metadata = {
+                    "timestamp": entry.timestamp,
+                    "predicate": entry.predicate,
+                    "subject": entry.subject,
+                }
+                for field_name in ("img_url", "blip_caption", "search_query"):
+                    if field_name in entry.metadata:
+                        item_metadata[field_name] = entry.metadata[field_name]
                 context_blocks.append(line)
                 retrieved_items.append(
                     RetrievedContextItem(
@@ -973,7 +989,7 @@ def build_observational_temporal_memory_packets(
                         score=_observation_score(question, entry),
                         strategy="reflected_memory",
                         text=line,
-                        metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
+                        metadata=item_metadata,
                     )
                 )
 

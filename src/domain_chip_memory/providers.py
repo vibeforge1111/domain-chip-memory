@@ -6,7 +6,7 @@ import re
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
-from typing import Protocol
+from typing import Any, Protocol
 from urllib import error, request
 
 from .contracts import JsonDict
@@ -646,7 +646,51 @@ class OpenAIChatCompletionsProvider:
     def name(self) -> str:
         return f"{self.name_prefix}:{self.model}"
 
-    def build_messages(self, packet: BaselinePromptPacket) -> list[dict[str, str]]:
+    include_context_images: bool = False
+    max_context_images: int = 2
+
+    def _context_image_urls(self, packet: BaselinePromptPacket) -> list[str]:
+        if not self.include_context_images:
+            return []
+        tokens = _question_tokens(packet.question)
+        question_lower = packet.question.lower()
+        scored_urls: list[tuple[float, str]] = []
+        seen: set[str] = set()
+        for item in packet.retrieved_context_items:
+            raw_urls = item.metadata.get("img_url")
+            candidates: list[str]
+            if isinstance(raw_urls, list):
+                candidates = [str(url) for url in raw_urls]
+            elif isinstance(raw_urls, str):
+                candidates = [raw_urls]
+            else:
+                candidates = []
+            item_text = item.text.lower()
+            blip_caption = str(item.metadata.get("blip_caption", "")).lower()
+            item_subject = str(item.metadata.get("subject", "")).lower()
+            score = 2.0 * float(item.score)
+            score += float(sum(1 for token in tokens if token in item_text or token in blip_caption))
+            if item_subject:
+                score += 4.0 if item_subject in question_lower else -1.0
+            if "book" in item_text or "read" in item_text:
+                score += 3.0
+            if "book" in blip_caption or "cover" in blip_caption:
+                score += 2.0
+            for candidate in candidates:
+                normalized = candidate.strip()
+                if not normalized or normalized in seen:
+                    continue
+                seen.add(normalized)
+                scored_urls.append((score, normalized))
+        top = sorted(scored_urls, key=lambda item: (-item[0], item[1]))[: self.max_context_images]
+        return [url for _, url in top]
+
+    def build_messages(
+        self,
+        packet: BaselinePromptPacket,
+        *,
+        image_urls: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         context = self.prepare_context(packet)
         if self.include_packet_metadata:
             user_content = (
@@ -663,9 +707,17 @@ class OpenAIChatCompletionsProvider:
                 f"Context:\n{context}\n\n"
                 f"{self.final_instruction}"
             )
+        selected_image_urls = image_urls if image_urls is not None else self._context_image_urls(packet)
+        if selected_image_urls:
+            multimodal_content: list[dict[str, Any]] = [{"type": "text", "text": user_content}]
+            for url in selected_image_urls:
+                multimodal_content.append({"type": "image_url", "image_url": {"url": url}})
+            user_payload: str | list[dict[str, Any]] = multimodal_content
+        else:
+            user_payload = user_content
         return [
             {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": user_content},
+            {"role": "user", "content": user_payload},
         ]
 
     def prepare_context(self, packet: BaselinePromptPacket) -> str:
@@ -712,9 +764,10 @@ class OpenAIChatCompletionsProvider:
 
     def generate_answer(self, packet: BaselinePromptPacket) -> ProviderResponse:
         prepared_context = self.prepare_context(packet)
+        context_image_urls = self._context_image_urls(packet)
         payload = {
             "model": self.model,
-            "messages": self.build_messages(packet),
+            "messages": self.build_messages(packet, image_urls=context_image_urls),
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
@@ -733,6 +786,7 @@ class OpenAIChatCompletionsProvider:
                 "completion_tokens": usage.get("completion_tokens"),
                 "total_tokens": usage.get("total_tokens"),
                 "context_compacted": bool(self.compact_context_lines),
+                "context_image_count": len(context_image_urls),
                 "request_attempts": attempts,
             },
         )
@@ -810,6 +864,8 @@ def get_provider(name: str) -> ModelProvider:
             include_packet_metadata=False,
             compact_context_lines=8,
             enable_exact_span_rescue=True,
+            include_context_images=True,
+            max_context_images=2,
             extra_body={"reasoning_split": True},
             timeout_s=45,
             max_retries=2,

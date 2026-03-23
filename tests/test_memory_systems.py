@@ -910,3 +910,10 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
     assert 'read "Charlotte\'s Web"' in packet_by_id["q6"].assembled_context
     assert "This book I read last year reminds me to always pursue my dreams" in packet_by_id["q6"].assembled_context
     assert "image_caption: a photography of a book cover with a gold coin on it" in packet_by_id["q6"].assembled_context
+    image_items = [
+        item
+        for item in packet_by_id["q6"].retrieved_context_items
+        if item.metadata.get("img_url")
+    ]
+    assert image_items
+    assert image_items[0].metadata["img_url"][0].endswith("Book-Cover-3D1.jpg")
