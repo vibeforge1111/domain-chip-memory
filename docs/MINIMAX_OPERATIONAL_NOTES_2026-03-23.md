@@ -105,6 +105,8 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - inspect the saved artifact
   - inspect the exact packet for the wrong question
   - classify the miss before patching
+- Check `known_issue_summary` in fresh scorecards before opening a new tuning loop
+  - known benchmark inconsistency and multimodal-ceiling questions are now tagged in-band
 - Treat multimodal-title recovery as a separate lane
   - do not overfit text-only rescue logic to hallucinate missing title names
 

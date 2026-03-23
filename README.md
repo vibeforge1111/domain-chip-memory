@@ -42,6 +42,7 @@ Current MiniMax frontier on that `LoCoMo` slice is now explicit:
 
 - MiniMax is working well when the packet already contains the exact answer-bearing turn or structured predicate
 - MiniMax is still faltering on benchmark inconsistencies and multimodal/title-recovery gaps
+- scorecards now annotate these known issue classes directly in `known_issue_summary` so future reruns do not look like generic model regressions
 - the two remaining misses on the current `23/25` run are:
   - `conv-26-qa-6`: likely benchmark inconsistency, with context pointing to `Saturday` while gold expects `Sunday`
   - `conv-26-qa-24`: likely multimodal/title ceiling, with text-only recovery surfacing only `Charlotte's Web`
