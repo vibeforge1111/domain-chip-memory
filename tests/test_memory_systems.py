@@ -1001,3 +1001,94 @@ def test_locomo_question_relevant_window_surfaces_support_network_facts():
     _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
 
     assert "friends, family and mentors are my rocks" in packets[0].assembled_context.lower()
+
+
+def test_locomo_question_relevant_window_surfaces_second_slice_event_turns():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-second-slice-events",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="7:55 pm on 9 June, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d3",
+                        speaker="Caroline",
+                        text=(
+                            "I felt super powerful giving my talk. It was wonderful to see how the audience related to "
+                            "what I said and how it inspired them to be better allies."
+                        ),
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="2:31 pm on 17 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d9",
+                        speaker="Caroline",
+                        text="Last weekend I joined a mentorship program for LGBTQ youth - it's really rewarding to help the community.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_3",
+                timestamp="1:50 pm on 17 August, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d12",
+                        speaker="Caroline",
+                        text="We had a blast last year at the Pride fest. Those supportive friends definitely make everything worth it!",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_4",
+                timestamp="2:24 pm on 14 August, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d11",
+                        speaker="Caroline",
+                        text="I went to a pride parade last Friday and it was awesome.",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q-events",
+                question="What events has Caroline participated in to help children?",
+                category="1",
+                expected_answers=["Mentoring program, school speech"],
+                evidence_session_ids=["session_1", "session_2"],
+                evidence_turn_ids=["d3", "d9"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q-pride",
+                question="When did Caroline and Melanie go to a pride fesetival together?",
+                category="2",
+                expected_answers=["2022"],
+                evidence_session_ids=["session_3"],
+                evidence_turn_ids=["d12"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "mentorship program for lgbtq youth" in packet_by_id["q-events"].assembled_context.lower()
+    assert "inspired them to be better allies" in packet_by_id["q-events"].assembled_context.lower()
+    assert "blast last year at the pride fest" in packet_by_id["q-pride"].assembled_context.lower()

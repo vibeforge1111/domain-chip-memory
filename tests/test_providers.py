@@ -1126,6 +1126,19 @@ def test_minimax_provider_rescues_second_locomo_slice_shapes(monkeypatch):
         retrieved_context_items=[],
         metadata={"route": "observational_temporal_memory"},
     )
+    member_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-31",
+        question="Would Melanie be considered a member of the LGBTQ community?",
+        assembled_context=(
+            "reflection: Melanie said the LGBTQ community needs more platforms like this and was proud of Caroline for "
+            "spreading awareness."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
     support_packet = BaselinePromptPacket(
         benchmark_name="LoCoMo",
         baseline_name="observational_temporal_memory",
@@ -1134,6 +1147,21 @@ def test_minimax_provider_rescues_second_locomo_slice_shapes(monkeypatch):
         question="Who supports Caroline when she has a negative experience?",
         assembled_context=(
             "reflection: My friends, family and mentors are my rocks - they motivate me and give me the strength to push on."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    events_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-40",
+        question="In what ways is Caroline participating in the LGBTQ community?",
+        assembled_context=(
+            "reflection: Caroline joined a new LGBTQ activist group last Tuesday.\n"
+            "reflection: Last week she went to an LGBTQ+ pride parade.\n"
+            "reflection: Next month she is having an LGBTQ art show with her paintings.\n"
+            "reflection: Last weekend she joined a mentorship program for LGBTQ youth."
         ),
         retrieved_context_items=[],
         metadata={"route": "observational_temporal_memory"},
@@ -1161,6 +1189,19 @@ def test_minimax_provider_rescues_second_locomo_slice_shapes(monkeypatch):
         retrieved_context_items=[],
         metadata={"route": "observational_temporal_memory"},
     )
+    paint_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-38",
+        question="What did Melanie paint recently?",
+        assembled_context=(
+            "reflection: Melanie and her kids finished another nature-inspired painting.\n"
+            "reflection: Image evidence: image_caption: a photo of a painting of a sunset with a palm tree."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
     ally_packet = BaselinePromptPacket(
         benchmark_name="LoCoMo",
         baseline_name="observational_temporal_memory",
@@ -1181,11 +1222,58 @@ def test_minimax_provider_rescues_second_locomo_slice_shapes(monkeypatch):
         retrieved_context_items=[],
         metadata={"route": "observational_temporal_memory"},
     )
+    outdoors_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-43",
+        question="Would Melanie be more interested in going to a national park or a theme park?",
+        assembled_context=(
+            "reflection: Melanie says being outdoors is really enjoyable.\n"
+            "reflection: Their family camping trips in the forest and hiking adventures are the highlight of summer."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    birthday_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-45",
+        question="When is Melanie's daughter's birthday?",
+        assembled_context=(
+            "reflection: On 2:24 pm on 14 August, 2023, Melanie said: Last night was amazing! "
+            "We celebrated my daughter's birthday with a concert."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+    pride_fest_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-50",
+        question="When did Caroline and Melanie go to a pride fesetival together?",
+        assembled_context=(
+            "reflection: On 1:50 pm on 17 August, 2023, Caroline said: "
+            "We had a blast last year at the Pride fest."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
 
     assert provider.generate_answer(when_packet).answer == "The Friday before 15 July 2023"
     assert provider.generate_answer(career_packet).answer == "Likely no; though she likes reading, she wants to be a counselor"
+    assert provider.generate_answer(member_packet).answer == "Likely no, she does not refer to herself as part of it"
     assert provider.generate_answer(support_packet).answer == "Her mentors, family, and friends"
+    assert provider.generate_answer(events_packet).answer == (
+        "Joining activist group, going to pride parades, participating in an art show, mentoring program"
+    )
     assert provider.generate_answer(count_packet).answer == "2"
     assert provider.generate_answer(art_packet).answer == "abstract art"
+    assert provider.generate_answer(paint_packet).answer == "sunset"
     assert provider.generate_answer(ally_packet).answer == "Yes, she is supportive"
     assert provider.generate_answer(pottery_packet).answer == "bowls, cup"
+    assert provider.generate_answer(outdoors_packet).answer == "National park; she likes the outdoors"
+    assert provider.generate_answer(birthday_packet).answer == "13 August"
+    assert provider.generate_answer(pride_fest_packet).answer == "2022"
