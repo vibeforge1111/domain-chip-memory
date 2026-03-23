@@ -9,6 +9,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v5.json`
   - `24/25`
   - audited view: `24/24`
+- `artifacts/benchmark_runs/locomo10_temporal_atom_router_minimax_limit1_question25_rerun.json`
+  - `6/25`
+  - audited view: `6/24`
 
 ## Where MiniMax is working well
 
@@ -79,6 +82,8 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - On the current bounded `LoCoMo` slice, MiniMax is effectively clean after benchmark-audit exclusion:
   - raw scorecard: `24/25`
   - audited scorecard: `24/24`
+- The same provider on the weaker substrate is nowhere close:
+  - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
 - When MiniMax fails today, the first suspicion should be:
   - missing evidence turn
   - missing structured predicate
