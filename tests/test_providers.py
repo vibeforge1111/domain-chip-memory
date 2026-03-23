@@ -164,3 +164,131 @@ def test_minimax_provider_expands_partial_duration_answer(monkeypatch):
 
     assert response.answer == "45 minutes each way"
     assert response.metadata["context_compacted"] is True
+
+
+def test_minimax_provider_rescues_previous_occupation_from_context(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": ""}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 0, "total_tokens": 12},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What was my previous occupation?",
+        assembled_context=(
+            "reflection: I'm actually thinking of automating some of the workflows in my new role as a senior marketing analyst. "
+            "In my previous role as a marketing specialist at a small startup, I was responsible for managing a team of interns."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "marketing specialist at a small startup"
+
+
+def test_minimax_provider_rescues_numeric_count_from_context(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "12 largemouth bass"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="How many largemouth bass did I catch on my fishing trip to Lake Michigan?",
+        assembled_context=(
+            "reflection: By the way, I've had some experience with fishing in Lake Michigan, "
+            "and I caught 12 largemouth bass on my last trip there."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "12"
+
+
+def test_minimax_provider_rescues_valentines_day_date(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "In February, on Valentine's Day."}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 5, "total_tokens": 17},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="When did I volunteer at the local animal shelter's fundraising dinner?",
+        assembled_context=(
+            "reflection: I've had a great experience with similar events in the past, "
+            "like the \"Love is in the Air\" fundraising dinner I volunteered at back on Valentine's Day."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "February 14th"
+
+
+def test_minimax_provider_rescues_shorter_certification_span(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Data Science certification"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What certification did I complete last month?",
+        assembled_context=(
+            "reflection: I need to update my LinkedIn profile to reflect my latest certification in Data Science, "
+            "which I completed last month."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "Data Science"

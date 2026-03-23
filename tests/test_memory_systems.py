@@ -159,6 +159,21 @@ def test_extract_memory_atoms_captures_benchmark_specific_patterns():
                         speaker="assistant",
                         text="Very long assistant response that should not become fallback memory.",
                     ),
+                    NormalizedTurn(
+                        turn_id="s1:t6",
+                        speaker="user",
+                        text="I've used Trello in my previous role as a marketing specialist at a small startup.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="s1:t7",
+                        speaker="user",
+                        text="Speaking of my bikes, I've got three of them - a road bike, a mountain bike, and a commuter bike.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="s1:t8",
+                        speaker="user",
+                        text="Do you have any recommendations for a good collar brand or type that would suit a Golden Retriever like Max?",
+                    ),
                 ],
             )
         ],
@@ -180,4 +195,7 @@ def test_extract_memory_atoms_captures_benchmark_specific_patterns():
     assert ("attended_play", "The Glass Menagerie") in pairs
     assert ("playlist_name", "Summer Vibes") in pairs
     assert ("retailer", "Target pretty frequently") in pairs or ("retailer", "Target") in pairs
+    assert ("previous_occupation", "marketing specialist at a small startup") in pairs
+    assert ("bike_count", "three") in pairs
+    assert ("dog_breed", "Golden Retriever") in pairs
     assert all(atom.metadata.get("speaker") != "assistant" or atom.predicate != "raw_turn" for atom in atoms)

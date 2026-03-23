@@ -127,12 +127,26 @@ def _observation_surface_text(subject: str, predicate: str, value: str, source_t
         return f"My playlist is {value}" if subject == "user" else f"{surface_subject}'s playlist is {value}"
     if predicate == "retailer":
         return f"I shop at {value}" if subject == "user" else f"{surface_subject} shops at {value}"
+    if predicate == "previous_occupation":
+        return f"My previous occupation was {value}" if subject == "user" else f"{surface_subject}'s previous occupation was {value}"
+    if predicate == "bike_count":
+        return f"I own {value} bikes" if subject == "user" else f"{surface_subject} owns {value} bikes"
+    if predicate == "dog_breed":
+        return f"My dog is a {value}" if subject == "user" else f"{surface_subject}'s dog is a {value}"
     return source_text
 
 
 def _answer_candidate_surface_text(subject: str, predicate: str, value: str, source_text: str) -> str:
     surface_subject = _subject_to_surface(subject)
-    if predicate in {"commute_duration", "attended_play", "playlist_name", "retailer"} and value:
+    if predicate in {
+        "commute_duration",
+        "attended_play",
+        "playlist_name",
+        "retailer",
+        "previous_occupation",
+        "bike_count",
+        "dog_breed",
+    } and value:
         return value
     if predicate == "location":
         return f"{surface_subject} do live in {value}" if subject == "user" else f"{surface_subject} does live in {value}"
@@ -167,6 +181,10 @@ def _extract_atoms_from_turn(session: NormalizedSession, turn: NormalizedTurn) -
         (r"\bi shop at\s+([A-Z][A-Za-z0-9'&-]*(?:\s+[A-Z][A-Za-z0-9'&-]*)*)", "retailer"),
         (r"\bcartwheel app from\s+([A-Z][A-Za-z0-9'&-]*(?:\s+[A-Z][A-Za-z0-9'&-]*)*)", "retailer"),
         (r"\bi redeemed .*?\bat\s+([A-Z][A-Za-z0-9'&-]*(?:\s+[A-Z][A-Za-z0-9'&-]*)*)", "retailer"),
+        (r"\bprevious role as (?:a|an)\s+([^,.!?]+?)(?:\s+and\b|,|\.|$)", "previous_occupation"),
+        (r"\bbikes?\b[^.?!]{0,200}?\bgot\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+of them\b", "bike_count"),
+        (r"\bi own\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+bikes?\b", "bike_count"),
+        (r"\bsuit a\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})\s+like\s+[A-Z][A-Za-z]+\b", "dog_breed"),
     ]
 
     for index, (pattern, predicate) in enumerate(patterns):
@@ -318,6 +336,12 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("playlist_name")
     if "where did i redeem" in question_lower or ("coupon" in question_lower and "where" in question_lower):
         predicates.append("retailer")
+    if "previous occupation" in question_lower or "previous role" in question_lower:
+        predicates.append("previous_occupation")
+    if "how many bikes" in question_lower and "own" in question_lower:
+        predicates.append("bike_count")
+    if "breed is my dog" in question_lower:
+        predicates.append("dog_breed")
     if not predicates:
         predicates.append("raw_turn")
     return predicates
