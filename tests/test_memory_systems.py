@@ -1107,3 +1107,89 @@ def test_locomo_question_relevant_window_surfaces_second_slice_event_turns():
     assert "mentorship program for lgbtq youth" in packet_by_id["q-events"].assembled_context.lower()
     assert "inspired them to be better allies" in packet_by_id["q-events"].assembled_context.lower()
     assert "blast last year at the pride fest" in packet_by_id["q-pride"].assembled_context.lower()
+
+
+def test_locomo_temporal_questions_keep_exact_relative_turns():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-temporal-raw",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="1:51 pm on 15 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d8",
+                        speaker="Melanie",
+                        text="Last Fri I finally took my kids to a pottery workshop. We all made our own pots, it was fun and therapeutic!",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="10:37 am on 27 June, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d4",
+                        speaker="Melanie",
+                        text="Actually, I just took my fam camping in the mountains last week - it was a really nice time together!",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_3",
+                timestamp="2:31 pm on 17 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d9",
+                        speaker="Melanie",
+                        text="I had a quiet weekend after we went camping with my fam two weekends ago. It was great to unplug and hang with the kids.",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="When did Melanie go to the pottery workshop?",
+                category="2",
+                expected_answers=["The Friday before 15 July 2023"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d8"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q2",
+                question="When did Melanie go camping in June?",
+                category="2",
+                expected_answers=["The week before 27 June 2023"],
+                evidence_session_ids=["session_2"],
+                evidence_turn_ids=["d4"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q3",
+                question="When did Melanie go camping in July?",
+                category="2",
+                expected_answers=["two weekends before 17 July 2023"],
+                evidence_session_ids=["session_3"],
+                evidence_turn_ids=["d9"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+    assembled = "\n".join(packet.assembled_context.lower() for packet in packets)
+
+    assert "last fri i finally took my kids to a pottery workshop" in assembled
+    assert "camping in the mountains last week" in assembled
+    assert "camping with my fam two weekends ago" in assembled
