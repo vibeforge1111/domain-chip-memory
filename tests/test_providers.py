@@ -1322,3 +1322,119 @@ def test_minimax_provider_normalizes_supportive_yes_answer(monkeypatch):
     )
 
     assert provider.generate_answer(packet).answer == "Yes, she is supportive"
+
+
+def test_minimax_provider_recovers_locomo_third_slice_profile_and_time_answers(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": ""}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packets = [
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-51",
+                question="What would Caroline's political leaning likely be?",
+                assembled_context=(
+                    "reflection: Caroline keeps fighting for LGBTQ rights.\n"
+                    "reflection: Caroline wants to make a difference at the youth center.\n"
+                    "reflection: Melanie volunteered at a homeless shelter with her family."
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Liberal",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-53",
+                question="What are Melanie's pets' names?",
+                assembled_context=(
+                    "reflection: Melanie has a pet named Oliver\n"
+                    "reflection: Melanie has a pet named Luna\n"
+                    "reflection: Melanie has a pet named Bailey"
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Oliver, Luna, Bailey",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-61",
+                question="What instruments does Melanie play?",
+                assembled_context=(
+                    "reflection: Melanie plays clarinet\n"
+                    "reflection: Melanie plays violin"
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "clarinet and violin",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-72",
+                question="What book did Melanie read from Caroline's suggestion?",
+                assembled_context='reflection: Caroline read "Becoming Nicole"\nreflection: Melanie said she had been reading that book Caroline recommended.',
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            '"Becoming Nicole"',
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-74",
+                question="When did Melanie get hurt?",
+                assembled_context=(
+                    "reflection: On 10:31 am on 13 October, 2023, Melanie said: "
+                    "Last month I got hurt and had to take a break from pottery."
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "September 2023",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-75",
+                question="When did Melanie's family go on a roadtrip?",
+                assembled_context=(
+                    "reflection: On 6:55 pm on 20 October, 2023, Melanie said: "
+                    "That roadtrip this past weekend was insane!"
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "The weekend before 20 October 2023",
+        ),
+    ]
+
+    for packet, expected in packets:
+        assert provider.generate_answer(packet).answer == expected

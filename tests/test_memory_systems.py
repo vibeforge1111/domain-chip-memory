@@ -1193,3 +1193,114 @@ def test_locomo_temporal_questions_keep_exact_relative_turns():
     assert "last fri i finally took my kids to a pottery workshop" in assembled
     assert "camping in the mountains last week" in assembled
     assert "camping with my fam two weekends ago" in assembled
+
+
+def test_locomo_question_relevant_window_surfaces_third_slice_profile_facts():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-third-slice-profile",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="4:33 pm on 12 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d1",
+                        speaker="Caroline",
+                        text='I loved "Becoming Nicole" by Amy Ellis Nutt. Highly recommend it for sure!',
+                    ),
+                    NormalizedTurn(
+                        turn_id="d2",
+                        speaker="Melanie",
+                        text="Luna and Oliver! They are so sweet and playful.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d3",
+                        speaker="Melanie",
+                        text="We got another cat named Bailey too.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="1:33 pm on 25 August, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d4",
+                        speaker="Melanie",
+                        metadata={"query": "horse painting"},
+                        text="Here's a photo of my horse painting I did recently.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d5",
+                        speaker="Caroline",
+                        metadata={"query": "rainbow flag painting unity acceptance"},
+                        text="The rainbow flag mural is important to me as it reflects the courage and strength of the trans community.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d6",
+                        speaker="Caroline",
+                        metadata={"query": "pendant transgender symbol"},
+                        text="Take a look at this necklace.",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="What are Melanie's pets' names?",
+                category="1",
+                expected_answers=["Oliver, Luna, Bailey"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d2", "d3"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q2",
+                question="What has Melanie painted?",
+                category="1",
+                expected_answers=["Horse"],
+                evidence_session_ids=["session_2"],
+                evidence_turn_ids=["d4"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q3",
+                question="What symbols are important to Caroline?",
+                category="1",
+                expected_answers=["Rainbow flag, transgender symbol"],
+                evidence_session_ids=["session_2"],
+                evidence_turn_ids=["d5", "d6"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q4",
+                question="What book did Melanie read from Caroline's suggestion?",
+                category="1",
+                expected_answers=['"Becoming Nicole"'],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d1"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "has a pet named Luna" in packet_by_id["q1"].assembled_context
+    assert "has a pet named Oliver" in packet_by_id["q1"].assembled_context
+    assert "has a pet named Bailey" in packet_by_id["q1"].assembled_context
+    assert "painted horse" in packet_by_id["q2"].assembled_context
+    assert "important symbol to Caroline is Rainbow flag" in packet_by_id["q3"].assembled_context
+    assert "important symbol to Caroline is transgender symbol" in packet_by_id["q3"].assembled_context
+    assert 'read "Becoming Nicole"' in packet_by_id["q4"].assembled_context
