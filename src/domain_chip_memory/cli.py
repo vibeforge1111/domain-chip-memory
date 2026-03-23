@@ -42,11 +42,24 @@ def _print(payload: dict | list[dict]) -> None:
 def _limit_questions(
     samples: list[NormalizedBenchmarkSample],
     *,
+    question_offset: int = 0,
     question_limit: int | None,
 ) -> list[NormalizedBenchmarkSample]:
-    if question_limit is None:
+    if question_offset < 0:
+        raise ValueError("question_offset must be non-negative.")
+    if question_limit is not None and question_limit < 0:
+        raise ValueError("question_limit must be non-negative.")
+    if question_offset == 0 and question_limit is None:
         return samples
-    return [replace(sample, questions=sample.questions[:question_limit]) for sample in samples]
+    return [
+        replace(
+            sample,
+            questions=sample.questions[question_offset : question_offset + question_limit]
+            if question_limit is not None
+            else sample.questions[question_offset:],
+        )
+        for sample in samples
+    ]
 
 
 def _load_resume_predictions(path: Path | None) -> list[BaselinePrediction]:
@@ -170,6 +183,7 @@ def main() -> None:
     run_locomo.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "dual_store_event_calendar_hybrid"), default="full_context")
     run_locomo.add_argument("--provider", default="heuristic_v1")
     run_locomo.add_argument("--limit", type=int)
+    run_locomo.add_argument("--question-offset", type=int, default=0)
     run_locomo.add_argument("--question-limit", type=int)
     run_locomo.add_argument("--top-k-sessions", type=int, default=2)
     run_locomo.add_argument("--fallback-sessions", type=int, default=1)
@@ -200,6 +214,7 @@ def main() -> None:
     compare_locomo.add_argument("data_file")
     compare_locomo.add_argument("--provider", default="heuristic_v1")
     compare_locomo.add_argument("--limit", type=int)
+    compare_locomo.add_argument("--question-offset", type=int, default=0)
     compare_locomo.add_argument("--question-limit", type=int)
     compare_locomo.add_argument("--top-k-sessions", type=int, default=2)
     compare_locomo.add_argument("--fallback-sessions", type=int, default=1)
@@ -340,6 +355,7 @@ def main() -> None:
     if args.command == "run-locomo-baseline":
         samples = _limit_questions(
             load_locomo_json(args.data_file, limit=args.limit),
+            question_offset=args.question_offset,
             question_limit=args.question_limit,
         )
         write_path = Path(args.write) if args.write else None
@@ -396,6 +412,7 @@ def main() -> None:
     if args.command == "compare-locomo-local":
         samples = _limit_questions(
             load_locomo_json(args.data_file, limit=args.limit),
+            question_offset=args.question_offset,
             question_limit=args.question_limit,
         )
         payload = run_candidate_comparison(
