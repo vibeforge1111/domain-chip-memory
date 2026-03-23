@@ -1303,7 +1303,7 @@ def test_minimax_provider_normalizes_supportive_yes_answer(monkeypatch):
     def fake_urlopen(req, timeout):
         return _FakeHTTPResponse(
             {
-                "choices": [{"message": {"content": "Yes, she appears supportive."}}],
+                "choices": [{"message": {"content": "Yes"}}],
                 "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
             }
         )
