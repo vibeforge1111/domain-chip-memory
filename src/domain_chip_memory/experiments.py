@@ -28,7 +28,9 @@ def _compact_scorecard(scorecard: dict[str, Any]) -> dict[str, Any]:
             "metadata": manifest.get("metadata", {}),
         },
         "overall": scorecard["overall"],
+        "audited_overall": scorecard["audited_overall"],
         "by_category": scorecard["by_category"],
+        "audited_by_category": scorecard["audited_by_category"],
     }
 
 
@@ -65,5 +67,11 @@ def build_experiment_contract_summary() -> dict[str, Any]:
     return {
         "entrypoint": "run_candidate_comparison",
         "default_systems": DEFAULT_SYSTEMS,
-        "compact_outputs": ["run_manifest", "overall", "by_category"],
+        "compact_outputs": [
+            "run_manifest",
+            "overall",
+            "audited_overall",
+            "by_category",
+            "audited_by_category",
+        ],
     }

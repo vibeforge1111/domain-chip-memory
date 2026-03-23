@@ -9,6 +9,9 @@ from .contracts import JsonDict, NormalizedBenchmarkSample, NormalizedQuestion
 from .runs import BaselinePromptPacket, BenchmarkRunManifest
 
 
+AUDIT_EXCLUDED_KNOWN_ISSUE_CLASSES = {"benchmark_inconsistency"}
+
+
 @dataclass(frozen=True)
 class BaselinePrediction:
     benchmark_name: str
@@ -31,6 +34,15 @@ def _normalize_answer(answer: str) -> str:
 
 def _question_lookup(samples: list[NormalizedBenchmarkSample]) -> dict[str, NormalizedQuestion]:
     return {question.question_id: question for sample in samples for question in sample.questions}
+
+
+def _accuracy_row(*, correct: int, total: int, excluded: int = 0) -> dict[str, Any]:
+    return {
+        "correct": correct,
+        "total": total,
+        "excluded": excluded,
+        "accuracy": round(correct / total, 4) if total else 0.0,
+    }
 
 
 def run_baseline_predictions(
@@ -72,34 +84,28 @@ def build_scorecard(
     predictions: list[BaselinePrediction],
 ) -> dict[str, Any]:
     manifest_dict = manifest.to_dict() if isinstance(manifest, BenchmarkRunManifest) else manifest
+    enriched_predictions: list[dict[str, Any]] = []
+    known_issue_rows: list[dict[str, Any]] = []
+    known_issue_counts: Counter[str] = Counter()
     by_category_total: Counter[str] = Counter()
     by_category_correct: Counter[str] = Counter()
+    audited_by_category_total: Counter[str] = Counter()
+    audited_by_category_correct: Counter[str] = Counter()
+    audited_by_category_excluded: Counter[str] = Counter()
+    overall_correct = 0
+    overall_total = len(predictions)
+    audited_overall_correct = 0
+    audited_overall_total = 0
+    audited_overall_excluded = 0
     for prediction in predictions:
         by_category_total[prediction.category] += 1
         if prediction.is_correct:
             by_category_correct[prediction.category] += 1
-
-    category_scores = []
-    for category, total in sorted(by_category_total.items()):
-        correct = by_category_correct[category]
-        category_scores.append(
-            {
-                "category": category,
-                "correct": correct,
-                "total": total,
-                "accuracy": round(correct / total, 4) if total else 0.0,
-            }
-        )
-
-    overall_correct = sum(1 for prediction in predictions if prediction.is_correct)
-    overall_total = len(predictions)
-    enriched_predictions: list[dict[str, Any]] = []
-    known_issue_rows: list[dict[str, Any]] = []
-    known_issue_counts: Counter[str] = Counter()
-    for prediction in predictions:
+            overall_correct += 1
         prediction_dict = prediction.to_dict()
         prediction_dict.setdefault("metadata", {}).pop("known_issue", None)
         known_issue = get_known_benchmark_issue(prediction.question_id)
+        is_audit_excluded = False
         if known_issue:
             prediction_dict["metadata"]["known_issue"] = known_issue
             known_issue_rows.append(
@@ -110,19 +116,57 @@ def build_scorecard(
                     "is_correct": prediction.is_correct,
                 }
             )
-            known_issue_counts[str(known_issue["classification"])] += 1
+            classification = str(known_issue["classification"])
+            known_issue_counts[classification] += 1
+            is_audit_excluded = classification in AUDIT_EXCLUDED_KNOWN_ISSUE_CLASSES
+        if is_audit_excluded:
+            audited_by_category_excluded[prediction.category] += 1
+            audited_overall_excluded += 1
+        else:
+            audited_by_category_total[prediction.category] += 1
+            audited_overall_total += 1
+            if prediction.is_correct:
+                audited_by_category_correct[prediction.category] += 1
+                audited_overall_correct += 1
         enriched_predictions.append(prediction_dict)
+
+    category_scores = []
+    audited_category_scores = []
+    for category in sorted(by_category_total):
+        category_scores.append(
+            {
+                "category": category,
+                **_accuracy_row(
+                    correct=by_category_correct[category],
+                    total=by_category_total[category],
+                ),
+            }
+        )
+        audited_category_scores.append(
+            {
+                "category": category,
+                **_accuracy_row(
+                    correct=audited_by_category_correct[category],
+                    total=audited_by_category_total[category],
+                    excluded=audited_by_category_excluded[category],
+                ),
+            }
+        )
     return {
         "run_manifest": manifest_dict,
-        "overall": {
-            "correct": overall_correct,
-            "total": overall_total,
-            "accuracy": round(overall_correct / overall_total, 4) if overall_total else 0.0,
-        },
+        "overall": _accuracy_row(correct=overall_correct, total=overall_total),
+        "audited_overall": _accuracy_row(
+            correct=audited_overall_correct,
+            total=audited_overall_total,
+            excluded=audited_overall_excluded,
+        ),
         "by_category": category_scores,
+        "audited_by_category": audited_category_scores,
         "known_issue_summary": {
             "total_flagged": len(known_issue_rows),
             "incorrect_flagged": sum(1 for item in known_issue_rows if not item["is_correct"]),
+            "audit_excluded_total": audited_overall_excluded,
+            "audit_excluded_classes": sorted(AUDIT_EXCLUDED_KNOWN_ISSUE_CLASSES),
             "by_classification": [
                 {"classification": classification, "count": count}
                 for classification, count in sorted(known_issue_counts.items())
@@ -139,7 +183,9 @@ def build_scorecard_contract_summary() -> dict[str, Any]:
         "scorecard_fields": [
             "run_manifest",
             "overall",
+            "audited_overall",
             "by_category",
+            "audited_by_category",
             "known_issue_summary",
             "predictions",
         ],

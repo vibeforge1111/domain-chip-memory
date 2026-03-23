@@ -78,6 +78,7 @@ def test_loader_provider_and_runner_contracts_exist():
 def test_candidate_comparison_summary_runs():
     payload = run_candidate_comparison(demo_samples(), provider=get_provider("heuristic_v1"))
     assert payload["systems"]["beam_temporal_atom_router"]["overall"]["total"] >= 1
+    assert payload["systems"]["beam_temporal_atom_router"]["audited_overall"]["total"] >= 1
     assert "question_ids" not in payload["systems"]["beam_temporal_atom_router"]["run_manifest"]
 
 

@@ -33,6 +33,8 @@ def test_demo_scorecards_run_end_to_end():
 
     assert full_scorecard["overall"]["total"] == 2
     assert lexical_scorecard["overall"]["total"] == 2
+    assert full_scorecard["audited_overall"]["total"] == 2
+    assert lexical_scorecard["audited_overall"]["total"] == 2
     assert full_scorecard["overall"]["accuracy"] >= 0.5
     assert lexical_scorecard["overall"]["accuracy"] >= 0.5
 
@@ -85,5 +87,12 @@ def test_build_scorecard_flags_known_benchmark_issues():
 
     assert scorecard["known_issue_summary"]["total_flagged"] == 1
     assert scorecard["known_issue_summary"]["incorrect_flagged"] == 1
+    assert scorecard["known_issue_summary"]["audit_excluded_total"] == 1
+    assert scorecard["overall"]["accuracy"] == 0.0
+    assert scorecard["audited_overall"]["total"] == 1
+    assert scorecard["audited_overall"]["excluded"] == 1
+    assert scorecard["audited_overall"]["accuracy"] == 0.0
+    assert scorecard["audited_by_category"][1]["category"] == "2"
+    assert scorecard["audited_by_category"][1]["excluded"] == 1
     assert scorecard["predictions"][0]["metadata"]["known_issue"]["classification"] == "benchmark_inconsistency"
     assert "known_issue" not in scorecard["predictions"][1]["metadata"]
