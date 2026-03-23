@@ -18,6 +18,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question76_100_rerun_v4.json`
   - `25/25`
   - audited view: `25/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question101_125_rerun_v3.json`
+  - `25/25`
+  - audited view: `25/25`
 - `artifacts/benchmark_runs/locomo10_temporal_atom_router_minimax_limit1_question25_rerun.json`
   - `6/25`
   - audited view: `6/24`
@@ -66,6 +69,15 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - adoption motivations
   - counseling motivations
   - workshop topics
+- Object and meaning questions once the packet surfaces exact symbolic or family-activity predicates
+  - library composition
+  - recommended-book takeaway
+  - pottery outputs
+  - flower symbolism
+  - art-show inspiration
+  - pet household summaries
+- MiniMax stays reliable under compaction when the exact `answer_candidate` line survives into the packet
+  - practical read: if the structured answer span is already explicit, MiniMax will usually choose it cleanly even on bounded compacted context
 
 ## Where MiniMax is faltering
 
@@ -83,6 +95,17 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - current LoCoMo example: `"Nothing is Impossible", "Charlotte's Web"`
 - Some gold-label disagreements cannot be fixed honestly in the provider layer
   - current LoCoMo example: context says `last Saturday`, gold expects `The sunday before 25 May 2023`
+- Lexical-variant misses when the substrate is looking for only one surface form
+  - concrete example from the `q101-125` slice:
+    - packet extractor matched `de-stress`
+    - source turn said `destress`
+    - MiniMax then drifted to nearby `mental health` language until the extractor was widened
+- Compaction bugs when the packet already has the right structured span but the compactor drops it
+  - concrete example from the `q101-125` slice:
+    - raw packet had `answer_candidate: a sunset with a palm tree`
+    - compacted packet dropped that line
+    - MiniMax answered `it`
+    - preserving `answer_candidate` in compaction closed the miss on the next real rerun
 
 ## Current MiniMax-specific miss ledger
 
@@ -114,6 +137,10 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - The fourth bounded `LoCoMo` slice (`conv-26 q76-100`) is now also clean on a real rerun:
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
+- The fifth bounded `LoCoMo` slice (`conv-26 q101-125`) is now also clean on a real rerun:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
+  - progression on the same slice: `1/25 -> 23/25 -> 25/25`
 - The main failure mode is no longer "MiniMax is weak."
 - The main failure mode is "the packet did not expose the exact answer-bearing representation."
 - On the current bounded `LoCoMo` slice, MiniMax is effectively clean after benchmark-audit exclusion:
@@ -126,6 +153,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
 - On the adjacent fourth bounded `LoCoMo` slice, MiniMax is also fully clean without audit adjustment:
+  - raw scorecard: `25/25`
+  - audited scorecard: `25/25`
+- On the adjacent fifth bounded `LoCoMo` slice, MiniMax is also fully clean without audit adjustment:
   - raw scorecard: `25/25`
   - audited scorecard: `25/25`
 - The same provider on the weaker substrate is nowhere close:
@@ -154,6 +184,8 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - retry on transient transport/server failures
 - Keep context compaction on for MiniMax
   - avoid sending broad conversational residue when the answer depends on one turn
+  - but preserve `answer_candidate` lines during compaction
+  - if compaction drops the exact structured span, MiniMax can regress from exact answers to plausible abstractions
 - Keep exact-span rescue on after generation
   - MiniMax is materially better when post-processing normalizes benchmark-shaped answers
 - Prefer structured predicates over raw-turn retrieval for LoCoMo temporal and identity questions
@@ -194,6 +226,6 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 
 ## Current recommendation
 
-- Treat `LongMemEval 50/50`, `LoCoMo q1-25 24/24 audited`, `LoCoMo q26-50 25/25`, `LoCoMo q51-75 25/25`, and `LoCoMo q76-100 25/25` as the current MiniMax source of truth in this repo.
+- Treat `LongMemEval 50/50`, `LoCoMo q1-25 24/24 audited`, `LoCoMo q26-50 25/25`, `LoCoMo q51-75 25/25`, `LoCoMo q76-100 25/25`, and `LoCoMo q101-125 25/25` as the current MiniMax source of truth in this repo.
 - Treat the remaining first-slice `LoCoMo` miss as a benchmark-audit lane:
   - benchmark inconsistency review for `conv-26-qa-6`

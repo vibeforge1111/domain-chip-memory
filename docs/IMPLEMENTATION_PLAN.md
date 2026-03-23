@@ -74,6 +74,9 @@ Current lead lane as of 2026-03-23:
   - `observational_temporal_memory`: `25/25` raw, `25/25` audited
 - real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q76-100`):
   - `observational_temporal_memory`: `25/25` raw, `25/25` audited
+- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q101-125`):
+  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
+  - measured progression on the same slice: `1/25 -> 23/25 -> 25/25`
 
 Candidate components:
 

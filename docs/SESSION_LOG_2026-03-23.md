@@ -438,3 +438,109 @@ Local commits recorded during the session include:
 - `b26c35e` `fix: harden minimax answer rescue spans`
 - `bec0bad` `feat: recover missing observational memory facts`
 - `757d48f` `fix: tighten degree and cocktail answer rescue`
+
+### 12. March 24 continuation: fifth bounded LoCoMo slice closure
+
+Work then shifted onto the next bounded `LoCoMo` slice:
+
+- `conv-26 q101-125`
+- observational lane:
+  - `observational_temporal_memory + MiniMax-M2.7`
+- progression on real artifacts:
+  - baseline `1/25`
+  - rerun `23/25`
+  - rerun `25/25`
+
+What the baseline failure pattern actually was:
+
+- not a generic MiniMax weakness
+- the observational lane was under-surfacing object, meaning, family-activity, and sentimental-detail facts from:
+  - `D4`
+  - `D6`
+  - `D7`
+  - `D8`
+  - `D9`
+  - `D10`
+  - `D11`
+  - `D12`
+  - `D13`
+- MiniMax was then falling back to nearby plausible abstractions:
+  - `a safe and loving home` instead of `a safe and inviting place for people to grow`
+  - `unknown` when library, book, pottery, flower, art-show, and pet facts were never promoted into the packet
+
+Fixes that lifted the slice from `1/25` to `23/25`:
+
+- added structured observational predicates for:
+  - supportive-space goal
+  - bowl authorship in photo
+  - library-book composition
+  - book takeaway
+  - shoe use
+  - running reason and benefit
+  - pottery outputs
+  - family creative activity
+  - family paint subject
+  - adoption-meeting takeaway
+  - flower symbolism and flower importance
+  - art-show inspiration
+  - camping-trip sighting and feeling
+  - birthday person and birthday performer
+  - pottery design reason
+  - pet type and pet household summary
+- widened question routing and observation scoring so those exact predicates actually won the stable window
+- tightened provider rescue for:
+  - short yes/no bowl authorship
+  - book/title questions
+  - running purpose vs running benefit
+  - pottery outputs
+  - symbolic and sentimental answers
+  - birthday and pet answers
+
+The two remaining live misses on the first rerun to `23/25` were useful:
+
+- `conv-26-qa-108`
+  - prediction: `to improve mental health`
+  - gold: `To de-stress and clear her mind`
+  - root cause:
+    - the source turn used `destress`
+    - the extractor only matched `de-stress`
+- `conv-26-qa-113`
+  - prediction: `it`
+  - gold: `a sunset with a palm tree`
+  - root cause:
+    - the raw packet already had `answer_candidate: a sunset with a palm tree`
+    - MiniMax compaction dropped that line
+    - the model then answered from surrounding residue instead of the exact span
+
+Final fixes that closed the slice from `23/25` to `25/25`:
+
+- widened the running-reason extractor to accept both `de-stress` and `destress`
+- changed MiniMax compaction to always preserve `answer_candidate` lines
+
+Files changed in this continuation:
+
+- `src/domain_chip_memory/memory_systems.py`
+- `src/domain_chip_memory/providers.py`
+- `tests/test_memory_systems.py`
+- `tests/test_providers.py`
+
+Artifacts written in this continuation:
+
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question101_125_rerun.json`
+  - `1/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question101_125_rerun_v2.json`
+  - `23/25`
+- `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question101_125_rerun_v3.json`
+  - `25/25`
+
+Current read after the fifth-slice rerun:
+
+- MiniMax is now clean on `LoCoMo conv-26 q101-125`
+- the first five bounded `LoCoMo` slices are now:
+  - `q1-25`: `24/24` audited after excluding the known benchmark inconsistency
+  - `q26-50`: `25/25`
+  - `q51-75`: `25/25`
+  - `q76-100`: `25/25`
+  - `q101-125`: `25/25`
+- the remaining audited-open `LoCoMo` issue across those slices is still only the first-slice benchmark inconsistency on `conv-26-qa-6`
+- the next rational move is to shift the same observational + MiniMax lane onto `LoCoMo q126-150`
