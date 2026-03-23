@@ -1,0 +1,80 @@
+{
+  "run_manifest": {
+    "run_id": "observational-temporal-memory-v1",
+    "benchmark_name": "LoCoMo",
+    "baseline_name": "observational_temporal_memory",
+    "sample_ids": [
+      "conv-26"
+    ],
+    "question_ids": [
+      "conv-26-qa-1",
+      "conv-26-qa-2"
+    ],
+    "question_count": 2,
+    "metadata": {
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Observational Temporal Memory",
+      "max_observations": 4,
+      "max_reflections": 3
+    }
+  },
+  "overall": {
+    "correct": 1,
+    "total": 2,
+    "accuracy": 0.5
+  },
+  "by_category": [
+    {
+      "category": "2",
+      "correct": 1,
+      "total": 2,
+      "accuracy": 0.5
+    }
+  ],
+  "predictions": [
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-1",
+      "category": "2",
+      "predicted_answer": "7 May 2023",
+      "expected_answers": [
+        "7 May 2023"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 579,
+        "completion_tokens": 327,
+        "total_tokens": 906,
+        "context_compacted": true,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-2",
+      "category": "2",
+      "predicted_answer": "",
+      "expected_answers": [
+        "2022"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 445,
+        "completion_tokens": 512,
+        "total_tokens": 957,
+        "context_compacted": true,
+        "route": "observational_temporal_memory"
+      }
+    }
+  ]
+}

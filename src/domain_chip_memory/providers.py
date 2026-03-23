@@ -4,6 +4,7 @@ import json
 import os
 import re
 from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
 from typing import Protocol
 from urllib import error, request
 
@@ -41,6 +42,29 @@ COUNT_WORDS = {
     "eighteen",
     "nineteen",
     "twenty",
+}
+COUNT_WORD_TO_INT = {
+    "zero": 0,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
+    "nineteen": 19,
+    "twenty": 20,
 }
 
 
@@ -158,6 +182,47 @@ def _extract_count_answer(question: str, answer: str, payloads: list[str]) -> st
     return None
 
 
+def _parse_context_anchor(payload: str) -> datetime | None:
+    match = re.search(r"\bOn\s+([^,]+?\s+on\s+\d{1,2}\s+[A-Za-z]+,\s+\d{4}),", payload)
+    if not match:
+        return None
+    timestamp = match.group(1).strip()
+    for fmt in ("%I:%M %p on %d %B, %Y", "%H:%M on %d %B, %Y"):
+        try:
+            return datetime.strptime(timestamp, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _format_anchor_date(anchor: datetime) -> str:
+    return f"{anchor.day} {anchor.strftime('%B %Y')}"
+
+
+def _relative_when_answer(payloads: list[str]) -> str | None:
+    for payload in payloads:
+        anchor = _parse_context_anchor(payload)
+        if not anchor:
+            continue
+        lower = payload.lower()
+        if "last year" in lower:
+            return str(anchor.year - 1)
+        if "yesterday" in lower:
+            return _format_anchor_date(anchor - timedelta(days=1))
+        if "today" in lower:
+            return _format_anchor_date(anchor)
+        days_ago_match = re.search(
+            r"\b(\d+|" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r")\s+days?\s+ago\b",
+            lower,
+        )
+        if days_ago_match:
+            raw_count = days_ago_match.group(1).lower()
+            days = int(raw_count) if raw_count.isdigit() else COUNT_WORD_TO_INT.get(raw_count)
+            if days is not None:
+                return _format_anchor_date(anchor - timedelta(days=days))
+    return None
+
+
 def _question_aware_rescue(question: str, answer: str, context: str) -> str | None:
     payloads = _candidate_payloads(question, context)
     if not payloads:
@@ -265,6 +330,11 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
 
     if "when did" in question_lower and "valentine's day" in combined_lower:
         return "February 14th"
+
+    if question_lower.startswith("when did") or question_lower.startswith("when was") or question_lower.startswith("when is"):
+        relative_when = _relative_when_answer(payloads)
+        if relative_when:
+            return relative_when
 
     if "study abroad" in question_lower:
         match = re.search(r"\bstudy abroad program at (?:the )?([^,.!?]+)", combined, re.IGNORECASE)

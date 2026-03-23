@@ -621,3 +621,67 @@ def test_minimax_provider_expands_ucla_degree_answer(monkeypatch):
     response = provider.generate_answer(packet)
 
     assert response.answer == "University of California, Los Angeles (UCLA)"
+
+
+def test_minimax_provider_rescues_relative_year_from_timestamped_context(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": ""}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 0, "total_tokens": 12},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-2",
+        question="When did Melanie paint a sunrise?",
+        assembled_context=(
+            "reflection: On 1:56 pm on 8 May, 2023, Melanie said: "
+            "Yeah, I painted that lake sunrise last year! It's special to me."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "2022"
+
+
+def test_minimax_provider_rescues_yesterday_from_timestamped_context(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": ""}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 0, "total_tokens": 12},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-1",
+        question="When did Caroline go to the LGBTQ support group?",
+        assembled_context=(
+            "reflection: On 1:56 pm on 8 May, 2023, Caroline said: "
+            "I went to a LGBTQ support group yesterday and it was so powerful."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "7 May 2023"
