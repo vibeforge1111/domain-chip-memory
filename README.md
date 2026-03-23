@@ -35,14 +35,15 @@ Current internal lead as of 2026-03-23:
 - real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
 - real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
 - real rerun on March 23, 2026 over the first 25 `LoCoMo` `conv-26` questions: `24/25` (`0.96`)
+  - audited scorecard view on the same artifact: `24/24` (`1.00`) after excluding the one known benchmark inconsistency
 - latest recorded comparison lane on the same provider path remains the 25-sample rerun: `beam_temporal_atom_router + MiniMax-M2.7` at `7/25` (`0.28`)
 - MiniMax operating notes and default guardrails now live in `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
 
 Current MiniMax frontier on that `LoCoMo` slice is now explicit:
 
 - MiniMax is working well when the packet already contains the exact answer-bearing turn or structured predicate
-- MiniMax is still faltering on benchmark inconsistencies
-- scorecards now annotate these known issue classes directly in `known_issue_summary` so future reruns do not look like generic model regressions
+- MiniMax is no longer the limiting factor on the current bounded `LoCoMo` slice once benchmark inconsistencies are excluded
+- scorecards now annotate these known issue classes directly in `known_issue_summary` and expose `audited_overall` so future reruns do not look like generic model regressions
 - the only remaining miss on the current `24/25` run is:
   - `conv-26-qa-6`: likely benchmark inconsistency, with context pointing to `Saturday` while gold expects `Sunday`
 

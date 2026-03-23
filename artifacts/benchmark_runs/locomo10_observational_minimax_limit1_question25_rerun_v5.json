@@ -45,31 +45,68 @@
   "overall": {
     "correct": 24,
     "total": 25,
+    "excluded": 0,
     "accuracy": 0.96
+  },
+  "audited_overall": {
+    "correct": 24,
+    "total": 24,
+    "excluded": 1,
+    "accuracy": 1.0
   },
   "by_category": [
     {
       "category": "1",
       "correct": 10,
       "total": 10,
+      "excluded": 0,
       "accuracy": 1.0
     },
     {
       "category": "2",
       "correct": 11,
       "total": 12,
+      "excluded": 0,
       "accuracy": 0.9167
     },
     {
       "category": "3",
       "correct": 3,
       "total": 3,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "1",
+      "correct": 10,
+      "total": 10,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "2",
+      "correct": 11,
+      "total": 11,
+      "excluded": 1,
+      "accuracy": 1.0
+    },
+    {
+      "category": "3",
+      "correct": 3,
+      "total": 3,
+      "excluded": 0,
       "accuracy": 1.0
     }
   ],
   "known_issue_summary": {
     "total_flagged": 1,
     "incorrect_flagged": 1,
+    "audit_excluded_total": 1,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
     "by_classification": [
       {
         "classification": "benchmark_inconsistency",

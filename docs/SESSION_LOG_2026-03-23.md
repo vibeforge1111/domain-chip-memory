@@ -139,6 +139,8 @@ Measured LoCoMo progression on March 23, 2026:
 - `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v5.json`
   - `24/25`
   - `0.96`
+  - audited scorecard view: `24/24`
+  - audited accuracy: `1.00`
 
 Current MiniMax read from that slice:
 
@@ -149,6 +151,9 @@ Current MiniMax read from that slice:
   - bounded list aggregation when facts are surfaced as predicates
 - still faltering:
   - likely benchmark inconsistency on `conv-26-qa-6`
+- scorecard hygiene:
+  - raw provider score remains `24/25`
+  - audited provider score is now `24/24` after excluding the known benchmark inconsistency
 
 Later audit result:
 

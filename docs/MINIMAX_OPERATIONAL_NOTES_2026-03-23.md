@@ -8,6 +8,7 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - `50/50`
 - `artifacts/benchmark_runs/locomo10_observational_minimax_limit1_question25_rerun_v5.json`
   - `24/25`
+  - audited view: `24/24`
 
 ## Where MiniMax is working well
 
@@ -58,6 +59,7 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - prediction: `The saturday before 25 May 2023`
   - gold: `The sunday before 25 May 2023`
   - current classification: likely benchmark inconsistency, not a provider defect
+  - scorecard handling: excluded from `audited_overall` and `audited_by_category`
 
 ## Resolved MiniMax-specific miss
 
@@ -74,6 +76,9 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 - MiniMax is working well enough now to validate the memory substrate on both `LongMemEval` and bounded `LoCoMo` slices.
 - The main failure mode is no longer "MiniMax is weak."
 - The main failure mode is "the packet did not expose the exact answer-bearing representation."
+- On the current bounded `LoCoMo` slice, MiniMax is effectively clean after benchmark-audit exclusion:
+  - raw scorecard: `24/25`
+  - audited scorecard: `24/24`
 - When MiniMax fails today, the first suspicion should be:
   - missing evidence turn
   - missing structured predicate
@@ -108,6 +113,7 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - classify the miss before patching
 - Check `known_issue_summary` in fresh scorecards before opening a new tuning loop
   - currently only known benchmark inconsistency questions are tagged in-band
+  - use `audited_overall` before classifying a run as a MiniMax regression
 - Treat multimodal-title recovery as a separate lane
   - use deterministic image-title hints only when the image URL has been explicitly verified
 
@@ -135,5 +141,6 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
 ## Current recommendation
 
 - Treat `LongMemEval 50/50` and `LoCoMo 24/25` as the current MiniMax source of truth in this repo.
+- Treat `LoCoMo 24/24 audited` as the current clean provider read on the bounded `conv-26` slice.
 - Treat the remaining `LoCoMo` miss as a benchmark-audit lane:
   - benchmark inconsistency review for `conv-26-qa-6`
