@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from .benchmark_issues import get_known_benchmark_issue
 from .contracts import JsonDict, NormalizedBenchmarkSample, NormalizedQuestion
 from .runs import BaselinePromptPacket, BenchmarkRunManifest
 
@@ -92,6 +93,24 @@ def build_scorecard(
 
     overall_correct = sum(1 for prediction in predictions if prediction.is_correct)
     overall_total = len(predictions)
+    enriched_predictions: list[dict[str, Any]] = []
+    known_issue_rows: list[dict[str, Any]] = []
+    known_issue_counts: Counter[str] = Counter()
+    for prediction in predictions:
+        prediction_dict = prediction.to_dict()
+        known_issue = get_known_benchmark_issue(prediction.question_id)
+        if known_issue:
+            prediction_dict.setdefault("metadata", {})["known_issue"] = known_issue
+            known_issue_rows.append(
+                {
+                    "question_id": prediction.question_id,
+                    "classification": str(known_issue["classification"]),
+                    "recommended_lane": str(known_issue["recommended_lane"]),
+                    "is_correct": prediction.is_correct,
+                }
+            )
+            known_issue_counts[str(known_issue["classification"])] += 1
+        enriched_predictions.append(prediction_dict)
     return {
         "run_manifest": manifest_dict,
         "overall": {
@@ -100,7 +119,16 @@ def build_scorecard(
             "accuracy": round(overall_correct / overall_total, 4) if overall_total else 0.0,
         },
         "by_category": category_scores,
-        "predictions": [prediction.to_dict() for prediction in predictions],
+        "known_issue_summary": {
+            "total_flagged": len(known_issue_rows),
+            "incorrect_flagged": sum(1 for item in known_issue_rows if not item["is_correct"]),
+            "by_classification": [
+                {"classification": classification, "count": count}
+                for classification, count in sorted(known_issue_counts.items())
+            ],
+            "questions": known_issue_rows,
+        },
+        "predictions": enriched_predictions,
     }
 
 
@@ -111,6 +139,7 @@ def build_scorecard_contract_summary() -> dict[str, Any]:
             "run_manifest",
             "overall",
             "by_category",
+            "known_issue_summary",
             "predictions",
         ],
     }

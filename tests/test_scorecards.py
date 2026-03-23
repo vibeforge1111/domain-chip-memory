@@ -3,6 +3,7 @@ from domain_chip_memory.canonical_configs import get_canonical_configs
 from domain_chip_memory.responders import heuristic_response
 from domain_chip_memory.sample_data import demo_samples
 from domain_chip_memory.scorecards import (
+    BaselinePrediction,
     build_scorecard,
     build_scorecard_contract_summary,
     run_baseline_predictions,
@@ -43,3 +44,46 @@ def test_scorecard_contract_and_canonical_config_exist():
     assert summary["scorecard_fields"]
     assert configs
     assert configs[0]["config_id"] == "benchmark-v3-32k.yml"
+
+
+def test_build_scorecard_flags_known_benchmark_issues():
+    scorecard = build_scorecard(
+        {
+            "run_id": "test-run",
+            "benchmark_name": "LoCoMo",
+            "baseline_name": "observational_temporal_memory",
+            "sample_ids": ["conv-26"],
+            "question_ids": ["conv-26-qa-6", "conv-26-qa-24"],
+            "question_count": 2,
+            "metadata": {},
+        },
+        [
+            BaselinePrediction(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-6",
+                category="2",
+                predicted_answer="The saturday before 25 May 2023",
+                expected_answers=["The sunday before 25 May 2023"],
+                is_correct=False,
+                metadata={"provider_name": "minimax:MiniMax-M2.7"},
+            ),
+            BaselinePrediction(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-24",
+                category="1",
+                predicted_answer="Charlotte's Web",
+                expected_answers=['"Nothing is Impossible", "Charlotte\'s Web"'],
+                is_correct=False,
+                metadata={"provider_name": "minimax:MiniMax-M2.7"},
+            ),
+        ],
+    )
+
+    assert scorecard["known_issue_summary"]["total_flagged"] == 2
+    assert scorecard["known_issue_summary"]["incorrect_flagged"] == 2
+    assert scorecard["predictions"][0]["metadata"]["known_issue"]["classification"] == "benchmark_inconsistency"
+    assert scorecard["predictions"][1]["metadata"]["known_issue"]["classification"] == "multimodal_title_ceiling"
