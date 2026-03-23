@@ -1378,6 +1378,22 @@ def test_minimax_provider_recovers_locomo_third_slice_profile_and_time_answers(m
                 benchmark_name="LoCoMo",
                 baseline_name="observational_temporal_memory",
                 sample_id="conv-26",
+                question_id="conv-26-qa-57",
+                question="What symbols are important to Caroline?",
+                assembled_context=(
+                    "reflection: An important symbol to Caroline is Rainbow flag\n"
+                    "reflection: Caroline's identity is Transgender woman"
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Rainbow flag, transgender symbol",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
                 question_id="conv-26-qa-61",
                 question="What instruments does Melanie play?",
                 assembled_context=(
@@ -1394,6 +1410,19 @@ def test_minimax_provider_recovers_locomo_third_slice_profile_and_time_answers(m
                 benchmark_name="LoCoMo",
                 baseline_name="observational_temporal_memory",
                 sample_id="conv-26",
+                question_id="conv-26-qa-62",
+                question="What musical artists/bands has Melanie seen?",
+                assembled_context="reflection: Melanie saw Summer Sounds\nanswer_candidate: Summer Sounds",
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Summer Sounds, Matt Patterson",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
                 question_id="conv-26-qa-72",
                 question="What book did Melanie read from Caroline's suggestion?",
                 assembled_context='reflection: Caroline read "Becoming Nicole"\nreflection: Melanie said she had been reading that book Caroline recommended.',
@@ -1401,6 +1430,55 @@ def test_minimax_provider_recovers_locomo_third_slice_profile_and_time_answers(m
                 metadata={"route": "observational_temporal_memory"},
             ),
             '"Becoming Nicole"',
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-69",
+                question="How long has Melanie been practicing art?",
+                assembled_context=(
+                    "reflection: Melanie has been practicing art for seven years\n"
+                    "reflection: On 12:09 am on 13 September, 2023, Melanie said: How long have you been creating art?"
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Since 2016",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-66",
+                question="What are some changes Caroline has faced during her transition journey?",
+                assembled_context=(
+                    "reflection: During the transition Caroline faced changes to her body\n"
+                    "reflection: During the transition Caroline faced losing unsupportive friends"
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Changes to her body, losing unsupportive friends",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-70",
+                question="What personality traits might Melanie say Caroline has?",
+                assembled_context=(
+                    "reflection: Caroline says your support really means a lot and she wants to help others with theirs.\n"
+                    "reflection: Caroline talks about guidance, and acceptance.\n"
+                    "reflection: Caroline wants to live authentically."
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "Thoughtful, authentic, driven",
         ),
         (
             BaselinePromptPacket(
