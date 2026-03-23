@@ -1324,6 +1324,33 @@ def test_minimax_provider_normalizes_supportive_yes_answer(monkeypatch):
     assert provider.generate_answer(packet).answer == "Yes, she is supportive"
 
 
+def test_minimax_provider_normalizes_count_word_answer(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Three"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-76",
+        question="How many children does Melanie have?",
+        assembled_context="reflection: Melanie has 3 children",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    assert provider.generate_answer(packet).answer == "3"
+
+
 def test_minimax_provider_recovers_locomo_third_slice_profile_and_time_answers(monkeypatch):
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
 

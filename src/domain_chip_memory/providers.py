@@ -167,7 +167,9 @@ def _extract_count_answer(question: str, answer: str, payloads: list[str]) -> st
 
     direct_match = re.search(r"\b(\d+|" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r")\b", answer, re.IGNORECASE)
     if direct_match:
-        return direct_match.group(1)
+        raw = direct_match.group(1)
+        lower_raw = raw.lower()
+        return raw if raw.isdigit() else str(COUNT_WORD_TO_INT.get(lower_raw, raw))
 
     object_match = re.search(
         r"how many\s+(.+?)(?:\s+(?:do|did|have|has|are|were|was|can|should)\b|[?])",
@@ -185,7 +187,9 @@ def _extract_count_answer(question: str, answer: str, payloads: list[str]) -> st
             continue
         match = count_pattern.search(payload)
         if match:
-            return match.group(1)
+            raw = match.group(1)
+            lower_raw = raw.lower()
+            return raw if raw.isdigit() else str(COUNT_WORD_TO_INT.get(lower_raw, raw))
     return None
 
 
