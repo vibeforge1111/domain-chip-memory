@@ -62,6 +62,7 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - prediction: `Charlotte's Web`
   - gold: `"Nothing is Impossible", "Charlotte's Web"`
   - current classification: likely multimodal/title-recovery ceiling on the text-only path
+  - additional evidence: after promoting the image-backed raw turn plus `img_url` and `blip_caption` into the observational packet, a direct MiniMax probe still returned a blank answer instead of recovering the missing title
 
 ## What this means in practice
 
@@ -75,6 +76,11 @@ This note records what `MiniMax-M2.7` is doing well in this repo, where it is fa
   - multimodal-only evidence
   - benchmark-label inconsistency
 - The provider should now be treated as stable enough for retrieval and packet-debug work unless a failure reproduces across well-grounded packets.
+- `conv-26-qa-24` has now crossed that threshold.
+  - the packet contains the image-backed evidence turn
+  - the packet contains the associated `img_url` and `blip_caption`
+  - MiniMax still does not recover `"Nothing is Impossible"`
+  - practical read: this is now a multimodal-title lane, not a text-packet lane
 
 ## Default guardrails from now on
 

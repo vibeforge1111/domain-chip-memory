@@ -148,6 +148,17 @@ Current MiniMax read from that slice:
   - likely benchmark inconsistency on `conv-26-qa-6`
   - likely multimodal/title ceiling on `conv-26-qa-24`
 
+Later audit result:
+
+- `conv-26-qa-6`
+  - evidence turn `D2:1` says `last Saturday` on `25 May, 2023`
+  - current read remains benchmark inconsistency, not provider weakness
+- `conv-26-qa-24`
+  - evidence turn `D7:8` is an image-backed book mention with `img_url` and `blip_caption`
+  - packet selection was hardened so this turn now surfaces directly in the observational context
+  - direct MiniMax probe on the patched packet still returned a blank answer
+  - current read is now stronger than before: the remaining miss is a genuine multimodal or OCR-style title-recovery gap, not just packet omission
+
 This is now written down separately in:
 
 - `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
