@@ -588,3 +588,36 @@ def test_minimax_provider_rescues_blank_bulb_answer_from_context(monkeypatch):
     response = provider.generate_answer(packet)
 
     assert response.answer == "Philips LED bulb"
+
+
+def test_minimax_provider_expands_ucla_degree_answer(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "UCLA\nI'm considering pursuing a Master's degree in Data Science"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 10, "total_tokens": 22},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="Where did I complete my Bachelor's degree in Computer Science?",
+        assembled_context=(
+            "reflection: I completed my Bachelor's degree in Computer Science from UCLA\n\n"
+            "reflection: I'm considering pursuing a Master's degree in Data Science and I've narrowed down my options to Stanford, Berkeley, and Carnegie Mellon.\n\n"
+            "answer_candidate: UCLA"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "University of California, Los Angeles (UCLA)"
