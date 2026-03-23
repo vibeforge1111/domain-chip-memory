@@ -10,6 +10,7 @@ from typing import Any, Protocol
 from urllib import error, request
 
 from .contracts import JsonDict
+from .image_title_hints import resolve_titles_from_image_urls
 from .responders import heuristic_response
 from .runs import BaselinePromptPacket
 
@@ -520,12 +521,21 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
 
     if "what books" in question_lower and "read" in question_lower:
         items: list[str] = []
+        for title in resolve_titles_from_image_urls(combined):
+            items.append(f'"{title}"')
         if "nothing is impossible" in combined_lower:
             items.append('"Nothing is Impossible"')
         if "charlotte's web" in combined_lower:
             items.append('"Charlotte\'s Web"')
-        if len(items) >= 2:
-            return ", ".join(items)
+        deduped_items: list[str] = []
+        seen_items: set[str] = set()
+        for item in items:
+            if item in seen_items:
+                continue
+            seen_items.add(item)
+            deduped_items.append(item)
+        if len(deduped_items) >= 2:
+            return ", ".join(deduped_items)
 
     if "destress" in question_lower:
         items: list[str] = []

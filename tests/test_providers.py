@@ -89,7 +89,7 @@ def test_minimax_provider_includes_context_image_urls(monkeypatch):
         captured["payload"] = json.loads(req.data.decode("utf-8"))
         return _FakeHTTPResponse(
             {
-                "choices": [{"message": {"content": "Nothing is Impossible"}}],
+                "choices": [{"message": {"content": ""}}],
                 "usage": {"prompt_tokens": 12, "completion_tokens": 2, "total_tokens": 14},
             }
         )
@@ -103,7 +103,8 @@ def test_minimax_provider_includes_context_image_urls(monkeypatch):
         question_id="conv-26-qa-24",
         question="What books has Melanie read?",
         assembled_context=(
-            "reflection: Melanie said this book she read last year reminds her to pursue her dreams.\n"
+            "reflection: Melanie said this book she read last year reminds her to pursue her dreams. "
+            "Image evidence: image_url: https://www.speakers.co.uk/microsites/tom-oliver/wp-content/uploads/2014/11/Book-Cover-3D1.jpg\n"
             "reflection: Melanie read \"Charlotte's Web\""
         ),
         retrieved_context_items=[
@@ -139,7 +140,7 @@ def test_minimax_provider_includes_context_image_urls(monkeypatch):
 
     response = provider.generate_answer(packet)
 
-    assert response.answer == "Nothing is Impossible"
+    assert response.answer == '"Nothing is Impossible", "Charlotte\'s Web"'
     assert response.metadata["context_image_count"] == 2
     content = captured["payload"]["messages"][1]["content"]
     assert isinstance(content, list)
