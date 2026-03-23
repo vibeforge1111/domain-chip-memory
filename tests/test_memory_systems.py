@@ -792,6 +792,17 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
                         speaker="Melanie",
                         text="I've been running farther to de-stress, which has been great for my headspace.",
                     ),
+                    NormalizedTurn(
+                        turn_id="d15",
+                        speaker="Melanie",
+                        text="This book I read last year reminds me to always pursue my dreams, just like you are doing!",
+                        metadata={
+                            "img_url": [
+                                "https://www.speakers.co.uk/microsites/tom-oliver/wp-content/uploads/2014/11/Book-Cover-3D1.jpg"
+                            ],
+                            "blip_caption": "a photography of a book cover with a gold coin on it",
+                        },
+                    ),
                 ],
             ),
             NormalizedSession(
@@ -873,8 +884,8 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
                 question="What books has Melanie read?",
                 category="1",
                 expected_answers=['"Nothing is Impossible", "Charlotte\'s Web"'],
-                evidence_session_ids=["session_4"],
-                evidence_turn_ids=["d9"],
+                evidence_session_ids=["session_4", "session_5"],
+                evidence_turn_ids=["d9", "d15"],
                 metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
             ),
         ],
@@ -897,3 +908,5 @@ def test_locomo_question_relevant_window_surfaces_list_and_inference_facts():
     assert "de-stresses by Running" in packet_by_id["q5"].assembled_context
     assert "de-stresses by pottery" in packet_by_id["q5"].assembled_context
     assert 'read "Charlotte\'s Web"' in packet_by_id["q6"].assembled_context
+    assert "This book I read last year reminds me to always pursue my dreams" in packet_by_id["q6"].assembled_context
+    assert "image_caption: a photography of a book cover with a gold coin on it" in packet_by_id["q6"].assembled_context
