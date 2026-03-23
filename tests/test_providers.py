@@ -292,3 +292,212 @@ def test_minimax_provider_rescues_shorter_certification_span(monkeypatch):
     response = provider.generate_answer(packet)
 
     assert response.answer == "Data Science"
+
+
+def test_minimax_provider_rescues_name_and_age_spans(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "s name is Luna, and she"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 6, "total_tokens": 18},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What is the name of my cat?",
+        assembled_context=(
+            "reflection: By the way, my cat's name is Luna, and she's been such a sweetie."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "Luna"
+
+
+def test_minimax_provider_rescues_numeric_and_ratio_spans(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "ve settled on a 3:1 ratio with a dash of citrus bitters. I"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 8, "total_tokens": 20},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What is my preferred gin-to-vermouth ratio for a classic gin martini?",
+        assembled_context=(
+            "reflection: I've settled on a 3:1 ratio with a dash of citrus bitters."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "3:1"
+
+
+def test_minimax_provider_rescues_article_span_for_cake(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Lemon blueberry cake"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What did I bake for my niece's birthday party?",
+        assembled_context=(
+            "reflection: I recently made a lemon blueberry cake for my niece's birthday party and it was a huge hit."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "a lemon blueberry cake"
+
+
+def test_minimax_provider_rescues_class_location_without_leading_at(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "At Serenity Yoga"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="Where do I take my yoga classes?",
+        assembled_context="reflection: I take my yoga classes at Serenity Yoga before work.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "Serenity Yoga"
+
+
+def test_minimax_provider_rescues_discount_percentage(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "10% discount"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What was the discount I got at the bookstore sale?",
+        assembled_context="reflection: I found a rare cookbook at the bookstore sale and got a 10% discount.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "10%"
+
+
+def test_minimax_provider_rescues_cocktail_name_from_infinitive_phrase(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "to make a lavender gin fizz"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 6, "total_tokens": 18},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What type of cocktail recipe did I try this weekend?",
+        assembled_context="reflection: I tried to make a lavender gin fizz this weekend and almost nailed it.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "lavender gin fizz"
+
+
+def test_minimax_provider_rescues_full_painting_worth_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Triple the amount you paid"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 5, "total_tokens": 17},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="How much is the painting worth compared to the amount I paid for it?",
+        assembled_context="reflection: The painting is worth triple what I paid for it according to the gallery owner.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "The painting is worth triple what I paid for it."
