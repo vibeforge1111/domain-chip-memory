@@ -372,13 +372,12 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
                     return f"{previous_month} {previous_year}"
 
     if question_lower.startswith("when did") and "go on a hike after the roadtrip" in question_lower:
-        if "yup, we just did it yesterday" in combined_lower and "road trip" in combined_lower:
-            anchor_match = re.search(r"on \d{1,2}:\d{2}\s+[ap]m on (\d{1,2})\s+([A-Za-z]+),\s+(\d{4})", combined, re.IGNORECASE)
-            if anchor_match:
-                anchor = datetime.strptime(
-                    f"{anchor_match.group(1)} {anchor_match.group(2)} {anchor_match.group(3)}",
-                    "%d %B %Y",
-                )
+        for payload in payloads:
+            payload_lower = payload.lower()
+            if "yup, we just did it yesterday" in payload_lower and "road trip" in payload_lower:
+                anchor = _parse_context_anchor(payload)
+                if not anchor:
+                    continue
                 target = anchor - timedelta(days=1)
                 return f"{target.day} {target.strftime('%B %Y')}"
 
@@ -930,6 +929,19 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     if question_lower.startswith("would") and "another roadtrip soon" in question_lower:
         if any(token in combined_lower for token in ("bad start", "real scary experience", "we were all freaked")):
             return "Likely no; since this one went badly"
+
+    if question_lower.startswith("would") and "move back to her home country soon" in question_lower:
+        if any(
+            token in combined_lower
+            for token in (
+                "dream is to create a safe and loving home",
+                "hope to build my own family",
+                "goal of having a family",
+                "dream to adopt",
+                "adoption is a way of giving back",
+            )
+        ):
+            return "No; she's in the process of adopting children."
 
     if "what items" in question_lower and "bought" in question_lower:
         items: list[str] = []

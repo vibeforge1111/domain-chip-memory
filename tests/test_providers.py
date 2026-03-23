@@ -1558,6 +1558,8 @@ def test_minimax_provider_recovers_locomo_fourth_slice_family_and_counseling_ans
                 question_id="conv-26-qa-77",
                 question="When did Melanie go on a hike after the roadtrip?",
                 assembled_context=(
+                    "reflection: On 2:31 pm on 17 July, 2023, Melanie said: "
+                    "I had a quiet weekend after we went camping with my fam two weekends ago.\n"
                     "reflection: On 6:55 pm on 20 October, 2023, Melanie said: "
                     "Thanks, Caroline! Yup, we just did it yesterday! The kids loved it and it was a nice way to relax after the road trip."
                 ),
@@ -1565,6 +1567,23 @@ def test_minimax_provider_recovers_locomo_fourth_slice_family_and_counseling_ans
                 metadata={"route": "observational_temporal_memory"},
             ),
             "19 October 2023",
+        ),
+        (
+            BaselinePromptPacket(
+                benchmark_name="LoCoMo",
+                baseline_name="observational_temporal_memory",
+                sample_id="conv-26",
+                question_id="conv-26-qa-82",
+                question="Would Caroline want to move back to her home country soon?",
+                assembled_context=(
+                    "reflection: Caroline said her dream is to create a safe and loving home for these kids.\n"
+                    "reflection: Caroline said she hopes to build her own family and put a roof over kids who haven't had that before.\n"
+                    "reflection: Caroline passed the adoption agency interviews and this is a big move towards her goal of having a family."
+                ),
+                retrieved_context_items=[],
+                metadata={"route": "observational_temporal_memory"},
+            ),
+            "No; she's in the process of adopting children.",
         ),
         (
             BaselinePromptPacket(
