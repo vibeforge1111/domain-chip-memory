@@ -1,0 +1,647 @@
+{
+  "run_manifest": {
+    "run_id": "observational-temporal-memory-v1",
+    "benchmark_name": "LoCoMo",
+    "baseline_name": "observational_temporal_memory",
+    "sample_ids": [
+      "conv-26"
+    ],
+    "question_ids": [
+      "conv-26-qa-1",
+      "conv-26-qa-2",
+      "conv-26-qa-3",
+      "conv-26-qa-4",
+      "conv-26-qa-5",
+      "conv-26-qa-6",
+      "conv-26-qa-7",
+      "conv-26-qa-8",
+      "conv-26-qa-9",
+      "conv-26-qa-10",
+      "conv-26-qa-11",
+      "conv-26-qa-12",
+      "conv-26-qa-13",
+      "conv-26-qa-14",
+      "conv-26-qa-15",
+      "conv-26-qa-16",
+      "conv-26-qa-17",
+      "conv-26-qa-18",
+      "conv-26-qa-19",
+      "conv-26-qa-20",
+      "conv-26-qa-21",
+      "conv-26-qa-22",
+      "conv-26-qa-23",
+      "conv-26-qa-24",
+      "conv-26-qa-25"
+    ],
+    "question_count": 25,
+    "metadata": {
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Observational Temporal Memory",
+      "max_observations": 4,
+      "max_reflections": 3,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 19,
+    "total": 25,
+    "accuracy": 0.76
+  },
+  "by_category": [
+    {
+      "category": "1",
+      "correct": 8,
+      "total": 10,
+      "accuracy": 0.8
+    },
+    {
+      "category": "2",
+      "correct": 8,
+      "total": 12,
+      "accuracy": 0.6667
+    },
+    {
+      "category": "3",
+      "correct": 3,
+      "total": 3,
+      "accuracy": 1.0
+    }
+  ],
+  "predictions": [
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-1",
+      "category": "2",
+      "predicted_answer": "7 May 2023",
+      "expected_answers": [
+        "7 May 2023"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 643,
+        "completion_tokens": 382,
+        "total_tokens": 1025,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-2",
+      "category": "2",
+      "predicted_answer": "unknown",
+      "expected_answers": [
+        "2022"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 487,
+        "completion_tokens": 133,
+        "total_tokens": 620,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-3",
+      "category": "3",
+      "predicted_answer": "Psychology, counseling certification",
+      "expected_answers": [
+        "Psychology, counseling certification"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 166,
+        "completion_tokens": 197,
+        "total_tokens": 363,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-4",
+      "category": "1",
+      "predicted_answer": "adoption agencies",
+      "expected_answers": [
+        "Adoption agencies"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 146,
+        "completion_tokens": 119,
+        "total_tokens": 265,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-5",
+      "category": "1",
+      "predicted_answer": "Trans woman",
+      "expected_answers": [
+        "Transgender woman"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 605,
+        "completion_tokens": 320,
+        "total_tokens": 925,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-6",
+      "category": "2",
+      "predicted_answer": "The saturday before 25 May 2023",
+      "expected_answers": [
+        "The sunday before 25 May 2023"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 176,
+        "completion_tokens": 512,
+        "total_tokens": 688,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-7",
+      "category": "2",
+      "predicted_answer": "unknown",
+      "expected_answers": [
+        "June 2023"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 561,
+        "completion_tokens": 455,
+        "total_tokens": 1016,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-8",
+      "category": "1",
+      "predicted_answer": "Single",
+      "expected_answers": [
+        "Single"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 214,
+        "completion_tokens": 70,
+        "total_tokens": 284,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-9",
+      "category": "2",
+      "predicted_answer": "The week before 9 June 2023",
+      "expected_answers": [
+        "The week before 9 June 2023"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 187,
+        "completion_tokens": 413,
+        "total_tokens": 600,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-10",
+      "category": "2",
+      "predicted_answer": "The week before 9 June 2023",
+      "expected_answers": [
+        "The week before 9 June 2023"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 541,
+        "completion_tokens": 512,
+        "total_tokens": 1053,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-11",
+      "category": "2",
+      "predicted_answer": "4 years",
+      "expected_answers": [
+        "4 years"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 294,
+        "completion_tokens": 121,
+        "total_tokens": 415,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-12",
+      "category": "1",
+      "predicted_answer": "Sweden",
+      "expected_answers": [
+        "Sweden"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 286,
+        "completion_tokens": 127,
+        "total_tokens": 413,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-13",
+      "category": "2",
+      "predicted_answer": "10 years ago",
+      "expected_answers": [
+        "10 years ago"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 610,
+        "completion_tokens": 263,
+        "total_tokens": 873,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-14",
+      "category": "1",
+      "predicted_answer": "counseling or mental health for Transgender people",
+      "expected_answers": [
+        "counseling or mental health for Transgender people"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 172,
+        "completion_tokens": 242,
+        "total_tokens": 414,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-15",
+      "category": "3",
+      "predicted_answer": "Likely no",
+      "expected_answers": [
+        "Likely no"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 728,
+        "completion_tokens": 140,
+        "total_tokens": 868,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-16",
+      "category": "1",
+      "predicted_answer": "pottery, camping, painting, swimming",
+      "expected_answers": [
+        "pottery, camping, painting, swimming"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 137,
+        "completion_tokens": 512,
+        "total_tokens": 649,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-17",
+      "category": "2",
+      "predicted_answer": "The week before 13 September 2023",
+      "expected_answers": [
+        "2 July 2023"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 537,
+        "completion_tokens": 512,
+        "total_tokens": 1049,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-18",
+      "category": "2",
+      "predicted_answer": "July 2023",
+      "expected_answers": [
+        "July 2023"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 557,
+        "completion_tokens": 341,
+        "total_tokens": 898,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-19",
+      "category": "1",
+      "predicted_answer": "beach, mountains, forest",
+      "expected_answers": [
+        "beach, mountains, forest"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 142,
+        "completion_tokens": 334,
+        "total_tokens": 476,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-20",
+      "category": "1",
+      "predicted_answer": "dinosaurs, nature",
+      "expected_answers": [
+        "dinosaurs, nature"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 300,
+        "completion_tokens": 462,
+        "total_tokens": 762,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-21",
+      "category": "2",
+      "predicted_answer": "5 July 2023",
+      "expected_answers": [
+        "5 July 2023"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 173,
+        "completion_tokens": 512,
+        "total_tokens": 685,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-22",
+      "category": "2",
+      "predicted_answer": "The week before 6 July 2023",
+      "expected_answers": [
+        "The week before 6 July 2023"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 627,
+        "completion_tokens": 411,
+        "total_tokens": 1038,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-23",
+      "category": "3",
+      "predicted_answer": "Yes, since she collects classic children's books",
+      "expected_answers": [
+        "Yes, since she collects classic children's books"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 158,
+        "completion_tokens": 82,
+        "total_tokens": 240,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-24",
+      "category": "1",
+      "predicted_answer": "Charlotte's Web",
+      "expected_answers": [
+        "\"Nothing is Impossible\", \"Charlotte's Web\""
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 143,
+        "completion_tokens": 120,
+        "total_tokens": 263,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LoCoMo",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "conv-26",
+      "question_id": "conv-26-qa-25",
+      "category": "1",
+      "predicted_answer": "Running, pottery",
+      "expected_answers": [
+        "Running, pottery"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 143,
+        "completion_tokens": 242,
+        "total_tokens": 385,
+        "context_compacted": true,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    }
+  ]
+}
