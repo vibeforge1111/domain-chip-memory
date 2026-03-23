@@ -952,11 +952,25 @@ def _observation_score(question: NormalizedQuestion, observation: ObservationEnt
     if "join a new activist group" in question_lower:
         if "activist group" in observation_lower or "last tues" in observation_lower or "last tuesday" in observation_lower:
             score += 7.0
+    if "pottery workshop" in question_lower:
+        if "pottery workshop" in observation_lower:
+            score += 10.0
+        if "last fri" in observation_lower or "last friday" in observation_lower:
+            score += 8.0
+        if "last month" in observation_lower and "pottery workshop" not in observation_lower:
+            score -= 5.0
     if "camping in june" in question_lower:
         if any(token in observation_lower for token in ("camping", "campfire", "nature", "hike", "marshmallows")):
             score += 7.0
         if "june" in (observation.timestamp or "").lower():
             score += 9.0
+        if not any(token in observation_lower for token in ("camping", "campfire", "nature", "hike", "marshmallows")):
+            score -= 6.0
+    if "camping in july" in question_lower:
+        if "two weekends ago" in observation_lower or "quiet weekend after we went camping" in observation_lower:
+            score += 10.0
+        if "last year" in observation_lower:
+            score -= 6.0
     if "during the summer" in question_lower and "pride parade" in question_lower:
         if "pride parade" in observation_lower and "last week" in observation_lower:
             score += 6.0

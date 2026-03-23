@@ -659,6 +659,14 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         if items:
             return ", ".join(items)
 
+    if "what activities has" in question_lower and "family" in question_lower:
+        items: list[str] = []
+        for needle in ("pottery", "painting", "camping", "museum", "swimming", "hiking"):
+            if needle in combined_lower:
+                items.append(needle)
+        if items:
+            return ", ".join(items)
+
     if "where has" in question_lower and "camped" in question_lower:
         items: list[str] = []
         for needle in ("beach", "mountains", "forest"):

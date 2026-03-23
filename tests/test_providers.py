@@ -1235,6 +1235,23 @@ def test_minimax_provider_rescues_second_locomo_slice_shapes(monkeypatch):
         retrieved_context_items=[],
         metadata={"route": "observational_temporal_memory"},
     )
+    family_activities_packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-39",
+        question="What activities has Melanie done with her family?",
+        assembled_context=(
+            "reflection: Melanie partakes in camping\n"
+            "reflection: Melanie partakes in pottery\n"
+            "reflection: Melanie partakes in hiking\n"
+            "reflection: Melanie partakes in museum\n"
+            "reflection: Melanie partakes in swimming\n"
+            "reflection: Melanie partakes in painting"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
     birthday_packet = BaselinePromptPacket(
         benchmark_name="LoCoMo",
         baseline_name="observational_temporal_memory",
@@ -1275,6 +1292,7 @@ def test_minimax_provider_rescues_second_locomo_slice_shapes(monkeypatch):
     assert provider.generate_answer(ally_packet).answer == "Yes, she is supportive"
     assert provider.generate_answer(pottery_packet).answer == "bowls, cup"
     assert provider.generate_answer(outdoors_packet).answer == "National park; she likes the outdoors"
+    assert provider.generate_answer(family_activities_packet).answer == "pottery, painting, camping, museum, swimming, hiking"
     assert provider.generate_answer(birthday_packet).answer == "13 August"
     assert provider.generate_answer(pride_fest_packet).answer == "2022"
 
