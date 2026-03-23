@@ -1304,3 +1304,345 @@ def test_locomo_question_relevant_window_surfaces_third_slice_profile_facts():
     assert "important symbol to Caroline is Rainbow flag" in packet_by_id["q3"].assembled_context
     assert "important symbol to Caroline is transgender symbol" in packet_by_id["q3"].assembled_context
     assert 'read "Becoming Nicole"' in packet_by_id["q4"].assembled_context
+
+
+def test_locomo_question_relevant_window_surfaces_fourth_slice_family_and_counseling_facts():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="locomo-fourth-slice-facts",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="6:55 pm on 20 October, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d1",
+                        speaker="Melanie",
+                        text="Thanks! They were scared but we reassured them and explained their brother would be OK. They're tough kids.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_2",
+                timestamp="3:31 pm on 23 August, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d2",
+                        speaker="Melanie",
+                        text="Luna and Oliver! They are so sweet and playful - they really liven up the house! Just got some new shoes, too!",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_3",
+                timestamp="9:55 am on 22 October, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d3",
+                        speaker="Melanie",
+                        metadata={"img_url": "https://example.com/figurines.jpg", "blip_caption": "a couple of wooden dolls sitting on a table"},
+                        text="Congrats, Caroline! Adoption sounds awesome. I'm so happy for you. These figurines I bought yesterday remind me of family love. Tell me, what's your vision for the future?",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_4",
+                timestamp="1:14 pm on 25 May, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d4",
+                        speaker="Melanie",
+                        text="Thanks, Caroline! The event was really thought-provoking. I'm starting to realize that self-care is really important.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d5",
+                        speaker="Melanie",
+                        text="Yeah, it's tough. So I'm carving out some me-time each day - running, reading, or playing my violin - which refreshes me and helps me stay present for my fam!",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d6",
+                        speaker="Caroline",
+                        text="Researching adoption agencies - it's been a dream to have a family and give a loving home to kids who need it.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d7",
+                        speaker="Caroline",
+                        text="I chose them 'cause they help LGBTQ+ folks with adoption. Their inclusivity and support really spoke to me.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d8",
+                        speaker="Caroline",
+                        text="I'm thrilled to make a family for kids who need one. It'll be tough as a single parent, but I'm up for the challenge!",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d9",
+                        speaker="Melanie",
+                        text="You're doing something amazing! Creating a family for those kids is so lovely. You'll be an awesome mom! Good luck!",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_5",
+                timestamp="7:55 pm on 9 June, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d10",
+                        speaker="Melanie",
+                        text="5 years already! Time flies- feels like just yesterday I put this dress on! Thanks, Caroline!",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_6",
+                timestamp="10:37 am on 27 June, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d11",
+                        speaker="Caroline",
+                        metadata={"img_url": "https://example.com/necklace.jpg", "blip_caption": "a person holding a necklace with a cross and a heart"},
+                        text="This necklace is super special to me - a gift from my grandma in my home country, Sweden. She gave it to me when I was young, and it stands for love, faith and strength.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d12",
+                        speaker="Caroline",
+                        text="I've got some other stuff with sentimental value, like my hand-painted bowl. A friend made it for my 18th birthday ten years ago. The pattern and colors are awesome-- it reminds me of art and self-expression.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d13",
+                        speaker="Melanie",
+                        text="Actually, I just took my fam camping in the mountains last week - it was a really nice time together!",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d14",
+                        speaker="Caroline",
+                        metadata={"blip_caption": "a book shelf with many books on it"},
+                        text="Lately, I've been looking into counseling and mental health as a career. I want to help people who have gone through the same things as me.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="d15",
+                        speaker="Caroline",
+                        text="Thanks, Melanie. It really mattered. My own journey and the support I got made a huge difference. Now I want to help people go through it too. I saw how counseling and support groups improved my life, so I started caring more about mental health and understanding myself.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_7",
+                timestamp="8:18 pm on 6 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d16",
+                        speaker="Caroline",
+                        text="I'm still figuring out the details, but I'm thinking of working with trans people, helping them accept themselves and supporting their mental health. Last Friday, I went to an LGBTQ+ counseling workshop and it was really enlightening. They talked about different therapeutic methods and how to best work with trans people.",
+                    ),
+                ],
+            ),
+            NormalizedSession(
+                session_id="session_8",
+                timestamp="8:56 pm on 20 July, 2023",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="d17",
+                        speaker="Melanie",
+                        text="It was an awesome time, Caroline! We explored nature, roasted marshmallows around the campfire and even went on a hike. The view from the top was amazing! The 2 younger kids love nature.",
+                    ),
+                ],
+            ),
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="How many children does Melanie have?",
+                category="1",
+                expected_answers=["3"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["d1"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q2",
+                question="What items has Melanie bought?",
+                category="1",
+                expected_answers=["Figurines, shoes"],
+                evidence_session_ids=["session_2", "session_3"],
+                evidence_turn_ids=["d2", "d3"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q3",
+                question="What did Melanie realize after the charity race?",
+                category="4",
+                expected_answers=["self-care is important"],
+                evidence_session_ids=["session_4"],
+                evidence_turn_ids=["d4"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q4",
+                question="How does Melanie prioritize self-care?",
+                category="4",
+                expected_answers=["by carving out some me-time each day for activities like running, reading, or playing the violin"],
+                evidence_session_ids=["session_4"],
+                evidence_turn_ids=["d5"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q5",
+                question="What are Caroline's plans for the summer?",
+                category="4",
+                expected_answers=["researching adoption agencies"],
+                evidence_session_ids=["session_4"],
+                evidence_turn_ids=["d6"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q6",
+                question="Why did Caroline choose the adoption agency?",
+                category="4",
+                expected_answers=["because of their inclusivity and support for LGBTQ+ individuals"],
+                evidence_session_ids=["session_4"],
+                evidence_turn_ids=["d7"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q7",
+                question="What is Caroline excited about in the adoption process?",
+                category="4",
+                expected_answers=["creating a family for kids who need one"],
+                evidence_session_ids=["session_4"],
+                evidence_turn_ids=["d8"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q8",
+                question="What does Melanie think about Caroline's decision to adopt?",
+                category="4",
+                expected_answers=["she thinks Caroline is doing something amazing and will be an awesome mom"],
+                evidence_session_ids=["session_4"],
+                evidence_turn_ids=["d9"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q9",
+                question="How long have Mel and her husband been married?",
+                category="4",
+                expected_answers=["Mel and her husband have been married for 5 years."],
+                evidence_session_ids=["session_5"],
+                evidence_turn_ids=["d10"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q10",
+                question="What does Caroline's necklace symbolize?",
+                category="4",
+                expected_answers=["love, faith, and strength"],
+                evidence_session_ids=["session_6"],
+                evidence_turn_ids=["d11"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q11",
+                question="What country is Caroline's grandma from?",
+                category="4",
+                expected_answers=["Sweden"],
+                evidence_session_ids=["session_6"],
+                evidence_turn_ids=["d11"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q12",
+                question="What was grandma's gift to Caroline?",
+                category="4",
+                expected_answers=["necklace"],
+                evidence_session_ids=["session_6"],
+                evidence_turn_ids=["d11"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q13",
+                question="What is Melanie's hand-painted bowl a reminder of?",
+                category="4",
+                expected_answers=["art and self-expression"],
+                evidence_session_ids=["session_6"],
+                evidence_turn_ids=["d12"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q14",
+                question="What did Melanie and her family do while camping?",
+                category="4",
+                expected_answers=["explored nature, roasted marshmallows, and went on a hike"],
+                evidence_session_ids=["session_8"],
+                evidence_turn_ids=["d17"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q15",
+                question="What kind of counseling and mental health services is Caroline interested in pursuing?",
+                category="4",
+                expected_answers=["working with trans people, helping them accept themselves and supporting their mental health"],
+                evidence_session_ids=["session_7"],
+                evidence_turn_ids=["d16"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q16",
+                question="What workshop did Caroline attend recently?",
+                category="4",
+                expected_answers=["LGBTQ+ counseling workshop"],
+                evidence_session_ids=["session_7"],
+                evidence_turn_ids=["d16"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q17",
+                question="What was discussed in the LGBTQ+ counseling workshop?",
+                category="4",
+                expected_answers=["therapeutic methods and how to best work with trans people"],
+                evidence_session_ids=["session_7"],
+                evidence_turn_ids=["d16"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+            NormalizedQuestion(
+                question_id="q18",
+                question="What motivated Caroline to pursue counseling?",
+                category="4",
+                expected_answers=["her own journey and the support she received, and how counseling improved her life"],
+                evidence_session_ids=["session_6"],
+                evidence_turn_ids=["d15"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            ),
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    _, packets = build_observational_temporal_memory_packets([sample], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "Melanie has 3 children" in packet_by_id["q1"].assembled_context
+    assert "Melanie bought Figurines" in packet_by_id["q2"].assembled_context
+    assert "Melanie bought shoes" in packet_by_id["q2"].assembled_context
+    assert "Melanie realized self-care is important" in packet_by_id["q3"].assembled_context
+    assert "Melanie prioritizes self-care by carving out some me-time each day for activities like running, reading, or playing the violin" in packet_by_id["q4"].assembled_context
+    assert "Caroline's plan for the summer is researching adoption agencies" in packet_by_id["q5"].assembled_context
+    assert "Caroline chose the adoption agency because their inclusivity and support for LGBTQ+ individuals" in packet_by_id["q6"].assembled_context
+    assert "Caroline is excited about creating a family for kids who need one in the adoption process" in packet_by_id["q7"].assembled_context
+    assert "Melanie thinks the adoption decision is doing something amazing and will be an awesome mom" in packet_by_id["q8"].assembled_context
+    assert "Melanie has been married for 5 years" in packet_by_id["q9"].assembled_context
+    assert "Caroline's necklace symbolizes love, faith, and strength" in packet_by_id["q10"].assembled_context
+    assert "Caroline moved from Sweden" in packet_by_id["q11"].assembled_context
+    assert "Caroline's grandma gave Caroline a necklace" in packet_by_id["q12"].assembled_context
+    assert "Caroline's hand-painted bowl reminds Caroline of art and self-expression" in packet_by_id["q13"].assembled_context
+    assert "While camping Melanie explored nature" in packet_by_id["q14"].assembled_context
+    assert "While camping Melanie roasted marshmallows" in packet_by_id["q14"].assembled_context
+    assert "While camping Melanie went on a hike" in packet_by_id["q14"].assembled_context
+    assert "Caroline is interested in working with trans people, helping them accept themselves and supporting their mental health" in packet_by_id["q15"].assembled_context
+    assert "Caroline attended LGBTQ+ counseling workshop" in packet_by_id["q16"].assembled_context
+    assert "Caroline's workshop discussed therapeutic methods and how to best work with trans people" in packet_by_id["q17"].assembled_context
+    assert "Caroline was motivated by her own journey and the support she received, and how counseling improved her life" in packet_by_id["q18"].assembled_context

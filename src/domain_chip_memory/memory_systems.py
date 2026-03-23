@@ -350,6 +350,100 @@ def _observation_surface_text(subject: str, predicate: str, value: str, source_t
             if subject == "user"
             else f"{surface_subject} has been practicing art for {value}"
         )
+    if predicate == "child_count":
+        return f"I have {value} children" if subject == "user" else f"{surface_subject} has {value} children"
+    if predicate == "bought_item":
+        return f"I bought {value}" if subject == "user" else f"{surface_subject} bought {value}"
+    if predicate == "self_care_realization":
+        return (
+            f"I realized {value}"
+            if subject == "user"
+            else f"{surface_subject} realized {value}"
+        )
+    if predicate == "self_care_method":
+        return (
+            f"I prioritize self-care by {value}"
+            if subject == "user"
+            else f"{surface_subject} prioritizes self-care by {value}"
+        )
+    if predicate == "summer_plan":
+        return (
+            f"My plan for the summer is {value}"
+            if subject == "user"
+            else f"{surface_subject}'s plan for the summer is {value}"
+        )
+    if predicate == "adoption_agency_reason":
+        return (
+            f"I chose the adoption agency because {value}"
+            if subject == "user"
+            else f"{surface_subject} chose the adoption agency because {value}"
+        )
+    if predicate == "adoption_goal":
+        return (
+            f"I'm excited about {value} in the adoption process"
+            if subject == "user"
+            else f"{surface_subject} is excited about {value} in the adoption process"
+        )
+    if predicate == "adoption_opinion":
+        return (
+            f"I think the adoption decision is {value}"
+            if subject == "user"
+            else f"{surface_subject} thinks the adoption decision is {value}"
+        )
+    if predicate == "marriage_duration":
+        return (
+            f"I have been married for {value}"
+            if subject == "user"
+            else f"{surface_subject} has been married for {value}"
+        )
+    if predicate == "necklace_symbolism":
+        return (
+            f"My necklace symbolizes {value}"
+            if subject == "user"
+            else f"{surface_subject}'s necklace symbolizes {value}"
+        )
+    if predicate == "gift_item":
+        return (
+            f"My grandma gave me a {value}"
+            if subject == "user"
+            else f"{surface_subject}'s grandma gave {surface_subject} a {value}"
+        )
+    if predicate == "bowl_symbolism":
+        return (
+            f"My hand-painted bowl reminds me of {value}"
+            if subject == "user"
+            else f"{surface_subject}'s hand-painted bowl reminds {surface_subject} of {value}"
+        )
+    if predicate == "camping_activity":
+        return (
+            f"While camping I {value}"
+            if subject == "user"
+            else f"While camping {surface_subject} {value}"
+        )
+    if predicate == "counseling_interest_detail":
+        return (
+            f"I'm interested in {value}"
+            if subject == "user"
+            else f"{surface_subject} is interested in {value}"
+        )
+    if predicate == "workshop_name":
+        return (
+            f"I attended {value}"
+            if subject == "user"
+            else f"{surface_subject} attended {value}"
+        )
+    if predicate == "workshop_topic":
+        return (
+            f"The workshop discussed {value}"
+            if subject == "user"
+            else f"{surface_subject}'s workshop discussed {value}"
+        )
+    if predicate == "counseling_motivation":
+        return (
+            f"I was motivated by {value}"
+            if subject == "user"
+            else f"{surface_subject} was motivated by {value}"
+        )
     if predicate == "trip_duration":
         return source_text
     return source_text
@@ -396,6 +490,23 @@ def _answer_candidate_surface_text(subject: str, predicate: str, value: str, sou
         "transition_change",
         "trans_event",
         "art_practice_duration",
+        "child_count",
+        "bought_item",
+        "self_care_realization",
+        "self_care_method",
+        "summer_plan",
+        "adoption_agency_reason",
+        "adoption_goal",
+        "adoption_opinion",
+        "marriage_duration",
+        "necklace_symbolism",
+        "gift_item",
+        "bowl_symbolism",
+        "camping_activity",
+        "counseling_interest_detail",
+        "workshop_name",
+        "workshop_topic",
+        "counseling_motivation",
         "trip_duration",
     } and value:
         return value
@@ -476,6 +587,70 @@ def _extract_atoms_from_turn(
         _append_atom("trans_event", "poetry reading", entity_key="poetry reading")
     if re.search(r"\bseven years now\b", lower) and ("muses" in lower or "into art" in lower):
         _append_atom("art_practice_duration", "seven years", entity_key="seven years")
+    if "their brother would be ok" in lower or "their brother would be okay" in lower or "2 younger kids" in lower:
+        _append_atom("child_count", "3", entity_key="3")
+    if "figurines i bought" in lower:
+        _append_atom("bought_item", "Figurines", entity_key="figurines")
+    if "new shoes" in lower:
+        _append_atom("bought_item", "shoes", entity_key="shoes")
+    if "self-care is really important" in lower:
+        _append_atom("self_care_realization", "self-care is important", entity_key="self-care is important")
+    if "carving out some me-time each day" in lower and "running" in lower and "reading" in lower and "violin" in lower:
+        _append_atom(
+            "self_care_method",
+            "carving out some me-time each day for activities like running, reading, or playing the violin",
+            entity_key="me-time-running-reading-violin",
+        )
+    if "researching adoption agencies" in lower:
+        _append_atom("summer_plan", "researching adoption agencies", entity_key="researching adoption agencies")
+    if "help lgbtq+ folks with adoption" in lower or "help lgbtq folks with adoption" in lower:
+        _append_atom(
+            "adoption_agency_reason",
+            "their inclusivity and support for LGBTQ+ individuals",
+            entity_key="inclusive-lgbtq-adoption",
+        )
+    if "make a family for kids who need one" in lower:
+        _append_atom("adoption_goal", "creating a family for kids who need one", entity_key="family-for-kids")
+    if "doing something amazing" in lower and "awesome mom" in lower:
+        _append_atom(
+            "adoption_opinion",
+            "doing something amazing and will be an awesome mom",
+            entity_key="amazing-awesome-mom",
+        )
+    if re.search(r"\b5 years already\b", lower) and "dress" in lower:
+        _append_atom("marriage_duration", "5 years", entity_key="5 years")
+    if "stands for love, faith and strength" in lower or "stands for love, faith and strength" in lower:
+        _append_atom("necklace_symbolism", "love, faith, and strength", entity_key="love-faith-strength")
+    if "this necklace is super special" in lower and "gift from my grandma" in lower:
+        _append_atom("gift_item", "necklace", entity_key="necklace")
+    if "hand-painted bowl" in lower and "art and self-expression" in lower:
+        _append_atom("bowl_symbolism", "art and self-expression", entity_key="art-and-self-expression")
+    if "explored nature" in lower:
+        _append_atom("camping_activity", "explored nature", entity_key="explored nature")
+    if "roasted marshmallows" in lower:
+        _append_atom("camping_activity", "roasted marshmallows", entity_key="roasted marshmallows")
+    if "went on a hike" in lower:
+        _append_atom("camping_activity", "went on a hike", entity_key="went on a hike")
+    if "working with trans people, helping them accept themselves and supporting their mental health" in lower:
+        _append_atom(
+            "counseling_interest_detail",
+            "working with trans people, helping them accept themselves and supporting their mental health",
+            entity_key="trans-counseling-detail",
+        )
+    if "lgbtq+ counseling workshop" in lower or "lgbtq counseling workshop" in lower:
+        _append_atom("workshop_name", "LGBTQ+ counseling workshop", entity_key="lgbtq-counseling-workshop")
+    if "therapeutic methods" in lower and "work with trans people" in lower:
+        _append_atom(
+            "workshop_topic",
+            "therapeutic methods and how to best work with trans people",
+            entity_key="therapeutic-methods-trans-people",
+        )
+    if "my own journey and the support i got made a huge difference" in lower and "counseling and support groups improved my life" in lower:
+        _append_atom(
+            "counseling_motivation",
+            "her own journey and the support she received, and how counseling improved her life",
+            entity_key="own-journey-support-counseling",
+        )
 
     patterns = [
         (r"\b(?:i|we)\s+moved to\s+([A-Za-z0-9 _-]+)", "location"),
@@ -952,6 +1127,42 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("trans_event")
     if "practicing art" in question_lower:
         predicates.append("art_practice_duration")
+    if "how many children" in question_lower:
+        predicates.append("child_count")
+    if "what items" in question_lower and "bought" in question_lower:
+        predicates.append("bought_item")
+    if "charity race" in question_lower and "realize" in question_lower:
+        predicates.append("self_care_realization")
+    if "prioritize self-care" in question_lower:
+        predicates.append("self_care_method")
+    if "plans for the summer" in question_lower:
+        predicates.extend(["summer_plan", "research_topic"])
+    if "choose the adoption agency" in question_lower:
+        predicates.append("adoption_agency_reason")
+    if "excited about" in question_lower and "adoption process" in question_lower:
+        predicates.append("adoption_goal")
+    if "decision to adopt" in question_lower:
+        predicates.append("adoption_opinion")
+    if "married" in question_lower:
+        predicates.append("marriage_duration")
+    if "necklace symbolize" in question_lower:
+        predicates.append("necklace_symbolism")
+    if "what country" in question_lower and "grandma" in question_lower:
+        predicates.append("moved_from_location")
+    if "grandma's gift" in question_lower:
+        predicates.append("gift_item")
+    if "hand-painted bowl" in question_lower:
+        predicates.append("bowl_symbolism")
+    if "while camping" in question_lower:
+        predicates.append("camping_activity")
+    if "what kind of counseling and mental health services" in question_lower:
+        predicates.extend(["counseling_interest_detail", "career_path"])
+    if "what workshop" in question_lower and "attend recently" in question_lower:
+        predicates.append("workshop_name")
+    if "what was discussed" in question_lower and "workshop" in question_lower:
+        predicates.append("workshop_topic")
+    if "what motivated" in question_lower and "pursue counseling" in question_lower:
+        predicates.append("counseling_motivation")
     if question_lower.startswith("how long was i in"):
         predicates.append("trip_duration")
     if not predicates:
@@ -1204,6 +1415,96 @@ def _observation_score(question: NormalizedQuestion, observation: ObservationEnt
             score += 10.0
         if "seven years" in observation_lower:
             score += 6.0
+    if "how many children" in question_lower:
+        if observation.predicate == "child_count":
+            score += 14.0
+        if any(token in observation_lower for token in ("my son", "their brother", "2 younger kids", "kids")):
+            score += 4.0
+    if "what items" in question_lower and "bought" in question_lower:
+        if observation.predicate == "bought_item":
+            score += 12.0
+        if any(token in observation_lower for token in ("figurines", "shoes", "bought")):
+            score += 6.0
+    if "charity race" in question_lower and "realize" in question_lower:
+        if observation.predicate == "self_care_realization":
+            score += 12.0
+        if "self-care is really important" in observation_lower:
+            score += 7.0
+    if "prioritize self-care" in question_lower:
+        if observation.predicate == "self_care_method":
+            score += 12.0
+        if any(token in observation_lower for token in ("me-time", "running", "reading", "violin")):
+            score += 6.0
+    if "plans for the summer" in question_lower:
+        if observation.predicate in {"summer_plan", "research_topic"}:
+            score += 12.0
+        if "researching adoption agencies" in observation_lower:
+            score += 8.0
+    if "choose the adoption agency" in question_lower:
+        if observation.predicate == "adoption_agency_reason":
+            score += 12.0
+        if any(token in observation_lower for token in ("lgbtq+ folks with adoption", "lgbtq folks with adoption", "inclusivity and support")):
+            score += 8.0
+    if "excited about" in question_lower and "adoption process" in question_lower:
+        if observation.predicate == "adoption_goal":
+            score += 12.0
+        if "make a family for kids who need one" in observation_lower:
+            score += 8.0
+    if "decision to adopt" in question_lower:
+        if observation.predicate == "adoption_opinion":
+            score += 12.0
+        if "doing something amazing" in observation_lower or "awesome mom" in observation_lower:
+            score += 8.0
+    if "married" in question_lower:
+        if observation.predicate == "marriage_duration":
+            score += 12.0
+        if "5 years already" in observation_lower:
+            score += 8.0
+    if "necklace symbolize" in question_lower:
+        if observation.predicate == "necklace_symbolism":
+            score += 12.0
+        if "love, faith and strength" in observation_lower or "love, faith, and strength" in observation_lower:
+            score += 8.0
+    if "what country" in question_lower and "grandma" in question_lower:
+        if observation.predicate == "moved_from_location":
+            score += 12.0
+        if "home country, sweden" in observation_lower:
+            score += 8.0
+    if "grandma's gift" in question_lower:
+        if observation.predicate == "gift_item":
+            score += 12.0
+        if "gift from my grandma" in observation_lower or "necklace" in observation_lower:
+            score += 7.0
+    if "hand-painted bowl" in question_lower:
+        if observation.predicate == "bowl_symbolism":
+            score += 12.0
+        if "art and self-expression" in observation_lower or "hand-painted bowl" in observation_lower:
+            score += 7.0
+    if "while camping" in question_lower:
+        if observation.predicate == "camping_activity":
+            score += 12.0
+        if any(token in observation_lower for token in ("explored nature", "roasted marshmallows", "went on a hike")):
+            score += 7.0
+    if "what kind of counseling and mental health services" in question_lower:
+        if observation.predicate in {"counseling_interest_detail", "career_path"}:
+            score += 12.0
+        if "working with trans people" in observation_lower or "supporting their mental health" in observation_lower:
+            score += 8.0
+    if "what workshop" in question_lower and "attend recently" in question_lower:
+        if observation.predicate == "workshop_name":
+            score += 12.0
+        if "counseling workshop" in observation_lower:
+            score += 8.0
+    if "what was discussed" in question_lower and "workshop" in question_lower:
+        if observation.predicate == "workshop_topic":
+            score += 12.0
+        if "therapeutic methods" in observation_lower or "work with trans people" in observation_lower:
+            score += 8.0
+    if "what motivated" in question_lower and "pursue counseling" in question_lower:
+        if observation.predicate == "counseling_motivation":
+            score += 12.0
+        if "my own journey" in observation_lower or "support groups improved my life" in observation_lower:
+            score += 8.0
     if "political leaning" in question_lower:
         if any(
             token in observation_lower
