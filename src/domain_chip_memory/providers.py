@@ -1398,6 +1398,20 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
     question_lower = question.lower()
     cleaned_lower = cleaned.lower()
+    relative_temporal_markers = (
+        "yesterday",
+        "today",
+        "this month",
+        "last month",
+        "next month",
+        "last week",
+        "this week",
+        "few years ago",
+        "years ago",
+        "months ago",
+        "weeks ago",
+        "days ago",
+    )
     if (
         answer_candidate
         and cleaned.lower() != answer_candidate.lower()
@@ -1411,6 +1425,7 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         and question_lower.startswith("when ")
         and (
             re.search(r"\b\d{4}\b", answer_candidate)
+            or any(marker in answer_candidate.lower() for marker in relative_temporal_markers)
             or any(month in answer_candidate.lower() for month in (
                 "january",
                 "february",
@@ -1442,6 +1457,11 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
                     len(answer_candidate.split()) >= 2
                     and not answer_candidate.lower().startswith(("hey ", "hi ", "thanks", "nice "))
                 )
+                or (
+                    question_lower.startswith(("what ", "which "))
+                    and len(answer_candidate.split()) >= 1
+                    and not answer_candidate.lower().startswith(("hey ", "hi ", "thanks", "nice "))
+                )
             )
         ):
             return answer_candidate
@@ -1457,7 +1477,14 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
             or len(cleaned.split()) <= 6
             or set(re.findall(r"[a-z0-9]+", cleaned_lower)).issubset(set(re.findall(r"[a-z0-9]+", answer_candidate.lower())))
         )
-        and len(answer_candidate.split()) >= 3
+        and (
+            len(answer_candidate.split()) >= 3
+            or (
+                cleaned_lower == "unknown"
+                and question_lower.startswith(("what ", "which "))
+                and len(answer_candidate.split()) >= 1
+            )
+        )
     ):
         return answer_candidate
     if (

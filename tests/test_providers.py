@@ -205,6 +205,26 @@ def test_expand_answer_prefers_richer_list_or_reason_candidate_over_thin_output(
     assert rescued_reason == "He lost his job and decided to start his own business to share his passion."
 
 
+def test_expand_answer_uses_relative_temporal_candidate_for_when_question():
+    rescued = providers._expand_answer_from_context(
+        "When did Gina get her tattoo?",
+        "1 February 2023",
+        "answer_candidate: A few years ago",
+    )
+
+    assert rescued == "A few years ago"
+
+
+def test_expand_answer_uses_single_token_entity_candidate_for_unknown_which_question():
+    rescued = providers._expand_answer_from_context(
+        "Which city have both Jean and John visited?",
+        "unknown",
+        "answer_candidate: Rome",
+    )
+
+    assert rescued == "Rome"
+
+
 def test_minimax_provider_includes_context_image_urls(monkeypatch):
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
     captured: dict[str, object] = {}

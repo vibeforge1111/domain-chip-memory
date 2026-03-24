@@ -1832,6 +1832,7 @@ def test_locomo_conv30_shared_and_explanatory_candidates_are_synthesized():
                 "conv-30-qa-3",
                 "conv-30-qa-4",
                 "conv-30-qa-5",
+                "conv-30-qa-10",
                 "conv-30-qa-18",
                 "conv-30-qa-19",
                 "conv-30-qa-24",
@@ -1847,10 +1848,44 @@ def test_locomo_conv30_shared_and_explanatory_candidates_are_synthesized():
     assert "answer_candidate: by dancing" in packet_by_id["conv-30-qa-3"].assembled_context
     assert "answer_candidate: They lost their jobs and decided to start their own businesses." in packet_by_id["conv-30-qa-4"].assembled_context
     assert "answer_candidate: He lost his job and decided to start his own business to share his passion." in packet_by_id["conv-30-qa-5"].assembled_context
-    assert "answer_candidate: She lost her job and wanted to combine what she loved into her own business." in packet_by_id["conv-30-qa-18"].assembled_context
+    assert "answer_candidate: Rome" in packet_by_id["conv-30-qa-10"].assembled_context
+    assert "answer_candidate: She always loved fashion trends and finding unique pieces and she lost her job so decided it was time to start her own business." in packet_by_id["conv-30-qa-18"].assembled_context
     assert "answer_candidate: Yes" in packet_by_id["conv-30-qa-19"].assembled_context
-    assert "answer_candidate: launched an ad campaign, ran offers and promotions, developed a video presentation, worked with an artist on unique pieces, made limited-edition sweatshirts" in packet_by_id["conv-30-qa-24"].assembled_context
+    assert "answer_candidate: worked with an artist to make unique fashion pieces, made limited-edition sweatshirts, got some new offers and promotions for online store, developed a video presentation showing how to style her pieces" in packet_by_id["conv-30-qa-24"].assembled_context
     assert "answer_candidate: fair, networking events, dance competition" in packet_by_id["conv-30-qa-25"].assembled_context
+
+
+def test_locomo_conv30_temporal_candidates_cover_future_relative_and_anchor_dates():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-30"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=[
+            next(question for question in sample.questions if question.question_id == question_id)
+            for question_id in (
+                "conv-30-qa-7",
+                "conv-30-qa-12",
+                "conv-30-qa-15",
+                "conv-30-qa-21",
+                "conv-30-qa-22",
+            )
+        ],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_observational_temporal_memory_packets([subset], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "answer_candidate: February 2023" in packet_by_id["conv-30-qa-7"].assembled_context
+    assert "answer_candidate: A few years ago" in packet_by_id["conv-30-qa-12"].assembled_context
+    assert "answer_candidate: 3 April 2023" in packet_by_id["conv-30-qa-15"].assembled_context
+    assert "answer_candidate: 27 May 2023" in packet_by_id["conv-30-qa-21"].assembled_context
+    assert "answer_candidate: 27 May 2023" in packet_by_id["conv-30-qa-22"].assembled_context
 
 
 def test_locomo_question_relevant_window_surfaces_sixth_slice_music_poetry_and_roadtrip_facts():
