@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-22T21:33:37Z",
+  "generated_at": "2026-03-24T10:00:00Z",
   "benchmark_family": "agent_memory",
   "public_targets": [
     {
@@ -47,8 +47,8 @@
       "win_condition": "Reproduce the benchmark definition faithfully once code or data access is pinned, then beat the strongest reported baseline on the chosen slice.",
       "status": "paper_only",
       "source_url": "https://arxiv.org/abs/2510.27246",
-      "notes": "High-value frontier benchmark for higher-context and million-token-scale memory pressure. Current source is the paper; implementation surface still needs pinning.",
-      "next_action": "Track public code or dataset release, then lock the benchmark adapter and scorecard contract."
+      "notes": "High-value frontier benchmark for higher-context and million-token-scale memory pressure. Promote it now as an explicit key architecture target while keeping LongMemEval_s and LoCoMo as the honesty and regression gates.",
+      "next_action": "Track public code or dataset release, then lock the benchmark adapter and scorecard contract and use BEAM pressure to shape the next architecture mutations."
     }
   ],
   "experimental_frontier_claims": [
@@ -192,5 +192,5 @@
     "pinned_threshold_count": 1,
     "unpinned_threshold_count": 3
   },
-  "verdict": "LongMemEval has a pinned public bar. Supermemory ASMR is tracked separately as a pending experimental frontier claim rather than a pinned reproducible target. LoCoMo remains a frontier target with an exact public threshold still to pin. GoodAI LTM Benchmark is adopted as the third official benchmark harness. BEAM is added as a frontier higher-context benchmark pending public implementation pinning. ConvoMem is retained as a shadow regression benchmark."
+  "verdict": "LongMemEval has a pinned public bar. Supermemory ASMR is tracked separately as a pending experimental frontier claim rather than a pinned reproducible target. LoCoMo remains a frontier target with an exact public threshold still to pin. BEAM is now promoted as an explicit key frontier benchmark target for architecture pressure, while LongMemEval_s and LoCoMo remain the honesty and regression benchmarks we must still finish. GoodAI LTM Benchmark is retained as a long-span durability harness. ConvoMem remains a shadow regression benchmark."
 }

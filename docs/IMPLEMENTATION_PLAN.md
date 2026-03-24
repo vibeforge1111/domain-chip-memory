@@ -39,6 +39,7 @@ Shadow deliverable:
 Frontier deliverable:
 
 - `BEAM` adapter contract once the public implementation surface is pinned
+- `BEAM` scorecard contract that can track million-token stress slices separately from shorter benchmark slices
 
 ## Phase 2: Baseline memory systems
 
@@ -58,6 +59,7 @@ Deliverables:
 Goal:
 
 - implement a memory system that can reasonably challenge public leaders
+- implement it in a way that can extend to `BEAM` without sacrificing already-closed `LongMemEval_s` and `LoCoMo` slices
 
 Current lead lane as of 2026-03-23:
 
@@ -101,6 +103,25 @@ Deferred until after the lightweight baseline is measured:
 - answer forests
 - graph-database-first infra
 - learned memory-control policies
+
+## Phase 3A: BEAM readiness track
+
+Goal:
+
+- restructure the winning lane so it can survive million-token pressure while preserving current benchmark wins
+
+Required constraints:
+
+- keep `LongMemEval_s` and `LoCoMo` as regression gates
+- do not treat current partial coverage as full-benchmark victory
+
+Deliverables:
+
+- explicit working-memory, episodic-memory, stable-memory, and scratchpad-memory role separation
+- stronger hybridization path between observational memory and temporal-event structure
+- offline consolidation hooks for large-context pressure
+- compaction and rehydration rules that preserve exact answer-bearing spans
+- architecture ablations that test whether `BEAM`-oriented changes keep current `LongMemEval_s` and `LoCoMo` wins intact
 
 ## Phase 4: Mutation flywheel
 

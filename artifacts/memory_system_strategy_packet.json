@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-23T14:26:00Z",
+  "generated_at": "2026-03-24T10:00:00Z",
   "packet_type": "memory_system_strategy_packet",
   "north_star": "Beat the strongest public agent-memory systems with a reproducible benchmark-native architecture.",
   "benchmarks": [
@@ -48,8 +48,8 @@
       "win_condition": "Reproduce the benchmark definition faithfully once code or data access is pinned, then beat the strongest reported baseline on the chosen slice.",
       "status": "paper_only",
       "source_url": "https://arxiv.org/abs/2510.27246",
-      "notes": "High-value frontier benchmark for higher-context and million-token-scale memory pressure. Current source is the paper; implementation surface still needs pinning.",
-      "next_action": "Track public code or dataset release, then lock the benchmark adapter and scorecard contract."
+      "notes": "High-value frontier benchmark for higher-context and million-token-scale memory pressure. Promote it now as an explicit key architecture target while keeping LongMemEval_s and LoCoMo as honesty and regression gates. Current source is the paper; implementation surface still needs pinning.",
+      "next_action": "Track public code or dataset release, lock the benchmark adapter and scorecard contract, and use BEAM pressure to shape the next architecture mutations without regressing the current LongMemEval_s and LoCoMo source-of-truth slices."
     }
   ],
   "experimental_frontier_claims": [
@@ -105,7 +105,15 @@
       "score": "50/50",
       "accuracy": 1.0
     },
-    "why": "Current best measured path in-repo; reached a perfect real rerun on the first 50 LongMemEval_s samples and remains materially ahead of the current beam comparison checkpoint."
+    "why": "Current best measured path in-repo on the slices actually run; reached a perfect real rerun on the first 50 LongMemEval_s samples and remains materially ahead of the current beam comparison checkpoint. Treat it as the current benchmark lead, not yet as a fully proven universal architecture."
+  },
+  "program_structure": {
+    "primary_regression_gates": [
+      "LongMemEval_s",
+      "LoCoMo"
+    ],
+    "frontier_architecture_target": "BEAM",
+    "rule": "Promote BEAM now as a key benchmark target, but do not accept BEAM-oriented mutations that regress already-closed LongMemEval_s or LoCoMo slices without explicit justification."
   },
   "ten_system_variants": [
     {
@@ -219,6 +227,8 @@
     "temporal-semantic baseline",
     "observational-memory baseline",
     "beam-ready dual-store baseline",
+    "BEAM adapter contract and scorecard contract",
+    "working-memory and scratchpad memory role separation",
     "shadow benchmark checks",
     "ablation runner",
     "promotion and rollback logging over real runs"

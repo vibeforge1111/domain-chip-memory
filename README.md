@@ -103,6 +103,9 @@ It does **not** yet contain official benchmark scoring or a production-grade mem
 - architecture: `docs/ARCHITECTURE.md`
 - implementation plan: `docs/IMPLEMENTATION_PLAN.md`
 - benchmark strategy: `docs/BENCHMARK_STRATEGY.md`
+- BEAM readiness program: `docs/BEAM_READINESS_PROGRAM_2026-03-24.md`
+- memory mutation matrix: `docs/MEMORY_MUTATION_MATRIX_2026-03-24.md`
+- research sourcing doctrine: `docs/RESEARCH_SOURCING_DOCTRINE_2026-03-24.md`
 - benchmark autoloop program: `docs/BENCHMARK_AUTOLOOP_PROGRAM.md`
 - deep research base: `docs/AI_MEMORY_RESEARCH_BASE_2026-03-22.md`
 - first-version research lock: `docs/FIRST_VERSION_RESEARCH_LOCK.md`
@@ -119,6 +122,8 @@ It does **not** yet contain official benchmark scoring or a production-grade mem
 - attribution plan: `docs/OPEN_SOURCE_ATTRIBUTION_PLAN.md`
 - benchmark-grounded summary: `research/benchmark_grounded/benchmark_summary.json`
 - research landscape memo: `research/research_grounded/MEMORY_SYSTEMS_LANDSCAPE_2026-03-22.md`
+- refreshed landscape and glossary: `research/research_grounded/MEMORY_SYSTEMS_LANDSCAPE_REFRESH_2026-03-24.md`
+- deep memory research scan: `research/research_grounded/DEEP_MEMORY_RESEARCH_SCAN_2026-03-24.md`
 - schemas: `schemas/`
 - templates: `templates/`
 

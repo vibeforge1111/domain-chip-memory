@@ -7,19 +7,31 @@ Status: active strategy
 
 Build a memory system that can beat the strongest public benchmarked systems with an honest, reproducible evaluation path.
 
+Program structure from March 24, 2026 onward:
+
+1. Keep `LongMemEval_s` and `LoCoMo` as mandatory completion and regression gates.
+2. Promote `BEAM` to an explicit frontier benchmark we optimize toward now, not only later.
+3. Refuse any `BEAM`-oriented mutation that breaks already-closed `LongMemEval_s` or `LoCoMo` slices.
+
 ## Public target order
 
 1. `LongMemEval_s`
 2. `LoCoMo`
-3. `GoodAI LTM Benchmark`
-4. `BEAM`
+3. `BEAM`
+4. `GoodAI LTM Benchmark`
 
 Reason:
 
 - `LongMemEval_s` is currently the clearest public frontier for knowledge updates and temporal reasoning
 - `LoCoMo` stress-tests long conversational recall and reasoning
-- `GoodAI LTM Benchmark` stress-tests long-span memory upkeep and integration across very long conversations with published runnable configs
-- `BEAM` extends the frontier toward coherent million-token and multi-million-token memory stress
+- `BEAM` is the clearest current stress test for coherent million-token and multi-million-token conversational memory, and is the hardest benchmark in the target stack to fake with shorter-context tricks
+- `GoodAI LTM Benchmark` still matters as a harness for long-span memory upkeep and integration across very long conversations with published runnable configs
+
+Interpretation:
+
+- `LongMemEval_s` and `LoCoMo` remain the honesty benchmarks we must actually finish.
+- `BEAM` is now the frontier architecture benchmark that should shape what we build next.
+- `GoodAI LTM Benchmark` remains an internal durability harness rather than the primary frontier narrative.
 
 Shadow benchmark:
 
@@ -71,10 +83,13 @@ Must be strong at:
 - million-token and beyond memory pressure
 - coherent long-context reasoning
 - balancing episodic memory, working memory, and scratchpad-style support
+- staying retrieval-efficient without collapsing into raw full-context dependence
+- preserving answer-bearing evidence after aggressive compression and rehydration
 
 Failure mode to avoid:
 
 - doing well on shorter long-memory benchmarks while collapsing as coherent context grows toward the million-token regime
+- adding heavy orchestration that wins only by brute-force fanout while regressing the lighter benchmark path
 
 ### ConvoMem Shadow
 
@@ -111,6 +126,14 @@ The initial architecture bet for the chip is:
 3. question-type-aware retrieval
 4. specialist answer policies
 5. mutation loop driven by benchmark failures
+
+BEAM-oriented pressure added now:
+
+1. separate working memory, episodic archive, stable compressed memory, and scratchpad memory explicitly
+2. keep the online path lightweight and push consolidation offline wherever possible
+3. preserve exact answer-bearing spans through compaction and rehydration
+4. treat stable observational compression and temporal event structure as complementary, not mutually exclusive
+5. use `LongMemEval_s` and `LoCoMo` as regression locks while evolving toward BEAM-scale memory
 
 ## Anti-goals
 
