@@ -1,0 +1,712 @@
+{
+  "run_manifest": {
+    "run_id": "observational-temporal-memory-v1",
+    "benchmark_name": "LongMemEval",
+    "baseline_name": "observational_temporal_memory",
+    "sample_ids": [
+      "6456829e",
+      "a4996e51",
+      "3c1045c8",
+      "60036106",
+      "681a1674",
+      "e25c3b8d",
+      "4adc0475",
+      "4bc144e2",
+      "ef66a6e5",
+      "5025383b",
+      "a1cc6108",
+      "9ee3ecd6",
+      "3fdac837",
+      "91b15a6e",
+      "27016adc",
+      "720133ac",
+      "77eafa52",
+      "8979f9ec",
+      "0100672e",
+      "a96c20ee",
+      "92a0aa75",
+      "3fe836c9",
+      "1c549ce4",
+      "6c49646a",
+      "1192316e"
+    ],
+    "question_ids": [
+      "6456829e",
+      "a4996e51",
+      "3c1045c8",
+      "60036106",
+      "681a1674",
+      "e25c3b8d",
+      "4adc0475",
+      "4bc144e2",
+      "ef66a6e5",
+      "5025383b",
+      "a1cc6108",
+      "9ee3ecd6",
+      "3fdac837",
+      "91b15a6e",
+      "27016adc",
+      "720133ac",
+      "77eafa52",
+      "8979f9ec",
+      "0100672e",
+      "a96c20ee",
+      "92a0aa75",
+      "3fe836c9",
+      "1c549ce4",
+      "6c49646a",
+      "1192316e"
+    ],
+    "question_count": 25,
+    "metadata": {
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Observational Temporal Memory",
+      "max_observations": 4,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 3,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.12
+  },
+  "audited_overall": {
+    "correct": 3,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.12
+  },
+  "by_category": [
+    {
+      "category": "multi-session",
+      "correct": 3,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.12
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "multi-session",
+      "correct": 3,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.12
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "predictions": [
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "6456829e",
+      "question_id": "6456829e",
+      "category": "multi-session",
+      "predicted_answer": "5",
+      "expected_answers": [
+        "8"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 420,
+        "completion_tokens": 312,
+        "total_tokens": 732,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "a4996e51",
+      "question_id": "a4996e51",
+      "category": "multi-session",
+      "predicted_answer": "50",
+      "expected_answers": [
+        "50"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 554,
+        "completion_tokens": 222,
+        "total_tokens": 776,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "3c1045c8",
+      "question_id": "3c1045c8",
+      "category": "multi-session",
+      "predicted_answer": "22:18",
+      "expected_answers": [
+        "2.5 years"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 440,
+        "completion_tokens": 307,
+        "total_tokens": 747,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "60036106",
+      "question_id": "60036106",
+      "category": "multi-session",
+      "predicted_answer": "I'm planning to target people who have shown interest in similar products to mine, just like I did in my previous Facebook ad campaign, which reached around 2,000 people and resulted in 50 clicks to my website",
+      "expected_answers": [
+        "12,000"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 461,
+        "completion_tokens": 191,
+        "total_tokens": 652,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "681a1674",
+      "question_id": "681a1674",
+      "category": "multi-session",
+      "predicted_answer": "2",
+      "expected_answers": [
+        "2"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 454,
+        "completion_tokens": 483,
+        "total_tokens": 937,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "e25c3b8d",
+      "question_id": "e25c3b8d",
+      "category": "multi-session",
+      "predicted_answer": "$200",
+      "expected_answers": [
+        "$300"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 409,
+        "completion_tokens": 170,
+        "total_tokens": 579,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "4adc0475",
+      "question_id": "4adc0475",
+      "category": "multi-session",
+      "predicted_answer": "I'm also playing in a recreational indoor soccer league, and I've scored 3 goals so far",
+      "expected_answers": [
+        "5"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 440,
+        "completion_tokens": 512,
+        "total_tokens": 952,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "4bc144e2",
+      "question_id": "4bc144e2",
+      "category": "multi-session",
+      "predicted_answer": "$15",
+      "expected_answers": [
+        "$65"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 584,
+        "completion_tokens": 314,
+        "total_tokens": 898,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "ef66a6e5",
+      "question_id": "ef66a6e5",
+      "category": "multi-session",
+      "predicted_answer": "2",
+      "expected_answers": [
+        "two"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 451,
+        "completion_tokens": 401,
+        "total_tokens": 852,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "5025383b",
+      "question_id": "5025383b",
+      "category": "multi-session",
+      "predicted_answer": "I've already joined a few online communities, which led me to engage in discussions about recipe techniques and share my thoughts on food-related posts",
+      "expected_answers": [
+        "photography and cooking"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 529,
+        "completion_tokens": 251,
+        "total_tokens": 780,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "a1cc6108",
+      "question_id": "a1cc6108",
+      "category": "multi-session",
+      "predicted_answer": "unknown",
+      "expected_answers": [
+        "11"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 420,
+        "completion_tokens": 336,
+        "total_tokens": 756,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "9ee3ecd6",
+      "question_id": "9ee3ecd6",
+      "category": "multi-session",
+      "predicted_answer": "300",
+      "expected_answers": [
+        "100"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 438,
+        "completion_tokens": 168,
+        "total_tokens": 606,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "3fdac837",
+      "question_id": "3fdac837",
+      "category": "multi-session",
+      "predicted_answer": "a car maintenance workshop recently and learned a lot about preparing cars for track days",
+      "expected_answers": [
+        "11 days (or 12 days, if April 15th to 22nd is considered as 8 days)"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 432,
+        "completion_tokens": 430,
+        "total_tokens": 862,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "91b15a6e",
+      "question_id": "91b15a6e",
+      "category": "multi-session",
+      "predicted_answer": "By the way, I'm also thinking of selling my vintage diamond necklace, which is worth $5,000",
+      "expected_answers": [
+        "$5,150"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 444,
+        "completion_tokens": 179,
+        "total_tokens": 623,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "27016adc",
+      "question_id": "27016adc",
+      "category": "multi-session",
+      "predicted_answer": "On 2023/05/26 (Fri) 13:07, I said: I'm planning to do some renovations to my current house and I'm trying to get a sense of how much I'll need to budget for property taxes after the renovations are complete. Can you help me understand how renovations affect property taxes?",
+      "expected_answers": [
+        "10%"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 474,
+        "completion_tokens": 194,
+        "total_tokens": 668,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "720133ac",
+      "question_id": "720133ac",
+      "category": "multi-session",
+      "predicted_answer": "I just got a new one from Petco last Saturday, but I'm not sure if it's the best one for Lola",
+      "expected_answers": [
+        "$75"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 459,
+        "completion_tokens": 207,
+        "total_tokens": 666,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "77eafa52",
+      "question_id": "77eafa52",
+      "category": "multi-session",
+      "predicted_answer": "$50",
+      "expected_answers": [
+        "$300"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 432,
+        "completion_tokens": 461,
+        "total_tokens": 893,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "8979f9ec",
+      "question_id": "8979f9ec",
+      "category": "multi-session",
+      "predicted_answer": "This is the third meal I got from my chicken fajitas",
+      "expected_answers": [
+        "8 meals"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 486,
+        "completion_tokens": 421,
+        "total_tokens": 907,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "0100672e",
+      "question_id": "0100672e",
+      "category": "multi-session",
+      "predicted_answer": "$60",
+      "expected_answers": [
+        "$12"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 609,
+        "completion_tokens": 292,
+        "total_tokens": 901,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "a96c20ee",
+      "question_id": "a96c20ee",
+      "category": "multi-session",
+      "predicted_answer": "Harvard University",
+      "expected_answers": [
+        "Harvard University"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 516,
+        "completion_tokens": 341,
+        "total_tokens": 857,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "92a0aa75",
+      "question_id": "92a0aa75",
+      "category": "multi-session",
+      "predicted_answer": "3 weeks",
+      "expected_answers": [
+        "1 year and 5 months"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 467,
+        "completion_tokens": 304,
+        "total_tokens": 771,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "3fe836c9",
+      "question_id": "3fe836c9",
+      "category": "multi-session",
+      "predicted_answer": "$325,000",
+      "expected_answers": [
+        "$25,000"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 827,
+        "completion_tokens": 178,
+        "total_tokens": 1005,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "1c549ce4",
+      "question_id": "1c549ce4",
+      "category": "multi-session",
+      "predicted_answer": "I'm also thinking of getting a detailing spray to keep my car's exterior clean",
+      "expected_answers": [
+        "$140"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 393,
+        "completion_tokens": 297,
+        "total_tokens": 690,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "6c49646a",
+      "question_id": "6c49646a",
+      "category": "multi-session",
+      "predicted_answer": "Since I've covered a total of 1,800 miles on my recent three road trips, including a solo trip to Durango, a weekend trip to Breckenridge, and a family trip to Santa Fe, I'm comfortable with the drive and exploring new scenic spots",
+      "expected_answers": [
+        "3,000 miles"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 518,
+        "completion_tokens": 126,
+        "total_tokens": 644,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "1192316e",
+      "question_id": "1192316e",
+      "category": "multi-session",
+      "predicted_answer": "30 minutes",
+      "expected_answers": [
+        "an hour and a half"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 421,
+        "completion_tokens": 364,
+        "total_tokens": 785,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    }
+  ]
+}

@@ -1,0 +1,712 @@
+{
+  "run_manifest": {
+    "run_id": "observational-temporal-memory-v1",
+    "benchmark_name": "LongMemEval",
+    "baseline_name": "observational_temporal_memory",
+    "sample_ids": [
+      "6456829e",
+      "a4996e51",
+      "3c1045c8",
+      "60036106",
+      "681a1674",
+      "e25c3b8d",
+      "4adc0475",
+      "4bc144e2",
+      "ef66a6e5",
+      "5025383b",
+      "a1cc6108",
+      "9ee3ecd6",
+      "3fdac837",
+      "91b15a6e",
+      "27016adc",
+      "720133ac",
+      "77eafa52",
+      "8979f9ec",
+      "0100672e",
+      "a96c20ee",
+      "92a0aa75",
+      "3fe836c9",
+      "1c549ce4",
+      "6c49646a",
+      "1192316e"
+    ],
+    "question_ids": [
+      "6456829e",
+      "a4996e51",
+      "3c1045c8",
+      "60036106",
+      "681a1674",
+      "e25c3b8d",
+      "4adc0475",
+      "4bc144e2",
+      "ef66a6e5",
+      "5025383b",
+      "a1cc6108",
+      "9ee3ecd6",
+      "3fdac837",
+      "91b15a6e",
+      "27016adc",
+      "720133ac",
+      "77eafa52",
+      "8979f9ec",
+      "0100672e",
+      "a96c20ee",
+      "92a0aa75",
+      "3fe836c9",
+      "1c549ce4",
+      "6c49646a",
+      "1192316e"
+    ],
+    "question_count": 25,
+    "metadata": {
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Observational Temporal Memory",
+      "max_observations": 4,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 24,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.96
+  },
+  "audited_overall": {
+    "correct": 24,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.96
+  },
+  "by_category": [
+    {
+      "category": "multi-session",
+      "correct": 24,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.96
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "multi-session",
+      "correct": 24,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.96
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "predictions": [
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "6456829e",
+      "question_id": "6456829e",
+      "category": "multi-session",
+      "predicted_answer": "8",
+      "expected_answers": [
+        "8"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 516,
+        "completion_tokens": 335,
+        "total_tokens": 851,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "a4996e51",
+      "question_id": "a4996e51",
+      "category": "multi-session",
+      "predicted_answer": "50",
+      "expected_answers": [
+        "50"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 554,
+        "completion_tokens": 311,
+        "total_tokens": 865,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "3c1045c8",
+      "question_id": "3c1045c8",
+      "category": "multi-session",
+      "predicted_answer": "2.5 years",
+      "expected_answers": [
+        "2.5 years"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 769,
+        "completion_tokens": 187,
+        "total_tokens": 956,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "60036106",
+      "question_id": "60036106",
+      "category": "multi-session",
+      "predicted_answer": "12000",
+      "expected_answers": [
+        "12,000"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 724,
+        "completion_tokens": 141,
+        "total_tokens": 865,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "681a1674",
+      "question_id": "681a1674",
+      "category": "multi-session",
+      "predicted_answer": "2",
+      "expected_answers": [
+        "2"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 454,
+        "completion_tokens": 479,
+        "total_tokens": 933,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "e25c3b8d",
+      "question_id": "e25c3b8d",
+      "category": "multi-session",
+      "predicted_answer": "$300",
+      "expected_answers": [
+        "$300"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 505,
+        "completion_tokens": 159,
+        "total_tokens": 664,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "4adc0475",
+      "question_id": "4adc0475",
+      "category": "multi-session",
+      "predicted_answer": "ve had several goals in the league so far. On 2023/05/28 (Sun) 12:05, I said: I",
+      "expected_answers": [
+        "5"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 577,
+        "completion_tokens": 185,
+        "total_tokens": 762,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "4bc144e2",
+      "question_id": "4bc144e2",
+      "category": "multi-session",
+      "predicted_answer": "$65",
+      "expected_answers": [
+        "$65"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 888,
+        "completion_tokens": 104,
+        "total_tokens": 992,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "ef66a6e5",
+      "question_id": "ef66a6e5",
+      "category": "multi-session",
+      "predicted_answer": "2",
+      "expected_answers": [
+        "two"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 525,
+        "completion_tokens": 176,
+        "total_tokens": 701,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "5025383b",
+      "question_id": "5025383b",
+      "category": "multi-session",
+      "predicted_answer": "photography and cooking",
+      "expected_answers": [
+        "photography and cooking"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 506,
+        "completion_tokens": 200,
+        "total_tokens": 706,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "a1cc6108",
+      "question_id": "a1cc6108",
+      "category": "multi-session",
+      "predicted_answer": "11",
+      "expected_answers": [
+        "11"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 702,
+        "completion_tokens": 224,
+        "total_tokens": 926,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "9ee3ecd6",
+      "question_id": "9ee3ecd6",
+      "category": "multi-session",
+      "predicted_answer": "100",
+      "expected_answers": [
+        "100"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 731,
+        "completion_tokens": 160,
+        "total_tokens": 891,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "3fdac837",
+      "question_id": "3fdac837",
+      "category": "multi-session",
+      "predicted_answer": "11 days",
+      "expected_answers": [
+        "11 days (or 12 days, if April 15th to 22nd is considered as 8 days)"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 1042,
+        "completion_tokens": 512,
+        "total_tokens": 1554,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "91b15a6e",
+      "question_id": "91b15a6e",
+      "category": "multi-session",
+      "predicted_answer": "$5150",
+      "expected_answers": [
+        "$5,150"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 791,
+        "completion_tokens": 258,
+        "total_tokens": 1049,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "27016adc",
+      "question_id": "27016adc",
+      "category": "multi-session",
+      "predicted_answer": "10%",
+      "expected_answers": [
+        "10%"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 492,
+        "completion_tokens": 132,
+        "total_tokens": 624,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "720133ac",
+      "question_id": "720133ac",
+      "category": "multi-session",
+      "predicted_answer": "$75",
+      "expected_answers": [
+        "$75"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 960,
+        "completion_tokens": 84,
+        "total_tokens": 1044,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "77eafa52",
+      "question_id": "77eafa52",
+      "category": "multi-session",
+      "predicted_answer": "$300",
+      "expected_answers": [
+        "$300"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 709,
+        "completion_tokens": 303,
+        "total_tokens": 1012,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "8979f9ec",
+      "question_id": "8979f9ec",
+      "category": "multi-session",
+      "predicted_answer": "8 meals",
+      "expected_answers": [
+        "8 meals"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 677,
+        "completion_tokens": 137,
+        "total_tokens": 814,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "0100672e",
+      "question_id": "0100672e",
+      "category": "multi-session",
+      "predicted_answer": "$12",
+      "expected_answers": [
+        "$12"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 1094,
+        "completion_tokens": 160,
+        "total_tokens": 1254,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "a96c20ee",
+      "question_id": "a96c20ee",
+      "category": "multi-session",
+      "predicted_answer": "Harvard University",
+      "expected_answers": [
+        "Harvard University"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 516,
+        "completion_tokens": 162,
+        "total_tokens": 678,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "92a0aa75",
+      "question_id": "92a0aa75",
+      "category": "multi-session",
+      "predicted_answer": "1 year and 5 months",
+      "expected_answers": [
+        "1 year and 5 months"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 683,
+        "completion_tokens": 494,
+        "total_tokens": 1177,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "3fe836c9",
+      "question_id": "3fe836c9",
+      "category": "multi-session",
+      "predicted_answer": "$25000",
+      "expected_answers": [
+        "$25,000"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 1003,
+        "completion_tokens": 103,
+        "total_tokens": 1106,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "1c549ce4",
+      "question_id": "1c549ce4",
+      "category": "multi-session",
+      "predicted_answer": "$140",
+      "expected_answers": [
+        "$140"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 688,
+        "completion_tokens": 209,
+        "total_tokens": 897,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "6c49646a",
+      "question_id": "6c49646a",
+      "category": "multi-session",
+      "predicted_answer": "3000 miles",
+      "expected_answers": [
+        "3,000 miles"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 854,
+        "completion_tokens": 292,
+        "total_tokens": 1146,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "1192316e",
+      "question_id": "1192316e",
+      "category": "multi-session",
+      "predicted_answer": "an hour and a half",
+      "expected_answers": [
+        "an hour and a half"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 950,
+        "completion_tokens": 132,
+        "total_tokens": 1082,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    }
+  ]
+}

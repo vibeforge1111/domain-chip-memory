@@ -147,6 +147,20 @@ def test_runner_matches_numeric_count_inside_instrument_gold():
     ) is True
 
 
+def test_runner_matches_digit_prediction_against_count_word_gold():
+    assert _matches_expected_answer(
+        "2",
+        ["two"],
+    ) is True
+
+
+def test_runner_matches_bare_numeric_prediction_against_meal_count_gold():
+    assert _matches_expected_answer(
+        "8",
+        ["8 meals"],
+    ) is True
+
+
 def test_runner_matches_preference_anchor_against_explanatory_preference_gold():
     assert _matches_expected_answer(
         "I'm trying to learn more about some advanced settings for video editing with Adobe Premiere Pro",

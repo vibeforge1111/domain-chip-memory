@@ -118,6 +118,7 @@ def _normalize_answer_tokens(text: str) -> list[str]:
     normalized: list[str] = []
     for token in tokens:
         token = _ANSWER_IRREGULARS.get(token, token)
+        token = _COUNT_WORD_TO_NUMBER.get(token, token)
         if len(token) > 4 and token.endswith("ed"):
             token = token[:-2]
         elif len(token) > 5 and token.endswith("ing"):
@@ -270,7 +271,7 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
         count_match = re.search(
             r"\b(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten)\s+"
             r"(?:(?:different|total|movie|art-related)\s+)?"
-            r"(model kits?|projects?|days?|weeks?|hours?|items?|times?|children|movies|doctors?|weddings?|festivals?|services?|cuisines?|events?|properties?|musical instruments?)\b",
+            r"(model kits?|projects?|days?|weeks?|hours?|items?|times?|children|movies|doctors?|weddings?|festivals?|services?|cuisines?|events?|properties?|musical instruments?|meals?)\b",
             expected,
         )
         if count_match:

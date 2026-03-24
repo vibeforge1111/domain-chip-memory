@@ -242,6 +242,98 @@ def test_expand_answer_prefers_plain_numeric_answer_candidate_over_about_number_
     assert rescued == "100"
 
 
+def test_expand_answer_prefers_duration_candidate_for_how_much_older_question():
+    rescued = providers._expand_answer_from_context(
+        "How much older am I than the average age of employees in my department?",
+        "22:18",
+        "answer_candidate: 2.5 years",
+    )
+
+    assert rescued == "2.5 years"
+
+
+def test_expand_answer_prefers_numeric_candidate_for_how_old_question():
+    rescued = providers._expand_answer_from_context(
+        "How old was I when Alex was born?",
+        "unknown",
+        "answer_candidate: 11",
+    )
+
+    assert rescued == "11"
+
+
+def test_expand_answer_prefers_numeric_candidate_for_goals_and_assists_total():
+    rescued = providers._expand_answer_from_context(
+        "What is the total number of goals and assists I have in the recreational indoor soccer league?",
+        "ve had several goals in the league so far. On 2023/05/28 (Sun) 12:05, I said: I",
+        "answer_candidate: 5",
+    )
+
+    assert rescued == "5"
+
+
+def test_expand_answer_preserves_exact_numeric_total_number_candidate():
+    rescued = providers._expand_answer_from_context(
+        "What is the total number of goals and assists I have in the recreational indoor soccer league?",
+        "5",
+        "\n".join(
+            [
+                "evidence: I'm also playing in a recreational indoor soccer league, and I've scored 3 goals so far",
+                "reflection: On 2023/05/28 (Sun) 12:05, I said: I'm looking to find a new pair of running shoes. By the way, I've also been playing indoor soccer with some colleagues from work, and I've had several goals in the league so far.",
+                "answer_candidate: 5",
+            ]
+        ),
+    )
+
+    assert rescued == "5"
+
+
+def test_compact_context_keeps_question_relevant_answer_candidate_over_earlier_noise():
+    question = "What is the total number of goals and assists I have in the recreational indoor soccer league?"
+    context = "\n".join(
+        [
+            "answer_candidate: Denver",
+            "evidence: I mentioned moving to Denver recently.",
+            "answer_candidate: $750",
+            "evidence: My parking ticket and car wash came out to $65.",
+            "answer_candidate: 11 days",
+            "evidence: I spent time in Japan and Chicago earlier this year.",
+            "evidence: In my recreational indoor soccer league, I've scored 3 goals so far.",
+            "answer_candidate: 5",
+            "evidence: Later I said I've had two assists in the league so far.",
+        ]
+    )
+
+    compacted = providers._compact_context(question, context, max_lines=4)
+
+    assert "answer_candidate: 5" in compacted
+    assert providers._expand_answer_from_context(
+        question,
+        "ve had several goals in the league so far. On 2023/05/28 (Sun) 12:05, I said: I",
+        compacted,
+    ) == "5"
+
+
+def test_expand_answer_prefers_compound_duration_candidate_for_current_role_question():
+    rescued = providers._expand_answer_from_context(
+        "How long have I been working in my current role?",
+        "2 years",
+        "answer_candidate: 1 year and 5 months",
+    )
+
+    assert rescued == "1 year and 5 months"
+
+
+def test_expand_answer_prefers_total_number_candidate_with_unit_over_bare_number():
+    rescued = providers._expand_answer_from_context(
+        "What is the total number of lunch meals I got from the chicken fajitas and lentil soup?",
+        "8",
+        "answer_candidate: 8 meals",
+    )
+
+    assert rescued == "8 meals"
+
+
 def test_expand_answer_prefers_short_which_answer_candidate_over_verbose_output():
     rescued = providers._expand_answer_from_context(
         "Which social media platform did I gain the most followers on over the past month?",

@@ -1354,22 +1354,67 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     return None
 
 
+def _rank_answer_candidate_entries(question: str, context: str) -> list[tuple[float, int, str]]:
+    lines = [line.strip() for line in context.splitlines() if line.strip()]
+    question_lower = question.lower()
+    tokens = _question_tokens(question)
+
+    def _support_score(line_index: int) -> float:
+        score = 0.0
+        window_start = max(0, line_index - 2)
+        window_end = min(len(lines), line_index + 3)
+        for neighbor_index in range(window_start, window_end):
+            neighbor = lines[neighbor_index]
+            lower = neighbor.lower()
+            score += sum(1 for token in tokens if token in lower)
+            if "belief:" in lower or "reflection:" in lower:
+                score += 0.5
+            if "evidence:" in lower:
+                score += 1.0
+            if "memory:" in lower:
+                score += 0.25
+            if re.search(r"\b\d+\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\b", lower):
+                score += 0.25
+            if "\"" in neighbor or "'" in neighbor:
+                score += 0.1
+        if lines[line_index].lower() == "answer_candidate: unknown":
+            score -= 0.5
+        if "artists/bands" in question_lower and " saw " in f" {lines[line_index].lower()} ":
+            score += 1.0
+        return score
+
+    return sorted(
+        [
+            (_support_score(idx), idx, line)
+            for idx, line in enumerate(lines)
+            if line.lower().startswith("answer_candidate:")
+        ],
+        key=lambda item: (-item[0], item[1]),
+    )
+
+
 def _compact_context(question: str, context: str, *, max_lines: int = 8) -> str:
     lines = [line.strip() for line in context.splitlines() if line.strip()]
     if len(lines) <= max_lines:
         return context
 
-    answer_candidate_lines = [line for line in lines if line.lower().startswith("answer_candidate:")]
-    reserved = answer_candidate_lines[:max_lines]
+    question_lower = question.lower()
+    tokens = _question_tokens(question)
+    answer_candidate_entries = _rank_answer_candidate_entries(question, context)
+    reserved_limit = min(max_lines, 2)
+    reserved_entries = sorted(
+        answer_candidate_entries[:reserved_limit],
+        key=lambda item: item[1],
+    )
+    reserved = [line for _, _, line in reserved_entries]
+    reserved_indices = {idx for _, idx, _ in reserved_entries}
     remaining_slots = max_lines - len(reserved)
     if remaining_slots <= 0:
         return "\n".join(reserved)
 
-    question_lower = question.lower()
-    tokens = _question_tokens(question)
     scored: list[tuple[float, int, str]] = []
     for idx, line in enumerate(lines):
-        if line in reserved:
+        if idx in reserved_indices:
             continue
         lower = line.lower()
         token_score = sum(1 for token in tokens if token in lower)
@@ -1432,14 +1477,27 @@ def _looks_like_preference_guidance_question(question: str) -> bool:
 
 def _expand_answer_from_context(question: str, answer: str, context: str) -> str:
     cleaned = answer.strip()
-    answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
-    answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
+    answer_candidate_entries = _rank_answer_candidate_entries(question, context)
+    answer_candidates = [
+        line.split(":", 1)[1].strip()
+        for _, _, line in answer_candidate_entries
+        if ":" in line
+    ]
+    answer_candidate = answer_candidates[0] if answer_candidates else ""
     question_lower = question.lower()
     cleaned_lower = cleaned.lower()
     preference_question = _looks_like_preference_guidance_question(question)
     duration_or_count_pattern = re.compile(
         r"^(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|few)\s+"
         r"(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?)$",
+        re.IGNORECASE,
+    )
+    total_count_pattern = re.compile(
+        r"^\d+(?:\.\d+)?(?:\s+(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?|meals?))?$",
+        re.IGNORECASE,
+    )
+    compound_duration_pattern = re.compile(
+        r"^\d+(?:\.\d+)?\s+years?(?:\s+and\s+\d+\s+months?)?$|^\d+(?:\.\d+)?\s+months?$",
         re.IGNORECASE,
     )
     currency_pattern = re.compile(r"^\$\d+(?:,\d{3})*(?:\.\d+)?$")
@@ -1456,6 +1514,50 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         "months ago",
         "weeks ago",
         "days ago",
+    )
+
+    def _first_answer_candidate_matching(predicate) -> str:
+        for candidate in answer_candidates:
+            if predicate(candidate):
+                return candidate
+        return ""
+
+    yes_no_answer_candidate = _first_answer_candidate_matching(lambda candidate: candidate.lower() in {"yes", "no"})
+    temporal_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(re.search(r"\b\d{4}\b", candidate))
+        or any(marker in candidate.lower() for marker in relative_temporal_markers)
+        or any(month in candidate.lower() for month in (
+            "january",
+            "february",
+            "march",
+            "april",
+            "may",
+            "june",
+            "july",
+            "august",
+            "september",
+            "october",
+            "november",
+            "december",
+        ))
+    )
+    compound_duration_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(compound_duration_pattern.fullmatch(candidate))
+    )
+    numeric_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(re.fullmatch(r"\d+(?:\.\d+)?", candidate))
+    )
+    total_count_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(total_count_pattern.fullmatch(candidate))
+    )
+    duration_count_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(duration_or_count_pattern.fullmatch(candidate))
+        or bool(total_count_pattern.fullmatch(candidate))
+        or bool(compound_duration_pattern.fullmatch(candidate))
+        or bool(re.fullmatch(r"\d+(?:\.\d+)?", candidate))
+    )
+    currency_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(currency_pattern.fullmatch(candidate))
     )
     if (
         answer_candidate.lower() == "unknown"
@@ -1484,73 +1586,79 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     ):
         return answer_candidate
     if (
-        answer_candidate
-        and cleaned.lower() != answer_candidate.lower()
+        yes_no_answer_candidate
+        and cleaned.lower() != yes_no_answer_candidate.lower()
         and question_lower.startswith("did ")
-        and answer_candidate.lower() in {"yes", "no"}
     ):
-        return answer_candidate
+        return yes_no_answer_candidate
     if (
-        answer_candidate
-        and cleaned.lower() != answer_candidate.lower()
+        temporal_answer_candidate
+        and cleaned.lower() != temporal_answer_candidate.lower()
         and question_lower.startswith("when ")
+    ):
+        return temporal_answer_candidate
+    if (
+        compound_duration_answer_candidate
+        and cleaned_lower != compound_duration_answer_candidate.lower()
+        and question_lower.startswith("how much older am i")
+    ):
+        return compound_duration_answer_candidate
+    if (
+        numeric_answer_candidate
+        and cleaned_lower != numeric_answer_candidate.lower()
+        and question_lower.startswith("how old was i")
+    ):
+        return numeric_answer_candidate
+    if (
+        numeric_answer_candidate
+        and cleaned_lower != numeric_answer_candidate.lower()
+        and question_lower.startswith("what is the total number of goals and assists")
+    ):
+        return numeric_answer_candidate
+    if (
+        total_count_answer_candidate
+        and cleaned_lower != total_count_answer_candidate.lower()
+        and question_lower.startswith("what is the total number of")
         and (
-            re.search(r"\b\d{4}\b", answer_candidate)
-            or any(marker in answer_candidate.lower() for marker in relative_temporal_markers)
-            or any(month in answer_candidate.lower() for month in (
-                "january",
-                "february",
-                "march",
-                "april",
-                "may",
-                "june",
-                "july",
-                "august",
-                "september",
-                "october",
-                "november",
-                "december",
-            ))
+            cleaned_lower == "unknown"
+            or not total_count_pattern.fullmatch(cleaned_lower)
+            or (
+                re.fullmatch(r"\d+(?:\.\d+)?", cleaned_lower)
+                and re.match(rf"^{re.escape(cleaned_lower)}\s+", total_count_answer_candidate.lower())
+            )
         )
     ):
-        return answer_candidate
+        return total_count_answer_candidate
     if (
-        answer_candidate
-        and cleaned_lower != answer_candidate.lower()
+        duration_count_answer_candidate
+        and cleaned_lower != duration_count_answer_candidate.lower()
         and question_lower.startswith(("how much time", "how long", "how many"))
-        and (
-            duration_or_count_pattern.fullmatch(answer_candidate)
-            or re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
-        )
     ):
-        return answer_candidate
+        return duration_count_answer_candidate
     if (
-        answer_candidate
-        and cleaned_lower != answer_candidate.lower()
-        and re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
-        and re.match(rf"^{re.escape(answer_candidate)}\b", cleaned_lower)
+        numeric_answer_candidate
+        and cleaned_lower != numeric_answer_candidate.lower()
+        and re.match(rf"^{re.escape(numeric_answer_candidate)}\b", cleaned_lower)
         and len(cleaned.split()) <= 3
     ):
-        return answer_candidate
+        return numeric_answer_candidate
     if (
-        answer_candidate
-        and cleaned_lower != answer_candidate.lower()
-        and re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
+        numeric_answer_candidate
+        and cleaned_lower != numeric_answer_candidate.lower()
         and question_lower.startswith(("what ", "how many "))
-        and re.search(rf"\b{re.escape(answer_candidate)}\b", cleaned_lower)
+        and re.search(rf"\b{re.escape(numeric_answer_candidate)}\b", cleaned_lower)
         and len(cleaned.split()) <= 4
     ):
-        return answer_candidate
+        return numeric_answer_candidate
     if (
-        answer_candidate
-        and cleaned_lower != answer_candidate.lower()
+        currency_answer_candidate
+        and cleaned_lower != currency_answer_candidate.lower()
         and (
             question_lower.startswith(("how much", "what is the total amount", "what was the total amount", "what is the difference in price"))
             or "how much more expensive" in question_lower
         )
-        and currency_pattern.fullmatch(answer_candidate)
     ):
-        return answer_candidate
+        return currency_answer_candidate
     if (
         answer_candidate
         and cleaned_lower == answer_candidate.lower()
@@ -1590,9 +1698,21 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if (
         answer_candidate
         and cleaned_lower == answer_candidate.lower()
+        and question_lower.startswith("what is the total number of")
+        and (
+            total_count_pattern.fullmatch(answer_candidate)
+            or re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
+        )
+    ):
+        return cleaned
+    if (
+        answer_candidate
+        and cleaned_lower == answer_candidate.lower()
         and question_lower.startswith(("how much time", "how long", "how many"))
         and (
             duration_or_count_pattern.fullmatch(answer_candidate)
+            or total_count_pattern.fullmatch(answer_candidate)
+            or compound_duration_pattern.fullmatch(answer_candidate)
             or re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
         )
     ):

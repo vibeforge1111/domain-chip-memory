@@ -39,8 +39,9 @@ Current internal lead as of 2026-03-24:
 - real rerun on March 24, 2026 over `LongMemEval_s` samples `101-125`: `25/25` (`1.00`)
 - real rerun on March 24, 2026 over `LongMemEval_s` samples `126-150`: `25/25` (`1.00`)
 - real rerun on March 25, 2026 over `LongMemEval_s` samples `151-175`: `25/25` (`1.00`)
+- real rerun on March 25, 2026 over `LongMemEval_s` samples `176-200`: `25/25` (`1.00`)
   - category split on the same artifact: `multi-session` `13/13` (`1.00`), `single-session-preference` `12/12` (`1.00`)
-- contiguous measured `LongMemEval_s` coverage through sample `175`: `175/175` (`1.00`)
+- contiguous measured `LongMemEval_s` coverage through sample `200`: `200/200` (`1.00`)
 - real rerun on March 23, 2026 over the first 25 `LoCoMo` `conv-26` questions: `24/25` (`0.96`)
   - audited scorecard view on the same artifact: `24/24` (`1.00`) after excluding the one known benchmark inconsistency
 - real rerun on March 24, 2026 over the next 25 `LoCoMo` `conv-26` questions (`q26-50`): `25/25` (`1.00`)

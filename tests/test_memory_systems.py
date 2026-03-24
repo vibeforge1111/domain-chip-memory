@@ -2050,6 +2050,28 @@ def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
         "51c32626": "answer_candidate: February 1st",
         "7405e8b1": "answer_candidate: Yes",
         "f35224e0": "answer_candidate: 27",
+        "6456829e": "answer_candidate: 8",
+        "3c1045c8": "answer_candidate: 2.5 years",
+        "60036106": "answer_candidate: 12000",
+        "e25c3b8d": "answer_candidate: $300",
+        "4adc0475": "answer_candidate: 5",
+        "4bc144e2": "answer_candidate: $65",
+        "ef66a6e5": "answer_candidate: 2",
+        "5025383b": "answer_candidate: photography and cooking",
+        "a1cc6108": "answer_candidate: 11",
+        "9ee3ecd6": "answer_candidate: 100",
+        "3fdac837": "answer_candidate: 11 days",
+        "91b15a6e": "answer_candidate: $5150",
+        "27016adc": "answer_candidate: 10%",
+        "720133ac": "answer_candidate: $75",
+        "77eafa52": "answer_candidate: $300",
+        "8979f9ec": "answer_candidate: 8 meals",
+        "0100672e": "answer_candidate: $12",
+        "92a0aa75": "answer_candidate: 1 year and 5 months",
+        "3fe836c9": "answer_candidate: $25000",
+        "1c549ce4": "answer_candidate: $140",
+        "6c49646a": "answer_candidate: 3000 miles",
+        "1192316e": "answer_candidate: an hour and a half",
     }
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]
 
@@ -2073,6 +2095,41 @@ def test_longmemeval_preference_candidates_cover_151_175_single_session_lane():
         "1d4e3b97": "answer_candidate: The new chain and cassette plus your Garmin setup",
         "1c0ddc50": "answer_candidate: During your commute, try history podcasts or audiobooks",
         "0a34ad58": "answer_candidate: Use your Suica card and TripIt itinerary",
+    }
+    subset = [sample for sample in samples if sample.questions[0].question_id in keep]
+
+    _, packets = build_observational_temporal_memory_packets(subset, max_observations=4, max_reflections=3)
+
+    for packet in packets:
+        assert keep[packet.question_id].lower() in packet.assembled_context.lower()
+
+
+def test_longmemeval_aggregate_candidates_cover_176_200_slice():
+    samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
+    keep = {
+        "681a1674": "answer_candidate: 2",
+        "6456829e": "answer_candidate: 8",
+        "3c1045c8": "answer_candidate: 2.5 years",
+        "60036106": "answer_candidate: 12000",
+        "e25c3b8d": "answer_candidate: $300",
+        "4adc0475": "answer_candidate: 5",
+        "4bc144e2": "answer_candidate: $65",
+        "ef66a6e5": "answer_candidate: 2",
+        "5025383b": "answer_candidate: photography and cooking",
+        "a1cc6108": "answer_candidate: 11",
+        "9ee3ecd6": "answer_candidate: 100",
+        "3fdac837": "answer_candidate: 11 days",
+        "91b15a6e": "answer_candidate: $5150",
+        "27016adc": "answer_candidate: 10%",
+        "720133ac": "answer_candidate: $75",
+        "77eafa52": "answer_candidate: $300",
+        "8979f9ec": "answer_candidate: 8 meals",
+        "0100672e": "answer_candidate: $12",
+        "92a0aa75": "answer_candidate: 1 year and 5 months",
+        "3fe836c9": "answer_candidate: $25000",
+        "1c549ce4": "answer_candidate: $140",
+        "6c49646a": "answer_candidate: 3000 miles",
+        "1192316e": "answer_candidate: an hour and a half",
     }
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]
 

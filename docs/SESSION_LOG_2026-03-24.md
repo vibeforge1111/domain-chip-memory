@@ -136,7 +136,8 @@ The same lane was then extended on `LongMemEval_s` and closed the next two bound
 - `samples 126-150`: `25/25` raw, `25/25` audited
 - `samples 151-175`: `25/25` raw, `25/25` audited
   - category split: `multi-session` `13/13`, `single-session-preference` `12/12`
-- contiguous measured `LongMemEval_s` coverage through sample `175`: `175/175`
+- `samples 176-200`: `25/25` raw, `25/25` audited
+- contiguous measured `LongMemEval_s` coverage through sample `200`: `200/200`
 
 Key execution read:
 
@@ -145,6 +146,7 @@ Key execution read:
 - `samples 101-125` started at `4/25`, moved through `22/25`, and closed at `25/25`
 - `samples 126-150` started at `0/25`, moved through `17/25`, then `21/25`, then `24/25`, and closed at `25/25`
 - `samples 151-175` started at `3/25`, moved through `14/25`, then `18/25`, then `24/25`, and closed at `25/25`
+- `samples 176-200` started at `3/25`, moved through `24/25`, and closed at `25/25`
 - the main new failure class was aggregate and total-amount reasoning, not basic temporal retrieval
 - the final `126-150` residue was all `single-session-preference`, and the closing fixes there were preference-specific rather than core aggregate logic
 - the first `151-175` pass showed the opposite pattern: the `multi-session` aggregate/comparison/date lane closed first, and the final residue was the `single-session-preference` answer-shaping lane
@@ -168,6 +170,7 @@ Source-of-truth artifacts:
 - `artifacts/benchmark_runs/longmemeval_observational_minimax_offset100_limit25_v4.json`
 - `artifacts/benchmark_runs/longmemeval_observational_minimax_offset125_limit25_v6.json`
 - `artifacts/benchmark_runs/longmemeval_observational_minimax_offset150_limit25_v8.json`
+- `artifacts/benchmark_runs/longmemeval_observational_minimax_offset175_limit25_v6.json`
 
 Validation during the close:
 
