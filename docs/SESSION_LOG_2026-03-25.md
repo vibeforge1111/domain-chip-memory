@@ -18,6 +18,27 @@ The closing commits that matter for today are:
 
 Everything above is already pushed to `origin/main`.
 
+## Architecture Read
+
+An explicit architecture review was also completed today against both the repo's earlier research base and newer memory-system papers.
+
+The honest conclusion is:
+
+- the repo is genuinely improving at the substrate level
+- the current winning lane is still too benchmark-shaped in places
+- the biggest remaining architectural debt is role separation, not raw benchmark accuracy
+
+The concrete next-step memo is:
+
+- `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
+
+That memo locks the next architectural moves:
+
+- separate evidence memory, current-state memory, and belief memory
+- move exact-answer integrity earlier into typed `answer_candidate` contracts
+- make supersession and reconsolidation first-class
+- replace more question-shaped branches with reusable operators
+
 ## Key Technical Wins
 
 The main gains today were not new broad architecture changes. They were bounded fixes that removed the last two recurring miss classes in the active lane:
@@ -77,9 +98,10 @@ The full artifact trail for the `176-200` work is:
 The next rational order is:
 
 1. Start `LongMemEval_s 201-225` baseline and establish the new miss taxonomy before mutating code.
-2. Do not spend another day on `conv-26 q151-199` as if it were a clean benchmark lane.
-3. Move `LoCoMo` to a clean new conversation slice after `conv-26 q150`, or another clean bounded slice with valid gold answers.
-4. After the next `LongMemEval_s` expansion is stable, lock the first canonical `GoodAI LTM Benchmark` configuration and produce a source-of-truth rerun.
+2. Start the architecture consolidation track in parallel by defining typed `answer_candidate` metadata and extracting current-state logic out of the packet builder.
+3. Do not spend another day on `conv-26 q151-199` as if it were a clean benchmark lane.
+4. Move `LoCoMo` to a clean new conversation slice after `conv-26 q150`, or another clean bounded slice with valid gold answers.
+5. After the next `LongMemEval_s` expansion is stable, lock the first canonical `GoodAI LTM Benchmark` configuration and produce a source-of-truth rerun.
 
 ## Restart Point
 

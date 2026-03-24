@@ -137,6 +137,41 @@ Deliverables:
 - compaction and rehydration rules that preserve exact answer-bearing spans
 - architecture ablations that test whether `BEAM`-oriented changes keep current `LongMemEval_s` and `LoCoMo` wins intact
 
+## Phase 3B: Architecture consolidation track
+
+Goal:
+
+- turn the current winning lane into a cleaner memory substrate instead of an ever-growing benchmark rescue layer
+
+Why now:
+
+- the repo has enough measured wins to justify consolidation work
+- `LongMemEval_s` is closed through sample `200`
+- recent wins exposed real architectural debt in `memory_systems.py` and `providers.py`
+
+Primary doctrine:
+
+- keep the benchmark flywheel running
+- start substrate consolidation in parallel
+- prefer generic operators over question-shaped branches
+
+Required architecture moves:
+
+- separate raw episodic evidence, structured evidence memory, current-state memory, and derived belief memory
+- make supersession and current-state selection explicit instead of packet-local heuristics
+- introduce typed `answer_candidate` metadata so exact numeric, currency, date, and abstention answers are preserved before provider rescue
+- split extraction, update logic, operators, and packet assembly into separate module surfaces
+- add architecture ablations that distinguish:
+  - extraction gains
+  - update and supersession gains
+  - retrieval gains
+  - operator gains
+  - provider-rescue gains
+
+Reference memo:
+
+- `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
+
 ## Phase 4: Mutation flywheel
 
 Goal:

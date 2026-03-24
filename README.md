@@ -110,6 +110,7 @@ It does **not** yet contain official benchmark scoring or a production-grade mem
 - PRD: `docs/PRD.md`
 - architecture: `docs/ARCHITECTURE.md`
 - implementation plan: `docs/IMPLEMENTATION_PLAN.md`
+- memory architecture evolution plan: `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
 - benchmark strategy: `docs/BENCHMARK_STRATEGY.md`
 - BEAM readiness program: `docs/BEAM_READINESS_PROGRAM_2026-03-24.md`
 - memory mutation matrix: `docs/MEMORY_MUTATION_MATRIX_2026-03-24.md`
