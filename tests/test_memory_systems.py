@@ -1894,6 +1894,33 @@ def test_locomo_conv30_temporal_candidates_cover_future_relative_and_anchor_date
     assert "answer_candidate: 27 May 2023" in packet_by_id["conv-30-qa-22"].assembled_context
 
 
+def test_locomo_conv26_scoreable_tail_yes_no_candidates_are_preserved():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-26"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=[
+            next(question for question in sample.questions if question.question_id == question_id)
+            for question_id in (
+                "conv-26-qa-168",
+                "conv-26-qa-179",
+            )
+        ],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_observational_temporal_memory_packets([subset], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "answer_candidate: No" in packet_by_id["conv-26-qa-168"].assembled_context
+    assert "answer_candidate: No" in packet_by_id["conv-26-qa-179"].assembled_context
+
+
 def test_locomo_question_relevant_window_surfaces_sixth_slice_music_poetry_and_roadtrip_facts():
     sample = next(
         record

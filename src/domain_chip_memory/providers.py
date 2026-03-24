@@ -327,6 +327,13 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         return None
 
     question_lower = question.lower()
+    answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
+    answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
+    if (
+        answer_candidate.lower() in {"yes", "no"}
+        and question_lower.startswith(("did ", "is ", "are ", "was ", "were "))
+    ):
+        return answer_candidate
     combined = "\n".join(payloads)
     combined_lower = combined.lower()
 

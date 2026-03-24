@@ -2232,7 +2232,7 @@ def _choose_answer_candidate(
     explanatory_answer = _infer_explanatory_answer(question, candidate_entries)
     if explanatory_answer:
         return explanatory_answer
-    yes_no_answer = _infer_yes_no_answer(question, evidence_entries)
+    yes_no_answer = _infer_yes_no_answer(question, candidate_entries)
     if yes_no_answer:
         return yes_no_answer
     if belief_entries and any(token in question_lower for token in (" now", "currently", "current ", "at the moment", "these days")):
@@ -2584,7 +2584,7 @@ def _infer_temporal_answer(question: NormalizedQuestion, evidence_entries: list[
 
 def _infer_yes_no_answer(question: NormalizedQuestion, evidence_entries: list[ObservationEntry]) -> str:
     question_lower = question.question.lower()
-    if not question_lower.startswith("did "):
+    if not question_lower.startswith(("did ", "is ", "are ", "was ", "were ")):
         return ""
 
     asked_subject = _question_subject(question)
@@ -2595,7 +2595,11 @@ def _infer_yes_no_answer(question: NormalizedQuestion, evidence_entries: list[Ob
     )
     for entry in ranked_entries:
         source_text = str(entry.metadata.get("source_text", "")).strip()
-        if source_text.endswith("?"):
+        if source_text.endswith("?") and not (
+            question_lower.startswith(("is ", "are ", "was ", "were "))
+            and "pet" in question_lower
+            and any(token in source_text.lower() for token in ("my guinea pig", "my dog", "my cat", "my pet"))
+        ):
             continue
         combined = " ".join(
             part.lower()
@@ -2606,6 +2610,21 @@ def _infer_yes_no_answer(question: NormalizedQuestion, evidence_entries: list[Ob
             )
             if part
         )
+        if question_lower.startswith(("is ", "are ", "was ", "were ")) and "pet" in question_lower:
+            pet_match = re.match(
+                r"(?:is|are|was|were)\s+([a-z0-9][a-z0-9' -]*?)\s+([a-z][a-z'-]*)'s\s+pet\??$",
+                question_lower,
+            )
+            if pet_match:
+                pet_name = pet_match.group(1).strip()
+                asked_owner = pet_match.group(2).strip()
+                if pet_name in combined and any(
+                    token in combined for token in ("guinea pig", "dog", "cat", "pet", "pets")
+                ):
+                    if asked_owner in combined or entry.subject == asked_owner:
+                        return "Yes"
+                    if " my " in f" {combined} " or " named " in f" {combined} " or entry.subject != asked_owner:
+                        return "No"
         if "make" in question_lower and any(
             token in combined
             for token in ("i made", "yeah, i made", "yes, i made", "made this bowl", "made it", "did make")

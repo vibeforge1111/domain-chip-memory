@@ -121,6 +121,24 @@ def test_expand_answer_prefers_yes_no_answer_candidate_for_did_question():
     assert rescued == "No"
 
 
+def test_expand_answer_prefers_yes_no_answer_candidate_for_is_question():
+    context = "\n".join(
+        [
+            "evidence_memory:",
+            "evidence: Oscar, my guinea pig. He's been great.",
+            "answer_candidate: No",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Is Oscar Melanie's pet?",
+        "unknown",
+        context,
+    )
+
+    assert rescued == "No"
+
+
 def test_expand_answer_prefers_temporal_answer_candidate_for_when_question():
     context = "\n".join(
         [
@@ -493,6 +511,39 @@ def test_minimax_provider_prefers_temporal_answer_candidate_over_conflicting_mod
     response = provider.generate_answer(packet)
 
     assert response.answer == "29 January 2023"
+
+
+def test_minimax_provider_prefers_yes_no_answer_candidate_for_is_question(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "unknown"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-26",
+        question_id="conv-26-qa-179",
+        question="Is Oscar Melanie's pet?",
+        assembled_context=(
+            "evidence_memory:\n"
+            "evidence: Oscar, my guinea pig. He's been great.\n"
+            "answer_candidate: No"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "No"
 
 
 def test_minimax_provider_preserves_matching_temporal_answer_candidate(monkeypatch):
