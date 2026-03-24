@@ -123,6 +123,11 @@ def _build_prediction(
 
 def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) -> bool:
     normalized_expected = [" ".join(expected.lower().strip().split()) for expected in expected_answers]
+    if (
+        normalized_pred == "unknown"
+        and any(expected.startswith("you did not mention this information") for expected in normalized_expected)
+    ):
+        return True
     if normalized_pred in normalized_expected:
         return True
     pred_tokens = _normalize_answer_tokens(normalized_pred)

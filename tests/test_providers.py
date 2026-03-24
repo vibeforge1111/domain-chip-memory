@@ -270,6 +270,63 @@ def test_expand_answer_uses_single_token_entity_candidate_for_unknown_which_ques
     assert rescued == "Rome"
 
 
+def test_expand_answer_preserves_unknown_answer_candidate_for_unsupported_factoid():
+    rescued = providers._expand_answer_from_context(
+        "What is the name of my hamster?",
+        "Luna",
+        "answer_candidate: unknown",
+    )
+
+    assert rescued == "unknown"
+
+
+def test_expand_answer_prefers_duration_answer_candidate_for_how_much_time_question():
+    rescued = providers._expand_answer_from_context(
+        "How much time do I dedicate to practicing guitar every day?",
+        "19:30",
+        "answer_candidate: 30 minutes",
+    )
+
+    assert rescued == "30 minutes"
+
+
+def test_expand_answer_prefers_numeric_count_answer_candidate_for_how_many_question():
+    rescued = providers._expand_answer_from_context(
+        "How many projects have I led or am currently leading?",
+        "one",
+        "answer_candidate: 2",
+    )
+
+    assert rescued == "2"
+
+
+def test_expand_answer_does_not_overwrite_matching_duration_candidate():
+    context = "\n".join(
+        [
+            "observation: On 2023/05/30 (Tue) 19:30, I said: trip planning",
+            "evidence: By the way, I've been practicing guitar for 30 minutes daily, and it's been helping me progress nicely",
+            "answer_candidate: 30 minutes",
+        ]
+    )
+    rescued = providers._expand_answer_from_context(
+        "How much time do I dedicate to practicing guitar every day?",
+        "30 minutes",
+        context,
+    )
+
+    assert rescued == "30 minutes"
+
+
+def test_expand_answer_does_not_overwrite_matching_unknown_candidate():
+    rescued = providers._expand_answer_from_context(
+        "What is the name of my hamster?",
+        "unknown",
+        "answer_candidate: unknown\nevidence: I mentioned my cat Luna",
+    )
+
+    assert rescued == "unknown"
+
+
 def test_minimax_provider_includes_context_image_urls(monkeypatch):
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
     captured: dict[str, object] = {}

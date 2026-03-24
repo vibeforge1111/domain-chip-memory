@@ -1405,6 +1405,11 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
     question_lower = question.lower()
     cleaned_lower = cleaned.lower()
+    duration_or_count_pattern = re.compile(
+        r"^(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|few)\s+"
+        r"(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?)$",
+        re.IGNORECASE,
+    )
     relative_temporal_markers = (
         "yesterday",
         "today",
@@ -1419,6 +1424,13 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         "weeks ago",
         "days ago",
     )
+    if (
+        answer_candidate.lower() == "unknown"
+        and cleaned_lower
+        and cleaned_lower != "unknown"
+        and question_lower.startswith(("what ", "which ", "who ", "where ", "how long", "how much time", "how many"))
+    ):
+        return "unknown"
     if (
         answer_candidate
         and cleaned.lower() != answer_candidate.lower()
@@ -1452,6 +1464,16 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         return answer_candidate
     if (
         answer_candidate
+        and cleaned_lower != answer_candidate.lower()
+        and question_lower.startswith(("how much time", "how long", "how many"))
+        and (
+            duration_or_count_pattern.fullmatch(answer_candidate)
+            or re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
+        )
+    ):
+        return answer_candidate
+    if (
+        answer_candidate
         and cleaned_lower == answer_candidate.lower()
         and question_lower.startswith("when ")
         and (
@@ -1471,6 +1493,18 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
                 "november",
                 "december",
             ))
+        )
+    ):
+        return cleaned
+    if cleaned_lower == "unknown" and answer_candidate.lower() == "unknown":
+        return cleaned
+    if (
+        answer_candidate
+        and cleaned_lower == answer_candidate.lower()
+        and question_lower.startswith(("how much time", "how long", "how many"))
+        and (
+            duration_or_count_pattern.fullmatch(answer_candidate)
+            or re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
         )
     ):
         return cleaned

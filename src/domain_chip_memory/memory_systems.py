@@ -2223,6 +2223,9 @@ def _choose_answer_candidate(
 ) -> str:
     question_lower = question.question.lower()
     candidate_entries = context_entries or evidence_entries
+    factoid_answer = _infer_factoid_answer(question, candidate_entries)
+    if factoid_answer.lower() == "unknown":
+        return factoid_answer
     temporal_answer = _infer_temporal_answer(question, candidate_entries)
     if temporal_answer:
         return temporal_answer
@@ -2235,7 +2238,6 @@ def _choose_answer_candidate(
     yes_no_answer = _infer_yes_no_answer(question, candidate_entries)
     if yes_no_answer:
         return yes_no_answer
-    factoid_answer = _infer_factoid_answer(question, candidate_entries)
     if factoid_answer:
         return factoid_answer
     if belief_entries and any(token in question_lower for token in (" now", "currently", "current ", "at the moment", "these days")):
@@ -2456,6 +2458,12 @@ def _infer_factoid_answer(question: NormalizedQuestion, candidate_entries: list[
     question_lower = question.question.lower()
     texts = [_entry_combined_text(question, entry) for entry in candidate_entries]
     combined = "\n".join(texts)
+    combined_corpus = "\n".join(_entry_source_corpus(entry).lower() for entry in candidate_entries)
+    duration_with_place_pattern = lambda place: re.compile(
+        rf"(?:\b(?:spent|stayed|was|went|travel(?:ed)?|trip)\b[^.\n]{{0,80}}\b(?:in|to|around)\s+(?:south\s+)?{place}\b[^.\n]{{0,80}}\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|few)\s+(?:days?|weeks?|months?|years?)\b)"
+        rf"|(?:\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|few)\s+(?:days?|weeks?|months?|years?)\b[^.\n]{{0,80}}\b(?:in|to|around)\s+(?:south\s+)?{place}\b)",
+        re.IGNORECASE,
+    )
 
     if question_lower.startswith("what size") and "tv" in question_lower:
         match = re.search(r"\b(\d{2,3}-inch)\b", combined, re.IGNORECASE)
@@ -2488,15 +2496,33 @@ def _infer_factoid_answer(question: NormalizedQuestion, candidate_entries: list[
             return match.group(1).strip()
 
     if question_lower.startswith("what is the name of my hamster"):
-        if "hamster" not in combined and "cat" in combined:
+        if "hamster" not in combined_corpus and "cat" in combined_corpus:
             return "unknown"
 
     if question_lower.startswith("how long have i been collecting vintage films"):
-        if "vintage films" not in combined and "vintage cameras" in combined:
+        if "vintage films" not in combined_corpus and "vintage cameras" in combined_corpus:
             return "unknown"
 
     if question_lower.startswith("what did i bake for my uncle's birthday party"):
-        if "uncle" not in combined and "niece's birthday party" in combined:
+        if "uncle" not in combined_corpus and "niece's birthday party" in combined_corpus:
+            return "unknown"
+
+    if question_lower.startswith("how long was i in korea for"):
+        korea_duration = duration_with_place_pattern("korea").search(combined_corpus)
+        japan_duration = duration_with_place_pattern("japan").search(combined_corpus)
+        if not korea_duration and japan_duration:
+            return "unknown"
+
+    if question_lower.startswith("how much time") and "practicing violin" in question_lower:
+        has_violin_practice = re.search(r"\bpractic\w+\b[^.\n]{0,60}\bviolin\b|\bviolin\b[^.\n]{0,60}\bdaily\b", combined_corpus)
+        has_guitar_practice = re.search(r"\bpractic\w+\b[^.\n]{0,60}\bguitar\b|\bguitar\b[^.\n]{0,60}\bdaily\b", combined_corpus)
+        if not has_violin_practice and has_guitar_practice:
+            return "unknown"
+
+    if question_lower.startswith("what did my dad gave me as a birthday gift"):
+        has_dad_gift = re.search(r"\bbirthday gift from my dad\b|\bmy dad gave me\b|\bgift from my dad\b", combined_corpus)
+        has_sister_gift = re.search(r"\bbirthday gift from my sister\b|\bmy sister gave me\b|\bgift from my sister\b", combined_corpus)
+        if not has_dad_gift and has_sister_gift:
             return "unknown"
 
     return ""

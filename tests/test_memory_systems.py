@@ -1933,6 +1933,9 @@ def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
         "0862e8bf_abs": "answer_candidate: unknown",
         "15745da0_abs": "answer_candidate: unknown",
         "bc8a6e93_abs": "answer_candidate: unknown",
+        "19b5f2b3_abs": "answer_candidate: unknown",
+        "29f2956b_abs": "answer_candidate: unknown",
+        "f4f1d8a4_abs": "answer_candidate: unknown",
     }
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]
 
