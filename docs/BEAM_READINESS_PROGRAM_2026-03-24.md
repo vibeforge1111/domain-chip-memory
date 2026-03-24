@@ -66,6 +66,7 @@ Program implication:
 
 - the likely `BEAM`-ready winner is not a pure observational system or a pure atom system
 - it is likely a hybrid that preserves what currently wins on `LongMemEval_s` and `LoCoMo` while adding stronger large-context structure
+- the unified operating memo is now `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
 
 ## Execution lanes
 
@@ -121,9 +122,11 @@ In repo terms, that suggests:
 ## Immediate next moves
 
 1. Extend `LongMemEval_s` coverage from `200/500` to `225/500`.
-2. Start the next clean `LoCoMo` conversation slice instead of continuing to optimize the contaminated `conv-26 q151-199` tail.
-3. Add `BEAM` adapter and scorecard contracts as soon as the implementation surface is pin-able.
-4. Start testing architecture mutations against the question:
+2. Start the architecture consolidation track in parallel by adding typed `answer_candidate` contracts and explicit current-state separation.
+3. Start the next clean `LoCoMo` conversation slice instead of continuing to optimize the contaminated `conv-26 q151-199` tail.
+4. Lock the first canonical `GoodAI LTM Benchmark` run instead of leaving that frontier abstract.
+5. Add `BEAM` adapter and scorecard contracts as soon as the implementation surface is pin-able.
+6. Start testing architecture mutations against the question:
    - does this help million-token-scale memory pressure without breaking the already-closed slices?
 
 ## Promotion rule

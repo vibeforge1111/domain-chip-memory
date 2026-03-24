@@ -171,6 +171,7 @@ Required architecture moves:
 Reference memo:
 
 - `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
+- `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
 
 ## Phase 4: Mutation flywheel
 

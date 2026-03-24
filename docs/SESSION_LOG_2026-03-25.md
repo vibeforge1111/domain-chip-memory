@@ -31,6 +31,8 @@ The honest conclusion is:
 The concrete next-step memo is:
 
 - `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
+- `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
+- `docs/TOMORROW_START_CHECKLIST_2026-03-26.md`
 
 That memo locks the next architectural moves:
 
@@ -102,6 +104,10 @@ The next rational order is:
 3. Do not spend another day on `conv-26 q151-199` as if it were a clean benchmark lane.
 4. Move `LoCoMo` to a clean new conversation slice after `conv-26 q150`, or another clean bounded slice with valid gold answers.
 5. After the next `LongMemEval_s` expansion is stable, lock the first canonical `GoodAI LTM Benchmark` configuration and produce a source-of-truth rerun.
+
+The explicit tomorrow restart checklist is:
+
+- `docs/TOMORROW_START_CHECKLIST_2026-03-26.md`
 
 ## Restart Point
 

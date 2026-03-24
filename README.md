@@ -111,6 +111,7 @@ It does **not** yet contain official benchmark scoring or a production-grade mem
 - architecture: `docs/ARCHITECTURE.md`
 - implementation plan: `docs/IMPLEMENTATION_PLAN.md`
 - memory architecture evolution plan: `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
+- unified memory system program: `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
 - benchmark strategy: `docs/BENCHMARK_STRATEGY.md`
 - BEAM readiness program: `docs/BEAM_READINESS_PROGRAM_2026-03-24.md`
 - memory mutation matrix: `docs/MEMORY_MUTATION_MATRIX_2026-03-24.md`
@@ -125,6 +126,8 @@ It does **not** yet contain official benchmark scoring or a production-grade mem
 - MiniMax operational notes: `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
 - session log for March 23: `docs/SESSION_LOG_2026-03-23.md`
 - session log for March 24: `docs/SESSION_LOG_2026-03-24.md`
+- session log for March 25: `docs/SESSION_LOG_2026-03-25.md`
+- tomorrow start checklist: `docs/TOMORROW_START_CHECKLIST_2026-03-26.md`
 - benchmark substrate contracts: `docs/BENCHMARK_SUBSTRATE_CONTRACTS.md`
 - people and labs map: `research/research_grounded/ARXIV_PEOPLE_AND_LABS_MAP_2026-03-22.md`
 - autoloop flywheel: `docs/AUTOLOOP_FLYWHEEL.md`
