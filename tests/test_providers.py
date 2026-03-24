@@ -215,6 +215,33 @@ def test_expand_answer_uses_relative_temporal_candidate_for_when_question():
     assert rescued == "A few years ago"
 
 
+def test_expand_answer_prefers_conflicting_full_date_answer_candidate_for_when_question():
+    rescued = providers._expand_answer_from_context(
+        "When did Gina launch an ad campaign for her store?",
+        "1 February 2023",
+        "answer_candidate: 29 January 2023",
+    )
+
+    assert rescued == "29 January 2023"
+
+
+def test_expand_answer_preserves_matching_temporal_answer_candidate_for_when_question():
+    context = "\n".join(
+        [
+            "observation: On 12:48 am on 1 February, 2023, Gina said: one wholesaler replied and said yes today.",
+            "answer_candidate: 29 January 2023",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "When did Gina launch an ad campaign for her store?",
+        "29 January 2023",
+        context,
+    )
+
+    assert rescued == "29 January 2023"
+
+
 def test_expand_answer_uses_single_token_entity_candidate_for_unknown_which_question():
     rescued = providers._expand_answer_from_context(
         "Which city have both Jean and John visited?",
@@ -432,6 +459,73 @@ def test_minimax_provider_expands_partial_duration_answer(monkeypatch):
 
     assert response.answer == "45 minutes each way"
     assert response.metadata["context_compacted"] is True
+
+
+def test_minimax_provider_prefers_temporal_answer_candidate_over_conflicting_model_date(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "1 February 2023"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-30",
+        question_id="conv-30-qa-8",
+        question="When did Gina launch an ad campaign for her store?",
+        assembled_context=(
+            "stable_memory_window:\n"
+            "observation: On 2:32 pm on 29 January, 2023, Gina said: "
+            "I just launched an ad campaign for my clothing store in hopes of growing the business.\n"
+            "answer_candidate: 29 January 2023"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "29 January 2023"
+
+
+def test_minimax_provider_preserves_matching_temporal_answer_candidate(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "29 January 2023"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="observational_temporal_memory",
+        sample_id="conv-30",
+        question_id="conv-30-qa-8",
+        question="When did Gina launch an ad campaign for her store?",
+        assembled_context=(
+            "stable_memory_window:\n"
+            "observation: On 12:48 am on 1 February, 2023, Gina said: one wholesaler replied and said yes today.\n"
+            "answer_candidate: 29 January 2023"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "29 January 2023"
 
 
 def test_minimax_provider_rescues_previous_occupation_from_context(monkeypatch):

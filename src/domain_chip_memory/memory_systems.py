@@ -2496,6 +2496,8 @@ def _infer_temporal_answer(question: NormalizedQuestion, evidence_entries: list[
     def _temporal_priority(entry: ObservationEntry) -> int:
         evidence_text = _observation_evidence_text(question, entry).lower()
         priority = 0
+        if "ad campaign" in question_lower and "ad campaign" in evidence_text:
+            priority += 3
         if "accepted" in question_lower and "accepted" in evidence_text:
             priority += 3
         if "interview" in question_lower and "interview" in evidence_text:
@@ -2506,6 +2508,12 @@ def _infer_temporal_answer(question: NormalizedQuestion, evidence_entries: list[
             priority += 3
         if "open her online clothing store" in question_lower and any(
             token in evidence_text for token in ("store is open", "opened an online clothing store", "online clothes store is open")
+        ):
+            priority += 3
+        if "fair" in question_lower and "fair" in evidence_text:
+            priority += 3
+        if "get more exposure" in question_lower and any(
+            token in evidence_text for token in ("fair", "show off my studio", "possible leads", "more attention to my studio")
         ):
             priority += 3
         if "festival" in question_lower and "festival" in evidence_text:

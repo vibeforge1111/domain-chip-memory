@@ -1868,9 +1868,12 @@ def test_locomo_conv30_temporal_candidates_cover_future_relative_and_anchor_date
         questions=[
             next(question for question in sample.questions if question.question_id == question_id)
             for question_id in (
+                "conv-30-qa-8",
+                "conv-30-qa-14",
                 "conv-30-qa-7",
                 "conv-30-qa-12",
                 "conv-30-qa-15",
+                "conv-30-qa-17",
                 "conv-30-qa-21",
                 "conv-30-qa-22",
             )
@@ -1881,9 +1884,12 @@ def test_locomo_conv30_temporal_candidates_cover_future_relative_and_anchor_date
     _, packets = build_observational_temporal_memory_packets([subset], max_observations=4, max_reflections=3)
     packet_by_id = {packet.question_id: packet for packet in packets}
 
+    assert "answer_candidate: 29 January 2023" in packet_by_id["conv-30-qa-8"].assembled_context
     assert "answer_candidate: February 2023" in packet_by_id["conv-30-qa-7"].assembled_context
+    assert "answer_candidate: 16 March 2023" in packet_by_id["conv-30-qa-14"].assembled_context
     assert "answer_candidate: A few years ago" in packet_by_id["conv-30-qa-12"].assembled_context
     assert "answer_candidate: 3 April 2023" in packet_by_id["conv-30-qa-15"].assembled_context
+    assert "answer_candidate: 24 April 2023" in packet_by_id["conv-30-qa-17"].assembled_context
     assert "answer_candidate: 27 May 2023" in packet_by_id["conv-30-qa-21"].assembled_context
     assert "answer_candidate: 27 May 2023" in packet_by_id["conv-30-qa-22"].assembled_context
 
