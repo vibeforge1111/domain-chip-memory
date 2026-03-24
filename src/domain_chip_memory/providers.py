@@ -1399,15 +1399,44 @@ def _compact_context(question: str, context: str, *, max_lines: int = 8) -> str:
     return "\n".join([*selected, *reserved])
 
 
+def _looks_like_preference_guidance_question(question: str) -> bool:
+    question_lower = question.lower()
+    first_person_question = question_lower.startswith(("i ", "i'", "i’m", "i'm", "ive", "im ")) or any(
+        marker in question_lower for marker in (" i ", " my ", " i've", " i'm", " ive", " im ")
+    )
+    if question_lower.startswith(("can you recommend", "can you suggest", "what should i serve")):
+        return True
+    if (
+        any(token in question_lower for token in ("recommend", "suggest"))
+        and first_person_question
+        and not question_lower.startswith(("what did", "which", "who", "when", "where"))
+    ):
+        return True
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "any tips",
+            "any advice",
+            "any suggestions",
+            "any ideas",
+            "any recommendations",
+            "helpful tips",
+            "what do you think",
+            "do you think",
+            "could there be a reason",
+        )
+    ):
+        return True
+    return False
+
+
 def _expand_answer_from_context(question: str, answer: str, context: str) -> str:
     cleaned = answer.strip()
     answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
     answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
     question_lower = question.lower()
     cleaned_lower = cleaned.lower()
-    preference_question = question_lower.startswith(("can you recommend", "can you suggest", "what should i serve")) or any(
-        phrase in question_lower for phrase in ("any tips", "any advice", "any suggestions", "any ideas")
-    )
+    preference_question = _looks_like_preference_guidance_question(question)
     duration_or_count_pattern = re.compile(
         r"^(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|few)\s+"
         r"(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?)$",
@@ -1442,7 +1471,7 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         and answer_candidate
         and cleaned_lower
         and cleaned_lower != answer_candidate.lower()
-        and len(cleaned.split()) <= 5
+        and len(cleaned.split()) <= 7
         and len(answer_candidate.split()) >= max(len(cleaned.split()) + 2, 6)
     ):
         return answer_candidate
@@ -1501,6 +1530,15 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         and re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
         and re.match(rf"^{re.escape(answer_candidate)}\b", cleaned_lower)
         and len(cleaned.split()) <= 3
+    ):
+        return answer_candidate
+    if (
+        answer_candidate
+        and cleaned_lower != answer_candidate.lower()
+        and re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
+        and question_lower.startswith(("what ", "how many "))
+        and re.search(rf"\b{re.escape(answer_candidate)}\b", cleaned_lower)
+        and len(cleaned.split()) <= 4
     ):
         return answer_candidate
     if (

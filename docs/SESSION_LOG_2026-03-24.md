@@ -134,9 +134,9 @@ The same lane was then extended on `LongMemEval_s` and closed the next two bound
 - `samples 76-100`: `25/25` raw, `25/25` audited
 - `samples 101-125`: `25/25` raw, `25/25` audited
 - `samples 126-150`: `25/25` raw, `25/25` audited
-- contiguous measured `LongMemEval_s` coverage through sample `150`: `150/150`
-- `samples 151-175`: `14/25` raw, `14/25` audited
-  - category split: `multi-session` `13/13`, `single-session-preference` `1/12`
+- `samples 151-175`: `25/25` raw, `25/25` audited
+  - category split: `multi-session` `13/13`, `single-session-preference` `12/12`
+- contiguous measured `LongMemEval_s` coverage through sample `175`: `175/175`
 
 Key execution read:
 
@@ -144,15 +144,16 @@ Key execution read:
 - `samples 76-100` started at `1/25`, moved through `14/25`, and closed at `25/25`
 - `samples 101-125` started at `4/25`, moved through `22/25`, and closed at `25/25`
 - `samples 126-150` started at `0/25`, moved through `17/25`, then `21/25`, then `24/25`, and closed at `25/25`
-- `samples 151-175` started at `3/25`, and the decisive lift was in the `multi-session` half rather than the `single-session-preference` half
+- `samples 151-175` started at `3/25`, moved through `14/25`, then `18/25`, then `24/25`, and closed at `25/25`
 - the main new failure class was aggregate and total-amount reasoning, not basic temporal retrieval
 - the final `126-150` residue was all `single-session-preference`, and the closing fixes there were preference-specific rather than core aggregate logic
-- the first `151-175` pass showed the opposite pattern: the `multi-session` aggregate/comparison/date lane was the part that needed work, and it is now fully closed on that slice
+- the first `151-175` pass showed the opposite pattern: the `multi-session` aggregate/comparison/date lane closed first, and the final residue was the `single-session-preference` answer-shaping lane
 - the decisive fixes were:
   - stronger aggregate answer synthesis in the observational substrate
   - aggregate-support evidence blocks in the packet for money questions
   - preference-support retrieval from raw user turns instead of the latest-session window for `LongMemEval`
   - stronger preference-domain gating, answer-candidate rescue, and fairer preference scoring for concrete but aligned suggestions
+  - broader provider-side preference rescue for first-person advice and recommendation questions
   - short-currency and plain-numeric provider rescue for `difference`, `how much more expensive`, and numeric-with-suffix outputs like `100 followers`
   - explicit project-count synthesis for "excluding my thesis" style concurrent-work questions
   - runner/provider rescue that preserves exact short `answer_candidate` values for:
@@ -164,7 +165,9 @@ Source-of-truth artifacts:
 
 - `artifacts/benchmark_runs/longmemeval_observational_minimax_offset50_limit25_v8.json`
 - `artifacts/benchmark_runs/longmemeval_observational_minimax_offset75_limit25_v9.json`
-- `artifacts/benchmark_runs/longmemeval_observational_minimax_offset100_limit25_v3.json`
+- `artifacts/benchmark_runs/longmemeval_observational_minimax_offset100_limit25_v4.json`
+- `artifacts/benchmark_runs/longmemeval_observational_minimax_offset125_limit25_v6.json`
+- `artifacts/benchmark_runs/longmemeval_observational_minimax_offset150_limit25_v8.json`
 
 Validation during the close:
 

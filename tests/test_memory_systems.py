@@ -2059,6 +2059,29 @@ def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
         assert keep[packet.question_id].lower() in packet.assembled_context.lower()
 
 
+def test_longmemeval_preference_candidates_cover_151_175_single_session_lane():
+    samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
+    keep = {
+        "505af2f5": "answer_candidate: Try lower-sugar homemade creamer variations",
+        "75f70248": "answer_candidate: Check whether Luna's shedding",
+        "d6233ab6": "answer_candidate: It could be worth going",
+        "1da05512": "answer_candidate: Buying a NAS now makes sense",
+        "fca70973": "answer_candidate: Pick a theme park weekend with thrill rides",
+        "b6025781": "answer_candidate: Try meal prep recipes built around quinoa",
+        "a89d7624": "answer_candidate: Focus on Denver's live music scene",
+        "b0479f84": "answer_candidate: Try more Netflix documentaries",
+        "1d4e3b97": "answer_candidate: The new chain and cassette plus your Garmin setup",
+        "1c0ddc50": "answer_candidate: During your commute, try history podcasts or audiobooks",
+        "0a34ad58": "answer_candidate: Use your Suica card and TripIt itinerary",
+    }
+    subset = [sample for sample in samples if sample.questions[0].question_id in keep]
+
+    _, packets = build_observational_temporal_memory_packets(subset, max_observations=4, max_reflections=3)
+
+    for packet in packets:
+        assert keep[packet.question_id].lower() in packet.assembled_context.lower()
+
+
 def test_locomo_question_relevant_window_surfaces_sixth_slice_music_poetry_and_roadtrip_facts():
     sample = next(
         record

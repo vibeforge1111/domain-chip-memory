@@ -232,6 +232,16 @@ def test_expand_answer_prefers_plain_numeric_answer_candidate_over_number_with_s
     assert rescued == "100"
 
 
+def test_expand_answer_prefers_plain_numeric_answer_candidate_over_about_number_suffix():
+    rescued = providers._expand_answer_from_context(
+        "What was the approximate increase in Instagram followers I experienced in two weeks?",
+        "About 100 followers",
+        "answer_candidate: 100",
+    )
+
+    assert rescued == "100"
+
+
 def test_expand_answer_prefers_short_which_answer_candidate_over_verbose_output():
     rescued = providers._expand_answer_from_context(
         "Which social media platform did I gain the most followers on over the past month?",
@@ -280,6 +290,52 @@ def test_expand_answer_uses_preference_candidate_for_any_ideas_question_when_mod
     )
 
     assert "flower paintings on Instagram" in rescued
+
+
+def test_expand_answer_prefers_preference_candidate_for_do_you_think_question():
+    rescued = providers._expand_answer_from_context(
+        "I'm trying to decide whether to buy a NAS device now or wait. What do you think?",
+        "Buy now if storage is tight.",
+        (
+            "evidence_memory:\n"
+            "evidence: My home network storage is getting pretty full.\n"
+            "answer_candidate: Buying a NAS now makes sense if your storage capacity is tight and you want central backup beyond external hard drives."
+        ),
+    )
+
+    assert rescued == (
+        "Buying a NAS now makes sense if your storage capacity is tight and you want central backup beyond external hard drives."
+    )
+
+
+def test_expand_answer_prefers_preference_candidate_for_unknown_helpful_tips_question():
+    rescued = providers._expand_answer_from_context(
+        "I'm a bit anxious about getting around Tokyo. Do you have any helpful tips?",
+        "unknown",
+        (
+            "evidence_memory:\n"
+            "evidence: You already have a Suica card and TripIt itinerary set up.\n"
+            "answer_candidate: Use your Suica card and TripIt itinerary to simplify Tokyo trains, meeting points, and navigation."
+        ),
+    )
+
+    assert rescued == "Use your Suica card and TripIt itinerary to simplify Tokyo trains, meeting points, and navigation."
+
+
+def test_expand_answer_prefers_preference_candidate_for_recommendations_question():
+    rescued = providers._expand_answer_from_context(
+        "I've got some free time tonight, any documentary recommendations?",
+        "My Octopus Teacher, 13th, Wild Wild Country",
+        (
+            "evidence_memory:\n"
+            "evidence: Can you recommend some more documentary series similar to Our Planet, Free Solo, and Tiger King.\n"
+            "answer_candidate: Try more Netflix documentaries in the style of Our Planet, Free Solo, and Tiger King, especially nature or true-story series."
+        ),
+    )
+
+    assert rescued == (
+        "Try more Netflix documentaries in the style of Our Planet, Free Solo, and Tiger King, especially nature or true-story series."
+    )
 
 
 def test_expand_answer_prefers_temporal_answer_candidate_for_when_question():
