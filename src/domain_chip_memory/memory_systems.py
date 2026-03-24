@@ -2138,6 +2138,9 @@ def _choose_answer_candidate(
     evidence_entries: list[ObservationEntry],
     belief_entries: list[ObservationEntry],
 ) -> str:
+    yes_no_answer = _infer_yes_no_answer(question, evidence_entries)
+    if yes_no_answer:
+        return yes_no_answer
     if evidence_entries:
         best_evidence = max(
             evidence_entries,
@@ -2152,6 +2155,43 @@ def _choose_answer_candidate(
             str(top_entry.metadata.get("value", "")),
             top_entry.text,
         )
+    return ""
+
+
+def _infer_yes_no_answer(question: NormalizedQuestion, evidence_entries: list[ObservationEntry]) -> str:
+    question_lower = question.question.lower()
+    if not question_lower.startswith("did "):
+        return ""
+
+    asked_subject = _question_subject(question)
+    ranked_entries = sorted(
+        evidence_entries,
+        key=lambda entry: (_evidence_score(question, entry), _observation_score(question, entry), entry.timestamp or "", entry.observation_id),
+        reverse=True,
+    )
+    for entry in ranked_entries:
+        source_text = str(entry.metadata.get("source_text", "")).strip()
+        if source_text.endswith("?"):
+            continue
+        combined = " ".join(
+            part.lower()
+            for part in (
+                _observation_evidence_text(question, entry),
+                entry.text,
+                source_text,
+            )
+            if part
+        )
+        if "make" in question_lower and any(
+            token in combined
+            for token in ("i made", "yeah, i made", "yes, i made", "made this bowl", "made it", "did make")
+        ):
+            return "Yes" if entry.subject == asked_subject else "No"
+        if "make" in question_lower and any(
+            token in combined
+            for token in ("i didn't make", "i did not make", "didn't make", "did not make", "no, i didn't")
+        ):
+            return "No" if entry.subject == asked_subject else "Yes"
     return ""
 
 

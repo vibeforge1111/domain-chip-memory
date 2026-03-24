@@ -824,12 +824,6 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         if "safe and inviting place for people to grow" in combined_lower or "safe, inviting place for people to grow" in combined_lower:
             return "a safe and inviting place for people to grow"
 
-    if question_lower.startswith("did ") and "bowl in the photo" in question_lower:
-        if "made the black and white bowl in the photo" in combined_lower:
-            return "Yes"
-        if "made this bowl" in combined_lower or ("made this" in combined_lower and "bowl" in combined_lower):
-            return "Yes"
-
     if "what kind of books" in question_lower and "library" in question_lower:
         if "kids' books - classics, stories from different cultures, educational books" in combined_lower:
             return "kids' books - classics, stories from different cultures, educational books"
@@ -1370,6 +1364,17 @@ def _compact_context(question: str, context: str, *, max_lines: int = 8) -> str:
 
 def _expand_answer_from_context(question: str, answer: str, context: str) -> str:
     cleaned = answer.strip()
+    answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
+    answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
+    question_lower = question.lower()
+    if (
+        answer_candidate
+        and cleaned.lower() != answer_candidate.lower()
+        and question_lower.startswith("did ")
+        and answer_candidate.lower() in {"yes", "no"}
+    ):
+        return answer_candidate
+
     rescued = _question_aware_rescue(question, cleaned, context)
     if rescued:
         return rescued
@@ -1381,9 +1386,6 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         return cleaned
 
     lines = [line.strip() for line in context.splitlines() if line.strip()]
-    answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
-    answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
-    question_lower = question.lower()
     belief_lines = [
         line for line in lines
         if line.lower().startswith("belief:") or line.lower().startswith("reflection:")
@@ -1391,12 +1393,11 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if (
         answer_candidate
         and cleaned.lower() != answer_candidate.lower()
-        and question_lower.startswith(("how did", "what did", "what was", "what does"))
+        and question_lower.startswith(("how did", "what did", "what was", "what does", "did "))
         and len(answer_candidate.split()) <= 8
         and any(cleaned.lower() in line.lower() for line in belief_lines)
     ):
         return answer_candidate
-
     candidate_lines = [line for line in lines if lower in line.lower()]
     if not candidate_lines:
         tokens = _question_tokens(question)

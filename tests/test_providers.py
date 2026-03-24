@@ -101,6 +101,26 @@ def test_expand_answer_prefers_exact_answer_candidate_over_belief_paraphrase():
     assert rescued == "Appreciate them a lot"
 
 
+def test_expand_answer_prefers_yes_no_answer_candidate_for_did_question():
+    context = "\n".join(
+        [
+            "evidence_memory:",
+            "evidence: No",
+            "belief_memory:",
+            "belief: Melanie said she made this bowl in her class",
+            "answer_candidate: No",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Did Caroline make the black and white bowl in the photo?",
+        "Yes",
+        context,
+    )
+
+    assert rescued == "No"
+
+
 def test_minimax_provider_includes_context_image_urls(monkeypatch):
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
     captured: dict[str, object] = {}

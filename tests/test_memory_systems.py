@@ -1770,6 +1770,25 @@ def test_locomo_evidence_and_belief_split_prefers_exact_evidence_for_scoreable_s
     assert "answer_candidate: went on a hike" in packet_by_id["conv-26-qa-152"].assembled_context
 
 
+def test_locomo_yes_no_subject_grounding_prefers_no_when_other_speaker_made_object():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-26"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=[next(question for question in sample.questions if question.question_id == "conv-26-qa-168")],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_observational_temporal_memory_packets([subset], max_observations=4, max_reflections=3)
+
+    assert "answer_candidate: No" in packets[0].assembled_context
+
+
 def test_locomo_question_relevant_window_surfaces_sixth_slice_music_poetry_and_roadtrip_facts():
     sample = next(
         record
