@@ -223,6 +223,36 @@ def test_expand_answer_prefers_short_which_answer_candidate_over_wrong_short_out
     assert rescued == "Thrive Market"
 
 
+def test_expand_answer_prefers_richer_preference_answer_candidate_over_short_specific_reply():
+    rescued = providers._expand_answer_from_context(
+        "Can you recommend a show or movie for me to watch tonight?",
+        "Netflix's Kid Gorgeous",
+        "answer_candidate: Can you recommend some stand-up comedy specials on Netflix with strong storytelling abilities like John Mulaney's 'Kid Gorgeous'",
+    )
+
+    assert rescued.startswith("Can you recommend some stand-up comedy specials on Netflix")
+
+
+def test_expand_answer_prefers_baking_preference_candidate_over_irrelevant_model_output():
+    rescued = providers._expand_answer_from_context(
+        "I'm thinking of inviting my colleagues over for a small gathering. Any tips on what to bake?",
+        "and organizing your coins can be a fun and rewarding experience",
+        "answer_candidate: Do you have any suggestions for a lemon flavored cake, like my lemon poppyseed cake that I made for a colleague's going-away party",
+    )
+
+    assert "lemon flavored cake" in rescued
+
+
+def test_expand_answer_uses_preference_candidate_for_any_ideas_question_when_model_is_blank():
+    rescued = providers._expand_answer_from_context(
+        "I've been feeling a bit stuck with my paintings lately. Do you have any ideas on how I can find new inspiration?",
+        "",
+        "answer_candidate: I've been looking at a lot of flower paintings on Instagram and I was wondering if you could give me some tips on how to paint realistic flowers",
+    )
+
+    assert "flower paintings on Instagram" in rescued
+
+
 def test_expand_answer_prefers_temporal_answer_candidate_for_when_question():
     context = "\n".join(
         [

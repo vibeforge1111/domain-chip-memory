@@ -1934,12 +1934,20 @@ def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
         "36580ce8": "answer_candidate: bronchitis",
         "3d86fd0a": "answer_candidate: a coffee shop in the city",
         "a82c026e": "answer_candidate: Dark Souls 3 DLC",
+        "gpt4_d84a3211": "answer_candidate: $185",
+        "36b9f61e": "answer_candidate: $2500",
         "0862e8bf_abs": "answer_candidate: unknown",
         "15745da0_abs": "answer_candidate: unknown",
         "bc8a6e93_abs": "answer_candidate: unknown",
         "19b5f2b3_abs": "answer_candidate: unknown",
         "29f2956b_abs": "answer_candidate: unknown",
         "f4f1d8a4_abs": "answer_candidate: unknown",
+        "88432d0a_abs": "answer_candidate: unknown",
+        "80ec1f4f_abs": "answer_candidate: unknown",
+        "eeda8a6d_abs": "answer_candidate: unknown",
+        "60bf93ed_abs": "answer_candidate: unknown",
+        "edced276_abs": "answer_candidate: unknown",
+        "gpt4_372c3eed_abs": "answer_candidate: unknown",
     }
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]
 
@@ -1956,10 +1964,29 @@ def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
     assert "$500" in packet_by_id["36b9f61e"].assembled_context
 
 
+def test_longmemeval_preference_packets_surface_domain_anchors():
+    samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
+    keep = {
+        "8a2466db": "Adobe Premiere Pro",
+        "0edc2aef": "hotel",
+        "09d032c9": "portable power bank",
+        "54026fce": "watercooler conversations with colleagues",
+        "95228167": "Fender Stratocaster",
+        "d24813b1": "lemon poppyseed cake",
+    }
+    subset = [sample for sample in samples if sample.questions[0].question_id in keep]
+
+    _, packets = build_observational_temporal_memory_packets(subset, max_observations=4, max_reflections=3)
+
+    for packet in packets:
+        assert keep[packet.question_id].lower() in packet.assembled_context.lower()
+
+
 def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
     samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
     keep = {
         "0a995998": "answer_candidate: 3",
+        "81507db6": "answer_candidate: 3",
         "6d550036": "answer_candidate: 2",
         "gpt4_59c863d7": "answer_candidate: 5",
         "b5ef892d": "answer_candidate: 8 days",

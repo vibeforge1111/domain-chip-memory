@@ -96,6 +96,10 @@ def test_runner_matches_unknown_for_longmemeval_abstention_explanation():
         "unknown",
         ["You did not mention this information. You mentioned your cat Luna but not your hamster."],
     ) is True
+    assert _matches_expected_answer(
+        "unknown",
+        ["The information provided is not enough. You did not mention baking egg tarts."],
+    ) is True
 
 
 def test_runner_matches_numeric_how_many_answer_inside_explanatory_gold():
@@ -139,6 +143,39 @@ def test_runner_matches_numeric_count_inside_instrument_gold():
         "4",
         [
             "I currently own 4 musical instruments. I've had the Fender Stratocaster electric guitar for 5 years, the Yamaha FG800 acoustic guitar for 8 years, the 5-piece Pearl Export drum set for an unspecified amount of time, and the Korg B1 piano for 3 years."
+        ],
+    ) is True
+
+
+def test_runner_matches_preference_anchor_against_explanatory_preference_gold():
+    assert _matches_expected_answer(
+        "I'm trying to learn more about some advanced settings for video editing with Adobe Premiere Pro",
+        [
+            "The user would prefer responses that suggest resources specifically tailored to Adobe Premiere Pro, especially those that delve into its advanced settings. They might not prefer general video editing resources or resources related to other video editing software."
+        ],
+    ) is True
+    assert _matches_expected_answer(
+        "I'm considering upgrading from a Fender Stratocaster to a Gibson Les Paul. Can you tell me the main differences between these two guitars?",
+        [
+            "The user would prefer responses that highlight the differences between Fender Stratocaster and Gibson Les Paul electric guitars, such as the feel of the neck, weight, and sound profile. They might not prefer general tips on buying an electric guitar or suggestions that do not take into account their current guitar and desired upgrade."
+        ],
+    ) is True
+
+
+def test_runner_matches_preference_gold_when_clause_precedes_user_would_prefer():
+    assert _matches_expected_answer(
+        "I like the idea of the Pimm's Cup with a Twist and classic cocktails from a mixology class",
+        [
+            "Considering their mixology class background, the user would prefer cocktail suggestions that build upon their existing skills and interests, such as creative variations of classic cocktails or innovative twists on familiar flavors."
+        ],
+    ) is True
+
+
+def test_runner_matches_watercooler_slack_suggestion_against_remote_colleague_preference_gold():
+    assert _matches_expected_answer(
+        "Start a virtual watercooler Slack channel",
+        [
+            "The user would prefer responses that acknowledge their desire for social interaction and collaboration while working remotely. They might prefer suggestions of virtual team-building activities, regular check-ins, or joining interest-based groups within the company."
         ],
     ) is True
 

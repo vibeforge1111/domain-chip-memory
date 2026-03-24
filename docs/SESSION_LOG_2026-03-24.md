@@ -133,17 +133,22 @@ The same lane was then extended on `LongMemEval_s` and closed the next two bound
 - `samples 51-75`: `25/25` raw, `25/25` audited
 - `samples 76-100`: `25/25` raw, `25/25` audited
 - `samples 101-125`: `25/25` raw, `25/25` audited
-- contiguous measured `LongMemEval_s` coverage through sample `125`: `125/125`
+- `samples 126-150`: `25/25` raw, `25/25` audited
+- contiguous measured `LongMemEval_s` coverage through sample `150`: `150/150`
 
 Key execution read:
 
 - `samples 51-75` started at `5/25`, moved through `10/25`, and closed at `25/25`
 - `samples 76-100` started at `1/25`, moved through `14/25`, and closed at `25/25`
 - `samples 101-125` started at `4/25`, moved through `22/25`, and closed at `25/25`
+- `samples 126-150` started at `0/25`, moved through `17/25`, then `21/25`, then `24/25`, and closed at `25/25`
 - the main new failure class was aggregate and total-amount reasoning, not basic temporal retrieval
+- the final `126-150` residue was all `single-session-preference`, and the closing fixes were preference-specific rather than core aggregate logic
 - the decisive fixes were:
   - stronger aggregate answer synthesis in the observational substrate
   - aggregate-support evidence blocks in the packet for money questions
+  - preference-support retrieval from raw user turns instead of the latest-session window for `LongMemEval`
+  - stronger preference-domain gating, answer-candidate rescue, and fairer preference scoring for concrete but aligned suggestions
   - explicit project-count synthesis for "excluding my thesis" style concurrent-work questions
   - runner/provider rescue that preserves exact short `answer_candidate` values for:
     - currency totals

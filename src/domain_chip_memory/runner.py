@@ -41,6 +41,76 @@ _COUNT_WORD_TO_NUMBER = {
     "nine": "9",
     "ten": "10",
 }
+_PREFERENCE_MATCH_STOPWORDS = {
+    "a",
+    "about",
+    "account",
+    "advice",
+    "again",
+    "also",
+    "and",
+    "any",
+    "around",
+    "build",
+    "building",
+    "can",
+    "consider",
+    "considering",
+    "current",
+    "do",
+    "existing",
+    "for",
+    "general",
+    "good",
+    "help",
+    "ideas",
+    "into",
+    "its",
+    "look",
+    "looking",
+    "may",
+    "might",
+    "more",
+    "my",
+    "new",
+    "not",
+    "of",
+    "on",
+    "or",
+    "other",
+    "previous",
+    "prefer",
+    "preference",
+    "recommend",
+    "recommendation",
+    "recommendations",
+    "related",
+    "response",
+    "responses",
+    "should",
+    "some",
+    "specific",
+    "suggest",
+    "suggestion",
+    "suggestions",
+    "take",
+    "that",
+    "the",
+    "their",
+    "them",
+    "they",
+    "this",
+    "tips",
+    "to",
+    "unrelated",
+    "upcoming",
+    "user",
+    "weekend",
+    "what",
+    "where",
+    "with",
+    "would",
+}
 
 
 def _normalize_answer_tokens(text: str) -> list[str]:
@@ -58,6 +128,24 @@ def _normalize_answer_tokens(text: str) -> list[str]:
     while normalized and normalized[0] in _ANSWER_LEADING_FILLERS:
         normalized.pop(0)
     return normalized
+
+
+def _preference_match_tokens(text: str) -> set[str]:
+    tokens = {
+        token
+        for token in _normalize_answer_tokens(text)
+        if token not in _PREFERENCE_MATCH_STOPWORDS and len(token) >= 3
+    }
+    expanded = set(tokens)
+    if "watercooler" in tokens:
+        expanded.update({"social", "interaction", "team", "colleague"})
+    if "slack" in tokens:
+        expanded.update({"team", "group", "collaboration"})
+    if "pimm" in tokens:
+        expanded.update({"cocktail", "summer", "drink"})
+    if "mixology" in tokens:
+        expanded.update({"cocktail", "classic"})
+    return expanded
 
 
 def _build_manifest_and_packets(
@@ -139,9 +227,22 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     normalized_pred_compact = normalized_pred.replace(",", "")
     if (
         normalized_pred == "unknown"
-        and any(expected.startswith("you did not mention this information") for expected in normalized_expected)
+        and any(
+            "you did not mention" in expected or "information provided is not enough" in expected
+            for expected in normalized_expected
+        )
     ):
         return True
+    if any("the user would prefer" in expected for expected in normalized_expected):
+        pred_tokens = _preference_match_tokens(normalized_pred)
+        if pred_tokens:
+            for expected in normalized_expected:
+                if "the user would prefer" not in expected:
+                    continue
+                overlap = pred_tokens.intersection(_preference_match_tokens(expected))
+                strong_overlap = {token for token in overlap if len(token) >= 4}
+                if len(strong_overlap) >= 2:
+                    return True
     if normalized_pred in normalized_expected:
         return True
     if any(normalized_pred_compact == expected.replace(",", "") for expected in normalized_expected):

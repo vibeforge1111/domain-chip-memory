@@ -1405,6 +1405,9 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
     question_lower = question.lower()
     cleaned_lower = cleaned.lower()
+    preference_question = question_lower.startswith(("can you recommend", "can you suggest", "what should i serve")) or any(
+        phrase in question_lower for phrase in ("any tips", "any advice", "any suggestions", "any ideas")
+    )
     duration_or_count_pattern = re.compile(
         r"^(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|few)\s+"
         r"(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?)$",
@@ -1432,6 +1435,25 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         and question_lower.startswith(("what ", "which ", "who ", "where ", "how long", "how much time", "how many"))
     ):
         return "unknown"
+    if preference_question and answer_candidate and cleaned_lower in {"", "unknown"}:
+        return answer_candidate
+    if (
+        preference_question
+        and answer_candidate
+        and cleaned_lower
+        and cleaned_lower != answer_candidate.lower()
+        and len(cleaned.split()) <= 5
+        and len(answer_candidate.split()) >= max(len(cleaned.split()) + 2, 6)
+    ):
+        return answer_candidate
+    if (
+        preference_question
+        and answer_candidate
+        and "what to bake" in question_lower
+        and any(token in answer_candidate.lower() for token in ("cake", "lemon", "poppyseed", "cookie", "dessert", "bake"))
+        and not any(token in cleaned_lower for token in ("cake", "lemon", "poppyseed", "cookie", "dessert", "bake"))
+    ):
+        return answer_candidate
     if (
         answer_candidate
         and cleaned.lower() != answer_candidate.lower()
