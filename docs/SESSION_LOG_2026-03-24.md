@@ -124,3 +124,36 @@ Secondary move if `q151-175` closes early:
 - prefer real reruns over inferred local replay claims
 - treat late misses as normalization bugs only after packet inspection proves the evidence is already present
 - keep the benchmark-inconsistency lane separate from provider tuning
+
+## Later Update: LongMemEval Expansion
+
+The same lane was then extended on `LongMemEval_s` and closed the next two bounded slices:
+
+- lane: `observational_temporal_memory + MiniMax-M2.7`
+- `samples 51-75`: `25/25` raw, `25/25` audited
+- `samples 76-100`: `25/25` raw, `25/25` audited
+- contiguous measured `LongMemEval_s` coverage through sample `100`: `100/100`
+
+Key execution read:
+
+- `samples 51-75` started at `5/25`, moved through `10/25`, and closed at `25/25`
+- `samples 76-100` started at `1/25`, moved through `14/25`, and closed at `25/25`
+- the main new failure class was aggregate and total-amount reasoning, not basic temporal retrieval
+- the decisive fixes were:
+  - stronger aggregate answer synthesis in the observational substrate
+  - aggregate-support evidence blocks in the packet for money questions
+  - runner/provider rescue that preserves exact short `answer_candidate` values for:
+    - currency totals
+    - short `which` answers
+    - month-compatible temporal spans
+
+Source-of-truth artifacts:
+
+- `artifacts/benchmark_runs/longmemeval_observational_minimax_offset50_limit25_v8.json`
+- `artifacts/benchmark_runs/longmemeval_observational_minimax_offset75_limit25_v9.json`
+
+Validation during the close:
+
+- targeted provider and runner regressions passed
+- focused packet-builder regressions passed
+- full real MiniMax reruns were used as the final gate, not only local packet replay

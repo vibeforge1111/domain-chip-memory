@@ -157,6 +157,72 @@ def test_expand_answer_prefers_short_where_answer_candidate_over_unknown():
     assert rescued == "Denver"
 
 
+def test_expand_answer_prefers_short_currency_answer_candidate_for_how_much_question():
+    rescued = providers._expand_answer_from_context(
+        "How much more did I spend on accommodations per night in Hawaii compared to Tokyo?",
+        "$30",
+        "answer_candidate: $270",
+    )
+
+    assert rescued == "$270"
+
+
+def test_expand_answer_keeps_matching_short_currency_candidate_for_how_much_question():
+    context = "\n".join(
+        [
+            "aggregate_memory:",
+            "aggregate: The chain cost $25 and the lights cost $40.",
+            "answer_candidate: $185",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "How much total money have I spent on bike-related expenses since the start of the year?",
+        "$185",
+        context,
+    )
+
+    assert rescued == "$185"
+
+
+def test_expand_answer_prefers_currency_answer_candidate_for_total_amount_question():
+    context = "\n".join(
+        [
+            "aggregate_memory:",
+            "aggregate: The gown cost $800, the handbag cost $1,200, and the boots cost $500.",
+            "answer_candidate: $2500",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "What is the total amount I spent on luxury items in the past few months?",
+        "$2000",
+        context,
+    )
+
+    assert rescued == "$2500"
+
+
+def test_expand_answer_prefers_short_which_answer_candidate_over_verbose_output():
+    rescued = providers._expand_answer_from_context(
+        "Which social media platform did I gain the most followers on over the past month?",
+        "I've been seeing some growth on some of my platforms, like TikTok, where I've gained around 200 followers over the past three weeks.",
+        "answer_candidate: TikTok",
+    )
+
+    assert rescued == "TikTok"
+
+
+def test_expand_answer_prefers_short_which_answer_candidate_over_wrong_short_output():
+    rescued = providers._expand_answer_from_context(
+        "Which grocery store did I spend the most money at in the past month?",
+        "Walmart",
+        "answer_candidate: Thrive Market",
+    )
+
+    assert rescued == "Thrive Market"
+
+
 def test_expand_answer_prefers_temporal_answer_candidate_for_when_question():
     context = "\n".join(
         [

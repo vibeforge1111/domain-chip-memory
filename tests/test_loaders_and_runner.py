@@ -112,6 +112,13 @@ def test_runner_matches_numeric_hours_inside_explanatory_gold():
     ) is True
 
 
+def test_runner_matches_currency_with_or_without_thousands_separator():
+    assert _matches_expected_answer(
+        "$2500",
+        ["$2,500"],
+    ) is True
+
+
 def test_runner_matches_numeric_count_inside_doctor_and_wedding_gold():
     assert _matches_expected_answer(
         "3",

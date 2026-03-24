@@ -1410,6 +1410,7 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         r"(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?)$",
         re.IGNORECASE,
     )
+    currency_pattern = re.compile(r"^\$\d+(?:,\d{3})*(?:\.\d+)?$")
     relative_temporal_markers = (
         "yesterday",
         "today",
@@ -1474,6 +1475,20 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         return answer_candidate
     if (
         answer_candidate
+        and cleaned_lower != answer_candidate.lower()
+        and question_lower.startswith(("how much", "what is the total amount", "what was the total amount"))
+        and currency_pattern.fullmatch(answer_candidate)
+    ):
+        return answer_candidate
+    if (
+        answer_candidate
+        and cleaned_lower == answer_candidate.lower()
+        and question_lower.startswith(("how much", "what is the total amount", "what was the total amount"))
+        and currency_pattern.fullmatch(answer_candidate)
+    ):
+        return cleaned
+    if (
+        answer_candidate
         and cleaned_lower == answer_candidate.lower()
         and question_lower.startswith("when ")
         and (
@@ -1533,6 +1548,19 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         return cleaned
 
     lower = cleaned.lower()
+    if (
+        answer_candidate
+        and cleaned_lower != answer_candidate.lower()
+        and question_lower.startswith("which ")
+        and len(answer_candidate.split()) <= 4
+        and (
+            cleaned_lower == "unknown"
+            or len(cleaned.split()) <= 2
+            or answer_candidate.lower() in cleaned_lower
+            or len(cleaned.split()) > len(answer_candidate.split()) + 3
+        )
+    ):
+        return answer_candidate
     if (
         answer_candidate
         and cleaned_lower != answer_candidate.lower()

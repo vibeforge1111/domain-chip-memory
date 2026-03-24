@@ -1944,9 +1944,16 @@ def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]
 
     _, packets = build_observational_temporal_memory_packets(subset, max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
 
     for packet in packets:
         assert keep[packet.question_id].lower() in packet.assembled_context.lower()
+    assert "$25" in packet_by_id["gpt4_d84a3211"].assembled_context
+    assert "$40" in packet_by_id["gpt4_d84a3211"].assembled_context
+    assert "$120" in packet_by_id["gpt4_d84a3211"].assembled_context
+    assert "$1,200" in packet_by_id["36b9f61e"].assembled_context
+    assert "$800" in packet_by_id["36b9f61e"].assembled_context
+    assert "$500" in packet_by_id["36b9f61e"].assembled_context
 
 
 def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
@@ -1962,15 +1969,25 @@ def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
         "gpt4_d84a3211": "answer_candidate: $185",
         "aae3761f": "answer_candidate: 15 hours",
         "gpt4_f2262a51": "answer_candidate: 3",
+        "dd2973ad": "answer_candidate: 2 AM",
         "gpt4_a56e767c": "answer_candidate: 4",
+        "46a3abf7": "answer_candidate: 3",
+        "36b9f61e": "answer_candidate: $2500",
         "28dc39ac": "answer_candidate: 140 hours",
         "gpt4_2f8be40d": "answer_candidate: 3",
         "2e6d26dc": "answer_candidate: 5",
         "gpt4_15e38248": "answer_candidate: 4",
+        "88432d0a": "answer_candidate: 4",
+        "80ec1f4f": "answer_candidate: 2",
         "d23cf73b": "answer_candidate: 4",
+        "gpt4_7fce9456": "answer_candidate: 4",
         "d682f1a2": "answer_candidate: 3",
+        "7024f17c": "answer_candidate: 0.5 hours",
+        "gpt4_5501fe77": "answer_candidate: TikTok",
+        "gpt4_2ba83207": "answer_candidate: Thrive Market",
         "2318644b": "answer_candidate: $270",
         "2ce6a0f2": "answer_candidate: 4",
+        "gpt4_d12ceb0e": "answer_candidate: 59.6",
     }
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]
 

@@ -34,6 +34,9 @@ Current internal lead as of 2026-03-24:
 - `observational_temporal_memory + MiniMax-M2.7`
 - real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
 - real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
+- real rerun on March 24, 2026 over `LongMemEval_s` samples `51-75`: `25/25` (`1.00`)
+- real rerun on March 24, 2026 over `LongMemEval_s` samples `76-100`: `25/25` (`1.00`)
+- contiguous measured `LongMemEval_s` coverage through sample `100`: `100/100` (`1.00`)
 - real rerun on March 23, 2026 over the first 25 `LoCoMo` `conv-26` questions: `24/25` (`0.96`)
   - audited scorecard view on the same artifact: `24/24` (`1.00`) after excluding the one known benchmark inconsistency
 - real rerun on March 24, 2026 over the next 25 `LoCoMo` `conv-26` questions (`q26-50`): `25/25` (`1.00`)

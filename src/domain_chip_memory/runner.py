@@ -12,7 +12,7 @@ from .memory_systems import (
     build_dual_store_event_calendar_hybrid_packets,
     build_observational_temporal_memory_packets,
 )
-from .providers import ModelProvider
+from .providers import ModelProvider, _expand_answer_from_context
 from .runs import BaselinePromptPacket
 from .scorecards import BaselinePrediction, build_scorecard
 
@@ -115,6 +115,7 @@ def _build_prediction(
     answer: str,
     provider_metadata: dict[str, Any],
 ) -> BaselinePrediction:
+    answer = _expand_answer_from_context(packet.question, answer, packet.assembled_context)
     normalized_pred = " ".join(answer.lower().strip().split())
     return BaselinePrediction(
         benchmark_name=packet.benchmark_name,
@@ -135,12 +136,15 @@ def _build_prediction(
 
 def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) -> bool:
     normalized_expected = [" ".join(expected.lower().strip().split()) for expected in expected_answers]
+    normalized_pred_compact = normalized_pred.replace(",", "")
     if (
         normalized_pred == "unknown"
         and any(expected.startswith("you did not mention this information") for expected in normalized_expected)
     ):
         return True
     if normalized_pred in normalized_expected:
+        return True
+    if any(normalized_pred_compact == expected.replace(",", "") for expected in normalized_expected):
         return True
     pred_tokens = _normalize_answer_tokens(normalized_pred)
     for expected in normalized_expected:
