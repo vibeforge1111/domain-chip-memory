@@ -203,6 +203,35 @@ def test_expand_answer_prefers_currency_answer_candidate_for_total_amount_questi
     assert rescued == "$2500"
 
 
+def test_expand_answer_prefers_currency_answer_candidate_for_difference_question():
+    context = "\n".join(
+        [
+            "aggregate_memory:",
+            "aggregate: I splurged on a pair of boots for $800.",
+            "aggregate: I found a similar pair at the budget store for $50.",
+            "answer_candidate: $750",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "What is the difference in price between my luxury boots and the similar pair found at the budget store?",
+        "$150",
+        context,
+    )
+
+    assert rescued == "$750"
+
+
+def test_expand_answer_prefers_plain_numeric_answer_candidate_over_number_with_suffix():
+    rescued = providers._expand_answer_from_context(
+        "What was the approximate increase in Instagram followers I experienced in two weeks?",
+        "100 followers",
+        "answer_candidate: 100",
+    )
+
+    assert rescued == "100"
+
+
 def test_expand_answer_prefers_short_which_answer_candidate_over_verbose_output():
     rescued = providers._expand_answer_from_context(
         "Which social media platform did I gain the most followers on over the past month?",

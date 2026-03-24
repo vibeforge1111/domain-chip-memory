@@ -1498,14 +1498,28 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if (
         answer_candidate
         and cleaned_lower != answer_candidate.lower()
-        and question_lower.startswith(("how much", "what is the total amount", "what was the total amount"))
+        and re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
+        and re.match(rf"^{re.escape(answer_candidate)}\b", cleaned_lower)
+        and len(cleaned.split()) <= 3
+    ):
+        return answer_candidate
+    if (
+        answer_candidate
+        and cleaned_lower != answer_candidate.lower()
+        and (
+            question_lower.startswith(("how much", "what is the total amount", "what was the total amount", "what is the difference in price"))
+            or "how much more expensive" in question_lower
+        )
         and currency_pattern.fullmatch(answer_candidate)
     ):
         return answer_candidate
     if (
         answer_candidate
         and cleaned_lower == answer_candidate.lower()
-        and question_lower.startswith(("how much", "what is the total amount", "what was the total amount"))
+        and (
+            question_lower.startswith(("how much", "what is the total amount", "what was the total amount", "what is the difference in price"))
+            or "how much more expensive" in question_lower
+        )
         and currency_pattern.fullmatch(answer_candidate)
     ):
         return cleaned
