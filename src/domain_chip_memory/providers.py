@@ -137,13 +137,15 @@ def _candidate_payloads(question: str, context: str, *, max_lines: int = 8) -> l
         payload = _line_payload(line)
         lower = payload.lower()
         token_score = sum(1 for token in tokens if token in lower)
-        if not token_score and not any(marker in line.lower() for marker in {"answer_candidate:", "reflection:", "observation:", "memory:"}):
+        if not token_score and not any(marker in line.lower() for marker in {"answer_candidate:", "belief:", "reflection:", "evidence:", "observation:", "memory:"}):
             continue
         bonus = 0.0
         if "answer_candidate:" in line.lower():
             bonus += 2.0
-        if "reflection:" in line.lower():
+        if "belief:" in line.lower() or "reflection:" in line.lower():
             bonus += 0.75
+        if "evidence:" in line.lower():
+            bonus += 1.0
         if "observation:" in line.lower() or "memory:" in line.lower():
             bonus += 0.25
         scored.append((token_score + bonus, idx, payload))
@@ -1340,13 +1342,15 @@ def _compact_context(question: str, context: str, *, max_lines: int = 8) -> str:
             continue
         lower = line.lower()
         token_score = sum(1 for token in tokens if token in lower)
-        if not token_score and not any(marker in lower for marker in {"answer_candidate:", "reflection:", "memory:"}):
+        if not token_score and not any(marker in lower for marker in {"answer_candidate:", "belief:", "reflection:", "evidence:", "memory:"}):
             continue
         bonus = 0.0
         if "answer_candidate:" in lower:
             bonus += 1.5
-        if "reflection:" in lower:
+        if "belief:" in lower or "reflection:" in lower:
             bonus += 0.5
+        if "evidence:" in lower:
+            bonus += 1.0
         if re.search(r"\b\d+\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\b", lower):
             bonus += 0.5
         if "\"" in line or "'" in line:
@@ -1377,6 +1381,22 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         return cleaned
 
     lines = [line.strip() for line in context.splitlines() if line.strip()]
+    answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
+    answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
+    question_lower = question.lower()
+    belief_lines = [
+        line for line in lines
+        if line.lower().startswith("belief:") or line.lower().startswith("reflection:")
+    ]
+    if (
+        answer_candidate
+        and cleaned.lower() != answer_candidate.lower()
+        and question_lower.startswith(("how did", "what did", "what was", "what does"))
+        and len(answer_candidate.split()) <= 8
+        and any(cleaned.lower() in line.lower() for line in belief_lines)
+    ):
+        return answer_candidate
+
     candidate_lines = [line for line in lines if lower in line.lower()]
     if not candidate_lines:
         tokens = _question_tokens(question)

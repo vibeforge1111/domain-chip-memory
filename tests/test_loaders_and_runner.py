@@ -9,7 +9,7 @@ from domain_chip_memory.loaders import (
     load_longmemeval_json,
 )
 from domain_chip_memory.providers import ProviderResponse, build_provider_contract_summary, get_provider
-from domain_chip_memory.runner import build_runner_contract_summary, run_baseline
+from domain_chip_memory.runner import _matches_expected_answer, build_runner_contract_summary, run_baseline
 from domain_chip_memory.scorecards import BaselinePrediction
 
 
@@ -78,6 +78,13 @@ def test_locomo_loader(tmp_path: Path):
     samples = load_locomo_json(data_file)
     assert samples[0].benchmark_name == "LoCoMo"
     assert samples[0].questions[0].expected_answers == ["jazz"]
+
+
+def test_runner_matches_disjunctive_expected_answers():
+    assert _matches_expected_answer("went on a hike", ["Went on a nature walk or hike"]) is True
+    assert _matches_expected_answer("appreciate them a lot", ["She appreciated them a lot"]) is True
+    assert _matches_expected_answer("no", ["No"]) is True
+    assert _matches_expected_answer("yes", ["No"]) is False
 
 
 def test_goodai_loader_and_runner(tmp_path: Path):

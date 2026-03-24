@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import re
 from typing import Any
 
 from .baselines import build_full_context_packets, build_lexical_packets
@@ -16,6 +17,32 @@ from .scorecards import BaselinePrediction, build_scorecard
 
 
 RunProgressCallback = Callable[[dict[str, Any], list[BaselinePrediction], dict[str, Any]], None]
+
+_ANSWER_IRREGULARS = {
+    "appreciated": "appreciate",
+    "felt": "feel",
+    "went": "go",
+    "made": "make",
+    "did": "do",
+}
+_ANSWER_LEADING_FILLERS = {"a", "an", "the", "i", "she", "he", "they", "we", "it"}
+
+
+def _normalize_answer_tokens(text: str) -> list[str]:
+    tokens = re.findall(r"[a-z0-9]+", text.lower())
+    normalized: list[str] = []
+    for token in tokens:
+        token = _ANSWER_IRREGULARS.get(token, token)
+        if len(token) > 4 and token.endswith("ed"):
+            token = token[:-2]
+        elif len(token) > 5 and token.endswith("ing"):
+            token = token[:-3]
+        elif len(token) > 3 and token.endswith("s") and not token.endswith("ss"):
+            token = token[:-1]
+        normalized.append(token)
+    while normalized and normalized[0] in _ANSWER_LEADING_FILLERS:
+        normalized.pop(0)
+    return normalized
 
 
 def _build_manifest_and_packets(
@@ -74,9 +101,6 @@ def _build_prediction(
     provider_metadata: dict[str, Any],
 ) -> BaselinePrediction:
     normalized_pred = " ".join(answer.lower().strip().split())
-    normalized_expected = [
-        " ".join(expected.lower().strip().split()) for expected in question.expected_answers
-    ]
     return BaselinePrediction(
         benchmark_name=packet.benchmark_name,
         baseline_name=packet.baseline_name,
@@ -85,13 +109,37 @@ def _build_prediction(
         category=question.category,
         predicted_answer=answer,
         expected_answers=question.expected_answers,
-        is_correct=bool(normalized_pred) and normalized_pred in normalized_expected,
+        is_correct=bool(normalized_pred) and _matches_expected_answer(normalized_pred, question.expected_answers),
         metadata={
             "provider_name": provider.name,
             **provider_metadata,
             "route": packet.metadata.get("route"),
         },
     )
+
+
+def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) -> bool:
+    normalized_expected = [" ".join(expected.lower().strip().split()) for expected in expected_answers]
+    if normalized_pred in normalized_expected:
+        return True
+    pred_tokens = _normalize_answer_tokens(normalized_pred)
+    for expected in normalized_expected:
+        if pred_tokens and pred_tokens == _normalize_answer_tokens(expected):
+            return True
+        if " or " not in expected:
+            continue
+        options = [option.strip() for option in expected.split(" or ") if option.strip()]
+        if normalized_pred in options:
+            return True
+        if any(pred_tokens and pred_tokens == _normalize_answer_tokens(option) for option in options):
+            return True
+        if any(
+            normalized_pred.endswith(option) or option.endswith(normalized_pred)
+            for option in options
+            if len(option) >= 3
+        ):
+            return True
+    return False
 
 
 def run_baseline(

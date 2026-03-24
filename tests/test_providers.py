@@ -81,6 +81,26 @@ def test_openai_provider_uses_env_model_and_chat_completions(monkeypatch):
     assert captured["payload"]["messages"][1]["content"].startswith("Benchmark: LongMemEval")
 
 
+def test_expand_answer_prefers_exact_answer_candidate_over_belief_paraphrase():
+    context = "\n".join(
+        [
+            "evidence_memory:",
+            "evidence: Appreciate them a lot",
+            "belief_memory:",
+            "belief: After the accident Melanie felt grateful and thankful for her family",
+            "answer_candidate: Appreciate them a lot",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "How did Melanie feel about her family supporting her?",
+        "Grateful and thankful",
+        context,
+    )
+
+    assert rescued == "Appreciate them a lot"
+
+
 def test_minimax_provider_includes_context_image_urls(monkeypatch):
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
     captured: dict[str, object] = {}

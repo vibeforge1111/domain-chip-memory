@@ -81,6 +81,70 @@ def test_observational_memory_manifest_and_packets():
     assert packets[0].metadata["route"] == "observational_temporal_memory"
 
 
+def test_observational_memory_surfaces_topical_episode_support_for_locomo():
+    from domain_chip_memory.contracts import (
+        NormalizedBenchmarkSample,
+        NormalizedQuestion,
+        NormalizedSession,
+        NormalizedTurn,
+    )
+
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="LoCoMo",
+        sample_id="conv-topic",
+        sessions=[
+            NormalizedSession(
+                session_id="session_1",
+                timestamp="2023-10-01",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="D1:1",
+                        speaker="Caroline",
+                        text="I started a pottery class last Friday and made a bowl.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="D1:2",
+                        speaker="Caroline",
+                        text="During the break from pottery, I read a book and painted to keep busy.",
+                    ),
+                    NormalizedTurn(
+                        turn_id="D1:3",
+                        speaker="Melanie",
+                        text="That sounds relaxing.",
+                    ),
+                ],
+            )
+        ],
+        questions=[
+            NormalizedQuestion(
+                question_id="q1",
+                question="During the break from pottery, which activity kept Caroline busy?",
+                category="4",
+                expected_answers=["read a book and painted"],
+                evidence_session_ids=["session_1"],
+                evidence_turn_ids=["D1:2"],
+                metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+            )
+        ],
+        metadata={"speaker_a": "Caroline", "speaker_b": "Melanie"},
+    )
+
+    observations = build_observation_log(sample)
+    topic_ids = {entry.metadata.get("topic_id") for entry in observations if entry.turn_ids[0] in {"D1:1", "D1:2"}}
+
+    _, packets = build_observational_temporal_memory_packets(
+        [sample],
+        max_observations=1,
+        max_reflections=1,
+        max_topic_support=1,
+    )
+
+    assert len(topic_ids) == 1
+    assert "topical_episode:" in packets[0].assembled_context
+    assert "episode_observation:" in packets[0].assembled_context
+    assert "During the break from pottery, I read a book and painted to keep busy." in packets[0].assembled_context
+
+
 def test_event_calendar_captures_latest_event():
     samples = demo_samples()
     events = build_event_calendar(samples[0])
@@ -1681,6 +1745,29 @@ def test_locomo_question_relevant_window_surfaces_fifth_slice_object_and_meaning
     assert "Matt Patterson performed at Melanie's daughter's birthday" in packet_by_id["conv-26-qa-122"].assembled_context
     assert "Caroline has a guinea pig" in packet_by_id["conv-26-qa-124"].assembled_context
     assert "Melanie has Two cats and a dog" in packet_by_id["conv-26-qa-125"].assembled_context
+
+
+def test_locomo_evidence_and_belief_split_prefers_exact_evidence_for_scoreable_seventh_slice_questions():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-26"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=sample.questions[150:152],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_observational_temporal_memory_packets([subset], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "evidence_memory:" in packet_by_id["conv-26-qa-151"].assembled_context
+    assert "belief_memory:" in packet_by_id["conv-26-qa-151"].assembled_context
+    assert "answer_candidate: Appreciate them a lot" in packet_by_id["conv-26-qa-151"].assembled_context
+    assert "answer_candidate: went on a hike" in packet_by_id["conv-26-qa-152"].assembled_context
 
 
 def test_locomo_question_relevant_window_surfaces_sixth_slice_music_poetry_and_roadtrip_facts():
