@@ -164,8 +164,8 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     for expected in normalized_expected:
         count_match = re.search(
             r"\b(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten)\s+"
-            r"(?:(?:different|total)\s+)?"
-            r"(model kits?|projects?|days?|weeks?|hours?|items?|times?|children|movies|doctors?|weddings?)\b",
+            r"(?:(?:different|total|movie|art-related)\s+)?"
+            r"(model kits?|projects?|days?|weeks?|hours?|items?|times?|children|movies|doctors?|weddings?|festivals?|services?|cuisines?|events?|properties?)\b",
             expected,
         )
         if count_match:

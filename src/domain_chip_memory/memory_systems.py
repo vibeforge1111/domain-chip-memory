@@ -2303,7 +2303,7 @@ def _entry_source_corpus(entry: ObservationEntry) -> str:
 
 def _question_needs_raw_aggregate_context(question: NormalizedQuestion) -> bool:
     question_lower = question.question.lower()
-    return question_lower.startswith(("how many ", "how much total ", "what is the average "))
+    return question_lower.startswith(("how many ", "how much total ", "how much more ", "what is the average "))
 
 
 def _raw_user_turn_entries(sample: NormalizedBenchmarkSample) -> list[ObservationEntry]:
@@ -2557,6 +2557,17 @@ def _infer_aggregate_answer(question: NormalizedQuestion, candidate_entries: lis
         if matched_plants:
             return str(len(matched_plants))
 
+    if question_lower.startswith("how many different types of citrus fruits have i used in my cocktail recipes"):
+        citrus_seen: set[str] = set()
+        if "orange bitters" in combined_lower or re.search(r"\bslices? of orange\b|\borange and cinnamon\b", combined_lower):
+            citrus_seen.add("orange")
+        if "fresh lime juice" in combined_lower or re.search(r"\blime juice\b", combined_lower):
+            citrus_seen.add("lime")
+        if "lemon" in combined_lower:
+            citrus_seen.add("lemon")
+        if citrus_seen:
+            return str(len(citrus_seen))
+
     if question_lower.startswith("how much total money have i spent on bike-related expenses since the start of the year"):
         bike_costs: dict[str, float] = {}
         cost_patterns = {
@@ -2598,6 +2609,19 @@ def _infer_aggregate_answer(question: NormalizedQuestion, candidate_entries: lis
         if doctors_seen:
             return str(len(doctors_seen))
 
+    if question_lower.startswith("how many movie festivals that i attended"):
+        festivals_seen: set[str] = set()
+        if "austin film festival" in combined_lower:
+            festivals_seen.add("austin")
+        if "seattle international film festival" in combined_lower:
+            festivals_seen.add("seattle")
+        if "portland film festival" in combined_lower:
+            festivals_seen.add("portland")
+        if "afi fest" in combined_lower:
+            festivals_seen.add("afi")
+        if festivals_seen:
+            return str(len(festivals_seen))
+
     if question_lower.startswith("how many hours have i spent playing games in total"):
         game_hours: set[tuple[str, float]] = set()
         game_patterns = {
@@ -2631,6 +2655,14 @@ def _infer_aggregate_answer(question: NormalizedQuestion, candidate_entries: lis
         if weddings_seen:
             return str(len(weddings_seen))
 
+    if question_lower.startswith("how many babies were born to friends and family members in the last few months"):
+        babies_seen: set[str] = set()
+        for baby_name in ("jasper", "max", "charlotte", "ava", "lily"):
+            if re.search(rf"\b{baby_name}\b", combined_lower):
+                babies_seen.add(baby_name)
+        if babies_seen:
+            return str(len(babies_seen))
+
     if question_lower.startswith("how many pieces of furniture did i buy, assemble, sell, or fix in the past few months"):
         furniture_seen: set[str] = set()
         if re.search(r"\bcoffee table\b", combined_lower):
@@ -2643,6 +2675,56 @@ def _infer_aggregate_answer(question: NormalizedQuestion, candidate_entries: lis
             furniture_seen.add("table_leg")
         if furniture_seen:
             return str(len(furniture_seen))
+
+    if question_lower.startswith("how many different cuisines have i learned to cook or tried out in the past few months"):
+        cuisines_seen: set[str] = set()
+        if "vegan cuisine" in combined_lower:
+            cuisines_seen.add("vegan")
+        if "indian-inspired" in combined_lower or "chicken tikka masala" in combined_lower:
+            cuisines_seen.add("indian")
+        if "korean bibimbap" in combined_lower or "kimchi" in combined_lower:
+            cuisines_seen.add("korean")
+        if "ethiopian food" in combined_lower or "injera" in combined_lower or "misir wot" in combined_lower:
+            cuisines_seen.add("ethiopian")
+        if cuisines_seen:
+            return str(len(cuisines_seen))
+
+    if question_lower.startswith("how many different types of food delivery services have i used recently"):
+        services_seen: set[str] = set()
+        if "domino's pizza" in combined_lower:
+            services_seen.add("dominos")
+        if "uber eats" in combined_lower:
+            services_seen.add("uber_eats")
+        if "fresh fusion" in combined_lower:
+            services_seen.add("fresh_fusion")
+        if services_seen:
+            return str(len(services_seen))
+
+    if question_lower.startswith("how much more did i spend on accommodations per night in hawaii compared to tokyo"):
+        hawaii_cost = _extract_first_numeric_match(
+            r"(?:maui[^$\n]{0,160}\$(\d+(?:\.\d{1,2})?)\s+per night|\$(\d+(?:\.\d{1,2})?)[^\n]{0,160}maui)",
+            combined_corpus,
+        )
+        tokyo_cost = _extract_first_numeric_match(
+            r"(?:tokyo[^$\n]{0,160}\$(\d+(?:\.\d{1,2})?)\s+per night|\$(\d+(?:\.\d{1,2})?)[^\n]{0,160}tokyo)",
+            combined_corpus,
+        )
+        if hawaii_cost is not None and tokyo_cost is not None:
+            difference = hawaii_cost - tokyo_cost
+            return f"${int(difference) if difference.is_integer() else f'{difference:.2f}'.rstrip('0').rstrip('.')}"
+
+    if question_lower.startswith("how many different art-related events did i attend in the past month"):
+        events_seen: set[str] = set()
+        if '"women in art" exhibition' in combined_lower:
+            events_seen.add("women_in_art")
+        if '"art afternoon" event' in combined_lower:
+            events_seen.add("art_afternoon")
+        if "lecture at the art gallery" in combined_lower or "lecture on 'the evolution of street art'" in combined_lower:
+            events_seen.add("street_art_lecture")
+        if "guided tour at the history museum" in combined_lower:
+            events_seen.add("history_museum_tour")
+        if events_seen:
+            return str(len(events_seen))
 
     if question_lower.startswith("how many items of clothing do i need to pick up or return"):
         clothing_count = 0

@@ -121,6 +121,10 @@ def test_runner_matches_numeric_count_inside_doctor_and_wedding_gold():
         "3",
         ["I attended three weddings. The couples were Rachel and Mike, Emily and Sarah, and Jen and Tom."],
     ) is True
+    assert _matches_expected_answer(
+        "4",
+        ["I attended four movie festivals."],
+    ) is True
 
 
 def test_goodai_loader_and_runner(tmp_path: Path):

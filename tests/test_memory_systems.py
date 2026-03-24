@@ -1958,12 +1958,19 @@ def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
         "b5ef892d": "answer_candidate: 8 days",
         "e831120c": "answer_candidate: 3.5 weeks",
         "3a704032": "answer_candidate: 3",
+        "c4a1ceb8": "answer_candidate: 3",
         "gpt4_d84a3211": "answer_candidate: $185",
         "aae3761f": "answer_candidate: 15 hours",
         "gpt4_f2262a51": "answer_candidate: 3",
+        "gpt4_a56e767c": "answer_candidate: 4",
         "28dc39ac": "answer_candidate: 140 hours",
         "gpt4_2f8be40d": "answer_candidate: 3",
+        "2e6d26dc": "answer_candidate: 5",
         "gpt4_15e38248": "answer_candidate: 4",
+        "d23cf73b": "answer_candidate: 4",
+        "d682f1a2": "answer_candidate: 3",
+        "2318644b": "answer_candidate: $270",
+        "2ce6a0f2": "answer_candidate: 4",
     }
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]
 
