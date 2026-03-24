@@ -1945,6 +1945,22 @@ def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
         assert keep[packet.question_id].lower() in packet.assembled_context.lower()
 
 
+def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
+    samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
+    keep = {
+        "0a995998": "answer_candidate: 3",
+        "6d550036": "answer_candidate: 2",
+        "gpt4_59c863d7": "answer_candidate: 5",
+        "e831120c": "answer_candidate: 3.5 weeks",
+    }
+    subset = [sample for sample in samples if sample.questions[0].question_id in keep]
+
+    _, packets = build_observational_temporal_memory_packets(subset, max_observations=4, max_reflections=3)
+
+    for packet in packets:
+        assert keep[packet.question_id].lower() in packet.assembled_context.lower()
+
+
 def test_locomo_question_relevant_window_surfaces_sixth_slice_music_poetry_and_roadtrip_facts():
     sample = next(
         record

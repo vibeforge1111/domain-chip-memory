@@ -98,6 +98,13 @@ def test_runner_matches_unknown_for_longmemeval_abstention_explanation():
     ) is True
 
 
+def test_runner_matches_numeric_how_many_answer_inside_explanatory_gold():
+    assert _matches_expected_answer(
+        "5",
+        ["I have worked on or bought five model kits. The scales of the models are: Revell F-15 Eagle, Tamiya 1/48 scale Spitfire Mk.V."],
+    ) is True
+
+
 def test_goodai_loader_and_runner(tmp_path: Path):
     config_file = tmp_path / "benchmark-v3-32k.yml"
     config_file.write_text(

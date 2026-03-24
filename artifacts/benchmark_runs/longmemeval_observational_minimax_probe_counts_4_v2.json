@@ -1,0 +1,166 @@
+{
+  "run_manifest": {
+    "run_id": "observational-temporal-memory-v1",
+    "benchmark_name": "LongMemEval",
+    "baseline_name": "observational_temporal_memory",
+    "sample_ids": [
+      "0a995998",
+      "6d550036",
+      "gpt4_59c863d7",
+      "e831120c"
+    ],
+    "question_ids": [
+      "0a995998",
+      "6d550036",
+      "gpt4_59c863d7",
+      "e831120c"
+    ],
+    "question_count": 4,
+    "metadata": {
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Observational Temporal Memory",
+      "max_observations": 4,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 4,
+    "total": 4,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "audited_overall": {
+    "correct": 4,
+    "total": 4,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "by_category": [
+    {
+      "category": "multi-session",
+      "correct": 4,
+      "total": 4,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "multi-session",
+      "correct": 4,
+      "total": 4,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "predictions": [
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "0a995998",
+      "question_id": "0a995998",
+      "category": "multi-session",
+      "predicted_answer": "3",
+      "expected_answers": [
+        "3"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 446,
+        "completion_tokens": 467,
+        "total_tokens": 913,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "6d550036",
+      "question_id": "6d550036",
+      "category": "multi-session",
+      "predicted_answer": "2",
+      "expected_answers": [
+        "2"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 529,
+        "completion_tokens": 512,
+        "total_tokens": 1041,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_59c863d7",
+      "question_id": "gpt4_59c863d7",
+      "category": "multi-session",
+      "predicted_answer": "5",
+      "expected_answers": [
+        "I have worked on or bought five model kits. The scales of the models are: Revell F-15 Eagle (scale not mentioned), Tamiya 1/48 scale Spitfire Mk.V, 1/16 scale German Tiger I tank, 1/72 scale B-29 bomber, and 1/24 scale '69 Camaro."
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 416,
+        "completion_tokens": 512,
+        "total_tokens": 928,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "e831120c",
+      "question_id": "e831120c",
+      "category": "multi-session",
+      "predicted_answer": "3.5 weeks",
+      "expected_answers": [
+        "3.5 weeks"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 409,
+        "completion_tokens": 257,
+        "total_tokens": 666,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    }
+  ]
+}

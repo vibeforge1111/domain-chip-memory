@@ -29,6 +29,18 @@ _ANSWER_IRREGULARS = {
 _ANSWER_LEADING_FILLERS = {"a", "an", "the", "i", "she", "he", "they", "we", "it"}
 _MONTH_YEAR_PATTERNS = ("%B %Y", "%B, %Y")
 _FULL_DATE_PATTERNS = ("%d %B %Y", "%d %B, %Y", "%B %d %Y", "%B %d, %Y")
+_COUNT_WORD_TO_NUMBER = {
+    "one": "1",
+    "two": "2",
+    "three": "3",
+    "four": "4",
+    "five": "5",
+    "six": "6",
+    "seven": "7",
+    "eight": "8",
+    "nine": "9",
+    "ten": "10",
+}
 
 
 def _normalize_answer_tokens(text: str) -> list[str]:
@@ -150,6 +162,15 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     pred_month_year = _parse_month_year(normalized_pred)
     pred_full_date = _parse_full_date(normalized_pred)
     for expected in normalized_expected:
+        count_match = re.search(
+            r"\b(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten)\s+"
+            r"(?:model kits?|projects?|days?|weeks?|items?|times?|children|movies)\b",
+            expected,
+        )
+        if count_match:
+            expected_count = _COUNT_WORD_TO_NUMBER.get(count_match.group(1), count_match.group(1))
+            if normalized_pred == expected_count:
+                return True
         expected_month_year = _parse_month_year(expected)
         if expected_month_year and pred_full_date and (
             pred_full_date.year == expected_month_year.year and pred_full_date.month == expected_month_year.month
