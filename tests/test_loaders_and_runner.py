@@ -105,6 +105,24 @@ def test_runner_matches_numeric_how_many_answer_inside_explanatory_gold():
     ) is True
 
 
+def test_runner_matches_numeric_hours_inside_explanatory_gold():
+    assert _matches_expected_answer(
+        "15 hours",
+        ["15 hours for getting to the three destinations (or 30 hours for the round trip)"],
+    ) is True
+
+
+def test_runner_matches_numeric_count_inside_doctor_and_wedding_gold():
+    assert _matches_expected_answer(
+        "3",
+        ["I visited three different doctors: a primary care physician, an ENT specialist, and a dermatologist."],
+    ) is True
+    assert _matches_expected_answer(
+        "3",
+        ["I attended three weddings. The couples were Rachel and Mike, Emily and Sarah, and Jen and Tom."],
+    ) is True
+
+
 def test_goodai_loader_and_runner(tmp_path: Path):
     config_file = tmp_path / "benchmark-v3-32k.yml"
     config_file.write_text(

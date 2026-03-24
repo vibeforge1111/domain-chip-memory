@@ -1,0 +1,712 @@
+{
+  "run_manifest": {
+    "run_id": "observational-temporal-memory-v1",
+    "benchmark_name": "LongMemEval",
+    "baseline_name": "observational_temporal_memory",
+    "sample_ids": [
+      "3a704032",
+      "gpt4_d84a3211",
+      "aae3761f",
+      "gpt4_f2262a51",
+      "dd2973ad",
+      "c4a1ceb8",
+      "gpt4_a56e767c",
+      "6cb6f249",
+      "46a3abf7",
+      "36b9f61e",
+      "28dc39ac",
+      "gpt4_2f8be40d",
+      "2e6d26dc",
+      "gpt4_15e38248",
+      "88432d0a",
+      "80ec1f4f",
+      "d23cf73b",
+      "gpt4_7fce9456",
+      "d682f1a2",
+      "7024f17c",
+      "gpt4_5501fe77",
+      "gpt4_2ba83207",
+      "2318644b",
+      "2ce6a0f2",
+      "gpt4_d12ceb0e"
+    ],
+    "question_ids": [
+      "3a704032",
+      "gpt4_d84a3211",
+      "aae3761f",
+      "gpt4_f2262a51",
+      "dd2973ad",
+      "c4a1ceb8",
+      "gpt4_a56e767c",
+      "6cb6f249",
+      "46a3abf7",
+      "36b9f61e",
+      "28dc39ac",
+      "gpt4_2f8be40d",
+      "2e6d26dc",
+      "gpt4_15e38248",
+      "88432d0a",
+      "80ec1f4f",
+      "d23cf73b",
+      "gpt4_7fce9456",
+      "d682f1a2",
+      "7024f17c",
+      "gpt4_5501fe77",
+      "gpt4_2ba83207",
+      "2318644b",
+      "2ce6a0f2",
+      "gpt4_d12ceb0e"
+    ],
+    "question_count": 25,
+    "metadata": {
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Observational Temporal Memory",
+      "max_observations": 4,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 5,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.2
+  },
+  "audited_overall": {
+    "correct": 5,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.2
+  },
+  "by_category": [
+    {
+      "category": "multi-session",
+      "correct": 5,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.2
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "multi-session",
+      "correct": 5,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.2
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "predictions": [
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "3a704032",
+      "question_id": "3a704032",
+      "category": "multi-session",
+      "predicted_answer": "3",
+      "expected_answers": [
+        "3"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 419,
+        "completion_tokens": 163,
+        "total_tokens": 582,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_d84a3211",
+      "question_id": "gpt4_d84a3211",
+      "category": "multi-session",
+      "predicted_answer": "$185",
+      "expected_answers": [
+        "$185"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 446,
+        "completion_tokens": 114,
+        "total_tokens": 560,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "aae3761f",
+      "question_id": "aae3761f",
+      "category": "multi-session",
+      "predicted_answer": "15 hours",
+      "expected_answers": [
+        "15 hours for getting to the three destinations (or 30 hours for the round trip)"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 425,
+        "completion_tokens": 512,
+        "total_tokens": 937,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_f2262a51",
+      "question_id": "gpt4_f2262a51",
+      "category": "multi-session",
+      "predicted_answer": "3",
+      "expected_answers": [
+        "I visited three different doctors: a primary care physician, an ENT specialist, and a dermatologist."
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 236,
+        "completion_tokens": 143,
+        "total_tokens": 379,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "dd2973ad",
+      "question_id": "dd2973ad",
+      "category": "multi-session",
+      "predicted_answer": "By the way, I had a doctor's appointment at 10 AM last Thursday, and that's when I got the results",
+      "expected_answers": [
+        "2 AM"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 407,
+        "completion_tokens": 129,
+        "total_tokens": 536,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "c4a1ceb8",
+      "question_id": "c4a1ceb8",
+      "category": "multi-session",
+      "predicted_answer": "1",
+      "expected_answers": [
+        "3"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 390,
+        "completion_tokens": 252,
+        "total_tokens": 642,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_a56e767c",
+      "question_id": "gpt4_a56e767c",
+      "category": "multi-session",
+      "predicted_answer": "2023",
+      "expected_answers": [
+        "I attended four movie festivals."
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 708,
+        "completion_tokens": 512,
+        "total_tokens": 1220,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "6cb6f249",
+      "question_id": "6cb6f249",
+      "category": "multi-session",
+      "predicted_answer": "17",
+      "expected_answers": [
+        "17 days"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 434,
+        "completion_tokens": 191,
+        "total_tokens": 625,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "46a3abf7",
+      "question_id": "46a3abf7",
+      "category": "multi-session",
+      "predicted_answer": "On 2023/05/21 (Sun) 12:06, I said: I've also been taking care of a small 1-gallon tank that I set up for a friend's kid, which has a few guppies and some plants. I was wondering if the temperature requirements are the same for these plants in a smaller tank like that?",
+      "expected_answers": [
+        "3"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 565,
+        "completion_tokens": 512,
+        "total_tokens": 1077,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "36b9f61e",
+      "question_id": "36b9f61e",
+      "category": "multi-session",
+      "predicted_answer": "And yeah, I'd say I splurge on luxury items every few months, usually when I'm feeling stressed or celebratory",
+      "expected_answers": [
+        "$2,500"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 498,
+        "completion_tokens": 443,
+        "total_tokens": 941,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "28dc39ac",
+      "question_id": "28dc39ac",
+      "category": "multi-session",
+      "predicted_answer": "140 hours",
+      "expected_answers": [
+        "140 hours"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 495,
+        "completion_tokens": 219,
+        "total_tokens": 714,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_2f8be40d",
+      "question_id": "gpt4_2f8be40d",
+      "category": "multi-session",
+      "predicted_answer": "3",
+      "expected_answers": [
+        "I attended three weddings. The couples were Rachel and Mike, Emily and Sarah, and Jen and Tom."
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 394,
+        "completion_tokens": 94,
+        "total_tokens": 488,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "2e6d26dc",
+      "question_id": "2e6d26dc",
+      "category": "multi-session",
+      "predicted_answer": "4",
+      "expected_answers": [
+        "5"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 466,
+        "completion_tokens": 365,
+        "total_tokens": 831,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_15e38248",
+      "question_id": "gpt4_15e38248",
+      "category": "multi-session",
+      "predicted_answer": "4",
+      "expected_answers": [
+        "4"
+      ],
+      "is_correct": true,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 562,
+        "completion_tokens": 512,
+        "total_tokens": 1074,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "88432d0a",
+      "question_id": "88432d0a",
+      "category": "multi-session",
+      "predicted_answer": "I'm planning to use my Hidrate Spark 2.0 to track my water intake during my daily meditation sessions, which I've been doing for at least 10 minutes daily for the past 2 weeks",
+      "expected_answers": [
+        "4"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 461,
+        "completion_tokens": 339,
+        "total_tokens": 800,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 2,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "80ec1f4f",
+      "question_id": "80ec1f4f",
+      "category": "multi-session",
+      "predicted_answer": "2023",
+      "expected_answers": [
+        "2"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 200,
+        "completion_tokens": 250,
+        "total_tokens": 450,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "d23cf73b",
+      "question_id": "d23cf73b",
+      "category": "multi-session",
+      "predicted_answer": "2",
+      "expected_answers": [
+        "4"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 546,
+        "completion_tokens": 228,
+        "total_tokens": 774,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_7fce9456",
+      "question_id": "gpt4_7fce9456",
+      "category": "multi-session",
+      "predicted_answer": "I recently put in an offer on a 3-bedroom townhouse in the Brookside neighborhood on February 25th, and after some negotiations, we agreed on a price of $340,000",
+      "expected_answers": [
+        "I viewed four properties before making an offer on the townhouse in the Brookside neighborhood. The reasons I didn't make an offer on them were: the kitchen of the bungalow needed serious renovation, the property in Cedar Creek was out of my budget, the noise from the highway was a deal-breaker for the 1-bedroom condo, and my offer on the 2-bedroom condo was rejected due to a higher bid."
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 547,
+        "completion_tokens": 232,
+        "total_tokens": 779,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "d682f1a2",
+      "question_id": "d682f1a2",
+      "category": "multi-session",
+      "predicted_answer": "2",
+      "expected_answers": [
+        "3"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 585,
+        "completion_tokens": 265,
+        "total_tokens": 850,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "7024f17c",
+      "question_id": "7024f17c",
+      "category": "multi-session",
+      "predicted_answer": "2023",
+      "expected_answers": [
+        "0.5 hours"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 590,
+        "completion_tokens": 167,
+        "total_tokens": 757,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_5501fe77",
+      "question_id": "gpt4_5501fe77",
+      "category": "multi-session",
+      "predicted_answer": "By the way, I've been seeing some growth on some of my platforms, like TikTok, where I've gained around 200 followers over the past three weeks, which is pretty cool",
+      "expected_answers": [
+        "TikTok"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 477,
+        "completion_tokens": 355,
+        "total_tokens": 832,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_2ba83207",
+      "question_id": "gpt4_2ba83207",
+      "category": "multi-session",
+      "predicted_answer": "By the way, I actually went back to the park just last month for a behind-the-scenes tour on October 16th, which was really cool",
+      "expected_answers": [
+        "Thrive Market"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 573,
+        "completion_tokens": 200,
+        "total_tokens": 773,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "2318644b",
+      "question_id": "2318644b",
+      "category": "multi-session",
+      "predicted_answer": "$30",
+      "expected_answers": [
+        "$270"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 559,
+        "completion_tokens": 492,
+        "total_tokens": 1051,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "2ce6a0f2",
+      "question_id": "2ce6a0f2",
+      "category": "multi-session",
+      "predicted_answer": "2023",
+      "expected_answers": [
+        "4"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 390,
+        "completion_tokens": 168,
+        "total_tokens": 558,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "observational_temporal_memory",
+      "sample_id": "gpt4_d12ceb0e",
+      "question_id": "gpt4_d12ceb0e",
+      "category": "multi-session",
+      "predicted_answer": "hiking",
+      "expected_answers": [
+        "59.6"
+      ],
+      "is_correct": false,
+      "metadata": {
+        "provider_name": "minimax:MiniMax-M2.7",
+        "provider_type": "minimax_openai_compatible_chat_completions",
+        "model": "MiniMax-M2.7",
+        "prompt_tokens": 397,
+        "completion_tokens": 147,
+        "total_tokens": 544,
+        "context_compacted": true,
+        "context_image_count": 0,
+        "request_attempts": 1,
+        "route": "observational_temporal_memory"
+      }
+    }
+  ]
+}

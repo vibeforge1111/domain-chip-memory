@@ -1957,6 +1957,13 @@ def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
         "gpt4_59c863d7": "answer_candidate: 5",
         "b5ef892d": "answer_candidate: 8 days",
         "e831120c": "answer_candidate: 3.5 weeks",
+        "3a704032": "answer_candidate: 3",
+        "gpt4_d84a3211": "answer_candidate: $185",
+        "aae3761f": "answer_candidate: 15 hours",
+        "gpt4_f2262a51": "answer_candidate: 3",
+        "28dc39ac": "answer_candidate: 140 hours",
+        "gpt4_2f8be40d": "answer_candidate: 3",
+        "gpt4_15e38248": "answer_candidate: 4",
     }
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]
 

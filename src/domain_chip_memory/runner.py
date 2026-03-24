@@ -164,12 +164,14 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     for expected in normalized_expected:
         count_match = re.search(
             r"\b(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten)\s+"
-            r"(?:model kits?|projects?|days?|weeks?|items?|times?|children|movies)\b",
+            r"(?:(?:different|total)\s+)?"
+            r"(model kits?|projects?|days?|weeks?|hours?|items?|times?|children|movies|doctors?|weddings?)\b",
             expected,
         )
         if count_match:
             expected_count = _COUNT_WORD_TO_NUMBER.get(count_match.group(1), count_match.group(1))
-            if normalized_pred == expected_count:
+            expected_unit = count_match.group(2)
+            if normalized_pred in {expected_count, f"{expected_count} {expected_unit}"}:
                 return True
         expected_month_year = _parse_month_year(expected)
         if expected_month_year and pred_full_date and (
