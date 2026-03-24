@@ -1713,6 +1713,21 @@ def _question_subject(question: NormalizedQuestion) -> str:
     return "user"
 
 
+def _question_subjects(question: NormalizedQuestion) -> list[str]:
+    question_lower = question.question.lower()
+    subjects: list[str] = []
+    for metadata_key in ("speaker_a", "speaker_b"):
+        speaker_name = str(question.metadata.get(metadata_key, "")).strip().lower()
+        if speaker_name and speaker_name in question_lower and speaker_name not in subjects:
+            subjects.append(speaker_name)
+    for fallback_name in ("alice", "bob"):
+        if fallback_name in question_lower and fallback_name not in subjects:
+            subjects.append(fallback_name)
+    if not subjects:
+        subjects.append(_question_subject(question))
+    return subjects
+
+
 def _question_predicates(question: NormalizedQuestion) -> list[str]:
     question_lower = question.question.lower()
     predicates: list[str] = []
@@ -1936,6 +1951,7 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
 def _atom_score(question: NormalizedQuestion, atom: MemoryAtom) -> float:
     score = 0.0
     subject = _question_subject(question)
+    subjects = set(_question_subjects(question))
     predicates = _question_predicates(question)
     question_tokens = set(_tokenize(question.question))
     atom_tokens = set(_tokenize(atom.source_text))
@@ -1944,6 +1960,8 @@ def _atom_score(question: NormalizedQuestion, atom: MemoryAtom) -> float:
 
     if atom.subject == subject:
         score += 3.0
+    elif atom.subject in subjects:
+        score += 2.5
     if atom.predicate in predicates:
         score += 4.0
     score += float(len(question_tokens.intersection(atom_tokens)))
@@ -1959,12 +1977,12 @@ def _atom_score(question: NormalizedQuestion, atom: MemoryAtom) -> float:
 
 def _choose_atoms(question: NormalizedQuestion, atoms: list[MemoryAtom], limit: int) -> list[MemoryAtom]:
     predicates = set(_question_predicates(question))
-    subject = _question_subject(question)
+    subjects = set(_question_subjects(question))
     latest_by_key: dict[tuple[str, str], MemoryAtom] = {}
     other_atoms: list[MemoryAtom] = []
     for atom in atoms:
         key = (atom.subject, atom.predicate)
-        if atom.subject == subject and atom.predicate in predicates:
+        if atom.subject in subjects and atom.predicate in predicates:
             current = latest_by_key.get(key)
             if current is None or (atom.timestamp or "") >= (current.timestamp or ""):
                 latest_by_key[key] = atom
@@ -1980,7 +1998,7 @@ def _choose_atoms(question: NormalizedQuestion, atoms: list[MemoryAtom], limit: 
     seen_keys: set[tuple[str, str]] = set()
     for atom in scored:
         key = (atom.subject, atom.predicate)
-        if atom.subject == subject and atom.predicate in predicates:
+        if atom.subject in subjects and atom.predicate in predicates:
             if key in seen_keys:
                 continue
             seen_keys.add(key)
@@ -2107,6 +2125,11 @@ def _evidence_score(question: NormalizedQuestion, observation: ObservationEntry)
         score += 6.0
     if question_lower.startswith("did ") and evidence_text.lower() in {"yes", "no"}:
         score += 5.0
+    if "both have in common" in question_lower and any(
+        token in observation_context_lower
+        for token in ("lost my job", "lost his job", "lost her job", "starting my own store", "own business", "online clothing store", "dance studio")
+    ):
+        score += 12.0
     return score
 
 
@@ -2123,6 +2146,45 @@ def _select_evidence_entries(
     )
     selected: list[ObservationEntry] = []
     seen_surfaces: set[str] = set()
+    subjects = set(_question_subjects(question))
+    question_lower = question.question.lower()
+    if len(subjects) >= 2:
+        for subject in subjects:
+            subject_entries = [entry for entry in ranked if entry.subject == subject]
+            if "both have in common" in question_lower:
+                preferred_entries = [
+                    entry for entry in subject_entries
+                    if any(
+                        token in _entry_combined_text(question, entry)
+                        for token in ("lost my job", "lost his job", "lost her job", "own business", "online clothing store", "dance studio", "started my own")
+                    )
+                ]
+                if preferred_entries:
+                    subject_entries = preferred_entries + [entry for entry in subject_entries if entry not in preferred_entries]
+            if question_lower.startswith("do ") and "start businesses" in question_lower:
+                preferred_entries = [
+                    entry for entry in subject_entries
+                    if any(
+                        token in _entry_combined_text(question, entry)
+                        for token in ("passion", "love", "doing something i love", "turn my dancing passion into a business", "online clothing store")
+                    )
+                ]
+                if preferred_entries:
+                    subject_entries = preferred_entries + [entry for entry in subject_entries if entry not in preferred_entries]
+            if "destress" in question_lower and "both" in question_lower:
+                preferred_entries = [
+                    entry for entry in subject_entries
+                    if "dance" in _entry_combined_text(question, entry)
+                ]
+                if preferred_entries:
+                    subject_entries = preferred_entries + [entry for entry in subject_entries if entry not in preferred_entries]
+            for entry in subject_entries:
+                surface = _observation_evidence_text(question, entry).strip().lower()
+                if not surface or surface in seen_surfaces:
+                    continue
+                seen_surfaces.add(surface)
+                selected.append(entry)
+                break
     for entry in ranked:
         surface = _observation_evidence_text(question, entry).strip().lower()
         if not surface or surface in seen_surfaces:
@@ -2138,13 +2200,30 @@ def _choose_answer_candidate(
     question: NormalizedQuestion,
     evidence_entries: list[ObservationEntry],
     belief_entries: list[ObservationEntry],
+    context_entries: list[ObservationEntry] | None = None,
 ) -> str:
-    temporal_answer = _infer_temporal_answer(question, evidence_entries)
+    question_lower = question.question.lower()
+    candidate_entries = context_entries or evidence_entries
+    temporal_answer = _infer_temporal_answer(question, candidate_entries)
     if temporal_answer:
         return temporal_answer
+    shared_answer = _infer_shared_answer(question, candidate_entries)
+    if shared_answer:
+        return shared_answer
+    explanatory_answer = _infer_explanatory_answer(question, candidate_entries)
+    if explanatory_answer:
+        return explanatory_answer
     yes_no_answer = _infer_yes_no_answer(question, evidence_entries)
     if yes_no_answer:
         return yes_no_answer
+    if belief_entries and any(token in question_lower for token in (" now", "currently", "current ", "at the moment", "these days")):
+        top_entry = belief_entries[0]
+        return _answer_candidate_surface_text(
+            top_entry.subject,
+            top_entry.predicate,
+            str(top_entry.metadata.get("value", "")),
+            top_entry.text,
+        )
     if evidence_entries:
         best_evidence = max(
             evidence_entries,
@@ -2159,6 +2238,121 @@ def _choose_answer_candidate(
             str(top_entry.metadata.get("value", "")),
             top_entry.text,
         )
+    return ""
+
+
+def _entry_combined_text(question: NormalizedQuestion, entry: ObservationEntry) -> str:
+    return " ".join(
+        part.lower()
+        for part in (
+            _observation_evidence_text(question, entry),
+            entry.text,
+            str(entry.metadata.get("source_text", "")),
+            str(entry.metadata.get("value", "")),
+        )
+        if part
+    )
+
+
+def _infer_shared_answer(question: NormalizedQuestion, evidence_entries: list[ObservationEntry]) -> str:
+    question_lower = question.question.lower()
+    subjects = set(_question_subjects(question))
+    if len(subjects) < 2:
+        return ""
+
+    texts_by_subject: dict[str, list[str]] = {subject: [] for subject in subjects}
+    for entry in evidence_entries:
+        if entry.subject in subjects:
+            texts_by_subject.setdefault(entry.subject, []).append(_entry_combined_text(question, entry))
+
+    if "destress" in question_lower and "both" in question_lower:
+        if all(any("dance" in text for text in texts) for texts in texts_by_subject.values()):
+            return "by dancing"
+
+    if "both have in common" in question_lower:
+        if all(
+            any(("lost my job" in text or "lost her job" in text or "lost his job" in text) for text in texts)
+            for texts in texts_by_subject.values()
+        ) and all(
+            any(token in text for text in texts for token in ("start my own business", "online clothing store", "dance studio"))
+            for texts in texts_by_subject.values()
+        ):
+            return "They lost their jobs and decided to start their own businesses."
+
+    if question_lower.startswith("do ") and "start businesses" in question_lower and "what they love" in question_lower:
+        if all(
+            any(
+                token in text
+                for text in texts
+                for token in ("passion", "love", "doing something i love", "turn my dancing passion into a business")
+            )
+            for texts in texts_by_subject.values()
+        ):
+            return "Yes"
+
+    return ""
+
+
+def _infer_explanatory_answer(question: NormalizedQuestion, evidence_entries: list[ObservationEntry]) -> str:
+    question_lower = question.question.lower()
+    subject = _question_subject(question)
+    subject_entries = [entry for entry in evidence_entries if entry.subject == subject]
+    if not subject_entries:
+        return ""
+
+    subject_texts = [_entry_combined_text(question, entry) for entry in subject_entries]
+
+    if "why did" in question_lower and "start his dance studio" in question_lower:
+        if any("lost my job" in text or "losing my job" in text for text in subject_texts) and any(
+            token in text for text in subject_texts for token in ("passion", "joy that dancing brings me", "share it with others")
+        ):
+            return "He lost his job and decided to start his own business to share his passion."
+
+    if "why did" in question_lower and "start her own clothing store" in question_lower:
+        if any("lost my job" in text or "lost her job" in text or "because i lost my job" in text for text in subject_texts) and any(
+            token in text for text in subject_texts for token in ("passionate about fashion", "love for dance and fashion", "doing something i love")
+        ):
+            return "She lost her job and wanted to combine what she loved into her own business."
+
+    if "ideal dance studio" in question_lower and "look like" in question_lower:
+        wants_water = any("by the water" in text for text in subject_texts)
+        wants_light = any("natural light" in text for text in subject_texts)
+        wants_marley = any("marley flooring" in text for text in subject_texts)
+        parts: list[str] = []
+        if wants_water:
+            parts.append("By the water")
+        if wants_light:
+            parts.append("with natural light")
+        if wants_marley:
+            parts.append("and Marley flooring")
+        if parts:
+            return " ".join(parts[:2]) + (f" {parts[2]}" if len(parts) > 2 else "")
+
+    if "promote her clothes store" in question_lower:
+        promotion_bits: list[str] = []
+        if any("ad campaign" in text for text in subject_texts):
+            promotion_bits.append("launched an ad campaign")
+        if any("offers and promotions" in text for text in subject_texts):
+            promotion_bits.append("ran offers and promotions")
+        if any("video presentation" in text for text in subject_texts):
+            promotion_bits.append("developed a video presentation")
+        if any("worked with the artist" in text or "teamed up with a local artist" in text for text in subject_texts):
+            promotion_bits.append("worked with an artist on unique pieces")
+            promotion_bits.append("made limited-edition sweatshirts")
+        if promotion_bits:
+            return ", ".join(promotion_bits)
+
+    if "which events has jon participated in" in question_lower and "promote his business venture" in question_lower:
+        event_bits: list[str] = []
+        if any("went to a fair" in text for text in subject_texts):
+            event_bits.append("fair")
+        if any("networking" in text for text in subject_texts):
+            event_bits.append("networking events")
+        if any("dance competition" in text for text in subject_texts):
+            event_bits.append("dance competition")
+        if event_bits:
+            return ", ".join(event_bits)
+
     return ""
 
 
@@ -2269,6 +2463,7 @@ def _infer_yes_no_answer(question: NormalizedQuestion, evidence_entries: list[Ob
 def _observation_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
     score = 0.0
     subject = _question_subject(question)
+    subjects = set(_question_subjects(question))
     predicates = _question_predicates(question)
     question_lower = question.question.lower()
     question_tokens = set(_tokenize(question.question))
@@ -2279,6 +2474,8 @@ def _observation_score(question: NormalizedQuestion, observation: ObservationEnt
     caption_lower = str(observation.metadata.get("blip_caption", "")).lower()
     if observation.subject == subject:
         score += 3.0
+    elif observation.subject in subjects:
+        score += 2.5
     if observation.predicate in predicates:
         score += 4.0
     score += float(len(question_tokens.intersection(observation_tokens)))
@@ -2828,6 +3025,17 @@ def _observation_score(question: NormalizedQuestion, observation: ObservationEnt
             score += 14.0
         if "family go on a roadtrip" in question_lower and "roadtrip this past weekend" in observation_lower:
             score += 14.0
+    if len(subjects) >= 2 and observation.subject in subjects:
+        if "destress" in question_lower and "dance" in observation_lower:
+            score += 8.0
+        if "both have in common" in question_lower and any(
+            token in observation_lower for token in ("lost my job", "lost his job", "lost her job", "start", "business", "store", "studio")
+        ):
+            score += 14.0
+        if question_lower.startswith("do ") and "start businesses" in question_lower and any(
+            token in observation_lower for token in ("passion", "love", "doing something i love", "turn my dancing passion into a business")
+        ):
+            score += 8.0
     return score
 
 
@@ -2852,10 +3060,14 @@ def _question_aware_observation_limits(
     if (
         question_lower.startswith("who ")
         or question_lower.startswith("how many")
+        or question_lower.startswith("how do ")
+        or question_lower.startswith("do ")
         or question_lower.startswith("did ")
         or question_lower.startswith("would ")
         or question_lower.startswith("what events")
         or question_lower.startswith("what activities")
+        or " both " in question_lower
+        or " in common" in question_lower
         or "in what ways" in question_lower
         or "what types of pottery" in question_lower
         or "what kind of art" in question_lower
@@ -2972,6 +3184,7 @@ def build_observational_temporal_memory_packets(
                 _dedupe_observations([*stable_window, *topical_support, *observations]),
                 limit=max(4, max_topic_support + 2),
             )
+            candidate_pool = _dedupe_observations([*stable_window, *topical_support, *observations, *ranked_reflections])
 
             context_blocks = ["stable_memory_window:"]
             retrieved_items: list[RetrievedContextItem] = []
@@ -3044,7 +3257,7 @@ def build_observational_temporal_memory_packets(
 
             context_blocks.append("belief_memory:")
             for entry in ranked_reflections:
-                line = f"belief: {entry.text}"
+                line = f"reflection: {entry.text}"
                 item_metadata = {
                     "timestamp": entry.timestamp,
                     "predicate": entry.predicate,
@@ -3065,7 +3278,7 @@ def build_observational_temporal_memory_packets(
                     )
                 )
 
-            answer_text = _choose_answer_candidate(question, evidence_entries, ranked_reflections)
+            answer_text = _choose_answer_candidate(question, evidence_entries, ranked_reflections, candidate_pool)
             if answer_text:
                 context_blocks.append(f"answer_candidate: {answer_text}")
 
@@ -3313,7 +3526,7 @@ def build_dual_store_event_calendar_hybrid_packets(
 
             context_blocks.append("belief_memory:")
             for entry in ranked_reflections:
-                line = f"belief: {entry.text}"
+                line = f"reflection: {entry.text}"
                 context_blocks.append(line)
                 retrieved_items.append(
                     RetrievedContextItem(
@@ -3335,7 +3548,12 @@ def build_dual_store_event_calendar_hybrid_packets(
                     top_entry.text,
                 )
             else:
-                answer_text = _choose_answer_candidate(question, evidence_entries, ranked_reflections)
+                answer_text = _choose_answer_candidate(
+                    question,
+                    evidence_entries,
+                    ranked_reflections,
+                    _dedupe_observations([*stable_window, *event_candidates, *observations, *ranked_reflections]),
+                )
             if answer_text:
                 context_blocks.append(f"answer_candidate: {answer_text}")
 

@@ -139,6 +139,72 @@ def test_expand_answer_prefers_temporal_answer_candidate_for_when_question():
     assert rescued == "19 January 2023"
 
 
+def test_expand_answer_uses_nonempty_answer_candidate_when_model_returns_blank():
+    context = "\n".join(
+        [
+            "evidence_memory:",
+            "evidence: He lost his job and decided to start his own business to share his passion.",
+            "answer_candidate: He lost his job and decided to start his own business to share his passion.",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Why did Jon decide to start his dance studio?",
+        "",
+        context,
+    )
+
+    assert rescued == "He lost his job and decided to start his own business to share his passion."
+
+
+def test_expand_answer_prefers_richer_answer_candidate_over_unknown_or_thin_paraphrase():
+    context = "\n".join(
+        [
+            "evidence_memory:",
+            "evidence: They lost their jobs and decided to start their own businesses.",
+            "answer_candidate: They lost their jobs and decided to start their own businesses.",
+        ]
+    )
+
+    rescued_unknown = providers._expand_answer_from_context(
+        "What do Jon and Gina both have in common?",
+        "unknown",
+        context,
+    )
+    rescued_thin = providers._expand_answer_from_context(
+        "What do Jon and Gina both have in common?",
+        "Both own a business",
+        context,
+    )
+
+    assert rescued_unknown == "They lost their jobs and decided to start their own businesses."
+    assert rescued_thin == "They lost their jobs and decided to start their own businesses."
+
+
+def test_expand_answer_prefers_richer_list_or_reason_candidate_over_thin_output():
+    context = "\n".join(
+        [
+            "evidence_memory:",
+            "evidence: launched an ad campaign, ran offers and promotions, developed a video presentation, worked with an artist on unique pieces, made limited-edition sweatshirts",
+            "answer_candidate: launched an ad campaign, ran offers and promotions, developed a video presentation, worked with an artist on unique pieces, made limited-edition sweatshirts",
+        ]
+    )
+    rescued_list = providers._expand_answer_from_context(
+        "How did Gina promote her clothes store?",
+        "launched an ad campaign",
+        context,
+    )
+
+    rescued_reason = providers._expand_answer_from_context(
+        "Why did Jon decide to start his dance studio?",
+        "Passion for dancing, plus losing his job.",
+        "answer_candidate: He lost his job and decided to start his own business to share his passion.",
+    )
+
+    assert rescued_list == "launched an ad campaign, ran offers and promotions, developed a video presentation, worked with an artist on unique pieces, made limited-edition sweatshirts"
+    assert rescued_reason == "He lost his job and decided to start his own business to share his passion."
+
+
 def test_minimax_provider_includes_context_image_urls(monkeypatch):
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
     captured: dict[str, object] = {}

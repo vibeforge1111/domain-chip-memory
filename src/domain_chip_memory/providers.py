@@ -330,6 +330,36 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     combined = "\n".join(payloads)
     combined_lower = combined.lower()
 
+    if question_lower.startswith("did "):
+        did_match = re.match(r"did\s+([a-z][a-z'-]*)\s+(.+?)\??$", question_lower)
+        if did_match:
+            subject = did_match.group(1)
+            action_phrase = did_match.group(2)
+            action_tokens = [
+                token
+                for token in re.findall(r"[a-z0-9]+", action_phrase)
+                if token not in QUESTION_STOPWORDS and len(token) > 2
+            ]
+            irregular_variants = {
+                "make": ("made",),
+                "go": ("went",),
+                "take": ("took",),
+                "see": ("saw",),
+                "find": ("found",),
+                "run": ("ran",),
+                "buy": ("bought",),
+                "get": ("got",),
+                "feel": ("felt",),
+                "have": ("had",),
+                "leave": ("left",),
+                "write": ("wrote",),
+            }
+            if subject in combined_lower and action_tokens and all(
+                token in combined_lower or any(variant in combined_lower for variant in irregular_variants.get(token, ()))
+                for token in action_tokens
+            ):
+                return "Yes"
+
     if "practicing art" in question_lower and "seven years" in (answer.lower() + " " + combined_lower):
         year_match = re.search(r"on \d{1,2}:\d{2}\s+[ap]m on \d{1,2}\s+[A-Za-z]+,\s+(\d{4})", combined, re.IGNORECASE)
         if year_match:
@@ -1367,6 +1397,7 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
     answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
     question_lower = question.lower()
+    cleaned_lower = cleaned.lower()
     if (
         answer_candidate
         and cleaned.lower() != answer_candidate.lower()
@@ -1402,9 +1433,45 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if rescued:
         return rescued
     if not cleaned:
+        if (
+            answer_candidate
+            and question_lower.startswith(("how ", "what ", "why ", "which ", "do ", "did "))
+            and (
+                answer_candidate.lower() in {"yes", "no"}
+                or (
+                    len(answer_candidate.split()) >= 2
+                    and not answer_candidate.lower().startswith(("hey ", "hi ", "thanks", "nice "))
+                )
+            )
+        ):
+            return answer_candidate
         return cleaned
 
     lower = cleaned.lower()
+    if (
+        answer_candidate
+        and cleaned_lower != answer_candidate.lower()
+        and question_lower.startswith(("what ", "why ", "which "))
+        and (
+            cleaned_lower == "unknown"
+            or len(cleaned.split()) <= 6
+            or set(re.findall(r"[a-z0-9]+", cleaned_lower)).issubset(set(re.findall(r"[a-z0-9]+", answer_candidate.lower())))
+        )
+        and len(answer_candidate.split()) >= 3
+    ):
+        return answer_candidate
+    if (
+        answer_candidate
+        and cleaned_lower != answer_candidate.lower()
+        and question_lower.startswith(("how ", "what ", "why ", "which "))
+        and len(answer_candidate.split()) >= 3
+    ):
+        cleaned_tokens = set(re.findall(r"[a-z0-9]+", cleaned_lower))
+        candidate_tokens = set(re.findall(r"[a-z0-9]+", answer_candidate.lower()))
+        if answer_candidate.count(",") > cleaned.count(","):
+            return answer_candidate
+        if question_lower.startswith("why ") and len(cleaned_tokens) <= 8 and len(candidate_tokens.difference(cleaned_tokens)) >= 3:
+            return answer_candidate
     if lower == "unknown":
         return cleaned
 
