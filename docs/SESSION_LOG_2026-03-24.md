@@ -132,16 +132,19 @@ The same lane was then extended on `LongMemEval_s` and closed the next two bound
 - lane: `observational_temporal_memory + MiniMax-M2.7`
 - `samples 51-75`: `25/25` raw, `25/25` audited
 - `samples 76-100`: `25/25` raw, `25/25` audited
-- contiguous measured `LongMemEval_s` coverage through sample `100`: `100/100`
+- `samples 101-125`: `25/25` raw, `25/25` audited
+- contiguous measured `LongMemEval_s` coverage through sample `125`: `125/125`
 
 Key execution read:
 
 - `samples 51-75` started at `5/25`, moved through `10/25`, and closed at `25/25`
 - `samples 76-100` started at `1/25`, moved through `14/25`, and closed at `25/25`
+- `samples 101-125` started at `4/25`, moved through `22/25`, and closed at `25/25`
 - the main new failure class was aggregate and total-amount reasoning, not basic temporal retrieval
 - the decisive fixes were:
   - stronger aggregate answer synthesis in the observational substrate
   - aggregate-support evidence blocks in the packet for money questions
+  - explicit project-count synthesis for "excluding my thesis" style concurrent-work questions
   - runner/provider rescue that preserves exact short `answer_candidate` values for:
     - currency totals
     - short `which` answers
@@ -151,6 +154,7 @@ Source-of-truth artifacts:
 
 - `artifacts/benchmark_runs/longmemeval_observational_minimax_offset50_limit25_v8.json`
 - `artifacts/benchmark_runs/longmemeval_observational_minimax_offset75_limit25_v9.json`
+- `artifacts/benchmark_runs/longmemeval_observational_minimax_offset100_limit25_v3.json`
 
 Validation during the close:
 

@@ -134,6 +134,15 @@ def test_runner_matches_numeric_count_inside_doctor_and_wedding_gold():
     ) is True
 
 
+def test_runner_matches_numeric_count_inside_instrument_gold():
+    assert _matches_expected_answer(
+        "4",
+        [
+            "I currently own 4 musical instruments. I've had the Fender Stratocaster electric guitar for 5 years, the Yamaha FG800 acoustic guitar for 8 years, the 5-piece Pearl Export drum set for an unspecified amount of time, and the Korg B1 piano for 3 years."
+        ],
+    ) is True
+
+
 def test_goodai_loader_and_runner(tmp_path: Path):
     config_file = tmp_path / "benchmark-v3-32k.yml"
     config_file.write_text(
