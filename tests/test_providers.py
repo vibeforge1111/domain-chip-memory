@@ -139,6 +139,24 @@ def test_expand_answer_prefers_yes_no_answer_candidate_for_is_question():
     assert rescued == "No"
 
 
+def test_expand_answer_prefers_short_where_answer_candidate_over_unknown():
+    context = "\n".join(
+        [
+            "evidence_memory:",
+            "evidence: I'm thinking of visiting my sister Emily in Denver soon.",
+            "answer_candidate: Denver",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where does my sister Emily live?",
+        "unknown",
+        context,
+    )
+
+    assert rescued == "Denver"
+
+
 def test_expand_answer_prefers_temporal_answer_candidate_for_when_question():
     context = "\n".join(
         [

@@ -1925,10 +1925,14 @@ def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
     samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
     keep = {
         "76d63226": "answer_candidate: 55-inch",
+        "86f00804": "answer_candidate: The Seven Husbands of Evelyn Hugo",
         "c19f7a0b": "answer_candidate: 6:30 pm",
         "4100d0a0": "answer_candidate: A mix of Irish and Italian",
         "29f2956b": "answer_candidate: 30 minutes",
+        "1faac195": "answer_candidate: Denver",
+        "c14c00dd": "answer_candidate: Trader Joe's",
         "36580ce8": "answer_candidate: bronchitis",
+        "3d86fd0a": "answer_candidate: a coffee shop in the city",
         "a82c026e": "answer_candidate: Dark Souls 3 DLC",
         "0862e8bf_abs": "answer_candidate: unknown",
         "15745da0_abs": "answer_candidate: unknown",
@@ -1951,6 +1955,7 @@ def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
         "0a995998": "answer_candidate: 3",
         "6d550036": "answer_candidate: 2",
         "gpt4_59c863d7": "answer_candidate: 5",
+        "b5ef892d": "answer_candidate: 8 days",
         "e831120c": "answer_candidate: 3.5 weeks",
     }
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]

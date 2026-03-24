@@ -1536,7 +1536,7 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if (
         answer_candidate
         and cleaned_lower != answer_candidate.lower()
-        and question_lower.startswith(("what ", "why ", "which "))
+        and question_lower.startswith(("what ", "where ", "why ", "which "))
         and (
             cleaned_lower == "unknown"
             or len(cleaned.split()) <= 6
@@ -1546,7 +1546,7 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
             len(answer_candidate.split()) >= 3
             or (
                 cleaned_lower == "unknown"
-                and question_lower.startswith(("what ", "which "))
+                and question_lower.startswith(("what ", "where ", "which "))
                 and len(answer_candidate.split()) >= 1
             )
         )
