@@ -61,11 +61,18 @@ Goal:
 - implement a memory system that can reasonably challenge public leaders
 - implement it in a way that can extend to `BEAM` without sacrificing already-closed `LongMemEval_s` and `LoCoMo` slices
 
-Current lead lane as of 2026-03-23:
+Current lead lane as of 2026-03-25:
 
 - `observational_temporal_memory + MiniMax-M2.7` is the active `LongMemEval` optimization path
 - real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
 - real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
+- real rerun on March 24, 2026 over `LongMemEval_s` samples `51-75`: `25/25` (`1.00`)
+- real rerun on March 24, 2026 over `LongMemEval_s` samples `76-100`: `25/25` (`1.00`)
+- real rerun on March 24, 2026 over `LongMemEval_s` samples `101-125`: `25/25` (`1.00`)
+- real rerun on March 24, 2026 over `LongMemEval_s` samples `126-150`: `25/25` (`1.00`)
+- real rerun on March 25, 2026 over `LongMemEval_s` samples `151-175`: `25/25` (`1.00`)
+- real rerun on March 25, 2026 over `LongMemEval_s` samples `176-200`: `25/25` (`1.00`)
+- contiguous measured `LongMemEval_s` coverage through sample `200`: `200/200` (`1.00`)
 - current bounded `LoCoMo` same-provider ladder on the first 25 `conv-26` questions:
   - `observational_temporal_memory`: `24/25` raw, `24/24` audited
   - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
@@ -82,6 +89,13 @@ Current lead lane as of 2026-03-23:
 - real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q126-150`):
   - `observational_temporal_memory`: `25/25` raw, `25/25` audited
   - measured progression on the same slice: `3/25 -> 23/25 -> 24/25 -> 25/25`
+- real rerun on March 25, 2026 over `LoCoMo conv-30 q1-25`:
+  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
+- measured `LoCoMo conv-26` tail status after `q150`:
+  - scoreable subset `q151`, `q152`, `q168`, `q179`: `4/4`
+  - the wider `q151-199` tail is benchmark-contaminated because many gold answers are empty in the source file
+- current clean `LoCoMo` limitation:
+  - the remaining first-slice audited-open issue is still the benchmark inconsistency on `conv-26-qa-6`
 
 Candidate components:
 

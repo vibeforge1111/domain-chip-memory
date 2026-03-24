@@ -73,8 +73,8 @@ Program implication:
 
 Keep extending real benchmark coverage:
 
-1. finish `LongMemEval_s` beyond the first `50/500`
-2. finish `LoCoMo conv-26` beyond `q150`
+1. finish `LongMemEval_s` beyond the first `200/500`
+2. move `LoCoMo` onto a clean post-`q150` lane instead of relying on the contaminated `conv-26 q151-199` tail
 3. expand beyond the current bounded `LoCoMo` single-conversation focus
 
 Regression rule:
@@ -120,8 +120,8 @@ In repo terms, that suggests:
 
 ## Immediate next moves
 
-1. Continue the active `LoCoMo` lane from `conv-26 q151-175`.
-2. Extend `LongMemEval_s` coverage beyond the current `50/500`.
+1. Extend `LongMemEval_s` coverage from `200/500` to `225/500`.
+2. Start the next clean `LoCoMo` conversation slice instead of continuing to optimize the contaminated `conv-26 q151-199` tail.
 3. Add `BEAM` adapter and scorecard contracts as soon as the implementation surface is pin-able.
 4. Start testing architecture mutations against the question:
    - does this help million-token-scale memory pressure without breaking the already-closed slices?
