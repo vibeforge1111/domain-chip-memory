@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from domain_chip_memory.loaders import load_locomo_json
+from domain_chip_memory.loaders import load_locomo_json, load_longmemeval_json
 from domain_chip_memory.memory_systems import (
     build_beam_ready_temporal_atom_router_packets,
     build_dual_store_event_calendar_hybrid_packets,
@@ -1919,6 +1919,27 @@ def test_locomo_conv26_scoreable_tail_yes_no_candidates_are_preserved():
 
     assert "answer_candidate: No" in packet_by_id["conv-26-qa-168"].assembled_context
     assert "answer_candidate: No" in packet_by_id["conv-26-qa-179"].assembled_context
+
+
+def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
+    samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
+    keep = {
+        "76d63226": "answer_candidate: 55-inch",
+        "c19f7a0b": "answer_candidate: 6:30 pm",
+        "4100d0a0": "answer_candidate: A mix of Irish and Italian",
+        "29f2956b": "answer_candidate: 30 minutes",
+        "36580ce8": "answer_candidate: bronchitis",
+        "a82c026e": "answer_candidate: Dark Souls 3 DLC",
+        "0862e8bf_abs": "answer_candidate: unknown",
+        "15745da0_abs": "answer_candidate: unknown",
+        "bc8a6e93_abs": "answer_candidate: unknown",
+    }
+    subset = [sample for sample in samples if sample.questions[0].question_id in keep]
+
+    _, packets = build_observational_temporal_memory_packets(subset, max_observations=4, max_reflections=3)
+
+    for packet in packets:
+        assert keep[packet.question_id].lower() in packet.assembled_context.lower()
 
 
 def test_locomo_question_relevant_window_surfaces_sixth_slice_music_poetry_and_roadtrip_facts():
