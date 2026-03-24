@@ -87,6 +87,10 @@ def test_runner_matches_disjunctive_expected_answers():
     assert _matches_expected_answer("yes", ["No"]) is False
 
 
+def test_runner_matches_month_year_expected_from_specific_date_prediction():
+    assert _matches_expected_answer("8 february 2023", ["February, 2023"]) is True
+
+
 def test_goodai_loader_and_runner(tmp_path: Path):
     config_file = tmp_path / "benchmark-v3-32k.yml"
     config_file.write_text(

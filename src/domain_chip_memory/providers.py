@@ -1374,6 +1374,29 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         and answer_candidate.lower() in {"yes", "no"}
     ):
         return answer_candidate
+    if (
+        answer_candidate
+        and cleaned.lower() != answer_candidate.lower()
+        and question_lower.startswith("when ")
+        and (
+            re.search(r"\b\d{4}\b", answer_candidate)
+            or any(month in answer_candidate.lower() for month in (
+                "january",
+                "february",
+                "march",
+                "april",
+                "may",
+                "june",
+                "july",
+                "august",
+                "september",
+                "october",
+                "november",
+                "december",
+            ))
+        )
+    ):
+        return answer_candidate
 
     rescued = _question_aware_rescue(question, cleaned, context)
     if rescued:

@@ -121,6 +121,24 @@ def test_expand_answer_prefers_yes_no_answer_candidate_for_did_question():
     assert rescued == "No"
 
 
+def test_expand_answer_prefers_temporal_answer_candidate_for_when_question():
+    context = "\n".join(
+        [
+            "stable_memory_window:",
+            "observation: On 4:04 pm on 20 January, 2023, Jon said: Lost my job as a banker yesterday.",
+            "answer_candidate: 19 January 2023",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "When Jon has lost his job as a banker?",
+        "20 January 2023",
+        context,
+    )
+
+    assert rescued == "19 January 2023"
+
+
 def test_minimax_provider_includes_context_image_urls(monkeypatch):
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
     captured: dict[str, object] = {}

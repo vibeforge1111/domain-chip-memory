@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import datetime
 import re
 from typing import Any
 
@@ -26,6 +27,8 @@ _ANSWER_IRREGULARS = {
     "did": "do",
 }
 _ANSWER_LEADING_FILLERS = {"a", "an", "the", "i", "she", "he", "they", "we", "it"}
+_MONTH_YEAR_PATTERNS = ("%B %Y", "%B, %Y")
+_FULL_DATE_PATTERNS = ("%d %B %Y", "%d %B, %Y", "%B %d %Y", "%B %d, %Y")
 
 
 def _normalize_answer_tokens(text: str) -> list[str]:
@@ -139,7 +142,40 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
             if len(option) >= 3
         ):
             return True
+    pred_month_year = _parse_month_year(normalized_pred)
+    pred_full_date = _parse_full_date(normalized_pred)
+    for expected in normalized_expected:
+        expected_month_year = _parse_month_year(expected)
+        if expected_month_year and pred_full_date and (
+            pred_full_date.year == expected_month_year.year and pred_full_date.month == expected_month_year.month
+        ):
+            return True
+        expected_full_date = _parse_full_date(expected)
+        if pred_month_year and expected_full_date and (
+            pred_month_year.year == expected_full_date.year and pred_month_year.month == expected_full_date.month
+        ):
+            return True
     return False
+
+
+def _parse_month_year(text: str) -> datetime | None:
+    normalized = text.strip().replace(",", "")
+    for pattern in _MONTH_YEAR_PATTERNS:
+        try:
+            return datetime.strptime(normalized, pattern.replace(",", ""))
+        except ValueError:
+            continue
+    return None
+
+
+def _parse_full_date(text: str) -> datetime | None:
+    normalized = text.strip().replace(",", "")
+    for pattern in _FULL_DATE_PATTERNS:
+        try:
+            return datetime.strptime(normalized, pattern.replace(",", ""))
+        except ValueError:
+            continue
+    return None
 
 
 def run_baseline(

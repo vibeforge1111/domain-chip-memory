@@ -1789,6 +1789,33 @@ def test_locomo_yes_no_subject_grounding_prefers_no_when_other_speaker_made_obje
     assert "answer_candidate: No" in packets[0].assembled_context
 
 
+def test_locomo_conv30_temporal_candidates_are_normalized_from_anchor_time():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-30"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=[
+            next(question for question in sample.questions if question.question_id == question_id)
+            for question_id in ("conv-30-qa-1", "conv-30-qa-2", "conv-30-qa-8", "conv-30-qa-13", "conv-30-qa-14")
+        ],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_observational_temporal_memory_packets([subset], max_observations=4, max_reflections=3)
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "answer_candidate: 19 January 2023" in packet_by_id["conv-30-qa-1"].assembled_context
+    assert "answer_candidate: January 2023" in packet_by_id["conv-30-qa-2"].assembled_context
+    assert "answer_candidate: 29 January 2023" in packet_by_id["conv-30-qa-8"].assembled_context
+    assert "answer_candidate: March 2023" in packet_by_id["conv-30-qa-13"].assembled_context
+    assert "answer_candidate: 16 March 2023" in packet_by_id["conv-30-qa-14"].assembled_context
+
+
 def test_locomo_question_relevant_window_surfaces_sixth_slice_music_poetry_and_roadtrip_facts():
     sample = next(
         record

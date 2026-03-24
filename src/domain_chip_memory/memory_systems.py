@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import Any
 
 from .contracts import JsonDict, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
@@ -2138,6 +2139,9 @@ def _choose_answer_candidate(
     evidence_entries: list[ObservationEntry],
     belief_entries: list[ObservationEntry],
 ) -> str:
+    temporal_answer = _infer_temporal_answer(question, evidence_entries)
+    if temporal_answer:
+        return temporal_answer
     yes_no_answer = _infer_yes_no_answer(question, evidence_entries)
     if yes_no_answer:
         return yes_no_answer
@@ -2155,6 +2159,73 @@ def _choose_answer_candidate(
             str(top_entry.metadata.get("value", "")),
             top_entry.text,
         )
+    return ""
+
+
+def _parse_observation_anchor(timestamp: str) -> datetime | None:
+    timestamp = timestamp.strip()
+    if not timestamp:
+        return None
+    normalized = timestamp.replace("am", "AM").replace("pm", "PM")
+    for pattern in ("%I:%M %p on %d %B, %Y", "%I:%M %p on %d %B %Y"):
+        try:
+            return datetime.strptime(normalized, pattern)
+        except ValueError:
+            continue
+    return None
+
+
+def _format_full_date(value: datetime) -> str:
+    return f"{value.day} {value.strftime('%B %Y')}"
+
+
+def _format_month_year(value: datetime) -> str:
+    return value.strftime("%B %Y")
+
+
+def _shift_month(value: datetime, offset: int) -> datetime:
+    month_index = (value.month - 1) + offset
+    year = value.year + (month_index // 12)
+    month = (month_index % 12) + 1
+    return datetime(year, month, 1)
+
+
+def _infer_temporal_answer(question: NormalizedQuestion, evidence_entries: list[ObservationEntry]) -> str:
+    question_lower = question.question.lower()
+    if not question_lower.startswith("when "):
+        return ""
+
+    ranked_entries = sorted(
+        evidence_entries,
+        key=lambda entry: (_evidence_score(question, entry), _observation_score(question, entry), entry.timestamp or "", entry.observation_id),
+        reverse=True,
+    )
+    for entry in ranked_entries:
+        anchor = _parse_observation_anchor(entry.timestamp)
+        if not anchor:
+            continue
+        combined = " ".join(
+            part.lower()
+            for part in (
+                _observation_evidence_text(question, entry),
+                entry.text,
+                str(entry.metadata.get("source_text", "")),
+            )
+            if part
+        )
+        if "yesterday" in combined:
+            return _format_full_date(anchor - timedelta(days=1))
+        if "today" in combined:
+            return _format_full_date(anchor)
+        if "this month" in combined:
+            return _format_month_year(anchor)
+        if "last month" in combined:
+            return _format_month_year(_shift_month(anchor, -1))
+        if "next month" in combined:
+            return _format_month_year(_shift_month(anchor, 1))
+        if "last week" in combined or "this week" in combined:
+            return _format_month_year(anchor)
+        return _format_full_date(anchor)
     return ""
 
 
