@@ -864,6 +864,76 @@ def test_observational_and_dual_store_handle_multi_session_relative_event_anchor
         assert predictions["q2"]["is_correct"] is True
 
 
+def test_observational_and_dual_store_handle_competing_anchor_location_recall():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-location-competing-anchor-recall",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-09-01T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I lived in Abu Dhabi."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-09-10T07:45:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I had breakfast with Omar at Marina Cafe."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2025-09-12T08:00:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "I moved to Sharjah."}],
+                },
+                {
+                    "session_id": "s4",
+                    "timestamp": "2025-09-20T09:00:00Z",
+                    "turns": [{"turn_id": "s4t1", "speaker": "user", "text": "I had breakfast with Layla at Marina Cafe."}],
+                },
+                {
+                    "session_id": "s5",
+                    "timestamp": "2025-09-22T18:00:00Z",
+                    "turns": [{"turn_id": "s5t1", "speaker": "user", "text": "I moved to Dubai."}],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "Where did I live after I had breakfast with Omar at Marina Cafe?",
+                    "answer": "Sharjah",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s2", "s3"],
+                    "evidence_turn_ids": ["s2t1", "s3t1"],
+                    "question_date": "2025-09-23",
+                },
+                {
+                    "question_id": "q2",
+                    "question": "Where did I live after I had breakfast with Layla at Marina Cafe?",
+                    "answer": "Dubai",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s4", "s5"],
+                    "evidence_turn_ids": ["s4t1", "s5t1"],
+                    "question_date": "2025-09-23",
+                },
+            ],
+        }
+    )
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+        )
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+
+        assert predictions["q1"]["predicted_answer"] == "Sharjah"
+        assert predictions["q1"]["is_correct"] is True
+        assert predictions["q2"]["predicted_answer"] == "Dubai"
+        assert predictions["q2"]["is_correct"] is True
+
+
 def test_memory_system_contract_summary_exists():
     payload = build_memory_system_contract_summary()
     names = [item["system_name"] for item in payload["candidate_memory_systems"]]
