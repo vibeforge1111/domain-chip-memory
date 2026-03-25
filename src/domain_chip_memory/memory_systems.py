@@ -2590,6 +2590,9 @@ def _choose_answer_candidate(
     dated_state_answer = _infer_dated_state_answer(question, candidate_entries)
     if dated_state_answer:
         return dated_state_answer
+    relative_state_answer = _infer_relative_state_answer(question, candidate_entries)
+    if relative_state_answer:
+        return relative_state_answer
     factoid_answer = _infer_factoid_answer(question, candidate_entries)
     if factoid_answer.lower() == "unknown":
         return factoid_answer
@@ -2653,6 +2656,18 @@ def _is_dated_state_question(question: NormalizedQuestion) -> bool:
             "where was i living when ",
         )
     )
+
+
+def _extract_relative_state_anchor(question_lower: str) -> tuple[str | None, str]:
+    for prefix, mode in (
+        ("where did i live before ", "before"),
+        ("where was i living before ", "before"),
+        ("where did i live after ", "after"),
+        ("where was i living after ", "after"),
+    ):
+        if question_lower.startswith(prefix):
+            return mode, question_lower[len(prefix):].strip().rstrip(".!?")
+    return None, ""
 
 
 def _should_use_current_state_exact_value(question: NormalizedQuestion) -> bool:
@@ -4919,16 +4934,15 @@ def _parse_question_state_anchor(question_lower: str) -> tuple[datetime | None, 
     return (None, None, None)
 
 
-def _infer_event_anchored_state_time(
-    question: NormalizedQuestion,
+def _infer_anchor_time_from_phrase(
+    anchor_phrase: str,
     candidate_entries: list[ObservationEntry | EventCalendarEntry],
 ) -> datetime | None:
-    question_lower = question.question.lower()
-    if not question_lower.startswith(("where did i live when ", "where was i living when ")):
+    if not anchor_phrase.strip():
         return None
 
-    question_tokens = set(_tokenize(question.question))
-    question_bigrams = _token_bigrams(question.question)
+    question_tokens = set(_tokenize(anchor_phrase))
+    question_bigrams = _token_bigrams(anchor_phrase)
     best_anchor: datetime | None = None
     best_score: tuple[int, int, int] | None = None
 
@@ -4962,6 +4976,70 @@ def _infer_event_anchored_state_time(
     if best_score[0] == 0 and best_score[1] < 2:
         return None
     return best_anchor
+
+
+def _infer_event_anchored_state_time(
+    question: NormalizedQuestion,
+    candidate_entries: list[ObservationEntry | EventCalendarEntry],
+) -> datetime | None:
+    question_lower = question.question.lower()
+    if not question_lower.startswith(("where did i live when ", "where was i living when ")):
+        return None
+    anchor_phrase = re.sub(r"^where (?:did i live|was i living) when\s+", "", question_lower).strip().rstrip(".!?")
+    return _infer_anchor_time_from_phrase(anchor_phrase, candidate_entries)
+
+
+def _infer_relative_state_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry | EventCalendarEntry]) -> str:
+    question_lower = question.question.lower()
+    mode, anchor_phrase = _extract_relative_state_anchor(question_lower)
+    if mode is None or not anchor_phrase:
+        return ""
+
+    anchor = _infer_anchor_time_from_phrase(anchor_phrase, candidate_entries)
+    if anchor is None:
+        return ""
+
+    dated_locations = sorted(
+        [
+            entry
+            for entry in candidate_entries
+            if entry.predicate == "location" and _parse_observation_anchor(entry.timestamp or "")
+        ],
+        key=lambda entry: (
+            _parse_observation_anchor(entry.timestamp or ""),
+            getattr(entry, "observation_id", getattr(entry, "event_id", "")),
+        ),
+    )
+    selected: ObservationEntry | EventCalendarEntry | None = None
+    if mode == "before":
+        for entry in dated_locations:
+            location_anchor = _parse_observation_anchor(entry.timestamp or "")
+            if location_anchor is None:
+                continue
+            if location_anchor < anchor:
+                selected = entry
+            elif location_anchor >= anchor:
+                break
+    else:
+        for entry in dated_locations:
+            location_anchor = _parse_observation_anchor(entry.timestamp or "")
+            if location_anchor is None:
+                continue
+            if location_anchor > anchor:
+                selected = entry
+                break
+
+    if selected is None:
+        return ""
+    value = str(selected.metadata.get("value", "")).strip()
+    if value:
+        return value
+    return _answer_candidate_surface_text(
+        selected.subject,
+        selected.predicate,
+        selected.metadata.get("value", ""),
+        selected.text,
+    )
 
 
 def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry | EventCalendarEntry]) -> str:

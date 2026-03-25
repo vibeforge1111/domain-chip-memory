@@ -1710,6 +1710,10 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
                 "where was i living at ",
                 "where did i live when ",
                 "where was i living when ",
+                "where did i live before ",
+                "where was i living before ",
+                "where did i live after ",
+                "where was i living after ",
             )
         )
         and answer_candidate
