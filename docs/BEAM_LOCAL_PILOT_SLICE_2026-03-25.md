@@ -199,6 +199,12 @@ The twentieth pilot adds:
 - repeated identical anchor phrases distinguished only by exact clock time on the same day
 - pressure on preventing generic dated-state selection from hijacking `before` and `after` questions that include a timestamp inside the anchor phrase
 
+The twenty-first pilot adds:
+
+- ambiguity abstention for relative event-anchored non-location state recall
+- repeated identical anchors on the same date where the question omits the decisive clock time
+- pressure on returning `unknown` when the anchor occurrence is underspecified instead of choosing one repeated event arbitrarily
+
 ## Command
 
 ```powershell
@@ -240,6 +246,8 @@ python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v19_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v19_dual_store_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v20_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v20_observational_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v20_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v20_dual_store_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v21_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v21_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v21_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v21_dual_store_heuristic_v1.json
 ```
 
 ## Promotion rule

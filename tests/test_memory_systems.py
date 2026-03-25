@@ -1717,6 +1717,107 @@ def test_observational_and_dual_store_handle_time_qualified_relative_event_ancho
         assert predictions["q4"]["is_correct"] is True
 
 
+def test_observational_and_dual_store_abstain_on_ambiguous_relative_event_anchored_non_location_state_recall():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-ambiguous-relative-event-anchored-non-location-state-recall",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-09-01T08:00:00Z",
+                    "turns": [
+                        {"turn_id": "s1t1", "speaker": "user", "text": "I prefer espresso."},
+                        {"turn_id": "s1t2", "speaker": "user", "text": "My favorite color is blue."},
+                    ],
+                },
+                {
+                    "session_id": "s2",
+                    "turns": [
+                        {
+                            "turn_id": "s2t1",
+                            "speaker": "user",
+                            "text": "I had breakfast with Omar at Marina Cafe.",
+                            "timestamp": "2025-09-03T09:00:00Z",
+                        },
+                        {
+                            "turn_id": "s2t2",
+                            "speaker": "user",
+                            "text": "I prefer pour-over now.",
+                            "timestamp": "2025-09-03T10:00:00Z",
+                        },
+                        {
+                            "turn_id": "s2t3",
+                            "speaker": "user",
+                            "text": "My favorite color is green now.",
+                            "timestamp": "2025-09-03T10:30:00Z",
+                        },
+                    ],
+                },
+                {
+                    "session_id": "s3",
+                    "turns": [
+                        {
+                            "turn_id": "s3t1",
+                            "speaker": "user",
+                            "text": "I had breakfast with Omar at Marina Cafe.",
+                            "timestamp": "2025-09-03T11:00:00Z",
+                        },
+                        {
+                            "turn_id": "s3t2",
+                            "speaker": "user",
+                            "text": "I switched back to espresso.",
+                            "timestamp": "2025-09-03T12:00:00Z",
+                        },
+                        {
+                            "turn_id": "s3t3",
+                            "speaker": "user",
+                            "text": "My favorite color is red now.",
+                            "timestamp": "2025-09-03T12:30:00Z",
+                        },
+                    ],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "What did I prefer after I had breakfast with Omar at Marina Cafe on 3 September 2025?",
+                    "answer": "Information provided is not enough",
+                    "category": "abstention",
+                    "evidence_session_ids": ["s2", "s3"],
+                    "evidence_turn_ids": ["s2t1", "s2t2", "s3t1", "s3t2"],
+                    "question_date": "2025-09-04",
+                    "should_abstain": True,
+                },
+                {
+                    "question_id": "q2",
+                    "question": "What was my favorite color after I had breakfast with Omar at Marina Cafe on 3 September 2025?",
+                    "answer": "Information provided is not enough",
+                    "category": "abstention",
+                    "evidence_session_ids": ["s2", "s3"],
+                    "evidence_turn_ids": ["s2t1", "s2t3", "s3t1", "s3t3"],
+                    "question_date": "2025-09-04",
+                    "should_abstain": True,
+                },
+            ],
+        }
+    )
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+        )
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+
+        assert predictions["q1"]["predicted_answer"] == "unknown"
+        assert predictions["q1"]["is_correct"] is True
+        assert predictions["q2"]["predicted_answer"] == "unknown"
+        assert predictions["q2"]["is_correct"] is True
+
+
 def test_memory_system_contract_summary_exists():
     payload = build_memory_system_contract_summary()
     names = [item["system_name"] for item in payload["candidate_memory_systems"]]
