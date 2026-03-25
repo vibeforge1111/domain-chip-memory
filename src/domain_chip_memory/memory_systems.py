@@ -2687,16 +2687,26 @@ def _is_dated_state_question(question: NormalizedQuestion) -> bool:
     )
 
 
-def _extract_relative_state_anchor(question_lower: str) -> tuple[str | None, str]:
-    for prefix, mode in (
-        ("where did i live before ", "before"),
-        ("where was i living before ", "before"),
-        ("where did i live after ", "after"),
-        ("where was i living after ", "after"),
+def _extract_relative_state_anchor(question_lower: str) -> tuple[str | None, str, list[str]]:
+    for prefix, mode, predicates in (
+        ("where did i live before ", "before", ["location"]),
+        ("where was i living before ", "before", ["location"]),
+        ("where did i live after ", "after", ["location"]),
+        ("where was i living after ", "after", ["location"]),
+        ("what did i prefer before ", "before", ["preference"]),
+        ("what did i prefer after ", "after", ["preference"]),
+        ("what was my favorite color before ", "before", ["favorite_color"]),
+        ("what was my favourite color before ", "before", ["favorite_color"]),
+        ("what was my favorite colour before ", "before", ["favorite_color"]),
+        ("what was my favourite colour before ", "before", ["favorite_color"]),
+        ("what was my favorite color after ", "after", ["favorite_color"]),
+        ("what was my favourite color after ", "after", ["favorite_color"]),
+        ("what was my favorite colour after ", "after", ["favorite_color"]),
+        ("what was my favourite colour after ", "after", ["favorite_color"]),
     ):
         if question_lower.startswith(prefix):
-            return mode, question_lower[len(prefix):].strip().rstrip(".!?")
-    return None, ""
+            return mode, question_lower[len(prefix):].strip().rstrip(".!?"), predicates
+    return None, "", []
 
 
 def _should_use_current_state_exact_value(question: NormalizedQuestion) -> bool:
@@ -5088,19 +5098,19 @@ def _dated_state_target_predicates(question: NormalizedQuestion) -> list[str]:
 
 def _infer_relative_state_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry | EventCalendarEntry]) -> str:
     question_lower = question.question.lower()
-    mode, anchor_phrase = _extract_relative_state_anchor(question_lower)
-    if mode is None or not anchor_phrase:
+    mode, anchor_phrase, target_predicates = _extract_relative_state_anchor(question_lower)
+    if mode is None or not anchor_phrase or not target_predicates:
         return ""
 
     anchor = _infer_anchor_time_from_phrase(anchor_phrase, candidate_entries)
     if anchor is None:
         return ""
 
-    dated_locations = sorted(
+    dated_states = sorted(
         [
             entry
             for entry in candidate_entries
-            if entry.predicate == "location" and _parse_observation_anchor(entry.timestamp or "")
+            if entry.predicate in target_predicates and _parse_observation_anchor(entry.timestamp or "")
         ],
         key=lambda entry: (
             _parse_observation_anchor(entry.timestamp or ""),
@@ -5109,20 +5119,20 @@ def _infer_relative_state_answer(question: NormalizedQuestion, candidate_entries
     )
     selected: ObservationEntry | EventCalendarEntry | None = None
     if mode == "before":
-        for entry in dated_locations:
-            location_anchor = _parse_observation_anchor(entry.timestamp or "")
-            if location_anchor is None:
+        for entry in dated_states:
+            state_anchor = _parse_observation_anchor(entry.timestamp or "")
+            if state_anchor is None:
                 continue
-            if location_anchor < anchor:
+            if state_anchor < anchor:
                 selected = entry
-            elif location_anchor >= anchor:
+            elif state_anchor >= anchor:
                 break
     else:
-        for entry in dated_locations:
-            location_anchor = _parse_observation_anchor(entry.timestamp or "")
-            if location_anchor is None:
+        for entry in dated_states:
+            state_anchor = _parse_observation_anchor(entry.timestamp or "")
+            if state_anchor is None:
                 continue
-            if location_anchor > anchor:
+            if state_anchor > anchor:
                 selected = entry
                 break
 
