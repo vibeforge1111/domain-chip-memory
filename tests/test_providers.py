@@ -367,6 +367,26 @@ def test_expand_answer_prefers_short_answer_candidate_for_time_indexed_location_
     assert rescued == "Sharjah"
 
 
+def test_expand_answer_prefers_short_answer_candidate_for_event_anchored_location_question():
+    context = "\n".join(
+        [
+            "observation: I live in Abu Dhabi",
+            "observation: On 2025-09-10T07:45:00Z, I said: I had breakfast at Marina Cafe.",
+            "observation: I live in Sharjah",
+            "observation: On 2025-09-10T12:30:00Z, I said: I attended the design review in Al Khan.",
+            "answer_candidate: Sharjah",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where was I living when I attended the design review in Al Khan?",
+        "Dubai",
+        context,
+    )
+
+    assert rescued == "Sharjah"
+
+
 def test_expand_answer_recovers_next_city_in_ordered_visit_sequence():
     context = "\n".join(
         [

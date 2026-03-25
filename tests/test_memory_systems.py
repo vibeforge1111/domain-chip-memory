@@ -630,6 +630,85 @@ def test_observational_and_dual_store_handle_time_indexed_location_recall():
         assert predictions["q3"]["is_correct"] is True
 
 
+def test_observational_and_dual_store_handle_event_anchored_location_recall():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-location-event-anchor-recall",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-09-09T21:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I lived in Abu Dhabi."}],
+                },
+                {
+                    "session_id": "s2",
+                    "turns": [
+                        {
+                            "turn_id": "s2t1",
+                            "speaker": "user",
+                            "text": "I had breakfast at Marina Cafe.",
+                            "timestamp": "2025-09-10T07:45:00Z",
+                        },
+                        {
+                            "turn_id": "s2t2",
+                            "speaker": "user",
+                            "text": "I moved to Sharjah.",
+                            "timestamp": "2025-09-10T08:00:00Z",
+                        },
+                        {
+                            "turn_id": "s2t3",
+                            "speaker": "user",
+                            "text": "I attended the design review in Al Khan.",
+                            "timestamp": "2025-09-10T12:30:00Z",
+                        },
+                        {
+                            "turn_id": "s2t4",
+                            "speaker": "user",
+                            "text": "I moved to Dubai.",
+                            "timestamp": "2025-09-10T18:00:00Z",
+                        },
+                    ],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "Where did I live when I had breakfast at Marina Cafe?",
+                    "answer": "Abu Dhabi",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s1", "s2"],
+                    "evidence_turn_ids": ["s1t1", "s2t1"],
+                    "question_date": "2025-09-11",
+                },
+                {
+                    "question_id": "q2",
+                    "question": "Where was I living when I attended the design review in Al Khan?",
+                    "answer": "Sharjah",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s2"],
+                    "evidence_turn_ids": ["s2t2", "s2t3"],
+                    "question_date": "2025-09-11",
+                },
+            ],
+        }
+    )
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+        )
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+
+        assert predictions["q1"]["predicted_answer"] == "Abu Dhabi"
+        assert predictions["q1"]["is_correct"] is True
+        assert predictions["q2"]["predicted_answer"] == "Sharjah"
+        assert predictions["q2"]["is_correct"] is True
+
+
 def test_memory_system_contract_summary_exists():
     payload = build_memory_system_contract_summary()
     names = [item["system_name"] for item in payload["candidate_memory_systems"]]

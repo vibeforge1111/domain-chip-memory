@@ -2649,6 +2649,8 @@ def _is_dated_state_question(question: NormalizedQuestion) -> bool:
             "where was i living on ",
             "where did i live at ",
             "where was i living at ",
+            "where did i live when ",
+            "where was i living when ",
         )
     )
 
@@ -4917,6 +4919,51 @@ def _parse_question_state_anchor(question_lower: str) -> tuple[datetime | None, 
     return (None, None, None)
 
 
+def _infer_event_anchored_state_time(
+    question: NormalizedQuestion,
+    candidate_entries: list[ObservationEntry | EventCalendarEntry],
+) -> datetime | None:
+    question_lower = question.question.lower()
+    if not question_lower.startswith(("where did i live when ", "where was i living when ")):
+        return None
+
+    question_tokens = set(_tokenize(question.question))
+    question_bigrams = _token_bigrams(question.question)
+    best_anchor: datetime | None = None
+    best_score: tuple[int, int, int] | None = None
+
+    for entry in candidate_entries:
+        if entry.predicate == "location":
+            continue
+        anchor = _parse_observation_anchor(entry.timestamp or "")
+        if anchor is None:
+            continue
+        entry_corpus = " ".join(
+            part
+            for part in (
+                entry.text,
+                str(entry.metadata.get("source_text", "")),
+                str(entry.metadata.get("value", "")),
+            )
+            if part
+        )
+        entry_tokens = set(_tokenize(entry_corpus))
+        token_overlap = len(question_tokens.intersection(entry_tokens))
+        if token_overlap == 0:
+            continue
+        bigram_overlap = len(question_bigrams.intersection(_token_bigrams(entry_corpus)))
+        score = (bigram_overlap, token_overlap, len(entry_corpus))
+        if best_score is None or score > best_score:
+            best_score = score
+            best_anchor = anchor
+
+    if best_score is None:
+        return None
+    if best_score[0] == 0 and best_score[1] < 2:
+        return None
+    return best_anchor
+
+
 def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry | EventCalendarEntry]) -> str:
     question_lower = question.question.lower()
     if not _is_dated_state_question(question):
@@ -4924,7 +4971,9 @@ def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: l
 
     target_anchor, target_start, target_end = _parse_question_state_anchor(question_lower)
     if target_anchor is None and (target_start is None or target_end is None):
-        return ""
+        target_anchor = _infer_event_anchored_state_time(question, candidate_entries)
+        if target_anchor is None:
+            return ""
 
     dated_locations = sorted(
         [
