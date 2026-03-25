@@ -4999,6 +4999,10 @@ def _infer_anchor_time_from_phrase(
 
     question_tokens = set(_tokenize(normalized_anchor_phrase or anchor_phrase_lower))
     question_bigrams = _token_bigrams(normalized_anchor_phrase or anchor_phrase_lower)
+    location_anchor_phrase = bool(
+        include_location_entries
+        and re.search(r"\b(?:live|lived|living|move|moved|moving)\b", normalized_anchor_phrase or anchor_phrase_lower)
+    )
     best_anchor: datetime | None = None
     best_score: tuple[int, int, int] | None = None
 
@@ -5023,6 +5027,10 @@ def _infer_anchor_time_from_phrase(
         )
         entry_tokens = set(_tokenize(entry_corpus))
         token_overlap = len(question_tokens.intersection(entry_tokens))
+        value_tokens = set(_tokenize(str(entry.metadata.get("value", ""))))
+        location_value_overlap = len(question_tokens.intersection(value_tokens))
+        if location_anchor_phrase and entry.predicate == "location" and location_value_overlap:
+            token_overlap = max(token_overlap, 2)
         if token_overlap == 0:
             continue
         bigram_overlap = len(question_bigrams.intersection(_token_bigrams(entry_corpus)))
@@ -5139,11 +5147,14 @@ def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: l
     if not target_predicates:
         return ""
 
+    event_anchor = _infer_event_anchored_state_time(question, candidate_entries)
     target_anchor, target_start, target_end = _parse_question_state_anchor(question_lower)
-    if target_anchor is None and (target_start is None or target_end is None):
-        target_anchor = _infer_event_anchored_state_time(question, candidate_entries)
-        if target_anchor is None:
-            return ""
+    if event_anchor is not None:
+        target_anchor = event_anchor
+        target_start = None
+        target_end = None
+    elif target_anchor is None and (target_start is None or target_end is None):
+        return ""
 
     dated_locations = sorted(
         [

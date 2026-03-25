@@ -1313,6 +1313,92 @@ def test_observational_and_dual_store_handle_event_anchored_preference_state_rec
         assert predictions["q2"]["is_correct"] is True
 
 
+def test_observational_and_dual_store_handle_date_qualified_reentered_event_anchored_preference_state_recall():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-date-qualified-reentered-event-anchored-preference-state-recall",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-03-01T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I prefer espresso."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-05-01T12:00:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I lived in Dubai."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2025-05-10T09:00:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "I prefer pour-over now."}],
+                },
+                {
+                    "session_id": "s4",
+                    "timestamp": "2025-07-01T09:00:00Z",
+                    "turns": [{"turn_id": "s4t1", "speaker": "user", "text": "I moved to Abu Dhabi."}],
+                },
+                {
+                    "session_id": "s5",
+                    "timestamp": "2025-09-01T09:00:00Z",
+                    "turns": [{"turn_id": "s5t1", "speaker": "user", "text": "I moved back to Dubai."}],
+                },
+                {
+                    "session_id": "s6",
+                    "timestamp": "2025-09-03T09:00:00Z",
+                    "turns": [{"turn_id": "s6t1", "speaker": "user", "text": "I switched back to espresso."}],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "What did I prefer when I lived in Dubai in May 2025?",
+                    "answer": "espresso",
+                    "category": "current_state",
+                    "evidence_session_ids": ["s1", "s2"],
+                    "evidence_turn_ids": ["s1t1", "s2t1"],
+                    "question_date": "2025-10-02",
+                },
+                {
+                    "question_id": "q2",
+                    "question": "What did I prefer when I lived in Dubai in September 2025?",
+                    "answer": "pour-over",
+                    "category": "current_state",
+                    "evidence_session_ids": ["s3", "s5"],
+                    "evidence_turn_ids": ["s3t1", "s5t1"],
+                    "question_date": "2025-10-02",
+                },
+                {
+                    "question_id": "q3",
+                    "question": "What do I prefer now?",
+                    "answer": "espresso",
+                    "category": "current_state",
+                    "evidence_session_ids": ["s6"],
+                    "evidence_turn_ids": ["s6t1"],
+                    "question_date": "2025-10-02",
+                },
+            ],
+        }
+    )
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+        )
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+
+        assert predictions["q1"]["predicted_answer"] == "espresso"
+        assert predictions["q1"]["is_correct"] is True
+        assert predictions["q2"]["predicted_answer"] == "pour-over"
+        assert predictions["q2"]["is_correct"] is True
+        assert predictions["q3"]["predicted_answer"] == "espresso"
+        assert predictions["q3"]["is_correct"] is True
+
+
 def test_memory_system_contract_summary_exists():
     payload = build_memory_system_contract_summary()
     names = [item["system_name"] for item in payload["candidate_memory_systems"]]

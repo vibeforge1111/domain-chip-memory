@@ -175,6 +175,12 @@ The sixteenth pilot adds:
 - state questions whose anchor is another state-bearing event like `when I lived in Dubai`
 - pressure on predicate-agnostic anchored-state selection instead of location-only `when ...` handling
 
+The seventeenth pilot adds:
+
+- date-qualified reentered non-location state recall
+- repeated anchor periods with the same location value but different downstream preferences
+- pressure on selecting the dated anchor occurrence first, then reading the non-location state at that anchor instead of treating the date as a direct state bucket
+
 ## Command
 
 ```powershell
@@ -208,6 +214,8 @@ python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v15_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v15_dual_store_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v16_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v16_observational_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v16_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v16_dual_store_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v17_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v17_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v17_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v17_dual_store_heuristic_v1.json
 ```
 
 ## Promotion rule
