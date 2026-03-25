@@ -2647,6 +2647,8 @@ def _is_dated_state_question(question: NormalizedQuestion) -> bool:
             "where was i living in ",
             "where did i live on ",
             "where was i living on ",
+            "where did i live at ",
+            "where was i living at ",
         )
     )
 
@@ -4862,13 +4864,33 @@ def _shift_month(value: datetime, offset: int) -> datetime:
     return datetime(year, month, 1)
 
 
-def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry | EventCalendarEntry]) -> str:
-    question_lower = question.question.lower()
-    if not _is_dated_state_question(question):
-        return ""
+def _parse_question_state_anchor(question_lower: str) -> tuple[datetime | None, datetime | None, datetime | None]:
+    exact_time_match = re.search(
+        r"\bat\s+(\d{1,2}(?::\d{2})?\s*[ap]m)\s+on\s+(\d{1,2})\s+"
+        r"(january|february|march|april|may|june|july|august|september|october|november|december)"
+        r"\s+(\d{4})\b",
+        question_lower,
+    )
+    if exact_time_match:
+        clock_text = re.sub(r"\s+", " ", exact_time_match.group(1).upper()).strip()
+        parsed_time: datetime | None = None
+        for pattern in ("%I:%M %p", "%I %p"):
+            try:
+                parsed_time = datetime.strptime(clock_text, pattern)
+                break
+            except ValueError:
+                continue
+        if parsed_time is not None:
+            return (
+                datetime.strptime(
+                    f"{exact_time_match.group(2)} {exact_time_match.group(3).title()} {exact_time_match.group(4)} "
+                    f"{parsed_time.strftime('%H:%M')}",
+                    "%d %B %Y %H:%M",
+                ),
+                None,
+                None,
+            )
 
-    target_start: datetime | None = None
-    target_end: datetime | None = None
     exact_date_match = re.search(
         r"\b(?:on)\s+(\d{1,2})\s+"
         r"(january|february|march|april|may|june|july|august|september|october|november|december)"
@@ -4880,21 +4902,28 @@ def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: l
             f"{exact_date_match.group(1)} {exact_date_match.group(2).title()} {exact_date_match.group(3)}",
             "%d %B %Y",
         )
-        target_end = target_start + timedelta(days=1)
+        return (None, target_start, target_start + timedelta(days=1))
 
     month_match = re.search(
         r"\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})\b",
         question_lower,
     )
-    if target_start is None and not month_match:
-        return ""
-    if target_start is None and month_match:
+    if month_match:
         target_start = datetime.strptime(
             f"{month_match.group(1).title()} {month_match.group(2)}",
             "%B %Y",
         )
-        target_end = _shift_month(target_start, 1)
-    if target_start is None or target_end is None:
+        return (None, target_start, _shift_month(target_start, 1))
+    return (None, None, None)
+
+
+def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry | EventCalendarEntry]) -> str:
+    question_lower = question.question.lower()
+    if not _is_dated_state_question(question):
+        return ""
+
+    target_anchor, target_start, target_end = _parse_question_state_anchor(question_lower)
+    if target_anchor is None and (target_start is None or target_end is None):
         return ""
 
     dated_locations = sorted(
@@ -4913,7 +4942,12 @@ def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: l
         anchor = _parse_observation_anchor(entry.timestamp or "")
         if anchor is None:
             continue
-        if anchor < target_end:
+        if target_anchor is not None:
+            if anchor <= target_anchor:
+                selected = entry
+            elif anchor > target_anchor:
+                break
+        elif anchor < target_end:
             selected = entry
         elif anchor >= target_end:
             break

@@ -348,6 +348,25 @@ def test_expand_answer_prefers_short_answer_candidate_for_day_indexed_location_q
     assert rescued == "Sharjah"
 
 
+def test_expand_answer_prefers_short_answer_candidate_for_time_indexed_location_question():
+    context = "\n".join(
+        [
+            "observation: I live in Abu Dhabi",
+            "observation: I live in Sharjah",
+            "observation: I live in Dubai",
+            "answer_candidate: Sharjah",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where did I live at 9:00 AM on 10 September 2025?",
+        "Dubai",
+        context,
+    )
+
+    assert rescued == "Sharjah"
+
+
 def test_expand_answer_recovers_next_city_in_ordered_visit_sequence():
     context = "\n".join(
         [

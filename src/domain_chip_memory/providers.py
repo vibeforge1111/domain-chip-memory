@@ -1706,6 +1706,8 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
                 "where was i living in ",
                 "where did i live on ",
                 "where was i living on ",
+                "where did i live at ",
+                "where was i living at ",
             )
         )
         and answer_candidate

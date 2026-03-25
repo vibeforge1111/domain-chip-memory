@@ -559,6 +559,77 @@ def test_observational_and_dual_store_handle_day_indexed_location_recall():
         assert predictions["q3"]["is_correct"] is True
 
 
+def test_observational_and_dual_store_handle_time_indexed_location_recall():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-location-time-recall",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-09-09T21:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I lived in Abu Dhabi."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-09-10T08:00:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I moved to Sharjah."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2025-09-10T18:00:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "I moved to Dubai."}],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "Where did I live at 7:30 AM on 10 September 2025?",
+                    "answer": "Abu Dhabi",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s1"],
+                    "evidence_turn_ids": ["s1t1"],
+                    "question_date": "2025-09-11",
+                },
+                {
+                    "question_id": "q2",
+                    "question": "Where did I live at 9:00 AM on 10 September 2025?",
+                    "answer": "Sharjah",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s2"],
+                    "evidence_turn_ids": ["s2t1"],
+                    "question_date": "2025-09-11",
+                },
+                {
+                    "question_id": "q3",
+                    "question": "Where was I living at 7:00 PM on 10 September 2025?",
+                    "answer": "Dubai",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s3"],
+                    "evidence_turn_ids": ["s3t1"],
+                    "question_date": "2025-09-11",
+                },
+            ],
+        }
+    )
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+        )
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+
+        assert predictions["q1"]["predicted_answer"] == "Abu Dhabi"
+        assert predictions["q1"]["is_correct"] is True
+        assert predictions["q2"]["predicted_answer"] == "Sharjah"
+        assert predictions["q2"]["is_correct"] is True
+        assert predictions["q3"]["predicted_answer"] == "Dubai"
+        assert predictions["q3"]["is_correct"] is True
+
+
 def test_memory_system_contract_summary_exists():
     payload = build_memory_system_contract_summary()
     names = [item["system_name"] for item in payload["candidate_memory_systems"]]
