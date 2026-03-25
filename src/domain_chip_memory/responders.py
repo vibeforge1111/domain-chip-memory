@@ -20,6 +20,8 @@ def _last_matching_line(packet: BaselinePromptPacket) -> str:
     for line in packet.assembled_context.splitlines():
         line_lower = line.lower()
         score = sum(1 for token in question_tokens if token in line_lower)
+        if line_lower.startswith("answer_candidate:"):
+            score += 100
         if score >= best_score and ":" in line:
             best_line = line
             best_score = score

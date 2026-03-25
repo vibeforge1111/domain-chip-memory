@@ -205,6 +205,12 @@ The twenty-first pilot adds:
 - repeated identical anchors on the same date where the question omits the decisive clock time
 - pressure on returning `unknown` when the anchor occurrence is underspecified instead of choosing one repeated event arbitrarily
 
+The twenty-second pilot adds:
+
+- relative non-location state recall anchored on a location-state transition
+- questions like `what did I prefer after I moved to Dubai` where the anchor is itself a structured current-state update
+- pressure on letting the relative-anchor resolver match location entries, not only episodic event text
+
 ## Command
 
 ```powershell
@@ -248,6 +254,8 @@ python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v20_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v20_dual_store_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v21_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v21_observational_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v21_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v21_dual_store_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v22_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v22_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v22_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v22_dual_store_heuristic_v1.json
 ```
 
 ## Promotion rule

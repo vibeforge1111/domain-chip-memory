@@ -138,6 +138,28 @@ def test_expand_answer_prefers_exact_answer_candidate_over_belief_paraphrase():
     assert rescued == "Appreciate them a lot"
 
 
+def test_heuristic_provider_prefers_answer_candidate_over_higher_overlap_evidence():
+    provider = get_provider("heuristic_v1")
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="observational_temporal_memory",
+        sample_id="beam-local-pilot-22",
+        question_id="beam-local-pilot-22-q-2",
+        question="What was my favorite color after I moved to Dubai?",
+        assembled_context="\n".join(
+            [
+                "evidence: I do live in Dubai",
+                "evidence: My favourite colour is green",
+                "answer_candidate: green",
+            ]
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    assert provider.generate_answer(packet).answer == "green"
+
+
 def test_expand_answer_prefers_yes_no_answer_candidate_for_did_question():
     context = "\n".join(
         [

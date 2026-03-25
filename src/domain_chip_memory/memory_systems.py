@@ -5119,7 +5119,11 @@ def _infer_relative_state_answer(question: NormalizedQuestion, candidate_entries
     if mode is None or not anchor_phrase or not target_predicates:
         return ""
 
-    anchor = _infer_anchor_time_from_phrase(anchor_phrase, candidate_entries)
+    anchor = _infer_anchor_time_from_phrase(
+        anchor_phrase,
+        candidate_entries,
+        include_location_entries=True,
+    )
     if anchor is None:
         return ""
 
