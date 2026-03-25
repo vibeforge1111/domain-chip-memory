@@ -14,6 +14,7 @@ from .env import load_dotenv
 from .experiments import build_experiment_contract_summary, run_candidate_comparison
 from .loaders import (
     build_loader_contract_summary,
+    load_beam_json,
     load_goodai_config,
     load_goodai_definitions,
     load_locomo_json,
@@ -202,6 +203,16 @@ def main() -> None:
     run_goodai.add_argument("--write")
     run_goodai.add_argument("--resume-from")
 
+    run_beam = subparsers.add_parser("run-beam-baseline", help="Run a baseline over a local BEAM slice JSON file.")
+    run_beam.add_argument("data_file")
+    run_beam.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "dual_store_event_calendar_hybrid"), default="full_context")
+    run_beam.add_argument("--provider", default="heuristic_v1")
+    run_beam.add_argument("--limit", type=int)
+    run_beam.add_argument("--top-k-sessions", type=int, default=2)
+    run_beam.add_argument("--fallback-sessions", type=int, default=1)
+    run_beam.add_argument("--write")
+    run_beam.add_argument("--resume-from")
+
     compare_longmemeval = subparsers.add_parser("compare-longmemeval-local", help="Run all default systems over a LongMemEval JSON file and emit a compact comparison.")
     compare_longmemeval.add_argument("data_file")
     compare_longmemeval.add_argument("--provider", default="heuristic_v1")
@@ -381,6 +392,23 @@ def main() -> None:
             dataset_name=args.dataset_name,
             limit=args.limit,
         )
+        write_path = Path(args.write) if args.write else None
+        payload = _run_with_progress(
+            samples,
+            baseline_name=args.baseline,
+            provider_name=args.provider,
+            top_k_sessions=args.top_k_sessions,
+            fallback_sessions=args.fallback_sessions,
+            write_path=write_path,
+            resume_path=Path(args.resume_from) if args.resume_from else None,
+        )
+        if args.write:
+            _write_json(write_path, payload)
+        _print(payload)
+        return
+
+    if args.command == "run-beam-baseline":
+        samples = load_beam_json(args.data_file, limit=args.limit)
         write_path = Path(args.write) if args.write else None
         payload = _run_with_progress(
             samples,

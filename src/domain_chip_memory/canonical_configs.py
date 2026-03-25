@@ -13,6 +13,25 @@ CANONICAL_CONFIGS = [
         ),
         "next_configs": ["benchmark-v3-120k.yml", "benchmark-v3-500k.yml"],
         "source_url": "https://github.com/GoodAI/goodai-ltm-benchmark",
+    },
+    {
+        "benchmark_name": "BEAM",
+        "config_id": "beam_local_pilot_v1_source.json",
+        "status": "initial_local_pilot_slice",
+        "rationale": (
+            "Program inference: until the official BEAM implementation surface is pinned, the repo needs "
+            "one explicit paper-pinned local slice to exercise adapter, scorecard, abstention, and "
+            "multi-session pressure without pretending it is full benchmark reproduction."
+        ),
+        "next_configs": [
+            "beam_local_pilot_v2_source.json",
+            "beam_local_pilot_v3_source.json",
+            "beam_local_pilot_v4_source.json",
+            "beam_local_pilot_v5_source.json",
+            "beam_local_pilot_v6_source.json",
+            "official_beam_slice_once_pinned",
+        ],
+        "source_url": "https://arxiv.org/abs/2510.27246",
     }
 ]
 

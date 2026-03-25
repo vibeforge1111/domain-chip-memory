@@ -10,6 +10,7 @@ from typing import Any, Protocol
 from urllib import error, request
 
 from .contracts import JsonDict
+from .answer_candidates import looks_like_current_state_question
 from .image_title_hints import resolve_titles_from_image_urls
 from .responders import heuristic_response
 from .runs import BaselinePromptPacket
@@ -327,6 +328,7 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         return None
 
     question_lower = question.lower()
+    context_lines = [line.strip() for line in context.splitlines() if line.strip()]
     answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
     answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
     if (
@@ -336,6 +338,101 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
         return answer_candidate
     combined = "\n".join(payloads)
     combined_lower = combined.lower()
+
+    def _ordered_sequence_labels() -> list[str]:
+        labels: list[str] = []
+        seen: set[str] = set()
+        patterns = (
+            r"\bi visited\s+([A-Z][A-Za-z0-9 .'-]+?)\s+in\b",
+            r"\bi booked\s+([A-Z][A-Za-z0-9 .'-]+?)\s+for\b",
+        )
+        for line in context_lines:
+            for pattern in patterns:
+                match = re.search(pattern, line, re.IGNORECASE)
+                if not match:
+                    continue
+                label = match.group(1).strip().rstrip(".!?")
+                key = label.lower()
+                if key in seen:
+                    break
+                seen.add(key)
+                labels.append(label)
+                break
+        return labels
+
+    ordered_labels = _ordered_sequence_labels()
+    after_match = re.match(r"which (?:city|trip).*(?:visit|came)\s+after\s+(.+?)\??$", question_lower)
+    if after_match and ordered_labels:
+        anchor = after_match.group(1).strip().rstrip(".!?")
+        lowered = [item.lower() for item in ordered_labels]
+        if anchor in lowered:
+            anchor_index = lowered.index(anchor)
+            if anchor_index + 1 < len(ordered_labels):
+                return ordered_labels[anchor_index + 1]
+    before_match = re.match(r"which (?:city|trip).*(?:visit|came)\s+before\s+(.+?)\??$", question_lower)
+    if before_match and ordered_labels:
+        anchor = before_match.group(1).strip().rstrip(".!?")
+        lowered = [item.lower() for item in ordered_labels]
+        if anchor in lowered:
+            anchor_index = lowered.index(anchor)
+            if anchor_index - 1 >= 0:
+                return ordered_labels[anchor_index - 1]
+
+    def _ordered_location_rows() -> list[tuple[int, str, str]]:
+        def _extract_location_rows(lines: list[str]) -> list[tuple[int, str, str]]:
+            rows: list[tuple[int, str, str]] = []
+            patterns = (
+                r"\b(?:live|lived)\s+in\s+([A-Za-z][A-Za-z0-9 .'-]+)",
+                r"\b(?:moved|move)\s+(?:back\s+)?to\s+([A-Za-z][A-Za-z0-9 .'-]+)",
+            )
+            for idx, line in enumerate(lines):
+                for pattern in patterns:
+                    location_match = re.search(pattern, line, re.IGNORECASE)
+                    if not location_match:
+                        continue
+                    rows.append((idx, location_match.group(1).strip().rstrip(".!?"), line.lower()))
+                    break
+            return rows
+
+        observation_lines = [line for line in context_lines if line.lower().startswith("observation:")]
+        return _extract_location_rows(observation_lines) or _extract_location_rows(context_lines)
+
+    def _location_anchor_from_phrase(phrase: str) -> tuple[str, bool] | None:
+        normalized = phrase.strip().rstrip(".!?")
+        if not normalized:
+            return None
+        location_match = re.search(r"\b(?:back to|to|in)\s+([a-z][a-z0-9 .'-]+)$", normalized)
+        if location_match:
+            return location_match.group(1).strip(), "back to" in normalized or "again" in normalized
+        return normalized, "back to" in normalized or "again" in normalized
+
+    location_rows = _ordered_location_rows()
+
+    if question_lower.startswith("where did i live before "):
+        target_match = re.search(r"where did i live before\s+(.+?)\??$", question_lower)
+        if target_match and location_rows:
+            anchor = _location_anchor_from_phrase(target_match.group(1))
+            if anchor:
+                target, prefer_last = anchor
+                target_positions = [pos for pos, (_, location, _) in enumerate(location_rows) if location.lower() == target]
+                if target_positions:
+                    anchor_position = max(target_positions) if prefer_last else min(target_positions)
+                    for _, location, _ in reversed(location_rows[:anchor_position]):
+                        if location.lower() != target:
+                            return location
+
+    if question_lower.startswith("where did i live after "):
+        target_match = re.search(r"where did i live after\s+(.+?)\??$", question_lower)
+        if target_match and location_rows:
+            anchor = _location_anchor_from_phrase(target_match.group(1))
+            if anchor:
+                target, prefer_last = anchor
+                target_positions = [pos for pos, (_, location, _) in enumerate(location_rows) if location.lower() == target]
+                if target_positions:
+                    anchor_position = max(target_positions) if prefer_last else min(target_positions)
+                    for _, location, _ in location_rows[anchor_position + 1:]:
+                        if location.lower() != target:
+                            return location
 
     if question_lower.startswith("did "):
         did_match = re.match(r"did\s+([a-z][a-z'-]*)\s+(.+?)\??$", question_lower)
@@ -1487,13 +1584,15 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     question_lower = question.lower()
     cleaned_lower = cleaned.lower()
     preference_question = _looks_like_preference_guidance_question(question)
+    current_state_question = looks_like_current_state_question(question)
     duration_or_count_pattern = re.compile(
         r"^(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|few)\s+"
         r"(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?)$",
         re.IGNORECASE,
     )
     total_count_pattern = re.compile(
-        r"^\d+(?:\.\d+)?(?:\s+(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?|meals?))?$",
+        r"^(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)"
+        r"(?:\s+(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?|meals?))?$",
         re.IGNORECASE,
     )
     compound_duration_pattern = re.compile(
@@ -1501,6 +1600,8 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         re.IGNORECASE,
     )
     currency_pattern = re.compile(r"^\$\d+(?:,\d{3})*(?:\.\d+)?$")
+    percentage_pattern = re.compile(r"^\d+(?:\.\d+)?%$")
+    time_pattern = re.compile(r"^\d{1,2}(?::\d{2})?\s*(?:am|pm)$", re.IGNORECASE)
     relative_temporal_markers = (
         "yesterday",
         "today",
@@ -1559,6 +1660,12 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     currency_answer_candidate = _first_answer_candidate_matching(
         lambda candidate: bool(currency_pattern.fullmatch(candidate))
     )
+    percentage_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(percentage_pattern.fullmatch(candidate))
+    )
+    time_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(time_pattern.fullmatch(candidate))
+    )
     if (
         answer_candidate.lower() == "unknown"
         and cleaned_lower
@@ -1585,6 +1692,37 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         and not any(token in cleaned_lower for token in ("cake", "lemon", "poppyseed", "cookie", "dessert", "bake"))
     ):
         return answer_candidate
+    if (
+        current_state_question
+        and answer_candidate
+        and cleaned_lower
+        and cleaned_lower != answer_candidate.lower()
+    ):
+        return answer_candidate
+    if (
+        question_lower.startswith(
+            (
+                "where did i live in ",
+                "where was i living in ",
+                "where did i live on ",
+                "where was i living on ",
+            )
+        )
+        and answer_candidate
+        and cleaned_lower != answer_candidate.lower()
+        and len(answer_candidate.split()) <= 4
+    ):
+        return answer_candidate
+    if (
+        answer_candidate
+        and cleaned_lower
+        and cleaned_lower != answer_candidate.lower()
+        and question_lower.startswith("what is ")
+        and len(cleaned.split()) <= 6
+    ):
+        candidate_tail_match = re.search(r"\bis\s+(.+)$", answer_candidate, re.IGNORECASE)
+        if candidate_tail_match and candidate_tail_match.group(1).strip().lower().rstrip(".!?") == cleaned_lower:
+            return cleaned
     if (
         yes_no_answer_candidate
         and cleaned.lower() != yes_no_answer_candidate.lower()
@@ -1616,6 +1754,12 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     ):
         return numeric_answer_candidate
     if (
+        numeric_answer_candidate
+        and cleaned_lower != numeric_answer_candidate.lower()
+        and question_lower.startswith(("what is the average ", "how much more ", "how many minutes did i exceed", "how many years older"))
+    ):
+        return numeric_answer_candidate
+    if (
         total_count_answer_candidate
         and cleaned_lower != total_count_answer_candidate.lower()
         and question_lower.startswith("what is the total number of")
@@ -1632,9 +1776,21 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if (
         duration_count_answer_candidate
         and cleaned_lower != duration_count_answer_candidate.lower()
-        and question_lower.startswith(("how much time", "how long", "how many"))
+        and question_lower.startswith(("how much time", "how long", "how many", "how much faster"))
     ):
         return duration_count_answer_candidate
+    if (
+        time_answer_candidate
+        and cleaned_lower != time_answer_candidate.lower()
+        and question_lower.startswith("what time")
+    ):
+        return time_answer_candidate
+    if (
+        percentage_answer_candidate
+        and cleaned_lower != percentage_answer_candidate.lower()
+        and question_lower.startswith("what percentage")
+    ):
+        return percentage_answer_candidate
     if (
         numeric_answer_candidate
         and cleaned_lower != numeric_answer_candidate.lower()

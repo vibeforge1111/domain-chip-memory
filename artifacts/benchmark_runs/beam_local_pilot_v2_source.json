@@ -1,0 +1,199 @@
+[
+  {
+    "sample_id": "beam-local-pilot-1",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-1-session-1",
+        "timestamp": "2025-01-05T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-1-s1-t1",
+            "speaker": "user",
+            "text": "I used to live in Austin."
+          },
+          {
+            "turn_id": "beam-local-pilot-1-s1-t2",
+            "speaker": "assistant",
+            "text": "Noted."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-1-session-2",
+        "timestamp": "2025-06-14T10:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-1-s2-t1",
+            "speaker": "user",
+            "text": "My favorite writing spot is Alserkal Avenue."
+          },
+          {
+            "turn_id": "beam-local-pilot-1-s2-t2",
+            "speaker": "assistant",
+            "text": "Got it."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-1-session-3",
+        "timestamp": "2026-02-18T08:30:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-1-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          },
+          {
+            "turn_id": "beam-local-pilot-1-s3-t2",
+            "speaker": "user",
+            "text": "I prefer espresso."
+          },
+          {
+            "turn_id": "beam-local-pilot-1-s3-t3",
+            "speaker": "assistant",
+            "text": "Understood."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-1-q-1",
+        "question": "What is my favorite writing spot?",
+        "answer": "Alserkal Avenue",
+        "category": "episodic_memory",
+        "evidence_session_ids": [
+          "beam-local-pilot-1-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-1-s2-t1"
+        ],
+        "question_date": "2026-03-01"
+      },
+      {
+        "question_id": "beam-local-pilot-1-q-2",
+        "question": "What do I prefer now?",
+        "answer": "espresso",
+        "category": "current_state",
+        "evidence_session_ids": [
+          "beam-local-pilot-1-session-1",
+          "beam-local-pilot-1-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-1-s1-t1",
+          "beam-local-pilot-1-s3-t2"
+        ],
+        "question_date": "2026-03-01"
+      },
+      {
+        "question_id": "beam-local-pilot-1-q-3",
+        "question": "Where do I live now?",
+        "answer": "Dubai",
+        "category": "current_state",
+        "evidence_session_ids": [
+          "beam-local-pilot-1-session-1",
+          "beam-local-pilot-1-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-1-s1-t1",
+          "beam-local-pilot-1-s3-t1"
+        ],
+        "question_date": "2026-03-01"
+      },
+      {
+        "question_id": "beam-local-pilot-1-q-4",
+        "question": "What hospital do I use now?",
+        "answer": "Information provided is not enough",
+        "category": "abstention",
+        "evidence_session_ids": [],
+        "evidence_turn_ids": [],
+        "should_abstain": true
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-2",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "supersession_and_temporal_disambiguation"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-2-session-1",
+        "timestamp": "2025-01-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-2-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Austin then."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-2-session-2",
+        "timestamp": "2025-03-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-2-s2-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-2-session-3",
+        "timestamp": "2025-05-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-2-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Abu Dhabi."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-2-q-1",
+        "question": "Where do I live now?",
+        "answer": "Abu Dhabi",
+        "category": "current_state",
+        "evidence_session_ids": [
+          "beam-local-pilot-2-session-1",
+          "beam-local-pilot-2-session-2",
+          "beam-local-pilot-2-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-2-s1-t1",
+          "beam-local-pilot-2-s2-t1",
+          "beam-local-pilot-2-s3-t1"
+        ],
+        "question_date": "2025-05-02"
+      },
+      {
+        "question_id": "beam-local-pilot-2-q-2",
+        "question": "Where did I live before Abu Dhabi?",
+        "answer": "Dubai",
+        "category": "temporal_disambiguation",
+        "evidence_session_ids": [
+          "beam-local-pilot-2-session-2",
+          "beam-local-pilot-2-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-2-s2-t1",
+          "beam-local-pilot-2-s3-t1"
+        ],
+        "question_date": "2025-05-02"
+      }
+    ]
+  }
+]

@@ -288,6 +288,92 @@ class GoodAILTMBenchmarkAdapter:
         )
 
 
+class BEAMAdapter:
+    benchmark_name = "BEAM"
+
+    @classmethod
+    def normalize_instance(cls, instance: Mapping[str, Any]) -> NormalizedBenchmarkSample:
+        raw_sessions = instance.get("sessions")
+        sessions: list[NormalizedSession] = []
+
+        if isinstance(raw_sessions, list):
+            for session_index, raw_session in enumerate(raw_sessions):
+                session_id = str(raw_session.get("session_id", f"session-{session_index + 1}"))
+                turns: list[NormalizedTurn] = []
+                for turn_index, raw_turn in enumerate(raw_session.get("turns", [])):
+                    turns.append(
+                        NormalizedTurn(
+                            turn_id=str(raw_turn.get("turn_id", f"{session_id}:turn-{turn_index + 1}")),
+                            speaker=str(raw_turn.get("speaker", "unknown")),
+                            text=str(raw_turn.get("text", "")),
+                            timestamp=str(raw_turn["timestamp"]) if raw_turn.get("timestamp") is not None else None,
+                            metadata=dict(raw_turn.get("metadata", {})),
+                        )
+                    )
+                sessions.append(
+                    NormalizedSession(
+                        session_id=session_id,
+                        turns=turns,
+                        timestamp=str(raw_session["timestamp"]) if raw_session.get("timestamp") is not None else None,
+                        metadata={
+                            "source_format": "beam_local_slice_session",
+                            **dict(raw_session.get("metadata", {})),
+                        },
+                    )
+                )
+        else:
+            turns = [
+                NormalizedTurn(
+                    turn_id=str(raw_turn.get("turn_id", f"session-1:turn-{index + 1}")),
+                    speaker=str(raw_turn.get("speaker", "unknown")),
+                    text=str(raw_turn.get("text", "")),
+                    timestamp=str(raw_turn["timestamp"]) if raw_turn.get("timestamp") is not None else None,
+                    metadata=dict(raw_turn.get("metadata", {})),
+                )
+                for index, raw_turn in enumerate(instance.get("conversation", []))
+            ]
+            sessions = [
+                NormalizedSession(
+                    session_id="session-1",
+                    turns=turns,
+                    metadata={"source_format": "beam_local_slice_session"},
+                )
+            ]
+
+        questions: list[NormalizedQuestion] = []
+        for index, raw_question in enumerate(instance.get("questions", [])):
+            questions.append(
+                NormalizedQuestion(
+                    question_id=str(raw_question.get("question_id", f"{instance.get('sample_id', 'beam-sample')}:q-{index + 1}")),
+                    question=str(raw_question.get("question", "")),
+                    category=str(raw_question.get("category", "unknown")),
+                    expected_answers=_normalize_expected_answers(
+                        raw_question.get("answer", raw_question.get("expected_answers"))
+                    ),
+                    evidence_session_ids=[str(item) for item in raw_question.get("evidence_session_ids", [])],
+                    evidence_turn_ids=[str(item) for item in raw_question.get("evidence_turn_ids", [])],
+                    question_date=str(raw_question["question_date"]) if raw_question.get("question_date") is not None else None,
+                    should_abstain=bool(raw_question.get("should_abstain", False)),
+                    metadata={
+                        "source_format": "beam_local_slice_question",
+                        **dict(raw_question.get("metadata", {})),
+                    },
+                )
+            )
+
+        return NormalizedBenchmarkSample(
+            benchmark_name=cls.benchmark_name,
+            sample_id=str(instance.get("sample_id", "beam-sample")),
+            sessions=sessions,
+            questions=questions,
+            metadata={
+                "source_format": "beam_local_slice",
+                "slice_status": str(instance.get("slice_status", "paper_pinned_local_slice")),
+                **dict(instance.get("metadata", {})),
+            },
+        )
+
+
 class ConvoMemShadowAdapter:
     benchmark_name = "ConvoMem"
 
@@ -348,6 +434,11 @@ def build_adapter_contract_summary() -> JsonDict:
                     "GoodAILTMBenchmarkAdapter.normalize_definition",
                 ],
                 "source_shape": "benchmark harness config plus generated test definition",
+            },
+            {
+                "benchmark_name": BEAMAdapter.benchmark_name,
+                "entrypoint": "BEAMAdapter.normalize_instance",
+                "source_shape": "paper-pinned local BEAM slice with sessions or flat conversation plus scoreable questions",
             },
         ],
         "shadow_benchmark_adapters": [

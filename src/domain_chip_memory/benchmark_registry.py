@@ -76,8 +76,8 @@ PUBLIC_TARGETS = [
         win_condition="Reproduce the benchmark definition faithfully once code or data access is pinned, then beat the strongest reported baseline on the chosen slice.",
         status="paper_only",
         source_url="https://arxiv.org/abs/2510.27246",
-        notes="High-value frontier benchmark for higher-context and million-token-scale memory pressure. Current source is the paper; implementation surface still needs pinning.",
-        next_action="Track public code or dataset release, then lock the benchmark adapter and scorecard contract.",
+        notes="High-value frontier benchmark for higher-context and million-token-scale memory pressure. Current source is the paper; the repo now has a paper-pinned local pilot slice, but the official implementation surface still needs pinning.",
+        next_action="Maintain the paper-pinned local pilot lane while tracking public code or dataset release for full reproduction.",
     ),
 ]
 

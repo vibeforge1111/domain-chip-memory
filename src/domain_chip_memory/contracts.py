@@ -1,10 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 
 JsonDict = dict[str, Any]
+AnswerCandidateType = Literal[
+    "generic",
+    "exact_numeric",
+    "currency",
+    "date",
+    "location",
+    "preference",
+    "current_state",
+    "abstain",
+]
 
 
 @dataclass(frozen=True)
@@ -77,6 +87,17 @@ class NormalizedBenchmarkConfig:
     dataset_family_names: list[str]
     memory_span_tokens: int | None = None
     dataset_examples: int | None = None
+    metadata: JsonDict = field(default_factory=dict)
+
+    def to_dict(self) -> JsonDict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class AnswerCandidate:
+    text: str
+    candidate_type: AnswerCandidateType = "generic"
+    source: str = "unknown"
     metadata: JsonDict = field(default_factory=dict)
 
     def to_dict(self) -> JsonDict:

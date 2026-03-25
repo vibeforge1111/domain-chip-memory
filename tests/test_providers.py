@@ -81,6 +81,43 @@ def test_openai_provider_uses_env_model_and_chat_completions(monkeypatch):
     assert captured["payload"]["messages"][1]["content"].startswith("Benchmark: LongMemEval")
 
 
+def test_baseline_prompt_packet_to_dict_includes_answer_candidate_metadata():
+    from domain_chip_memory.contracts import AnswerCandidate
+
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="Where do I live now?",
+        assembled_context="current_state_memory:\ncurrent_state: I live in Dubai\nanswer_candidate: Dubai",
+        retrieved_context_items=[
+            RetrievedContextItem(
+                session_id="s2",
+                turn_ids=["s2:t1"],
+                score=1.0,
+                strategy="current_state_memory",
+                text="current_state: I live in Dubai",
+                metadata={"predicate": "location", "subject": "user"},
+            )
+        ],
+        metadata={"primary_answer_candidate_type": "current_state"},
+        answer_candidates=[
+            AnswerCandidate(
+                text="Dubai",
+                candidate_type="current_state",
+                source="current_state_memory",
+                metadata={"question_id": "q-1"},
+            )
+        ],
+    )
+
+    payload = packet.to_dict()
+
+    assert payload["answer_candidates"][0]["text"] == "Dubai"
+    assert payload["answer_candidates"][0]["candidate_type"] == "current_state"
+
+
 def test_expand_answer_prefers_exact_answer_candidate_over_belief_paraphrase():
     context = "\n".join(
         [
@@ -155,6 +192,198 @@ def test_expand_answer_prefers_short_where_answer_candidate_over_unknown():
     )
 
     assert rescued == "Denver"
+
+
+def test_expand_answer_prefers_current_state_candidate_over_stale_answer():
+    context = "\n".join(
+        [
+            "evidence_memory:",
+            "evidence: I do live in Dubai",
+            "current_state_memory:",
+            "current_state: I live in Dubai",
+            "answer_candidate: Dubai",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where do I live now?",
+        "London",
+        context,
+    )
+
+    assert rescued == "Dubai"
+
+
+def test_heuristic_provider_extracts_multiword_favorite_slot_value():
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="observational_temporal_memory",
+        sample_id="beam-local-pilot-1",
+        question_id="beam-local-pilot-1-q-1",
+        question="What is my favorite writing spot?",
+        assembled_context="observation: My favorite writing spot is Alserkal Avenue.",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = get_provider("heuristic_v1").generate_answer(packet)
+
+    assert response.answer == "Alserkal Avenue"
+
+
+def test_expand_answer_preserves_short_slot_value_over_full_sentence_answer_candidate():
+    context = "\n".join(
+        [
+            "observation: My favorite writing spot is Alserkal Avenue.",
+            "answer_candidate: My favorite writing spot is Alserkal Avenue",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "What is my favorite writing spot?",
+        "Alserkal Avenue",
+        context,
+    )
+
+    assert rescued == "Alserkal Avenue"
+
+
+def test_expand_answer_recovers_previous_location_for_before_question():
+    context = "\n".join(
+        [
+            "observation: I live in Dubai",
+            "observation: I live in Abu Dhabi",
+            "evidence: I do live in Abu Dhabi",
+            "evidence: I do live in Dubai",
+            "evidence: I lived in Austin then",
+            "answer_candidate: I do live in Abu Dhabi",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where did I live before Abu Dhabi?",
+        "I do live in Abu Dhabi",
+        context,
+    )
+
+    assert rescued == "Dubai"
+
+
+def test_expand_answer_recovers_previous_location_before_moving_back_to_city():
+    context = "\n".join(
+        [
+            "observation: I lived in Austin",
+            "observation: I live in Dubai",
+            "observation: I live in Abu Dhabi",
+            "observation: I moved back to Dubai",
+            "answer_candidate: I do live in Dubai",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where did I live before moving back to Dubai?",
+        "I do live in Dubai",
+        context,
+    )
+
+    assert rescued == "Abu Dhabi"
+
+
+def test_expand_answer_recovers_next_location_after_city():
+    context = "\n".join(
+        [
+            "observation: I lived in Austin",
+            "observation: I live in Dubai",
+            "observation: I live in Abu Dhabi",
+            "observation: I moved back to Dubai",
+            "answer_candidate: I do live in Abu Dhabi",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where did I live after Austin?",
+        "I do live in Abu Dhabi",
+        context,
+    )
+
+    assert rescued == "Dubai"
+
+
+def test_expand_answer_prefers_short_answer_candidate_for_dated_location_question():
+    context = "\n".join(
+        [
+            "observation: I live in Austin",
+            "observation: I live in Dubai",
+            "observation: I live in Abu Dhabi",
+            "observation: I live in Dubai",
+            "answer_candidate: Abu Dhabi",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where did I live in July 2025?",
+        "Dubai",
+        context,
+    )
+
+    assert rescued == "Abu Dhabi"
+
+
+def test_expand_answer_prefers_short_answer_candidate_for_day_indexed_location_question():
+    context = "\n".join(
+        [
+            "observation: I live in Abu Dhabi",
+            "observation: I live in Sharjah",
+            "observation: I live in Dubai",
+            "answer_candidate: Sharjah",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where did I live on 10 September 2025?",
+        "Dubai",
+        context,
+    )
+
+    assert rescued == "Sharjah"
+
+
+def test_expand_answer_recovers_next_city_in_ordered_visit_sequence():
+    context = "\n".join(
+        [
+            "observation: On 2025-01-10T09:00:00Z, I said: I visited Kyoto in January.",
+            "observation: On 2025-03-15T09:00:00Z, I said: I visited Seoul in March.",
+            "observation: On 2025-06-20T09:00:00Z, I said: I visited Lisbon in June.",
+            "answer_candidate: I visited Kyoto in January",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Which city did I visit after Kyoto?",
+        "I visited Kyoto in January",
+        context,
+    )
+
+    assert rescued == "Seoul"
+
+
+def test_expand_answer_recovers_previous_trip_in_ordered_booking_sequence():
+    context = "\n".join(
+        [
+            "observation: On 2025-01-12T09:00:00Z, I said: I booked Tokyo for January.",
+            "observation: On 2025-04-10T09:00:00Z, I said: I booked Rome for April.",
+            "observation: On 2025-08-08T09:00:00Z, I said: I booked Nairobi for August.",
+            "answer_candidate: I booked Nairobi for August",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Which trip came before Nairobi?",
+        "I booked Nairobi for August",
+        context,
+    )
+
+    assert rescued == "Rome"
 
 
 def test_expand_answer_prefers_short_currency_answer_candidate_for_how_much_question():
@@ -989,6 +1218,98 @@ def test_minimax_provider_rescues_numeric_count_from_context(monkeypatch):
     response = provider.generate_answer(packet)
 
     assert response.answer == "12"
+
+
+def test_minimax_provider_prefers_percentage_answer_candidate_for_operator_question(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "women hold several leadership roles"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 5, "total_tokens": 17},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What percentage of leadership positions do women hold in the my company?",
+        assembled_context=(
+            "aggregate_memory:\n"
+            "aggregate: women occupy 20 of the leadership positions in our company\n"
+            "aggregate: we have a total of 100 leadership positions across the company\n"
+            "answer_candidate: 20%"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "20%"
+
+
+def test_minimax_provider_prefers_time_answer_candidate_for_what_time_question(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Recruiting agencies are useful because they save you time"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 8, "total_tokens": 20},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+    packet = BaselinePromptPacket(
+        benchmark_name="LongMemEval",
+        baseline_name="observational_temporal_memory",
+        sample_id="sample-1",
+        question_id="q-1",
+        question="What time did I reach the clinic on Monday?",
+        assembled_context=(
+            "aggregate_memory:\n"
+            "aggregate: I left home at 7 AM on Monday for my doctor's appointment\n"
+            "aggregate: it took me two hours to get to the clinic last time\n"
+            "answer_candidate: 9:00 AM"
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "9:00 AM"
+
+
+def test_expand_answer_prefers_duration_answer_candidate_for_how_many_days_question():
+    rescued = providers._expand_answer_from_context(
+        "How many days a week do I attend fitness classes?",
+        "3",
+        "answer_candidate: 4 days",
+    )
+
+    assert rescued == "4 days"
+
+
+def test_expand_answer_prefers_word_count_answer_candidate_for_how_many_question():
+    rescued = providers._expand_answer_from_context(
+        "How many dinner parties have I attended in the past month?",
+        "2023",
+        (
+            "evidence_memory:\n"
+            "evidence: I attended Sarah's place last week, Mike's place two weeks ago, and Alex's place yesterday.\n"
+            "answer_candidate: three"
+        ),
+    )
+
+    assert rescued == "three"
 
 
 def test_minimax_provider_rescues_valentines_day_date(monkeypatch):

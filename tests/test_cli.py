@@ -129,6 +129,62 @@ def test_run_longmemeval_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     assert payload["predictions"][0]["predicted_answer"].lower() == "dubai"
 
 
+def test_run_beam_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "beam.json"
+    output_file = tmp_path / "artifacts" / "beam_scorecard.json"
+    data_file.write_text(
+        json.dumps(
+            [
+                {
+                    "sample_id": "beam-1",
+                    "sessions": [
+                        {
+                            "session_id": "beam-session-1",
+                            "turns": [
+                                {"turn_id": "t1", "speaker": "user", "text": "I live in Dubai."},
+                                {"turn_id": "t2", "speaker": "assistant", "text": "Noted."},
+                            ],
+                        }
+                    ],
+                    "questions": [
+                        {
+                            "question_id": "beam-1-q-1",
+                            "question": "Where do I live now?",
+                            "answer": "Dubai",
+                            "category": "episodic_memory",
+                            "evidence_session_ids": ["beam-session-1"],
+                            "evidence_turn_ids": ["t1"],
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-baseline",
+            str(data_file),
+            "--baseline",
+            "observational_temporal_memory",
+            "--provider",
+            "heuristic_v1",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["overall"]["total"] == 1
+    assert payload["run_manifest"]["benchmark_name"] == "BEAM"
+    assert payload["benchmark_slices"]["temporal_scope"][0]["label"] == "undated"
+
+
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "locomo.json"
     output_file = tmp_path / "artifacts" / "locomo_scorecard.json"

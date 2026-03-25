@@ -1,0 +1,113 @@
+# BEAM Local Pilot Slice 2026-03-25
+
+Status: active local pilot
+
+## Purpose
+
+This file pins the first in-repo BEAM pilot slice so the benchmark stops being only an architecture memo.
+
+It is intentionally narrow:
+
+- one local pilot sample
+- shaped to the BEAM contract already added in code
+- explicitly marked as a paper-pinned local slice, not official BEAM data
+
+## Truthfulness rule
+
+This slice is not the public BEAM benchmark corpus.
+
+It exists to do three honest jobs now:
+
+1. verify that the BEAM adapter, loader, CLI, and scorecard path work end to end
+2. force the repo to track BEAM-style pressure slices explicitly
+3. give the current lead system a small deterministic BEAM-oriented regression lane while the official implementation surface remains unpinned
+
+## Source-of-truth files
+
+- source slice: `artifacts/benchmark_runs/beam_local_pilot_v1_source.json`
+- first scorecard target: `artifacts/benchmark_runs/beam_local_pilot_observational_heuristic_v1.json`
+- expanded slice: `artifacts/benchmark_runs/beam_local_pilot_v2_source.json`
+- expanded scorecard target: `artifacts/benchmark_runs/beam_local_pilot_v2_observational_heuristic_v1.json`
+- third slice: `artifacts/benchmark_runs/beam_local_pilot_v3_source.json`
+- third-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v3_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v3_dual_store_heuristic_v2.json`
+- fourth slice: `artifacts/benchmark_runs/beam_local_pilot_v4_source.json`
+- fourth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v4_observational_heuristic_v2.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v4_dual_store_heuristic_v2.json`
+- fifth slice: `artifacts/benchmark_runs/beam_local_pilot_v5_source.json`
+- fifth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v5_observational_heuristic_v3.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v5_dual_store_heuristic_v4.json`
+- sixth slice: `artifacts/benchmark_runs/beam_local_pilot_v6_source.json`
+- sixth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v6_observational_heuristic_v3.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v6_dual_store_heuristic_v3.json`
+
+## Pilot coverage
+
+The first pilot covers:
+
+- `single_session` evidence
+- `multi_session` evidence
+- `dated` questions
+- `undated` questions
+- `answer` questions
+- `should_abstain` questions
+- current-state pressure
+
+The expanded pilot adds:
+
+- explicit supersession pressure
+- temporal disambiguation over changing locations
+- a direct `before X` query over multi-session state transitions
+
+The third pilot adds:
+
+- dated event ordering
+- `before` and `after` queries over ordered travel events
+- a direct comparison lane for observational memory versus the dual-store hybrid
+
+The fourth pilot adds:
+
+- repeated-value state reentry (`Austin -> Dubai -> Abu Dhabi -> Dubai`)
+- current-state recovery after returning to a previous value
+- `before moving back to X` and `after X` queries over ordered location transitions
+
+The fifth pilot adds:
+
+- month-indexed state recall over the same changing timeline
+- `Where did I live in April/July/October 2025?` pressure
+- explicit as-of-date state selection rather than latest-state or nearest-neighbor shortcuts
+
+The sixth pilot adds:
+
+- day-indexed state recall with conflicting updates inside the same month
+- `Where did I live on 10/25 September 2025?` pressure
+- exact-date selection instead of month-bucket selection
+
+## Command
+
+```powershell
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v1_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v2_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v2_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v3_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v3_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v3_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v3_dual_store_heuristic_v2.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v4_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v4_observational_heuristic_v2.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v4_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v4_dual_store_heuristic_v2.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v5_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v5_observational_heuristic_v3.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v5_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v5_dual_store_heuristic_v4.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v6_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v6_observational_heuristic_v3.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v6_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v6_dual_store_heuristic_v3.json
+```
+
+## Promotion rule
+
+Do not describe this as BEAM reproduction.
+
+It is only the first local pilot lane until one of these becomes true:
+
+- official BEAM code is pinned
+- official BEAM data access is pinned
+- a paper-faithful public harness is pinned with evidence

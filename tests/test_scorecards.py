@@ -44,6 +44,7 @@ def test_scorecard_contract_and_canonical_config_exist():
     configs = get_canonical_configs()
 
     assert summary["scorecard_fields"]
+    assert "benchmark_slices" in summary["scorecard_fields"]
     assert configs
     assert configs[0]["config_id"] == "benchmark-v3-32k.yml"
 
@@ -96,3 +97,59 @@ def test_build_scorecard_flags_known_benchmark_issues():
     assert scorecard["audited_by_category"][1]["excluded"] == 1
     assert scorecard["predictions"][0]["metadata"]["known_issue"]["classification"] == "benchmark_inconsistency"
     assert "known_issue" not in scorecard["predictions"][1]["metadata"]
+
+
+def test_build_scorecard_emits_beam_benchmark_slices():
+    scorecard = build_scorecard(
+        {
+            "run_id": "beam-run",
+            "benchmark_name": "BEAM",
+            "baseline_name": "observational_temporal_memory",
+            "sample_ids": ["beam-1"],
+            "question_ids": ["beam-1-q-1", "beam-1-q-2"],
+            "question_count": 2,
+            "metadata": {},
+        },
+        [
+            BaselinePrediction(
+                benchmark_name="BEAM",
+                baseline_name="observational_temporal_memory",
+                sample_id="beam-1",
+                question_id="beam-1-q-1",
+                category="episodic_memory",
+                predicted_answer="Dubai",
+                expected_answers=["Dubai"],
+                is_correct=True,
+                metadata={
+                    "provider_name": "heuristic_v1",
+                    "should_abstain": False,
+                    "evidence_scope": "single_session",
+                    "temporal_scope": "dated",
+                },
+            ),
+            BaselinePrediction(
+                benchmark_name="BEAM",
+                baseline_name="observational_temporal_memory",
+                sample_id="beam-1",
+                question_id="beam-1-q-2",
+                category="abstention",
+                predicted_answer="unknown",
+                expected_answers=["Information provided is not enough"],
+                is_correct=False,
+                metadata={
+                    "provider_name": "heuristic_v1",
+                    "should_abstain": True,
+                    "evidence_scope": "multi_session",
+                    "temporal_scope": "undated",
+                },
+            ),
+        ],
+    )
+
+    assert scorecard["benchmark_slices"]["should_abstain"][0]["label"] == "abstain"
+    assert scorecard["benchmark_slices"]["should_abstain"][1]["label"] == "answer"
+    assert scorecard["benchmark_slices"]["evidence_scope"][0]["label"] == "multi_session"
+    assert scorecard["benchmark_slices"]["evidence_scope"][1]["label"] == "single_session"
+    assert scorecard["benchmark_slices"]["temporal_scope"][0]["label"] == "dated"
+    assert scorecard["benchmark_slices"]["temporal_scope"][1]["label"] == "undated"
+    assert scorecard["benchmark_slices"]["should_abstain"][1]["accuracy"] == 1.0

@@ -105,37 +105,24 @@ The repo now has the standard Spark domain-chip scaffold:
 It now contains a benchmark substrate, baseline packet builders, local deterministic execution, file loaders, and an env-gated OpenAI provider path for bounded real benchmark runs.
 It does **not** yet contain official benchmark scoring or a production-grade memory engine.
 
-## Deliverables in this folder
+## Docs
 
-- PRD: `docs/PRD.md`
-- architecture: `docs/ARCHITECTURE.md`
+Start here instead of scanning the repo manually:
+
+- docs index: `docs/README.md`
+- research index: `research/README.md`
+- research-to-build map: `docs/RESEARCH_TO_BUILD_MAP_2026-03-25.md`
+
+Most important current execution docs:
+
 - implementation plan: `docs/IMPLEMENTATION_PLAN.md`
 - memory architecture evolution plan: `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
 - unified memory system program: `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
-- benchmark strategy: `docs/BENCHMARK_STRATEGY.md`
-- BEAM readiness program: `docs/BEAM_READINESS_PROGRAM_2026-03-24.md`
-- memory mutation matrix: `docs/MEMORY_MUTATION_MATRIX_2026-03-24.md`
-- research sourcing doctrine: `docs/RESEARCH_SOURCING_DOCTRINE_2026-03-24.md`
-- benchmark autoloop program: `docs/BENCHMARK_AUTOLOOP_PROGRAM.md`
-- deep research base: `docs/AI_MEMORY_RESEARCH_BASE_2026-03-22.md`
-- first-version research lock: `docs/FIRST_VERSION_RESEARCH_LOCK.md`
-- combination search program: `docs/COMBINATION_SEARCH_PROGRAM.md`
-- frontier systems comparative analysis: `docs/FRONTIER_MEMORY_SYSTEMS_COMPARATIVE_ANALYSIS_2026-03-22.md`
-- execution program and PRD gap: `docs/EXECUTION_PROGRAM_AND_PRD_GAP_2026-03-22.md`
-- memory variation map and three builds: `docs/MEMORY_VARIATION_MAP_AND_THREE_BUILDS_2026-03-23.md`
-- MiniMax operational notes: `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
-- session log for March 23: `docs/SESSION_LOG_2026-03-23.md`
-- session log for March 24: `docs/SESSION_LOG_2026-03-24.md`
-- session log for March 25: `docs/SESSION_LOG_2026-03-25.md`
 - tomorrow start checklist: `docs/TOMORROW_START_CHECKLIST_2026-03-26.md`
-- benchmark substrate contracts: `docs/BENCHMARK_SUBSTRATE_CONTRACTS.md`
-- people and labs map: `research/research_grounded/ARXIV_PEOPLE_AND_LABS_MAP_2026-03-22.md`
-- autoloop flywheel: `docs/AUTOLOOP_FLYWHEEL.md`
-- attribution plan: `docs/OPEN_SOURCE_ATTRIBUTION_PLAN.md`
+
+Repo structure surfaces:
+
 - benchmark-grounded summary: `research/benchmark_grounded/benchmark_summary.json`
-- research landscape memo: `research/research_grounded/MEMORY_SYSTEMS_LANDSCAPE_2026-03-22.md`
-- refreshed landscape and glossary: `research/research_grounded/MEMORY_SYSTEMS_LANDSCAPE_REFRESH_2026-03-24.md`
-- deep memory research scan: `research/research_grounded/DEEP_MEMORY_RESEARCH_SCAN_2026-03-24.md`
 - schemas: `schemas/`
 - templates: `templates/`
 

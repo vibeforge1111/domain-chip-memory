@@ -3,6 +3,7 @@ from pathlib import Path
 
 from domain_chip_memory.loaders import (
     build_loader_contract_summary,
+    load_beam_json,
     load_goodai_config,
     load_goodai_definitions,
     load_locomo_json,
@@ -78,6 +79,50 @@ def test_locomo_loader(tmp_path: Path):
     samples = load_locomo_json(data_file)
     assert samples[0].benchmark_name == "LoCoMo"
     assert samples[0].questions[0].expected_answers == ["jazz"]
+
+
+def test_beam_loader_and_runner(tmp_path: Path):
+    data_file = tmp_path / "beam.json"
+    data_file.write_text(
+        json.dumps(
+            [
+                {
+                    "sample_id": "beam-1",
+                    "sessions": [
+                        {
+                            "session_id": "beam-session-1",
+                            "turns": [
+                                {"turn_id": "t1", "speaker": "user", "text": "I live in Dubai."},
+                                {"turn_id": "t2", "speaker": "assistant", "text": "Noted."},
+                            ],
+                        }
+                    ],
+                    "questions": [
+                        {
+                            "question_id": "beam-1-q-1",
+                            "question": "Where do I live now?",
+                            "answer": "Dubai",
+                            "category": "episodic_memory",
+                            "evidence_session_ids": ["beam-session-1"],
+                            "evidence_turn_ids": ["t1"],
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    samples = load_beam_json(data_file)
+    scorecard = run_baseline(
+        samples,
+        baseline_name="full_context",
+        provider=get_provider("heuristic_v1"),
+    )
+
+    assert samples[0].benchmark_name == "BEAM"
+    assert scorecard["overall"]["total"] == 1
+    assert scorecard["benchmark_slices"]["evidence_scope"][0]["label"] == "single_session"
 
 
 def test_runner_matches_disjunctive_expected_answers():

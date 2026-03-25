@@ -45,6 +45,21 @@ def _accuracy_row(*, correct: int, total: int, excluded: int = 0) -> dict[str, A
     }
 
 
+def _build_slice_rows(
+    total_by_label: Counter[str],
+    correct_by_label: Counter[str],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for label in sorted(total_by_label):
+        rows.append(
+            {
+                "label": label,
+                **_accuracy_row(correct=correct_by_label[label], total=total_by_label[label]),
+            }
+        )
+    return rows
+
+
 def run_baseline_predictions(
     samples: list[NormalizedBenchmarkSample],
     packets: list[BaselinePromptPacket],
@@ -73,6 +88,9 @@ def run_baseline_predictions(
                 metadata={
                     "responder_name": responder_name,
                     "route": packet.metadata.get("route"),
+                    "should_abstain": question.should_abstain,
+                    "evidence_scope": "multi_session" if len(question.evidence_session_ids) > 1 else "single_session",
+                    "temporal_scope": "dated" if question.question_date else "undated",
                 },
             )
         )
@@ -92,6 +110,12 @@ def build_scorecard(
     audited_by_category_total: Counter[str] = Counter()
     audited_by_category_correct: Counter[str] = Counter()
     audited_by_category_excluded: Counter[str] = Counter()
+    abstain_total: Counter[str] = Counter()
+    abstain_correct: Counter[str] = Counter()
+    evidence_scope_total: Counter[str] = Counter()
+    evidence_scope_correct: Counter[str] = Counter()
+    temporal_scope_total: Counter[str] = Counter()
+    temporal_scope_correct: Counter[str] = Counter()
     overall_correct = 0
     overall_total = len(predictions)
     audited_overall_correct = 0
@@ -104,6 +128,17 @@ def build_scorecard(
             overall_correct += 1
         prediction_dict = prediction.to_dict()
         prediction_dict.setdefault("metadata", {}).pop("known_issue", None)
+        if prediction.benchmark_name == "BEAM":
+            abstain_label = "abstain" if prediction.metadata.get("should_abstain") else "answer"
+            abstain_total[abstain_label] += 1
+            evidence_scope = str(prediction.metadata.get("evidence_scope", "single_session"))
+            evidence_scope_total[evidence_scope] += 1
+            temporal_scope = str(prediction.metadata.get("temporal_scope", "undated"))
+            temporal_scope_total[temporal_scope] += 1
+            if prediction.is_correct:
+                abstain_correct[abstain_label] += 1
+                evidence_scope_correct[evidence_scope] += 1
+                temporal_scope_correct[temporal_scope] += 1
         known_issue = get_known_benchmark_issue(prediction.question_id)
         is_audit_excluded = False
         if known_issue:
@@ -173,6 +208,13 @@ def build_scorecard(
             ],
             "questions": known_issue_rows,
         },
+        "benchmark_slices": {
+            "should_abstain": _build_slice_rows(abstain_total, abstain_correct),
+            "evidence_scope": _build_slice_rows(evidence_scope_total, evidence_scope_correct),
+            "temporal_scope": _build_slice_rows(temporal_scope_total, temporal_scope_correct),
+        }
+        if manifest_dict.get("benchmark_name") == "BEAM"
+        else {},
         "predictions": enriched_predictions,
     }
 
@@ -187,6 +229,7 @@ def build_scorecard_contract_summary() -> dict[str, Any]:
             "by_category",
             "audited_by_category",
             "known_issue_summary",
+            "benchmark_slices",
             "predictions",
         ],
     }

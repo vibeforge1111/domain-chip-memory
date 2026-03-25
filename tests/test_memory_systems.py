@@ -24,6 +24,46 @@ def test_extract_memory_atoms_captures_updated_fact():
     assert "Dubai" in values
 
 
+def test_extract_memory_atoms_captures_lived_in_and_moved_back_location_updates():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-location-reentry",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I lived in Austin."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-03-10T09:00:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I moved to Dubai."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2025-06-01T09:00:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "I moved to Abu Dhabi."}],
+                },
+                {
+                    "session_id": "s4",
+                    "timestamp": "2025-09-15T09:00:00Z",
+                    "turns": [{"turn_id": "s4t1", "speaker": "user", "text": "I moved back to Dubai."}],
+                },
+            ],
+            "questions": [],
+        }
+    )
+
+    observations = build_observation_log(sample)
+    values = [entry.metadata.get("value") for entry in observations if entry.predicate == "location"]
+
+    assert "Austin" in values
+    assert "Abu Dhabi" in values
+    assert values.count("Dubai") == 2
+
+
 def test_temporal_atom_router_prefers_latest_fact():
     samples = demo_samples()
     scorecard = run_baseline(
@@ -79,6 +119,17 @@ def test_observational_memory_manifest_and_packets():
     assert manifest["baseline_name"] == "observational_temporal_memory"
     assert packets
     assert packets[0].metadata["route"] == "observational_temporal_memory"
+
+
+def test_observational_memory_surfaces_typed_current_state_answer_candidate():
+    samples = demo_samples()
+    _, packets = build_observational_temporal_memory_packets(samples[:1], max_observations=4)
+
+    assert packets[0].answer_candidates
+    assert packets[0].answer_candidates[0].text == "Dubai"
+    assert packets[0].answer_candidates[0].candidate_type == "current_state"
+    assert packets[0].metadata["primary_answer_candidate_type"] == "current_state"
+    assert "current_state_memory:" in packets[0].assembled_context
 
 
 def test_observational_memory_surfaces_topical_episode_support_for_locomo():
@@ -175,6 +226,337 @@ def test_dual_store_hybrid_manifest_and_packets():
     assert manifest["baseline_name"] == "dual_store_event_calendar_hybrid"
     assert packets
     assert packets[0].metadata["route"] == "dual_store_event_calendar_hybrid"
+
+
+def test_dual_store_hybrid_handles_questions_without_ranked_events():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-probe-no-events",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-01T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I visited Kyoto in January."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-03-15T09:00:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I visited Seoul in March."}],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "Which city did I visit after Kyoto?",
+                    "answer": "Seoul",
+                    "category": "temporal_disambiguation",
+                    "evidence_session_ids": ["s1", "s2"],
+                    "evidence_turn_ids": ["s1t1", "s2t1"],
+                    "question_date": "2025-03-16",
+                }
+            ],
+        }
+    )
+
+    scorecard = run_baseline(
+        [sample],
+        baseline_name="dual_store_event_calendar_hybrid",
+        provider=get_provider("heuristic_v1"),
+    )
+
+    assert scorecard["overall"]["total"] == 1
+
+
+def test_dual_store_hybrid_prefers_evidence_candidates_for_episodic_and_abstention_questions():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-probe-evidence-first",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I used to live in Austin."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-06-14T10:00:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "My favorite writing spot is Alserkal Avenue."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2026-02-18T08:30:00Z",
+                    "turns": [
+                        {"turn_id": "s3t1", "speaker": "user", "text": "I moved to Dubai."},
+                        {"turn_id": "s3t2", "speaker": "user", "text": "I prefer espresso."},
+                    ],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "What is my favorite writing spot?",
+                    "answer": "Alserkal Avenue",
+                    "category": "episodic_memory",
+                    "evidence_session_ids": ["s2"],
+                    "evidence_turn_ids": ["s2t1"],
+                    "question_date": "2026-03-01",
+                },
+                {
+                    "question_id": "q4",
+                    "question": "What hospital do I use now?",
+                    "answer": "Information provided is not enough",
+                    "category": "abstention",
+                    "evidence_session_ids": [],
+                    "evidence_turn_ids": [],
+                    "should_abstain": True,
+                },
+            ],
+        }
+    )
+
+    _, packets = build_dual_store_event_calendar_hybrid_packets([sample], top_k_events=2)
+    packets_by_question_id = {packet.question_id: packet for packet in packets}
+
+    assert packets_by_question_id["q1"].answer_candidates[0].text == "My favorite writing spot is Alserkal Avenue"
+    assert packets_by_question_id["q4"].answer_candidates[0].text == "unknown"
+
+    scorecard = run_baseline(
+        [sample],
+        baseline_name="dual_store_event_calendar_hybrid",
+        provider=get_provider("heuristic_v1"),
+    )
+    predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+
+    assert predictions["q1"]["predicted_answer"] == "Alserkal Avenue"
+    assert predictions["q1"]["is_correct"] is True
+    assert predictions["q4"]["is_correct"] is True
+
+
+def test_observational_and_dual_store_handle_reentered_location_timeline():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-location-reentry",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I lived in Austin."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-03-10T09:00:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I moved to Dubai."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2025-06-01T09:00:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "I moved to Abu Dhabi."}],
+                },
+                {
+                    "session_id": "s4",
+                    "timestamp": "2025-09-15T09:00:00Z",
+                    "turns": [{"turn_id": "s4t1", "speaker": "user", "text": "I moved back to Dubai."}],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "Where do I live now?",
+                    "answer": "Dubai",
+                    "category": "current_state",
+                    "evidence_session_ids": ["s1", "s2", "s3", "s4"],
+                    "evidence_turn_ids": ["s1t1", "s2t1", "s3t1", "s4t1"],
+                    "question_date": "2025-09-16",
+                },
+                {
+                    "question_id": "q2",
+                    "question": "Where did I live before moving back to Dubai?",
+                    "answer": "Abu Dhabi",
+                    "category": "temporal_disambiguation",
+                    "evidence_session_ids": ["s3", "s4"],
+                    "evidence_turn_ids": ["s3t1", "s4t1"],
+                    "question_date": "2025-09-16",
+                },
+                {
+                    "question_id": "q3",
+                    "question": "Where did I live after Austin?",
+                    "answer": "Dubai",
+                    "category": "temporal_disambiguation",
+                    "evidence_session_ids": ["s1", "s2"],
+                    "evidence_turn_ids": ["s1t1", "s2t1"],
+                    "question_date": "2025-09-16",
+                },
+            ],
+        }
+    )
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+        )
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+
+        assert predictions["q1"]["predicted_answer"] == "Dubai"
+        assert predictions["q1"]["is_correct"] is True
+        assert predictions["q2"]["predicted_answer"] == "Abu Dhabi"
+        assert predictions["q2"]["is_correct"] is True
+        assert predictions["q3"]["predicted_answer"] == "Dubai"
+        assert predictions["q3"]["is_correct"] is True
+
+
+def test_observational_and_dual_store_handle_date_indexed_location_recall():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-location-dated-recall",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I lived in Austin."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-03-10T09:00:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I moved to Dubai."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2025-06-01T09:00:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "I moved to Abu Dhabi."}],
+                },
+                {
+                    "session_id": "s4",
+                    "timestamp": "2025-09-15T09:00:00Z",
+                    "turns": [{"turn_id": "s4t1", "speaker": "user", "text": "I moved back to Dubai."}],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "Where did I live in April 2025?",
+                    "answer": "Dubai",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s2"],
+                    "evidence_turn_ids": ["s2t1"],
+                    "question_date": "2025-10-01",
+                },
+                {
+                    "question_id": "q2",
+                    "question": "Where did I live in July 2025?",
+                    "answer": "Abu Dhabi",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s3"],
+                    "evidence_turn_ids": ["s3t1"],
+                    "question_date": "2025-10-01",
+                },
+                {
+                    "question_id": "q3",
+                    "question": "Where did I live in October 2025?",
+                    "answer": "Dubai",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s4"],
+                    "evidence_turn_ids": ["s4t1"],
+                    "question_date": "2025-10-15",
+                },
+            ],
+        }
+    )
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+        )
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+
+        assert predictions["q1"]["predicted_answer"] == "Dubai"
+        assert predictions["q1"]["is_correct"] is True
+        assert predictions["q2"]["predicted_answer"] == "Abu Dhabi"
+        assert predictions["q2"]["is_correct"] is True
+        assert predictions["q3"]["predicted_answer"] == "Dubai"
+        assert predictions["q3"]["is_correct"] is True
+
+
+def test_observational_and_dual_store_handle_day_indexed_location_recall():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-location-day-recall",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-08-20T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I lived in Abu Dhabi."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-09-05T09:00:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I moved to Sharjah."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2025-09-20T09:00:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "I moved to Dubai."}],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "Where did I live on 10 September 2025?",
+                    "answer": "Sharjah",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s2"],
+                    "evidence_turn_ids": ["s2t1"],
+                    "question_date": "2025-09-25",
+                },
+                {
+                    "question_id": "q2",
+                    "question": "Where did I live on 25 September 2025?",
+                    "answer": "Dubai",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s3"],
+                    "evidence_turn_ids": ["s3t1"],
+                    "question_date": "2025-09-26",
+                },
+                {
+                    "question_id": "q3",
+                    "question": "Where did I live on 1 September 2025?",
+                    "answer": "Abu Dhabi",
+                    "category": "temporal",
+                    "evidence_session_ids": ["s1"],
+                    "evidence_turn_ids": ["s1t1"],
+                    "question_date": "2025-09-26",
+                },
+            ],
+        }
+    )
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+        )
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+
+        assert predictions["q1"]["predicted_answer"] == "Sharjah"
+        assert predictions["q1"]["is_correct"] is True
+        assert predictions["q2"]["predicted_answer"] == "Dubai"
+        assert predictions["q2"]["is_correct"] is True
+        assert predictions["q3"]["predicted_answer"] == "Abu Dhabi"
+        assert predictions["q3"]["is_correct"] is True
 
 
 def test_memory_system_contract_summary_exists():
@@ -2072,6 +2454,41 @@ def test_longmemeval_aggregate_candidates_cover_count_and_duration_cases():
         "1c549ce4": "answer_candidate: $140",
         "6c49646a": "answer_candidate: 3000 miles",
         "1192316e": "answer_candidate: an hour and a half",
+    }
+    subset = [sample for sample in samples if sample.questions[0].question_id in keep]
+
+    _, packets = build_observational_temporal_memory_packets(subset, max_observations=4, max_reflections=3)
+
+    for packet in packets:
+        assert keep[packet.question_id].lower() in packet.assembled_context.lower()
+
+
+def test_longmemeval_operator_candidates_cover_201_225_frontier_slice():
+    samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
+    keep = {
+        "0ea62687": "answer_candidate: 2",
+        "ba358f49": "answer_candidate: 33",
+        "60159905": "answer_candidate: three",
+        "ef9cf60a": "answer_candidate: $300",
+        "73d42213": "answer_candidate: 9:00 AM",
+        "67e0d0f2": "answer_candidate: 20",
+        "bb7c3b45": "answer_candidate: $300",
+        "61f8c8f8": "answer_candidate: 10 minutes",
+        "099778bb": "answer_candidate: 20%",
+        "09ba9854": "answer_candidate: $50",
+        "157a136e": "answer_candidate: 43",
+        "c18a7dc8": "answer_candidate: 7",
+        "8cf4d046": "answer_candidate: 3.83",
+        "a346bb18": "answer_candidate: 12",
+        "8e91e7d9": "answer_candidate: 4",
+        "bc149d6b": "answer_candidate: 70 pounds",
+        "d6062bb9": "answer_candidate: 1998",
+        "a3332713": "answer_candidate: $200",
+        "55241a1f": "answer_candidate: 33",
+        "f0e564bc": "answer_candidate: $1300",
+        "078150f1": "answer_candidate: $50",
+        "37f165cf": "answer_candidate: 856",
+        "a08a253f": "answer_candidate: 4 days",
     }
     subset = [sample for sample in samples if sample.questions[0].question_id in keep]
 

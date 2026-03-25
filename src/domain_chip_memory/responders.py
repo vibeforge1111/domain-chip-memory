@@ -35,6 +35,7 @@ def heuristic_response(packet: BaselinePromptPacket) -> str:
     patterns = [
         r"(?:moved to|live in|lives in)\s+([A-Za-z0-9 _-]+)",
         r"(?:prefer|prefers)\s+([A-Za-z0-9 _-]+)",
+        r"(?:favourite|favorite)\s+[A-Za-z0-9 _-]+\s+(?:is|could be described as)\s+([A-Za-z0-9 _-]+)",
         r"(?:favourite|favorite)\s+\w+\s+(?:is|could be described as)\s+([A-Za-z0-9 _-]+)",
         r"(?:favourite|favorite)\s+([A-Za-z0-9 _-]+)",
         r"is\s+([A-Za-z0-9 _-]+)$",

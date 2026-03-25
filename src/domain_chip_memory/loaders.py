@@ -4,7 +4,7 @@ import json
 import re
 from pathlib import Path
 
-from .adapters import GoodAILTMBenchmarkAdapter, LoCoMoAdapter, LongMemEvalAdapter
+from .adapters import BEAMAdapter, GoodAILTMBenchmarkAdapter, LoCoMoAdapter, LongMemEvalAdapter
 from .contracts import NormalizedBenchmarkConfig, NormalizedBenchmarkSample
 
 
@@ -26,6 +26,14 @@ def load_locomo_json(path: str | Path, *, limit: int | None = None) -> list[Norm
         raise ValueError("LoCoMo loader expected a JSON list of conversation samples.")
     instances = payload[:limit] if limit is not None else payload
     return [LoCoMoAdapter.normalize_instance(instance) for instance in instances]
+
+
+def load_beam_json(path: str | Path, *, limit: int | None = None) -> list[NormalizedBenchmarkSample]:
+    payload = _load_json(Path(path))
+    if not isinstance(payload, list):
+        raise ValueError("BEAM loader expected a JSON list of local slice instances.")
+    instances = payload[:limit] if limit is not None else payload
+    return [BEAMAdapter.normalize_instance(instance) for instance in instances]
 
 
 def _parse_published_goodai_yaml(path: Path) -> dict:
@@ -116,6 +124,11 @@ def build_loader_contract_summary() -> dict[str, object]:
                 "benchmark_name": "GoodAI LTM Benchmark",
                 "entrypoint": ["load_goodai_config", "load_goodai_definitions"],
                 "required_input": "path to a published config plus a definitions directory",
+            },
+            {
+                "benchmark_name": "BEAM",
+                "entrypoint": "load_beam_json",
+                "required_input": "path to a paper-pinned local BEAM slice JSON",
             },
         ]
     }

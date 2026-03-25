@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from .contracts import JsonDict, NormalizedBenchmarkSample
+from .contracts import AnswerCandidate, JsonDict, NormalizedBenchmarkSample
 
 
 @dataclass(frozen=True)
@@ -29,6 +29,7 @@ class BaselinePromptPacket:
     assembled_context: str
     retrieved_context_items: list[RetrievedContextItem]
     metadata: JsonDict = field(default_factory=dict)
+    answer_candidates: list[AnswerCandidate] = field(default_factory=list)
 
     def to_dict(self) -> JsonDict:
         return {
@@ -40,6 +41,7 @@ class BaselinePromptPacket:
             "assembled_context": self.assembled_context,
             "retrieved_context_items": [item.to_dict() for item in self.retrieved_context_items],
             "metadata": self.metadata,
+            "answer_candidates": [candidate.to_dict() for candidate in self.answer_candidates],
         }
 
 

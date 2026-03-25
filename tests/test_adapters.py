@@ -1,4 +1,5 @@
 from domain_chip_memory.adapters import (
+    BEAMAdapter,
     ConvoMemShadowAdapter,
     GoodAILTMBenchmarkAdapter,
     LoCoMoAdapter,
@@ -140,3 +141,40 @@ def test_shadow_adapter_and_contract_summary_are_available():
     assert sample.benchmark_name == "ConvoMem"
     assert summary["official_benchmark_adapters"]
     assert summary["shadow_benchmark_adapters"]
+
+
+def test_beam_adapter_normalizes_local_slice_instance():
+    payload = {
+        "sample_id": "beam-1",
+        "slice_status": "paper_pinned_local_slice",
+        "sessions": [
+            {
+                "session_id": "beam-session-1",
+                "timestamp": "2026-03-25T12:00:00Z",
+                "turns": [
+                    {"turn_id": "t1", "speaker": "user", "text": "I live in Dubai."},
+                    {"turn_id": "t2", "speaker": "assistant", "text": "Noted."},
+                ],
+            }
+        ],
+        "questions": [
+            {
+                "question_id": "beam-1-q-1",
+                "question": "Where do I live?",
+                "answer": "Dubai",
+                "category": "episodic_memory",
+                "evidence_session_ids": ["beam-session-1"],
+                "evidence_turn_ids": ["t1"],
+            }
+        ],
+    }
+
+    sample = BEAMAdapter.normalize_instance(payload)
+    summary = build_adapter_contract_summary()
+
+    assert sample.benchmark_name == "BEAM"
+    assert sample.sample_id == "beam-1"
+    assert sample.questions[0].expected_answers == ["Dubai"]
+    assert sample.questions[0].evidence_turn_ids == ["t1"]
+    assert sample.metadata["slice_status"] == "paper_pinned_local_slice"
+    assert any(item["benchmark_name"] == "BEAM" for item in summary["official_benchmark_adapters"])

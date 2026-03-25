@@ -219,6 +219,9 @@ def _build_prediction(
             "provider_name": provider.name,
             **provider_metadata,
             "route": packet.metadata.get("route"),
+            "should_abstain": question.should_abstain,
+            "evidence_scope": "multi_session" if len(question.evidence_session_ids) > 1 else "single_session",
+            "temporal_scope": "dated" if question.question_date else "undated",
         },
     )
 

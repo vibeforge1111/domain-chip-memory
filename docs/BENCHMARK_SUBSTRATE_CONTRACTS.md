@@ -45,6 +45,7 @@ The package now defines:
 - `LoCoMoAdapter.normalize_instance`
 - `GoodAILTMBenchmarkAdapter.normalize_configuration`
 - `GoodAILTMBenchmarkAdapter.normalize_definition`
+- `BEAMAdapter.normalize_instance`
 - `ConvoMemShadowAdapter.normalize_instance`
 
 These live in:
@@ -128,6 +129,7 @@ The stack still does not:
 - download benchmark data
 - run official scoring
 - build full retrieval traces
+- reproduce official `BEAM` yet; current support is a paper-pinned local pilot slice
 
 ## Schemas
 
@@ -192,6 +194,7 @@ python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_
 python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline beam_temporal_atom_router --provider heuristic_v1 --limit 10
 python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline observational_temporal_memory --provider heuristic_v1 --limit 10
 python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --limit 10
+python -m domain_chip_memory.cli run-beam-baseline artifacts\\benchmark_runs\\beam_local_pilot_v1_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\\benchmark_runs\\beam_local_pilot_observational_heuristic_v1.json
 python -m domain_chip_memory.cli run-locomo-baseline path\\to\\locomo10.json --baseline full_context --provider heuristic_v1 --limit 3
 python -m domain_chip_memory.cli run-goodai-baseline path\\to\\benchmark-v3-32k.yml path\\to\\definitions --baseline lexical --provider heuristic_v1 --dataset-name Colours --limit 5
 python -m domain_chip_memory.cli compare-longmemeval-local path\\to\\longmemeval_s_cleaned.json --provider heuristic_v1 --write artifacts\\benchmark_runs\\longmemeval_s_system_comparison.json
