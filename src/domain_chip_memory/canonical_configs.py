@@ -37,6 +37,7 @@ CANONICAL_CONFIGS = [
             "beam_local_pilot_v12_source.json",
             "beam_local_pilot_v13_source.json",
             "beam_local_pilot_v14_source.json",
+            "beam_local_pilot_v15_source.json",
             "official_beam_slice_once_pinned",
         ],
         "source_url": "https://arxiv.org/abs/2510.27246",

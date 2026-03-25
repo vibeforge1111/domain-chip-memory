@@ -1166,7 +1166,8 @@ def _extract_atoms_from_turn(
         (r"\b(?:i|we)\s+lived in\s+([A-Za-z0-9 _-]+)", "location"),
         (r"\b(?:i|we)\s+live in\s+([A-Za-z0-9 _-]+)", "location"),
         (r"\b([A-Z][A-Za-z0-9_-]+)\s+(?:moved to|lives in|live in)\s+([A-Za-z0-9 _-]+)", "location_named"),
-        (r"\b(?:i now prefer|i prefer|i like)\s+([A-Za-z0-9 _-]+)", "preference"),
+        (r"\b(?:i now prefer|i prefer|i like)\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)", "preference"),
+        (r"\bi switched back to\s+([A-Za-z0-9 _-]+?)(?:\s+again)?(?:[.!?,]|$)", "preference"),
         (r"\b([A-Z][A-Za-z0-9_-]+)\s+(?:now prefers|prefers|likes)\s+([A-Za-z0-9 _-]+)", "preference_named"),
         (r"\bmy favourite colour is\s+([A-Za-z0-9 _-]+)", "favorite_color"),
         (r"\bmy favorite color is\s+([A-Za-z0-9 _-]+)", "favorite_color"),
@@ -1775,7 +1776,7 @@ def _question_subjects(question: NormalizedQuestion) -> list[str]:
 def _question_predicates(question: NormalizedQuestion) -> list[str]:
     question_lower = question.question.lower()
     predicates: list[str] = []
-    if "live" in question_lower or "moved" in question_lower:
+    if "live" in question_lower or "living" in question_lower or "moved" in question_lower:
         predicates.append("location")
     if "favourite colour" in question_lower or "favorite colour" in question_lower:
         predicates.append("favorite_color")
@@ -2583,13 +2584,13 @@ def _choose_answer_candidate(
         _question_needs_raw_aggregate_context(question)
         or question_lower.startswith("what are the two hobbies that led me to join online communities")
     )
+    dated_state_answer = _infer_dated_state_answer(question, candidate_entries)
+    if dated_state_answer:
+        return dated_state_answer
     if _is_preference_question(question):
         preference_answer = _infer_preference_answer(question, candidate_entries)
         if preference_answer:
             return preference_answer
-    dated_state_answer = _infer_dated_state_answer(question, candidate_entries)
-    if dated_state_answer:
-        return dated_state_answer
     relative_state_answer = _infer_relative_state_answer(question, candidate_entries)
     if relative_state_answer:
         return relative_state_answer
@@ -2644,16 +2645,39 @@ def _choose_answer_candidate(
 
 def _is_dated_state_question(question: NormalizedQuestion) -> bool:
     question_lower = question.question.lower()
-    return question_lower.startswith(
+    if question_lower.startswith(
         (
-            "where did i live in ",
-            "where was i living in ",
-            "where did i live on ",
-            "where was i living on ",
-            "where did i live at ",
-            "where was i living at ",
-            "where did i live when ",
-            "where was i living when ",
+            "where did i live before ",
+            "where was i living before ",
+            "where did i live after ",
+            "where was i living after ",
+        )
+    ):
+        return False
+    return (
+        question_lower.startswith(
+            (
+                "where did i live in ",
+                "where was i living in ",
+                "where did i live on ",
+                "where was i living on ",
+                "where did i live at ",
+                "where was i living at ",
+                "where did i live when ",
+                "where was i living when ",
+                "what did i prefer in ",
+                "what did i prefer on ",
+                "what did i prefer at ",
+            )
+        )
+        or bool(
+            re.search(
+                r"\b(?:at\s+\d{1,2}(?::\d{2})?\s*[ap]m\s+on\s+\d{1,2}\s+"
+                r"(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{4}|"
+                r"on\s+\d{1,2}\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{4}|"
+                r"in\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{4})\b",
+                question_lower,
+            )
         )
     )
 
@@ -5075,6 +5099,9 @@ def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: l
     question_lower = question.question.lower()
     if not _is_dated_state_question(question):
         return ""
+    target_predicates = [predicate for predicate in _question_predicates(question) if predicate in {"location", "preference", "favorite_color"}]
+    if not target_predicates:
+        return ""
 
     target_anchor, target_start, target_end = _parse_question_state_anchor(question_lower)
     if target_anchor is None and (target_start is None or target_end is None):
@@ -5086,7 +5113,7 @@ def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: l
         [
             entry
             for entry in candidate_entries
-            if entry.predicate == "location" and _parse_observation_anchor(entry.timestamp or "")
+            if entry.predicate in target_predicates and _parse_observation_anchor(entry.timestamp or "")
         ],
         key=lambda entry: (
             _parse_observation_anchor(entry.timestamp or ""),
@@ -6363,6 +6390,13 @@ def build_dual_store_event_calendar_hybrid_packets(
                 key=lambda entry: (_observation_score(question, entry), entry.timestamp or "", entry.observation_id),
                 reverse=True,
             )[:2]
+            current_state_entries = select_current_state_entries(
+                question,
+                reflected,
+                limit=2,
+                score_entry=lambda entry: _observation_score(question, entry),
+                preferred_predicates=set(_question_predicates(question)),
+            )
             ranked_events = sorted(
                 events,
                 key=lambda entry: (_event_score(question, entry), entry.timestamp or "", entry.event_id),
@@ -6442,6 +6476,22 @@ def build_dual_store_event_calendar_hybrid_packets(
                         )
                     )
 
+            if current_state_entries:
+                context_blocks.append("current_state_memory:")
+                for entry in current_state_entries:
+                    line = f"current_state: {entry.text}"
+                    context_blocks.append(line)
+                    retrieved_items.append(
+                        RetrievedContextItem(
+                            session_id=entry.session_id,
+                            turn_ids=entry.turn_ids,
+                            score=_observation_score(question, entry),
+                            strategy="current_state_memory",
+                            text=line,
+                            metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
+                        )
+                    )
+
             context_blocks.append("event_calendar:")
             for entry in ranked_events:
                 prefix = f"{entry.timestamp} " if entry.timestamp else ""
@@ -6481,6 +6531,11 @@ def build_dual_store_event_calendar_hybrid_packets(
                 raw_candidate_pool if _is_dated_state_question(question) else _dedupe_observations(raw_candidate_pool),
             )
             answer_source = "evidence_memory" if evidence_entries else "belief_memory"
+            if _should_use_current_state_exact_value(question) and current_state_entries:
+                current_state_value = str(current_state_entries[0].metadata.get("value", "")).strip()
+                if current_state_value:
+                    answer_text = current_state_value
+                    answer_source = "current_state_memory"
             if ranked_events:
                 top_entry = ranked_events[0]
                 answer_value = str(top_entry.metadata.get("value", "")).strip()
@@ -6494,7 +6549,12 @@ def build_dual_store_event_calendar_hybrid_packets(
                         top_entry.text,
                     )
                 )
-                if not question.should_abstain and is_current_state_question(question) and event_answer_text:
+                if (
+                    not question.should_abstain
+                    and is_current_state_question(question)
+                    and "location" in _question_predicates(question)
+                    and event_answer_text
+                ):
                     answer_text = event_answer_text
                     answer_source = "event_calendar"
                 elif not answer_text and event_answer_text:
