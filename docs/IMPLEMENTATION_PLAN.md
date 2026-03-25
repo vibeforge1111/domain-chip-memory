@@ -96,6 +96,16 @@ Current lead lane as of 2026-03-25:
   - the wider `q151-199` tail is benchmark-contaminated because many gold answers are empty in the source file
 - current clean `LoCoMo` limitation:
   - the remaining first-slice audited-open issue is still the benchmark inconsistency on `conv-26-qa-6`
+- current local `BEAM` pilot ladder as of 2026-03-26:
+  - `observational_temporal_memory`: `58/58`
+  - `dual_store_event_calendar_hybrid`: `58/58`
+  - currently closed pressure families include:
+    - dated state recall at month, day, and clock-time granularity
+    - event-anchored state recall
+    - relative non-location state recall
+    - timed repeated-anchor state recall
+    - ambiguity abstention
+    - location-anchored relative non-location state recall
 
 Candidate components:
 
@@ -137,6 +147,13 @@ Deliverables:
 - compaction and rehydration rules that preserve exact answer-bearing spans
 - architecture ablations that test whether `BEAM`-oriented changes keep current `LongMemEval_s` and `LoCoMo` wins intact
 
+Current operating read as of 2026-03-26:
+
+- the repo is no longer blocked on a vague `BEAM` adapter story
+- the local `BEAM` pilot ladder is now the active frontier pressure track
+- the next step is not adding random new slices; it is using each new slice to expose shared substrate debt
+- the most recent exposed debt was answer-candidate obedience across packet assembly and heuristic response
+
 ## Phase 3B: Architecture consolidation track
 
 Goal:
@@ -172,6 +189,19 @@ Reference memo:
 
 - `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
 - `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
+
+Implementation path as of 2026-03-26:
+
+1. Continue expanding the local `BEAM` ladder one honest pressure family at a time.
+2. Prefer pressure families that test state anchors, supersession, and answer integrity, not only more location chronology.
+3. After each new closed lane, capture the architectural lesson and decide whether the fix belongs in:
+   - extraction
+   - anchor resolution
+   - typed answer-candidate metadata
+   - packet assembly
+   - responder or provider normalization
+4. Use the first post-`v22` consolidation pass to turn answer-candidate precedence into explicit doctrine instead of heuristic spillover.
+5. Only return to older benchmark expansion memos if the `BEAM`-first path stops yielding transferable substrate lessons.
 
 ## Phase 4: Mutation flywheel
 
