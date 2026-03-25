@@ -181,6 +181,12 @@ The seventeenth pilot adds:
 - repeated anchor periods with the same location value but different downstream preferences
 - pressure on selecting the dated anchor occurrence first, then reading the non-location state at that anchor instead of treating the date as a direct state bucket
 
+The eighteenth pilot adds:
+
+- date-qualified reentered favorite-color recall
+- another non-location predicate family with the same repeated-location anchor shape as v17
+- pressure on exact slot-value extraction so the system returns `green`, not `green now`
+
 ## Command
 
 ```powershell
@@ -216,6 +222,8 @@ python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v16_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v16_dual_store_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v17_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v17_observational_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v17_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v17_dual_store_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v18_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v18_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v18_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v18_dual_store_heuristic_v1.json
 ```
 
 ## Promotion rule
