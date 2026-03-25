@@ -2587,13 +2587,13 @@ def _choose_answer_candidate(
     dated_state_answer = _infer_dated_state_answer(question, candidate_entries)
     if dated_state_answer:
         return dated_state_answer
+    relative_state_answer = _infer_relative_state_answer(question, candidate_entries)
+    if relative_state_answer:
+        return relative_state_answer
     if _is_preference_question(question):
         preference_answer = _infer_preference_answer(question, candidate_entries)
         if preference_answer:
             return preference_answer
-    relative_state_answer = _infer_relative_state_answer(question, candidate_entries)
-    if relative_state_answer:
-        return relative_state_answer
     factoid_answer = _infer_factoid_answer(question, candidate_entries)
     if factoid_answer.lower() == "unknown":
         return factoid_answer
@@ -2651,6 +2651,16 @@ def _is_dated_state_question(question: NormalizedQuestion) -> bool:
             "where was i living before ",
             "where did i live after ",
             "where was i living after ",
+            "what did i prefer before ",
+            "what did i prefer after ",
+            "what was my favorite color before ",
+            "what was my favourite color before ",
+            "what was my favorite colour before ",
+            "what was my favourite colour before ",
+            "what was my favorite color after ",
+            "what was my favourite color after ",
+            "what was my favorite colour after ",
+            "what was my favourite colour after ",
         )
     ):
         return False
@@ -2709,9 +2719,16 @@ def _extract_relative_state_anchor(question_lower: str) -> tuple[str | None, str
     return None, "", []
 
 
+def _is_relative_state_question(question: NormalizedQuestion) -> bool:
+    mode, anchor_phrase, target_predicates = _extract_relative_state_anchor(question.question.lower())
+    return mode is not None and bool(anchor_phrase) and bool(target_predicates)
+
+
 def _should_use_current_state_exact_value(question: NormalizedQuestion) -> bool:
     question_lower = question.question.lower()
     if not is_current_state_question(question):
+        return False
+    if _is_dated_state_question(question) or _is_relative_state_question(question):
         return False
     if _question_needs_raw_aggregate_context(question):
         return False
@@ -6256,7 +6273,7 @@ def build_observational_temporal_memory_packets(
                 question,
                 evidence_entries,
                 ranked_reflections,
-                raw_candidate_pool if _is_dated_state_question(question) else candidate_pool,
+                raw_candidate_pool if (_is_dated_state_question(question) or _is_relative_state_question(question)) else candidate_pool,
                 aggregate_pool,
             )
             if _should_use_current_state_exact_value(question) and current_state_entries:
@@ -6585,7 +6602,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                 question,
                 evidence_entries,
                 ranked_reflections,
-                raw_candidate_pool if _is_dated_state_question(question) else _dedupe_observations(raw_candidate_pool),
+                raw_candidate_pool if (_is_dated_state_question(question) or _is_relative_state_question(question)) else _dedupe_observations(raw_candidate_pool),
             )
             answer_source = "evidence_memory" if evidence_entries else "belief_memory"
             if _should_use_current_state_exact_value(question) and current_state_entries:
