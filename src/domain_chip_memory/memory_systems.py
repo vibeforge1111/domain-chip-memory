@@ -4941,8 +4941,33 @@ def _infer_anchor_time_from_phrase(
     if not anchor_phrase.strip():
         return None
 
-    question_tokens = set(_tokenize(anchor_phrase))
-    question_bigrams = _token_bigrams(anchor_phrase)
+    anchor_phrase_lower = anchor_phrase.lower()
+    target_anchor, target_start, target_end = _parse_question_state_anchor(anchor_phrase_lower)
+    normalized_anchor_phrase = re.sub(
+        r"\s+at\s+\d{1,2}(?::\d{2})?\s*[ap]m\s+on\s+\d{1,2}\s+"
+        r"(?:january|february|march|april|may|june|july|august|september|october|november|december)"
+        r"\s+\d{4}\b",
+        "",
+        anchor_phrase_lower,
+    )
+    normalized_anchor_phrase = re.sub(
+        r"\s+on\s+\d{1,2}\s+"
+        r"(?:january|february|march|april|may|june|july|august|september|october|november|december)"
+        r"\s+\d{4}\b",
+        "",
+        normalized_anchor_phrase,
+    )
+    normalized_anchor_phrase = re.sub(
+        r"\s+in\s+"
+        r"(?:january|february|march|april|may|june|july|august|september|october|november|december)"
+        r"\s+\d{4}\b",
+        "",
+        normalized_anchor_phrase,
+    )
+    normalized_anchor_phrase = re.sub(r"\s+", " ", normalized_anchor_phrase).strip()
+
+    question_tokens = set(_tokenize(normalized_anchor_phrase or anchor_phrase_lower))
+    question_bigrams = _token_bigrams(normalized_anchor_phrase or anchor_phrase_lower)
     best_anchor: datetime | None = None
     best_score: tuple[int, int, int] | None = None
 
@@ -4951,6 +4976,10 @@ def _infer_anchor_time_from_phrase(
             continue
         anchor = _parse_observation_anchor(entry.timestamp or "")
         if anchor is None:
+            continue
+        if target_anchor is not None and anchor != target_anchor:
+            continue
+        if target_start is not None and target_end is not None and not (target_start <= anchor < target_end):
             continue
         entry_corpus = " ".join(
             part
