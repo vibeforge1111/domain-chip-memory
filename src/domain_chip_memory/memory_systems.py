@@ -2668,6 +2668,11 @@ def _is_dated_state_question(question: NormalizedQuestion) -> bool:
                 "what did i prefer in ",
                 "what did i prefer on ",
                 "what did i prefer at ",
+                "what did i prefer when ",
+                "what was my favorite color when ",
+                "what was my favourite color when ",
+                "what was my favorite colour when ",
+                "what was my favourite colour when ",
             )
         )
         or bool(
@@ -4961,6 +4966,8 @@ def _parse_question_state_anchor(question_lower: str) -> tuple[datetime | None, 
 def _infer_anchor_time_from_phrase(
     anchor_phrase: str,
     candidate_entries: list[ObservationEntry | EventCalendarEntry],
+    *,
+    include_location_entries: bool = False,
 ) -> datetime | None:
     if not anchor_phrase.strip():
         return None
@@ -4996,7 +5003,7 @@ def _infer_anchor_time_from_phrase(
     best_score: tuple[int, int, int] | None = None
 
     for entry in candidate_entries:
-        if entry.predicate == "location":
+        if entry.predicate == "location" and not include_location_entries:
             continue
         anchor = _parse_observation_anchor(entry.timestamp or "")
         if anchor is None:
@@ -5036,10 +5043,39 @@ def _infer_event_anchored_state_time(
     candidate_entries: list[ObservationEntry | EventCalendarEntry],
 ) -> datetime | None:
     question_lower = question.question.lower()
-    if not question_lower.startswith(("where did i live when ", "where was i living when ")):
-        return None
-    anchor_phrase = re.sub(r"^where (?:did i live|was i living) when\s+", "", question_lower).strip().rstrip(".!?")
-    return _infer_anchor_time_from_phrase(anchor_phrase, candidate_entries)
+    patterns = (
+        r"^where (?:did i live|was i living) when\s+(.+)$",
+        r"^what did i prefer when\s+(.+)$",
+        r"^what was my favou?rite colou?r when\s+(.+)$",
+    )
+    for pattern in patterns:
+        match = re.match(pattern, question_lower)
+        if not match:
+            continue
+        anchor_phrase = match.group(1).strip().rstrip(".!?")
+        if anchor_phrase:
+            return _infer_anchor_time_from_phrase(
+                anchor_phrase,
+                candidate_entries,
+                include_location_entries=True,
+            )
+    return None
+
+
+def _dated_state_target_predicates(question: NormalizedQuestion) -> list[str]:
+    question_lower = question.question.lower()
+    if question_lower.startswith("what did i prefer"):
+        return ["preference"]
+    if question_lower.startswith(
+        (
+            "what was my favorite color",
+            "what was my favourite color",
+            "what was my favorite colour",
+            "what was my favourite colour",
+        )
+    ):
+        return ["favorite_color"]
+    return ["location"]
 
 
 def _infer_relative_state_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry | EventCalendarEntry]) -> str:
@@ -5099,7 +5135,7 @@ def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: l
     question_lower = question.question.lower()
     if not _is_dated_state_question(question):
         return ""
-    target_predicates = [predicate for predicate in _question_predicates(question) if predicate in {"location", "preference", "favorite_color"}]
+    target_predicates = _dated_state_target_predicates(question)
     if not target_predicates:
         return ""
 

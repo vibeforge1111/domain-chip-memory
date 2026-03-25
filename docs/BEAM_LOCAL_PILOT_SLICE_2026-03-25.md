@@ -169,6 +169,12 @@ The fifteenth pilot adds:
 - superseding non-location state values across months
 - pressure on treating `preference` as real current-state memory instead of location-only date selection
 
+The sixteenth pilot adds:
+
+- event-anchored non-location state recall
+- state questions whose anchor is another state-bearing event like `when I lived in Dubai`
+- pressure on predicate-agnostic anchored-state selection instead of location-only `when ...` handling
+
 ## Command
 
 ```powershell
@@ -200,6 +206,8 @@ python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v14_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v14_dual_store_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v15_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v15_observational_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v15_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v15_dual_store_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v16_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v16_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v16_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v16_dual_store_heuristic_v1.json
 ```
 
 ## Promotion rule
