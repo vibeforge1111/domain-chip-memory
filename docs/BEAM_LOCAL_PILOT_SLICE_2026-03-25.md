@@ -68,6 +68,10 @@ It exists to do three honest jobs now:
 - twelfth-slice scorecard targets:
   - `artifacts/benchmark_runs/beam_local_pilot_v12_observational_heuristic_v1.json`
   - `artifacts/benchmark_runs/beam_local_pilot_v12_dual_store_heuristic_v1.json`
+- thirteenth slice: `artifacts/benchmark_runs/beam_local_pilot_v13_source.json`
+- thirteenth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v13_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v13_dual_store_heuristic_v1.json`
 
 ## Pilot coverage
 
@@ -147,6 +151,12 @@ The twelfth pilot adds:
 - two near-duplicate breakfast events sharing most words and structure
 - pressure on the decisive token being less prominent than the shared scaffold
 
+The thirteenth pilot adds:
+
+- long-span reentered competing anchors
+- repeated anchor phrases across a longer timeline with state reentry
+- pressure on distinguishing early anchor, later repeated anchor, and reused state values
+
 ## Command
 
 ```powershell
@@ -172,6 +182,8 @@ python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v11_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v11_dual_store_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v12_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v12_observational_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v12_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v12_dual_store_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v13_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v13_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v13_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v13_dual_store_heuristic_v1.json
 ```
 
 ## Promotion rule

@@ -1,0 +1,1256 @@
+[
+  {
+    "sample_id": "beam-local-pilot-1",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-1-session-1",
+        "timestamp": "2025-01-05T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-1-s1-t1",
+            "speaker": "user",
+            "text": "I used to live in Austin."
+          },
+          {
+            "turn_id": "beam-local-pilot-1-s1-t2",
+            "speaker": "assistant",
+            "text": "Noted."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-1-session-2",
+        "timestamp": "2025-06-14T10:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-1-s2-t1",
+            "speaker": "user",
+            "text": "My favorite writing spot is Alserkal Avenue."
+          },
+          {
+            "turn_id": "beam-local-pilot-1-s2-t2",
+            "speaker": "assistant",
+            "text": "Got it."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-1-session-3",
+        "timestamp": "2026-02-18T08:30:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-1-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          },
+          {
+            "turn_id": "beam-local-pilot-1-s3-t2",
+            "speaker": "user",
+            "text": "I prefer espresso."
+          },
+          {
+            "turn_id": "beam-local-pilot-1-s3-t3",
+            "speaker": "assistant",
+            "text": "Understood."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-1-q-1",
+        "question": "What is my favorite writing spot?",
+        "answer": "Alserkal Avenue",
+        "category": "episodic_memory",
+        "evidence_session_ids": [
+          "beam-local-pilot-1-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-1-s2-t1"
+        ],
+        "question_date": "2026-03-01"
+      },
+      {
+        "question_id": "beam-local-pilot-1-q-2",
+        "question": "What do I prefer now?",
+        "answer": "espresso",
+        "category": "current_state",
+        "evidence_session_ids": [
+          "beam-local-pilot-1-session-1",
+          "beam-local-pilot-1-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-1-s1-t1",
+          "beam-local-pilot-1-s3-t2"
+        ],
+        "question_date": "2026-03-01"
+      },
+      {
+        "question_id": "beam-local-pilot-1-q-3",
+        "question": "Where do I live now?",
+        "answer": "Dubai",
+        "category": "current_state",
+        "evidence_session_ids": [
+          "beam-local-pilot-1-session-1",
+          "beam-local-pilot-1-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-1-s1-t1",
+          "beam-local-pilot-1-s3-t1"
+        ],
+        "question_date": "2026-03-01"
+      },
+      {
+        "question_id": "beam-local-pilot-1-q-4",
+        "question": "What hospital do I use now?",
+        "answer": "Information provided is not enough",
+        "category": "abstention",
+        "evidence_session_ids": [],
+        "evidence_turn_ids": [],
+        "should_abstain": true
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-2",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "supersession_and_temporal_disambiguation"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-2-session-1",
+        "timestamp": "2025-01-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-2-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Austin then."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-2-session-2",
+        "timestamp": "2025-03-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-2-s2-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-2-session-3",
+        "timestamp": "2025-05-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-2-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Abu Dhabi."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-2-q-1",
+        "question": "Where do I live now?",
+        "answer": "Abu Dhabi",
+        "category": "current_state",
+        "evidence_session_ids": [
+          "beam-local-pilot-2-session-1",
+          "beam-local-pilot-2-session-2",
+          "beam-local-pilot-2-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-2-s1-t1",
+          "beam-local-pilot-2-s2-t1",
+          "beam-local-pilot-2-s3-t1"
+        ],
+        "question_date": "2025-05-02"
+      },
+      {
+        "question_id": "beam-local-pilot-2-q-2",
+        "question": "Where did I live before Abu Dhabi?",
+        "answer": "Dubai",
+        "category": "temporal_disambiguation",
+        "evidence_session_ids": [
+          "beam-local-pilot-2-session-2",
+          "beam-local-pilot-2-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-2-s2-t1",
+          "beam-local-pilot-2-s3-t1"
+        ],
+        "question_date": "2025-05-02"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-3",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "dated_event_ordering"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-3-session-1",
+        "timestamp": "2025-01-10T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-3-s1-t1",
+            "speaker": "user",
+            "text": "I visited Kyoto in January."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-3-session-2",
+        "timestamp": "2025-03-15T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-3-s2-t1",
+            "speaker": "user",
+            "text": "I visited Seoul in March."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-3-session-3",
+        "timestamp": "2025-06-20T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-3-s3-t1",
+            "speaker": "user",
+            "text": "I visited Lisbon in June."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-3-q-1",
+        "question": "Which city did I visit after Kyoto?",
+        "answer": "Seoul",
+        "category": "temporal_disambiguation",
+        "evidence_session_ids": [
+          "beam-local-pilot-3-session-1",
+          "beam-local-pilot-3-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-3-s1-t1",
+          "beam-local-pilot-3-s2-t1"
+        ],
+        "question_date": "2025-06-21"
+      },
+      {
+        "question_id": "beam-local-pilot-3-q-2",
+        "question": "Which city did I visit before Lisbon?",
+        "answer": "Seoul",
+        "category": "temporal_disambiguation",
+        "evidence_session_ids": [
+          "beam-local-pilot-3-session-2",
+          "beam-local-pilot-3-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-3-s2-t1",
+          "beam-local-pilot-3-s3-t1"
+        ],
+        "question_date": "2025-06-21"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-4",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "state_reentry_and_repeated_values"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-4-session-1",
+        "timestamp": "2025-01-05T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-4-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Austin."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-4-session-2",
+        "timestamp": "2025-03-10T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-4-s2-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-4-session-3",
+        "timestamp": "2025-06-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-4-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-4-session-4",
+        "timestamp": "2025-09-15T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-4-s4-t1",
+            "speaker": "user",
+            "text": "I moved back to Dubai."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-4-q-1",
+        "question": "Where do I live now?",
+        "answer": "Dubai",
+        "category": "current_state",
+        "evidence_session_ids": [
+          "beam-local-pilot-4-session-1",
+          "beam-local-pilot-4-session-2",
+          "beam-local-pilot-4-session-3",
+          "beam-local-pilot-4-session-4"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-4-s1-t1",
+          "beam-local-pilot-4-s2-t1",
+          "beam-local-pilot-4-s3-t1",
+          "beam-local-pilot-4-s4-t1"
+        ],
+        "question_date": "2025-09-16"
+      },
+      {
+        "question_id": "beam-local-pilot-4-q-2",
+        "question": "Where did I live before moving back to Dubai?",
+        "answer": "Abu Dhabi",
+        "category": "temporal_disambiguation",
+        "evidence_session_ids": [
+          "beam-local-pilot-4-session-3",
+          "beam-local-pilot-4-session-4"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-4-s3-t1",
+          "beam-local-pilot-4-s4-t1"
+        ],
+        "question_date": "2025-09-16"
+      },
+      {
+        "question_id": "beam-local-pilot-4-q-3",
+        "question": "Where did I live after Austin?",
+        "answer": "Dubai",
+        "category": "temporal_disambiguation",
+        "evidence_session_ids": [
+          "beam-local-pilot-4-session-1",
+          "beam-local-pilot-4-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-4-s1-t1",
+          "beam-local-pilot-4-s2-t1"
+        ],
+        "question_date": "2025-09-16"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-5",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "date_indexed_state_recall"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-5-session-1",
+        "timestamp": "2025-01-05T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-5-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Austin."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-5-session-2",
+        "timestamp": "2025-03-10T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-5-s2-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-5-session-3",
+        "timestamp": "2025-06-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-5-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-5-session-4",
+        "timestamp": "2025-09-15T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-5-s4-t1",
+            "speaker": "user",
+            "text": "I moved back to Dubai."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-5-q-1",
+        "question": "Where did I live in April 2025?",
+        "answer": "Dubai",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-5-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-5-s2-t1"
+        ],
+        "question_date": "2025-10-01"
+      },
+      {
+        "question_id": "beam-local-pilot-5-q-2",
+        "question": "Where did I live in July 2025?",
+        "answer": "Abu Dhabi",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-5-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-5-s3-t1"
+        ],
+        "question_date": "2025-10-01"
+      },
+      {
+        "question_id": "beam-local-pilot-5-q-3",
+        "question": "Where did I live in October 2025?",
+        "answer": "Dubai",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-5-session-4"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-5-s4-t1"
+        ],
+        "question_date": "2025-10-15"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-6",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "day_indexed_state_recall"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-6-session-1",
+        "timestamp": "2025-08-20T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-6-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-6-session-2",
+        "timestamp": "2025-09-05T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-6-s2-t1",
+            "speaker": "user",
+            "text": "I moved to Sharjah."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-6-session-3",
+        "timestamp": "2025-09-20T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-6-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-6-q-1",
+        "question": "Where did I live on 10 September 2025?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-6-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-6-s2-t1"
+        ],
+        "question_date": "2025-09-25"
+      },
+      {
+        "question_id": "beam-local-pilot-6-q-2",
+        "question": "Where did I live on 25 September 2025?",
+        "answer": "Dubai",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-6-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-6-s3-t1"
+        ],
+        "question_date": "2025-09-26"
+      },
+      {
+        "question_id": "beam-local-pilot-6-q-3",
+        "question": "Where did I live on 1 September 2025?",
+        "answer": "Abu Dhabi",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-6-session-1"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-6-s1-t1"
+        ],
+        "question_date": "2025-09-26"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-7",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "clock_time_state_recall"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-7-session-1",
+        "timestamp": "2025-09-09T21:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-7-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-7-session-2",
+        "timestamp": "2025-09-10T08:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-7-s2-t1",
+            "speaker": "user",
+            "text": "I moved to Sharjah."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-7-session-3",
+        "timestamp": "2025-09-10T18:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-7-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-7-q-1",
+        "question": "Where did I live at 7:30 AM on 10 September 2025?",
+        "answer": "Abu Dhabi",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-7-session-1"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-7-s1-t1"
+        ],
+        "question_date": "2025-09-11"
+      },
+      {
+        "question_id": "beam-local-pilot-7-q-2",
+        "question": "Where did I live at 9:00 AM on 10 September 2025?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-7-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-7-s2-t1"
+        ],
+        "question_date": "2025-09-11"
+      },
+      {
+        "question_id": "beam-local-pilot-7-q-3",
+        "question": "Where was I living at 7:00 PM on 10 September 2025?",
+        "answer": "Dubai",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-7-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-7-s3-t1"
+        ],
+        "question_date": "2025-09-11"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-8",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "event_anchored_state_recall"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-8-session-1",
+        "timestamp": "2025-09-09T21:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-8-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-8-session-2",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-8-s2-t1",
+            "speaker": "user",
+            "text": "I had breakfast at Marina Cafe.",
+            "timestamp": "2025-09-10T07:45:00Z"
+          },
+          {
+            "turn_id": "beam-local-pilot-8-s2-t2",
+            "speaker": "user",
+            "text": "I moved to Sharjah.",
+            "timestamp": "2025-09-10T08:00:00Z"
+          },
+          {
+            "turn_id": "beam-local-pilot-8-s2-t3",
+            "speaker": "user",
+            "text": "I attended the design review in Al Khan.",
+            "timestamp": "2025-09-10T12:30:00Z"
+          },
+          {
+            "turn_id": "beam-local-pilot-8-s2-t4",
+            "speaker": "user",
+            "text": "I moved to Dubai.",
+            "timestamp": "2025-09-10T18:00:00Z"
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-8-q-1",
+        "question": "Where did I live when I had breakfast at Marina Cafe?",
+        "answer": "Abu Dhabi",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-8-session-1",
+          "beam-local-pilot-8-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-8-s1-t1",
+          "beam-local-pilot-8-s2-t1"
+        ],
+        "question_date": "2025-09-11"
+      },
+      {
+        "question_id": "beam-local-pilot-8-q-2",
+        "question": "Where was I living when I attended the design review in Al Khan?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-8-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-8-s2-t2",
+          "beam-local-pilot-8-s2-t3"
+        ],
+        "question_date": "2025-09-11"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-9",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "relative_event_anchored_state_recall"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-9-session-1",
+        "timestamp": "2025-09-09T21:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-9-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-9-session-2",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-9-s2-t1",
+            "speaker": "user",
+            "text": "I had breakfast at Marina Cafe.",
+            "timestamp": "2025-09-10T07:45:00Z"
+          },
+          {
+            "turn_id": "beam-local-pilot-9-s2-t2",
+            "speaker": "user",
+            "text": "I moved to Sharjah.",
+            "timestamp": "2025-09-10T08:00:00Z"
+          },
+          {
+            "turn_id": "beam-local-pilot-9-s2-t3",
+            "speaker": "user",
+            "text": "I attended the design review in Al Khan.",
+            "timestamp": "2025-09-10T12:30:00Z"
+          },
+          {
+            "turn_id": "beam-local-pilot-9-s2-t4",
+            "speaker": "user",
+            "text": "I moved to Dubai.",
+            "timestamp": "2025-09-10T18:00:00Z"
+          },
+          {
+            "turn_id": "beam-local-pilot-9-s2-t5",
+            "speaker": "user",
+            "text": "I had dinner at Creek Harbor.",
+            "timestamp": "2025-09-10T19:15:00Z"
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-9-q-1",
+        "question": "Where did I live after I had breakfast at Marina Cafe?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-9-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-9-s2-t1",
+          "beam-local-pilot-9-s2-t2"
+        ],
+        "question_date": "2025-09-11"
+      },
+      {
+        "question_id": "beam-local-pilot-9-q-2",
+        "question": "Where was I living before I had dinner at Creek Harbor?",
+        "answer": "Dubai",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-9-session-2"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-9-s2-t4",
+          "beam-local-pilot-9-s2-t5"
+        ],
+        "question_date": "2025-09-11"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-10",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "multi_session_relative_event_anchored_state_recall"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-10-session-1",
+        "timestamp": "2025-09-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-10-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-10-session-2",
+        "timestamp": "2025-09-10T07:45:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-10-s2-t1",
+            "speaker": "user",
+            "text": "I had breakfast at Marina Cafe."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-10-session-3",
+        "timestamp": "2025-09-12T08:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-10-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Sharjah."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-10-session-4",
+        "timestamp": "2025-09-20T12:30:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-10-s4-t1",
+            "speaker": "user",
+            "text": "I attended the design review in Al Khan."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-10-session-5",
+        "timestamp": "2025-09-22T18:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-10-s5-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-10-q-1",
+        "question": "Where did I live after I had breakfast at Marina Cafe?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-10-session-2",
+          "beam-local-pilot-10-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-10-s2-t1",
+          "beam-local-pilot-10-s3-t1"
+        ],
+        "question_date": "2025-09-23"
+      },
+      {
+        "question_id": "beam-local-pilot-10-q-2",
+        "question": "Where was I living before I attended the design review in Al Khan?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-10-session-3",
+          "beam-local-pilot-10-session-4"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-10-s3-t1",
+          "beam-local-pilot-10-s4-t1"
+        ],
+        "question_date": "2025-09-23"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-11",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "competing_anchor_disambiguation"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-11-session-1",
+        "timestamp": "2025-09-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-11-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-11-session-2",
+        "timestamp": "2025-09-10T07:45:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-11-s2-t1",
+            "speaker": "user",
+            "text": "I had breakfast with Omar at Marina Cafe."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-11-session-3",
+        "timestamp": "2025-09-12T08:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-11-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Sharjah."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-11-session-4",
+        "timestamp": "2025-09-20T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-11-s4-t1",
+            "speaker": "user",
+            "text": "I had breakfast with Layla at Marina Cafe."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-11-session-5",
+        "timestamp": "2025-09-22T18:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-11-s5-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-11-q-1",
+        "question": "Where did I live after I had breakfast with Omar at Marina Cafe?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-11-session-2",
+          "beam-local-pilot-11-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-11-s2-t1",
+          "beam-local-pilot-11-s3-t1"
+        ],
+        "question_date": "2025-09-23"
+      },
+      {
+        "question_id": "beam-local-pilot-11-q-2",
+        "question": "Where did I live after I had breakfast with Layla at Marina Cafe?",
+        "answer": "Dubai",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-11-session-4",
+          "beam-local-pilot-11-session-5"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-11-s4-t1",
+          "beam-local-pilot-11-s5-t1"
+        ],
+        "question_date": "2025-09-23"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-12",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "misleading_overlap_anchor_disambiguation"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-12-session-1",
+        "timestamp": "2025-09-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-12-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-12-session-2",
+        "timestamp": "2025-09-10T07:45:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-12-s2-t1",
+            "speaker": "user",
+            "text": "I had breakfast at Marina Cafe with Omar before the client review."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-12-session-3",
+        "timestamp": "2025-09-12T08:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-12-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Sharjah."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-12-session-4",
+        "timestamp": "2025-09-20T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-12-s4-t1",
+            "speaker": "user",
+            "text": "I had breakfast at Marina Cafe before the client review with Layla."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-12-session-5",
+        "timestamp": "2025-09-22T18:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-12-s5-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-12-q-1",
+        "question": "Where did I live after I had breakfast at Marina Cafe with Omar before the client review?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-12-session-2",
+          "beam-local-pilot-12-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-12-s2-t1",
+          "beam-local-pilot-12-s3-t1"
+        ],
+        "question_date": "2025-09-23"
+      },
+      {
+        "question_id": "beam-local-pilot-12-q-2",
+        "question": "Where did I live after I had breakfast at Marina Cafe before the client review with Layla?",
+        "answer": "Dubai",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-12-session-4",
+          "beam-local-pilot-12-session-5"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-12-s4-t1",
+          "beam-local-pilot-12-s5-t1"
+        ],
+        "question_date": "2025-09-23"
+      }
+    ]
+  },
+  {
+    "sample_id": "beam-local-pilot-13",
+    "slice_status": "paper_pinned_local_pilot",
+    "metadata": {
+      "benchmark_mode": "local_pilot_slice",
+      "truthfulness_note": "Paper-pinned local pilot shaped from the BEAM paper description. Not official BEAM data.",
+      "paper_source_url": "https://arxiv.org/abs/2510.27246",
+      "pressure_focus": "reentered_competing_anchor_disambiguation"
+    },
+    "sessions": [
+      {
+        "session_id": "beam-local-pilot-13-session-1",
+        "timestamp": "2025-09-01T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-13-s1-t1",
+            "speaker": "user",
+            "text": "I lived in Abu Dhabi."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-13-session-2",
+        "timestamp": "2025-09-10T07:45:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-13-s2-t1",
+            "speaker": "user",
+            "text": "I had breakfast with Omar at Marina Cafe."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-13-session-3",
+        "timestamp": "2025-09-12T08:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-13-s3-t1",
+            "speaker": "user",
+            "text": "I moved to Sharjah."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-13-session-4",
+        "timestamp": "2025-09-20T09:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-13-s4-t1",
+            "speaker": "user",
+            "text": "I had breakfast with Layla at Marina Cafe."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-13-session-5",
+        "timestamp": "2025-09-22T18:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-13-s5-t1",
+            "speaker": "user",
+            "text": "I moved to Dubai."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-13-session-6",
+        "timestamp": "2025-10-05T08:15:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-13-s6-t1",
+            "speaker": "user",
+            "text": "I had breakfast with Omar at Marina Cafe again."
+          }
+        ]
+      },
+      {
+        "session_id": "beam-local-pilot-13-session-7",
+        "timestamp": "2025-10-06T10:00:00Z",
+        "turns": [
+          {
+            "turn_id": "beam-local-pilot-13-s7-t1",
+            "speaker": "user",
+            "text": "I moved back to Sharjah."
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "beam-local-pilot-13-q-1",
+        "question": "Where did I live after I had breakfast with Omar at Marina Cafe?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-13-session-2",
+          "beam-local-pilot-13-session-3"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-13-s2-t1",
+          "beam-local-pilot-13-s3-t1"
+        ],
+        "question_date": "2025-10-07"
+      },
+      {
+        "question_id": "beam-local-pilot-13-q-2",
+        "question": "Where did I live after I had breakfast with Omar at Marina Cafe again?",
+        "answer": "Sharjah",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-13-session-6",
+          "beam-local-pilot-13-session-7"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-13-s6-t1",
+          "beam-local-pilot-13-s7-t1"
+        ],
+        "question_date": "2025-10-07"
+      },
+      {
+        "question_id": "beam-local-pilot-13-q-3",
+        "question": "Where did I live after I had breakfast with Layla at Marina Cafe?",
+        "answer": "Dubai",
+        "category": "temporal",
+        "evidence_session_ids": [
+          "beam-local-pilot-13-session-4",
+          "beam-local-pilot-13-session-5"
+        ],
+        "evidence_turn_ids": [
+          "beam-local-pilot-13-s4-t1",
+          "beam-local-pilot-13-s5-t1"
+        ],
+        "question_date": "2025-10-07"
+      }
+    ]
+  }
+]
