@@ -226,6 +226,7 @@ def _build_prediction(
             "product_memory_task": question.metadata.get("product_memory_task"),
             "memory_operation": question.metadata.get("memory_operation"),
             "memory_scope": question.metadata.get("memory_scope"),
+            "expected_answer_candidate_source": question.metadata.get("expected_answer_candidate_source"),
             "retrieved_context_item_count": len(packet.retrieved_context_items),
             "answer_candidate_count": len(packet.answer_candidates),
             "primary_answer_candidate_type": primary_answer_candidate.candidate_type if primary_answer_candidate else None,

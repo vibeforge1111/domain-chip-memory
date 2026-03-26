@@ -102,6 +102,8 @@ def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict
     current_state_correct = 0
     answer_source_counts: Counter[str] = Counter()
     answer_type_counts: Counter[str] = Counter()
+    expected_source_total = 0
+    expected_source_aligned = 0
 
     for prediction in predictions:
         latency = prediction.metadata.get("latency_ms")
@@ -115,6 +117,11 @@ def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict
         answer_source = str(prediction.metadata.get("primary_answer_candidate_source", "") or "").strip()
         if answer_source:
             answer_source_counts[answer_source] += 1
+        expected_source = str(prediction.metadata.get("expected_answer_candidate_source", "") or "").strip()
+        if expected_source:
+            expected_source_total += 1
+            if answer_source == expected_source:
+                expected_source_aligned += 1
         answer_type = str(prediction.metadata.get("primary_answer_candidate_type", "") or "").strip()
         if answer_type:
             answer_type_counts[answer_type] += 1
@@ -149,6 +156,11 @@ def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict
                 "total": total_predictions,
                 "rows": _label_count_rows(answer_source_counts),
             },
+            "primary_answer_candidate_source_alignment": _rate_row(
+                numerator=expected_source_aligned,
+                total=expected_source_total,
+                label="aligned",
+            ),
             "primary_answer_candidate_types": {
                 "supported": sum(answer_type_counts.values()),
                 "total": total_predictions,

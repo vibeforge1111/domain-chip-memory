@@ -184,6 +184,7 @@ def test_build_scorecard_emits_product_memory_summary():
                     "answer_candidate_count": 1,
                     "primary_answer_candidate_type": "current_state",
                     "primary_answer_candidate_source": "current_state_memory",
+                    "expected_answer_candidate_source": "current_state_memory",
                     "provenance_supported": True,
                     "should_abstain": False,
                 },
@@ -202,6 +203,7 @@ def test_build_scorecard_emits_product_memory_summary():
                     "latency_ms": 0.0,
                     "total_tokens": 0,
                     "answer_candidate_count": 0,
+                    "expected_answer_candidate_source": "current_state_deletion",
                     "provenance_supported": False,
                     "should_abstain": True,
                 },
@@ -220,6 +222,8 @@ def test_build_scorecard_emits_product_memory_summary():
     assert product_summary["primary_answer_candidate_sources"]["rows"] == [
         {"label": "current_state_memory", "count": 1}
     ]
+    assert product_summary["primary_answer_candidate_source_alignment"]["aligned"] == 1
+    assert product_summary["primary_answer_candidate_source_alignment"]["rate"] == 0.5
     assert product_summary["primary_answer_candidate_types"]["rows"] == [
         {"label": "current_state", "count": 1}
     ]

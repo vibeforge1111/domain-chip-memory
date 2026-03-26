@@ -115,6 +115,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "correction",
                         "memory_operation": "update",
                         "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
                     },
                 )
             ],
@@ -157,6 +158,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "deletion",
                         "memory_operation": "delete",
                         "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "current_state_deletion",
                     },
                 )
             ],
@@ -199,6 +201,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "stale_state_drift",
                         "memory_operation": "supersession",
                         "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
                     },
                 )
             ],
@@ -241,6 +244,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "deletion",
                         "memory_operation": "delete",
                         "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "current_state_deletion",
                     },
                 )
             ],
@@ -290,6 +294,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "correction",
                         "memory_operation": "update_after_delete",
                         "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
                     },
                 )
             ],
@@ -333,6 +338,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "deletion",
                         "memory_operation": "delete_one_facet",
                         "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_deletion",
                     },
                 ),
                 NormalizedQuestion(
@@ -346,6 +352,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "correction",
                         "memory_operation": "preserve_other_facet_after_delete",
                         "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
                     },
                 ),
             ],
@@ -395,6 +402,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "correction",
                         "memory_operation": "update_deleted_predicate",
                         "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
                     },
                 )
             ],
@@ -449,6 +457,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "correction",
                         "memory_operation": "rollback_to_prior_value",
                         "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
                     },
                 ),
                 NormalizedQuestion(
@@ -462,6 +471,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "correction",
                         "memory_operation": "preserve_other_facet_after_rollback",
                         "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
                     },
                 ),
             ],
@@ -515,6 +525,7 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "product_memory_task": "correction",
                         "memory_operation": "restore_deleted_value",
                         "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
                     },
                 )
             ],

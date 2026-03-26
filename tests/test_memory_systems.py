@@ -308,6 +308,24 @@ def test_product_memory_restores_deleted_value_when_user_reasserts_same_fact():
         assert prediction["is_correct"] is True
 
 
+def test_product_memory_lead_systems_are_source_aligned_on_local_lane():
+    samples = product_memory_samples()
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            samples,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        for prediction in scorecard["predictions"]:
+            expected_source = prediction["metadata"].get("expected_answer_candidate_source")
+            actual_source = prediction["metadata"].get("primary_answer_candidate_source")
+            assert expected_source == actual_source
+
+
 def test_observational_temporal_memory_answers_latest_fact():
     samples = demo_samples()
     scorecard = run_baseline(
