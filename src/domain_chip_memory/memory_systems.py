@@ -911,6 +911,25 @@ def _extract_atoms_from_turn(
             )
         )
 
+    def _append_referential_ambiguity(target_predicates: list[str], operations: list[str]) -> None:
+        atoms.append(
+            MemoryAtom(
+                atom_id=f"{turn.turn_id}:atom:manual:referential_ambiguity:{len(atoms)}",
+                subject=subject,
+                predicate="referential_ambiguity",
+                value=",".join(target_predicates),
+                session_id=session.session_id,
+                turn_id=turn.turn_id,
+                timestamp=turn.timestamp or session.timestamp,
+                source_text=text,
+                metadata={
+                    "speaker": turn.speaker,
+                    "target_predicates": list(target_predicates),
+                    "operations": list(operations),
+                },
+            )
+        )
+
     deletion_patterns = [
         (r"\b(?:please\s+)?(?:forget|delete|remove)\s+where\s+(?:i|we)\s+live\b", "location"),
         (r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?(?:i|we)\s+live in\s+([A-Za-z0-9 _-]+)", "location"),
@@ -933,33 +952,43 @@ def _extract_atoms_from_turn(
         deleted_value = _normalize_value(match.group(1)) if match.lastindex else ""
         _append_state_deletion(target_predicate, deleted_value)
 
-    discourse_scoped_pronoun_predicate: str | None = None
-    if re.search(r"\babout my favou?rite colou?r\b", lower):
-        discourse_scoped_pronoun_predicate = "favorite_color"
-    elif re.search(r"\babout where\s+(?:i|we)\s+live\b", lower):
-        discourse_scoped_pronoun_predicate = "location"
-    elif re.search(r"\babout what\s+(?:i|we)\s+(?:now\s+)?prefer\b", lower) or re.search(
-        r"\babout (?:my|our)\s+preference\b",
-        lower,
+    discourse_scoped_pronoun_predicates: list[str] = []
+    if "about" in lower and re.search(r"\bmy favou?rite colou?r\b", lower):
+        discourse_scoped_pronoun_predicates.append("favorite_color")
+    if "about" in lower and re.search(r"\bwhere\s+(?:i|we)\s+live\b", lower):
+        discourse_scoped_pronoun_predicates.append("location")
+    if "about" in lower and (
+        re.search(r"\bwhat\s+(?:i|we)\s+(?:now\s+)?prefer\b", lower)
+        or re.search(r"\b(?:my|our)\s+preference\b", lower)
     ):
-        discourse_scoped_pronoun_predicate = "preference"
+        discourse_scoped_pronoun_predicates.append("preference")
 
-    if discourse_scoped_pronoun_predicate and re.search(r"\b(?:please\s+)?(?:forget|delete|remove)\s+it\b", lower):
-        _append_state_deletion(discourse_scoped_pronoun_predicate, "")
+    has_pronoun_deletion = bool(re.search(r"\b(?:please\s+)?(?:forget|delete|remove)\s+it\b", lower))
 
     scoped_change_match = re.search(
         r"\b(?:change|update|correct|restore)\s+it\s+to\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
         text,
         re.IGNORECASE,
     )
-    if discourse_scoped_pronoun_predicate and scoped_change_match:
-        updated_value = _normalize_value(scoped_change_match.group(1))
-        if updated_value:
-            _append_atom(
-                discourse_scoped_pronoun_predicate,
-                updated_value,
-                entity_key=updated_value.lower(),
-            )
+    if len(discourse_scoped_pronoun_predicates) > 1 and (has_pronoun_deletion or scoped_change_match):
+        operations: list[str] = []
+        if has_pronoun_deletion:
+            operations.append("delete")
+        if scoped_change_match:
+            operations.append("update")
+        _append_referential_ambiguity(discourse_scoped_pronoun_predicates, operations)
+    elif len(discourse_scoped_pronoun_predicates) == 1:
+        discourse_scoped_pronoun_predicate = discourse_scoped_pronoun_predicates[0]
+        if has_pronoun_deletion:
+            _append_state_deletion(discourse_scoped_pronoun_predicate, "")
+        if scoped_change_match:
+            updated_value = _normalize_value(scoped_change_match.group(1))
+            if updated_value:
+                _append_atom(
+                    discourse_scoped_pronoun_predicate,
+                    updated_value,
+                    entity_key=updated_value.lower(),
+                )
 
     if "luna and oliver" in lower:
         _append_atom("pet_name", "Luna", entity_key="luna")
@@ -5343,6 +5372,26 @@ def _has_ambiguous_relative_state_anchor(
     return _has_ambiguous_generic_relative_anchor(anchor_phrase, target_predicates, candidate_entries)
 
 
+def _has_referential_ambiguity(
+    question: NormalizedQuestion,
+    candidate_entries: list[ObservationEntry | EventCalendarEntry],
+) -> bool:
+    predicates = set(_question_predicates(question))
+    if not predicates:
+        return False
+    for entry in candidate_entries:
+        if entry.predicate != "referential_ambiguity":
+            continue
+        target_predicates = {
+            str(predicate).strip()
+            for predicate in entry.metadata.get("target_predicates", [])
+            if str(predicate).strip()
+        }
+        if predicates.intersection(target_predicates):
+            return True
+    return False
+
+
 def _dated_state_target_predicates(question: NormalizedQuestion) -> list[str]:
     question_lower = question.question.lower()
     if question_lower.startswith("what did i prefer"):
@@ -6532,6 +6581,7 @@ def build_observational_temporal_memory_packets(
                 aggregate_pool,
             )
             ambiguous_relative_state = _has_ambiguous_relative_state_anchor(question, raw_candidate_pool)
+            referential_ambiguity = _has_referential_ambiguity(question, raw_candidate_pool)
             if _should_use_current_state_exact_value(question) and current_state_entries:
                 current_state_value = str(current_state_entries[0].metadata.get("value", "")).strip()
                 if current_state_value:
@@ -6545,6 +6595,8 @@ def build_observational_temporal_memory_packets(
                     source = "current_state_memory"
                 elif current_state_deleted:
                     source = "current_state_deletion"
+                elif referential_ambiguity and answer_text.lower() == "unknown":
+                    source = "referential_ambiguity"
                 elif ambiguous_relative_state and answer_text.lower() == "unknown":
                     source = "temporal_ambiguity"
                 elif aggregate_support_entries:
@@ -6868,6 +6920,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                 raw_candidate_pool if (_is_dated_state_question(question) or _is_relative_state_question(question)) else _dedupe_observations(raw_candidate_pool),
             )
             ambiguous_relative_state = _has_ambiguous_relative_state_anchor(question, raw_candidate_pool)
+            referential_ambiguity = _has_referential_ambiguity(question, raw_candidate_pool)
             answer_source = "evidence_memory" if evidence_entries else "belief_memory"
             if _should_use_current_state_exact_value(question) and current_state_entries:
                 current_state_value = str(current_state_entries[0].metadata.get("value", "")).strip()
@@ -6877,6 +6930,8 @@ def build_dual_store_event_calendar_hybrid_packets(
             elif current_state_deleted:
                 answer_text = "unknown"
                 answer_source = "current_state_deletion"
+            elif referential_ambiguity and answer_text.lower() == "unknown":
+                answer_source = "referential_ambiguity"
             elif ambiguous_relative_state and answer_text.lower() == "unknown":
                 answer_source = "temporal_ambiguity"
             if ranked_events:

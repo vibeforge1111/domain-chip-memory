@@ -526,6 +526,31 @@ def test_product_memory_binds_pronoun_heavy_turn_clauses_to_the_right_facet_and_
         assert predictions["product-memory-pronoun-turn-2:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
+def test_product_memory_abstains_on_mixed_facet_pronoun_scope_ambiguity():
+    ambiguity_samples = [
+        sample
+        for sample in product_memory_samples()
+        if sample.sample_id == "product-memory-pronoun-ambiguity-1"
+    ]
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            ambiguity_samples,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+        assert predictions["product-memory-pronoun-ambiguity-1:q1"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-ambiguity-1:q1"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-1:q1"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
+        assert predictions["product-memory-pronoun-ambiguity-1:q2"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-ambiguity-1:q2"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-1:q2"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
+
+
 def test_product_memory_lead_systems_are_source_aligned_on_local_lane():
     samples = product_memory_samples()
 
