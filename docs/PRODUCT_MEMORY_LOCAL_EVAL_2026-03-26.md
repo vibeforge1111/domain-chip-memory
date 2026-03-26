@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `146/146` on this lane:
+As of 2026-03-26, the two lead memory systems are now `148/148` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x41, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x16, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x41, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x16, `temporal_wording_disambiguation` x42
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x43, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x16, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x43, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x16, `temporal_wording_disambiguation` x42
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -111,6 +111,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - fronted mixed-facet chronology-bearing competition is now explicit too, so fronted forms like `Before the one we changed in February, what was my favorite color?` and `Before the one we removed later, where did I live?` still require `referential_ambiguity` when the facet remains under-specified
 - fronted mixed-facet value-bearing competition is now explicit too, so fronted forms like `Before the one we changed to green, what was my favorite color?` and `Before the one we removed, where did I live?` still require `referential_ambiguity` when the facet remains under-specified
 - fronted mixed-facet pronoun plus clause-carry competition is now explicit too, so fronted forms built on scoped `change it` / `forget it` histories still require `referential_ambiguity` instead of borrowing discourse scope from one facet
+- fronted mixed-facet chronology-bearing pronoun competition is now explicit too, so fronted forms built on scoped `change it` / `forget it` histories with month or later-style cues still require `referential_ambiguity` instead of borrowing discourse scope from one facet
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -129,13 +130,13 @@ It also now reports the primary answer-candidate source and type, which is usefu
   - `current_state_deletion` x3
   - `evidence_memory` x78
   - `temporal_ambiguity` x31
-  - `referential_ambiguity` x26
+  - `referential_ambiguity` x28
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
   - `evidence_memory` x78
   - `temporal_ambiguity` x31
-  - `referential_ambiguity` x26
+  - `referential_ambiguity` x28
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
@@ -145,8 +146,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `146/146` source-aligned
-- `dual_store_event_calendar_hybrid`: `146/146` source-aligned
+- `observational_temporal_memory`: `148/148` source-aligned
+- `dual_store_event_calendar_hybrid`: `148/148` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
