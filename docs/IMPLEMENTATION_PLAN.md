@@ -120,9 +120,11 @@ Current lead lane as of 2026-03-25:
     - restore a deleted value, including reasserting the exact same value
   - scorecards now slice this lane by `product_memory_task`, `memory_operation`, and `memory_scope`
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
+  - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
     - `observational_temporal_memory` answers this lane through `current_state_memory` x8 and `current_state_deletion` x3
     - `dual_store_event_calendar_hybrid` now also answers this lane through `current_state_memory` x8 and `current_state_deletion` x3
+    - both lead systems are now `11/11` source-aligned on the local lane
 
 Candidate components:
 

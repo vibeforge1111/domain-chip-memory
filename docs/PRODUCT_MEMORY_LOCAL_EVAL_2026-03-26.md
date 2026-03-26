@@ -78,6 +78,17 @@ It also now reports the primary answer-candidate source and type, which is usefu
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
+The lane now also carries an explicit expected source contract per question via `expected_answer_candidate_source`.
+
+That lets the scorecard measure `primary_answer_candidate_source_alignment` directly instead of relying on manual inspection.
+
+As of the current local lane:
+
+- `observational_temporal_memory`: `11/11` source-aligned
+- `dual_store_event_calendar_hybrid`: `11/11` source-aligned
+
+This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
+
 ## Source
 
 The current local source lives in:
