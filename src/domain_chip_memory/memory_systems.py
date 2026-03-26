@@ -2868,6 +2868,25 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
         return normalized
     correction_verbs = "corrected|changed|updated|restored"
     deletion_verbs = "deleted|removed|forgot"
+    month_names = (
+        "january|february|march|april|may|june|july|august|"
+        "september|october|november|december"
+    )
+
+    generic_anchor_match = re.match(
+        r"^(that\s+(?:earlier|later|first|last)\s+"
+        r"(?:change|update|correction|move|relocation|deletion|removal|forget))\b",
+        normalized,
+    )
+    if generic_anchor_match:
+        suffix = normalized[generic_anchor_match.end() :].strip()
+        if not suffix:
+            return generic_anchor_match.group(1)
+        if re.match(
+            rf"^(?:we\s+(?:talked about|mentioned)|in\s+(?:{month_names})(?:\s+\d{{4}})?)$",
+            suffix,
+        ):
+            return generic_anchor_match.group(1)
 
     if re.match(rf"^(?:i\s+)?(?:{deletion_verbs})\s+it$", normalized):
         if "favorite_color" in target_predicates:
