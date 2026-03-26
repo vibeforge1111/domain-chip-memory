@@ -22,7 +22,7 @@ It is not a public benchmark claim.
 - `stale_state_drift`
   - a value changes, changes again, then re-enters, and the system should return the active state instead of stale intermediate state
 - `evidence_preservation`
-  - historical facts should remain recoverable from evidence memory even after current-state deletion and later update or correction, including broader correction and deletion phrasing, slot-explicit delete paraphrases, and mixed slot-plus-target update phrasing
+  - historical facts should remain recoverable from evidence memory even after current-state deletion and later update or correction, including broader correction and deletion phrasing, slot-explicit delete paraphrases, mixed slot-plus-target update phrasing, and fronted-clause question forms
 
 ## Why this matters
 
@@ -42,10 +42,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `19/19` on this lane:
+As of 2026-03-26, the two lead memory systems are now `22/22` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x8
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x8
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x11
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x11
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -63,6 +63,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - deletion-history anchors like `before I deleted it`, `before I removed it`, and `before I forgot it` now route into predicate-specific delete anchors instead of collapsing to the latest current-state value
 - slot-explicit delete history phrasing like `before I deleted where I live` now also routes into the same delete anchor instead of leaking through current-state retrieval
 - mixed slot-plus-target phrasing like `before I changed where I live to Sharjah` and `before I updated my favorite color to green` is now locked into the local lane as regression coverage
+- fronted-clause forms like `Before I changed my favorite color to green, what was my favorite color?` now route into the same relative-state operator instead of defaulting to the latest evidence
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -79,11 +80,11 @@ It also now reports the primary answer-candidate source and type, which is usefu
 - `observational_temporal_memory` is fully source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x8
+  - `evidence_memory` x11
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x8
+  - `evidence_memory` x11
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
@@ -93,8 +94,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `19/19` source-aligned
-- `dual_store_event_calendar_hybrid`: `19/19` source-aligned
+- `observational_temporal_memory`: `22/22` source-aligned
+- `dual_store_event_calendar_hybrid`: `22/22` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
