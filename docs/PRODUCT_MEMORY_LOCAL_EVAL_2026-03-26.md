@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `594/594` on this lane:
+As of 2026-03-26, the two lead memory systems are now `610/610` on this lane:
 
-- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x175, `pronoun_referential_ambiguity` x200, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x175, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x200
+- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x176, `pronoun_referential_ambiguity` x201, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x176, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x201
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -170,6 +170,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - five-facet scoped-pronoun inverse-overlap stability is now explicit too, so a clean favorite-color deletion, an ambiguous favorite-color-plus-preference middle clause, a far-edge clean location update, and untouched dog-breed plus bike-count facets can coexist without cross-facet leakage
 - five-facet value-bearing scoped-pronoun inverse-overlap stability is now explicit too, so the same clean delete edge, far-edge clean update, and untouched dog-breed plus bike-count facets still hold when the ambiguous middle clause carries an explicit target value like `update it to blue later`
 - five-facet chronology-bearing scoped-pronoun inverse-overlap stability is now explicit too, so the same clean delete edge, far-edge clean update, and untouched dog-breed plus bike-count facets still hold when the ambiguous middle clause carries a timing cue like `update it in February later`
+- five-facet comparative scoped-pronoun inverse-overlap stability is now explicit too, so the same clean delete edge, far-edge clean update, and untouched dog-breed plus bike-count facets still hold when the ambiguous middle clause carries comparative wording like `update it earlier instead`
 - current-state bike-count questions like `How many bikes do I own now?` now stay source-aligned on `current_state_memory` instead of being forced onto the generic aggregate/evidence path by the broad count-question gate
 - selective facet-preserving edits plus historical recall are now explicit too, so deleting one facet and later updating another facet still preserves current-state separation and historical recall for both the deleted facet and the edited facet
 - rollback/edit sequences plus historical recall are now explicit too, so rolling one facet back and later editing another facet still preserves current-state separation and historical recall for both facets
@@ -220,8 +221,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `594/594` source-aligned
-- `dual_store_event_calendar_hybrid`: `594/594` source-aligned
+- `observational_temporal_memory`: `610/610` source-aligned
+- `dual_store_event_calendar_hybrid`: `610/610` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
