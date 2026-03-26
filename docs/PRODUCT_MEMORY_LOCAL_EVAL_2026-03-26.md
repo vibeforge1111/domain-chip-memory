@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `62/62` on this lane:
+As of 2026-03-26, the two lead memory systems are now `66/66` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x14
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x14
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x18
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x18
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -89,6 +89,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - mixed-facet multi-operation pronoun scope is now also locked down, so turns like `About my favorite color and where I live, please forget it, and after that change it to green` abstain across both delete/update anchors instead of partially hallucinating one operation
 - earlier/later temporal wording is now locked down too, so questions like `What was my favorite color before that earlier change?`, `What was my favorite color before that later update?`, `Where did I live before that earlier move?`, and `Where did I live before that later deletion?` bind to the right transition instead of being misclassified as `temporal_ambiguity` because of duplicate packet entries
 - first/last temporal wording is now also locked down, so multi-update and multi-delete histories answer `before that first change`, `before that last update`, `before that first deletion`, and `before that last deletion` from `evidence_memory` instead of relying on whichever transition happened to be most recent
+- clause-heavy temporal wording is now covered as well, so conversational forms like `before that first change we talked about`, `before that first move we mentioned`, and `before that later deletion in May` normalize back into the same generic temporal operators instead of falling through to latest-evidence retrieval
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -105,13 +106,13 @@ It also now reports the primary answer-candidate source and type, which is usefu
 - `observational_temporal_memory` is fully source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x42
+  - `evidence_memory` x46
   - `temporal_ambiguity` x3
   - `referential_ambiguity` x6
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x42
+  - `evidence_memory` x46
   - `temporal_ambiguity` x3
   - `referential_ambiguity` x6
 
@@ -123,8 +124,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `62/62` source-aligned
-- `dual_store_event_calendar_hybrid`: `62/62` source-aligned
+- `observational_temporal_memory`: `66/66` source-aligned
+- `dual_store_event_calendar_hybrid`: `66/66` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
