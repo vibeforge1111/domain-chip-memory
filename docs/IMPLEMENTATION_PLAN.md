@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `38/38`
-  - `dual_store_event_calendar_hybrid`: `38/38`
+  - `observational_temporal_memory`: `42/42`
+  - `dual_store_event_calendar_hybrid`: `42/42`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -126,6 +126,7 @@ Current lead lane as of 2026-03-25:
     - cross-facet generic-anchor binding when another facet changed nearby but the asked facet remains unambiguous
     - operation-specific anchor binding when `that deletion` or similar phrasing must bind to a delete event instead of a later update on the same facet
     - dense-turn clause binding when delete/update operations are mentioned in the same utterance but must stay distinguishable
+    - pronoun-scoped turn binding when a turn says `forget it` / `change it` after locally scoping the target facet
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
@@ -134,8 +135,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x8, `current_state_deletion` x3, `evidence_memory` x24, and `temporal_ambiguity` x3
-    - both lead systems are now `38/38` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x8, `current_state_deletion` x3, `evidence_memory` x28, and `temporal_ambiguity` x3
+    - both lead systems are now `42/42` source-aligned on the local lane
 
 Candidate components:
 
