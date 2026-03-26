@@ -23,6 +23,8 @@ It is not a public benchmark claim.
   - a value changes, changes again, then re-enters, and the system should return the active state instead of stale intermediate state
 - `evidence_preservation`
   - historical facts should remain recoverable from evidence memory even after current-state deletion and later update or correction, including broader correction and deletion phrasing, slot-explicit delete paraphrases, mixed slot-plus-target update phrasing, fronted-clause question forms, longer multi-clause variants, and anaphoric anchors like `that change`
+- `ambiguity_abstention`
+  - if a generic historical anchor like `that update` or `that move` has more than one plausible target, the system should abstain instead of inventing a chronology
 
 ## Why this matters
 
@@ -42,10 +44,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `28/28` on this lane:
+As of 2026-03-26, the two lead memory systems are now `30/30` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x17
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x17
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -66,6 +68,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - fronted-clause forms like `Before I changed my favorite color to green, what was my favorite color?` now route into the same relative-state operator instead of defaulting to the latest evidence
 - longer multi-clause forms like `Before I changed my favorite color to green, when we were still using the old one, what was my favorite color?` are now also covered locally
 - anaphoric forms like `What was my favorite color before that update?` and `Before that move, where did I live?` now route through a generic target-change anchor instead of requiring explicit slot restatement
+- ambiguous generic anchors like `What did I prefer before that update?` and multi-update histories like `Where did I live before that move?` now abstain explicitly through `temporal_ambiguity` instead of relying on accidental fallback behavior
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -82,11 +85,13 @@ It also now reports the primary answer-candidate source and type, which is usefu
 - `observational_temporal_memory` is fully source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x17
+  - `evidence_memory` x16
+  - `temporal_ambiguity` x3
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x17
+  - `evidence_memory` x16
+  - `temporal_ambiguity` x3
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
@@ -96,8 +101,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `28/28` source-aligned
-- `dual_store_event_calendar_hybrid`: `28/28` source-aligned
+- `observational_temporal_memory`: `30/30` source-aligned
+- `dual_store_event_calendar_hybrid`: `30/30` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
