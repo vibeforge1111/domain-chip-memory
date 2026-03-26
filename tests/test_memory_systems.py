@@ -414,6 +414,31 @@ def test_product_memory_abstains_on_ambiguous_anaphoric_history():
         assert predictions["product-memory-ambiguity-2:q1"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
 
 
+def test_product_memory_binds_generic_anchor_to_requested_facet_across_other_updates():
+    disambiguation_samples = [
+        sample
+        for sample in product_memory_samples()
+        if sample.sample_id in {"product-memory-disambiguation-1", "product-memory-disambiguation-2"}
+    ]
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            disambiguation_samples,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+        assert predictions["product-memory-disambiguation-1:q1"]["predicted_answer"] == "red"
+        assert predictions["product-memory-disambiguation-1:q1"]["is_correct"] is True
+        assert predictions["product-memory-disambiguation-1:q1"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-disambiguation-2:q1"]["predicted_answer"] == "Dubai"
+        assert predictions["product-memory-disambiguation-2:q1"]["is_correct"] is True
+        assert predictions["product-memory-disambiguation-2:q1"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+
+
 def test_product_memory_lead_systems_are_source_aligned_on_local_lane():
     samples = product_memory_samples()
 

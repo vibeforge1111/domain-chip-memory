@@ -863,4 +863,100 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 )
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-disambiguation-1",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-03-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-03-04",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="Correction: my favorite color is green.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Updated color."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2026-03-07",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="I moved to Sharjah."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated location."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-disambiguation-1:q1",
+                    question="What was my favorite color before that change?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "cross_facet_disambiguation",
+                        "memory_operation": "historical_cross_facet_anchor_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                )
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-disambiguation-2",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-04-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-04-04",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="I moved to Sharjah."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Updated location."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2026-04-07",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated color."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-disambiguation-2:q1",
+                    question="Where did I live before that change?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "cross_facet_disambiguation",
+                        "memory_operation": "historical_cross_facet_anchor_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                )
+            ],
+        ),
     ]
