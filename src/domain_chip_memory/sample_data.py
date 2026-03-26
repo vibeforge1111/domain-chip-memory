@@ -4385,4 +4385,268 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 ),
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-temporal-wording-27",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2028-08-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2028-08-02",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2028-08-03",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="My favorite color is green."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2028-08-04",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="Please forget where I live."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s5",
+                    timestamp="2028-08-05",
+                    turns=[
+                        NormalizedTurn(turn_id="s5:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s5:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s6",
+                    timestamp="2028-08-06",
+                    turns=[
+                        NormalizedTurn(turn_id="s6:t1", speaker="user", text="I moved to Sharjah."),
+                        NormalizedTurn(turn_id="s6:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s7",
+                    timestamp="2028-08-07",
+                    turns=[
+                        NormalizedTurn(turn_id="s7:t1", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s7:t2", speaker="assistant", text="Updated again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s8",
+                    timestamp="2028-08-08",
+                    turns=[
+                        NormalizedTurn(turn_id="s8:t1", speaker="user", text="Please forget where I live again."),
+                        NormalizedTurn(turn_id="s8:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s9",
+                    timestamp="2028-08-09",
+                    turns=[
+                        NormalizedTurn(turn_id="s9:t1", speaker="user", text="Please forget my favorite color again."),
+                        NormalizedTurn(turn_id="s9:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s10",
+                    timestamp="2028-08-10",
+                    turns=[
+                        NormalizedTurn(turn_id="s10:t1", speaker="user", text="I moved to Abu Dhabi."),
+                        NormalizedTurn(turn_id="s10:t2", speaker="assistant", text="Updated again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s11",
+                    timestamp="2028-08-11",
+                    turns=[
+                        NormalizedTurn(turn_id="s11:t1", speaker="user", text="Please forget where I live one more time."),
+                        NormalizedTurn(turn_id="s11:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s12",
+                    timestamp="2028-08-12",
+                    turns=[
+                        NormalizedTurn(turn_id="s12:t1", speaker="user", text="Please forget my favorite color one more time."),
+                        NormalizedTurn(turn_id="s12:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-27:q1",
+                    question="What was my favorite color before that first update we talked about?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1", "s3"],
+                    evidence_turn_ids=["s1:t1", "s3:t1"],
+                    metadata={
+                        "product_memory_task": "temporal_wording_disambiguation",
+                        "memory_operation": "historical_clause_heavy_first_update_with_mixed_operation_overload",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-27:q2",
+                    question="What was my favorite color before that last deletion in August?",
+                    category="historical_state",
+                    expected_answers=["blue"],
+                    evidence_session_ids=["s7", "s12"],
+                    evidence_turn_ids=["s7:t1", "s12:t1"],
+                    metadata={
+                        "product_memory_task": "temporal_wording_disambiguation",
+                        "memory_operation": "historical_clause_heavy_last_deletion_with_mixed_operation_overload",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-temporal-wording-28",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2028-08-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2028-08-02",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2028-08-03",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="My favorite color is green."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2028-08-04",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="Please forget where I live."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s5",
+                    timestamp="2028-08-05",
+                    turns=[
+                        NormalizedTurn(turn_id="s5:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s5:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s6",
+                    timestamp="2028-08-06",
+                    turns=[
+                        NormalizedTurn(turn_id="s6:t1", speaker="user", text="I moved to Sharjah."),
+                        NormalizedTurn(turn_id="s6:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s7",
+                    timestamp="2028-08-07",
+                    turns=[
+                        NormalizedTurn(turn_id="s7:t1", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s7:t2", speaker="assistant", text="Updated again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s8",
+                    timestamp="2028-08-08",
+                    turns=[
+                        NormalizedTurn(turn_id="s8:t1", speaker="user", text="Please forget where I live again."),
+                        NormalizedTurn(turn_id="s8:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s9",
+                    timestamp="2028-08-09",
+                    turns=[
+                        NormalizedTurn(turn_id="s9:t1", speaker="user", text="Please forget my favorite color again."),
+                        NormalizedTurn(turn_id="s9:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s10",
+                    timestamp="2028-08-10",
+                    turns=[
+                        NormalizedTurn(turn_id="s10:t1", speaker="user", text="I moved to Abu Dhabi."),
+                        NormalizedTurn(turn_id="s10:t2", speaker="assistant", text="Updated again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s11",
+                    timestamp="2028-08-11",
+                    turns=[
+                        NormalizedTurn(turn_id="s11:t1", speaker="user", text="Please forget where I live one more time."),
+                        NormalizedTurn(turn_id="s11:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s12",
+                    timestamp="2028-08-12",
+                    turns=[
+                        NormalizedTurn(turn_id="s12:t1", speaker="user", text="Please forget my favorite color one more time."),
+                        NormalizedTurn(turn_id="s12:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-28:q1",
+                    question="Where did I live before that first move we mentioned?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s2", "s6"],
+                    evidence_turn_ids=["s2:t1", "s6:t1"],
+                    metadata={
+                        "product_memory_task": "temporal_wording_disambiguation",
+                        "memory_operation": "historical_clause_heavy_first_move_with_mixed_operation_overload",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-28:q2",
+                    question="Where did I live before that last deletion in August?",
+                    category="historical_state",
+                    expected_answers=["Abu Dhabi"],
+                    evidence_session_ids=["s10", "s11"],
+                    evidence_turn_ids=["s10:t1", "s11:t1"],
+                    metadata={
+                        "product_memory_task": "temporal_wording_disambiguation",
+                        "memory_operation": "historical_clause_heavy_last_location_deletion_with_mixed_operation_overload",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
     ]
