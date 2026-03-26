@@ -2161,4 +2161,156 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 ),
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-temporal-wording-9",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2027-09-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2027-09-03",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="My favorite color is green."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2027-09-05",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2027-09-07",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="My favorite color is yellow."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Updated again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s5",
+                    timestamp="2027-09-09",
+                    turns=[
+                        NormalizedTurn(turn_id="s5:t1", speaker="user", text="Please forget my favorite color again."),
+                        NormalizedTurn(turn_id="s5:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-9:q1",
+                    question="What was my favorite color before that earlier update we talked about?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "temporal_wording_disambiguation",
+                        "memory_operation": "historical_earlier_update_clause_binding",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-9:q2",
+                    question="What was my favorite color before that later deletion in September?",
+                    category="historical_state",
+                    expected_answers=["yellow"],
+                    evidence_session_ids=["s4"],
+                    evidence_turn_ids=["s4:t1"],
+                    metadata={
+                        "product_memory_task": "temporal_wording_disambiguation",
+                        "memory_operation": "historical_later_deletion_mixed_operation_binding",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-temporal-wording-10",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2027-10-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2027-10-03",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="I moved to Sharjah."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2027-10-05",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Please forget where I live."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2027-10-07",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="I moved to Abu Dhabi."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Updated again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s5",
+                    timestamp="2027-10-09",
+                    turns=[
+                        NormalizedTurn(turn_id="s5:t1", speaker="user", text="Please forget where I live again."),
+                        NormalizedTurn(turn_id="s5:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-10:q1",
+                    question="Where did I live before that earlier move we mentioned?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "temporal_wording_disambiguation",
+                        "memory_operation": "historical_earlier_update_clause_binding",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-10:q2",
+                    question="Where did I live before that later deletion in October?",
+                    category="historical_state",
+                    expected_answers=["Abu Dhabi"],
+                    evidence_session_ids=["s4"],
+                    evidence_turn_ids=["s4:t1"],
+                    metadata={
+                        "product_memory_task": "temporal_wording_disambiguation",
+                        "memory_operation": "historical_later_deletion_mixed_operation_binding",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
     ]
