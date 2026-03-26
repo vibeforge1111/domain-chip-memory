@@ -2892,6 +2892,13 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
             suffix,
         ):
             return generic_anchor_match.group(1)
+        if re.match(
+            r"^we\s+(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot),\s+and\s+before\s+that\s+"
+            r"(?:earlier|later|first|last)\s+one(?:\s+we\s+"
+            r"(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot))?$",
+            suffix,
+        ):
+            return generic_anchor_match.group(1)
 
     if re.match(rf"^(?:i\s+)?(?:{deletion_verbs})\s+it$", normalized):
         if "favorite_color" in target_predicates:
