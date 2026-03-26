@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `152/152`
-  - `dual_store_event_calendar_hybrid`: `152/152`
+  - `observational_temporal_memory`: `156/156`
+  - `dual_store_event_calendar_hybrid`: `156/156`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -155,6 +155,7 @@ Current lead lane as of 2026-03-25:
     - fronted mixed-facet chronology-bearing pronoun ambiguity when questions start with clauses like `Before the first one we changed in January and the last one we removed later...` and must still surface `referential_ambiguity` instead of borrowing scoped discourse from one facet
     - delete-specific fronted pronoun ambiguity when questions start with clauses like `Before the one we removed later...` on scoped `forget it` histories and must still surface `referential_ambiguity` instead of borrowing one facet's delete trace
     - update-specific fronted pronoun ambiguity when questions start with clauses like `Before the one we changed...` on scoped `change it` histories and must still surface `referential_ambiguity` instead of borrowing one facet's update trace
+    - lean fronted first/last pronoun ambiguity when questions start with clauses like `Before the first one...` or `Before the last one...` on scoped histories and must still surface `referential_ambiguity` instead of silently binding to one facet
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
@@ -163,8 +164,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x8, `current_state_deletion` x3, `evidence_memory` x78, `temporal_ambiguity` x31, and `referential_ambiguity` x32
-    - both lead systems are now `152/152` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x8, `current_state_deletion` x3, `evidence_memory` x78, `temporal_ambiguity` x31, and `referential_ambiguity` x36
+    - both lead systems are now `156/156` source-aligned on the local lane
 
 Candidate components:
 
