@@ -962,49 +962,50 @@ def _extract_atoms_from_turn(
     scoped_about_clauses = _split_sentence_fronted_about_clauses(text)
     if len(scoped_about_clauses) > 1:
         clause_predicates = [_scoped_pronoun_predicates(clause.lower()) for clause in scoped_about_clauses]
-        if all(len(predicates) == 1 for predicates in clause_predicates):
-            clause_atoms: list[MemoryAtom] = []
-            clause_operations: set[str] = set()
-            clause_target_predicates: set[str] = set()
-            for clause_index, clause in enumerate(scoped_about_clauses):
-                clause_target_predicates.update(clause_predicates[clause_index])
-                clause_lower = clause.lower()
-                if re.search(r"\b(?:please\s+)?(?:forget|delete|remove)\s+it\b", clause_lower):
-                    clause_operations.add("delete")
-                if re.search(
-                    r"\b(?:change|update|correct|restore)\s+it\s+to\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
-                    clause,
-                    re.IGNORECASE,
-                ):
-                    clause_operations.add("update")
-                clause_turn = replace(turn, text=clause)
-                extracted_clause_atoms = _extract_atoms_from_turn(
-                    session,
-                    clause_turn,
-                    allow_raw_fallback=allow_raw_fallback,
-                )
-                for extracted_atom in extracted_clause_atoms:
-                    source_text = extracted_atom.source_text
-                    if extracted_atom.predicate == "state_deletion":
-                        target_predicate = str(extracted_atom.metadata.get("target_predicate", ""))
-                        if target_predicate == "favorite_color":
-                            source_text = "forget my favorite color"
-                        elif target_predicate == "location":
-                            source_text = "forget where i live"
-                        elif target_predicate == "preference":
-                            source_text = "forget what i prefer"
-                    clause_atoms.append(
-                        replace(
-                            extracted_atom,
-                            atom_id=f"{turn.turn_id}:atom:scoped_clause:{clause_index}:{len(clause_atoms)}",
-                            turn_id=turn.turn_id,
-                            source_text=source_text,
-                        )
+        clause_atoms: list[MemoryAtom] = []
+        clause_operations: set[str] = set()
+        clause_target_predicates: set[str] = set()
+        for clause_index, clause in enumerate(scoped_about_clauses):
+            if not clause_predicates[clause_index]:
+                continue
+            clause_target_predicates.update(clause_predicates[clause_index])
+            clause_lower = clause.lower()
+            if re.search(r"\b(?:please\s+)?(?:forget|delete|remove)\s+it\b", clause_lower):
+                clause_operations.add("delete")
+            if re.search(
+                r"\b(?:change|update|correct|restore)\s+it\s+to\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
+                clause,
+                re.IGNORECASE,
+            ):
+                clause_operations.add("update")
+            clause_turn = replace(turn, text=clause)
+            extracted_clause_atoms = _extract_atoms_from_turn(
+                session,
+                clause_turn,
+                allow_raw_fallback=allow_raw_fallback,
+            )
+            for extracted_atom in extracted_clause_atoms:
+                source_text = extracted_atom.source_text
+                if extracted_atom.predicate == "state_deletion":
+                    target_predicate = str(extracted_atom.metadata.get("target_predicate", ""))
+                    if target_predicate == "favorite_color":
+                        source_text = "forget my favorite color"
+                    elif target_predicate == "location":
+                        source_text = "forget where i live"
+                    elif target_predicate == "preference":
+                        source_text = "forget what i prefer"
+                clause_atoms.append(
+                    replace(
+                        extracted_atom,
+                        atom_id=f"{turn.turn_id}:atom:scoped_clause:{clause_index}:{len(clause_atoms)}",
+                        turn_id=turn.turn_id,
+                        source_text=source_text,
                     )
-            if clause_atoms:
-                if len(clause_target_predicates) > 1 and clause_operations:
-                    _append_referential_ambiguity(sorted(clause_target_predicates), sorted(clause_operations))
-                return clause_atoms + atoms
+                )
+        if clause_atoms:
+            if len(clause_target_predicates) > 1 and clause_operations:
+                _append_referential_ambiguity(sorted(clause_target_predicates), sorted(clause_operations))
+            return clause_atoms + atoms
 
     deletion_patterns = [
         (r"\b(?:please\s+)?(?:forget|delete|remove)\s+where\s+(?:i|we)\s+live\b", "location"),
