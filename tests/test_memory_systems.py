@@ -255,6 +255,9 @@ def test_product_memory_preserves_historical_evidence_after_delete_and_update():
         assert predictions["product-memory-correction-2:q3"]["predicted_answer"] == "Dubai"
         assert predictions["product-memory-correction-2:q3"]["is_correct"] is True
         assert predictions["product-memory-correction-2:q3"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-correction-2:q4"]["predicted_answer"] == "Dubai"
+        assert predictions["product-memory-correction-2:q4"]["is_correct"] is True
+        assert predictions["product-memory-correction-2:q4"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_preserves_non_location_historical_evidence_after_correction():

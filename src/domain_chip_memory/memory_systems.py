@@ -2794,6 +2794,11 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
             return "forget what i prefer"
         if "location" in target_predicates:
             return "forget where i live"
+    if "location" in target_predicates and re.match(
+        rf"^(?:i\s+)?(?:{deletion_verbs})\s+where\s+i\s+live$",
+        normalized,
+    ):
+        return "forget where i live"
 
     if "favorite_color" in target_predicates:
         match = re.match(
