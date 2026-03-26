@@ -418,7 +418,21 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "memory_scope": "single_facet",
                         "expected_answer_candidate_source": "current_state_memory",
                     },
-                )
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-3:q2",
+                    question="What was my favorite color before I corrected it to green?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_pre_correction_recall",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
             ],
         ),
         NormalizedBenchmarkSample(

@@ -254,6 +254,24 @@ def test_product_memory_preserves_historical_evidence_after_delete_and_update():
         assert predictions["product-memory-correction-2:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
+def test_product_memory_preserves_non_location_historical_evidence_after_correction():
+    historical_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-correction-3"]
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            historical_sample,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+        assert predictions["product-memory-correction-3:q2"]["predicted_answer"] == "red"
+        assert predictions["product-memory-correction-3:q2"]["is_correct"] is True
+        assert predictions["product-memory-correction-3:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+
+
 def test_product_memory_selective_deletion_preserves_other_current_state():
     selective_delete_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-deletion-3"]
 

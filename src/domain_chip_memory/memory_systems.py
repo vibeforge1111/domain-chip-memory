@@ -2775,8 +2775,30 @@ def _extract_relative_state_anchor(question_lower: str) -> tuple[str | None, str
         ("what was my favourite colour after ", "after", ["favorite_color"]),
     ):
         if question_lower.startswith(prefix):
-            return mode, question_lower[len(prefix):].strip().rstrip(".!?"), predicates
+            anchor_phrase = question_lower[len(prefix):].strip().rstrip(".!?")
+            return mode, _normalize_relative_state_anchor_phrase(anchor_phrase, predicates), predicates
     return None, "", []
+
+
+def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicates: list[str]) -> str:
+    normalized = anchor_phrase.strip().rstrip(".!?")
+    if not normalized:
+        return normalized
+    if "favorite_color" in target_predicates:
+        match = re.match(
+            r"^(?:i\s+)?corrected\s+it\s+to\s+([a-z0-9 _-]+?)(?:\s+now|\s+again)?$",
+            normalized,
+        )
+        if match:
+            return f"my favorite color is {_normalize_value(match.group(1).lower())}"
+    if "preference" in target_predicates:
+        match = re.match(
+            r"^(?:i\s+)?corrected\s+it\s+to\s+([a-z0-9 _-]+?)(?:\s+now|\s+again)?$",
+            normalized,
+        )
+        if match:
+            return f"i prefer {_normalize_value(match.group(1).lower())}"
+    return normalized
 
 
 def _is_relative_state_question(question: NormalizedQuestion) -> bool:
