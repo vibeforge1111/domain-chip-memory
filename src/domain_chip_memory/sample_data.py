@@ -2058,6 +2058,101 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-ambiguity-3",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-03-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="assistant", text="Saved both."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-03-03",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted color."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2026-03-05",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Correction: my favorite color is green."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated color."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2026-03-07",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="Actually, my favorite color is yellow now."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Updated color again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s5",
+                    timestamp="2026-03-09",
+                    turns=[
+                        NormalizedTurn(turn_id="s5:t1", speaker="user", text="Please forget where I live."),
+                        NormalizedTurn(turn_id="s5:t2", speaker="assistant", text="Deleted location."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s6",
+                    timestamp="2026-03-11",
+                    turns=[
+                        NormalizedTurn(turn_id="s6:t1", speaker="user", text="Actually, I live in Sharjah."),
+                        NormalizedTurn(turn_id="s6:t2", speaker="assistant", text="Restored location."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s7",
+                    timestamp="2026-03-13",
+                    turns=[
+                        NormalizedTurn(turn_id="s7:t1", speaker="user", text="Actually, I live in Ajman."),
+                        NormalizedTurn(turn_id="s7:t2", speaker="assistant", text="Updated location again."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-ambiguity-3:q1",
+                    question="What was my favorite color before that change?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2", "s3", "s4"],
+                    evidence_turn_ids=["s1:t1", "s2:t1", "s3:t1", "s4:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "ambiguity_abstention",
+                        "memory_operation": "mixed_lifecycle_ambiguous_color_anchor_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "temporal_ambiguity",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-ambiguity-3:q2",
+                    question="Where did I live before that change?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s5", "s6", "s7"],
+                    evidence_turn_ids=["s1:t2", "s5:t1", "s6:t1", "s7:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "ambiguity_abstention",
+                        "memory_operation": "mixed_lifecycle_ambiguous_location_anchor_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "temporal_ambiguity",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-disambiguation-1",
             sessions=[
                 NormalizedSession(

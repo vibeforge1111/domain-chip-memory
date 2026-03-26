@@ -711,7 +711,7 @@ def test_product_memory_abstains_on_ambiguous_anaphoric_history():
     ambiguous_samples = [
         sample
         for sample in product_memory_samples()
-        if sample.sample_id in {"product-memory-ambiguity-1", "product-memory-ambiguity-2"}
+        if sample.sample_id in {"product-memory-ambiguity-1", "product-memory-ambiguity-2", "product-memory-ambiguity-3"}
     ]
 
     for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
@@ -730,6 +730,12 @@ def test_product_memory_abstains_on_ambiguous_anaphoric_history():
         assert predictions["product-memory-ambiguity-2:q1"]["predicted_answer"].lower() == "unknown"
         assert predictions["product-memory-ambiguity-2:q1"]["is_correct"] is True
         assert predictions["product-memory-ambiguity-2:q1"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
+        assert predictions["product-memory-ambiguity-3:q1"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-ambiguity-3:q1"]["is_correct"] is True
+        assert predictions["product-memory-ambiguity-3:q1"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
+        assert predictions["product-memory-ambiguity-3:q2"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-ambiguity-3:q2"]["is_correct"] is True
+        assert predictions["product-memory-ambiguity-3:q2"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
 
 
 def test_product_memory_binds_generic_anchor_to_requested_facet_across_other_updates():
