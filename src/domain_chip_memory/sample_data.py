@@ -3181,6 +3181,65 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-pronoun-ambiguity-5",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2027-01-28",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="assistant", text="Saved both."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2027-02-03",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="About my favorite color and where I live, please forget it, and after that change it to blue.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Handled in February."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-ambiguity-5:q1",
+                    question="What was my favorite color before that change in February?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2"],
+                    evidence_turn_ids=["s1:t1", "s1:t2", "s2:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "pronoun_referential_ambiguity",
+                        "memory_operation": "historical_pronoun_turn_chronology_bearing_color_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-ambiguity-5:q2",
+                    question="Where did I live before that change in February?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2"],
+                    evidence_turn_ids=["s1:t1", "s1:t2", "s2:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "pronoun_referential_ambiguity",
+                        "memory_operation": "historical_pronoun_turn_chronology_bearing_location_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-temporal-wording-1",
             sessions=[
                 NormalizedSession(
