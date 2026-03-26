@@ -2910,6 +2910,9 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
                     base = clause_carry_base_by_verb.get(clause_carry_match.group(1))
                     if base:
                         return f"that {modifier_match.group(1)} {base}"
+                first_last_match = re.match(r"^that\s+(first|last)\s+one$", generic_anchor)
+                if first_last_match:
+                    return f"{generic_anchor} we {clause_carry_match.group(1)}"
         if re.match(r"^we\s+(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)$", suffix):
             return generic_anchor
         if re.match(
@@ -2948,6 +2951,62 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
         if match:
             return f"i prefer {_normalize_value(match.group(1).lower())}"
     return normalized
+
+
+def _specialize_clause_carry_first_last_anchor_phrase(
+    anchor_phrase: str,
+    target_predicates: list[str],
+    candidate_entries: list[ObservationEntry | EventCalendarEntry],
+    *,
+    allow_operation_specialization: bool,
+) -> str:
+    normalized = anchor_phrase.strip().lower()
+    match = re.match(
+        r"^that\s+(first|last)\s+one\s+we\s+"
+        r"(changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)$",
+        normalized,
+    )
+    if not match:
+        return anchor_phrase
+
+    modifier, verb = match.groups()
+    generic_anchor = f"that {modifier} one"
+    if not allow_operation_specialization:
+        return generic_anchor
+
+    clause_carry_base_by_verb = {
+        "changed": "change",
+        "updated": "update",
+        "corrected": "correction",
+        "restored": "correction",
+        "moved": "move",
+        "relocated": "relocation",
+        "deleted": "deletion",
+        "removed": "deletion",
+        "forgot": "deletion",
+    }
+    base = clause_carry_base_by_verb.get(verb)
+    if not base:
+        return generic_anchor
+
+    candidates = _generic_relative_anchor_candidates(f"that {base}", target_predicates, candidate_entries)
+    if len(candidates) != 1:
+        return generic_anchor
+    return f"that {modifier} {base}"
+
+
+def _specialize_relative_state_anchor_phrase(
+    question: NormalizedQuestion,
+    anchor_phrase: str,
+    target_predicates: list[str],
+    candidate_entries: list[ObservationEntry | EventCalendarEntry],
+) -> str:
+    return _specialize_clause_carry_first_last_anchor_phrase(
+        anchor_phrase,
+        target_predicates,
+        candidate_entries,
+        allow_operation_specialization=not _has_referential_ambiguity(question, candidate_entries),
+    )
 
 
 def _is_relative_state_question(question: NormalizedQuestion) -> bool:
@@ -5495,7 +5554,17 @@ def _has_ambiguous_relative_state_anchor(
     mode, anchor_phrase, target_predicates = _extract_relative_state_anchor(question_lower)
     if mode is None or not anchor_phrase or not target_predicates:
         return False
-    return _has_ambiguous_generic_relative_anchor(anchor_phrase, target_predicates, candidate_entries)
+    specialized_anchor_phrase = _specialize_relative_state_anchor_phrase(
+        question,
+        anchor_phrase,
+        target_predicates,
+        candidate_entries,
+    )
+    return _has_ambiguous_generic_relative_anchor(
+        specialized_anchor_phrase,
+        target_predicates,
+        candidate_entries,
+    )
 
 
 def _has_referential_ambiguity(
@@ -5539,10 +5608,16 @@ def _infer_relative_state_answer(question: NormalizedQuestion, candidate_entries
     mode, anchor_phrase, target_predicates = _extract_relative_state_anchor(question_lower)
     if mode is None or not anchor_phrase or not target_predicates:
         return ""
-    if _has_ambiguous_generic_relative_anchor(anchor_phrase, target_predicates, candidate_entries):
+    specialized_anchor_phrase = _specialize_relative_state_anchor_phrase(
+        question,
+        anchor_phrase,
+        target_predicates,
+        candidate_entries,
+    )
+    if _has_ambiguous_generic_relative_anchor(specialized_anchor_phrase, target_predicates, candidate_entries):
         return "unknown"
 
-    anchor = _infer_generic_relative_anchor_time(anchor_phrase, target_predicates, candidate_entries)
+    anchor = _infer_generic_relative_anchor_time(specialized_anchor_phrase, target_predicates, candidate_entries)
     if anchor is None:
         anchor = _infer_anchor_time_from_phrase(
             anchor_phrase,
