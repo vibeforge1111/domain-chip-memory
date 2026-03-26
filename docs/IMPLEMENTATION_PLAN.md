@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `342/342`
-  - `dual_store_event_calendar_hybrid`: `342/342`
+  - `observational_temporal_memory`: `351/351`
+  - `dual_store_event_calendar_hybrid`: `351/351`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -206,6 +206,7 @@ Current lead lane as of 2026-03-25:
     - overlapping-scope three-facet scoped-pronoun partial clause separability must preserve current-state updates and historical recall for the cleanly scoped clauses even when one of those facets also appears inside a separate mixed clause that should remain on `referential_ambiguity`
     - inverse-overlap three-facet scoped-pronoun partial clause separability must preserve both clean updates and their historical anchors when the ambiguous middle clause overlaps each clean clause on opposite sides instead of letting the middle ambiguity wipe out both edges
     - value-bearing ambiguous-middle three-facet scoped-pronoun partial clause separability must preserve the clean edge clauses even when the ambiguous middle clause names a target value like `change it to blue`, with the middle clause still routed to `referential_ambiguity`
+    - chronology-bearing ambiguous-middle three-facet scoped-pronoun partial clause separability must preserve the clean edge clauses even when the ambiguous middle clause carries a cue like `change it in February`, with the middle clause still routed to `referential_ambiguity`
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
@@ -214,8 +215,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x47, `current_state_deletion` x8, `evidence_memory` x155, `temporal_ambiguity` x33, and `referential_ambiguity` x99
-    - both lead systems are now `342/342` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x50, `current_state_deletion` x8, `evidence_memory` x157, `temporal_ambiguity` x33, and `referential_ambiguity` x103
+    - both lead systems are now `351/351` source-aligned on the local lane
 
 Candidate components:
 
