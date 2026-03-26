@@ -289,4 +289,106 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 )
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-deletion-3",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2025-09-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="assistant", text="Saved both."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2025-09-03",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="Please forget where I live.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted location only."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-3:q1",
+                    question="Where do I live now?",
+                    category="abstention",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s2"],
+                    evidence_turn_ids=["s2:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "deletion",
+                        "memory_operation": "delete_one_facet",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-3:q2",
+                    question="What is my favorite color now?",
+                    category="current_state",
+                    expected_answers=["blue"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "preserve_other_facet_after_delete",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-correction-3",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2025-10-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2025-10-04",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="Please forget my favorite color.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2025-10-06",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Correction: my favorite color is green."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-correction-3:q1",
+                    question="What is my favorite color now?",
+                    category="current_state",
+                    expected_answers=["green"],
+                    evidence_session_ids=["s3"],
+                    evidence_turn_ids=["s3:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "update_deleted_predicate",
+                    },
+                )
+            ],
+        ),
     ]
