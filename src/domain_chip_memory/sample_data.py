@@ -391,4 +391,69 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 )
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-correction-4",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2025-11-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="I prefer espresso."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="assistant", text="Saved both."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2025-11-04",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="Correction: I prefer matcha now.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2025-11-06",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s3:t1",
+                            speaker="user",
+                            text="Actually no, I prefer espresso again.",
+                        ),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Rolled back."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-correction-4:q1",
+                    question="What do I prefer now?",
+                    category="current_state",
+                    expected_answers=["espresso"],
+                    evidence_session_ids=["s3"],
+                    evidence_turn_ids=["s3:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "rollback_to_prior_value",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-4:q2",
+                    question="What is my favorite color now?",
+                    category="current_state",
+                    expected_answers=["blue"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "preserve_other_facet_after_rollback",
+                    },
+                ),
+            ],
+        ),
     ]
