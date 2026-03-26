@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `265/265` on this lane:
+As of 2026-03-26, the two lead memory systems are now `269/269` on this lane:
 
-- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x8, `pronoun_turn_disambiguation` x26, `pronoun_referential_ambiguity` x36, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x8, `pronoun_turn_disambiguation` x26, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x36
+- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x8, `pronoun_turn_disambiguation` x28, `pronoun_referential_ambiguity` x38, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x8, `pronoun_turn_disambiguation` x28, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x38
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -136,6 +136,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - fronted clause-carry earlier/later pronoun ambiguity is now explicit too, so those same `Before that earlier one we changed...` and `Before that later one we deleted...` forms now abstain through `referential_ambiguity` when the mixed-facet scoped-pronoun turn still does not uniquely identify the facet
 - fronted clause-carry first/last pronoun ambiguity is now explicit too, so those same `Before that first one we changed...` and `Before that last one we deleted...` forms also abstain through `referential_ambiguity` when the mixed-facet scoped-pronoun turn still does not uniquely identify the facet
 - fronted clause-carry first/last pronoun disambiguation is now explicit too, so those same `Before that first one we changed...` and `Before that last one we deleted...` forms bind the intended facet when the scoped-pronoun history is single-facet per turn and the operation family is uniquely recoverable
+- fronted value-bearing clause-carry first/last pronoun competition is now explicit too, so forms like `Before that first one we changed to green...` and `Before that last one we changed to Sharjah...` bind the intended facet on single-facet scoped turns but still abstain through `referential_ambiguity` on the mixed-facet scoped-pronoun surface
 - selective facet-preserving edits plus historical recall are now explicit too, so deleting one facet and later updating another facet still preserves current-state separation and historical recall for both the deleted facet and the edited facet
 - rollback/edit sequences plus historical recall are now explicit too, so rolling one facet back and later editing another facet still preserves current-state separation and historical recall for both facets
 - delete-plus-rollback sequences plus historical recall are now explicit too, so deleting one facet after rolling another back still preserves current-state separation and historical recall for both facets
@@ -167,15 +168,15 @@ It also now reports the primary answer-candidate source and type, which is usefu
 - `observational_temporal_memory` is fully source-aligned on this local lane:
   - `current_state_memory` x32
   - `current_state_deletion` x8
-  - `evidence_memory` x128
+  - `evidence_memory` x130
   - `temporal_ambiguity` x33
-  - `referential_ambiguity` x64
+  - `referential_ambiguity` x66
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x32
   - `current_state_deletion` x8
-  - `evidence_memory` x128
+  - `evidence_memory` x130
   - `temporal_ambiguity` x33
-  - `referential_ambiguity` x64
+  - `referential_ambiguity` x66
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
@@ -185,8 +186,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `265/265` source-aligned
-- `dual_store_event_calendar_hybrid`: `265/265` source-aligned
+- `observational_temporal_memory`: `269/269` source-aligned
+- `dual_store_event_calendar_hybrid`: `269/269` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
