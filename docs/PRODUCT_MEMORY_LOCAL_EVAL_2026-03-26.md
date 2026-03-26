@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `124/124` on this lane:
+As of 2026-03-26, the two lead memory systems are now `126/126` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x29, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x29, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x42
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x31, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x31, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x42
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -104,6 +104,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - anaphoric first/last wording is now explicit too, so underspecified forms like `that first one` and `that last one` abstain through `temporal_ambiguity` under mixed update/delete pressure instead of silently borrowing the latest evidence path
 - clause-carry anaphoric wording is now explicit too, so forms like `that first one we changed` and `that last one we removed` also abstain through `temporal_ambiguity` instead of leaking back onto the generic evidence path
 - dense clause-carry ambiguity is now explicit too, so multi-clause forms like `before that first one we changed, and before that last one we removed` also abstain through `temporal_ambiguity` instead of inheriting a stray evidence span
+- pronoun plus clause-carry ambiguity is now explicit too, so the same multi-clause forms stay attributed to `temporal_ambiguity` even when the underlying history was built from scoped `change it` / `forget it` turns rather than explicit slot restatements
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -121,13 +122,13 @@ It also now reports the primary answer-candidate source and type, which is usefu
   - `current_state_memory` x8
   - `current_state_deletion` x3
   - `evidence_memory` x78
-  - `temporal_ambiguity` x29
+  - `temporal_ambiguity` x31
   - `referential_ambiguity` x6
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
   - `evidence_memory` x78
-  - `temporal_ambiguity` x29
+  - `temporal_ambiguity` x31
   - `referential_ambiguity` x6
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
@@ -138,8 +139,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `124/124` source-aligned
-- `dual_store_event_calendar_hybrid`: `124/124` source-aligned
+- `observational_temporal_memory`: `126/126` source-aligned
+- `dual_store_event_calendar_hybrid`: `126/126` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
