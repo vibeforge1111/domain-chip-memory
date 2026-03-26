@@ -2784,16 +2784,17 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
     normalized = anchor_phrase.strip().rstrip(".!?")
     if not normalized:
         return normalized
+    correction_verbs = "corrected|changed|updated|restored"
     if "favorite_color" in target_predicates:
         match = re.match(
-            r"^(?:i\s+)?corrected\s+it\s+to\s+([a-z0-9 _-]+?)(?:\s+now|\s+again)?$",
+            rf"^(?:i\s+)?(?:{correction_verbs})\s+it\s+to\s+([a-z0-9 _-]+?)(?:\s+now|\s+again)?$",
             normalized,
         )
         if match:
             return f"my favorite color is {_normalize_value(match.group(1).lower())}"
     if "preference" in target_predicates:
         match = re.match(
-            r"^(?:i\s+)?corrected\s+it\s+to\s+([a-z0-9 _-]+?)(?:\s+now|\s+again)?$",
+            rf"^(?:i\s+)?(?:{correction_verbs})\s+it\s+to\s+([a-z0-9 _-]+?)(?:\s+now|\s+again)?$",
             normalized,
         )
         if match:

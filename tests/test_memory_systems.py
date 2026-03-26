@@ -270,6 +270,9 @@ def test_product_memory_preserves_non_location_historical_evidence_after_correct
         assert predictions["product-memory-correction-3:q2"]["predicted_answer"] == "red"
         assert predictions["product-memory-correction-3:q2"]["is_correct"] is True
         assert predictions["product-memory-correction-3:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-correction-3:q3"]["predicted_answer"] == "red"
+        assert predictions["product-memory-correction-3:q3"]["is_correct"] is True
+        assert predictions["product-memory-correction-3:q3"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_selective_deletion_preserves_other_current_state():
