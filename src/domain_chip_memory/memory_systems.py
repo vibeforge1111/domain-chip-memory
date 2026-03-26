@@ -890,12 +890,14 @@ def _extract_atoms_from_turn(
         )
 
     def _append_state_deletion(target_predicate: str, value: str) -> None:
+        normalized_value = _normalize_value(value)
+        entity_key = f"{target_predicate}:{normalized_value.lower()}" if normalized_value else target_predicate
         atoms.append(
             MemoryAtom(
                 atom_id=f"{turn.turn_id}:atom:manual:state_deletion:{len(atoms)}",
                 subject=subject,
                 predicate="state_deletion",
-                value=value,
+                value=normalized_value,
                 session_id=session.session_id,
                 turn_id=turn.turn_id,
                 timestamp=turn.timestamp or session.timestamp,
@@ -903,19 +905,22 @@ def _extract_atoms_from_turn(
                 metadata={
                     "speaker": turn.speaker,
                     "target_predicate": target_predicate,
-                    "entity_key": f"{target_predicate}:{value.lower()}",
-                    "deleted_value": value,
+                    "entity_key": entity_key,
+                    "deleted_value": normalized_value,
                 },
             )
         )
 
     deletion_patterns = [
+        (r"\b(?:please\s+)?(?:forget|delete|remove)\s+where\s+(?:i|we)\s+live\b", "location"),
         (r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?(?:i|we)\s+live in\s+([A-Za-z0-9 _-]+)", "location"),
         (r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?(?:i|we)\s+lived in\s+([A-Za-z0-9 _-]+)", "location"),
+        (r"\b(?:please\s+)?(?:forget|delete|remove)\s+my\s+favo(?:u)?rite\s+colou?r\b", "favorite_color"),
         (
             r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?(?:i\s+now\s+prefer|i\s+prefer|i\s+like)\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
             "preference",
         ),
+        (r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:what\s+)?(?:i|we)\s+(?:now\s+)?prefer\b", "preference"),
         (
             r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?my\s+favo(?:u)?rite\s+colou?r\s+is\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
             "favorite_color",
@@ -925,7 +930,8 @@ def _extract_atoms_from_turn(
         match = re.search(pattern, text, re.IGNORECASE)
         if not match:
             continue
-        _append_state_deletion(target_predicate, _normalize_value(match.group(1)))
+        deleted_value = _normalize_value(match.group(1)) if match.lastindex else ""
+        _append_state_deletion(target_predicate, deleted_value)
 
     if "luna and oliver" in lower:
         _append_atom("pet_name", "Luna", entity_key="luna")

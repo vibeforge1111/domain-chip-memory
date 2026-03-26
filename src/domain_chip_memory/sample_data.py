@@ -200,4 +200,45 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 )
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-deletion-2",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2025-07-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2025-07-03",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="Please forget my favorite color.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="I will stop using that memory."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-2:q1",
+                    question="What is my favorite color now?",
+                    category="abstention",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s2"],
+                    evidence_turn_ids=["s2:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "deletion",
+                        "memory_operation": "delete",
+                    },
+                )
+            ],
+        ),
     ]

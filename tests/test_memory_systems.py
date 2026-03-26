@@ -89,6 +89,31 @@ def test_extract_memory_atoms_captures_current_state_deletion():
     assert deletion_atoms[0].metadata["deleted_value"] == "Dubai"
 
 
+def test_extract_memory_atoms_captures_predicate_level_current_state_deletion():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-favorite-color-deletion",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "Please forget my favorite color."}],
+                }
+            ],
+            "questions": [],
+        }
+    )
+
+    atoms = extract_memory_atoms(sample)
+    deletion_atoms = [atom for atom in atoms if atom.predicate == "state_deletion"]
+
+    assert len(deletion_atoms) == 1
+    assert deletion_atoms[0].metadata["target_predicate"] == "favorite_color"
+    assert deletion_atoms[0].metadata["deleted_value"] == ""
+
+
 def test_temporal_atom_router_prefers_latest_fact():
     samples = demo_samples()
     scorecard = run_baseline(
@@ -158,20 +183,24 @@ def test_observational_memory_reflection_suppresses_deleted_current_state_until_
 
 
 def test_product_memory_deletion_abstains_in_lead_memory_systems():
-    deletion_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-deletion-1"]
+    deletion_samples = [
+        sample
+        for sample in product_memory_samples()
+        if sample.sample_id in {"product-memory-deletion-1", "product-memory-deletion-2"}
+    ]
 
     for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
         scorecard = run_baseline(
-            deletion_sample,
+            deletion_samples,
             baseline_name=baseline_name,
             provider=get_provider("heuristic_v1"),
             top_k_sessions=2,
             fallback_sessions=1,
         )
 
-        prediction = scorecard["predictions"][0]
-        assert prediction["predicted_answer"].lower() == "unknown"
-        assert prediction["is_correct"] is True
+        for prediction in scorecard["predictions"]:
+            assert prediction["predicted_answer"].lower() == "unknown"
+            assert prediction["is_correct"] is True
 
 
 def test_observational_temporal_memory_answers_latest_fact():
