@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `16/16`
-  - `dual_store_event_calendar_hybrid`: `16/16`
+  - `observational_temporal_memory`: `17/17`
+  - `dual_store_event_calendar_hybrid`: `17/17`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -117,6 +117,7 @@ Current lead lane as of 2026-03-25:
     - historical evidence preservation after current-state deletion and later update
     - non-location historical evidence preservation after explicit correction, including broader change/update-style phrasing
     - pre-delete historical evidence recall for both location and non-location facts
+    - slot-explicit pre-delete historical recall such as `before I deleted where I live`
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
@@ -125,8 +126,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x8, `current_state_deletion` x3, and `evidence_memory` x5
-    - both lead systems are now `16/16` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x8, `current_state_deletion` x3, and `evidence_memory` x6
+    - both lead systems are now `17/17` source-aligned on the local lane
 
 Candidate components:
 
