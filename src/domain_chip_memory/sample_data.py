@@ -296,7 +296,21 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "memory_scope": "single_facet",
                         "expected_answer_candidate_source": "current_state_memory",
                     },
-                )
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-2:q2",
+                    question="Where did I live before moving to Sharjah?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_pre_update_recall",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
             ],
         ),
         NormalizedBenchmarkSample(
