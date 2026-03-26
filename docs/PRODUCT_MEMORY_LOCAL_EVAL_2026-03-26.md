@@ -29,6 +29,8 @@ It is not a public benchmark claim.
   - if another facet changed nearby, a generic anchor like `that change` should still bind to the asked facet instead of drifting across memory roles
 - `operation_disambiguation`
   - if delete and update operations both happened on the same facet, operation-specific anchors like `that deletion` should bind to the right event instead of drifting to the latest state update
+- `dense_turn_disambiguation`
+  - if delete and update clauses appear in the same conversational turn, the system should still bind the intended operation instead of collapsing them together
 
 ## Why this matters
 
@@ -48,10 +50,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `34/34` on this lane:
+As of 2026-03-26, the two lead memory systems are now `38/38` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -75,6 +77,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - ambiguous generic anchors like `What did I prefer before that update?` and multi-update histories like `Where did I live before that move?` now abstain explicitly through `temporal_ambiguity` instead of relying on accidental fallback behavior
 - cross-facet competition is now locked down locally, so `What was my favorite color before that change?` still binds to favorite-color history even when a location update happened nearby, and the location version behaves symmetrically
 - operation-specific binding is now also covered, so `What was my favorite color before that deletion?` and `Where did I live before that deletion?` bind to the actual delete event even after later updates on the same facet
+- dense same-turn phrasing is now covered too, so utterances like `Please forget my favorite color, and after that my favorite color is green` still let `that deletion` and `that update` resolve to the right clause
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -91,12 +94,12 @@ It also now reports the primary answer-candidate source and type, which is usefu
 - `observational_temporal_memory` is fully source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x20
+  - `evidence_memory` x24
   - `temporal_ambiguity` x3
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x20
+  - `evidence_memory` x24
   - `temporal_ambiguity` x3
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
@@ -107,8 +110,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `34/34` source-aligned
-- `dual_store_event_calendar_hybrid`: `34/34` source-aligned
+- `observational_temporal_memory`: `38/38` source-aligned
+- `dual_store_event_calendar_hybrid`: `38/38` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
