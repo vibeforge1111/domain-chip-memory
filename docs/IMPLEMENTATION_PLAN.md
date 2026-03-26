@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `241/241`
-  - `dual_store_event_calendar_hybrid`: `241/241`
+  - `observational_temporal_memory`: `243/243`
+  - `dual_store_event_calendar_hybrid`: `243/243`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -180,6 +180,7 @@ Current lead lane as of 2026-03-25:
     - pronoun-heavy same-turn mixed-lifecycle chronology-bearing value-target disambiguation must still bind the intended facet when a later history question combines both the time cue and the target value, like `before that change to green in February`
     - pronoun-heavy same-turn delete chronology disambiguation must still bind the intended facet when a later history question asks about `before that deletion in February` on a mixed-facet scoped-pronoun turn
     - pronoun-heavy same-turn delete chronology ambiguity must still abstain through `referential_ambiguity` when a later history question asks about `before that deletion in February` but the scoped pronoun turn itself still leaves the facet under-specified
+    - pronoun-heavy same-turn earlier/later delete disambiguation must still bind the intended facet when a later history question asks about `before that earlier deletion` or `before that later deletion` on a mixed-facet scoped-pronoun turn
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
@@ -188,8 +189,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x32, `current_state_deletion` x8, `evidence_memory` x116, `temporal_ambiguity` x33, and `referential_ambiguity` x52
-    - both lead systems are now `241/241` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x32, `current_state_deletion` x8, `evidence_memory` x118, `temporal_ambiguity` x33, and `referential_ambiguity` x52
+    - both lead systems are now `243/243` source-aligned on the local lane
 
 Candidate components:
 
