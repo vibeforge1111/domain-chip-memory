@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `200/200` on this lane:
+As of 2026-03-26, the two lead memory systems are now `205/205` on this lane:
 
-- `observational_temporal_memory`: `correction` x23, `deletion` x7, `stale_state_drift`, `evidence_preservation` x32, `ambiguity_abstention` x59, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x16, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x23, `deletion` x7, `stale_state_drift`, `evidence_preservation` x32, `ambiguity_abstention` x59, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x16
+- `observational_temporal_memory`: `correction` x26, `deletion` x7, `stale_state_drift`, `evidence_preservation` x34, `ambiguity_abstention` x59, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x16, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x26, `deletion` x7, `stale_state_drift`, `evidence_preservation` x34, `ambiguity_abstention` x59, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x16
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -125,6 +125,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - three-facet restore-to-new-value stability is now explicit too, so restoring a deleted facet to a different value, editing a second facet, and leaving a third facet untouched still preserves all three current-state boundaries plus historical recall for the edited facets
 - three-facet delete-plus-rollback stability is now explicit too, so rolling one facet back, deleting a second facet, and leaving a third facet untouched still preserves all three current-state boundaries plus historical recall for the changed facets
 - three-facet delete-plus-restore-to-new-value stability is now explicit too, so restoring one deleted facet to a different value, deleting a second facet, and leaving a third facet untouched still preserves all three current-state boundaries plus historical recall for the changed facets
+- explicit correction of a previously deleted facet plus another-facet rollback history is now explicit too, so correcting one deleted facet while another facet carries its own rollback chain still preserves current-state separation, third-facet stability, and the other facet's historical chain in the same sample
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -139,15 +140,15 @@ That makes it possible to see whether the architecture is strong on the broad ta
 It also now reports the primary answer-candidate source and type, which is useful for architecture honesty:
 
 - `observational_temporal_memory` is fully source-aligned on this local lane:
-  - `current_state_memory` x24
+  - `current_state_memory` x27
   - `current_state_deletion` x7
-  - `evidence_memory` x94
+  - `evidence_memory` x96
   - `temporal_ambiguity` x31
   - `referential_ambiguity` x44
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
-  - `current_state_memory` x24
+  - `current_state_memory` x27
   - `current_state_deletion` x7
-  - `evidence_memory` x94
+  - `evidence_memory` x96
   - `temporal_ambiguity` x31
   - `referential_ambiguity` x44
 
@@ -159,8 +160,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `200/200` source-aligned
-- `dual_store_event_calendar_hybrid`: `200/200` source-aligned
+- `observational_temporal_memory`: `205/205` source-aligned
+- `dual_store_event_calendar_hybrid`: `205/205` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
