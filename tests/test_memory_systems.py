@@ -574,6 +574,8 @@ def test_product_memory_uses_earlier_and_later_wording_to_bind_relative_anchors(
             "product-memory-temporal-wording-4",
             "product-memory-temporal-wording-5",
             "product-memory-temporal-wording-6",
+            "product-memory-temporal-wording-7",
+            "product-memory-temporal-wording-8",
         }
     ]
 
@@ -641,6 +643,18 @@ def test_product_memory_uses_earlier_and_later_wording_to_bind_relative_anchors(
         assert predictions["product-memory-temporal-wording-6:q2"]["predicted_answer"] == "Sharjah"
         assert predictions["product-memory-temporal-wording-6:q2"]["is_correct"] is True
         assert predictions["product-memory-temporal-wording-6:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-temporal-wording-7:q1"]["predicted_answer"] == "green"
+        assert predictions["product-memory-temporal-wording-7:q1"]["is_correct"] is True
+        assert predictions["product-memory-temporal-wording-7:q1"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-temporal-wording-7:q2"]["predicted_answer"] == "yellow"
+        assert predictions["product-memory-temporal-wording-7:q2"]["is_correct"] is True
+        assert predictions["product-memory-temporal-wording-7:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-temporal-wording-8:q1"]["predicted_answer"] == "Sharjah"
+        assert predictions["product-memory-temporal-wording-8:q1"]["is_correct"] is True
+        assert predictions["product-memory-temporal-wording-8:q1"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-temporal-wording-8:q2"]["predicted_answer"] == "Abu Dhabi"
+        assert predictions["product-memory-temporal-wording-8:q2"]["is_correct"] is True
+        assert predictions["product-memory-temporal-wording-8:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_lead_systems_are_source_aligned_on_local_lane():
