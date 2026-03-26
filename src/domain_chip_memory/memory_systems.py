@@ -2904,6 +2904,13 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
                 r"^we\s+(changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)$",
                 suffix,
             )
+            chronology_clause_carry_match = re.match(
+                rf"^we\s+(changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)"
+                rf"\s+(?:in\s+(?:{month_names})(?:\s+\d{{4}})?|later|earlier)$",
+                suffix,
+            )
+            if chronology_clause_carry_match:
+                clause_carry_match = chronology_clause_carry_match
             if clause_carry_match:
                 modifier_match = re.match(r"^that\s+(earlier|later)\s+one$", generic_anchor)
                 if modifier_match:
