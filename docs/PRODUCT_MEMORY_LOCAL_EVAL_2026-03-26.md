@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `378/378` on this lane:
+As of 2026-03-26, the two lead memory systems are now `390/390` on this lane:
 
-- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x86, `pronoun_referential_ambiguity` x87, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x86, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x87
+- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x93, `pronoun_referential_ambiguity` x92, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x93, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x92
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -67,6 +67,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - predicate-level delete intents like `forget my favorite color` are handled even when the deleted value is not restated
 - current-state reflection suppresses deleted predicates until a newer explicit update arrives
 - later explicit updates clear the deletion tombstone and restore normal current-state answering
+- direct pet statements like `My dog is a beagle` now materialize `dog_breed` observations instead of falling through to an unrelated current-state answer path
 - deleting one facet does not wipe unrelated current-state facets in the same memory profile
 - contradictory corrections can intentionally roll back to an earlier value without treating that older value as stale forever
 - rolling back one facet does not clobber unrelated current-state facets that were never edited
@@ -154,6 +155,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - delete-oriented chronology-bearing ambiguous-middle three-facet scoped-pronoun partial clause separability is now explicit too, so an ambiguous middle clause that says `forget it in February` still fails safely through `referential_ambiguity` while the clean edge clauses keep their current-state updates and historical bindings
 - comparative delete/update ambiguous-middle three-facet scoped-pronoun partial clause separability is now explicit too, so an ambiguous middle clause that says `forget it later` still fails safely through `referential_ambiguity` while the clean edge clauses keep their current-state updates and historical bindings
 - comparative update ambiguous-middle three-facet scoped-pronoun partial clause separability is now explicit too, so an ambiguous middle clause that says `update it later` still fails safely through `referential_ambiguity` while the clean edge clauses keep their current-state updates and historical bindings
+- four-facet scoped-pronoun overlap stability is now explicit too, so favorite color, location, and preference can all survive a same-turn clean-plus-mixed scoped update pattern while an untouched dog-breed facet still answers from current-state memory instead of leaking to another facet
 - selective facet-preserving edits plus historical recall are now explicit too, so deleting one facet and later updating another facet still preserves current-state separation and historical recall for both the deleted facet and the edited facet
 - rollback/edit sequences plus historical recall are now explicit too, so rolling one facet back and later editing another facet still preserves current-state separation and historical recall for both facets
 - delete-plus-rollback sequences plus historical recall are now explicit too, so deleting one facet after rolling another back still preserves current-state separation and historical recall for both facets
@@ -183,17 +185,17 @@ That makes it possible to see whether the architecture is strong on the broad ta
 It also now reports the primary answer-candidate source and type, which is useful for architecture honesty:
 
 - `observational_temporal_memory` is fully source-aligned on this local lane:
-  - `current_state_memory` x59
+  - `current_state_memory` x64
   - `current_state_deletion` x8
-  - `evidence_memory` x163
+  - `evidence_memory` x166
   - `temporal_ambiguity` x33
-  - `referential_ambiguity` x115
+  - `referential_ambiguity` x119
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
-  - `current_state_memory` x59
+  - `current_state_memory` x64
   - `current_state_deletion` x8
-  - `evidence_memory` x163
+  - `evidence_memory` x166
   - `temporal_ambiguity` x33
-  - `referential_ambiguity` x115
+  - `referential_ambiguity` x119
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
@@ -203,8 +205,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `378/378` source-aligned
-- `dual_store_event_calendar_hybrid`: `378/378` source-aligned
+- `observational_temporal_memory`: `390/390` source-aligned
+- `dual_store_event_calendar_hybrid`: `390/390` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
