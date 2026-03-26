@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `658/658` on this lane:
+As of 2026-03-26, the two lead memory systems are now `674/674` on this lane:
 
-- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x179, `pronoun_referential_ambiguity` x204, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x179, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x204
+- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x180, `pronoun_referential_ambiguity` x205, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x180, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x205
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -69,6 +69,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - later explicit updates clear the deletion tombstone and restore normal current-state answering
 - direct pet statements like `My dog is a beagle` now materialize `dog_breed` observations instead of falling through to an unrelated current-state answer path
 - five-facet inverse mixed-lifecycle scoped-pronoun turns now explicitly cover the clean-delete edge, ambiguous location-plus-preference middle clause, far-edge clean location update, and untouched dog-breed plus bike-count stability split
+- five-facet value-bearing inverse mixed-lifecycle scoped-pronoun turns now also cover the same inverse structure when the ambiguous middle clause carries an explicit target value like `update it to blue later`
 - deleting one facet does not wipe unrelated current-state facets in the same memory profile
 - contradictory corrections can intentionally roll back to an earlier value without treating that older value as stale forever
 - rolling back one facet does not clobber unrelated current-state facets that were never edited
@@ -224,8 +225,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `658/658` source-aligned
-- `dual_store_event_calendar_hybrid`: `658/658` source-aligned
+- `observational_temporal_memory`: `674/674` source-aligned
+- `dual_store_event_calendar_hybrid`: `674/674` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
