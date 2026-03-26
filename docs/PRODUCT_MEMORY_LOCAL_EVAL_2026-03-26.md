@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `176/176` on this lane:
+As of 2026-03-26, the two lead memory systems are now `180/180` on this lane:
 
-- `observational_temporal_memory`: `correction` x11, `deletion` x5, `stale_state_drift`, `evidence_preservation` x22, `ambiguity_abstention` x59, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x16, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x11, `deletion` x5, `stale_state_drift`, `evidence_preservation` x22, `ambiguity_abstention` x59, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x16
+- `observational_temporal_memory`: `correction` x13, `deletion` x5, `stale_state_drift`, `evidence_preservation` x24, `ambiguity_abstention` x59, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x16, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x13, `deletion` x5, `stale_state_drift`, `evidence_preservation` x24, `ambiguity_abstention` x59, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x16
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -120,6 +120,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - selective facet-preserving edits plus historical recall are now explicit too, so deleting one facet and later updating another facet still preserves current-state separation and historical recall for both the deleted facet and the edited facet
 - rollback/edit sequences plus historical recall are now explicit too, so rolling one facet back and later editing another facet still preserves current-state separation and historical recall for both facets
 - delete-plus-rollback sequences plus historical recall are now explicit too, so deleting one facet after rolling another back still preserves current-state separation and historical recall for both facets
+- restore-after-delete plus other-facet-edit sequences are now explicit too, so restoring one deleted facet and later editing another facet still preserves current-state separation and historical recall for both facets
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -134,15 +135,15 @@ That makes it possible to see whether the architecture is strong on the broad ta
 It also now reports the primary answer-candidate source and type, which is useful for architecture honesty:
 
 - `observational_temporal_memory` is fully source-aligned on this local lane:
-  - `current_state_memory` x12
+  - `current_state_memory` x14
   - `current_state_deletion` x5
-  - `evidence_memory` x84
+  - `evidence_memory` x86
   - `temporal_ambiguity` x31
   - `referential_ambiguity` x44
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
-  - `current_state_memory` x12
+  - `current_state_memory` x14
   - `current_state_deletion` x5
-  - `evidence_memory` x84
+  - `evidence_memory` x86
   - `temporal_ambiguity` x31
   - `referential_ambiguity` x44
 
@@ -154,8 +155,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `176/176` source-aligned
-- `dual_store_event_calendar_hybrid`: `176/176` source-aligned
+- `observational_temporal_memory`: `180/180` source-aligned
+- `dual_store_event_calendar_hybrid`: `180/180` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
