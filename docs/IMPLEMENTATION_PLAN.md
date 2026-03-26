@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `418/418`
-  - `dual_store_event_calendar_hybrid`: `418/418`
+  - `observational_temporal_memory`: `432/432`
+  - `dual_store_event_calendar_hybrid`: `432/432`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -213,6 +213,7 @@ Current lead lane as of 2026-03-25:
     - four-facet same-turn scoped-pronoun overlap stability must preserve clean favorite-color, location, and preference updates while the ambiguous middle clause still routes to `referential_ambiguity` and an untouched dog-breed facet remains stable in current-state answering
     - four-facet same-turn scoped-pronoun inverse-overlap stability must preserve clean favorite-color and location edge updates while the ambiguous middle clause overlaps favorite color plus preference, with dog-breed staying untouched and the middle clause still routing to `referential_ambiguity`
     - four-facet delete-side scoped-pronoun inverse-overlap stability must preserve clean favorite-color deletion state and pre-delete history while the ambiguous middle delete clause overlaps favorite color plus preference, a far-edge clean location update still binds, and dog-breed stays untouched
+    - four-facet delete-side value-bearing scoped-pronoun inverse-overlap stability must preserve the same clean delete/history split even when the ambiguous middle clause carries an explicit target value like `update it to blue later`
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
@@ -221,8 +222,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x78, `current_state_deletion` x10, `evidence_memory` x170, `temporal_ambiguity` x33, and `referential_ambiguity` x127
-    - both lead systems are now `418/418` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x84, `current_state_deletion` x12, `evidence_memory` x172, `temporal_ambiguity` x33, and `referential_ambiguity` x131
+    - both lead systems are now `432/432` source-aligned on the local lane
 
 Candidate components:
 
