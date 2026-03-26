@@ -108,14 +108,15 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `8/8`
-  - `dual_store_event_calendar_hybrid`: `8/8`
+  - `observational_temporal_memory`: `10/10`
+  - `dual_store_event_calendar_hybrid`: `10/10`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
     - stale-state drift / re-entry
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
+    - contradictory correction with explicit rollback to a prior value
   - scorecards now slice this lane by both `product_memory_task` and `memory_operation`
 
 Candidate components:

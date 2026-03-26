@@ -40,10 +40,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `8/8` on this lane:
+As of 2026-03-26, the two lead memory systems are now `10/10` on this lane:
 
-- `observational_temporal_memory`: `correction` x4, `deletion` x3, `stale_state_drift`
-- `dual_store_event_calendar_hybrid`: `correction` x4, `deletion` x3, `stale_state_drift`
+- `observational_temporal_memory`: `correction` x6, `deletion` x3, `stale_state_drift`
+- `dual_store_event_calendar_hybrid`: `correction` x6, `deletion` x3, `stale_state_drift`
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -52,6 +52,8 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - current-state reflection suppresses deleted predicates until a newer explicit update arrives
 - later explicit updates clear the deletion tombstone and restore normal current-state answering
 - deleting one facet does not wipe unrelated current-state facets in the same memory profile
+- contradictory corrections can intentionally roll back to an earlier value without treating that older value as stale forever
+- rolling back one facet does not clobber unrelated current-state facets that were never edited
 - current-state answer selection now returns `unknown` instead of resurfacing stale deleted state
 
 This is still a local eval, not a public product-memory benchmark claim.
@@ -61,7 +63,7 @@ The scorecard now reports this lane at two levels:
 - `product_memory_task`
 - `memory_operation`
 
-That makes it possible to see whether the architecture is strong on the broad task family but weak on a specific operator such as `delete_one_facet` or `update_after_delete`.
+That makes it possible to see whether the architecture is strong on the broad task family but weak on a specific operator such as `delete_one_facet`, `update_after_delete`, or `rollback_to_prior_value`.
 
 ## Source
 
