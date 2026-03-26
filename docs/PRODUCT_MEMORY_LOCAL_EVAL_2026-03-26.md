@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `235/235` on this lane:
+As of 2026-03-26, the two lead memory systems are now `237/237` on this lane:
 
-- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x8, `pronoun_turn_disambiguation` x10, `pronoun_referential_ambiguity` x22, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x8, `pronoun_turn_disambiguation` x10, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x22
+- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x8, `pronoun_turn_disambiguation` x12, `pronoun_referential_ambiguity` x22, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x8, `pronoun_turn_disambiguation` x12, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x22
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -90,6 +90,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - mixed-facet same-turn pronoun history ambiguity is now explicit too, so questions like `What was my favorite color before that change?` and `Where did I live before that change?` abstain through `referential_ambiguity` when the underlying scoped pronoun turn mutated more than one facet
 - value-bearing mixed-facet same-turn pronoun history ambiguity is now explicit too, so questions like `What was my favorite color before that change to blue?` and `Where did I live before that change to blue?` still abstain through `referential_ambiguity` when a scoped pronoun turn leaves the facet under-specified
 - chronology-bearing mixed-facet same-turn pronoun history ambiguity is now explicit too, so questions like `What was my favorite color before that change in February?` and `Where did I live before that change in February?` still abstain through `referential_ambiguity` when a scoped pronoun turn leaves the facet under-specified
+- chronology-bearing value-target disambiguation on mixed-facet same-turn pronoun history is now explicit too, so questions like `What was my favorite color before that change to green in February?` and `Where did I live before that change to Sharjah in February?` bind the intended facet instead of abstaining
 - value-target disambiguation on mixed-facet same-turn pronoun history is now explicit too, so questions like `What was my favorite color before that change to green?` and `Where did I live before that change to Sharjah?` bind the intended facet instead of abstaining or leaking across slots
 - earlier/later temporal wording is now locked down too, so questions like `What was my favorite color before that earlier change?`, `What was my favorite color before that later update?`, `Where did I live before that earlier move?`, and `Where did I live before that later deletion?` bind to the right transition instead of being misclassified as `temporal_ambiguity` because of duplicate packet entries
 - first/last temporal wording is now also locked down, so multi-update and multi-delete histories answer `before that first change`, `before that last update`, `before that first deletion`, and `before that last deletion` from `evidence_memory` instead of relying on whichever transition happened to be most recent
@@ -152,13 +153,13 @@ It also now reports the primary answer-candidate source and type, which is usefu
 - `observational_temporal_memory` is fully source-aligned on this local lane:
   - `current_state_memory` x32
   - `current_state_deletion` x8
-  - `evidence_memory` x112
+  - `evidence_memory` x114
   - `temporal_ambiguity` x33
   - `referential_ambiguity` x50
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x32
   - `current_state_deletion` x8
-  - `evidence_memory` x112
+  - `evidence_memory` x114
   - `temporal_ambiguity` x33
   - `referential_ambiguity` x50
 
@@ -170,8 +171,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `235/235` source-aligned
-- `dual_store_event_calendar_hybrid`: `235/235` source-aligned
+- `observational_temporal_memory`: `237/237` source-aligned
+- `dual_store_event_calendar_hybrid`: `237/237` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
