@@ -933,6 +933,34 @@ def _extract_atoms_from_turn(
         deleted_value = _normalize_value(match.group(1)) if match.lastindex else ""
         _append_state_deletion(target_predicate, deleted_value)
 
+    discourse_scoped_pronoun_predicate: str | None = None
+    if re.search(r"\babout my favou?rite colou?r\b", lower):
+        discourse_scoped_pronoun_predicate = "favorite_color"
+    elif re.search(r"\babout where\s+(?:i|we)\s+live\b", lower):
+        discourse_scoped_pronoun_predicate = "location"
+    elif re.search(r"\babout what\s+(?:i|we)\s+(?:now\s+)?prefer\b", lower) or re.search(
+        r"\babout (?:my|our)\s+preference\b",
+        lower,
+    ):
+        discourse_scoped_pronoun_predicate = "preference"
+
+    if discourse_scoped_pronoun_predicate and re.search(r"\b(?:please\s+)?(?:forget|delete|remove)\s+it\b", lower):
+        _append_state_deletion(discourse_scoped_pronoun_predicate, "")
+
+    scoped_change_match = re.search(
+        r"\b(?:change|update|correct|restore)\s+it\s+to\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
+        text,
+        re.IGNORECASE,
+    )
+    if discourse_scoped_pronoun_predicate and scoped_change_match:
+        updated_value = _normalize_value(scoped_change_match.group(1))
+        if updated_value:
+            _append_atom(
+                discourse_scoped_pronoun_predicate,
+                updated_value,
+                entity_key=updated_value.lower(),
+            )
+
     if "luna and oliver" in lower:
         _append_atom("pet_name", "Luna", entity_key="luna")
         _append_atom("pet_name", "Oliver", entity_key="oliver")
