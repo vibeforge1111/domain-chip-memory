@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `74/74` on this lane:
+As of 2026-03-26, the two lead memory systems are now `78/78` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x26
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x26
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x7, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x26
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x7, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x26
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -92,6 +92,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - clause-heavy temporal wording is now covered as well, so conversational forms like `before that first change we talked about`, `before that first move we mentioned`, and `before that later deletion in May` normalize back into the same generic temporal operators instead of falling through to latest-evidence retrieval
 - competing clause modifiers on the same facet are now covered too, so forms like `before that earlier deletion we talked about` and `before that later deletion in August` still bind the intended delete event instead of collapsing the modifier away or defaulting to latest evidence
 - mixed operation wording on the same facet is now covered too, so `before that earlier update we talked about` and `before that later deletion in October` still honor both the operation type and the chronology instead of only binding one of them
+- the three-update ambiguity boundary is now explicit too, so `before that earlier update we talked about` and `before that later move in December` abstain through `temporal_ambiguity` once there are more than two plausible same-facet update targets
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -109,13 +110,13 @@ It also now reports the primary answer-candidate source and type, which is usefu
   - `current_state_memory` x8
   - `current_state_deletion` x3
   - `evidence_memory` x54
-  - `temporal_ambiguity` x3
+  - `temporal_ambiguity` x7
   - `referential_ambiguity` x6
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
   - `evidence_memory` x54
-  - `temporal_ambiguity` x3
+  - `temporal_ambiguity` x7
   - `referential_ambiguity` x6
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
@@ -126,8 +127,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `74/74` source-aligned
-- `dual_store_event_calendar_hybrid`: `74/74` source-aligned
+- `observational_temporal_memory`: `78/78` source-aligned
+- `dual_store_event_calendar_hybrid`: `78/78` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
