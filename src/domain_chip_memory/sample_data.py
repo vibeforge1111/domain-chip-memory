@@ -339,6 +339,20 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "expected_answer_candidate_source": "evidence_memory",
                     },
                 ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-2:q5",
+                    question="Where did I live before I changed where I live to Sharjah?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_pre_slot_update_recall",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
             ],
         ),
         NormalizedBenchmarkSample(
@@ -471,6 +485,20 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                     metadata={
                         "product_memory_task": "evidence_preservation",
                         "memory_operation": "historical_pre_change_recall",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-3:q4",
+                    question="What was my favorite color before I updated my favorite color to green?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_pre_slot_update_recall",
                         "memory_scope": "single_facet",
                         "expected_answer_candidate_source": "evidence_memory",
                     },
