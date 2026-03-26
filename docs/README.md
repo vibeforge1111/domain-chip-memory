@@ -7,7 +7,8 @@ This index groups the active documentation surface by job instead of by filename
 - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
 - [Unified Memory System Program](UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md)
-- [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-26.md)
+- [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
+- [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-28.md)
 
 ## Active Program Docs
 
@@ -40,10 +41,14 @@ This index groups the active documentation surface by job instead of by filename
 
 ## Session Logs And Handoffs
 
+- [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
+- [Tomorrow Start Checklist 2026-03-28](TOMORROW_START_CHECKLIST_2026-03-28.md)
+- [Session Log 2026-03-26](SESSION_LOG_2026-03-26.md)
 - [Session Log 2026-03-25](SESSION_LOG_2026-03-25.md)
 - [Session Log 2026-03-24](SESSION_LOG_2026-03-24.md)
 - [Session Log 2026-03-23](SESSION_LOG_2026-03-23.md)
-- [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-26.md)
+- [Tomorrow Start Checklist 2026-03-27](TOMORROW_START_CHECKLIST_2026-03-27.md)
+- [Tomorrow Start Checklist 2026-03-26](TOMORROW_START_CHECKLIST_2026-03-26.md)
 
 ## Research Folder
 
@@ -56,8 +61,8 @@ For benchmark-grounded and research-grounded materials, start in:
 Use these routes depending on the task.
 
 - Restarting work after a pause:
-  - [Session Log 2026-03-25](SESSION_LOG_2026-03-25.md)
-  - [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-26.md)
+  - [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
+  - [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-28.md)
 - Understanding the architecture direction:
   - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
   - [Memory Architecture Evolution Plan](MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md)
