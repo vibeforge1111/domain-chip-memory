@@ -122,7 +122,7 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - current instrumentation note:
     - `observational_temporal_memory` answers this lane through `current_state_memory` x8 and `current_state_deletion` x3
-    - `dual_store_event_calendar_hybrid` still has one `event_calendar` fallback on a current-state recovery, which should eventually be pulled into cleaner current-state routing
+    - `dual_store_event_calendar_hybrid` now also answers this lane through `current_state_memory` x8 and `current_state_deletion` x3
 
 Candidate components:
 

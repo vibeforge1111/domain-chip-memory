@@ -72,12 +72,11 @@ It also now reports the primary answer-candidate source and type, which is usefu
 - `observational_temporal_memory` is fully source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-- `dual_store_event_calendar_hybrid` is almost source-aligned but still has one current-state recovery coming from `event_calendar`:
-  - `current_state_memory` x7
+- `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
+  - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `event_calendar` x1
 
-That remaining `event_calendar` fallback is not a failure on the local lane, but it is real substrate debt if the long-term doctrine is strict role separation between current state and event memory.
+That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
 ## Source
 
