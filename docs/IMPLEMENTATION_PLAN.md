@@ -211,6 +211,7 @@ Current lead lane as of 2026-03-25:
     - comparative delete/update ambiguous-middle three-facet scoped-pronoun partial clause separability must preserve the clean edge clauses even when the ambiguous middle clause says `forget it later`, with the middle clause still routed to `referential_ambiguity`
     - comparative update ambiguous-middle three-facet scoped-pronoun partial clause separability must preserve the clean edge clauses even when the ambiguous middle clause says `update it later`, with the middle clause still routed to `referential_ambiguity`
     - four-facet same-turn scoped-pronoun overlap stability must preserve clean favorite-color, location, and preference updates while the ambiguous middle clause still routes to `referential_ambiguity` and an untouched dog-breed facet remains stable in current-state answering
+    - four-facet same-turn scoped-pronoun inverse-overlap stability must preserve clean favorite-color and location edge updates while the ambiguous middle clause overlaps favorite color plus preference, with dog-breed staying untouched and the middle clause still routing to `referential_ambiguity`
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
