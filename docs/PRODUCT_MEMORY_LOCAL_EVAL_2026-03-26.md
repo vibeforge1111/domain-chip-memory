@@ -54,10 +54,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `44/44` on this lane:
+As of 2026-03-26, the two lead memory systems are now `48/48` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x2
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x2
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x3, `cross_facet_disambiguation` x2, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -84,6 +84,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - dense same-turn phrasing is now covered too, so utterances like `Please forget my favorite color, and after that my favorite color is green` still let `that deletion` and `that update` resolve to the right clause
 - pronoun-heavy same-turn phrasing is now covered as well, so scoped turns like `About my favorite color, please forget it, and after that change it to green` materialize the right slot operations instead of falling back to generic evidence text
 - mixed-facet pronoun scope is now handled explicitly too, so `About my favorite color and where I live, please forget it` surfaces `referential_ambiguity` instead of silently binding the deletion to the first scoped facet
+- mixed-facet multi-operation pronoun scope is now also locked down, so turns like `About my favorite color and where I live, please forget it, and after that change it to green` abstain across both delete/update anchors instead of partially hallucinating one operation
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -102,13 +103,13 @@ It also now reports the primary answer-candidate source and type, which is usefu
   - `current_state_deletion` x3
   - `evidence_memory` x28
   - `temporal_ambiguity` x3
-  - `referential_ambiguity` x2
+  - `referential_ambiguity` x6
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
   - `evidence_memory` x28
   - `temporal_ambiguity` x3
-  - `referential_ambiguity` x2
+  - `referential_ambiguity` x6
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
@@ -118,8 +119,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `44/44` source-aligned
-- `dual_store_event_calendar_hybrid`: `44/44` source-aligned
+- `observational_temporal_memory`: `48/48` source-aligned
+- `dual_store_event_calendar_hybrid`: `48/48` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
