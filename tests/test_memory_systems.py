@@ -220,6 +220,22 @@ def test_product_memory_relearn_after_deletion_updates_current_state():
         assert prediction["is_correct"] is True
 
 
+def test_dual_store_product_memory_prefers_current_state_source_over_event_calendar():
+    relearn_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-correction-2"]
+
+    scorecard = run_baseline(
+        relearn_sample,
+        baseline_name="dual_store_event_calendar_hybrid",
+        provider=get_provider("heuristic_v1"),
+        top_k_sessions=2,
+        fallback_sessions=1,
+    )
+
+    prediction = scorecard["predictions"][0]
+    assert prediction["predicted_answer"] == "Sharjah"
+    assert prediction["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+
+
 def test_product_memory_selective_deletion_preserves_other_current_state():
     selective_delete_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-deletion-3"]
 

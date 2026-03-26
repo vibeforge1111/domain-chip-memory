@@ -6700,6 +6700,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                     not question.should_abstain
                     and not current_state_deleted
                     and is_current_state_question(question)
+                    and not current_state_entries
                     and "location" in _question_predicates(question)
                     and event_answer_text
                 ):
