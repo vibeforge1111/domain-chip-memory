@@ -2777,6 +2777,31 @@ def _extract_relative_state_anchor(question_lower: str) -> tuple[str | None, str
         if question_lower.startswith(prefix):
             anchor_phrase = question_lower[len(prefix):].strip().rstrip(".!?")
             return mode, _normalize_relative_state_anchor_phrase(anchor_phrase, predicates), predicates
+    for mode, predicate_patterns in (
+        (
+            "before",
+            (
+                (r"^before\s+(.+?),\s*where did i live\??$", ["location"]),
+                (r"^before\s+(.+?),\s*where was i living\??$", ["location"]),
+                (r"^before\s+(.+?),\s*what did i prefer\??$", ["preference"]),
+                (r"^before\s+(.+?),\s*what was my favou?rite colou?r\??$", ["favorite_color"]),
+            ),
+        ),
+        (
+            "after",
+            (
+                (r"^after\s+(.+?),\s*where did i live\??$", ["location"]),
+                (r"^after\s+(.+?),\s*where was i living\??$", ["location"]),
+                (r"^after\s+(.+?),\s*what did i prefer\??$", ["preference"]),
+                (r"^after\s+(.+?),\s*what was my favou?rite colou?r\??$", ["favorite_color"]),
+            ),
+        ),
+    ):
+        for pattern, predicates in predicate_patterns:
+            match = re.match(pattern, question_lower)
+            if match:
+                anchor_phrase = match.group(1).strip().rstrip(".!?")
+                return mode, _normalize_relative_state_anchor_phrase(anchor_phrase, predicates), predicates
     return None, "", []
 
 
