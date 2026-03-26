@@ -1377,6 +1377,111 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-deletion-6",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-01-15",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="I prefer espresso."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t4", speaker="assistant", text="Saved all three."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-01-17",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="Correction: I prefer matcha now."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Updated preference."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2026-01-19",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Deleted color."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-6:q1",
+                    question="What do I prefer now?",
+                    category="current_state",
+                    expected_answers=["matcha"],
+                    evidence_session_ids=["s2"],
+                    evidence_turn_ids=["s2:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "rollback_facet_current_state_with_third_facet_stability",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-6:q2",
+                    question="What is my favorite color now?",
+                    category="abstention",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s3"],
+                    evidence_turn_ids=["s3:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "deletion",
+                        "memory_operation": "delete_second_facet_with_third_facet_stability",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_deletion",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-6:q3",
+                    question="Where do I live now?",
+                    category="current_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t3"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "preserve_third_facet_after_delete_and_rollback",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-6:q4",
+                    question="What did I prefer before I corrected it to matcha?",
+                    category="historical_state",
+                    expected_answers=["espresso"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_rollback_facet_recall_with_third_facet_stability",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-6:q5",
+                    question="What was my favorite color before I deleted it?",
+                    category="historical_state",
+                    expected_answers=["blue"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_deleted_facet_recall_with_third_facet_stability",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-ambiguity-1",
             sessions=[
                 NormalizedSession(
