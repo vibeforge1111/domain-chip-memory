@@ -798,7 +798,7 @@ def test_product_memory_binds_dense_turn_delete_and_update_clauses_to_the_right_
     dense_turn_samples = [
         sample
         for sample in product_memory_samples()
-        if sample.sample_id in {"product-memory-dense-turn-1", "product-memory-dense-turn-2"}
+        if sample.sample_id in {"product-memory-dense-turn-1", "product-memory-dense-turn-2", "product-memory-dense-turn-3"}
     ]
 
     for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
@@ -823,6 +823,18 @@ def test_product_memory_binds_dense_turn_delete_and_update_clauses_to_the_right_
         assert predictions["product-memory-dense-turn-2:q2"]["predicted_answer"] == "Dubai"
         assert predictions["product-memory-dense-turn-2:q2"]["is_correct"] is True
         assert predictions["product-memory-dense-turn-2:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-dense-turn-3:q1"]["predicted_answer"] == "red"
+        assert predictions["product-memory-dense-turn-3:q1"]["is_correct"] is True
+        assert predictions["product-memory-dense-turn-3:q1"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-dense-turn-3:q2"]["predicted_answer"] == "red"
+        assert predictions["product-memory-dense-turn-3:q2"]["is_correct"] is True
+        assert predictions["product-memory-dense-turn-3:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-dense-turn-3:q3"]["predicted_answer"] == "Dubai"
+        assert predictions["product-memory-dense-turn-3:q3"]["is_correct"] is True
+        assert predictions["product-memory-dense-turn-3:q3"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-dense-turn-3:q4"]["predicted_answer"] == "Dubai"
+        assert predictions["product-memory-dense-turn-3:q4"]["is_correct"] is True
+        assert predictions["product-memory-dense-turn-3:q4"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_binds_pronoun_heavy_turn_clauses_to_the_right_facet_and_operation():

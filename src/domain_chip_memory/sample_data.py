@@ -2562,6 +2562,91 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-dense-turn-3",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-08-11",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="assistant", text="Saved both."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-08-13",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="Please forget my favorite color, and after that my favorite color is green. Also, please forget where I live, and after that I moved to Sharjah.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted and updated both facets."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-dense-turn-3:q1",
+                    question="What was my favorite color before that deletion?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "dense_turn_disambiguation",
+                        "memory_operation": "historical_dense_turn_mixed_lifecycle_color_delete_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-dense-turn-3:q2",
+                    question="What was my favorite color before that update?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "dense_turn_disambiguation",
+                        "memory_operation": "historical_dense_turn_mixed_lifecycle_color_update_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-dense-turn-3:q3",
+                    question="Where did I live before that deletion?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "dense_turn_disambiguation",
+                        "memory_operation": "historical_dense_turn_mixed_lifecycle_location_delete_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-dense-turn-3:q4",
+                    question="Where did I live before that update?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "dense_turn_disambiguation",
+                        "memory_operation": "historical_dense_turn_mixed_lifecycle_location_update_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-pronoun-turn-1",
             sessions=[
                 NormalizedSession(
