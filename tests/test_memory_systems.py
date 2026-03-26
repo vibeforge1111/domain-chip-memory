@@ -533,6 +533,36 @@ def test_product_memory_corrects_deleted_facet_without_clobbering_other_history_
         assert predictions["product-memory-correction-10:q5"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
+def test_product_memory_isolates_contradictory_correction_from_other_restore_chain():
+    contradictory_correction_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-correction-11"]
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            contradictory_correction_sample,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+        assert predictions["product-memory-correction-11:q1"]["predicted_answer"] == "yellow"
+        assert predictions["product-memory-correction-11:q1"]["is_correct"] is True
+        assert predictions["product-memory-correction-11:q1"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert predictions["product-memory-correction-11:q2"]["predicted_answer"] == "Sharjah"
+        assert predictions["product-memory-correction-11:q2"]["is_correct"] is True
+        assert predictions["product-memory-correction-11:q2"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert predictions["product-memory-correction-11:q3"]["predicted_answer"] == "espresso"
+        assert predictions["product-memory-correction-11:q3"]["is_correct"] is True
+        assert predictions["product-memory-correction-11:q3"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert predictions["product-memory-correction-11:q4"]["predicted_answer"] == "green"
+        assert predictions["product-memory-correction-11:q4"]["is_correct"] is True
+        assert predictions["product-memory-correction-11:q4"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-correction-11:q5"]["predicted_answer"] == "Dubai"
+        assert predictions["product-memory-correction-11:q5"]["is_correct"] is True
+        assert predictions["product-memory-correction-11:q5"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+
+
 def test_product_memory_selective_edit_preserves_other_current_state_and_history():
     selective_edit_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-deletion-4"]
 

@@ -1309,6 +1309,134 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-correction-11",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-02-18",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="user", text="I prefer espresso."),
+                        NormalizedTurn(turn_id="s1:t4", speaker="assistant", text="Saved all three."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-02-20",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted color."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2026-02-22",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Correction: my favorite color is green."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated color."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2026-02-24",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="Actually, my favorite color is yellow now."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Updated color again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s5",
+                    timestamp="2026-02-26",
+                    turns=[
+                        NormalizedTurn(turn_id="s5:t1", speaker="user", text="Please forget where I live."),
+                        NormalizedTurn(turn_id="s5:t2", speaker="assistant", text="Deleted location."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s6",
+                    timestamp="2026-02-28",
+                    turns=[
+                        NormalizedTurn(turn_id="s6:t1", speaker="user", text="Actually, I live in Sharjah."),
+                        NormalizedTurn(turn_id="s6:t2", speaker="assistant", text="Restored location."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-correction-11:q1",
+                    question="What is my favorite color now?",
+                    category="current_state",
+                    expected_answers=["yellow"],
+                    evidence_session_ids=["s4"],
+                    evidence_turn_ids=["s4:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "contradictory_correction_after_delete_current_state",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-11:q2",
+                    question="Where do I live now?",
+                    category="current_state",
+                    expected_answers=["Sharjah"],
+                    evidence_session_ids=["s6"],
+                    evidence_turn_ids=["s6:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "other_facet_restore_chain_current_state",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-11:q3",
+                    question="What do I prefer now?",
+                    category="current_state",
+                    expected_answers=["espresso"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t3"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "preserve_stable_third_facet_during_dual_lifecycle_pressure",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-11:q4",
+                    question="What was my favorite color before I corrected it to yellow?",
+                    category="historical_state",
+                    expected_answers=["green"],
+                    evidence_session_ids=["s3"],
+                    evidence_turn_ids=["s3:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_deleted_facet_chain_recall_after_contradictory_correction",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-11:q5",
+                    question="Where did I live before I deleted where I live?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_other_facet_delete_restore_recall_under_correction_pressure",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-deletion-4",
             sessions=[
                 NormalizedSession(
