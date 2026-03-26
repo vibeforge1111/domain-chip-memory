@@ -45,6 +45,7 @@ def test_scorecard_contract_and_canonical_config_exist():
 
     assert summary["scorecard_fields"]
     assert "benchmark_slices" in summary["scorecard_fields"]
+    assert "product_memory_summary" in summary["scorecard_fields"]
     assert configs
     assert configs[0]["config_id"] == "benchmark-v3-32k.yml"
 
@@ -153,3 +154,68 @@ def test_build_scorecard_emits_beam_benchmark_slices():
     assert scorecard["benchmark_slices"]["temporal_scope"][0]["label"] == "dated"
     assert scorecard["benchmark_slices"]["temporal_scope"][1]["label"] == "undated"
     assert scorecard["benchmark_slices"]["should_abstain"][1]["accuracy"] == 1.0
+
+
+def test_build_scorecard_emits_product_memory_summary():
+    scorecard = build_scorecard(
+        {
+            "run_id": "product-memory-run",
+            "benchmark_name": "BEAM",
+            "baseline_name": "observational_temporal_memory",
+            "sample_ids": ["beam-1", "beam-2"],
+            "question_ids": ["beam-1-q-1", "beam-2-q-1"],
+            "question_count": 2,
+            "metadata": {},
+        },
+        [
+            BaselinePrediction(
+                benchmark_name="BEAM",
+                baseline_name="observational_temporal_memory",
+                sample_id="beam-1",
+                question_id="beam-1-q-1",
+                category="current_state",
+                predicted_answer="Dubai",
+                expected_answers=["Dubai"],
+                is_correct=True,
+                metadata={
+                    "provider_name": "openai:gpt-4.1-mini",
+                    "latency_ms": 120.0,
+                    "total_tokens": 42,
+                    "answer_candidate_count": 1,
+                    "provenance_supported": True,
+                    "should_abstain": False,
+                },
+            ),
+            BaselinePrediction(
+                benchmark_name="BEAM",
+                baseline_name="observational_temporal_memory",
+                sample_id="beam-2",
+                question_id="beam-2-q-1",
+                category="abstention",
+                predicted_answer="unknown",
+                expected_answers=["Information provided is not enough"],
+                is_correct=True,
+                metadata={
+                    "provider_name": "heuristic_v1",
+                    "latency_ms": 0.0,
+                    "total_tokens": 0,
+                    "answer_candidate_count": 0,
+                    "provenance_supported": False,
+                    "should_abstain": True,
+                },
+            ),
+        ],
+    )
+
+    product_summary = scorecard["product_memory_summary"]["measured_metrics"]
+
+    assert product_summary["latency_ms"]["available"] == 2
+    assert product_summary["latency_ms"]["mean"] == 60.0
+    assert product_summary["total_tokens"]["max"] == 42.0
+    assert product_summary["answer_candidate_support_rate"]["supported"] == 1
+    assert product_summary["answer_candidate_support_rate"]["rate"] == 0.5
+    assert product_summary["provenance_support_rate"]["supported"] == 1
+    assert product_summary["abstention_honesty"]["honest"] == 1
+    assert product_summary["abstention_honesty"]["rate"] == 1.0
+    assert product_summary["current_state_accuracy"]["accuracy"] == 1.0
+    assert "memory_drift_rate" in scorecard["product_memory_summary"]["unmeasured_metrics"]

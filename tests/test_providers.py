@@ -1127,11 +1127,13 @@ def test_openai_provider_retries_temporary_transport_failures(monkeypatch):
             "prompt_tokens": 12,
             "completion_tokens": 2,
             "total_tokens": 14,
+            "latency_ms": response.metadata["latency_ms"],
             "context_compacted": False,
             "context_image_count": 0,
             "request_attempts": 2,
         },
     )
+    assert response.metadata["latency_ms"] >= 0
     assert attempts["count"] == 2
 
 

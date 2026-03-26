@@ -60,6 +60,105 @@ def _build_slice_rows(
     return rows
 
 
+def _numeric_metric_summary(values: list[float | int]) -> dict[str, Any]:
+    ordered = sorted(float(value) for value in values)
+    if not ordered:
+        return {"available": 0, "missing": 0}
+    midpoint = len(ordered) // 2
+    if len(ordered) % 2:
+        median = ordered[midpoint]
+    else:
+        median = (ordered[midpoint - 1] + ordered[midpoint]) / 2
+    return {
+        "available": len(ordered),
+        "missing": 0,
+        "min": round(ordered[0], 4),
+        "max": round(ordered[-1], 4),
+        "mean": round(sum(ordered) / len(ordered), 4),
+        "median": round(median, 4),
+    }
+
+
+def _rate_row(*, numerator: int, total: int, label: str) -> dict[str, Any]:
+    return {
+        label: numerator,
+        "total": total,
+        "rate": round(numerator / total, 4) if total else 0.0,
+    }
+
+
+def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict[str, Any]:
+    latency_values: list[float | int] = []
+    token_values: list[float | int] = []
+    answer_candidate_supported = 0
+    provenance_supported = 0
+    abstention_total = 0
+    abstention_honest = 0
+    current_state_total = 0
+    current_state_correct = 0
+
+    for prediction in predictions:
+        latency = prediction.metadata.get("latency_ms")
+        if isinstance(latency, (int, float)):
+            latency_values.append(latency)
+        total_tokens = prediction.metadata.get("total_tokens")
+        if isinstance(total_tokens, (int, float)):
+            token_values.append(total_tokens)
+        if int(prediction.metadata.get("answer_candidate_count", 0) or 0) > 0:
+            answer_candidate_supported += 1
+        if bool(prediction.metadata.get("provenance_supported")):
+            provenance_supported += 1
+        if prediction.metadata.get("should_abstain"):
+            abstention_total += 1
+            if prediction.is_correct:
+                abstention_honest += 1
+        if prediction.category == "current_state":
+            current_state_total += 1
+            if prediction.is_correct:
+                current_state_correct += 1
+
+    total_predictions = len(predictions)
+    latency_summary = _numeric_metric_summary(latency_values)
+    latency_summary["missing"] = total_predictions - len(latency_values)
+    token_summary = _numeric_metric_summary(token_values)
+    token_summary["missing"] = total_predictions - len(token_values)
+
+    return {
+        "measured_metrics": {
+            "latency_ms": latency_summary,
+            "total_tokens": token_summary,
+            "answer_candidate_support_rate": _rate_row(
+                numerator=answer_candidate_supported,
+                total=total_predictions,
+                label="supported",
+            ),
+            "provenance_support_rate": _rate_row(
+                numerator=provenance_supported,
+                total=total_predictions,
+                label="supported",
+            ),
+            "abstention_honesty": _rate_row(
+                numerator=abstention_honest,
+                total=abstention_total,
+                label="honest",
+            ),
+            "current_state_accuracy": {
+                **_accuracy_row(correct=current_state_correct, total=current_state_total),
+            },
+        },
+        "unmeasured_metrics": [
+            "stale_state_error_rate",
+            "correction_success_rate",
+            "deletion_reliability",
+            "memory_drift_rate",
+        ],
+        "notes": [
+            "This summary only reports metrics that current benchmark runs can measure honestly.",
+            "Correction, deletion, and drift metrics still require dedicated product-memory evaluation tasks.",
+        ],
+    }
+
+
 def run_baseline_predictions(
     samples: list[NormalizedBenchmarkSample],
     packets: list[BaselinePromptPacket],
@@ -215,6 +314,7 @@ def build_scorecard(
         }
         if manifest_dict.get("benchmark_name") == "BEAM"
         else {},
+        "product_memory_summary": _build_product_memory_summary(predictions),
         "predictions": enriched_predictions,
     }
 
@@ -230,6 +330,7 @@ def build_scorecard_contract_summary() -> dict[str, Any]:
             "audited_by_category",
             "known_issue_summary",
             "benchmark_slices",
+            "product_memory_summary",
             "predictions",
         ],
     }

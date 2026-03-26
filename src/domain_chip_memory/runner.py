@@ -222,6 +222,12 @@ def _build_prediction(
             "should_abstain": question.should_abstain,
             "evidence_scope": "multi_session" if len(question.evidence_session_ids) > 1 else "single_session",
             "temporal_scope": "dated" if question.question_date else "undated",
+            "retrieved_context_item_count": len(packet.retrieved_context_items),
+            "answer_candidate_count": len(packet.answer_candidates),
+            "provenance_supported": bool(
+                packet.retrieved_context_items
+                and all(item.session_id and item.turn_ids for item in packet.retrieved_context_items)
+            ),
         },
     )
 

@@ -93,7 +93,13 @@ class HeuristicProvider:
     def generate_answer(self, packet: BaselinePromptPacket) -> ProviderResponse:
         return ProviderResponse(
             answer=heuristic_response(packet),
-            metadata={"provider_type": "local_deterministic"},
+            metadata={
+                "provider_type": "local_deterministic",
+                "latency_ms": 0.0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
+            },
         )
 
 
@@ -2152,7 +2158,9 @@ class OpenAIChatCompletionsProvider:
             "max_tokens": self.max_tokens,
         }
         payload.update(self.extra_body)
+        started_at = time.perf_counter()
         parsed, attempts = self._request_chat_completion(payload)
+        latency_ms = round((time.perf_counter() - started_at) * 1000, 2)
         usage = parsed.get("usage", {})
         answer = _extract_openai_answer(parsed)
         if self.enable_exact_span_rescue:
@@ -2165,6 +2173,7 @@ class OpenAIChatCompletionsProvider:
                 "prompt_tokens": usage.get("prompt_tokens"),
                 "completion_tokens": usage.get("completion_tokens"),
                 "total_tokens": usage.get("total_tokens"),
+                "latency_ms": latency_ms,
                 "context_compacted": bool(self.compact_context_lines),
                 "context_image_count": len(context_image_urls),
                 "request_attempts": attempts,
