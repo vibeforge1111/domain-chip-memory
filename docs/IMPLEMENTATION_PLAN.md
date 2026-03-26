@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `289/289`
-  - `dual_store_event_calendar_hybrid`: `289/289`
+  - `observational_temporal_memory`: `293/293`
+  - `dual_store_event_calendar_hybrid`: `293/293`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -198,6 +198,7 @@ Current lead lane as of 2026-03-25:
     - dense fronted same-turn value-bearing clause-carry first/last wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines both anchors with explicit values in one clause
     - dense fronted same-turn value-bearing clause-carry earlier/later wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines comparative anchors with explicit values in one clause
     - dense fronted same-turn chronology-bearing clause-carry earlier/later wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines comparative anchors with explicit timing cues in one clause
+    - dense fronted same-turn mixed-operation value-bearing clause-carry earlier/later wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines an explicit target value on one anchor and a delete anchor on the other
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
@@ -206,8 +207,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x32, `current_state_deletion` x8, `evidence_memory` x140, `temporal_ambiguity` x33, and `referential_ambiguity` x76
-    - both lead systems are now `289/289` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x32, `current_state_deletion` x8, `evidence_memory` x142, `temporal_ambiguity` x33, and `referential_ambiguity` x78
+    - both lead systems are now `293/293` source-aligned on the local lane
 
 Candidate components:
 
