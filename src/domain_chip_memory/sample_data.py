@@ -6963,4 +6963,136 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 ),
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-temporal-wording-48",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2029-01-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2029-01-02",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2029-01-03",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s3:t1",
+                            speaker="user",
+                            text="About my favorite color and where I live, change it to green.",
+                        ),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2029-01-04",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s4:t1",
+                            speaker="user",
+                            text="About my favorite color and where I live, please forget it.",
+                        ),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s5",
+                    timestamp="2029-01-05",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s5:t1",
+                            speaker="user",
+                            text="About my favorite color and where I live, change it to blue.",
+                        ),
+                        NormalizedTurn(turn_id="s5:t2", speaker="assistant", text="Updated again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s6",
+                    timestamp="2029-01-06",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s6:t1",
+                            speaker="user",
+                            text="About my favorite color and where I live, please forget it again.",
+                        ),
+                        NormalizedTurn(turn_id="s6:t2", speaker="assistant", text="Deleted again."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-48:q1",
+                    question="Before the earlier one we changed, what was my favorite color?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2", "s3", "s4", "s5", "s6"],
+                    evidence_turn_ids=["s1:t1", "s2:t1", "s3:t1", "s4:t1", "s5:t1", "s6:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "ambiguity_abstention",
+                        "memory_operation": "historical_fronted_earlier_pronoun_clause_carry_mixed_facet_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-48:q2",
+                    question="Before the earlier one we changed, where did I live?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2", "s3", "s4", "s5", "s6"],
+                    evidence_turn_ids=["s1:t1", "s2:t1", "s3:t1", "s4:t1", "s5:t1", "s6:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "ambiguity_abstention",
+                        "memory_operation": "historical_fronted_earlier_pronoun_clause_carry_mixed_facet_location_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-48:q3",
+                    question="Before the later one we removed, what was my favorite color?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2", "s3", "s4", "s5", "s6"],
+                    evidence_turn_ids=["s1:t1", "s2:t1", "s3:t1", "s4:t1", "s5:t1", "s6:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "ambiguity_abstention",
+                        "memory_operation": "historical_fronted_later_pronoun_clause_carry_mixed_facet_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-temporal-wording-48:q4",
+                    question="Before the later one we removed, where did I live?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2", "s3", "s4", "s5", "s6"],
+                    evidence_turn_ids=["s1:t1", "s2:t1", "s3:t1", "s4:t1", "s5:t1", "s6:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "ambiguity_abstention",
+                        "memory_operation": "historical_fronted_later_pronoun_clause_carry_mixed_facet_location_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+            ],
+        ),
     ]
