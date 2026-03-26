@@ -381,6 +381,20 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "expected_answer_candidate_source": "evidence_memory",
                     },
                 ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-2:q8",
+                    question="Before that move, where did I live?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_anaphoric_anchor_recall",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
             ],
         ),
         NormalizedBenchmarkSample(
@@ -559,6 +573,20 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "expected_answer_candidate_source": "evidence_memory",
                     },
                 ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-3:q7",
+                    question="What was my favorite color before that update?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_anaphoric_anchor_recall",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
             ],
         ),
         NormalizedBenchmarkSample(
@@ -652,6 +680,20 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                     metadata={
                         "product_memory_task": "evidence_preservation",
                         "memory_operation": "historical_multiclause_recall",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-4:q5",
+                    question="What did I prefer before that update?",
+                    category="historical_state",
+                    expected_answers=["matcha"],
+                    evidence_session_ids=["s2"],
+                    evidence_turn_ids=["s2:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_anaphoric_anchor_recall",
                         "memory_scope": "multi_facet",
                         "expected_answer_candidate_source": "evidence_memory",
                     },

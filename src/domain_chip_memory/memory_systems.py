@@ -5220,6 +5220,36 @@ def _infer_event_anchored_state_time(
     return None
 
 
+def _infer_generic_relative_anchor_time(
+    anchor_phrase: str,
+    target_predicates: list[str],
+    candidate_entries: list[ObservationEntry | EventCalendarEntry],
+) -> datetime | None:
+    normalized = anchor_phrase.strip().lower()
+    generic_phrases = {"that change", "that update", "that correction"}
+    location_only_phrases = {"that move", "that relocation"}
+    deletion_phrases = {"that deletion", "that removal", "that forget"}
+    if normalized not in generic_phrases.union(location_only_phrases).union(deletion_phrases):
+        return None
+    if normalized in location_only_phrases and "location" not in target_predicates:
+        return None
+
+    dated_states = sorted(
+        [
+            entry
+            for entry in candidate_entries
+            if entry.predicate in target_predicates and _parse_observation_anchor(entry.timestamp or "")
+        ],
+        key=lambda entry: (
+            _parse_observation_anchor(entry.timestamp or ""),
+            getattr(entry, "observation_id", getattr(entry, "event_id", "")),
+        ),
+    )
+    if not dated_states:
+        return None
+    return _parse_observation_anchor(dated_states[-1].timestamp or "")
+
+
 def _dated_state_target_predicates(question: NormalizedQuestion) -> list[str]:
     question_lower = question.question.lower()
     if question_lower.startswith("what did i prefer"):
@@ -5242,11 +5272,13 @@ def _infer_relative_state_answer(question: NormalizedQuestion, candidate_entries
     if mode is None or not anchor_phrase or not target_predicates:
         return ""
 
-    anchor = _infer_anchor_time_from_phrase(
-        anchor_phrase,
-        candidate_entries,
-        include_location_entries=True,
-    )
+    anchor = _infer_generic_relative_anchor_time(anchor_phrase, target_predicates, candidate_entries)
+    if anchor is None:
+        anchor = _infer_anchor_time_from_phrase(
+            anchor_phrase,
+            candidate_entries,
+            include_location_entries=True,
+        )
     if anchor is None:
         return ""
 
