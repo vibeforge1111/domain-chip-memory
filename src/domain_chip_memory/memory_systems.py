@@ -3128,6 +3128,8 @@ def _should_use_current_state_exact_value(question: NormalizedQuestion) -> bool:
         return False
     if _is_dated_state_question(question) or _is_relative_state_question(question):
         return False
+    if question_lower.startswith("how many bikes") and "own" in question_lower:
+        return True
     if _question_needs_raw_aggregate_context(question):
         return False
     if question_lower.startswith(("how many", "how much", "what is the total", "what was the total")):
