@@ -5250,6 +5250,54 @@ def _infer_generic_relative_anchor_time(
     return _parse_observation_anchor(dated_states[-1].timestamp or "")
 
 
+def _has_ambiguous_generic_relative_anchor(
+    anchor_phrase: str,
+    target_predicates: list[str],
+    candidate_entries: list[ObservationEntry | EventCalendarEntry],
+) -> bool:
+    normalized = anchor_phrase.strip().lower()
+    generic_phrases = {"that change", "that update", "that correction"}
+    location_only_phrases = {"that move", "that relocation"}
+    deletion_phrases = {"that deletion", "that removal", "that forget"}
+    if normalized in location_only_phrases and "location" not in target_predicates:
+        return False
+    if normalized in generic_phrases.union(location_only_phrases):
+        state_markers = {
+            (
+                _parse_observation_anchor(entry.timestamp or ""),
+                entry.predicate,
+                _normalize_value(str(entry.metadata.get("value", "") or entry.text)),
+            )
+            for entry in candidate_entries
+            if entry.predicate in target_predicates and _parse_observation_anchor(entry.timestamp or "")
+        }
+        return len(state_markers) > 2
+    if normalized in deletion_phrases:
+        deletion_markers = {
+            (
+                _parse_observation_anchor(entry.timestamp or ""),
+                str(entry.metadata.get("target_predicate", "")).strip(),
+            )
+            for entry in candidate_entries
+            if entry.predicate == "state_deletion"
+            and str(entry.metadata.get("target_predicate", "")).strip() in target_predicates
+            and _parse_observation_anchor(entry.timestamp or "")
+        }
+        return len(deletion_markers) > 1
+    return False
+
+
+def _has_ambiguous_relative_state_anchor(
+    question: NormalizedQuestion,
+    candidate_entries: list[ObservationEntry | EventCalendarEntry],
+) -> bool:
+    question_lower = question.question.lower()
+    mode, anchor_phrase, target_predicates = _extract_relative_state_anchor(question_lower)
+    if mode is None or not anchor_phrase or not target_predicates:
+        return False
+    return _has_ambiguous_generic_relative_anchor(anchor_phrase, target_predicates, candidate_entries)
+
+
 def _dated_state_target_predicates(question: NormalizedQuestion) -> list[str]:
     question_lower = question.question.lower()
     if question_lower.startswith("what did i prefer"):
@@ -5271,6 +5319,8 @@ def _infer_relative_state_answer(question: NormalizedQuestion, candidate_entries
     mode, anchor_phrase, target_predicates = _extract_relative_state_anchor(question_lower)
     if mode is None or not anchor_phrase or not target_predicates:
         return ""
+    if _has_ambiguous_generic_relative_anchor(anchor_phrase, target_predicates, candidate_entries):
+        return "unknown"
 
     anchor = _infer_generic_relative_anchor_time(anchor_phrase, target_predicates, candidate_entries)
     if anchor is None:
@@ -6436,6 +6486,7 @@ def build_observational_temporal_memory_packets(
                 raw_candidate_pool if (_is_dated_state_question(question) or _is_relative_state_question(question)) else candidate_pool,
                 aggregate_pool,
             )
+            ambiguous_relative_state = _has_ambiguous_relative_state_anchor(question, raw_candidate_pool)
             if _should_use_current_state_exact_value(question) and current_state_entries:
                 current_state_value = str(current_state_entries[0].metadata.get("value", "")).strip()
                 if current_state_value:
@@ -6449,6 +6500,8 @@ def build_observational_temporal_memory_packets(
                     source = "current_state_memory"
                 elif current_state_deleted:
                     source = "current_state_deletion"
+                elif ambiguous_relative_state and answer_text.lower() == "unknown":
+                    source = "temporal_ambiguity"
                 elif aggregate_support_entries:
                     source = "aggregate_memory"
                 elif evidence_entries:
@@ -6769,6 +6822,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                 ranked_reflections,
                 raw_candidate_pool if (_is_dated_state_question(question) or _is_relative_state_question(question)) else _dedupe_observations(raw_candidate_pool),
             )
+            ambiguous_relative_state = _has_ambiguous_relative_state_anchor(question, raw_candidate_pool)
             answer_source = "evidence_memory" if evidence_entries else "belief_memory"
             if _should_use_current_state_exact_value(question) and current_state_entries:
                 current_state_value = str(current_state_entries[0].metadata.get("value", "")).strip()
@@ -6778,6 +6832,8 @@ def build_dual_store_event_calendar_hybrid_packets(
             elif current_state_deleted:
                 answer_text = "unknown"
                 answer_source = "current_state_deletion"
+            elif ambiguous_relative_state and answer_text.lower() == "unknown":
+                answer_source = "temporal_ambiguity"
             if ranked_events:
                 top_entry = ranked_events[0]
                 answer_value = str(top_entry.metadata.get("value", "")).strip()

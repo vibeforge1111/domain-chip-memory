@@ -99,7 +99,7 @@ def test_demo_product_memory_scorecards_command_runs(monkeypatch):
 
     payload = captured["payload"]
     assert payload["observational_temporal_memory"]["run_manifest"]["benchmark_name"] == "ProductMemory"
-    assert payload["observational_temporal_memory"]["overall"]["total"] == 28
+    assert payload["observational_temporal_memory"]["overall"]["total"] == 30
     assert payload["observational_temporal_memory"]["benchmark_slices"]["product_memory_task"]
 
 

@@ -364,9 +364,9 @@ def test_product_memory_rollback_reasserts_prior_value_without_clobbering_other_
         assert predictions["product-memory-correction-4:q4"]["predicted_answer"] == "matcha"
         assert predictions["product-memory-correction-4:q4"]["is_correct"] is True
         assert predictions["product-memory-correction-4:q4"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
-        assert predictions["product-memory-correction-4:q5"]["predicted_answer"] == "matcha"
+        assert predictions["product-memory-correction-4:q5"]["predicted_answer"].lower() == "unknown"
         assert predictions["product-memory-correction-4:q5"]["is_correct"] is True
-        assert predictions["product-memory-correction-4:q5"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-correction-4:q5"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
 
 
 def test_product_memory_restores_deleted_value_when_user_reasserts_same_fact():
@@ -387,6 +387,31 @@ def test_product_memory_restores_deleted_value_when_user_reasserts_same_fact():
         assert predictions["product-memory-correction-5:q2"]["predicted_answer"] == "red"
         assert predictions["product-memory-correction-5:q2"]["is_correct"] is True
         assert predictions["product-memory-correction-5:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+
+
+def test_product_memory_abstains_on_ambiguous_anaphoric_history():
+    ambiguous_samples = [
+        sample
+        for sample in product_memory_samples()
+        if sample.sample_id in {"product-memory-ambiguity-1", "product-memory-ambiguity-2"}
+    ]
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            ambiguous_samples,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+        assert predictions["product-memory-ambiguity-1:q1"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-ambiguity-1:q1"]["is_correct"] is True
+        assert predictions["product-memory-ambiguity-1:q1"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
+        assert predictions["product-memory-ambiguity-2:q1"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-ambiguity-2:q1"]["is_correct"] is True
+        assert predictions["product-memory-ambiguity-2:q1"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
 
 
 def test_product_memory_lead_systems_are_source_aligned_on_local_lane():
