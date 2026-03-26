@@ -3,6 +3,7 @@ import json
 import pytest
 
 from domain_chip_memory import providers
+from domain_chip_memory.answer_candidates import build_answer_candidate
 from domain_chip_memory.contracts import AnswerCandidate
 from domain_chip_memory.providers import (
     OpenAIChatCompletionsProvider,
@@ -280,6 +281,29 @@ def test_heuristic_provider_extracts_multiword_favorite_slot_value():
     response = get_provider("heuristic_v1").generate_answer(packet)
 
     assert response.answer == "Alserkal Avenue"
+
+
+def test_heuristic_response_compacts_explicit_slot_style_answer_candidate():
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="observational_temporal_memory",
+        sample_id="beam-local-pilot-1",
+        question_id="beam-local-pilot-1-q-1",
+        question="What is my favorite writing spot?",
+        assembled_context="answer_candidate: My favorite writing spot is Alserkal Avenue",
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+        answer_candidates=[
+            build_answer_candidate(
+                "What is my favorite writing spot?",
+                "My favorite writing spot is Alserkal Avenue",
+                source="belief_memory",
+                metadata={"question_id": "beam-local-pilot-1-q-1"},
+            )
+        ],
+    )
+
+    assert heuristic_response(packet) == "Alserkal Avenue"
 
 
 def test_expand_answer_preserves_short_slot_value_over_full_sentence_answer_candidate():

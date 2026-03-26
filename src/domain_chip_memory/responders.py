@@ -29,16 +29,7 @@ def _last_matching_line(packet: BaselinePromptPacket) -> str:
     return best_line
 
 
-def heuristic_response(packet: BaselinePromptPacket) -> str:
-    explicit_candidate = primary_answer_candidate_text(packet.answer_candidates)
-    if explicit_candidate:
-        return _clean(explicit_candidate)
-
-    line = _last_matching_line(packet)
-    if not line:
-        return ""
-
-    text = line.split(":", 1)[1].strip() if ":" in line else line.strip()
+def _compact_answer_text(text: str) -> str:
     patterns = [
         r"(?:moved to|live in|lives in)\s+([A-Za-z0-9 _-]+)",
         r"(?:prefer|prefers)\s+([A-Za-z0-9 _-]+)",
@@ -52,3 +43,16 @@ def heuristic_response(packet: BaselinePromptPacket) -> str:
         if match:
             return _clean(match.group(1))
     return _clean(text)
+
+
+def heuristic_response(packet: BaselinePromptPacket) -> str:
+    explicit_candidate = primary_answer_candidate_text(packet.answer_candidates)
+    if explicit_candidate:
+        return _compact_answer_text(explicit_candidate)
+
+    line = _last_matching_line(packet)
+    if not line:
+        return ""
+
+    text = line.split(":", 1)[1].strip() if ":" in line else line.strip()
+    return _compact_answer_text(text)
