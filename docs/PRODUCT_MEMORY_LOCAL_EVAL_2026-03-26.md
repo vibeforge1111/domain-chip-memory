@@ -22,7 +22,7 @@ It is not a public benchmark claim.
 - `stale_state_drift`
   - a value changes, changes again, then re-enters, and the system should return the active state instead of stale intermediate state
 - `evidence_preservation`
-  - historical facts should remain recoverable from evidence memory even after current-state deletion and later update
+  - historical facts should remain recoverable from evidence memory even after current-state deletion and later update or correction
 
 ## Why this matters
 
@@ -42,10 +42,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `12/12` on this lane:
+As of 2026-03-26, the two lead memory systems are now `13/13` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation`
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation`
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x2
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x2
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -59,6 +59,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - a deleted value can be restored explicitly, including when the restored value is the same as the deleted one
 - current-state answer selection now returns `unknown` instead of resurfacing stale deleted state
 - superseded historical evidence can still be recovered when the user asks a historical question instead of a current-state question
+- non-location correction anchors like `before I corrected it to green` are now normalized into the same relative-state operator instead of requiring a separate heuristic lane
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -75,11 +76,11 @@ It also now reports the primary answer-candidate source and type, which is usefu
 - `observational_temporal_memory` is fully source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x1
+  - `evidence_memory` x2
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x1
+  - `evidence_memory` x2
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
@@ -89,8 +90,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `12/12` source-aligned
-- `dual_store_event_calendar_hybrid`: `12/12` source-aligned
+- `observational_temporal_memory`: `13/13` source-aligned
+- `dual_store_event_calendar_hybrid`: `13/13` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
