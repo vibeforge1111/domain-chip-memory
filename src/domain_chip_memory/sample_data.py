@@ -1077,6 +1077,118 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-correction-9",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-01-07",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I prefer espresso."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t4", speaker="assistant", text="Saved all three."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-01-09",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted color."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2026-01-11",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Actually, my favorite color is green now."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Restored color with a new value."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2026-01-13",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="Correction: I prefer matcha now."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Updated preference."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-correction-9:q1",
+                    question="What is my favorite color now?",
+                    category="current_state",
+                    expected_answers=["green"],
+                    evidence_session_ids=["s3"],
+                    evidence_turn_ids=["s3:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "restore_deleted_facet_to_new_value_with_third_facet_stability",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-9:q2",
+                    question="What do I prefer now?",
+                    category="current_state",
+                    expected_answers=["matcha"],
+                    evidence_session_ids=["s4"],
+                    evidence_turn_ids=["s4:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "update_second_facet_after_restoring_new_value",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-9:q3",
+                    question="Where do I live now?",
+                    category="current_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t3"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "preserve_third_facet_after_restore_to_new_value_and_edit",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-9:q4",
+                    question="What was my favorite color before I deleted it?",
+                    category="historical_state",
+                    expected_answers=["blue"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_deleted_value_recall_after_restore_to_new_value",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-9:q5",
+                    question="What did I prefer before I corrected it to matcha?",
+                    category="historical_state",
+                    expected_answers=["espresso"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_second_facet_recall_after_restore_to_new_value",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-deletion-4",
             sessions=[
                 NormalizedSession(
