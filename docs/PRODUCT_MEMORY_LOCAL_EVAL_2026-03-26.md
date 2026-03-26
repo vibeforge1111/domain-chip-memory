@@ -63,8 +63,21 @@ The scorecard now reports this lane at two levels:
 
 - `product_memory_task`
 - `memory_operation`
+- `memory_scope`
 
 That makes it possible to see whether the architecture is strong on the broad task family but weak on a specific operator such as `delete_one_facet`, `update_after_delete`, or `rollback_to_prior_value`.
+
+It also now reports the primary answer-candidate source and type, which is useful for architecture honesty:
+
+- `observational_temporal_memory` is fully source-aligned on this local lane:
+  - `current_state_memory` x8
+  - `current_state_deletion` x3
+- `dual_store_event_calendar_hybrid` is almost source-aligned but still has one current-state recovery coming from `event_calendar`:
+  - `current_state_memory` x7
+  - `current_state_deletion` x3
+  - `event_calendar` x1
+
+That remaining `event_calendar` fallback is not a failure on the local lane, but it is real substrate debt if the long-term doctrine is strict role separation between current state and event memory.
 
 ## Source
 

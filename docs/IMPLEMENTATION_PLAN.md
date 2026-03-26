@@ -118,7 +118,11 @@ Current lead lane as of 2026-03-25:
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
     - restore a deleted value, including reasserting the exact same value
-  - scorecards now slice this lane by both `product_memory_task` and `memory_operation`
+  - scorecards now slice this lane by `product_memory_task`, `memory_operation`, and `memory_scope`
+  - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
+  - current instrumentation note:
+    - `observational_temporal_memory` answers this lane through `current_state_memory` x8 and `current_state_deletion` x3
+    - `dual_store_event_calendar_hybrid` still has one `event_calendar` fallback on a current-state recovery, which should eventually be pulled into cleaner current-state routing
 
 Candidate components:
 
