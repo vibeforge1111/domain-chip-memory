@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `82/82`
-  - `dual_store_event_calendar_hybrid`: `82/82`
+  - `observational_temporal_memory`: `86/86`
+  - `dual_store_event_calendar_hybrid`: `86/86`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -135,6 +135,7 @@ Current lead lane as of 2026-03-25:
     - mixed operation wording disambiguation when questions combine discourse filler with update-vs-delete operator selection on the same facet
     - multi-update ambiguity abstention when `earlier` or `later` update wording names more than two plausible same-facet update targets
     - cross-facet temporal wording disambiguation when nearby updates on another facet should not poison same-facet `earlier` or `later` delete-anchor binding
+    - cross-facet update wording disambiguation when nearby updates on another facet should not poison same-facet `earlier` or `later` update-anchor binding
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
     - contradictory correction with explicit rollback to a prior value
@@ -143,8 +144,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x8, `current_state_deletion` x3, `evidence_memory` x58, `temporal_ambiguity` x7, and `referential_ambiguity` x6
-    - both lead systems are now `82/82` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x8, `current_state_deletion` x3, `evidence_memory` x62, `temporal_ambiguity` x7, and `referential_ambiguity` x6
+    - both lead systems are now `86/86` source-aligned on the local lane
 
 Candidate components:
 
