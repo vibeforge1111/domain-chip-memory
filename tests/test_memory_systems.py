@@ -841,7 +841,7 @@ def test_product_memory_binds_pronoun_heavy_turn_clauses_to_the_right_facet_and_
     pronoun_turn_samples = [
         sample
         for sample in product_memory_samples()
-        if sample.sample_id in {"product-memory-pronoun-turn-1", "product-memory-pronoun-turn-2", "product-memory-pronoun-turn-3", "product-memory-pronoun-turn-4", "product-memory-pronoun-turn-5", "product-memory-pronoun-turn-6", "product-memory-pronoun-turn-7", "product-memory-pronoun-turn-8"}
+        if sample.sample_id in {"product-memory-pronoun-turn-1", "product-memory-pronoun-turn-2", "product-memory-pronoun-turn-3", "product-memory-pronoun-turn-4", "product-memory-pronoun-turn-5", "product-memory-pronoun-turn-6", "product-memory-pronoun-turn-7", "product-memory-pronoun-turn-8", "product-memory-pronoun-turn-9"}
     ]
 
     for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
@@ -908,13 +908,19 @@ def test_product_memory_binds_pronoun_heavy_turn_clauses_to_the_right_facet_and_
         assert "dubai" in predictions["product-memory-pronoun-turn-8:q2"]["predicted_answer"].lower()
         assert predictions["product-memory-pronoun-turn-8:q2"]["is_correct"] is True
         assert predictions["product-memory-pronoun-turn-8:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert "red" in predictions["product-memory-pronoun-turn-9:q1"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-9:q1"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-9:q1"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert "dubai" in predictions["product-memory-pronoun-turn-9:q2"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-9:q2"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-9:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_abstains_on_mixed_facet_pronoun_scope_ambiguity():
     ambiguity_samples = [
         sample
         for sample in product_memory_samples()
-        if sample.sample_id in {"product-memory-pronoun-ambiguity-1", "product-memory-pronoun-ambiguity-2", "product-memory-pronoun-ambiguity-3", "product-memory-pronoun-ambiguity-4", "product-memory-pronoun-ambiguity-5", "product-memory-pronoun-ambiguity-6", "product-memory-pronoun-ambiguity-7", "product-memory-pronoun-ambiguity-8"}
+        if sample.sample_id in {"product-memory-pronoun-ambiguity-1", "product-memory-pronoun-ambiguity-2", "product-memory-pronoun-ambiguity-3", "product-memory-pronoun-ambiguity-4", "product-memory-pronoun-ambiguity-5", "product-memory-pronoun-ambiguity-6", "product-memory-pronoun-ambiguity-7", "product-memory-pronoun-ambiguity-8", "product-memory-pronoun-ambiguity-9"}
     ]
 
     for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
@@ -981,6 +987,12 @@ def test_product_memory_abstains_on_mixed_facet_pronoun_scope_ambiguity():
         assert predictions["product-memory-pronoun-ambiguity-8:q2"]["predicted_answer"].lower() == "unknown"
         assert predictions["product-memory-pronoun-ambiguity-8:q2"]["is_correct"] is True
         assert predictions["product-memory-pronoun-ambiguity-8:q2"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
+        assert predictions["product-memory-pronoun-ambiguity-9:q1"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-ambiguity-9:q1"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-9:q1"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
+        assert predictions["product-memory-pronoun-ambiguity-9:q2"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-ambiguity-9:q2"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-9:q2"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
 
 
 def test_product_memory_uses_earlier_and_later_wording_to_bind_relative_anchors():

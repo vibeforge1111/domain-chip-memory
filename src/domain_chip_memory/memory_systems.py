@@ -2868,6 +2868,17 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
         return normalized
     correction_verbs = "corrected|changed|updated|restored"
     deletion_verbs = "deleted|removed|forgot"
+    clause_carry_base_by_verb = {
+        "changed": "change",
+        "updated": "update",
+        "corrected": "correction",
+        "restored": "correction",
+        "moved": "move",
+        "relocated": "relocation",
+        "deleted": "deletion",
+        "removed": "deletion",
+        "forgot": "deletion",
+    }
     month_names = (
         "january|february|march|april|may|june|july|august|"
         "september|october|november|december"
@@ -2879,26 +2890,35 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
         normalized,
     )
     if generic_anchor_match:
+        generic_anchor = generic_anchor_match.group(1)
         suffix = normalized[generic_anchor_match.end() :].strip()
         if not suffix:
-            return generic_anchor_match.group(1)
+            return generic_anchor
         if re.match(
             rf"^(?:we\s+(?:talked about|mentioned)|in\s+(?:{month_names})(?:\s+\d{{4}})?)$",
             suffix,
         ):
-            return generic_anchor_match.group(1)
-        if re.match(
-            r"^we\s+(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)$",
-            suffix,
-        ):
-            return generic_anchor_match.group(1)
+            return generic_anchor
+        if generic_anchor.endswith(" one"):
+            clause_carry_match = re.match(
+                r"^we\s+(changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)$",
+                suffix,
+            )
+            if clause_carry_match:
+                modifier_match = re.match(r"^that\s+(earlier|later)\s+one$", generic_anchor)
+                if modifier_match:
+                    base = clause_carry_base_by_verb.get(clause_carry_match.group(1))
+                    if base:
+                        return f"that {modifier_match.group(1)} {base}"
+        if re.match(r"^we\s+(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)$", suffix):
+            return generic_anchor
         if re.match(
             r"^we\s+(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot),\s+and\s+before\s+that\s+"
             r"(?:earlier|later|first|last)\s+one(?:\s+we\s+"
             r"(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot))?$",
             suffix,
         ):
-            return generic_anchor_match.group(1)
+            return generic_anchor
 
     if re.match(rf"^(?:i\s+)?(?:{deletion_verbs})\s+it$", normalized):
         if "favorite_color" in target_predicates:
