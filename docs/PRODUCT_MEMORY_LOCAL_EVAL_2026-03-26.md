@@ -40,10 +40,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `10/10` on this lane:
+As of 2026-03-26, the two lead memory systems are now `11/11` on this lane:
 
-- `observational_temporal_memory`: `correction` x6, `deletion` x3, `stale_state_drift`
-- `dual_store_event_calendar_hybrid`: `correction` x6, `deletion` x3, `stale_state_drift`
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -54,6 +54,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - deleting one facet does not wipe unrelated current-state facets in the same memory profile
 - contradictory corrections can intentionally roll back to an earlier value without treating that older value as stale forever
 - rolling back one facet does not clobber unrelated current-state facets that were never edited
+- a deleted value can be restored explicitly, including when the restored value is the same as the deleted one
 - current-state answer selection now returns `unknown` instead of resurfacing stale deleted state
 
 This is still a local eval, not a public product-memory benchmark claim.
