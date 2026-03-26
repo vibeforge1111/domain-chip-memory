@@ -5277,51 +5277,97 @@ def _infer_event_anchored_state_time(
     return None
 
 
-def _infer_generic_relative_anchor_time(
-    anchor_phrase: str,
+def _parse_generic_relative_anchor_phrase(anchor_phrase: str) -> tuple[str | None, str | None]:
+    normalized = anchor_phrase.strip().lower()
+    valid_bases = {
+        "that change",
+        "that update",
+        "that correction",
+        "that move",
+        "that relocation",
+        "that deletion",
+        "that removal",
+        "that forget",
+    }
+    if normalized in valid_bases:
+        return None, normalized
+    match = re.match(r"^that\s+(earlier|later|first|last)\s+(.+)$", normalized)
+    if not match:
+        return None, None
+    modifier = match.group(1)
+    base_phrase = f"that {match.group(2).strip()}"
+    if base_phrase not in valid_bases:
+        return None, None
+    return modifier, base_phrase
+
+
+def _generic_relative_anchor_candidates(
+    base_phrase: str,
     target_predicates: list[str],
     candidate_entries: list[ObservationEntry | EventCalendarEntry],
-) -> datetime | None:
-    normalized = anchor_phrase.strip().lower()
-    generic_phrases = {"that change", "that update", "that correction"}
-    location_only_phrases = {"that move", "that relocation"}
+) -> list[datetime]:
+    def _unique_sorted_anchors(anchors: list[datetime]) -> list[datetime]:
+        return sorted(set(anchors))
+
     deletion_phrases = {"that deletion", "that removal", "that forget"}
-    if normalized not in generic_phrases.union(location_only_phrases).union(deletion_phrases):
-        return None
-    if normalized in location_only_phrases and "location" not in target_predicates:
-        return None
-    if normalized in deletion_phrases:
-        dated_deletions = sorted(
+    if base_phrase in deletion_phrases:
+        return _unique_sorted_anchors(
             [
-                entry
+                anchor
                 for entry in candidate_entries
                 if entry.predicate == "state_deletion"
                 and str(entry.metadata.get("target_predicate", "")).strip() in target_predicates
-                and _parse_observation_anchor(entry.timestamp or "")
+                for anchor in [_parse_observation_anchor(entry.timestamp or "")]
+                if anchor is not None
+            ]
+        )
+
+    dated_state_markers = [
+        (
+            anchor,
+            entry.predicate,
+            _normalize_value(str(entry.metadata.get("value", "") or entry.text)),
+        )
+        for entry in sorted(
+            [
+                entry
+                for entry in candidate_entries
+                if entry.predicate in target_predicates and _parse_observation_anchor(entry.timestamp or "")
             ],
             key=lambda entry: (
                 _parse_observation_anchor(entry.timestamp or ""),
                 getattr(entry, "observation_id", getattr(entry, "event_id", "")),
             ),
         )
-        if not dated_deletions:
-            return None
-        return _parse_observation_anchor(dated_deletions[-1].timestamp or "")
+        for anchor in [_parse_observation_anchor(entry.timestamp or "")]
+        if anchor is not None
+    ]
+    unique_state_markers = list(dict.fromkeys(dated_state_markers))
+    unique_state_anchors = [anchor for anchor, _, _ in unique_state_markers]
+    if len(unique_state_anchors) <= 1:
+        return []
+    return _unique_sorted_anchors(unique_state_anchors[1:])
 
-    dated_states = sorted(
-        [
-            entry
-            for entry in candidate_entries
-            if entry.predicate in target_predicates and _parse_observation_anchor(entry.timestamp or "")
-        ],
-        key=lambda entry: (
-            _parse_observation_anchor(entry.timestamp or ""),
-            getattr(entry, "observation_id", getattr(entry, "event_id", "")),
-        ),
-    )
-    if not dated_states:
+
+def _infer_generic_relative_anchor_time(
+    anchor_phrase: str,
+    target_predicates: list[str],
+    candidate_entries: list[ObservationEntry | EventCalendarEntry],
+) -> datetime | None:
+    modifier, base_phrase = _parse_generic_relative_anchor_phrase(anchor_phrase)
+    generic_phrases = {"that change", "that update", "that correction"}
+    location_only_phrases = {"that move", "that relocation"}
+    deletion_phrases = {"that deletion", "that removal", "that forget"}
+    if base_phrase is None:
         return None
-    return _parse_observation_anchor(dated_states[-1].timestamp or "")
+    if base_phrase in location_only_phrases and "location" not in target_predicates:
+        return None
+    candidates = _generic_relative_anchor_candidates(base_phrase, target_predicates, candidate_entries)
+    if not candidates:
+        return None
+    if modifier in {"earlier", "first"}:
+        return candidates[0]
+    return candidates[-1]
 
 
 def _has_ambiguous_generic_relative_anchor(
@@ -5329,13 +5375,20 @@ def _has_ambiguous_generic_relative_anchor(
     target_predicates: list[str],
     candidate_entries: list[ObservationEntry | EventCalendarEntry],
 ) -> bool:
-    normalized = anchor_phrase.strip().lower()
+    modifier, base_phrase = _parse_generic_relative_anchor_phrase(anchor_phrase)
     generic_phrases = {"that change", "that update", "that correction"}
     location_only_phrases = {"that move", "that relocation"}
     deletion_phrases = {"that deletion", "that removal", "that forget"}
-    if normalized in location_only_phrases and "location" not in target_predicates:
+    if base_phrase in location_only_phrases and "location" not in target_predicates:
         return False
-    if normalized in generic_phrases.union(location_only_phrases):
+    if base_phrase is None:
+        return False
+    candidates = _generic_relative_anchor_candidates(base_phrase, target_predicates, candidate_entries)
+    if modifier in {"earlier", "later"}:
+        return len(candidates) > 2
+    if modifier in {"first", "last"}:
+        return False
+    if base_phrase in generic_phrases.union(location_only_phrases):
         state_markers = {
             (
                 _parse_observation_anchor(entry.timestamp or ""),
@@ -5346,7 +5399,7 @@ def _has_ambiguous_generic_relative_anchor(
             if entry.predicate in target_predicates and _parse_observation_anchor(entry.timestamp or "")
         }
         return len(state_markers) > 2
-    if normalized in deletion_phrases:
+    if base_phrase in deletion_phrases:
         deletion_markers = {
             (
                 _parse_observation_anchor(entry.timestamp or ""),
