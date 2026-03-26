@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `118/118` on this lane:
+As of 2026-03-26, the two lead memory systems are now `122/122` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x23, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x23, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x42
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x27, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x27, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x42
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -102,6 +102,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - first/last mixed-operation overload is now explicit too, so `first/last update` and `first/last deletion` wording still bind to the correct operation family under mixed same-facet update/delete pressure instead of collapsing into the wrong chronology or the wrong operator
 - clause-heavy first/last overload is now explicit too, so conversational suffixes like `we talked about` and `we mentioned` do not break `first/last` operator binding under the same mixed update/delete pressure
 - anaphoric first/last wording is now explicit too, so underspecified forms like `that first one` and `that last one` abstain through `temporal_ambiguity` under mixed update/delete pressure instead of silently borrowing the latest evidence path
+- clause-carry anaphoric wording is now explicit too, so forms like `that first one we changed` and `that last one we removed` also abstain through `temporal_ambiguity` instead of leaking back onto the generic evidence path
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -119,13 +120,13 @@ It also now reports the primary answer-candidate source and type, which is usefu
   - `current_state_memory` x8
   - `current_state_deletion` x3
   - `evidence_memory` x78
-  - `temporal_ambiguity` x23
+  - `temporal_ambiguity` x27
   - `referential_ambiguity` x6
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
   - `evidence_memory` x78
-  - `temporal_ambiguity` x23
+  - `temporal_ambiguity` x27
   - `referential_ambiguity` x6
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
@@ -136,8 +137,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `118/118` source-aligned
-- `dual_store_event_calendar_hybrid`: `118/118` source-aligned
+- `observational_temporal_memory`: `122/122` source-aligned
+- `dual_store_event_calendar_hybrid`: `122/122` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
