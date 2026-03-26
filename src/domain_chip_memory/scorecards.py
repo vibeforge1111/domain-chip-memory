@@ -87,6 +87,10 @@ def _rate_row(*, numerator: int, total: int, label: str) -> dict[str, Any]:
     }
 
 
+def _label_count_rows(counter: Counter[str]) -> list[dict[str, Any]]:
+    return [{"label": label, "count": counter[label]} for label in sorted(counter)]
+
+
 def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict[str, Any]:
     latency_values: list[float | int] = []
     token_values: list[float | int] = []
@@ -96,6 +100,8 @@ def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict
     abstention_honest = 0
     current_state_total = 0
     current_state_correct = 0
+    answer_source_counts: Counter[str] = Counter()
+    answer_type_counts: Counter[str] = Counter()
 
     for prediction in predictions:
         latency = prediction.metadata.get("latency_ms")
@@ -106,6 +112,12 @@ def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict
             token_values.append(total_tokens)
         if int(prediction.metadata.get("answer_candidate_count", 0) or 0) > 0:
             answer_candidate_supported += 1
+        answer_source = str(prediction.metadata.get("primary_answer_candidate_source", "") or "").strip()
+        if answer_source:
+            answer_source_counts[answer_source] += 1
+        answer_type = str(prediction.metadata.get("primary_answer_candidate_type", "") or "").strip()
+        if answer_type:
+            answer_type_counts[answer_type] += 1
         if bool(prediction.metadata.get("provenance_supported")):
             provenance_supported += 1
         if prediction.metadata.get("should_abstain"):
@@ -132,6 +144,16 @@ def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict
                 total=total_predictions,
                 label="supported",
             ),
+            "primary_answer_candidate_sources": {
+                "supported": sum(answer_source_counts.values()),
+                "total": total_predictions,
+                "rows": _label_count_rows(answer_source_counts),
+            },
+            "primary_answer_candidate_types": {
+                "supported": sum(answer_type_counts.values()),
+                "total": total_predictions,
+                "rows": _label_count_rows(answer_type_counts),
+            },
             "provenance_support_rate": _rate_row(
                 numerator=provenance_supported,
                 total=total_predictions,
@@ -219,6 +241,8 @@ def build_scorecard(
     product_task_correct: Counter[str] = Counter()
     product_operation_total: Counter[str] = Counter()
     product_operation_correct: Counter[str] = Counter()
+    product_scope_total: Counter[str] = Counter()
+    product_scope_correct: Counter[str] = Counter()
     overall_correct = 0
     overall_total = len(predictions)
     audited_overall_correct = 0
@@ -247,9 +271,12 @@ def build_scorecard(
             product_task_total[task_label] += 1
             operation_label = str(prediction.metadata.get("memory_operation", "unknown"))
             product_operation_total[operation_label] += 1
+            scope_label = str(prediction.metadata.get("memory_scope", "unknown"))
+            product_scope_total[scope_label] += 1
             if prediction.is_correct:
                 product_task_correct[task_label] += 1
                 product_operation_correct[operation_label] += 1
+                product_scope_correct[scope_label] += 1
         known_issue = get_known_benchmark_issue(prediction.question_id)
         is_audit_excluded = False
         if known_issue:
@@ -329,6 +356,7 @@ def build_scorecard(
             else {
                 "product_memory_task": _build_slice_rows(product_task_total, product_task_correct),
                 "memory_operation": _build_slice_rows(product_operation_total, product_operation_correct),
+                "memory_scope": _build_slice_rows(product_scope_total, product_scope_correct),
             }
             if manifest_dict.get("benchmark_name") == "ProductMemory"
             else {}

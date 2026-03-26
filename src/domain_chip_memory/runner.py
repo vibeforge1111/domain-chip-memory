@@ -206,6 +206,7 @@ def _build_prediction(
 ) -> BaselinePrediction:
     answer = _expand_answer_from_context(packet.question, answer, packet.assembled_context)
     normalized_pred = " ".join(answer.lower().strip().split())
+    primary_answer_candidate = packet.answer_candidates[0] if packet.answer_candidates else None
     return BaselinePrediction(
         benchmark_name=packet.benchmark_name,
         baseline_name=packet.baseline_name,
@@ -224,8 +225,11 @@ def _build_prediction(
             "temporal_scope": "dated" if question.question_date else "undated",
             "product_memory_task": question.metadata.get("product_memory_task"),
             "memory_operation": question.metadata.get("memory_operation"),
+            "memory_scope": question.metadata.get("memory_scope"),
             "retrieved_context_item_count": len(packet.retrieved_context_items),
             "answer_candidate_count": len(packet.answer_candidates),
+            "primary_answer_candidate_type": primary_answer_candidate.candidate_type if primary_answer_candidate else None,
+            "primary_answer_candidate_source": primary_answer_candidate.source if primary_answer_candidate else None,
             "provenance_supported": bool(
                 packet.retrieved_context_items
                 and all(item.session_id and item.turn_ids for item in packet.retrieved_context_items)

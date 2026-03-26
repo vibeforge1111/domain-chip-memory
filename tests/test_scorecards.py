@@ -182,6 +182,8 @@ def test_build_scorecard_emits_product_memory_summary():
                     "latency_ms": 120.0,
                     "total_tokens": 42,
                     "answer_candidate_count": 1,
+                    "primary_answer_candidate_type": "current_state",
+                    "primary_answer_candidate_source": "current_state_memory",
                     "provenance_supported": True,
                     "should_abstain": False,
                 },
@@ -214,6 +216,13 @@ def test_build_scorecard_emits_product_memory_summary():
     assert product_summary["total_tokens"]["max"] == 42.0
     assert product_summary["answer_candidate_support_rate"]["supported"] == 1
     assert product_summary["answer_candidate_support_rate"]["rate"] == 0.5
+    assert product_summary["primary_answer_candidate_sources"]["supported"] == 1
+    assert product_summary["primary_answer_candidate_sources"]["rows"] == [
+        {"label": "current_state_memory", "count": 1}
+    ]
+    assert product_summary["primary_answer_candidate_types"]["rows"] == [
+        {"label": "current_state", "count": 1}
+    ]
     assert product_summary["provenance_support_rate"]["supported"] == 1
     assert product_summary["abstention_honesty"]["honest"] == 1
     assert product_summary["abstention_honesty"]["rate"] == 1.0
@@ -242,7 +251,11 @@ def test_build_scorecard_emits_product_memory_task_slices():
                 predicted_answer="green",
                 expected_answers=["green"],
                 is_correct=True,
-                metadata={"product_memory_task": "correction", "memory_operation": "update"},
+                metadata={
+                    "product_memory_task": "correction",
+                    "memory_operation": "update",
+                    "memory_scope": "single_facet",
+                },
             ),
             BaselinePrediction(
                 benchmark_name="ProductMemory",
@@ -253,7 +266,11 @@ def test_build_scorecard_emits_product_memory_task_slices():
                 predicted_answer="Dubai",
                 expected_answers=["Information provided is not enough"],
                 is_correct=False,
-                metadata={"product_memory_task": "deletion", "memory_operation": "delete_one_facet"},
+                metadata={
+                    "product_memory_task": "deletion",
+                    "memory_operation": "delete_one_facet",
+                    "memory_scope": "multi_facet",
+                },
             ),
             BaselinePrediction(
                 benchmark_name="ProductMemory",
@@ -264,7 +281,11 @@ def test_build_scorecard_emits_product_memory_task_slices():
                 predicted_answer="espresso",
                 expected_answers=["espresso"],
                 is_correct=True,
-                metadata={"product_memory_task": "stale_state_drift", "memory_operation": "supersession"},
+                metadata={
+                    "product_memory_task": "stale_state_drift",
+                    "memory_operation": "supersession",
+                    "memory_scope": "single_facet",
+                },
             ),
         ],
     )
@@ -281,3 +302,9 @@ def test_build_scorecard_emits_product_memory_task_slices():
     assert operation_rows[0]["accuracy"] == 0.0
     assert operation_rows[1]["accuracy"] == 1.0
     assert operation_rows[2]["accuracy"] == 1.0
+
+    scope_rows = scorecard["benchmark_slices"]["memory_scope"]
+    scope_labels = [row["label"] for row in scope_rows]
+    assert scope_labels == ["multi_facet", "single_facet"]
+    assert scope_rows[0]["accuracy"] == 0.0
+    assert scope_rows[1]["accuracy"] == 1.0
