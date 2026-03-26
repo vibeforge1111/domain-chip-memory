@@ -4113,6 +4113,77 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-pronoun-ambiguity-12",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2027-01-18",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="assistant", text="Saved both."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2027-01-25",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="About my favorite color and where I live, please forget it, and after that change it to green.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Handled in January."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2027-02-28",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s3:t1",
+                            speaker="user",
+                            text="About my favorite color and where I live, please forget it, and after that change it to Sharjah.",
+                        ),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Handled in February."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-ambiguity-12:q1",
+                    question="Before that first one we changed, what was my favorite color?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2", "s3"],
+                    evidence_turn_ids=["s1:t1", "s1:t2", "s2:t1", "s3:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "pronoun_referential_ambiguity",
+                        "memory_operation": "historical_pronoun_turn_fronted_clause_carry_first_change_color_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-ambiguity-12:q2",
+                    question="Before that last one we deleted, where did I live?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2", "s3"],
+                    evidence_turn_ids=["s1:t1", "s1:t2", "s2:t1", "s3:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "pronoun_referential_ambiguity",
+                        "memory_operation": "historical_pronoun_turn_fronted_clause_carry_last_delete_location_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-temporal-wording-1",
             sessions=[
                 NormalizedSession(
