@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `102/102` on this lane:
+As of 2026-03-26, the two lead memory systems are now `110/110` on this lane:
 
-- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x19, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x30
-- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x19, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x30
+- `observational_temporal_memory`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x19, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x38
+- `dual_store_event_calendar_hybrid`: `correction` x7, `deletion` x3, `stale_state_drift`, `evidence_preservation` x16, `ambiguity_abstention` x19, `cross_facet_disambiguation` x10, `operation_disambiguation` x2, `dense_turn_disambiguation` x4, `pronoun_turn_disambiguation` x4, `pronoun_referential_ambiguity` x6, `temporal_wording_disambiguation` x38
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -99,6 +99,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - mixed operation ambiguity is now explicit too, so once the asked facet itself has more than two plausible updates, `later update` wording still abstains through `temporal_ambiguity` even when delete anchors are present nearby, while `later deletion` wording on the same facet still binds to the delete event instead of inheriting update ambiguity
 - delete-side ambiguity escalation is now explicit too, so once the asked facet itself has more than two plausible deletions, `earlier/later deletion` wording abstains through `temporal_ambiguity` even when another facet has dense nearby updates that could have caused a false operator leak
 - mixed delete-overload competition is now explicit too, so with same-facet delete overload and nearby other-facet deletions, `later update` or `later move` wording still binds to the update family while `later deletion` wording abstains through `temporal_ambiguity` instead of leaking across operation families
+- first/last mixed-operation overload is now explicit too, so `first/last update` and `first/last deletion` wording still bind to the correct operation family under mixed same-facet update/delete pressure instead of collapsing into the wrong chronology or the wrong operator
 
 This is still a local eval, not a public product-memory benchmark claim.
 
@@ -115,13 +116,13 @@ It also now reports the primary answer-candidate source and type, which is usefu
 - `observational_temporal_memory` is fully source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x66
+  - `evidence_memory` x74
   - `temporal_ambiguity` x19
   - `referential_ambiguity` x6
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
   - `current_state_memory` x8
   - `current_state_deletion` x3
-  - `evidence_memory` x66
+  - `evidence_memory` x74
   - `temporal_ambiguity` x19
   - `referential_ambiguity` x6
 
@@ -133,8 +134,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `102/102` source-aligned
-- `dual_store_event_calendar_hybrid`: `102/102` source-aligned
+- `observational_temporal_memory`: `110/110` source-aligned
+- `dual_store_event_calendar_hybrid`: `110/110` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
