@@ -2920,6 +2920,23 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
                 first_last_match = re.match(r"^that\s+(first|last)\s+one$", generic_anchor)
                 if first_last_match:
                     return f"{generic_anchor} we {clause_carry_match.group(1)}"
+            dense_clause_carry_match = re.match(
+                rf"^we\s+(changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)"
+                rf"(?:\s+(?:in\s+(?:{month_names})(?:\s+\d{{4}})?|later|earlier))?"
+                rf",\s+and\s+before\s+that\s+(?:earlier|later|first|last)\s+one"
+                rf"(?:\s+we\s+(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)"
+                rf"(?:\s+(?:in\s+(?:{month_names})(?:\s+\d{{4}})?|later|earlier))?)?$",
+                suffix,
+            )
+            if dense_clause_carry_match:
+                modifier_match = re.match(r"^that\s+(earlier|later)\s+one$", generic_anchor)
+                if modifier_match:
+                    base = clause_carry_base_by_verb.get(dense_clause_carry_match.group(1))
+                    if base:
+                        return f"that {modifier_match.group(1)} {base}"
+                first_last_match = re.match(r"^that\s+(first|last)\s+one$", generic_anchor)
+                if first_last_match:
+                    return f"{generic_anchor} we {dense_clause_carry_match.group(1)}"
         if re.match(r"^we\s+(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot)$", suffix):
             return generic_anchor
         if re.match(
