@@ -587,6 +587,36 @@ def test_product_memory_delete_plus_rollback_preserves_third_facet_stability():
         assert predictions["product-memory-deletion-6:q5"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
+def test_product_memory_delete_plus_restore_to_new_value_preserves_third_facet_stability():
+    delete_restore_new_value_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-deletion-7"]
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            delete_restore_new_value_sample,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+        assert predictions["product-memory-deletion-7:q1"]["predicted_answer"] == "Sharjah"
+        assert predictions["product-memory-deletion-7:q1"]["is_correct"] is True
+        assert predictions["product-memory-deletion-7:q1"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert predictions["product-memory-deletion-7:q2"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-deletion-7:q2"]["is_correct"] is True
+        assert predictions["product-memory-deletion-7:q2"]["metadata"]["primary_answer_candidate_source"] == "current_state_deletion"
+        assert predictions["product-memory-deletion-7:q3"]["predicted_answer"] == "espresso"
+        assert predictions["product-memory-deletion-7:q3"]["is_correct"] is True
+        assert predictions["product-memory-deletion-7:q3"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert predictions["product-memory-deletion-7:q4"]["predicted_answer"] == "Dubai"
+        assert predictions["product-memory-deletion-7:q4"]["is_correct"] is True
+        assert predictions["product-memory-deletion-7:q4"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-deletion-7:q5"]["predicted_answer"] == "blue"
+        assert predictions["product-memory-deletion-7:q5"]["is_correct"] is True
+        assert predictions["product-memory-deletion-7:q5"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+
+
 def test_product_memory_abstains_on_ambiguous_anaphoric_history():
     ambiguous_samples = [
         sample
