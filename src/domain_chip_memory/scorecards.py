@@ -215,6 +215,8 @@ def build_scorecard(
     evidence_scope_correct: Counter[str] = Counter()
     temporal_scope_total: Counter[str] = Counter()
     temporal_scope_correct: Counter[str] = Counter()
+    product_task_total: Counter[str] = Counter()
+    product_task_correct: Counter[str] = Counter()
     overall_correct = 0
     overall_total = len(predictions)
     audited_overall_correct = 0
@@ -238,6 +240,11 @@ def build_scorecard(
                 abstain_correct[abstain_label] += 1
                 evidence_scope_correct[evidence_scope] += 1
                 temporal_scope_correct[temporal_scope] += 1
+        if prediction.benchmark_name == "ProductMemory":
+            task_label = str(prediction.metadata.get("product_memory_task", "unknown"))
+            product_task_total[task_label] += 1
+            if prediction.is_correct:
+                product_task_correct[task_label] += 1
         known_issue = get_known_benchmark_issue(prediction.question_id)
         is_audit_excluded = False
         if known_issue:
@@ -307,13 +314,19 @@ def build_scorecard(
             ],
             "questions": known_issue_rows,
         },
-        "benchmark_slices": {
-            "should_abstain": _build_slice_rows(abstain_total, abstain_correct),
-            "evidence_scope": _build_slice_rows(evidence_scope_total, evidence_scope_correct),
-            "temporal_scope": _build_slice_rows(temporal_scope_total, temporal_scope_correct),
-        }
-        if manifest_dict.get("benchmark_name") == "BEAM"
-        else {},
+        "benchmark_slices": (
+            {
+                "should_abstain": _build_slice_rows(abstain_total, abstain_correct),
+                "evidence_scope": _build_slice_rows(evidence_scope_total, evidence_scope_correct),
+                "temporal_scope": _build_slice_rows(temporal_scope_total, temporal_scope_correct),
+            }
+            if manifest_dict.get("benchmark_name") == "BEAM"
+            else {
+                "product_memory_task": _build_slice_rows(product_task_total, product_task_correct),
+            }
+            if manifest_dict.get("benchmark_name") == "ProductMemory"
+            else {}
+        ),
         "product_memory_summary": _build_product_memory_summary(predictions),
         "predictions": enriched_predictions,
     }

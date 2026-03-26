@@ -24,7 +24,7 @@ from .memory_systems import build_memory_system_contract_summary
 from .packets import build_strategy_packet
 from .providers import build_provider_contract_summary, get_provider
 from .runner import build_runner_contract_summary, run_baseline
-from .sample_data import demo_samples
+from .sample_data import demo_samples, product_memory_samples
 from .scorecards import BaselinePrediction, build_scorecard, build_scorecard_contract_summary
 from .baselines import build_full_context_packets, build_lexical_packets
 from .watchtower import build_watchtower_summary
@@ -163,6 +163,7 @@ def main() -> None:
     subparsers.add_parser("scorecard-contracts", help="Show scorecard contract summary.")
     subparsers.add_parser("canonical-configs", help="Show the canonical benchmark configuration choices.")
     subparsers.add_parser("demo-scorecards", help="Run local demo scorecards for baselines and candidate memory systems.")
+    subparsers.add_parser("demo-product-memory-scorecards", help="Run local product-memory scorecards for correction, deletion, and stale-state drift.")
     subparsers.add_parser("loader-contracts", help="Show benchmark file loader summary.")
     subparsers.add_parser("provider-contracts", help="Show model-provider interface summary.")
     subparsers.add_parser("runner-contracts", help="Show executable baseline runner summary.")
@@ -307,6 +308,39 @@ def main() -> None:
                     provider=get_provider("heuristic_v1"),
                     top_k_sessions=2,
                     fallback_sessions=1,
+                ),
+                "observational_temporal_memory": run_baseline(
+                    samples,
+                    baseline_name="observational_temporal_memory",
+                    provider=get_provider("heuristic_v1"),
+                    top_k_sessions=2,
+                    fallback_sessions=1,
+                ),
+                "dual_store_event_calendar_hybrid": run_baseline(
+                    samples,
+                    baseline_name="dual_store_event_calendar_hybrid",
+                    provider=get_provider("heuristic_v1"),
+                    top_k_sessions=2,
+                    fallback_sessions=1,
+                ),
+            }
+        )
+        return
+
+    if args.command == "demo-product-memory-scorecards":
+        samples = product_memory_samples()
+        _print(
+            {
+                "full_context": run_baseline(
+                    samples,
+                    baseline_name="full_context",
+                    provider=get_provider("heuristic_v1"),
+                ),
+                "lexical": run_baseline(
+                    samples,
+                    baseline_name="lexical",
+                    provider=get_provider("heuristic_v1"),
+                    top_k_sessions=1,
                 ),
                 "observational_temporal_memory": run_baseline(
                     samples,

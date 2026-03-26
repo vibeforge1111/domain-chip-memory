@@ -82,6 +82,27 @@ def test_candidate_comparison_summary_runs():
     assert "question_ids" not in payload["systems"]["beam_temporal_atom_router"]["run_manifest"]
 
 
+def test_demo_product_memory_scorecards_command_runs(monkeypatch):
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "demo-product-memory-scorecards",
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["observational_temporal_memory"]["run_manifest"]["benchmark_name"] == "ProductMemory"
+    assert payload["observational_temporal_memory"]["overall"]["total"] == 3
+    assert payload["observational_temporal_memory"]["benchmark_slices"]["product_memory_task"]
+
+
 def test_run_longmemeval_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "longmemeval.json"
     output_file = tmp_path / "artifacts" / "scorecard.json"

@@ -219,3 +219,58 @@ def test_build_scorecard_emits_product_memory_summary():
     assert product_summary["abstention_honesty"]["rate"] == 1.0
     assert product_summary["current_state_accuracy"]["accuracy"] == 1.0
     assert "memory_drift_rate" in scorecard["product_memory_summary"]["unmeasured_metrics"]
+
+
+def test_build_scorecard_emits_product_memory_task_slices():
+    scorecard = build_scorecard(
+        {
+            "run_id": "product-memory-run",
+            "benchmark_name": "ProductMemory",
+            "baseline_name": "observational_temporal_memory",
+            "sample_ids": ["pm-1", "pm-2", "pm-3"],
+            "question_ids": ["pm-1-q-1", "pm-2-q-1", "pm-3-q-1"],
+            "question_count": 3,
+            "metadata": {},
+        },
+        [
+            BaselinePrediction(
+                benchmark_name="ProductMemory",
+                baseline_name="observational_temporal_memory",
+                sample_id="pm-1",
+                question_id="pm-1-q-1",
+                category="current_state",
+                predicted_answer="green",
+                expected_answers=["green"],
+                is_correct=True,
+                metadata={"product_memory_task": "correction"},
+            ),
+            BaselinePrediction(
+                benchmark_name="ProductMemory",
+                baseline_name="observational_temporal_memory",
+                sample_id="pm-2",
+                question_id="pm-2-q-1",
+                category="abstention",
+                predicted_answer="Dubai",
+                expected_answers=["Information provided is not enough"],
+                is_correct=False,
+                metadata={"product_memory_task": "deletion"},
+            ),
+            BaselinePrediction(
+                benchmark_name="ProductMemory",
+                baseline_name="observational_temporal_memory",
+                sample_id="pm-3",
+                question_id="pm-3-q-1",
+                category="current_state",
+                predicted_answer="espresso",
+                expected_answers=["espresso"],
+                is_correct=True,
+                metadata={"product_memory_task": "stale_state_drift"},
+            ),
+        ],
+    )
+
+    rows = scorecard["benchmark_slices"]["product_memory_task"]
+    labels = [row["label"] for row in rows]
+    assert labels == ["correction", "deletion", "stale_state_drift"]
+    assert rows[0]["accuracy"] == 1.0
+    assert rows[1]["accuracy"] == 0.0

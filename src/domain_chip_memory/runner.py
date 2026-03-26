@@ -222,6 +222,8 @@ def _build_prediction(
             "should_abstain": question.should_abstain,
             "evidence_scope": "multi_session" if len(question.evidence_session_ids) > 1 else "single_session",
             "temporal_scope": "dated" if question.question_date else "undated",
+            "product_memory_task": question.metadata.get("product_memory_task"),
+            "memory_operation": question.metadata.get("memory_operation"),
             "retrieved_context_item_count": len(packet.retrieved_context_items),
             "answer_candidate_count": len(packet.answer_candidates),
             "provenance_supported": bool(
