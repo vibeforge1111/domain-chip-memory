@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `626/626`
-  - `dual_store_event_calendar_hybrid`: `626/626`
+  - `observational_temporal_memory`: `642/642`
+  - `dual_store_event_calendar_hybrid`: `642/642`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -227,6 +227,7 @@ Current lead lane as of 2026-03-25:
     - five-facet chronology-bearing scoped-pronoun inverse-overlap stability must preserve the same clean delete edge, far-edge clean update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries a timing cue like `update it in February later`
     - five-facet comparative scoped-pronoun inverse-overlap stability must preserve the same clean delete edge, far-edge clean update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries comparative wording like `update it earlier instead`
     - five-facet chronology-bearing scoped-pronoun overlap stability must preserve a clean favorite-color deletion, a clean location update, an ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count facets when the overlapping clause carries a timing cue like `update it in February later`
+    - five-facet comparative scoped-pronoun overlap stability must preserve a clean favorite-color deletion, a clean location update, an ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count facets when the overlapping clause carries comparative wording like `update it earlier instead`
     - current-state bike-count questions like `How many bikes do I own now?` must stay source-aligned on `current_state_memory` instead of being forced onto the generic aggregate/evidence path by the broad count-question gate
     - relearn after deletion
     - selective deletion with unrelated-facet preservation
@@ -236,8 +237,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x174, `current_state_deletion` x38, `evidence_memory` x198, `temporal_ambiguity` x33, and `referential_ambiguity` x183
-    - both lead systems are now `626/626` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x182, `current_state_deletion` x40, `evidence_memory` x200, `temporal_ambiguity` x33, and `referential_ambiguity` x187
+    - both lead systems are now `642/642` source-aligned on the local lane
 
 Candidate components:
 
