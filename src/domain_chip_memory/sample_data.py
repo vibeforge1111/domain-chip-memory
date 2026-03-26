@@ -959,4 +959,112 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 )
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-operation-binding-1",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-05-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-05-03",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2026-05-06",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Correction: my favorite color is green."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2026-05-09",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="Actually, my favorite color is yellow now."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Updated again."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-operation-binding-1:q1",
+                    question="What was my favorite color before that deletion?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "operation_disambiguation",
+                        "memory_operation": "historical_delete_anchor_binding",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                )
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-operation-binding-2",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-06-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-06-03",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="Please forget where I live."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2026-06-06",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="I moved to Sharjah."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2026-06-09",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="I moved to Abu Dhabi."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Updated again."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-operation-binding-2:q1",
+                    question="Where did I live before that deletion?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "operation_disambiguation",
+                        "memory_operation": "historical_delete_anchor_binding",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                )
+            ],
+        ),
     ]

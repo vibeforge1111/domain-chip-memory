@@ -5233,6 +5233,23 @@ def _infer_generic_relative_anchor_time(
         return None
     if normalized in location_only_phrases and "location" not in target_predicates:
         return None
+    if normalized in deletion_phrases:
+        dated_deletions = sorted(
+            [
+                entry
+                for entry in candidate_entries
+                if entry.predicate == "state_deletion"
+                and str(entry.metadata.get("target_predicate", "")).strip() in target_predicates
+                and _parse_observation_anchor(entry.timestamp or "")
+            ],
+            key=lambda entry: (
+                _parse_observation_anchor(entry.timestamp or ""),
+                getattr(entry, "observation_id", getattr(entry, "event_id", "")),
+            ),
+        )
+        if not dated_deletions:
+            return None
+        return _parse_observation_anchor(dated_deletions[-1].timestamp or "")
 
     dated_states = sorted(
         [
