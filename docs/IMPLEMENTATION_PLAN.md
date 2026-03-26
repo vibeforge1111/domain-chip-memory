@@ -97,8 +97,8 @@ Current lead lane as of 2026-03-25:
 - current clean `LoCoMo` limitation:
   - the remaining first-slice audited-open issue is still the benchmark inconsistency on `conv-26-qa-6`
 - current local `BEAM` pilot ladder as of 2026-03-26:
-  - `observational_temporal_memory`: `58/58`
-  - `dual_store_event_calendar_hybrid`: `58/58`
+  - `observational_temporal_memory`: `60/60`
+  - `dual_store_event_calendar_hybrid`: `60/60`
   - currently closed pressure families include:
     - dated state recall at month, day, and clock-time granularity
     - event-anchored state recall
@@ -106,6 +106,7 @@ Current lead lane as of 2026-03-25:
     - timed repeated-anchor state recall
     - ambiguity abstention
     - location-anchored relative non-location state recall
+    - non-location-transition-anchored relative non-location state recall
 
 Candidate components:
 

@@ -72,6 +72,46 @@ It exists to do three honest jobs now:
 - thirteenth-slice scorecard targets:
   - `artifacts/benchmark_runs/beam_local_pilot_v13_observational_heuristic_v1.json`
   - `artifacts/benchmark_runs/beam_local_pilot_v13_dual_store_heuristic_v1.json`
+- fourteenth slice: `artifacts/benchmark_runs/beam_local_pilot_v14_source.json`
+- fourteenth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v14_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v14_dual_store_heuristic_v1.json`
+- fifteenth slice: `artifacts/benchmark_runs/beam_local_pilot_v15_source.json`
+- fifteenth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v15_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v15_dual_store_heuristic_v1.json`
+- sixteenth slice: `artifacts/benchmark_runs/beam_local_pilot_v16_source.json`
+- sixteenth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v16_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v16_dual_store_heuristic_v1.json`
+- seventeenth slice: `artifacts/benchmark_runs/beam_local_pilot_v17_source.json`
+- seventeenth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v17_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v17_dual_store_heuristic_v1.json`
+- eighteenth slice: `artifacts/benchmark_runs/beam_local_pilot_v18_source.json`
+- eighteenth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v18_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v18_dual_store_heuristic_v1.json`
+- nineteenth slice: `artifacts/benchmark_runs/beam_local_pilot_v19_source.json`
+- nineteenth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v19_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v19_dual_store_heuristic_v1.json`
+- twentieth slice: `artifacts/benchmark_runs/beam_local_pilot_v20_source.json`
+- twentieth-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v20_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v20_dual_store_heuristic_v1.json`
+- twenty-first slice: `artifacts/benchmark_runs/beam_local_pilot_v21_source.json`
+- twenty-first-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v21_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v21_dual_store_heuristic_v1.json`
+- twenty-second slice: `artifacts/benchmark_runs/beam_local_pilot_v22_source.json`
+- twenty-second-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v22_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v22_dual_store_heuristic_v1.json`
+- twenty-third slice: `artifacts/benchmark_runs/beam_local_pilot_v23_source.json`
+- twenty-third-slice scorecard targets:
+  - `artifacts/benchmark_runs/beam_local_pilot_v23_observational_heuristic_v1.json`
+  - `artifacts/benchmark_runs/beam_local_pilot_v23_dual_store_heuristic_v1.json`
 
 ## Pilot coverage
 
@@ -211,6 +251,12 @@ The twenty-second pilot adds:
 - questions like `what did I prefer after I moved to Dubai` where the anchor is itself a structured current-state update
 - pressure on letting the relative-anchor resolver match location entries, not only episodic event text
 
+The twenty-third pilot adds:
+
+- relative non-location state recall anchored on a non-location state transition
+- questions like `what did I prefer after I switched back to espresso`
+- pressure on treating non-location current-state updates as anchorable timeline events instead of only answer-bearing values
+
 ## Command
 
 ```powershell
@@ -256,6 +302,8 @@ python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v21_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v21_dual_store_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v22_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v22_observational_heuristic_v1.json
 python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v22_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v22_dual_store_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v23_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v23_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam_local_pilot_v23_source.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --write artifacts\benchmark_runs\beam_local_pilot_v23_dual_store_heuristic_v1.json
 ```
 
 ## Promotion rule
