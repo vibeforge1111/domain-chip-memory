@@ -83,3 +83,28 @@ def build_answer_candidate(
         source=source,
         metadata=dict(metadata or {}),
     )
+
+
+def primary_answer_candidate_text(answer_candidates: list[AnswerCandidate]) -> str:
+    for candidate in answer_candidates:
+        text = candidate.text.strip()
+        if text:
+            return text
+    return ""
+
+
+def extract_answer_candidate_texts(context: str) -> list[str]:
+    candidates: list[str] = []
+    for raw_line in context.splitlines():
+        line = raw_line.strip()
+        if not line or not line.lower().startswith("answer_candidate:"):
+            continue
+        text = line.split(":", 1)[1].strip() if ":" in line else ""
+        if text:
+            candidates.append(text)
+    return candidates
+
+
+def context_primary_answer_candidate_text(context: str) -> str:
+    candidates = extract_answer_candidate_texts(context)
+    return candidates[0] if candidates else ""

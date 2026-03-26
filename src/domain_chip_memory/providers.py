@@ -10,7 +10,7 @@ from typing import Any, Protocol
 from urllib import error, request
 
 from .contracts import JsonDict
-from .answer_candidates import looks_like_current_state_question
+from .answer_candidates import context_primary_answer_candidate_text, looks_like_current_state_question
 from .image_title_hints import resolve_titles_from_image_urls
 from .responders import heuristic_response
 from .runs import BaselinePromptPacket
@@ -329,8 +329,7 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
 
     question_lower = question.lower()
     context_lines = [line.strip() for line in context.splitlines() if line.strip()]
-    answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
-    answer_candidate = answer_candidate_match.group(1).strip() if answer_candidate_match else ""
+    answer_candidate = context_primary_answer_candidate_text(context)
     if (
         answer_candidate.lower() in {"yes", "no"}
         and question_lower.startswith(("did ", "is ", "are ", "was ", "were "))
@@ -613,11 +612,9 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
             match = re.search(pattern, combined, re.IGNORECASE)
             if match:
                 return match.group(1).strip()
-        answer_candidate_match = re.search(r"answer_candidate:\s*([^\n]+)", context, re.IGNORECASE)
-        if answer_candidate_match:
-            candidate = answer_candidate_match.group(1).strip()
-            if candidate and len(candidate.split()) <= 8:
-                return candidate
+        candidate = context_primary_answer_candidate_text(context)
+        if candidate and len(candidate.split()) <= 8:
+            return candidate
 
     if "spirituality" in question_lower and "previous stance" in question_lower:
         match = re.search(r"\bused to be\s+(a\s+[^,.!?]+)", combined, re.IGNORECASE)

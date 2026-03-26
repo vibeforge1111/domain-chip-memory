@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from .answer_candidates import primary_answer_candidate_text
 from .runs import BaselinePromptPacket
 
 
@@ -29,6 +30,10 @@ def _last_matching_line(packet: BaselinePromptPacket) -> str:
 
 
 def heuristic_response(packet: BaselinePromptPacket) -> str:
+    explicit_candidate = primary_answer_candidate_text(packet.answer_candidates)
+    if explicit_candidate:
+        return _clean(explicit_candidate)
+
     line = _last_matching_line(packet)
     if not line:
         return ""

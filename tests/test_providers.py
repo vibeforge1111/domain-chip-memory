@@ -3,12 +3,14 @@ import json
 import pytest
 
 from domain_chip_memory import providers
+from domain_chip_memory.contracts import AnswerCandidate
 from domain_chip_memory.providers import (
     OpenAIChatCompletionsProvider,
     ProviderResponse,
     build_provider_contract_summary,
     get_provider,
 )
+from domain_chip_memory.responders import heuristic_response
 from domain_chip_memory.runs import BaselinePromptPacket
 from domain_chip_memory.runs import RetrievedContextItem
 
@@ -158,6 +160,33 @@ def test_heuristic_provider_prefers_answer_candidate_over_higher_overlap_evidenc
     )
 
     assert provider.generate_answer(packet).answer == "green"
+
+
+def test_heuristic_response_prefers_packet_answer_candidate_over_context_overlap():
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="observational_temporal_memory",
+        sample_id="beam-local-pilot-22",
+        question_id="beam-local-pilot-22-q-2",
+        question="What was my favorite color after I moved to Dubai?",
+        assembled_context="\n".join(
+            [
+                "evidence: I do live in Dubai",
+                "evidence: My favourite colour is green",
+            ]
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "observational_temporal_memory"},
+        answer_candidates=[
+            AnswerCandidate(
+                text="green",
+                candidate_type="current_state",
+                source="current_state_memory",
+            )
+        ],
+    )
+
+    assert heuristic_response(packet) == "green"
 
 
 def test_expand_answer_prefers_yes_no_answer_candidate_for_did_question():
