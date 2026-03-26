@@ -4367,6 +4367,106 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-pronoun-turn-20",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2027-01-02",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="user", text="I prefer espresso."),
+                        NormalizedTurn(turn_id="s1:t4", speaker="assistant", text="Saved all three."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2027-03-01",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="About my favorite color, change it to green. About my favorite color and where I live, please forget it later. About where I live, change it to Sharjah.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Handled the comparative delete/update overlap turn."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-turn-20:q1",
+                    question="What is my favorite color now?",
+                    category="current_state",
+                    expected_answers=["green", "My favorite color is green", "My favourite colour is green"],
+                    evidence_session_ids=["s2"],
+                    evidence_turn_ids=["s2:t1"],
+                    metadata={
+                        "product_memory_task": "pronoun_turn_disambiguation",
+                        "memory_operation": "current_state_comparative_delete_middle_clause_color_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-turn-20:q2",
+                    question="Where do I live now?",
+                    category="current_state",
+                    expected_answers=["Sharjah", "I live in Sharjah", "I do live in Sharjah"],
+                    evidence_session_ids=["s2"],
+                    evidence_turn_ids=["s2:t1"],
+                    metadata={
+                        "product_memory_task": "pronoun_turn_disambiguation",
+                        "memory_operation": "current_state_comparative_delete_middle_clause_location_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-turn-20:q3",
+                    question="What do I prefer now?",
+                    category="current_state",
+                    expected_answers=["espresso", "I prefer espresso", "I do prefer espresso"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t3"],
+                    metadata={
+                        "product_memory_task": "pronoun_turn_disambiguation",
+                        "memory_operation": "current_state_comparative_delete_middle_clause_preference_preservation",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-turn-20:q4",
+                    question="Before that change to green, what was my favorite color?",
+                    category="historical_state",
+                    expected_answers=["red", "My favorite color is red", "My favourite colour is red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "pronoun_turn_disambiguation",
+                        "memory_operation": "historical_comparative_delete_middle_clause_color_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-turn-20:q5",
+                    question="Before that change to Sharjah, where did I live?",
+                    category="historical_state",
+                    expected_answers=["Dubai", "I live in Dubai", "I do live in Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "pronoun_turn_disambiguation",
+                        "memory_operation": "historical_comparative_delete_middle_clause_location_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-pronoun-ambiguity-1",
             sessions=[
                 NormalizedSession(
@@ -6038,6 +6138,96 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                     metadata={
                         "product_memory_task": "pronoun_referential_ambiguity",
                         "memory_operation": "historical_delete_chronology_middle_clause_location_generic_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-pronoun-ambiguity-20",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2027-01-02",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="user", text="I prefer espresso."),
+                        NormalizedTurn(turn_id="s1:t4", speaker="assistant", text="Saved all three."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2027-03-01",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="About my favorite color, change it to green. About my favorite color and where I live, please forget it later. About where I live, change it to Sharjah.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Handled the comparative delete/update overlap turn."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-ambiguity-20:q1",
+                    question="What was my favorite color before that later deletion?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2"],
+                    evidence_turn_ids=["s1:t1", "s1:t2", "s2:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "pronoun_referential_ambiguity",
+                        "memory_operation": "historical_comparative_delete_middle_clause_color_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-ambiguity-20:q2",
+                    question="Where did I live before that later deletion?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2"],
+                    evidence_turn_ids=["s1:t1", "s1:t2", "s2:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "pronoun_referential_ambiguity",
+                        "memory_operation": "historical_comparative_delete_middle_clause_location_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-ambiguity-20:q3",
+                    question="What was my favorite color before that deletion?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2"],
+                    evidence_turn_ids=["s1:t1", "s1:t2", "s2:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "pronoun_referential_ambiguity",
+                        "memory_operation": "historical_comparative_delete_middle_clause_color_generic_ambiguity_abstention",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "referential_ambiguity",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-ambiguity-20:q4",
+                    question="Where did I live before that deletion?",
+                    category="historical_state",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s1", "s2"],
+                    evidence_turn_ids=["s1:t1", "s1:t2", "s2:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "pronoun_referential_ambiguity",
+                        "memory_operation": "historical_comparative_delete_middle_clause_location_generic_ambiguity_abstention",
                         "memory_scope": "multi_facet",
                         "expected_answer_candidate_source": "referential_ambiguity",
                     },
