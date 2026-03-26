@@ -2249,6 +2249,99 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-disambiguation-3",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-04-11",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="assistant", text="Saved both."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2026-04-13",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted color."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2026-04-15",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Correction: my favorite color is green."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated color."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2026-04-17",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="Actually, my favorite color is yellow now."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Updated color again."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s5",
+                    timestamp="2026-04-19",
+                    turns=[
+                        NormalizedTurn(turn_id="s5:t1", speaker="user", text="Please forget where I live."),
+                        NormalizedTurn(turn_id="s5:t2", speaker="assistant", text="Deleted location."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s6",
+                    timestamp="2026-04-21",
+                    turns=[
+                        NormalizedTurn(turn_id="s6:t1", speaker="user", text="Actually, I live in Sharjah."),
+                        NormalizedTurn(turn_id="s6:t2", speaker="assistant", text="Restored location."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s7",
+                    timestamp="2026-04-23",
+                    turns=[
+                        NormalizedTurn(turn_id="s7:t1", speaker="user", text="Actually, I live in Ajman."),
+                        NormalizedTurn(turn_id="s7:t2", speaker="assistant", text="Updated location again."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-disambiguation-3:q1",
+                    question="What was my favorite color before I corrected it to yellow?",
+                    category="historical_state",
+                    expected_answers=["green"],
+                    evidence_session_ids=["s3"],
+                    evidence_turn_ids=["s3:t1"],
+                    metadata={
+                        "product_memory_task": "cross_facet_disambiguation",
+                        "memory_operation": "mixed_lifecycle_explicit_color_anchor_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-disambiguation-3:q2",
+                    question="Where did I live before I changed where I live to Ajman?",
+                    category="historical_state",
+                    expected_answers=["Sharjah"],
+                    evidence_session_ids=["s6"],
+                    evidence_turn_ids=["s6:t1"],
+                    metadata={
+                        "product_memory_task": "cross_facet_disambiguation",
+                        "memory_operation": "mixed_lifecycle_explicit_location_anchor_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-operation-binding-1",
             sessions=[
                 NormalizedSession(

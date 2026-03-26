@@ -742,7 +742,7 @@ def test_product_memory_binds_generic_anchor_to_requested_facet_across_other_upd
     disambiguation_samples = [
         sample
         for sample in product_memory_samples()
-        if sample.sample_id in {"product-memory-disambiguation-1", "product-memory-disambiguation-2"}
+        if sample.sample_id in {"product-memory-disambiguation-1", "product-memory-disambiguation-2", "product-memory-disambiguation-3"}
     ]
 
     for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
@@ -761,6 +761,12 @@ def test_product_memory_binds_generic_anchor_to_requested_facet_across_other_upd
         assert predictions["product-memory-disambiguation-2:q1"]["predicted_answer"] == "Dubai"
         assert predictions["product-memory-disambiguation-2:q1"]["is_correct"] is True
         assert predictions["product-memory-disambiguation-2:q1"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-disambiguation-3:q1"]["predicted_answer"] == "green"
+        assert predictions["product-memory-disambiguation-3:q1"]["is_correct"] is True
+        assert predictions["product-memory-disambiguation-3:q1"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-disambiguation-3:q2"]["predicted_answer"] == "Sharjah"
+        assert predictions["product-memory-disambiguation-3:q2"]["is_correct"] is True
+        assert predictions["product-memory-disambiguation-3:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_binds_delete_anchor_to_deletion_event_even_after_later_updates():
