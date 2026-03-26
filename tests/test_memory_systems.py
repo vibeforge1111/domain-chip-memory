@@ -264,6 +264,9 @@ def test_product_memory_preserves_historical_evidence_after_delete_and_update():
         assert predictions["product-memory-correction-2:q6"]["predicted_answer"] == "Dubai"
         assert predictions["product-memory-correction-2:q6"]["is_correct"] is True
         assert predictions["product-memory-correction-2:q6"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-correction-2:q7"]["predicted_answer"] == "Dubai"
+        assert predictions["product-memory-correction-2:q7"]["is_correct"] is True
+        assert predictions["product-memory-correction-2:q7"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_preserves_non_location_historical_evidence_after_correction():
@@ -291,6 +294,9 @@ def test_product_memory_preserves_non_location_historical_evidence_after_correct
         assert predictions["product-memory-correction-3:q5"]["predicted_answer"] == "red"
         assert predictions["product-memory-correction-3:q5"]["is_correct"] is True
         assert predictions["product-memory-correction-3:q5"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-correction-3:q6"]["predicted_answer"] == "red"
+        assert predictions["product-memory-correction-3:q6"]["is_correct"] is True
+        assert predictions["product-memory-correction-3:q6"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_selective_deletion_preserves_other_current_state():
@@ -349,6 +355,9 @@ def test_product_memory_rollback_reasserts_prior_value_without_clobbering_other_
         assert predictions["product-memory-correction-4:q3"]["predicted_answer"] == "matcha"
         assert predictions["product-memory-correction-4:q3"]["is_correct"] is True
         assert predictions["product-memory-correction-4:q3"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-correction-4:q4"]["predicted_answer"] == "matcha"
+        assert predictions["product-memory-correction-4:q4"]["is_correct"] is True
+        assert predictions["product-memory-correction-4:q4"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_restores_deleted_value_when_user_reasserts_same_fact():

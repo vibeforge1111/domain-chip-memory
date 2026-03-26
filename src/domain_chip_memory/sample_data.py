@@ -367,6 +367,20 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "expected_answer_candidate_source": "evidence_memory",
                     },
                 ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-2:q7",
+                    question="Before I changed where I live to Sharjah, back when the old place was still current, where did I live?",
+                    category="historical_state",
+                    expected_answers=["Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_multiclause_recall",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
             ],
         ),
         NormalizedBenchmarkSample(
@@ -531,6 +545,20 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                         "expected_answer_candidate_source": "evidence_memory",
                     },
                 ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-3:q6",
+                    question="Before I changed my favorite color to green, when we were still using the old one, what was my favorite color?",
+                    category="historical_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_multiclause_recall",
+                        "memory_scope": "single_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
             ],
         ),
         NormalizedBenchmarkSample(
@@ -610,6 +638,20 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                     metadata={
                         "product_memory_task": "evidence_preservation",
                         "memory_operation": "historical_fronted_clause_recall",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-correction-4:q4",
+                    question="Before I changed what I prefer to espresso again, back when the old preference still applied, what did I prefer?",
+                    category="historical_state",
+                    expected_answers=["matcha"],
+                    evidence_session_ids=["s2"],
+                    evidence_turn_ids=["s2:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_multiclause_recall",
                         "memory_scope": "multi_facet",
                         "expected_answer_candidate_source": "evidence_memory",
                     },
