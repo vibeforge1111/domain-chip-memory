@@ -275,6 +275,23 @@ def test_product_memory_rollback_reasserts_prior_value_without_clobbering_other_
         assert predictions["product-memory-correction-4:q2"]["is_correct"] is True
 
 
+def test_product_memory_restores_deleted_value_when_user_reasserts_same_fact():
+    restored_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-correction-5"]
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            restored_sample,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        prediction = scorecard["predictions"][0]
+        assert prediction["predicted_answer"] == "red"
+        assert prediction["is_correct"] is True
+
+
 def test_observational_temporal_memory_answers_latest_fact():
     samples = demo_samples()
     scorecard = run_baseline(

@@ -456,4 +456,56 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 ),
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-correction-5",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2025-12-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2025-12-03",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="Please forget my favorite color.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2025-12-05",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s3:t1",
+                            speaker="user",
+                            text="Actually, my favorite color is red again.",
+                        ),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Restored."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-correction-5:q1",
+                    question="What is my favorite color now?",
+                    category="current_state",
+                    expected_answers=["red"],
+                    evidence_session_ids=["s3"],
+                    evidence_turn_ids=["s3:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "restore_deleted_value",
+                    },
+                )
+            ],
+        ),
     ]
