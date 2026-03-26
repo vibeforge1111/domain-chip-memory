@@ -2785,6 +2785,16 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
     if not normalized:
         return normalized
     correction_verbs = "corrected|changed|updated|restored"
+    deletion_verbs = "deleted|removed|forgot"
+
+    if re.match(rf"^(?:i\s+)?(?:{deletion_verbs})\s+it$", normalized):
+        if "favorite_color" in target_predicates:
+            return "forget my favorite color"
+        if "preference" in target_predicates:
+            return "forget what i prefer"
+        if "location" in target_predicates:
+            return "forget where i live"
+
     if "favorite_color" in target_predicates:
         match = re.match(
             rf"^(?:i\s+)?(?:{correction_verbs})\s+it\s+to\s+([a-z0-9 _-]+?)(?:\s+now|\s+again)?$",

@@ -252,6 +252,9 @@ def test_product_memory_preserves_historical_evidence_after_delete_and_update():
         assert predictions["product-memory-correction-2:q2"]["predicted_answer"] == "Dubai"
         assert predictions["product-memory-correction-2:q2"]["is_correct"] is True
         assert predictions["product-memory-correction-2:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-correction-2:q3"]["predicted_answer"] == "Dubai"
+        assert predictions["product-memory-correction-2:q3"]["is_correct"] is True
+        assert predictions["product-memory-correction-2:q3"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_preserves_non_location_historical_evidence_after_correction():
@@ -342,9 +345,12 @@ def test_product_memory_restores_deleted_value_when_user_reasserts_same_fact():
             fallback_sessions=1,
         )
 
-        prediction = scorecard["predictions"][0]
-        assert prediction["predicted_answer"] == "red"
-        assert prediction["is_correct"] is True
+        predictions = {prediction["question_id"]: prediction for prediction in scorecard["predictions"]}
+        assert predictions["product-memory-correction-5:q1"]["predicted_answer"] == "red"
+        assert predictions["product-memory-correction-5:q1"]["is_correct"] is True
+        assert predictions["product-memory-correction-5:q2"]["predicted_answer"] == "red"
+        assert predictions["product-memory-correction-5:q2"]["is_correct"] is True
+        assert predictions["product-memory-correction-5:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_lead_systems_are_source_aligned_on_local_lane():
