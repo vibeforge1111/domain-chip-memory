@@ -2875,7 +2875,7 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
 
     generic_anchor_match = re.match(
         r"^(that\s+(?:earlier|later|first|last)\s+"
-        r"(?:change|update|correction|move|relocation|deletion|removal|forget))\b",
+        r"(?:change|update|correction|move|relocation|deletion|removal|forget|one))\b",
         normalized,
     )
     if generic_anchor_match:
@@ -5307,6 +5307,7 @@ def _parse_generic_relative_anchor_phrase(anchor_phrase: str) -> tuple[str | Non
         "that deletion",
         "that removal",
         "that forget",
+        "that one",
     }
     if normalized in valid_bases:
         return None, normalized
@@ -5341,6 +5342,16 @@ def _generic_relative_anchor_candidates(
             ]
         )
 
+    if base_phrase == "that one":
+        combined_anchors = [
+            anchor
+            for entry in candidate_entries
+            if entry.predicate == "state_deletion"
+            and str(entry.metadata.get("target_predicate", "")).strip() in target_predicates
+            for anchor in [_parse_observation_anchor(entry.timestamp or "")]
+            if anchor is not None
+        ]
+
     dated_state_markers = [
         (
             anchor,
@@ -5364,8 +5375,12 @@ def _generic_relative_anchor_candidates(
     unique_state_markers = list(dict.fromkeys(dated_state_markers))
     unique_state_anchors = [anchor for anchor, _, _ in unique_state_markers]
     if len(unique_state_anchors) <= 1:
-        return []
-    return _unique_sorted_anchors(unique_state_anchors[1:])
+        state_transition_anchors: list[datetime] = []
+    else:
+        state_transition_anchors = unique_state_anchors[1:]
+    if base_phrase == "that one":
+        return _unique_sorted_anchors(combined_anchors + state_transition_anchors)
+    return _unique_sorted_anchors(state_transition_anchors)
 
 
 def _infer_generic_relative_anchor_time(
@@ -5402,6 +5417,13 @@ def _has_ambiguous_generic_relative_anchor(
         return False
     if base_phrase is None:
         return False
+    if base_phrase == "that one":
+        state_candidates = _generic_relative_anchor_candidates("that update", target_predicates, candidate_entries)
+        deletion_candidates = _generic_relative_anchor_candidates("that deletion", target_predicates, candidate_entries)
+        if state_candidates and deletion_candidates:
+            return True
+        combined_candidates = _generic_relative_anchor_candidates(base_phrase, target_predicates, candidate_entries)
+        return len(combined_candidates) > 1
     candidates = _generic_relative_anchor_candidates(base_phrase, target_predicates, candidate_entries)
     if modifier in {"earlier", "later"}:
         return len(candidates) > 2

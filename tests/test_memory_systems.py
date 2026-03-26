@@ -596,6 +596,8 @@ def test_product_memory_uses_earlier_and_later_wording_to_bind_relative_anchors(
             "product-memory-temporal-wording-26",
             "product-memory-temporal-wording-27",
             "product-memory-temporal-wording-28",
+            "product-memory-temporal-wording-29",
+            "product-memory-temporal-wording-30",
         }
     ]
 
@@ -807,6 +809,18 @@ def test_product_memory_uses_earlier_and_later_wording_to_bind_relative_anchors(
         assert predictions["product-memory-temporal-wording-28:q2"]["predicted_answer"] == "Abu Dhabi"
         assert predictions["product-memory-temporal-wording-28:q2"]["is_correct"] is True
         assert predictions["product-memory-temporal-wording-28:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-temporal-wording-29:q1"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-temporal-wording-29:q1"]["is_correct"] is True
+        assert predictions["product-memory-temporal-wording-29:q1"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
+        assert predictions["product-memory-temporal-wording-29:q2"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-temporal-wording-29:q2"]["is_correct"] is True
+        assert predictions["product-memory-temporal-wording-29:q2"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
+        assert predictions["product-memory-temporal-wording-30:q1"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-temporal-wording-30:q1"]["is_correct"] is True
+        assert predictions["product-memory-temporal-wording-30:q1"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
+        assert predictions["product-memory-temporal-wording-30:q2"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-temporal-wording-30:q2"]["is_correct"] is True
+        assert predictions["product-memory-temporal-wording-30:q2"]["metadata"]["primary_answer_candidate_source"] == "temporal_ambiguity"
 
 
 def test_product_memory_lead_systems_are_source_aligned_on_local_lane():
