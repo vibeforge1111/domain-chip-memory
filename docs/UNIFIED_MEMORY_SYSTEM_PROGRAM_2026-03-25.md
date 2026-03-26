@@ -21,6 +21,10 @@ The correct target is one memory architecture that can:
 
 This document defines that unified target.
 
+Related active doctrine:
+
+- `docs/HARMONIZED_MEMORY_DOCTRINE_2026-03-26.md`
+
 ## Core principle
 
 `BEAM` is not just a bigger context benchmark.
@@ -252,3 +256,7 @@ The repo should now operate under one thesis:
 - every benchmark mutation should either improve the current benchmark frontier or make the architecture more transferable to `BEAM`
 
 If it does neither, it is likely the wrong work.
+
+That thesis now has a companion product rule:
+
+- benchmark wins, product UX, trust, and lightweight operation should come from the same memory substrate, not separate stacks
