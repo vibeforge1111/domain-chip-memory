@@ -203,6 +203,23 @@ def test_product_memory_deletion_abstains_in_lead_memory_systems():
             assert prediction["is_correct"] is True
 
 
+def test_product_memory_relearn_after_deletion_updates_current_state():
+    relearn_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-correction-2"]
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            relearn_sample,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        prediction = scorecard["predictions"][0]
+        assert prediction["predicted_answer"] == "Sharjah"
+        assert prediction["is_correct"] is True
+
+
 def test_observational_temporal_memory_answers_latest_fact():
     samples = demo_samples()
     scorecard = run_baseline(

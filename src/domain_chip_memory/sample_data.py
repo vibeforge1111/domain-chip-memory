@@ -241,4 +241,52 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
                 )
             ],
         ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
+            sample_id="product-memory-correction-2",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2025-08-01",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="assistant", text="Saved."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2025-08-03",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="Please forget where I live.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Deleted."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2025-08-07",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="I moved to Sharjah."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Updated."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-correction-2:q1",
+                    question="Where do I live now?",
+                    category="current_state",
+                    expected_answers=["Sharjah"],
+                    evidence_session_ids=["s3"],
+                    evidence_turn_ids=["s3:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "update_after_delete",
+                    },
+                )
+            ],
+        ),
     ]
