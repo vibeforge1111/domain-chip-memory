@@ -958,6 +958,104 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-deletion-5",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2025-12-21",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="I prefer espresso."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="My favorite color is blue."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="assistant", text="Saved both."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2025-12-23",
+                    turns=[
+                        NormalizedTurn(turn_id="s2:t1", speaker="user", text="Correction: I prefer matcha now."),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Updated preference."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s3",
+                    timestamp="2025-12-25",
+                    turns=[
+                        NormalizedTurn(turn_id="s3:t1", speaker="user", text="Actually no, I prefer espresso again."),
+                        NormalizedTurn(turn_id="s3:t2", speaker="assistant", text="Rolled back preference."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s4",
+                    timestamp="2025-12-27",
+                    turns=[
+                        NormalizedTurn(turn_id="s4:t1", speaker="user", text="Please forget my favorite color."),
+                        NormalizedTurn(turn_id="s4:t2", speaker="assistant", text="Deleted color."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-5:q1",
+                    question="What do I prefer now?",
+                    category="current_state",
+                    expected_answers=["espresso"],
+                    evidence_session_ids=["s3"],
+                    evidence_turn_ids=["s3:t1"],
+                    metadata={
+                        "product_memory_task": "correction",
+                        "memory_operation": "rollback_then_delete_other_facet_current_state",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-5:q2",
+                    question="What is my favorite color now?",
+                    category="abstention",
+                    expected_answers=["Information provided is not enough"],
+                    evidence_session_ids=["s4"],
+                    evidence_turn_ids=["s4:t1"],
+                    should_abstain=True,
+                    metadata={
+                        "product_memory_task": "deletion",
+                        "memory_operation": "delete_other_facet_after_rollback",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "current_state_deletion",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-5:q3",
+                    question="Before I changed what I prefer to espresso again, what did I prefer?",
+                    category="historical_state",
+                    expected_answers=["matcha"],
+                    evidence_session_ids=["s2"],
+                    evidence_turn_ids=["s2:t1"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_rollback_facet_recall_after_other_delete",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-deletion-5:q4",
+                    question="What was my favorite color before I deleted it?",
+                    category="historical_state",
+                    expected_answers=["blue"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "evidence_preservation",
+                        "memory_operation": "historical_deleted_facet_recall_after_rollback",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-ambiguity-1",
             sessions=[
                 NormalizedSession(
