@@ -242,7 +242,7 @@ def test_build_scorecard_emits_product_memory_task_slices():
                 predicted_answer="green",
                 expected_answers=["green"],
                 is_correct=True,
-                metadata={"product_memory_task": "correction"},
+                metadata={"product_memory_task": "correction", "memory_operation": "update"},
             ),
             BaselinePrediction(
                 benchmark_name="ProductMemory",
@@ -253,7 +253,7 @@ def test_build_scorecard_emits_product_memory_task_slices():
                 predicted_answer="Dubai",
                 expected_answers=["Information provided is not enough"],
                 is_correct=False,
-                metadata={"product_memory_task": "deletion"},
+                metadata={"product_memory_task": "deletion", "memory_operation": "delete_one_facet"},
             ),
             BaselinePrediction(
                 benchmark_name="ProductMemory",
@@ -264,7 +264,7 @@ def test_build_scorecard_emits_product_memory_task_slices():
                 predicted_answer="espresso",
                 expected_answers=["espresso"],
                 is_correct=True,
-                metadata={"product_memory_task": "stale_state_drift"},
+                metadata={"product_memory_task": "stale_state_drift", "memory_operation": "supersession"},
             ),
         ],
     )
@@ -274,3 +274,10 @@ def test_build_scorecard_emits_product_memory_task_slices():
     assert labels == ["correction", "deletion", "stale_state_drift"]
     assert rows[0]["accuracy"] == 1.0
     assert rows[1]["accuracy"] == 0.0
+
+    operation_rows = scorecard["benchmark_slices"]["memory_operation"]
+    operation_labels = [row["label"] for row in operation_rows]
+    assert operation_labels == ["delete_one_facet", "supersession", "update"]
+    assert operation_rows[0]["accuracy"] == 0.0
+    assert operation_rows[1]["accuracy"] == 1.0
+    assert operation_rows[2]["accuracy"] == 1.0
