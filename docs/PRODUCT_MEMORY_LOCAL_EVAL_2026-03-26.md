@@ -56,6 +56,13 @@ The deletion closure came from substrate work, not responder-only cleanup:
 
 This is still a local eval, not a public product-memory benchmark claim.
 
+The scorecard now reports this lane at two levels:
+
+- `product_memory_task`
+- `memory_operation`
+
+That makes it possible to see whether the architecture is strong on the broad task family but weak on a specific operator such as `delete_one_facet` or `update_after_delete`.
+
 ## Source
 
 The current local source lives in:
