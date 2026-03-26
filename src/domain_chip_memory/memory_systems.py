@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -930,6 +930,82 @@ def _extract_atoms_from_turn(
             )
         )
 
+    def _scoped_pronoun_predicates(text_lower: str) -> list[str]:
+        predicates: list[str] = []
+        if "about" in text_lower and re.search(r"\bmy favou?rite colou?r\b", text_lower):
+            predicates.append("favorite_color")
+        if "about" in text_lower and re.search(r"\bwhere\s+(?:i|we)\s+live\b", text_lower):
+            predicates.append("location")
+        if "about" in text_lower and (
+            re.search(r"\bwhat\s+(?:i|we)\s+(?:now\s+)?prefer\b", text_lower)
+            or re.search(r"\b(?:my|our)\s+preference\b", text_lower)
+        ):
+            predicates.append("preference")
+        return predicates
+
+    def _split_sentence_fronted_about_clauses(raw_text: str) -> list[str]:
+        clause_starts: list[int] = []
+        for match in re.finditer(r"(?i)\babout\b", raw_text):
+            prefix = raw_text[: match.start()].rstrip()
+            if not prefix or prefix.endswith((".", "!", "?")):
+                clause_starts.append(match.start())
+        if len(clause_starts) <= 1:
+            return []
+        clauses: list[str] = []
+        for index, start in enumerate(clause_starts):
+            end = clause_starts[index + 1] if index + 1 < len(clause_starts) else len(raw_text)
+            clause = raw_text[start:end].strip()
+            if clause:
+                clauses.append(clause)
+        return clauses
+
+    scoped_about_clauses = _split_sentence_fronted_about_clauses(text)
+    if len(scoped_about_clauses) > 1:
+        clause_predicates = [_scoped_pronoun_predicates(clause.lower()) for clause in scoped_about_clauses]
+        if all(len(predicates) == 1 for predicates in clause_predicates):
+            clause_atoms: list[MemoryAtom] = []
+            clause_operations: set[str] = set()
+            clause_target_predicates: set[str] = set()
+            for clause_index, clause in enumerate(scoped_about_clauses):
+                clause_target_predicates.update(clause_predicates[clause_index])
+                clause_lower = clause.lower()
+                if re.search(r"\b(?:please\s+)?(?:forget|delete|remove)\s+it\b", clause_lower):
+                    clause_operations.add("delete")
+                if re.search(
+                    r"\b(?:change|update|correct|restore)\s+it\s+to\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
+                    clause,
+                    re.IGNORECASE,
+                ):
+                    clause_operations.add("update")
+                clause_turn = replace(turn, text=clause)
+                extracted_clause_atoms = _extract_atoms_from_turn(
+                    session,
+                    clause_turn,
+                    allow_raw_fallback=allow_raw_fallback,
+                )
+                for extracted_atom in extracted_clause_atoms:
+                    source_text = extracted_atom.source_text
+                    if extracted_atom.predicate == "state_deletion":
+                        target_predicate = str(extracted_atom.metadata.get("target_predicate", ""))
+                        if target_predicate == "favorite_color":
+                            source_text = "forget my favorite color"
+                        elif target_predicate == "location":
+                            source_text = "forget where i live"
+                        elif target_predicate == "preference":
+                            source_text = "forget what i prefer"
+                    clause_atoms.append(
+                        replace(
+                            extracted_atom,
+                            atom_id=f"{turn.turn_id}:atom:scoped_clause:{clause_index}:{len(clause_atoms)}",
+                            turn_id=turn.turn_id,
+                            source_text=source_text,
+                        )
+                    )
+            if clause_atoms:
+                if len(clause_target_predicates) > 1 and clause_operations:
+                    _append_referential_ambiguity(sorted(clause_target_predicates), sorted(clause_operations))
+                return clause_atoms + atoms
+
     deletion_patterns = [
         (r"\b(?:please\s+)?(?:forget|delete|remove)\s+where\s+(?:i|we)\s+live\b", "location"),
         (r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?(?:i|we)\s+live in\s+([A-Za-z0-9 _-]+)", "location"),
@@ -952,16 +1028,7 @@ def _extract_atoms_from_turn(
         deleted_value = _normalize_value(match.group(1)) if match.lastindex else ""
         _append_state_deletion(target_predicate, deleted_value)
 
-    discourse_scoped_pronoun_predicates: list[str] = []
-    if "about" in lower and re.search(r"\bmy favou?rite colou?r\b", lower):
-        discourse_scoped_pronoun_predicates.append("favorite_color")
-    if "about" in lower and re.search(r"\bwhere\s+(?:i|we)\s+live\b", lower):
-        discourse_scoped_pronoun_predicates.append("location")
-    if "about" in lower and (
-        re.search(r"\bwhat\s+(?:i|we)\s+(?:now\s+)?prefer\b", lower)
-        or re.search(r"\b(?:my|our)\s+preference\b", lower)
-    ):
-        discourse_scoped_pronoun_predicates.append("preference")
+    discourse_scoped_pronoun_predicates = _scoped_pronoun_predicates(lower)
 
     has_pronoun_deletion = bool(re.search(r"\b(?:please\s+)?(?:forget|delete|remove)\s+it\b", lower))
 
@@ -2943,6 +3010,21 @@ def _normalize_relative_state_anchor_phrase(anchor_phrase: str, target_predicate
             r"^we\s+(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot),\s+and\s+before\s+that\s+"
             r"(?:earlier|later|first|last)\s+one(?:\s+we\s+"
             r"(?:changed|updated|corrected|restored|moved|relocated|deleted|removed|forgot))?$",
+            suffix,
+        ):
+            return generic_anchor
+
+    plain_generic_anchor_match = re.match(
+        r"^(that\s+(?:change|update|correction|move|relocation|deletion|removal|forget))\b",
+        normalized,
+    )
+    if plain_generic_anchor_match:
+        generic_anchor = plain_generic_anchor_match.group(1)
+        suffix = normalized[plain_generic_anchor_match.end() :].strip()
+        if not suffix:
+            return generic_anchor
+        if re.match(
+            rf"^(?:in\s+(?:{month_names})(?:\s+\d{{4}})?|later|earlier)$",
             suffix,
         ):
             return generic_anchor
