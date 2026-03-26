@@ -7,7 +7,7 @@ from typing import Any
 
 from .answer_candidates import build_answer_candidate
 from .contracts import AnswerCandidate, JsonDict, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
-from .memory_views import build_current_state_view, is_current_state_question, select_current_state_entries
+from .memory_views import build_current_state_view, has_active_state_deletion, is_current_state_question, select_current_state_entries
 from .runs import BaselinePromptPacket, RetrievedContextItem, build_run_manifest
 
 
@@ -889,6 +889,44 @@ def _extract_atoms_from_turn(
             )
         )
 
+    def _append_state_deletion(target_predicate: str, value: str) -> None:
+        atoms.append(
+            MemoryAtom(
+                atom_id=f"{turn.turn_id}:atom:manual:state_deletion:{len(atoms)}",
+                subject=subject,
+                predicate="state_deletion",
+                value=value,
+                session_id=session.session_id,
+                turn_id=turn.turn_id,
+                timestamp=turn.timestamp or session.timestamp,
+                source_text=text,
+                metadata={
+                    "speaker": turn.speaker,
+                    "target_predicate": target_predicate,
+                    "entity_key": f"{target_predicate}:{value.lower()}",
+                    "deleted_value": value,
+                },
+            )
+        )
+
+    deletion_patterns = [
+        (r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?(?:i|we)\s+live in\s+([A-Za-z0-9 _-]+)", "location"),
+        (r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?(?:i|we)\s+lived in\s+([A-Za-z0-9 _-]+)", "location"),
+        (
+            r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?(?:i\s+now\s+prefer|i\s+prefer|i\s+like)\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
+            "preference",
+        ),
+        (
+            r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?my\s+favo(?:u)?rite\s+colou?r\s+is\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
+            "favorite_color",
+        ),
+    ]
+    for pattern, target_predicate in deletion_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if not match:
+            continue
+        _append_state_deletion(target_predicate, _normalize_value(match.group(1)))
+
     if "luna and oliver" in lower:
         _append_atom("pet_name", "Luna", entity_key="luna")
         _append_atom("pet_name", "Oliver", entity_key="oliver")
@@ -1722,7 +1760,7 @@ def _topical_episode_support(
 def build_event_calendar(sample: NormalizedBenchmarkSample) -> list[EventCalendarEntry]:
     events: list[EventCalendarEntry] = []
     for atom in extract_memory_atoms(sample):
-        if atom.predicate == "raw_turn":
+        if atom.predicate in {"raw_turn", "state_deletion"}:
             continue
         text = _observation_surface_text(atom.subject, atom.predicate, atom.value, atom.source_text)
         events.append(
@@ -1991,6 +2029,22 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
     if not predicates:
         predicates.append("raw_turn")
     return predicates
+
+
+def _has_active_current_state_deletion(
+    question: NormalizedQuestion,
+    observations: list[ObservationEntry],
+) -> bool:
+    if not is_current_state_question(question):
+        return False
+    predicates = set(_question_predicates(question))
+    if not predicates:
+        return False
+    return any(
+        has_active_state_deletion(observations, subject=subject, predicate=predicate)
+        for subject in _question_subjects(question)
+        for predicate in predicates
+    )
 
 
 def _is_preference_question(question: NormalizedQuestion) -> bool:
@@ -6075,6 +6129,7 @@ def build_observational_temporal_memory_packets(
         reflected = reflect_observations(observations)
         raw_user_entries = _raw_user_turn_entries(sample)
         for question in sample.questions:
+            current_state_deleted = _has_active_current_state_deletion(question, observations)
             observation_limit, reflection_limit = _question_aware_observation_limits(
                 sample,
                 question,
@@ -6284,11 +6339,15 @@ def build_observational_temporal_memory_packets(
                 current_state_value = str(current_state_entries[0].metadata.get("value", "")).strip()
                 if current_state_value:
                     answer_text = current_state_value
+            elif current_state_deleted:
+                answer_text = "unknown"
             answer_candidates: list[AnswerCandidate] = []
             if answer_text:
                 source = "belief_memory"
                 if _should_use_current_state_exact_value(question) and current_state_entries:
                     source = "current_state_memory"
+                elif current_state_deleted:
+                    source = "current_state_deletion"
                 elif aggregate_support_entries:
                     source = "aggregate_memory"
                 elif evidence_entries:
@@ -6463,6 +6522,7 @@ def build_dual_store_event_calendar_hybrid_packets(
             key=lambda entry: (entry.timestamp or "", entry.observation_id),
         )[-max_observations:]
         for question in sample.questions:
+            current_state_deleted = _has_active_current_state_deletion(question, observations)
             ranked_reflections = sorted(
                 reflected,
                 key=lambda entry: (_observation_score(question, entry), entry.timestamp or "", entry.observation_id),
@@ -6614,6 +6674,9 @@ def build_dual_store_event_calendar_hybrid_packets(
                 if current_state_value:
                     answer_text = current_state_value
                     answer_source = "current_state_memory"
+            elif current_state_deleted:
+                answer_text = "unknown"
+                answer_source = "current_state_deletion"
             if ranked_events:
                 top_entry = ranked_events[0]
                 answer_value = str(top_entry.metadata.get("value", "")).strip()
@@ -6629,6 +6692,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                 )
                 if (
                     not question.should_abstain
+                    and not current_state_deleted
                     and is_current_state_question(question)
                     and "location" in _question_predicates(question)
                     and event_answer_text

@@ -38,6 +38,21 @@ The first goal is to create honest visibility into product-memory behavior that 
 python -m domain_chip_memory.cli demo-product-memory-scorecards
 ```
 
+## Current local status
+
+As of 2026-03-26, the two lead memory systems are now `3/3` on this lane:
+
+- `observational_temporal_memory`: `correction`, `deletion`, `stale_state_drift`
+- `dual_store_event_calendar_hybrid`: `correction`, `deletion`, `stale_state_drift`
+
+The deletion closure came from substrate work, not responder-only cleanup:
+
+- extraction now emits explicit `state_deletion` observations for delete intents on current-state facts
+- current-state reflection suppresses deleted predicates until a newer explicit update arrives
+- current-state answer selection now returns `unknown` instead of resurfacing stale deleted state
+
+This is still a local eval, not a public product-memory benchmark claim.
+
 ## Source
 
 The current local source lives in:

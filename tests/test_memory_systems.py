@@ -13,7 +13,7 @@ from domain_chip_memory.memory_systems import (
 )
 from domain_chip_memory.providers import get_provider
 from domain_chip_memory.runner import run_baseline
-from domain_chip_memory.sample_data import demo_samples
+from domain_chip_memory.sample_data import demo_samples, product_memory_samples
 
 
 def test_extract_memory_atoms_captures_updated_fact():
@@ -64,6 +64,31 @@ def test_extract_memory_atoms_captures_lived_in_and_moved_back_location_updates(
     assert values.count("Dubai") == 2
 
 
+def test_extract_memory_atoms_captures_current_state_deletion():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-location-deletion",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "Please forget that I live in Dubai."}],
+                }
+            ],
+            "questions": [],
+        }
+    )
+
+    atoms = extract_memory_atoms(sample)
+    deletion_atoms = [atom for atom in atoms if atom.predicate == "state_deletion"]
+
+    assert len(deletion_atoms) == 1
+    assert deletion_atoms[0].metadata["target_predicate"] == "location"
+    assert deletion_atoms[0].metadata["deleted_value"] == "Dubai"
+
+
 def test_temporal_atom_router_prefers_latest_fact():
     samples = demo_samples()
     scorecard = run_baseline(
@@ -95,6 +120,58 @@ def test_observational_memory_reflection_keeps_latest_fact():
     location_entries = [entry.text for entry in reflected if entry.predicate == "location" and entry.subject == "user"]
     assert "I live in Dubai" in location_entries
     assert "I live in London" not in location_entries
+
+
+def test_observational_memory_reflection_suppresses_deleted_current_state_until_new_update():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-location-delete-then-update",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "I live in Dubai."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2025-01-06T09:00:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "Please forget that I live in Dubai."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2025-01-07T09:00:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "I live in Abu Dhabi."}],
+                },
+            ],
+            "questions": [],
+        }
+    )
+
+    observations = build_observation_log(sample)
+    reflected = reflect_observations(observations)
+    location_entries = [entry.text for entry in reflected if entry.predicate == "location" and entry.subject == "user"]
+
+    assert "I live in Abu Dhabi" in location_entries
+    assert "I live in Dubai" not in location_entries
+
+
+def test_product_memory_deletion_abstains_in_lead_memory_systems():
+    deletion_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-deletion-1"]
+
+    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            deletion_sample,
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+
+        prediction = scorecard["predictions"][0]
+        assert prediction["predicted_answer"].lower() == "unknown"
+        assert prediction["is_correct"] is True
 
 
 def test_observational_temporal_memory_answers_latest_fact():
