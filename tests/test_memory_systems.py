@@ -841,7 +841,7 @@ def test_product_memory_binds_pronoun_heavy_turn_clauses_to_the_right_facet_and_
     pronoun_turn_samples = [
         sample
         for sample in product_memory_samples()
-        if sample.sample_id in {"product-memory-pronoun-turn-1", "product-memory-pronoun-turn-2", "product-memory-pronoun-turn-3", "product-memory-pronoun-turn-4", "product-memory-pronoun-turn-5"}
+        if sample.sample_id in {"product-memory-pronoun-turn-1", "product-memory-pronoun-turn-2", "product-memory-pronoun-turn-3", "product-memory-pronoun-turn-4", "product-memory-pronoun-turn-5", "product-memory-pronoun-turn-6"}
     ]
 
     for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
@@ -890,6 +890,12 @@ def test_product_memory_binds_pronoun_heavy_turn_clauses_to_the_right_facet_and_
         assert "dubai" in predictions["product-memory-pronoun-turn-5:q2"]["predicted_answer"].lower()
         assert predictions["product-memory-pronoun-turn-5:q2"]["is_correct"] is True
         assert predictions["product-memory-pronoun-turn-5:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert "red" in predictions["product-memory-pronoun-turn-6:q1"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-6:q1"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-6:q1"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert "dubai" in predictions["product-memory-pronoun-turn-6:q2"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-6:q2"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-6:q2"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_abstains_on_mixed_facet_pronoun_scope_ambiguity():

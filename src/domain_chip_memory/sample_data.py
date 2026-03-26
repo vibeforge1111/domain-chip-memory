@@ -2958,6 +2958,63 @@ def product_memory_samples() -> list[NormalizedBenchmarkSample]:
         ),
         NormalizedBenchmarkSample(
             benchmark_name="ProductMemory",
+            sample_id="product-memory-pronoun-turn-6",
+            sessions=[
+                NormalizedSession(
+                    session_id="s1",
+                    timestamp="2026-11-10",
+                    turns=[
+                        NormalizedTurn(turn_id="s1:t1", speaker="user", text="My favorite color is red."),
+                        NormalizedTurn(turn_id="s1:t2", speaker="user", text="I live in Dubai."),
+                        NormalizedTurn(turn_id="s1:t3", speaker="assistant", text="Saved both."),
+                    ],
+                ),
+                NormalizedSession(
+                    session_id="s2",
+                    timestamp="2027-02-14",
+                    turns=[
+                        NormalizedTurn(
+                            turn_id="s2:t1",
+                            speaker="user",
+                            text="About my favorite color, please forget it, and after that change it to green. About where I live, please forget it, and after that change it to Sharjah.",
+                        ),
+                        NormalizedTurn(turn_id="s2:t2", speaker="assistant", text="Handled both in February."),
+                    ],
+                ),
+            ],
+            questions=[
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-turn-6:q1",
+                    question="What was my favorite color before that deletion in February?",
+                    category="historical_state",
+                    expected_answers=["red", "My favorite color is red", "My favourite colour is red"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t1"],
+                    metadata={
+                        "product_memory_task": "pronoun_turn_disambiguation",
+                        "memory_operation": "historical_pronoun_turn_chronology_delete_color_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+                NormalizedQuestion(
+                    question_id="product-memory-pronoun-turn-6:q2",
+                    question="Where did I live before that deletion in February?",
+                    category="historical_state",
+                    expected_answers=["Dubai", "I live in Dubai", "I lived in Dubai", "I do live in Dubai"],
+                    evidence_session_ids=["s1"],
+                    evidence_turn_ids=["s1:t2"],
+                    metadata={
+                        "product_memory_task": "pronoun_turn_disambiguation",
+                        "memory_operation": "historical_pronoun_turn_chronology_delete_location_binding",
+                        "memory_scope": "multi_facet",
+                        "expected_answer_candidate_source": "evidence_memory",
+                    },
+                ),
+            ],
+        ),
+        NormalizedBenchmarkSample(
+            benchmark_name="ProductMemory",
             sample_id="product-memory-pronoun-ambiguity-1",
             sessions=[
                 NormalizedSession(
