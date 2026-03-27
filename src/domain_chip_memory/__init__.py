@@ -10,6 +10,12 @@ from .sdk import (
     SparkMemorySDK,
     build_sdk_contract_summary,
 )
+from .spark_shadow import (
+    SparkShadowIngestAdapter,
+    SparkShadowIngestRequest,
+    SparkShadowTurn,
+    build_shadow_ingest_contract_summary,
+)
 
 __all__ = [
     "__version__",
@@ -21,5 +27,9 @@ __all__ = [
     "EventRetrievalRequest",
     "AnswerExplanationRequest",
     "build_sdk_contract_summary",
+    "SparkShadowIngestAdapter",
+    "SparkShadowTurn",
+    "SparkShadowIngestRequest",
+    "build_shadow_ingest_contract_summary",
 ]
 __version__ = "0.1.0"
