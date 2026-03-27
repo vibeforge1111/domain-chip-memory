@@ -408,6 +408,95 @@ def _build_demo_sdk_maintenance_payload() -> dict:
     }
 
 
+def _run_sdk_maintenance_checks(sdk: SparkMemorySDK, checks: dict | None) -> dict:
+    payload = dict(checks or {})
+    current_requests = payload.get("current_state", [])
+    historical_requests = payload.get("historical_state", [])
+    return {
+        "current_state": [
+            {
+                "request": dict(item),
+                "result": asdict(
+                    sdk.get_current_state(
+                        CurrentStateRequest(
+                            subject=str(item.get("subject", "")),
+                            predicate=str(item.get("predicate", "")),
+                        )
+                    )
+                ),
+            }
+            for item in current_requests
+            if isinstance(item, dict)
+        ],
+        "historical_state": [
+            {
+                "request": dict(item),
+                "result": asdict(
+                    sdk.get_historical_state(
+                        HistoricalStateRequest(
+                            subject=str(item.get("subject", "")),
+                            predicate=str(item.get("predicate", "")),
+                            as_of=str(item.get("as_of", "")),
+                        )
+                    )
+                ),
+            }
+            for item in historical_requests
+            if isinstance(item, dict)
+        ],
+    }
+
+
+def _load_sdk_maintenance_payload(data_file: str) -> dict:
+    payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("SDK maintenance replay file must contain a JSON object.")
+    raw_writes = payload.get("writes", [])
+    if not isinstance(raw_writes, list):
+        raise ValueError("SDK maintenance replay file must contain a writes list.")
+
+    sdk = SparkMemorySDK()
+    write_results = []
+    for index, item in enumerate(raw_writes):
+        if not isinstance(item, dict):
+            raise ValueError(f"Write at index {index} must be an object.")
+        write_kind = str(item.get("write_kind", "observation")).strip().lower() or "observation"
+        request = MemoryWriteRequest(
+            text=str(item.get("text", "")),
+            speaker=str(item.get("speaker", "user")),
+            timestamp=str(item.get("timestamp")) if item.get("timestamp") is not None else None,
+            session_id=str(item.get("session_id")) if item.get("session_id") is not None else None,
+            turn_id=str(item.get("turn_id")) if item.get("turn_id") is not None else None,
+            operation=str(item.get("operation", "auto")),
+            subject=str(item.get("subject")) if item.get("subject") is not None else None,
+            predicate=str(item.get("predicate")) if item.get("predicate") is not None else None,
+            value=str(item.get("value")) if item.get("value") is not None else None,
+            metadata=dict(item.get("metadata", {})),
+        )
+        if write_kind == "event":
+            write_result = sdk.write_event(request)
+        else:
+            write_result = sdk.write_observation(request)
+        write_results.append(
+            {
+                "write_kind": write_kind,
+                "request": dict(item),
+                "result": asdict(write_result),
+            }
+        )
+
+    checks = payload.get("checks")
+    before = _run_sdk_maintenance_checks(sdk, checks if isinstance(checks, dict) else None)
+    maintenance = sdk.reconsolidate_manual_memory()
+    after = _run_sdk_maintenance_checks(sdk, checks if isinstance(checks, dict) else None)
+    return {
+        "write_results": write_results,
+        "maintenance": asdict(maintenance),
+        "before": before,
+        "after": after,
+    }
+
+
 def main() -> None:
     load_dotenv(Path.cwd() / ".env")
 
@@ -434,6 +523,9 @@ def main() -> None:
     demo_spark_shadow.add_argument("--write")
     demo_sdk_maintenance = subparsers.add_parser("demo-sdk-maintenance", help="Run a local SDK maintenance and reconsolidation demo.")
     demo_sdk_maintenance.add_argument("--write")
+    run_sdk_maintenance = subparsers.add_parser("run-sdk-maintenance-report", help="Replay explicit SDK writes from JSON and emit a maintenance report.")
+    run_sdk_maintenance.add_argument("data_file")
+    run_sdk_maintenance.add_argument("--write")
     run_spark_shadow = subparsers.add_parser("run-spark-shadow-report", help="Replay Builder-style shadow traffic from JSON and emit a shadow report.")
     run_spark_shadow.add_argument("data_file")
     run_spark_shadow.add_argument("--write")
@@ -647,6 +739,13 @@ def main() -> None:
 
     if args.command == "demo-sdk-maintenance":
         payload = _build_demo_sdk_maintenance_payload()
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-sdk-maintenance-report":
+        payload = _load_sdk_maintenance_payload(args.data_file)
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)

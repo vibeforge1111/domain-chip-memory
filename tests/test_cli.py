@@ -181,6 +181,86 @@ def test_demo_sdk_maintenance_command_runs_and_can_write(tmp_path: Path, monkeyp
     assert written["maintenance"]["trace"]["operation"] == "reconsolidate_manual_memory"
 
 
+def test_run_sdk_maintenance_report_cli_can_write_report(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "sdk_maintenance.json"
+    output_file = tmp_path / "artifacts" / "sdk_maintenance_report.json"
+    data_file.write_text(
+        json.dumps(
+            {
+                "writes": [
+                    {
+                        "write_kind": "observation",
+                        "operation": "create",
+                        "subject": "user",
+                        "predicate": "location",
+                        "value": "London",
+                        "timestamp": "2025-01-01T09:00:00Z",
+                    },
+                    {
+                        "write_kind": "observation",
+                        "operation": "update",
+                        "subject": "user",
+                        "predicate": "location",
+                        "value": "Dubai",
+                        "timestamp": "2025-03-01T09:00:00Z",
+                    },
+                    {
+                        "write_kind": "observation",
+                        "operation": "delete",
+                        "subject": "user",
+                        "predicate": "location",
+                        "timestamp": "2025-04-01T09:00:00Z",
+                    },
+                    {
+                        "write_kind": "event",
+                        "operation": "event",
+                        "subject": "user",
+                        "predicate": "move",
+                        "value": "Dubai",
+                        "timestamp": "2025-03-01T09:00:00Z",
+                    },
+                ],
+                "checks": {
+                    "current_state": [
+                        {"subject": "user", "predicate": "location"}
+                    ],
+                    "historical_state": [
+                        {
+                            "subject": "user",
+                            "predicate": "location",
+                            "as_of": "2025-03-15T00:00:00Z",
+                        }
+                    ],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-sdk-maintenance-report",
+            str(data_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert len(payload["write_results"]) == 4
+    assert payload["write_results"][3]["result"]["trace"]["write_kind"] == "event"
+    assert payload["maintenance"]["manual_observations_before"] == 3
+    assert payload["maintenance"]["manual_observations_after"] == 1
+    assert payload["before"]["current_state"][0]["result"]["memory_role"] == "state_deletion"
+    assert payload["after"]["current_state"][0]["result"]["memory_role"] == "state_deletion"
+    assert payload["after"]["historical_state"][0]["result"]["value"] == "Dubai"
+
+
 def test_run_spark_shadow_report_cli_can_write_report(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "spark_shadow.json"
     output_file = tmp_path / "artifacts" / "spark_shadow_report.json"
