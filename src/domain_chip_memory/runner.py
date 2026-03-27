@@ -7,7 +7,7 @@ from typing import Any
 
 from .baselines import build_full_context_packets, build_lexical_packets
 from .contracts import NormalizedBenchmarkSample
-from .memory_systems import (
+from .packet_builders import (
     build_beam_ready_temporal_atom_router_packets,
     build_dual_store_event_calendar_hybrid_packets,
     build_observational_temporal_memory_packets,

@@ -6,6 +6,7 @@ This index groups the active documentation surface by job instead of by filename
 
 - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
+- [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
 - [Unified Memory System Program](UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md)
 - [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
 - [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-28.md)
@@ -23,6 +24,7 @@ This index groups the active documentation surface by job instead of by filename
 ## Current Architecture Direction
 
 - [Memory Architecture Evolution Plan](MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md)
+- [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
 - [Unified Memory System Program](UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md)
 - [BEAM Readiness Program](BEAM_READINESS_PROGRAM_2026-03-24.md)
 - [Memory Mutation Matrix](MEMORY_MUTATION_MATRIX_2026-03-24.md)
@@ -66,6 +68,7 @@ Use these routes depending on the task.
 - Understanding the architecture direction:
   - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
   - [Memory Architecture Evolution Plan](MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md)
+  - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
   - [Unified Memory System Program](UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md)
 - Understanding the mutation queue:
   - [Memory Mutation Matrix](MEMORY_MUTATION_MATRIX_2026-03-24.md)
