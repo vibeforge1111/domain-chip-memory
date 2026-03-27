@@ -26,6 +26,7 @@ from .providers import build_provider_contract_summary, get_provider
 from .runner import build_runner_contract_summary, run_baseline
 from .sample_data import demo_samples, product_memory_samples
 from .scorecards import BaselinePrediction, build_scorecard, build_scorecard_contract_summary
+from .sdk import CurrentStateRequest, HistoricalStateRequest, MemoryWriteRequest, SparkMemorySDK
 from .baselines import build_full_context_packets, build_lexical_packets
 from .spark_shadow import (
     SparkShadowIngestAdapter,
@@ -342,6 +343,71 @@ def _load_shadow_report_batch_payload(data_dir: str, *, glob_pattern: str = "*.j
     return payload
 
 
+def _build_demo_sdk_maintenance_payload() -> dict:
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="London",
+            timestamp="2025-01-01T09:00:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="delete",
+            subject="user",
+            predicate="location",
+            timestamp="2025-04-01T09:00:00Z",
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="move",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+        )
+    )
+
+    before_current = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+    before_historical = sdk.get_historical_state(
+        HistoricalStateRequest(subject="user", predicate="location", as_of="2025-03-15T00:00:00Z")
+    )
+    maintenance = sdk.reconsolidate_manual_memory()
+    after_current = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+    after_historical = sdk.get_historical_state(
+        HistoricalStateRequest(subject="user", predicate="location", as_of="2025-03-15T00:00:00Z")
+    )
+
+    return {
+        "maintenance": asdict(maintenance),
+        "before": {
+            "current_state": asdict(before_current),
+            "historical_state": asdict(before_historical),
+        },
+        "after": {
+            "current_state": asdict(after_current),
+            "historical_state": asdict(after_historical),
+        },
+    }
+
+
 def main() -> None:
     load_dotenv(Path.cwd() / ".env")
 
@@ -366,6 +432,8 @@ def main() -> None:
     subparsers.add_parser("demo-product-memory-scorecards", help="Run local product-memory scorecards for correction, deletion, and stale-state drift.")
     demo_spark_shadow = subparsers.add_parser("demo-spark-shadow-report", help="Run a local Spark shadow ingest/report demo.")
     demo_spark_shadow.add_argument("--write")
+    demo_sdk_maintenance = subparsers.add_parser("demo-sdk-maintenance", help="Run a local SDK maintenance and reconsolidation demo.")
+    demo_sdk_maintenance.add_argument("--write")
     run_spark_shadow = subparsers.add_parser("run-spark-shadow-report", help="Replay Builder-style shadow traffic from JSON and emit a shadow report.")
     run_spark_shadow.add_argument("data_file")
     run_spark_shadow.add_argument("--write")
@@ -572,6 +640,13 @@ def main() -> None:
 
     if args.command == "demo-spark-shadow-report":
         payload = _build_demo_shadow_report_payload()
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "demo-sdk-maintenance":
+        payload = _build_demo_sdk_maintenance_payload()
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)

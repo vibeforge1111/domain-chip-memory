@@ -152,6 +152,35 @@ def test_demo_spark_shadow_report_command_runs_and_can_write(tmp_path: Path, mon
     assert written["report"]["conversation_rows"][0]["conversation_id"] == "spark-shadow-demo-1"
 
 
+def test_demo_sdk_maintenance_command_runs_and_can_write(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    output_file = tmp_path / "artifacts" / "sdk_maintenance.json"
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "demo-sdk-maintenance",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    written = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["maintenance"]["manual_observations_before"] == 3
+    assert payload["maintenance"]["manual_observations_after"] == 1
+    assert payload["maintenance"]["active_deletion_count"] == 1
+    assert payload["before"]["current_state"]["memory_role"] == "state_deletion"
+    assert payload["after"]["current_state"]["memory_role"] == "state_deletion"
+    assert payload["after"]["historical_state"]["value"] == "Dubai"
+    assert written["maintenance"]["trace"]["operation"] == "reconsolidate_manual_memory"
+
+
 def test_run_spark_shadow_report_cli_can_write_report(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "spark_shadow.json"
     output_file = tmp_path / "artifacts" / "spark_shadow_report.json"
