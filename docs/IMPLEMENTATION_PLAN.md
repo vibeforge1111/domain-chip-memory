@@ -108,8 +108,8 @@ Current lead lane as of 2026-03-25:
     - location-anchored relative non-location state recall
     - non-location-transition-anchored relative non-location state recall
 - current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `960/960`
-  - `dual_store_event_calendar_hybrid`: `960/960`
+  - `observational_temporal_memory`: `982/982`
+  - `dual_store_event_calendar_hybrid`: `982/982`
   - covered operation families now include:
     - explicit correction
     - explicit deletion with and without restated value
@@ -240,6 +240,7 @@ Current lead lane as of 2026-03-25:
     - eight-facet mixed-lifecycle scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service facets when the overlap is structural rather than wording-heavy
     - eight-facet value-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service facets when the overlapping clause carries an explicit target value like `update it to blue later`
     - eight-facet chronology-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service facets when the overlapping clause carries a timing cue like `update it in February later`
+    - eight-facet comparative scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service facets when the overlapping clause carries comparative wording like `update it earlier instead`
     - five-facet inverse mixed-lifecycle scoped-pronoun stability must preserve a clean favorite-color deletion, an ambiguous location-plus-preference middle clause, a far-edge clean location update, and untouched dog-breed plus bike-count facets without cross-facet leakage
     - five-facet value-bearing inverse mixed-lifecycle scoped-pronoun stability must preserve the same clean delete edge, far-edge clean location update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries an explicit target value like `update it to blue later`
     - five-facet chronology-bearing inverse mixed-lifecycle scoped-pronoun stability must preserve the same clean delete edge, far-edge clean location update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries a timing cue like `update it in February later`
@@ -254,8 +255,8 @@ Current lead lane as of 2026-03-25:
   - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
   - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
   - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x364, `current_state_deletion` x74, `evidence_memory` x234, `temporal_ambiguity` x33, and `referential_ambiguity` x255
-    - both lead systems are now `960/960` source-aligned on the local lane
+    - both lead systems answer this lane through `current_state_memory` x378, `current_state_deletion` x76, `evidence_memory` x236, `temporal_ambiguity` x33, and `referential_ambiguity` x259
+    - both lead systems are now `982/982` source-aligned on the local lane
 
 Candidate components:
 
