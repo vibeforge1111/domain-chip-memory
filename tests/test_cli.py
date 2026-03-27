@@ -410,6 +410,52 @@ def test_run_spark_shadow_report_batch_cli_can_aggregate_directory(tmp_path: Pat
     ]
 
 
+def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatch):
+    repo_root = Path(__file__).resolve().parents[1]
+    single_file = repo_root / "docs" / "examples" / "spark_shadow" / "single_replay.json"
+    batch_dir = repo_root / "docs" / "examples" / "spark_shadow" / "batch_replay"
+    single_output = tmp_path / "artifacts" / "single_report.json"
+    batch_output = tmp_path / "artifacts" / "batch_report.json"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-shadow-report",
+            str(single_file),
+            "--write",
+            str(single_output),
+        ],
+    )
+    cli.main()
+
+    single_payload = json.loads(single_output.read_text(encoding="utf-8"))
+    assert single_payload["report"]["run_count"] == 2
+    assert single_payload["report"]["summary"]["accepted_writes"] == 3
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-shadow-report-batch",
+            str(batch_dir),
+            "--write",
+            str(batch_output),
+        ],
+    )
+    cli.main()
+
+    batch_payload = json.loads(batch_output.read_text(encoding="utf-8"))
+    assert batch_payload["report"]["run_count"] == 2
+    assert batch_payload["report"]["summary"]["accepted_writes"] == 2
+    assert batch_payload["source_files"] == [
+        str(batch_dir / "slice_a.json"),
+        str(batch_dir / "slice_b.json"),
+    ]
+
+
 def test_run_longmemeval_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "longmemeval.json"
     output_file = tmp_path / "artifacts" / "scorecard.json"

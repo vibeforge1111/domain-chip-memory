@@ -1,0 +1,24 @@
+{
+  "conversations": [
+    {
+      "conversation_id": "batch-shadow-a",
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "I moved to Dubai.",
+          "timestamp": "2025-03-01T09:00:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p1",
+          "probe_type": "current_state",
+          "subject": "user",
+          "predicate": "location",
+          "expected_value": "Dubai"
+        }
+      ]
+    }
+  ]
+}

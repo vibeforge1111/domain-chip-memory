@@ -1,0 +1,37 @@
+{
+  "conversations": [
+    {
+      "conversation_id": "batch-shadow-b",
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "Hello there.",
+          "timestamp": "2025-01-01T09:00:00Z"
+        },
+        {
+          "message_id": "m2",
+          "role": "assistant",
+          "content": "Noted.",
+          "timestamp": "2025-01-01T09:01:00Z"
+        },
+        {
+          "message_id": "m3",
+          "role": "user",
+          "content": "I moved to Abu Dhabi.",
+          "timestamp": "2025-06-01T09:00:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p2",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "location",
+          "expected_value": "Abu Dhabi",
+          "min_results": 1
+        }
+      ]
+    }
+  ]
+}

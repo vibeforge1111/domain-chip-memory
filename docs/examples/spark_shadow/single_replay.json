@@ -1,0 +1,74 @@
+{
+  "writable_roles": [
+    "user"
+  ],
+  "conversations": [
+    {
+      "conversation_id": "example-shadow-1",
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "Hello there.",
+          "timestamp": "2025-01-01T09:00:00Z"
+        },
+        {
+          "message_id": "m2",
+          "role": "assistant",
+          "content": "Noted.",
+          "timestamp": "2025-01-01T09:01:00Z"
+        },
+        {
+          "message_id": "m3",
+          "role": "user",
+          "content": "I moved to Dubai.",
+          "timestamp": "2025-03-01T09:00:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p1",
+          "probe_type": "current_state",
+          "subject": "user",
+          "predicate": "location",
+          "expected_value": "Dubai"
+        },
+        {
+          "probe_id": "p2",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "location",
+          "expected_value": "Dubai",
+          "min_results": 1
+        }
+      ]
+    },
+    {
+      "conversation_id": "example-shadow-2",
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "I live in London.",
+          "timestamp": "2025-01-01T09:00:00Z"
+        },
+        {
+          "message_id": "m2",
+          "role": "user",
+          "content": "I moved to Abu Dhabi.",
+          "timestamp": "2025-06-01T09:00:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p3",
+          "probe_type": "historical_state",
+          "subject": "user",
+          "predicate": "location",
+          "as_of": "2025-07-01T00:00:00Z",
+          "expected_value": "Abu Dhabi"
+        }
+      ]
+    }
+  ]
+}
