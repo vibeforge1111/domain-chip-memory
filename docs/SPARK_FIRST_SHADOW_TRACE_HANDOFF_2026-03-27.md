@@ -90,6 +90,10 @@ python -m domain_chip_memory.cli run-spark-shadow-report <file> --write <report.
 For a directory of files:
 
 ```bash
+python -m domain_chip_memory.cli validate-spark-shadow-replay-batch <dir>
+```
+
+```bash
 python -m domain_chip_memory.cli run-spark-shadow-report-batch <dir> --write <report.json>
 ```
 

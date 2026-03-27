@@ -30,6 +30,7 @@ def test_shadow_replay_contract_summary_exposes_file_shapes():
     assert payload["batch_shape"]["default_glob"] == "*.json"
     assert payload["supported_probe_types"] == ["current_state", "historical_state", "evidence"]
     assert "validate-spark-shadow-replay <file>" in payload["validation_entrypoints"][1]
+    assert "validate-spark-shadow-replay-batch <dir>" in payload["validation_entrypoints"][2]
 
 
 def test_validate_shadow_replay_payload_reports_good_file_shape():

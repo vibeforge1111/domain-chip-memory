@@ -650,6 +650,7 @@ def build_shadow_replay_contract_summary() -> dict[str, Any]:
         "validation_entrypoints": [
             "validate_shadow_replay_payload(...)",
             "python -m domain_chip_memory.cli validate-spark-shadow-replay <file>",
+            "python -m domain_chip_memory.cli validate-spark-shadow-replay-batch <dir>",
         ],
         "notes": [
             "Single-file replay emits evaluations and one aggregate report.",

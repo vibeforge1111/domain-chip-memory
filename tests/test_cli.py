@@ -137,6 +137,86 @@ def test_validate_spark_shadow_replay_command_runs_and_can_write(tmp_path: Path,
     assert written["file"] == str(data_file)
 
 
+def test_validate_spark_shadow_replay_batch_command_runs_and_can_write(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    data_dir = tmp_path / "shadow_batch"
+    output_file = tmp_path / "artifacts" / "shadow_batch_validation.json"
+    data_dir.mkdir()
+    (data_dir / "slice_a.json").write_text(
+        json.dumps(
+            {
+                "conversations": [
+                    {
+                        "conversation_id": "conv-a",
+                        "turns": [
+                            {
+                                "message_id": "m1",
+                                "role": "user",
+                                "content": "I live in Dubai."
+                            }
+                        ],
+                        "probes": [
+                            {
+                                "probe_id": "p1",
+                                "probe_type": "current_state",
+                                "subject": "user",
+                                "predicate": "location"
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "slice_b.json").write_text(
+        json.dumps(
+            {
+                "conversations": [
+                    {
+                        "conversation_id": "",
+                        "turns": [
+                            {
+                                "message_id": "",
+                                "role": "user",
+                                "content": "Hello."
+                            }
+                        ],
+                        "probes": []
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "validate-spark-shadow-replay-batch",
+            str(data_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    written = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["valid"] is False
+    assert payload["file_count"] == 2
+    assert payload["invalid_file_count"] == 1
+    assert str(data_dir / "slice_b.json") in payload["invalid_files"]
+    assert written["source_files"] == [
+        str(data_dir / "slice_a.json"),
+        str(data_dir / "slice_b.json"),
+    ]
+
+
 def test_spark_integration_contracts_command_runs(monkeypatch):
     captured: dict[str, object] = {}
 
@@ -619,8 +699,26 @@ def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatc
     repo_root = Path(__file__).resolve().parents[1]
     single_file = repo_root / "docs" / "examples" / "spark_shadow" / "single_replay.json"
     batch_dir = repo_root / "docs" / "examples" / "spark_shadow" / "batch_replay"
+    single_validation_output = tmp_path / "artifacts" / "single_validation.json"
+    batch_validation_output = tmp_path / "artifacts" / "batch_validation.json"
     single_output = tmp_path / "artifacts" / "single_report.json"
     batch_output = tmp_path / "artifacts" / "batch_report.json"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "validate-spark-shadow-replay",
+            str(single_file),
+            "--write",
+            str(single_validation_output),
+        ],
+    )
+    cli.main()
+
+    single_validation_payload = json.loads(single_validation_output.read_text(encoding="utf-8"))
+    assert single_validation_payload["valid"] is True
 
     monkeypatch.setattr(
         sys,
@@ -638,6 +736,23 @@ def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatc
     single_payload = json.loads(single_output.read_text(encoding="utf-8"))
     assert single_payload["report"]["run_count"] == 2
     assert single_payload["report"]["summary"]["accepted_writes"] == 3
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "validate-spark-shadow-replay-batch",
+            str(batch_dir),
+            "--write",
+            str(batch_validation_output),
+        ],
+    )
+    cli.main()
+
+    batch_validation_payload = json.loads(batch_validation_output.read_text(encoding="utf-8"))
+    assert batch_validation_payload["valid"] is True
+    assert batch_validation_payload["file_count"] == 2
 
     monkeypatch.setattr(
         sys,

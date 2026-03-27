@@ -333,6 +333,29 @@ def _validate_shadow_replay_payload(data_file: str) -> dict:
     return summary
 
 
+def _validate_shadow_replay_batch_payload(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
+    root = Path(data_dir)
+    files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
+    if not files:
+        raise ValueError(f"No shadow replay files matched '{glob_pattern}' in {root}.")
+
+    validations = [_validate_shadow_replay_payload(str(path)) for path in files]
+    invalid_files = [item["file"] for item in validations if not item["valid"]]
+    total_errors = sum(len(item["errors"]) for item in validations)
+    total_warnings = sum(len(item["warnings"]) for item in validations)
+    return {
+        "valid": not invalid_files,
+        "file_count": len(validations),
+        "valid_file_count": len(validations) - len(invalid_files),
+        "invalid_file_count": len(invalid_files),
+        "total_errors": total_errors,
+        "total_warnings": total_warnings,
+        "invalid_files": invalid_files,
+        "source_files": [str(path) for path in files],
+        "source_validations": validations,
+    }
+
+
 def _load_shadow_report_batch_payload(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
     root = Path(data_dir)
     files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
@@ -549,6 +572,10 @@ def main() -> None:
     validate_spark_shadow = subparsers.add_parser("validate-spark-shadow-replay", help="Validate a Builder-style shadow replay JSON file without running replay.")
     validate_spark_shadow.add_argument("data_file")
     validate_spark_shadow.add_argument("--write")
+    validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
+    validate_spark_shadow_batch.add_argument("data_dir")
+    validate_spark_shadow_batch.add_argument("--glob", default="*.json")
+    validate_spark_shadow_batch.add_argument("--write")
     run_spark_shadow_batch = subparsers.add_parser("run-spark-shadow-report-batch", help="Replay a directory of Builder-style shadow JSON files and emit one aggregate report.")
     run_spark_shadow_batch.add_argument("data_dir")
     run_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -790,6 +817,13 @@ def main() -> None:
 
     if args.command == "validate-spark-shadow-replay":
         payload = _validate_shadow_replay_payload(args.data_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "validate-spark-shadow-replay-batch":
+        payload = _validate_shadow_replay_batch_payload(args.data_dir, glob_pattern=args.glob)
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
