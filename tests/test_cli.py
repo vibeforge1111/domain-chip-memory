@@ -263,6 +263,132 @@ def test_run_spark_shadow_report_cli_can_write_report(tmp_path: Path, monkeypatc
     assert payload["report"]["conversation_rows"][0]["conversation_id"] == "shadow-1"
 
 
+def test_run_spark_shadow_report_batch_cli_can_aggregate_directory(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "shadow_runs"
+    output_file = tmp_path / "artifacts" / "spark_shadow_batch_report.json"
+    data_dir.mkdir()
+
+    (data_dir / "slice_a.json").write_text(
+        json.dumps(
+            {
+                "conversations": [
+                    {
+                        "conversation_id": "shadow-a",
+                        "turns": [
+                            {
+                                "message_id": "m1",
+                                "role": "user",
+                                "content": "I moved to Dubai.",
+                                "timestamp": "2025-03-01T09:00:00Z",
+                            }
+                        ],
+                        "probes": [
+                            {
+                                "probe_id": "p1",
+                                "probe_type": "current_state",
+                                "subject": "user",
+                                "predicate": "location",
+                                "expected_value": "Dubai",
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "slice_b.json").write_text(
+        json.dumps(
+            {
+                "conversations": [
+                    {
+                        "conversation_id": "shadow-b",
+                        "turns": [
+                            {
+                                "message_id": "m1",
+                                "role": "user",
+                                "content": "Hello there.",
+                                "timestamp": "2025-01-01T09:00:00Z",
+                            },
+                            {
+                                "message_id": "m2",
+                                "role": "assistant",
+                                "content": "Noted.",
+                                "timestamp": "2025-01-01T09:01:00Z",
+                            },
+                            {
+                                "message_id": "m3",
+                                "role": "user",
+                                "content": "I moved to Abu Dhabi.",
+                                "timestamp": "2025-06-01T09:00:00Z",
+                            },
+                        ],
+                        "probes": [
+                            {
+                                "probe_id": "p2",
+                                "probe_type": "evidence",
+                                "subject": "user",
+                                "predicate": "location",
+                                "expected_value": "Abu Dhabi",
+                                "min_results": 1,
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-shadow-report-batch",
+            str(data_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["report"]["run_count"] == 2
+    assert payload["report"]["summary"]["accepted_writes"] == 2
+    assert payload["report"]["summary"]["rejected_writes"] == 1
+    assert payload["report"]["summary"]["skipped_turns"] == 1
+    assert payload["source_files"] == [
+        str(data_dir / "slice_a.json"),
+        str(data_dir / "slice_b.json"),
+    ]
+    assert payload["source_reports"][0]["summary"]["accepted_writes"] == 1
+    assert payload["source_reports"][1]["summary"]["unsupported_reasons"] == [
+        {"reason": "no_structured_memory_extracted", "count": 1}
+    ]
+    assert payload["report"]["summary"]["probe_rows"] == [
+        {
+            "probe_type": "current_state",
+            "hits": 1,
+            "total": 1,
+            "hit_rate": 1.0,
+            "expected_matches": 1,
+            "expected_total": 1,
+            "expected_match_rate": 1.0,
+        },
+        {
+            "probe_type": "evidence",
+            "hits": 1,
+            "total": 1,
+            "hit_rate": 1.0,
+            "expected_matches": 1,
+            "expected_total": 1,
+            "expected_match_rate": 1.0,
+        },
+    ]
+
+
 def test_run_longmemeval_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "longmemeval.json"
     output_file = tmp_path / "artifacts" / "scorecard.json"

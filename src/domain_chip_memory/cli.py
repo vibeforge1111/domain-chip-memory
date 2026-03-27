@@ -243,7 +243,7 @@ def _build_demo_shadow_report_payload() -> dict:
     }
 
 
-def _load_shadow_report_payload(data_file: str) -> dict:
+def _load_shadow_evaluations(data_file: str) -> list:
     payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("Shadow replay file must contain a JSON object.")
@@ -299,11 +299,45 @@ def _load_shadow_report_payload(data_file: str) -> dict:
         )
         evaluations.append(adapter.evaluate_ingest(ingest_result, probes=probes))
 
+    return evaluations
+
+
+def _build_shadow_report_payload_from_evaluations(evaluations: list) -> dict:
     report = build_shadow_report(evaluations)
     return {
         "evaluations": [asdict(evaluation) for evaluation in evaluations],
         "report": asdict(report),
     }
+
+
+def _load_shadow_report_payload(data_file: str) -> dict:
+    return _build_shadow_report_payload_from_evaluations(_load_shadow_evaluations(data_file))
+
+
+def _load_shadow_report_batch_payload(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
+    root = Path(data_dir)
+    files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
+    if not files:
+        raise ValueError(f"No shadow replay files matched '{glob_pattern}' in {root}.")
+
+    all_evaluations = []
+    source_reports = []
+    for path in files:
+        evaluations = _load_shadow_evaluations(str(path))
+        source_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+        source_reports.append(
+            {
+                "file": str(path),
+                "run_count": source_payload["report"]["run_count"],
+                "summary": source_payload["report"]["summary"],
+            }
+        )
+        all_evaluations.extend(evaluations)
+
+    payload = _build_shadow_report_payload_from_evaluations(all_evaluations)
+    payload["source_files"] = [str(path) for path in files]
+    payload["source_reports"] = source_reports
+    return payload
 
 
 def main() -> None:
@@ -333,6 +367,10 @@ def main() -> None:
     run_spark_shadow = subparsers.add_parser("run-spark-shadow-report", help="Replay Builder-style shadow traffic from JSON and emit a shadow report.")
     run_spark_shadow.add_argument("data_file")
     run_spark_shadow.add_argument("--write")
+    run_spark_shadow_batch = subparsers.add_parser("run-spark-shadow-report-batch", help="Replay a directory of Builder-style shadow JSON files and emit one aggregate report.")
+    run_spark_shadow_batch.add_argument("data_dir")
+    run_spark_shadow_batch.add_argument("--glob", default="*.json")
+    run_spark_shadow_batch.add_argument("--write")
     subparsers.add_parser("loader-contracts", help="Show benchmark file loader summary.")
     subparsers.add_parser("provider-contracts", help="Show model-provider interface summary.")
     subparsers.add_parser("runner-contracts", help="Show executable baseline runner summary.")
@@ -538,6 +576,13 @@ def main() -> None:
 
     if args.command == "run-spark-shadow-report":
         payload = _load_shadow_report_payload(args.data_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-shadow-report-batch":
+        payload = _load_shadow_report_batch_payload(args.data_dir, glob_pattern=args.glob)
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
