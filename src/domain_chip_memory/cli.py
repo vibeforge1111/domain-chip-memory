@@ -37,6 +37,7 @@ from .spark_shadow import (
     build_shadow_report,
     build_shadow_replay_contract_summary,
 )
+from .spark_integration import build_spark_integration_contract_summary
 from .watchtower import build_watchtower_summary
 from .contracts import NormalizedBenchmarkSample
 
@@ -534,6 +535,7 @@ def main() -> None:
     run_spark_shadow_batch.add_argument("--glob", default="*.json")
     run_spark_shadow_batch.add_argument("--write")
     subparsers.add_parser("spark-shadow-contracts", help="Show the Spark shadow replay and ingest contract summary.")
+    subparsers.add_parser("spark-integration-contracts", help="Show the Spark integration outlook and orchestration contract summary.")
     subparsers.add_parser("loader-contracts", help="Show benchmark file loader summary.")
     subparsers.add_parser("provider-contracts", help="Show model-provider interface summary.")
     subparsers.add_parser("runner-contracts", help="Show executable baseline runner summary.")
@@ -772,6 +774,10 @@ def main() -> None:
                 "replay": build_shadow_replay_contract_summary(),
             }
         )
+        return
+
+    if args.command == "spark-integration-contracts":
+        _print(build_spark_integration_contract_summary())
         return
 
     if args.command == "loader-contracts":

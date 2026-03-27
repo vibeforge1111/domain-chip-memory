@@ -25,6 +25,7 @@ This index groups the active documentation surface by job instead of by filename
 
 - [Memory Architecture Evolution Plan](MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md)
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
+- [Spark Memory Integration Outlook](SPARK_MEMORY_INTEGRATION_OUTLOOK_2026-03-27.md)
 - [Spark Shadow Replay Examples](SPARK_SHADOW_REPLAY_EXAMPLES_2026-03-27.md)
 - [Unified Memory System Program](UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md)
 - [BEAM Readiness Program](BEAM_READINESS_PROGRAM_2026-03-24.md)
@@ -70,6 +71,7 @@ Use these routes depending on the task.
   - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
   - [Memory Architecture Evolution Plan](MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md)
   - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
+  - [Spark Memory Integration Outlook](SPARK_MEMORY_INTEGRATION_OUTLOOK_2026-03-27.md)
   - [Spark Shadow Replay Examples](SPARK_SHADOW_REPLAY_EXAMPLES_2026-03-27.md)
   - [Unified Memory System Program](UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md)
 - Understanding the mutation queue:

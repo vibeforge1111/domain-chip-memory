@@ -83,6 +83,27 @@ def test_spark_shadow_contracts_command_runs(monkeypatch):
     assert payload["replay"]["batch_shape"]["default_glob"] == "*.json"
 
 
+def test_spark_integration_contracts_command_runs(monkeypatch):
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "spark-integration-contracts",
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["sdk_runtime"] == "SparkMemorySDK"
+    assert "memory_query_router" in payload["required_builder_systems"]
+    assert "Do not persist every turn by default." in payload["system_prompt_template"]
+
+
 def test_canonical_configs_exist():
     payload = get_canonical_configs()
     assert payload

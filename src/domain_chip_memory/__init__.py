@@ -21,6 +21,7 @@ from .spark_shadow import (
     build_shadow_ingest_contract_summary,
     build_shadow_replay_contract_summary,
 )
+from .spark_integration import build_spark_integration_contract_summary
 
 __all__ = [
     "__version__",
@@ -41,5 +42,6 @@ __all__ = [
     "build_shadow_report",
     "build_shadow_ingest_contract_summary",
     "build_shadow_replay_contract_summary",
+    "build_spark_integration_contract_summary",
 ]
 __version__ = "0.1.0"
