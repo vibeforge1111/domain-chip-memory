@@ -5886,7 +5886,7 @@ def _infer_temporal_answer(question: NormalizedQuestion, evidence_entries: list[
             _evidence_score(question, entry),
             _observation_score(question, entry),
             entry.timestamp or "",
-            entry.observation_id,
+            getattr(entry, "observation_id", getattr(entry, "event_id", "")),
         ),
         reverse=True,
     )
