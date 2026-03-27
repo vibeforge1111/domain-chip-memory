@@ -198,6 +198,39 @@ def test_shadow_ingest_can_route_turn_to_event_write():
     assert result.turn_traces[0].trace["write_trace"]["operation"] == "write_memory"
 
 
+def test_shadow_ingest_uses_explicit_structured_metadata_when_present():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-structured",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="User preference update. I live in Dubai.",
+                    timestamp="2025-03-01T09:00:00Z",
+                    metadata={
+                        "memory_kind": "current_state",
+                        "subject": "human:human:test",
+                        "predicate": "profile.city",
+                        "value": "Dubai",
+                        "operation": "update",
+                        "memory_role": "current_state",
+                    },
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="human:human:test", predicate="profile.city"))
+
+    assert result.accepted_writes == 1
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
 def test_shadow_ingest_evaluation_summarizes_write_and_readback_quality():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)

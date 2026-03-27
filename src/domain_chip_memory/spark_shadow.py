@@ -140,12 +140,17 @@ class SparkShadowIngestAdapter:
                 continue
 
             memory_kind = str(turn.metadata.get("memory_kind", "observation")).strip().lower()
+            structured_operation = str(turn.metadata.get("operation", "auto")).strip().lower() or "auto"
             write_request = MemoryWriteRequest(
                 text=turn.content,
                 speaker=normalized_role,
                 timestamp=turn.timestamp,
                 session_id=session_id,
                 turn_id=turn_id,
+                operation=structured_operation,
+                subject=str(turn.metadata.get("subject")) if turn.metadata.get("subject") is not None else None,
+                predicate=str(turn.metadata.get("predicate")) if turn.metadata.get("predicate") is not None else None,
+                value=str(turn.metadata.get("value")) if turn.metadata.get("value") is not None else None,
                 metadata={
                     "conversation_id": request.conversation_id,
                     "message_id": turn.message_id,
