@@ -16,6 +16,7 @@ def test_sdk_contract_summary_exposes_runtime_surface():
     assert payload["runtime_class"] == "SparkMemorySDK"
     assert "write_observation" in payload["write_methods"]
     assert payload["write_operations"]["write_observation"] == ["auto", "create", "update", "delete"]
+    assert payload["maintenance_methods"] == ["reconsolidate_manual_memory"]
     assert "get_current_state" in payload["read_methods"]
 
 
@@ -249,6 +250,66 @@ def test_sdk_rejects_unsupported_explicit_operation():
     assert write_result.accepted is False
     assert write_result.unsupported_reason == "unsupported_operation"
     assert write_result.trace["write_operation"] == "merge"
+
+
+def test_sdk_reconsolidates_manual_memory_into_current_state_snapshot():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="London",
+            timestamp="2025-01-01T09:00:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="delete",
+            subject="user",
+            predicate="location",
+            timestamp="2025-04-01T09:00:00Z",
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="move",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+        )
+    )
+
+    maintenance = sdk.reconsolidate_manual_memory()
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+    historical_state = sdk.get_historical_state(
+        HistoricalStateRequest(subject="user", predicate="location", as_of="2025-03-15T00:00:00Z")
+    )
+
+    assert maintenance.manual_observations_before == 3
+    assert maintenance.manual_observations_after == 1
+    assert maintenance.current_state_snapshot_count == 1
+    assert maintenance.active_deletion_count == 1
+    assert maintenance.manual_events_count == 1
+    assert maintenance.trace["operation"] == "reconsolidate_manual_memory"
+    assert current_state.found is False
+    assert current_state.memory_role == "state_deletion"
+    assert historical_state.found is True
+    assert historical_state.value == "Dubai"
 
 
 def test_sdk_explain_answer_returns_trace_and_support():

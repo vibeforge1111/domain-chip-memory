@@ -127,12 +127,23 @@ class AnswerExplanationResult:
     trace: JsonDict = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class MemoryMaintenanceResult:
+    manual_observations_before: int
+    manual_observations_after: int
+    current_state_snapshot_count: int
+    active_deletion_count: int
+    manual_events_count: int
+    trace: JsonDict = field(default_factory=dict)
+
+
 class SparkMemorySDK:
     def __init__(self) -> None:
         self._sessions: list[NormalizedSession] = []
         self._session_counter = 0
         self._manual_observations: list[ObservationEntry] = []
         self._manual_events: list[EventCalendarEntry] = []
+        self._manual_current_state_snapshot: list[ObservationEntry] = []
 
     def write_observation(self, request: MemoryWriteRequest) -> MemoryWriteResult:
         return self._write(request, write_kind="observation")
@@ -151,7 +162,7 @@ class SparkMemorySDK:
             )
         subject = self._normalize_subject(request.subject)
         predicate = self._normalize_predicate(request.predicate)
-        observations = self._observations()
+        observations = self._current_state_observations()
         reflected = build_current_state_view(observations)
         matches = [
             entry
@@ -405,6 +416,22 @@ class SparkMemorySDK:
             },
         )
 
+    def reconsolidate_manual_memory(self) -> MemoryMaintenanceResult:
+        snapshot = self._build_manual_current_state_snapshot(self._manual_observations)
+        self._manual_current_state_snapshot = snapshot
+        active_deletions = sum(1 for entry in snapshot if entry.predicate == "state_deletion")
+        return MemoryMaintenanceResult(
+            manual_observations_before=len(self._manual_observations),
+            manual_observations_after=len(snapshot),
+            current_state_snapshot_count=len(snapshot),
+            active_deletion_count=active_deletions,
+            manual_events_count=len(self._manual_events),
+            trace={
+                "operation": "reconsolidate_manual_memory",
+                "status": "ok",
+            },
+        )
+
     def _write(self, request: MemoryWriteRequest, *, write_kind: str) -> MemoryWriteResult:
         operation = _normalize_scalar(request.operation).lower() or "auto"
         cleaned_text = str(request.text or "").strip()
@@ -526,6 +553,7 @@ class SparkMemorySDK:
             if manual_write:
                 self._manual_observations.extend(observations)
                 self._manual_events.extend(events)
+                self._manual_current_state_snapshot = []
         return MemoryWriteResult(
             session_id=session_id,
             turn_id=turn_id,
@@ -604,6 +632,10 @@ class SparkMemorySDK:
                 )
             )
         return self._sample_for_sessions(filtered_sessions)
+
+    def _current_state_observations(self) -> list[ObservationEntry]:
+        manual = self._manual_current_state_snapshot or self._manual_observations
+        return [*build_observation_log(self._runtime_sample()), *manual]
 
     def _observations(self) -> list[ObservationEntry]:
         return [*build_observation_log(self._runtime_sample()), *self._manual_observations]
@@ -810,6 +842,32 @@ class SparkMemorySDK:
             return f"delete {predicate_text} for {subject_text}: {value_text}".strip(" :")
         return f"{subject_text} {predicate_text} {value_text}".strip()
 
+    def _build_manual_current_state_snapshot(
+        self,
+        observations: list[ObservationEntry],
+    ) -> list[ObservationEntry]:
+        if not observations:
+            return []
+        current_entries = [
+            entry for entry in build_current_state_view(observations) if entry.predicate != "raw_turn"
+        ]
+        deletion_targets = {
+            (entry.subject, state_deletion_target(entry))
+            for entry in observations
+            if entry.predicate == "state_deletion" and state_deletion_target(entry)
+        }
+        active_deletions: list[ObservationEntry] = []
+        for subject, predicate in sorted(deletion_targets):
+            if not has_active_state_deletion(observations, subject=subject, predicate=predicate):
+                continue
+            deletion_entries = self._deletion_entries(observations, subject=subject, predicate=predicate)
+            if deletion_entries:
+                active_deletions.append(deletion_entries[-1])
+        return sorted(
+            [*current_entries, *active_deletions],
+            key=lambda entry: (_timestamp_key(entry.timestamp), entry.observation_id),
+        )
+
     def _write_has_supported_memory(
         self,
         observations: list[ObservationEntry],
@@ -900,6 +958,7 @@ def build_sdk_contract_summary() -> dict[str, Any]:
             "write_observation": ["auto", "create", "update", "delete"],
             "write_event": ["auto", "event"],
         },
+        "maintenance_methods": ["reconsolidate_manual_memory"],
         "read_methods": [
             "get_current_state",
             "get_historical_state",
@@ -920,6 +979,7 @@ def build_sdk_contract_summary() -> dict[str, Any]:
             "MemoryLookupResult",
             "MemoryRetrievalResult",
             "AnswerExplanationResult",
+            "MemoryMaintenanceResult",
             "RetrievedMemoryRecord",
         ],
     }
