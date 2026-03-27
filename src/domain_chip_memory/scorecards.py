@@ -101,9 +101,13 @@ def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict
     current_state_total = 0
     current_state_correct = 0
     answer_source_counts: Counter[str] = Counter()
+    answer_role_counts: Counter[str] = Counter()
     answer_type_counts: Counter[str] = Counter()
     expected_source_total = 0
     expected_source_aligned = 0
+    retrieved_role_prediction_counts: Counter[str] = Counter()
+    retrieved_role_item_counts: Counter[str] = Counter()
+    retrieved_role_supported = 0
 
     for prediction in predictions:
         latency = prediction.metadata.get("latency_ms")
@@ -117,11 +121,24 @@ def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict
         answer_source = str(prediction.metadata.get("primary_answer_candidate_source", "") or "").strip()
         if answer_source:
             answer_source_counts[answer_source] += 1
+        answer_role = str(prediction.metadata.get("primary_answer_candidate_role", "") or "").strip()
+        if answer_role:
+            answer_role_counts[answer_role] += 1
         expected_source = str(prediction.metadata.get("expected_answer_candidate_source", "") or "").strip()
         if expected_source:
             expected_source_total += 1
             if answer_source == expected_source:
                 expected_source_aligned += 1
+        retrieved_role_counts = prediction.metadata.get("retrieved_memory_role_counts")
+        if isinstance(retrieved_role_counts, dict) and retrieved_role_counts:
+            retrieved_role_supported += 1
+            for label, count in retrieved_role_counts.items():
+                role = str(label or "").strip()
+                if not role:
+                    continue
+                if isinstance(count, (int, float)):
+                    retrieved_role_item_counts[role] += int(count)
+                    retrieved_role_prediction_counts[role] += 1
         answer_type = str(prediction.metadata.get("primary_answer_candidate_type", "") or "").strip()
         if answer_type:
             answer_type_counts[answer_type] += 1
@@ -161,10 +178,25 @@ def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict
                 total=expected_source_total,
                 label="aligned",
             ),
+            "primary_answer_candidate_roles": {
+                "supported": sum(answer_role_counts.values()),
+                "total": total_predictions,
+                "rows": _label_count_rows(answer_role_counts),
+            },
             "primary_answer_candidate_types": {
                 "supported": sum(answer_type_counts.values()),
                 "total": total_predictions,
                 "rows": _label_count_rows(answer_type_counts),
+            },
+            "retrieved_memory_roles": {
+                "supported": retrieved_role_supported,
+                "total": total_predictions,
+                "rows": _label_count_rows(retrieved_role_prediction_counts),
+            },
+            "retrieved_memory_role_items": {
+                "supported": sum(retrieved_role_item_counts.values()),
+                "total": total_predictions,
+                "rows": _label_count_rows(retrieved_role_item_counts),
             },
             "provenance_support_rate": _rate_row(
                 numerator=provenance_supported,

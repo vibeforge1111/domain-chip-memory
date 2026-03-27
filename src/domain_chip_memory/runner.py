@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Callable
 from datetime import datetime
 import re
@@ -208,6 +209,13 @@ def _build_prediction(
     answer = _expand_answer_from_context(packet.question, answer, packet.assembled_context)
     normalized_pred = " ".join(answer.lower().strip().split())
     primary_answer_candidate = packet.answer_candidates[0] if packet.answer_candidates else None
+    retrieved_role_counts = Counter(
+        item.memory_role for item in packet.retrieved_context_items if str(item.memory_role or "").strip()
+    )
+    retrieved_roles = sorted(retrieved_role_counts)
+    primary_retrieved_memory_role = (
+        packet.retrieved_context_items[0].memory_role if packet.retrieved_context_items else None
+    )
     return BaselinePrediction(
         benchmark_name=packet.benchmark_name,
         baseline_name=packet.baseline_name,
@@ -229,6 +237,9 @@ def _build_prediction(
             "memory_scope": question.metadata.get("memory_scope"),
             "expected_answer_candidate_source": question.metadata.get("expected_answer_candidate_source"),
             "retrieved_context_item_count": len(packet.retrieved_context_items),
+            "retrieved_memory_roles": retrieved_roles,
+            "retrieved_memory_role_counts": dict(retrieved_role_counts),
+            "primary_retrieved_memory_role": primary_retrieved_memory_role,
             "answer_candidate_count": len(packet.answer_candidates),
             "primary_answer_candidate_type": primary_answer_candidate.candidate_type if primary_answer_candidate else None,
             "primary_answer_candidate_source": primary_answer_candidate.source if primary_answer_candidate else None,

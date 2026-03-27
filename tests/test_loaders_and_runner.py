@@ -365,6 +365,9 @@ def test_runner_supports_observational_temporal_memory(tmp_path: Path):
 
     assert scorecard["overall"]["total"] == 1
     assert scorecard["predictions"][0]["predicted_answer"].lower() == "dubai"
+    assert scorecard["predictions"][0]["metadata"]["primary_answer_candidate_role"] == "current_state"
+    assert scorecard["predictions"][0]["metadata"]["primary_retrieved_memory_role"] == "episodic"
+    assert "current_state" in scorecard["predictions"][0]["metadata"]["retrieved_memory_roles"]
 
 
 def test_runner_supports_dual_store_event_calendar_hybrid(tmp_path: Path):

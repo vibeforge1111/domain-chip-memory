@@ -184,7 +184,9 @@ def test_build_scorecard_emits_product_memory_summary():
                     "answer_candidate_count": 1,
                     "primary_answer_candidate_type": "current_state",
                     "primary_answer_candidate_source": "current_state_memory",
+                    "primary_answer_candidate_role": "current_state",
                     "expected_answer_candidate_source": "current_state_memory",
+                    "retrieved_memory_role_counts": {"current_state": 1, "structured_evidence": 2},
                     "provenance_supported": True,
                     "should_abstain": False,
                 },
@@ -204,6 +206,7 @@ def test_build_scorecard_emits_product_memory_summary():
                     "total_tokens": 0,
                     "answer_candidate_count": 0,
                     "expected_answer_candidate_source": "current_state_deletion",
+                    "retrieved_memory_role_counts": {"episodic": 1},
                     "provenance_supported": False,
                     "should_abstain": True,
                 },
@@ -224,8 +227,22 @@ def test_build_scorecard_emits_product_memory_summary():
     ]
     assert product_summary["primary_answer_candidate_source_alignment"]["aligned"] == 1
     assert product_summary["primary_answer_candidate_source_alignment"]["rate"] == 0.5
+    assert product_summary["primary_answer_candidate_roles"]["rows"] == [
+        {"label": "current_state", "count": 1}
+    ]
     assert product_summary["primary_answer_candidate_types"]["rows"] == [
         {"label": "current_state", "count": 1}
+    ]
+    assert product_summary["retrieved_memory_roles"]["supported"] == 2
+    assert product_summary["retrieved_memory_roles"]["rows"] == [
+        {"label": "current_state", "count": 1},
+        {"label": "episodic", "count": 1},
+        {"label": "structured_evidence", "count": 1},
+    ]
+    assert product_summary["retrieved_memory_role_items"]["rows"] == [
+        {"label": "current_state", "count": 1},
+        {"label": "episodic", "count": 1},
+        {"label": "structured_evidence", "count": 2},
     ]
     assert product_summary["provenance_support_rate"]["supported"] == 1
     assert product_summary["abstention_honesty"]["honest"] == 1
