@@ -15,6 +15,28 @@ AnswerCandidateType = Literal[
     "current_state",
     "abstain",
 ]
+AnswerCandidateSource = Literal[
+    "unknown",
+    "current_state_memory",
+    "current_state_deletion",
+    "evidence_memory",
+    "belief_memory",
+    "event_calendar",
+    "aggregate_memory",
+    "referential_ambiguity",
+    "temporal_ambiguity",
+    "temporal_atom_router",
+]
+MemoryRole = Literal[
+    "unknown",
+    "current_state",
+    "state_deletion",
+    "structured_evidence",
+    "belief",
+    "event",
+    "aggregate",
+    "ambiguity",
+]
 
 
 @dataclass(frozen=True)
@@ -97,7 +119,7 @@ class NormalizedBenchmarkConfig:
 class AnswerCandidate:
     text: str
     candidate_type: AnswerCandidateType = "generic"
-    source: str = "unknown"
+    source: AnswerCandidateSource = "unknown"
     metadata: JsonDict = field(default_factory=dict)
 
     def to_dict(self) -> JsonDict:

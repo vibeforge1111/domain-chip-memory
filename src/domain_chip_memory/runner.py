@@ -7,6 +7,7 @@ from typing import Any
 
 from .baselines import build_full_context_packets, build_lexical_packets
 from .contracts import NormalizedBenchmarkSample
+from .memory_roles import source_memory_role
 from .packet_builders import (
     build_beam_ready_temporal_atom_router_packets,
     build_dual_store_event_calendar_hybrid_packets,
@@ -231,6 +232,9 @@ def _build_prediction(
             "answer_candidate_count": len(packet.answer_candidates),
             "primary_answer_candidate_type": primary_answer_candidate.candidate_type if primary_answer_candidate else None,
             "primary_answer_candidate_source": primary_answer_candidate.source if primary_answer_candidate else None,
+            "primary_answer_candidate_role": source_memory_role(
+                primary_answer_candidate.source if primary_answer_candidate else None
+            ),
             "provenance_supported": bool(
                 packet.retrieved_context_items
                 and all(item.session_id and item.turn_ids for item in packet.retrieved_context_items)
