@@ -103,6 +103,34 @@ def test_demo_product_memory_scorecards_command_runs(monkeypatch):
     assert payload["observational_temporal_memory"]["benchmark_slices"]["product_memory_task"]
 
 
+def test_demo_spark_shadow_report_command_runs_and_can_write(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    output_file = tmp_path / "artifacts" / "spark_shadow_report.json"
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "demo-spark-shadow-report",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    written = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["report"]["run_count"] == 2
+    assert payload["report"]["summary"]["accepted_writes"] == 3
+    assert payload["report"]["summary"]["rejected_writes"] == 1
+    assert payload["report"]["summary"]["skipped_turns"] == 1
+    assert payload["report"]["summary"]["probe_rows"]
+    assert written["report"]["conversation_rows"][0]["conversation_id"] == "spark-shadow-demo-1"
+
+
 def test_run_longmemeval_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "longmemeval.json"
     output_file = tmp_path / "artifacts" / "scorecard.json"

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 
 from .adapters import build_adapter_contract_summary
@@ -27,6 +27,13 @@ from .runner import build_runner_contract_summary, run_baseline
 from .sample_data import demo_samples, product_memory_samples
 from .scorecards import BaselinePrediction, build_scorecard, build_scorecard_contract_summary
 from .baselines import build_full_context_packets, build_lexical_packets
+from .spark_shadow import (
+    SparkShadowIngestAdapter,
+    SparkShadowIngestRequest,
+    SparkShadowProbe,
+    SparkShadowTurn,
+    build_shadow_report,
+)
 from .watchtower import build_watchtower_summary
 from .contracts import NormalizedBenchmarkSample
 
@@ -142,6 +149,100 @@ def _run_with_progress(
     )
 
 
+def _build_demo_shadow_report_payload() -> dict:
+    adapter = SparkShadowIngestAdapter()
+    evaluations = []
+
+    first_ingest = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="spark-shadow-demo-1",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="Hello there.",
+                    timestamp="2025-01-01T09:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="assistant",
+                    content="Noted.",
+                    timestamp="2025-01-01T09:01:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m3",
+                    role="user",
+                    content="I moved to Dubai.",
+                    timestamp="2025-03-01T09:00:00Z",
+                ),
+            ],
+        )
+    )
+    evaluations.append(
+        adapter.evaluate_ingest(
+            first_ingest,
+            probes=[
+                SparkShadowProbe(
+                    probe_id="demo-p1",
+                    probe_type="current_state",
+                    subject="user",
+                    predicate="location",
+                    expected_value="Dubai",
+                ),
+                SparkShadowProbe(
+                    probe_id="demo-p2",
+                    probe_type="evidence",
+                    subject="user",
+                    predicate="location",
+                    expected_value="Dubai",
+                    min_results=1,
+                ),
+            ],
+        )
+    )
+
+    second_ingest = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="spark-shadow-demo-2",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I live in London.",
+                    timestamp="2025-01-01T09:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I moved to Abu Dhabi.",
+                    timestamp="2025-06-01T09:00:00Z",
+                ),
+            ],
+        )
+    )
+    evaluations.append(
+        adapter.evaluate_ingest(
+            second_ingest,
+            probes=[
+                SparkShadowProbe(
+                    probe_id="demo-p3",
+                    probe_type="historical_state",
+                    subject="user",
+                    predicate="location",
+                    as_of="2025-05-01T00:00:00Z",
+                    expected_value="London",
+                )
+            ],
+        )
+    )
+
+    report = build_shadow_report(evaluations)
+    return {
+        "evaluations": [asdict(evaluation) for evaluation in evaluations],
+        "report": asdict(report),
+    }
+
+
 def main() -> None:
     load_dotenv(Path.cwd() / ".env")
 
@@ -164,6 +265,8 @@ def main() -> None:
     subparsers.add_parser("canonical-configs", help="Show the canonical benchmark configuration choices.")
     subparsers.add_parser("demo-scorecards", help="Run local demo scorecards for baselines and candidate memory systems.")
     subparsers.add_parser("demo-product-memory-scorecards", help="Run local product-memory scorecards for correction, deletion, and stale-state drift.")
+    demo_spark_shadow = subparsers.add_parser("demo-spark-shadow-report", help="Run a local Spark shadow ingest/report demo.")
+    demo_spark_shadow.add_argument("--write")
     subparsers.add_parser("loader-contracts", help="Show benchmark file loader summary.")
     subparsers.add_parser("provider-contracts", help="Show model-provider interface summary.")
     subparsers.add_parser("runner-contracts", help="Show executable baseline runner summary.")
@@ -358,6 +461,13 @@ def main() -> None:
                 ),
             }
         )
+        return
+
+    if args.command == "demo-spark-shadow-report":
+        payload = _build_demo_shadow_report_payload()
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
         return
 
     if args.command == "loader-contracts":
