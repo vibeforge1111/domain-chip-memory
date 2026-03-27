@@ -5,6 +5,7 @@ This page pins the first checked-in examples for the Spark shadow replay flow.
 Use these when Spark Intelligence Builder needs a known-good file shape for:
 
 - `python -m domain_chip_memory.cli spark-shadow-contracts`
+- `python -m domain_chip_memory.cli validate-spark-shadow-replay <file>`
 - `python -m domain_chip_memory.cli run-spark-shadow-report <file>`
 - `python -m domain_chip_memory.cli run-spark-shadow-report-batch <dir>`
 
@@ -56,6 +57,10 @@ Supported probe types right now:
 - `evidence`
 
 ## Example Commands
+
+```bash
+python -m domain_chip_memory.cli validate-spark-shadow-replay docs/examples/spark_shadow/single_replay.json
+```
 
 ```bash
 python -m domain_chip_memory.cli run-spark-shadow-report docs/examples/spark_shadow/single_replay.json
