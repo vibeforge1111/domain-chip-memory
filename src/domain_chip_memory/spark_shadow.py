@@ -4,7 +4,16 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .contracts import JsonDict
-from .sdk import MemoryWriteRequest, MemoryWriteResult, SparkMemorySDK
+from .sdk import (
+    CurrentStateRequest,
+    EvidenceRetrievalRequest,
+    HistoricalStateRequest,
+    MemoryLookupResult,
+    MemoryRetrievalResult,
+    MemoryWriteRequest,
+    MemoryWriteResult,
+    SparkMemorySDK,
+)
 
 
 @dataclass(frozen=True)
@@ -44,6 +53,39 @@ class SparkShadowIngestResult:
     rejected_writes: int
     skipped_turns: int
     turn_traces: list[SparkShadowTurnTrace]
+    trace: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class SparkShadowProbe:
+    probe_id: str
+    probe_type: str
+    subject: str | None = None
+    predicate: str | None = None
+    query: str | None = None
+    as_of: str | None = None
+    expected_value: str | None = None
+    min_results: int = 1
+
+
+@dataclass(frozen=True)
+class SparkShadowProbeResult:
+    probe_id: str
+    probe_type: str
+    hit: bool
+    matched_expected: bool | None
+    returned_count: int
+    memory_role: str
+    trace: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class SparkShadowEvaluationResult:
+    conversation_id: str
+    session_id: str
+    ingest_summary: JsonDict
+    probe_results: list[SparkShadowProbeResult]
+    summary: JsonDict
     trace: JsonDict = field(default_factory=dict)
 
 
@@ -132,6 +174,76 @@ class SparkShadowIngestAdapter:
             },
         )
 
+    def evaluate_ingest(
+        self,
+        ingest_result: SparkShadowIngestResult,
+        *,
+        probes: list[SparkShadowProbe],
+    ) -> SparkShadowEvaluationResult:
+        unsupported_reason_counts: dict[str, int] = {}
+        for turn_trace in ingest_result.turn_traces:
+            reason = str(turn_trace.unsupported_reason or "").strip()
+            if reason:
+                unsupported_reason_counts[reason] = unsupported_reason_counts.get(reason, 0) + 1
+
+        probe_results = [self._evaluate_probe(probe) for probe in probes]
+        current_state_total = sum(1 for probe in probes if probe.probe_type == "current_state")
+        current_state_hits = sum(
+            1 for result in probe_results if result.probe_type == "current_state" and result.hit
+        )
+        evidence_total = sum(1 for probe in probes if probe.probe_type == "evidence")
+        evidence_hits = sum(1 for result in probe_results if result.probe_type == "evidence" and result.hit)
+        historical_total = sum(1 for probe in probes if probe.probe_type == "historical_state")
+        historical_hits = sum(
+            1 for result in probe_results if result.probe_type == "historical_state" and result.hit
+        )
+        total_turns = ingest_result.accepted_writes + ingest_result.rejected_writes + ingest_result.skipped_turns
+
+        summary = {
+            "accepted_writes": ingest_result.accepted_writes,
+            "rejected_writes": ingest_result.rejected_writes,
+            "skipped_turns": ingest_result.skipped_turns,
+            "accepted_rate": round(ingest_result.accepted_writes / total_turns, 4) if total_turns else 0.0,
+            "rejected_rate": round(ingest_result.rejected_writes / total_turns, 4) if total_turns else 0.0,
+            "skipped_rate": round(ingest_result.skipped_turns / total_turns, 4) if total_turns else 0.0,
+            "unsupported_reasons": [
+                {"reason": reason, "count": unsupported_reason_counts[reason]}
+                for reason in sorted(unsupported_reason_counts)
+            ],
+            "current_state_hit_rate": {
+                "hits": current_state_hits,
+                "total": current_state_total,
+                "rate": round(current_state_hits / current_state_total, 4) if current_state_total else 0.0,
+            },
+            "historical_state_hit_rate": {
+                "hits": historical_hits,
+                "total": historical_total,
+                "rate": round(historical_hits / historical_total, 4) if historical_total else 0.0,
+            },
+            "evidence_hit_rate": {
+                "hits": evidence_hits,
+                "total": evidence_total,
+                "rate": round(evidence_hits / evidence_total, 4) if evidence_total else 0.0,
+            },
+        }
+        return SparkShadowEvaluationResult(
+            conversation_id=ingest_result.conversation_id,
+            session_id=ingest_result.session_id,
+            ingest_summary={
+                "accepted_writes": ingest_result.accepted_writes,
+                "rejected_writes": ingest_result.rejected_writes,
+                "skipped_turns": ingest_result.skipped_turns,
+            },
+            probe_results=probe_results,
+            summary=summary,
+            trace={
+                "operation": "evaluate_ingest",
+                "conversation_id": ingest_result.conversation_id,
+                "session_id": ingest_result.session_id,
+                "probe_count": len(probes),
+            },
+        )
+
     def _build_turn_trace(
         self,
         turn: SparkShadowTurn,
@@ -156,15 +268,103 @@ class SparkShadowIngestAdapter:
             },
         )
 
+    def _evaluate_probe(self, probe: SparkShadowProbe) -> SparkShadowProbeResult:
+        if probe.probe_type == "current_state":
+            result = self.sdk.get_current_state(
+                CurrentStateRequest(
+                    subject=str(probe.subject or ""),
+                    predicate=str(probe.predicate or ""),
+                )
+            )
+            return self._lookup_probe_result(probe, result)
+        if probe.probe_type == "historical_state":
+            result = self.sdk.get_historical_state(
+                HistoricalStateRequest(
+                    subject=str(probe.subject or ""),
+                    predicate=str(probe.predicate or ""),
+                    as_of=str(probe.as_of or ""),
+                )
+            )
+            return self._lookup_probe_result(probe, result)
+        if probe.probe_type == "evidence":
+            result = self.sdk.retrieve_evidence(
+                EvidenceRetrievalRequest(
+                    query=probe.query,
+                    subject=probe.subject,
+                    predicate=probe.predicate,
+                    limit=max(probe.min_results, 1),
+                )
+            )
+            return self._retrieval_probe_result(probe, result)
+        return SparkShadowProbeResult(
+            probe_id=probe.probe_id,
+            probe_type=probe.probe_type,
+            hit=False,
+            matched_expected=None,
+            returned_count=0,
+            memory_role="unknown",
+            trace={
+                "operation": "evaluate_probe",
+                "status": "unsupported_probe_type",
+                "probe_type": probe.probe_type,
+            },
+        )
+
+    def _lookup_probe_result(
+        self,
+        probe: SparkShadowProbe,
+        result: MemoryLookupResult,
+    ) -> SparkShadowProbeResult:
+        expected_value = str(probe.expected_value or "").strip().lower()
+        actual_value = str(result.value or "").strip().lower()
+        matched_expected = None
+        if expected_value:
+            matched_expected = actual_value == expected_value
+        return SparkShadowProbeResult(
+            probe_id=probe.probe_id,
+            probe_type=probe.probe_type,
+            hit=result.found,
+            matched_expected=matched_expected,
+            returned_count=len(result.provenance),
+            memory_role=result.memory_role,
+            trace=dict(result.trace),
+        )
+
+    def _retrieval_probe_result(
+        self,
+        probe: SparkShadowProbe,
+        result: MemoryRetrievalResult,
+    ) -> SparkShadowProbeResult:
+        matched_expected = None
+        expected_value = str(probe.expected_value or "").strip().lower()
+        if expected_value:
+            matched_expected = any(expected_value in item.text.lower() for item in result.items)
+        memory_role = result.items[0].memory_role if result.items else "unknown"
+        return SparkShadowProbeResult(
+            probe_id=probe.probe_id,
+            probe_type=probe.probe_type,
+            hit=len(result.items) >= max(probe.min_results, 1),
+            matched_expected=matched_expected,
+            returned_count=len(result.items),
+            memory_role=memory_role,
+            trace=dict(result.trace),
+        )
+
 
 def build_shadow_ingest_contract_summary() -> dict[str, Any]:
     return {
         "runtime_class": "SparkShadowIngestAdapter",
-        "request_contracts": ["SparkShadowTurn", "SparkShadowIngestRequest"],
-        "response_contracts": ["SparkShadowTurnTrace", "SparkShadowIngestResult"],
+        "request_contracts": ["SparkShadowTurn", "SparkShadowIngestRequest", "SparkShadowProbe"],
+        "response_contracts": [
+            "SparkShadowTurnTrace",
+            "SparkShadowIngestResult",
+            "SparkShadowProbeResult",
+            "SparkShadowEvaluationResult",
+        ],
         "behavior": [
             "accept Builder-style conversation turns",
             "write only configured roles into SparkMemorySDK",
             "report accepted, rejected, and skipped turns with replayable traces",
+            "evaluate post-ingest current-state, historical-state, and evidence probes",
         ],
     }
