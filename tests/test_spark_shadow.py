@@ -5,6 +5,7 @@ from domain_chip_memory import (
     SparkShadowIngestRequest,
     SparkShadowProbe,
     SparkShadowTurn,
+    build_shadow_replay_contract_summary,
     build_shadow_report,
     build_shadow_ingest_contract_summary,
 )
@@ -17,6 +18,16 @@ def test_shadow_ingest_contract_summary_exposes_runtime_surface():
     assert "SparkShadowIngestRequest" in payload["request_contracts"]
     assert "SparkShadowProbe" in payload["request_contracts"]
     assert "SparkShadowReport" in payload["response_contracts"]
+
+
+def test_shadow_replay_contract_summary_exposes_file_shapes():
+    payload = build_shadow_replay_contract_summary()
+
+    assert payload["single_file_shape"]["required_fields"] == ["conversations"]
+    assert "turns" in payload["single_file_shape"]["conversation_fields"]
+    assert "probe_type" in payload["single_file_shape"]["probe_fields"]
+    assert payload["batch_shape"]["default_glob"] == "*.json"
+    assert payload["supported_probe_types"] == ["current_state", "historical_state", "evidence"]
 
 
 def test_shadow_ingest_writes_user_turns_and_skips_assistant_turns():

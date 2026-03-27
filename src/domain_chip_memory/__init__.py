@@ -18,6 +18,7 @@ from .spark_shadow import (
     SparkShadowTurn,
     build_shadow_report,
     build_shadow_ingest_contract_summary,
+    build_shadow_replay_contract_summary,
 )
 
 __all__ = [
@@ -37,5 +38,6 @@ __all__ = [
     "SparkShadowReport",
     "build_shadow_report",
     "build_shadow_ingest_contract_summary",
+    "build_shadow_replay_contract_summary",
 ]
 __version__ = "0.1.0"

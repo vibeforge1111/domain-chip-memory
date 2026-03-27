@@ -62,6 +62,27 @@ def test_scorecard_contract_summary_has_fields():
     assert payload["scorecard_fields"]
 
 
+def test_spark_shadow_contracts_command_runs(monkeypatch):
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "spark-shadow-contracts",
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["ingest"]["runtime_class"] == "SparkShadowIngestAdapter"
+    assert payload["replay"]["single_file_shape"]["required_fields"] == ["conversations"]
+    assert payload["replay"]["batch_shape"]["default_glob"] == "*.json"
+
+
 def test_canonical_configs_exist():
     payload = get_canonical_configs()
     assert payload

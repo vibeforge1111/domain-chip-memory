@@ -473,3 +473,61 @@ def build_shadow_ingest_contract_summary() -> dict[str, Any]:
             "aggregate multiple shadow evaluations into a Spark-facing quality report",
         ],
     }
+
+
+def build_shadow_replay_contract_summary() -> dict[str, Any]:
+    return {
+        "single_file_shape": {
+            "root_type": "object",
+            "required_fields": ["conversations"],
+            "optional_fields": ["writable_roles"],
+            "conversation_fields": [
+                "conversation_id",
+                "turns",
+                "probes",
+                "session_id",
+                "metadata",
+            ],
+            "turn_fields": [
+                "message_id",
+                "role",
+                "content",
+                "timestamp",
+                "metadata",
+            ],
+            "probe_fields": [
+                "probe_id",
+                "probe_type",
+                "subject",
+                "predicate",
+                "query",
+                "as_of",
+                "expected_value",
+                "min_results",
+            ],
+        },
+        "batch_shape": {
+            "input": "directory of single-file replay JSON payloads",
+            "default_glob": "*.json",
+            "per_file_summary_fields": [
+                "file",
+                "run_count",
+                "summary",
+            ],
+        },
+        "supported_probe_types": [
+            "current_state",
+            "historical_state",
+            "evidence",
+        ],
+        "output_fields": [
+            "evaluations",
+            "report",
+            "source_files",
+            "source_reports",
+        ],
+        "notes": [
+            "Single-file replay emits evaluations and one aggregate report.",
+            "Batch replay adds source_files and source_reports on top of the same aggregate report format.",
+        ],
+    }
