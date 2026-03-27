@@ -104,6 +104,27 @@ def test_spark_integration_contracts_command_runs(monkeypatch):
     assert "Do not persist every turn by default." in payload["system_prompt_template"]
 
 
+def test_sdk_maintenance_contracts_command_runs(monkeypatch):
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "sdk-maintenance-contracts",
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["sdk"]["runtime_class"] == "SparkMemorySDK"
+    assert payload["replay"]["single_file_shape"]["required_fields"] == ["writes"]
+    assert payload["replay"]["maintenance_method"] == "reconsolidate_manual_memory"
+
+
 def test_canonical_configs_exist():
     payload = get_canonical_configs()
     assert payload
@@ -584,6 +605,31 @@ def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatc
         str(batch_dir / "slice_a.json"),
         str(batch_dir / "slice_b.json"),
     ]
+
+
+def test_checked_in_sdk_maintenance_example_runs_via_cli(tmp_path: Path, monkeypatch):
+    repo_root = Path(__file__).resolve().parents[1]
+    single_file = repo_root / "docs" / "examples" / "sdk_maintenance" / "single_replay.json"
+    output_file = tmp_path / "artifacts" / "sdk_maintenance_report.json"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-sdk-maintenance-report",
+            str(single_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["maintenance"]["manual_observations_before"] == 3
+    assert payload["maintenance"]["manual_observations_after"] == 1
+    assert payload["maintenance"]["active_deletion_count"] == 1
+    assert payload["after"]["historical_state"][0]["result"]["value"] == "Dubai"
 
 
 def test_run_longmemeval_cli_can_write_scorecard(tmp_path: Path, monkeypatch):

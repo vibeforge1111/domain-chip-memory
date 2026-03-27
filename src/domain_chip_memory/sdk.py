@@ -983,3 +983,56 @@ def build_sdk_contract_summary() -> dict[str, Any]:
             "RetrievedMemoryRecord",
         ],
     }
+
+
+def build_sdk_maintenance_replay_contract_summary() -> dict[str, Any]:
+    return {
+        "single_file_shape": {
+            "root_type": "object",
+            "required_fields": ["writes"],
+            "optional_fields": ["checks"],
+            "write_fields": [
+                "write_kind",
+                "text",
+                "speaker",
+                "timestamp",
+                "session_id",
+                "turn_id",
+                "operation",
+                "subject",
+                "predicate",
+                "value",
+                "metadata",
+            ],
+            "check_groups": {
+                "current_state": [
+                    "subject",
+                    "predicate",
+                ],
+                "historical_state": [
+                    "subject",
+                    "predicate",
+                    "as_of",
+                ],
+            },
+        },
+        "supported_write_kinds": [
+            "observation",
+            "event",
+        ],
+        "supported_operations": {
+            "observation": ["auto", "create", "update", "delete"],
+            "event": ["auto", "event"],
+        },
+        "maintenance_method": "reconsolidate_manual_memory",
+        "output_fields": [
+            "write_results",
+            "maintenance",
+            "before",
+            "after",
+        ],
+        "notes": [
+            "The replay file models explicit SDK writes rather than Builder conversation turns.",
+            "Checks are optional and are evaluated before and after maintenance to verify reconsolidation behavior.",
+        ],
+    }

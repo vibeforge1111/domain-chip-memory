@@ -10,6 +10,7 @@ from .sdk import (
     MemoryWriteRequest,
     SparkMemorySDK,
     build_sdk_contract_summary,
+    build_sdk_maintenance_replay_contract_summary,
 )
 from .spark_shadow import (
     SparkShadowIngestAdapter,
@@ -34,6 +35,7 @@ __all__ = [
     "EventRetrievalRequest",
     "AnswerExplanationRequest",
     "build_sdk_contract_summary",
+    "build_sdk_maintenance_replay_contract_summary",
     "SparkShadowIngestAdapter",
     "SparkShadowTurn",
     "SparkShadowIngestRequest",

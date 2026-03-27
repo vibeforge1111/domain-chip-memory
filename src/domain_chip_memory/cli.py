@@ -26,7 +26,14 @@ from .providers import build_provider_contract_summary, get_provider
 from .runner import build_runner_contract_summary, run_baseline
 from .sample_data import demo_samples, product_memory_samples
 from .scorecards import BaselinePrediction, build_scorecard, build_scorecard_contract_summary
-from .sdk import CurrentStateRequest, HistoricalStateRequest, MemoryWriteRequest, SparkMemorySDK
+from .sdk import (
+    CurrentStateRequest,
+    HistoricalStateRequest,
+    MemoryWriteRequest,
+    SparkMemorySDK,
+    build_sdk_contract_summary,
+    build_sdk_maintenance_replay_contract_summary,
+)
 from .baselines import build_full_context_packets, build_lexical_packets
 from .spark_shadow import (
     SparkShadowIngestAdapter,
@@ -527,6 +534,7 @@ def main() -> None:
     run_sdk_maintenance = subparsers.add_parser("run-sdk-maintenance-report", help="Replay explicit SDK writes from JSON and emit a maintenance report.")
     run_sdk_maintenance.add_argument("data_file")
     run_sdk_maintenance.add_argument("--write")
+    subparsers.add_parser("sdk-maintenance-contracts", help="Show the SDK runtime and maintenance replay contract summary.")
     run_spark_shadow = subparsers.add_parser("run-spark-shadow-report", help="Replay Builder-style shadow traffic from JSON and emit a shadow report.")
     run_spark_shadow.add_argument("data_file")
     run_spark_shadow.add_argument("--write")
@@ -751,6 +759,15 @@ def main() -> None:
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
+        return
+
+    if args.command == "sdk-maintenance-contracts":
+        _print(
+            {
+                "sdk": build_sdk_contract_summary(),
+                "replay": build_sdk_maintenance_replay_contract_summary(),
+            }
+        )
         return
 
     if args.command == "run-spark-shadow-report":

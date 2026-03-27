@@ -1,0 +1,50 @@
+{
+  "writes": [
+    {
+      "write_kind": "observation",
+      "operation": "create",
+      "subject": "user",
+      "predicate": "location",
+      "value": "London",
+      "timestamp": "2025-01-01T09:00:00Z"
+    },
+    {
+      "write_kind": "observation",
+      "operation": "update",
+      "subject": "user",
+      "predicate": "location",
+      "value": "Dubai",
+      "timestamp": "2025-03-01T09:00:00Z"
+    },
+    {
+      "write_kind": "observation",
+      "operation": "delete",
+      "subject": "user",
+      "predicate": "location",
+      "timestamp": "2025-04-01T09:00:00Z"
+    },
+    {
+      "write_kind": "event",
+      "operation": "event",
+      "subject": "user",
+      "predicate": "move",
+      "value": "Dubai",
+      "timestamp": "2025-03-01T09:00:00Z"
+    }
+  ],
+  "checks": {
+    "current_state": [
+      {
+        "subject": "user",
+        "predicate": "location"
+      }
+    ],
+    "historical_state": [
+      {
+        "subject": "user",
+        "predicate": "location",
+        "as_of": "2025-03-15T00:00:00Z"
+      }
+    ]
+  }
+}
