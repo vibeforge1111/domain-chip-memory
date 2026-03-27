@@ -8,6 +8,7 @@ from domain_chip_memory import (
     build_shadow_replay_contract_summary,
     build_shadow_report,
     build_shadow_ingest_contract_summary,
+    validate_shadow_replay_payload,
 )
 
 
@@ -28,6 +29,74 @@ def test_shadow_replay_contract_summary_exposes_file_shapes():
     assert "probe_type" in payload["single_file_shape"]["probe_fields"]
     assert payload["batch_shape"]["default_glob"] == "*.json"
     assert payload["supported_probe_types"] == ["current_state", "historical_state", "evidence"]
+    assert "validate-spark-shadow-replay <file>" in payload["validation_entrypoints"][1]
+
+
+def test_validate_shadow_replay_payload_reports_good_file_shape():
+    payload = validate_shadow_replay_payload(
+        {
+            "conversations": [
+                {
+                    "conversation_id": "conv-1",
+                    "session_id": "conv-1",
+                    "turns": [
+                        {
+                            "message_id": "m1",
+                            "role": "user",
+                            "content": "I live in Dubai.",
+                            "timestamp": "2025-01-01T00:00:00Z",
+                        }
+                    ],
+                    "probes": [
+                        {
+                            "probe_id": "p1",
+                            "probe_type": "current_state",
+                            "subject": "user",
+                            "predicate": "location",
+                            "expected_value": "Dubai",
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+    assert payload["valid"] is True
+    assert payload["conversation_count"] == 1
+    assert payload["turn_count"] == 1
+    assert payload["probe_count"] == 1
+
+
+def test_validate_shadow_replay_payload_reports_bad_shape():
+    payload = validate_shadow_replay_payload(
+        {
+            "conversations": [
+                {
+                    "conversation_id": "",
+                    "turns": [
+                        {
+                            "message_id": "",
+                            "role": "",
+                            "content": "",
+                        }
+                    ],
+                    "probes": [
+                        {
+                            "probe_id": "",
+                            "probe_type": "historical_state",
+                            "subject": "user",
+                            "predicate": "",
+                            "as_of": "",
+                            "min_results": 0,
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+    assert payload["valid"] is False
+    assert payload["errors"]
+    assert any("conversation_id" in error for error in payload["errors"])
+    assert any("min_results" in error for error in payload["errors"])
 
 
 def test_shadow_ingest_writes_user_turns_and_skips_assistant_turns():

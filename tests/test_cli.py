@@ -83,6 +83,60 @@ def test_spark_shadow_contracts_command_runs(monkeypatch):
     assert payload["replay"]["batch_shape"]["default_glob"] == "*.json"
 
 
+def test_validate_spark_shadow_replay_command_runs_and_can_write(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    data_file = tmp_path / "shadow_replay.json"
+    output_file = tmp_path / "artifacts" / "shadow_validation.json"
+    data_file.write_text(
+        json.dumps(
+            {
+                "conversations": [
+                    {
+                        "conversation_id": "conv-1",
+                        "turns": [
+                            {
+                                "message_id": "m1",
+                                "role": "user",
+                                "content": "I live in Dubai."
+                            }
+                        ],
+                        "probes": [
+                            {
+                                "probe_id": "p1",
+                                "probe_type": "current_state",
+                                "subject": "user",
+                                "predicate": "location"
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "validate-spark-shadow-replay",
+            str(data_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    written = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["valid"] is True
+    assert payload["conversation_count"] == 1
+    assert written["file"] == str(data_file)
+
+
 def test_spark_integration_contracts_command_runs(monkeypatch):
     captured: dict[str, object] = {}
 

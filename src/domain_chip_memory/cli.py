@@ -43,6 +43,7 @@ from .spark_shadow import (
     build_shadow_ingest_contract_summary,
     build_shadow_report,
     build_shadow_replay_contract_summary,
+    validate_shadow_replay_payload,
 )
 from .spark_integration import build_spark_integration_contract_summary
 from .watchtower import build_watchtower_summary
@@ -325,6 +326,13 @@ def _load_shadow_report_payload(data_file: str) -> dict:
     return _build_shadow_report_payload_from_evaluations(_load_shadow_evaluations(data_file))
 
 
+def _validate_shadow_replay_payload(data_file: str) -> dict:
+    payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
+    summary = validate_shadow_replay_payload(payload)
+    summary["file"] = str(Path(data_file))
+    return summary
+
+
 def _load_shadow_report_batch_payload(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
     root = Path(data_dir)
     files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
@@ -538,6 +546,9 @@ def main() -> None:
     run_spark_shadow = subparsers.add_parser("run-spark-shadow-report", help="Replay Builder-style shadow traffic from JSON and emit a shadow report.")
     run_spark_shadow.add_argument("data_file")
     run_spark_shadow.add_argument("--write")
+    validate_spark_shadow = subparsers.add_parser("validate-spark-shadow-replay", help="Validate a Builder-style shadow replay JSON file without running replay.")
+    validate_spark_shadow.add_argument("data_file")
+    validate_spark_shadow.add_argument("--write")
     run_spark_shadow_batch = subparsers.add_parser("run-spark-shadow-report-batch", help="Replay a directory of Builder-style shadow JSON files and emit one aggregate report.")
     run_spark_shadow_batch.add_argument("data_dir")
     run_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -772,6 +783,13 @@ def main() -> None:
 
     if args.command == "run-spark-shadow-report":
         payload = _load_shadow_report_payload(args.data_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "validate-spark-shadow-replay":
+        payload = _validate_shadow_replay_payload(args.data_file)
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)

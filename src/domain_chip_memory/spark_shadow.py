@@ -475,6 +475,127 @@ def build_shadow_ingest_contract_summary() -> dict[str, Any]:
     }
 
 
+def validate_shadow_replay_payload(payload: Any) -> dict[str, Any]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    conversation_count = 0
+    turn_count = 0
+    probe_count = 0
+
+    if not isinstance(payload, dict):
+        return {
+            "valid": False,
+            "errors": ["Shadow replay file must contain a JSON object."],
+            "warnings": [],
+            "conversation_count": 0,
+            "turn_count": 0,
+            "probe_count": 0,
+        }
+
+    writable_roles = payload.get("writable_roles")
+    if writable_roles is not None and not isinstance(writable_roles, list):
+        errors.append("writable_roles must be a list when provided.")
+
+    raw_conversations = payload.get("conversations")
+    if not isinstance(raw_conversations, list):
+        return {
+            "valid": False,
+            "errors": ["Shadow replay file must contain a conversations list."],
+            "warnings": warnings,
+            "conversation_count": 0,
+            "turn_count": 0,
+            "probe_count": 0,
+        }
+
+    supported_probe_types = {"current_state", "historical_state", "evidence"}
+    for index, item in enumerate(raw_conversations):
+        conversation_count += 1
+        if not isinstance(item, dict):
+            errors.append(f"Conversation at index {index} must be an object.")
+            continue
+
+        conversation_id = str(item.get("conversation_id", "")).strip()
+        if not conversation_id:
+            errors.append(f"Conversation at index {index} must include conversation_id.")
+
+        turns = item.get("turns", [])
+        if not isinstance(turns, list):
+            errors.append(f"Conversation '{conversation_id or index}' must contain a turns list.")
+            turns = []
+        if not turns:
+            warnings.append(f"Conversation '{conversation_id or index}' has no turns.")
+        for turn_index, turn in enumerate(turns):
+            turn_count += 1
+            if not isinstance(turn, dict):
+                errors.append(f"Turn {turn_index} in conversation '{conversation_id or index}' must be an object.")
+                continue
+            if not str(turn.get("message_id", "")).strip():
+                errors.append(f"Turn {turn_index} in conversation '{conversation_id or index}' must include message_id.")
+            if not str(turn.get("role", "")).strip():
+                errors.append(f"Turn {turn_index} in conversation '{conversation_id or index}' must include role.")
+            if not str(turn.get("content", "")).strip():
+                errors.append(f"Turn {turn_index} in conversation '{conversation_id or index}' must include content.")
+            metadata = turn.get("metadata", {})
+            if metadata is not None and not isinstance(metadata, dict):
+                errors.append(f"Turn {turn_index} in conversation '{conversation_id or index}' must use object metadata.")
+
+        probes = item.get("probes", [])
+        if not isinstance(probes, list):
+            errors.append(f"Conversation '{conversation_id or index}' must contain a probes list when provided.")
+            probes = []
+        for probe_index, probe in enumerate(probes):
+            probe_count += 1
+            if not isinstance(probe, dict):
+                errors.append(f"Probe {probe_index} in conversation '{conversation_id or index}' must be an object.")
+                continue
+            probe_type = str(probe.get("probe_type", "")).strip()
+            if probe_type not in supported_probe_types:
+                errors.append(
+                    f"Probe {probe_index} in conversation '{conversation_id or index}' has unsupported probe_type '{probe_type}'."
+                )
+                continue
+            if not str(probe.get("probe_id", "")).strip():
+                errors.append(f"Probe {probe_index} in conversation '{conversation_id or index}' must include probe_id.")
+            if probe_type in {"current_state", "historical_state"}:
+                if not str(probe.get("subject", "")).strip():
+                    errors.append(
+                        f"Probe {probe_index} in conversation '{conversation_id or index}' must include subject."
+                    )
+                if not str(probe.get("predicate", "")).strip():
+                    errors.append(
+                        f"Probe {probe_index} in conversation '{conversation_id or index}' must include predicate."
+                    )
+            if probe_type == "historical_state" and not str(probe.get("as_of", "")).strip():
+                errors.append(f"Probe {probe_index} in conversation '{conversation_id or index}' must include as_of.")
+            if probe_type == "evidence":
+                has_query = bool(str(probe.get("query", "")).strip())
+                has_subject = bool(str(probe.get("subject", "")).strip())
+                has_predicate = bool(str(probe.get("predicate", "")).strip())
+                if not (has_query or has_subject or has_predicate):
+                    errors.append(
+                        f"Probe {probe_index} in conversation '{conversation_id or index}' must include query or subject/predicate."
+                    )
+            min_results = probe.get("min_results", 1)
+            try:
+                if int(min_results) < 1:
+                    errors.append(
+                        f"Probe {probe_index} in conversation '{conversation_id or index}' must use min_results >= 1."
+                    )
+            except (TypeError, ValueError):
+                errors.append(
+                    f"Probe {probe_index} in conversation '{conversation_id or index}' must use an integer min_results."
+                )
+
+    return {
+        "valid": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "conversation_count": conversation_count,
+        "turn_count": turn_count,
+        "probe_count": probe_count,
+    }
+
+
 def build_shadow_replay_contract_summary() -> dict[str, Any]:
     return {
         "single_file_shape": {
@@ -525,6 +646,10 @@ def build_shadow_replay_contract_summary() -> dict[str, Any]:
             "report",
             "source_files",
             "source_reports",
+        ],
+        "validation_entrypoints": [
+            "validate_shadow_replay_payload(...)",
+            "python -m domain_chip_memory.cli validate-spark-shadow-replay <file>",
         ],
         "notes": [
             "Single-file replay emits evaluations and one aggregate report.",
