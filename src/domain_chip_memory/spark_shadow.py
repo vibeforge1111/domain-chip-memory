@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -86,6 +87,14 @@ class SparkShadowEvaluationResult:
     ingest_summary: JsonDict
     probe_results: list[SparkShadowProbeResult]
     summary: JsonDict
+    trace: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class SparkShadowReport:
+    run_count: int
+    summary: JsonDict
+    conversation_rows: list[JsonDict]
     trace: JsonDict = field(default_factory=dict)
 
 
@@ -351,6 +360,100 @@ class SparkShadowIngestAdapter:
         )
 
 
+def build_shadow_report(evaluations: list[SparkShadowEvaluationResult]) -> SparkShadowReport:
+    unsupported_reason_counts: Counter[str] = Counter()
+    probe_total_by_type: Counter[str] = Counter()
+    probe_hits_by_type: Counter[str] = Counter()
+    expected_total_by_type: Counter[str] = Counter()
+    expected_matches_by_type: Counter[str] = Counter()
+    memory_role_counts: Counter[str] = Counter()
+    conversation_rows: list[JsonDict] = []
+    accepted_writes = 0
+    rejected_writes = 0
+    skipped_turns = 0
+
+    for evaluation in evaluations:
+        summary = dict(evaluation.summary)
+        accepted_writes += int(summary.get("accepted_writes", 0) or 0)
+        rejected_writes += int(summary.get("rejected_writes", 0) or 0)
+        skipped_turns += int(summary.get("skipped_turns", 0) or 0)
+        for row in summary.get("unsupported_reasons", []):
+            reason = str(row.get("reason", "") or "").strip()
+            count = int(row.get("count", 0) or 0)
+            if reason and count > 0:
+                unsupported_reason_counts[reason] += count
+        for result in evaluation.probe_results:
+            probe_type = str(result.probe_type or "").strip() or "unknown"
+            probe_total_by_type[probe_type] += 1
+            if result.hit:
+                probe_hits_by_type[probe_type] += 1
+            if result.matched_expected is not None:
+                expected_total_by_type[probe_type] += 1
+                if result.matched_expected:
+                    expected_matches_by_type[probe_type] += 1
+            memory_role = str(result.memory_role or "").strip()
+            if memory_role:
+                memory_role_counts[memory_role] += 1
+        conversation_rows.append(
+            {
+                "conversation_id": evaluation.conversation_id,
+                "session_id": evaluation.session_id,
+                "accepted_writes": int(summary.get("accepted_writes", 0) or 0),
+                "rejected_writes": int(summary.get("rejected_writes", 0) or 0),
+                "skipped_turns": int(summary.get("skipped_turns", 0) or 0),
+                "probe_count": len(evaluation.probe_results),
+            }
+        )
+
+    total_turns = accepted_writes + rejected_writes + skipped_turns
+    probe_rows: list[JsonDict] = []
+    for probe_type in sorted(probe_total_by_type):
+        expected_total = expected_total_by_type[probe_type]
+        probe_rows.append(
+            {
+                "probe_type": probe_type,
+                "hits": probe_hits_by_type[probe_type],
+                "total": probe_total_by_type[probe_type],
+                "hit_rate": round(probe_hits_by_type[probe_type] / probe_total_by_type[probe_type], 4)
+                if probe_total_by_type[probe_type]
+                else 0.0,
+                "expected_matches": expected_matches_by_type[probe_type],
+                "expected_total": expected_total,
+                "expected_match_rate": round(expected_matches_by_type[probe_type] / expected_total, 4)
+                if expected_total
+                else 0.0,
+            }
+        )
+
+    summary: JsonDict = {
+        "accepted_writes": accepted_writes,
+        "rejected_writes": rejected_writes,
+        "skipped_turns": skipped_turns,
+        "total_turns": total_turns,
+        "accepted_rate": round(accepted_writes / total_turns, 4) if total_turns else 0.0,
+        "rejected_rate": round(rejected_writes / total_turns, 4) if total_turns else 0.0,
+        "skipped_rate": round(skipped_turns / total_turns, 4) if total_turns else 0.0,
+        "unsupported_reasons": [
+            {"reason": reason, "count": unsupported_reason_counts[reason]}
+            for reason in sorted(unsupported_reason_counts)
+        ],
+        "probe_rows": probe_rows,
+        "memory_roles": [
+            {"memory_role": role, "count": memory_role_counts[role]}
+            for role in sorted(memory_role_counts)
+        ],
+    }
+    return SparkShadowReport(
+        run_count=len(evaluations),
+        summary=summary,
+        conversation_rows=conversation_rows,
+        trace={
+            "operation": "build_shadow_report",
+            "run_count": len(evaluations),
+        },
+    )
+
+
 def build_shadow_ingest_contract_summary() -> dict[str, Any]:
     return {
         "runtime_class": "SparkShadowIngestAdapter",
@@ -360,11 +463,13 @@ def build_shadow_ingest_contract_summary() -> dict[str, Any]:
             "SparkShadowIngestResult",
             "SparkShadowProbeResult",
             "SparkShadowEvaluationResult",
+            "SparkShadowReport",
         ],
         "behavior": [
             "accept Builder-style conversation turns",
             "write only configured roles into SparkMemorySDK",
             "report accepted, rejected, and skipped turns with replayable traces",
             "evaluate post-ingest current-state, historical-state, and evidence probes",
+            "aggregate multiple shadow evaluations into a Spark-facing quality report",
         ],
     }

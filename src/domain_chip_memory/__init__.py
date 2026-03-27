@@ -13,8 +13,10 @@ from .sdk import (
 from .spark_shadow import (
     SparkShadowIngestAdapter,
     SparkShadowIngestRequest,
+    SparkShadowReport,
     SparkShadowProbe,
     SparkShadowTurn,
+    build_shadow_report,
     build_shadow_ingest_contract_summary,
 )
 
@@ -32,6 +34,8 @@ __all__ = [
     "SparkShadowTurn",
     "SparkShadowIngestRequest",
     "SparkShadowProbe",
+    "SparkShadowReport",
+    "build_shadow_report",
     "build_shadow_ingest_contract_summary",
 ]
 __version__ = "0.1.0"
