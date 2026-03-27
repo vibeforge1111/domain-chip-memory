@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `1210/1210` on this lane:
+As of 2026-03-26, the two lead memory systems are now `1238/1238` on this lane:
 
-- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x205, `pronoun_referential_ambiguity` x230, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x205, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x230
+- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x206, `pronoun_referential_ambiguity` x231, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x206, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x231
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -79,6 +79,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - nine-facet mixed-lifecycle scoped-pronoun stability is now explicit too, so the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration facets still hold when the structure grows by one more stable facet
 - nine-facet value-bearing scoped-pronoun stability is now explicit too, so the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration facets still hold when the overlapping clause carries an explicit target value like `update it to blue later`
 - nine-facet chronology-bearing scoped-pronoun stability is now explicit too, so the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration facets still hold when the overlapping clause carries a timing cue like `update it in February later`
+- eleven-facet value-bearing scoped-pronoun stability is now explicit too, so the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration plus camping-plan plus dessert facets still hold when the overlapping clause carries an explicit target value like `update it to blue later`
 - deleting one facet does not wipe unrelated current-state facets in the same memory profile
 - contradictory corrections can intentionally roll back to an earlier value without treating that older value as stale forever
 - rolling back one facet does not clobber unrelated current-state facets that were never edited
@@ -231,17 +232,17 @@ That makes it possible to see whether the architecture is strong on the broad ta
 It also now reports the primary answer-candidate source and type, which is useful for architecture honesty:
 
 - `observational_temporal_memory` is fully source-aligned on this local lane:
-  - `current_state_memory` x532
-  - `current_state_deletion` x94
-  - `evidence_memory` x256
+  - `current_state_memory` x550
+  - `current_state_deletion` x96
+  - `evidence_memory` x260
   - `temporal_ambiguity` x33
-  - `referential_ambiguity` x295
+  - `referential_ambiguity` x299
 - `dual_store_event_calendar_hybrid` is now also source-aligned on this local lane:
-  - `current_state_memory` x532
-  - `current_state_deletion` x94
-  - `evidence_memory` x256
+  - `current_state_memory` x550
+  - `current_state_deletion` x96
+  - `evidence_memory` x260
   - `temporal_ambiguity` x33
-  - `referential_ambiguity` x295
+  - `referential_ambiguity` x299
 
 That does not prove the role separation problem is solved globally, but it does mean the local product-memory lane no longer depends on an event-memory fallback for a current-state recovery.
 
@@ -251,8 +252,8 @@ That lets the scorecard measure `primary_answer_candidate_source_alignment` dire
 
 As of the current local lane:
 
-- `observational_temporal_memory`: `1210/1210` source-aligned
-- `dual_store_event_calendar_hybrid`: `1210/1210` source-aligned
+- `observational_temporal_memory`: `1238/1238` source-aligned
+- `dual_store_event_calendar_hybrid`: `1238/1238` source-aligned
 
 This is the first local product-memory check in the repo that directly tests memory-role hygiene rather than answer correctness alone.
 
