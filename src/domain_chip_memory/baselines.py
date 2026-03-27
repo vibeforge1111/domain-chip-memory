@@ -4,6 +4,7 @@ import re
 from typing import Any
 
 from .contracts import NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession
+from .memory_roles import strategy_memory_role
 from .runs import BaselinePromptPacket, RetrievedContextItem, build_run_manifest
 
 
@@ -88,6 +89,7 @@ def build_full_context_packets(
                 score=1.0,
                 strategy="full_context",
                 text=_serialize_session(session),
+                memory_role=strategy_memory_role("full_context"),
             )
             for session in sample.sessions
         ]
@@ -142,6 +144,7 @@ def build_lexical_packets(
                     score=score,
                     strategy="lexical_session_overlap",
                     text=_serialize_session(session),
+                    memory_role=strategy_memory_role("lexical_session_overlap"),
                     metadata={"timestamp": session.timestamp},
                 )
                 for session, score in ranked

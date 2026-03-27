@@ -4536,6 +4536,9 @@ def test_observational_memory_surfaces_typed_current_state_answer_candidate():
     assert packets[0].answer_candidates[0].text == "Dubai"
     assert packets[0].answer_candidates[0].candidate_type == "current_state"
     assert packets[0].metadata["primary_answer_candidate_type"] == "current_state"
+    current_state_items = [item for item in packets[0].retrieved_context_items if item.strategy == "current_state_memory"]
+    assert current_state_items
+    assert current_state_items[0].memory_role == "current_state"
     assert "current_state_memory:" in packets[0].assembled_context
 
 

@@ -7,6 +7,7 @@ from typing import Any
 
 from .answer_candidates import build_answer_candidate
 from .contracts import AnswerCandidate, JsonDict, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
+from .memory_roles import strategy_memory_role
 from .memory_updates import build_current_state_view, has_active_current_state_deletion
 from .memory_views import is_current_state_question, select_current_state_entries
 from .runs import BaselinePromptPacket, RetrievedContextItem, build_run_manifest
@@ -6762,6 +6763,7 @@ def build_observational_temporal_memory_packets(
                         score=0.25,
                         strategy="observation_log",
                         text=line,
+                        memory_role=strategy_memory_role("observation_log"),
                         metadata=item_metadata,
                     )
                 )
@@ -6783,6 +6785,7 @@ def build_observational_temporal_memory_packets(
                         score=_evidence_score(question, entry),
                         strategy="evidence_memory",
                         text=line,
+                        memory_role=strategy_memory_role("evidence_memory"),
                         metadata=item_metadata,
                     )
                 )
@@ -6799,6 +6802,7 @@ def build_observational_temporal_memory_packets(
                             score=_evidence_score(question, entry),
                             strategy="aggregate_memory",
                             text=line,
+                            memory_role=strategy_memory_role("aggregate_memory"),
                             metadata={
                                 "timestamp": entry.timestamp,
                                 "predicate": entry.predicate,
@@ -6827,6 +6831,7 @@ def build_observational_temporal_memory_packets(
                             score=_observation_score(question, entry),
                             strategy="topic_continuity",
                             text=line,
+                            memory_role=strategy_memory_role("topic_continuity"),
                             metadata=item_metadata,
                         )
                     )
@@ -6843,6 +6848,7 @@ def build_observational_temporal_memory_packets(
                             score=_observation_score(question, entry),
                             strategy="current_state_memory",
                             text=line,
+                            memory_role=strategy_memory_role("current_state_memory"),
                             metadata={
                                 "timestamp": entry.timestamp,
                                 "predicate": entry.predicate,
@@ -6870,6 +6876,7 @@ def build_observational_temporal_memory_packets(
                         score=_observation_score(question, entry),
                         strategy="belief_memory",
                         text=line,
+                        memory_role=strategy_memory_role("belief_memory"),
                         metadata=item_metadata,
                     )
                 )
@@ -6979,6 +6986,7 @@ def build_beam_ready_temporal_atom_router_packets(
                         score=_atom_score(question, atom),
                         strategy="temporal_atom_router",
                         text=atom_line,
+                        memory_role=strategy_memory_role("temporal_atom_router"),
                         metadata={
                             "atom_id": atom.atom_id,
                             "subject": atom.subject,
@@ -6999,6 +7007,7 @@ def build_beam_ready_temporal_atom_router_packets(
                         score=0.5,
                         strategy="source_rehydration",
                         text=session_text,
+                        memory_role=strategy_memory_role("source_rehydration"),
                         metadata={"timestamp": session.timestamp},
                     )
                 )
@@ -7125,6 +7134,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                         score=0.25,
                         strategy="hybrid_observation_window",
                         text=line,
+                        memory_role=strategy_memory_role("hybrid_observation_window"),
                         metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
                     )
                 )
@@ -7140,6 +7150,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                         score=_evidence_score(question, entry),
                         strategy="evidence_memory",
                         text=line,
+                        memory_role=strategy_memory_role("evidence_memory"),
                         metadata={
                             "timestamp": entry.timestamp,
                             "predicate": entry.predicate,
@@ -7163,6 +7174,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                             score=_observation_score(question, entry),
                             strategy="topic_continuity",
                             text=line,
+                            memory_role=strategy_memory_role("topic_continuity"),
                             metadata={
                                 "timestamp": entry.timestamp,
                                 "predicate": entry.predicate,
@@ -7184,6 +7196,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                             score=_observation_score(question, entry),
                             strategy="current_state_memory",
                             text=line,
+                            memory_role=strategy_memory_role("current_state_memory"),
                             metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
                         )
                     )
@@ -7200,6 +7213,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                         score=_event_score(question, entry),
                         strategy="event_calendar",
                         text=line,
+                        memory_role=strategy_memory_role("event_calendar"),
                         metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
                     )
                 )
@@ -7215,6 +7229,7 @@ def build_dual_store_event_calendar_hybrid_packets(
                         score=_observation_score(question, entry),
                         strategy="belief_memory",
                         text=line,
+                        memory_role=strategy_memory_role("belief_memory"),
                         metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
                     )
                 )

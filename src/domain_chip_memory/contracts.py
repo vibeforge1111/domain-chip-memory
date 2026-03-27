@@ -29,6 +29,7 @@ AnswerCandidateSource = Literal[
 ]
 MemoryRole = Literal[
     "unknown",
+    "episodic",
     "current_state",
     "state_deletion",
     "structured_evidence",

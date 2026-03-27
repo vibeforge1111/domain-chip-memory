@@ -119,6 +119,7 @@ def test_baseline_prompt_packet_to_dict_includes_answer_candidate_metadata():
 
     assert payload["answer_candidates"][0]["text"] == "Dubai"
     assert payload["answer_candidates"][0]["candidate_type"] == "current_state"
+    assert payload["retrieved_context_items"][0]["memory_role"] == "unknown"
 
 
 def test_expand_answer_prefers_exact_answer_candidate_over_belief_paraphrase():

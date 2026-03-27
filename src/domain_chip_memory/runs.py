@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from .contracts import AnswerCandidate, JsonDict, NormalizedBenchmarkSample
+from .contracts import AnswerCandidate, JsonDict, MemoryRole, NormalizedBenchmarkSample
 
 
 @dataclass(frozen=True)
@@ -13,6 +13,7 @@ class RetrievedContextItem:
     score: float
     strategy: str
     text: str
+    memory_role: MemoryRole = "unknown"
     metadata: JsonDict = field(default_factory=dict)
 
     def to_dict(self) -> JsonDict:
