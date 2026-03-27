@@ -20,18 +20,21 @@ def test_sdk_contract_summary_exposes_runtime_surface():
 
 def test_sdk_write_and_get_current_state():
     sdk = SparkMemorySDK()
-    sdk.write_observation(
+    first_write = sdk.write_observation(
         MemoryWriteRequest(
             text="I live in London.",
             timestamp="2025-01-01T09:00:00Z",
         )
     )
-    sdk.write_observation(
+    second_write = sdk.write_observation(
         MemoryWriteRequest(
             text="I moved to Dubai.",
             timestamp="2025-03-01T09:00:00Z",
         )
     )
+
+    assert first_write.accepted is True
+    assert second_write.accepted is True
 
     result = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
 
@@ -117,6 +120,47 @@ def test_sdk_retrieve_evidence_and_events_return_typed_roles():
     assert evidence.items[0].memory_role == "structured_evidence"
     assert events.items
     assert events.items[0].memory_role == "event"
+
+
+def test_sdk_rejects_unsupported_write_without_persisting_raw_residue():
+    sdk = SparkMemorySDK()
+
+    write_result = sdk.write_observation(
+        MemoryWriteRequest(
+            text="Hello there.",
+            timestamp="2025-03-01T09:00:00Z",
+        )
+    )
+    evidence = sdk.retrieve_evidence(EvidenceRetrievalRequest(limit=5))
+
+    assert write_result.accepted is False
+    assert write_result.unsupported_reason == "no_structured_memory_extracted"
+    assert write_result.trace["persisted"] is False
+    assert evidence.items == []
+
+
+def test_sdk_rejects_empty_write_request():
+    sdk = SparkMemorySDK()
+
+    write_result = sdk.write_observation(MemoryWriteRequest(text="   "))
+
+    assert write_result.accepted is False
+    assert write_result.unsupported_reason == "empty_text"
+    assert write_result.trace["status"] == "unsupported_write"
+
+
+def test_sdk_returns_invalid_request_trace_for_bad_lookup_and_limit():
+    sdk = SparkMemorySDK()
+
+    lookup = sdk.get_current_state(CurrentStateRequest(subject="user", predicate=""))
+    retrieval = sdk.retrieve_evidence(EvidenceRetrievalRequest(limit=0))
+
+    assert lookup.found is False
+    assert lookup.trace["status"] == "invalid_request"
+    assert lookup.trace["reason"] == "predicate_required"
+    assert retrieval.items == []
+    assert retrieval.trace["status"] == "invalid_request"
+    assert retrieval.trace["reason"] == "limit_must_be_positive"
 
 
 def test_sdk_explain_answer_returns_trace_and_support():

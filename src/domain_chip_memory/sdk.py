@@ -82,10 +82,12 @@ class RetrievedMemoryRecord:
 class MemoryWriteResult:
     session_id: str
     turn_id: str
+    accepted: bool
     observations_written: int
     events_written: int
     observations: list[RetrievedMemoryRecord]
     events: list[RetrievedMemoryRecord]
+    unsupported_reason: str | None = None
     trace: JsonDict = field(default_factory=dict)
 
 
@@ -129,12 +131,22 @@ class SparkMemorySDK:
         return self._write(request)
 
     def get_current_state(self, request: CurrentStateRequest) -> MemoryLookupResult:
+        invalid_reason = self._invalid_subject_predicate_reason(request.subject, request.predicate)
+        if invalid_reason:
+            return self._invalid_lookup_result(
+                operation="get_current_state",
+                subject=request.subject,
+                predicate=request.predicate,
+                reason=invalid_reason,
+            )
+        subject = self._normalize_subject(request.subject)
+        predicate = self._normalize_predicate(request.predicate)
         observations = self._observations()
         reflected = build_current_state_view(observations)
         matches = [
             entry
             for entry in reflected
-            if entry.subject == request.subject and entry.predicate == request.predicate
+            if entry.subject == subject and entry.predicate == predicate
         ]
         if matches:
             selected = sorted(matches, key=lambda entry: (_timestamp_key(entry.timestamp), entry.observation_id))[-1]
@@ -146,13 +158,13 @@ class SparkMemorySDK:
                 provenance=[self._observation_record(selected, memory_role="current_state")],
                 trace={
                     "operation": "get_current_state",
-                    "subject": request.subject,
-                    "predicate": request.predicate,
+                    "subject": subject,
+                    "predicate": predicate,
                     "observation_count": len(observations),
                 },
             )
-        if has_active_state_deletion(observations, subject=request.subject, predicate=request.predicate):
-            deletion_entries = self._deletion_entries(observations, subject=request.subject, predicate=request.predicate)
+        if has_active_state_deletion(observations, subject=subject, predicate=predicate):
+            deletion_entries = self._deletion_entries(observations, subject=subject, predicate=predicate)
             return MemoryLookupResult(
                 found=False,
                 value=None,
@@ -161,8 +173,8 @@ class SparkMemorySDK:
                 provenance=[self._observation_record(deletion_entries[-1], memory_role="state_deletion")] if deletion_entries else [],
                 trace={
                     "operation": "get_current_state",
-                    "subject": request.subject,
-                    "predicate": request.predicate,
+                    "subject": subject,
+                    "predicate": predicate,
                     "observation_count": len(observations),
                 },
             )
@@ -174,13 +186,31 @@ class SparkMemorySDK:
             provenance=[],
             trace={
                 "operation": "get_current_state",
-                "subject": request.subject,
-                "predicate": request.predicate,
+                "subject": subject,
+                "predicate": predicate,
                 "observation_count": len(observations),
             },
         )
 
     def get_historical_state(self, request: HistoricalStateRequest) -> MemoryLookupResult:
+        invalid_reason = self._invalid_subject_predicate_reason(request.subject, request.predicate)
+        if invalid_reason:
+            return self._invalid_lookup_result(
+                operation="get_historical_state",
+                subject=request.subject,
+                predicate=request.predicate,
+                reason=invalid_reason,
+                extra_trace={"as_of": request.as_of},
+            )
+        if not str(request.as_of or "").strip():
+            return self._invalid_lookup_result(
+                operation="get_historical_state",
+                subject=request.subject,
+                predicate=request.predicate,
+                reason="as_of_required",
+            )
+        subject = self._normalize_subject(request.subject)
+        predicate = self._normalize_predicate(request.predicate)
         observations = [
             entry
             for entry in self._observations()
@@ -190,7 +220,7 @@ class SparkMemorySDK:
         matches = [
             entry
             for entry in reflected
-            if entry.subject == request.subject and entry.predicate == request.predicate
+            if entry.subject == subject and entry.predicate == predicate
         ]
         if matches:
             selected = sorted(matches, key=lambda entry: (_timestamp_key(entry.timestamp), entry.observation_id))[-1]
@@ -202,14 +232,14 @@ class SparkMemorySDK:
                 provenance=[self._observation_record(selected, memory_role="structured_evidence")],
                 trace={
                     "operation": "get_historical_state",
-                    "subject": request.subject,
-                    "predicate": request.predicate,
+                    "subject": subject,
+                    "predicate": predicate,
                     "as_of": request.as_of,
                     "observation_count": len(observations),
                 },
             )
-        if has_active_state_deletion(observations, subject=request.subject, predicate=request.predicate):
-            deletion_entries = self._deletion_entries(observations, subject=request.subject, predicate=request.predicate)
+        if has_active_state_deletion(observations, subject=subject, predicate=predicate):
+            deletion_entries = self._deletion_entries(observations, subject=subject, predicate=predicate)
             return MemoryLookupResult(
                 found=False,
                 value=None,
@@ -218,8 +248,8 @@ class SparkMemorySDK:
                 provenance=[self._observation_record(deletion_entries[-1], memory_role="state_deletion")] if deletion_entries else [],
                 trace={
                     "operation": "get_historical_state",
-                    "subject": request.subject,
-                    "predicate": request.predicate,
+                    "subject": subject,
+                    "predicate": predicate,
                     "as_of": request.as_of,
                     "observation_count": len(observations),
                 },
@@ -232,22 +262,32 @@ class SparkMemorySDK:
             provenance=[],
             trace={
                 "operation": "get_historical_state",
-                "subject": request.subject,
-                "predicate": request.predicate,
+                "subject": subject,
+                "predicate": predicate,
                 "as_of": request.as_of,
                 "observation_count": len(observations),
             },
         )
 
     def retrieve_evidence(self, request: EvidenceRetrievalRequest) -> MemoryRetrievalResult:
+        if request.limit < 1:
+            return MemoryRetrievalResult(
+                items=[],
+                trace={
+                    "operation": "retrieve_evidence",
+                    "status": "invalid_request",
+                    "reason": "limit_must_be_positive",
+                    "limit": request.limit,
+                },
+            )
         observations = self._observations()
         items = [
             self._observation_record(entry, memory_role=self._observation_memory_role(entry))
             for entry in self._rank_observations(
                 observations,
                 query=request.query,
-                subject=request.subject,
-                predicate=request.predicate,
+                subject=self._normalize_optional_subject(request.subject),
+                predicate=self._normalize_optional_predicate(request.predicate),
                 limit=request.limit,
             )
         ]
@@ -263,14 +303,24 @@ class SparkMemorySDK:
         )
 
     def retrieve_events(self, request: EventRetrievalRequest) -> MemoryRetrievalResult:
+        if request.limit < 1:
+            return MemoryRetrievalResult(
+                items=[],
+                trace={
+                    "operation": "retrieve_events",
+                    "status": "invalid_request",
+                    "reason": "limit_must_be_positive",
+                    "limit": request.limit,
+                },
+            )
         events = self._events()
         items = [
             self._event_record(entry)
             for entry in self._rank_events(
                 events,
                 query=request.query,
-                subject=request.subject,
-                predicate=request.predicate,
+                subject=self._normalize_optional_subject(request.subject),
+                predicate=self._normalize_optional_predicate(request.predicate),
                 limit=request.limit,
             )
         ]
@@ -346,16 +396,32 @@ class SparkMemorySDK:
         )
 
     def _write(self, request: MemoryWriteRequest) -> MemoryWriteResult:
+        cleaned_text = str(request.text or "").strip()
+        if not cleaned_text:
+            return MemoryWriteResult(
+                session_id=request.session_id or "",
+                turn_id=request.turn_id or "",
+                accepted=False,
+                observations_written=0,
+                events_written=0,
+                observations=[],
+                events=[],
+                unsupported_reason="empty_text",
+                trace={
+                    "operation": "write_memory",
+                    "status": "unsupported_write",
+                    "reason": "empty_text",
+                },
+            )
         session_id = request.session_id or self._next_session_id()
         turn_id = request.turn_id or self._next_turn_id(session_id)
         turn = NormalizedTurn(
             turn_id=turn_id,
             speaker=request.speaker,
-            text=request.text,
+            text=cleaned_text,
             timestamp=request.timestamp,
             metadata=dict(request.metadata),
         )
-        self._upsert_session(session_id, turn, request.timestamp)
         single_turn_sample = self._sample_for_sessions(
             [
                 NormalizedSession(
@@ -368,9 +434,13 @@ class SparkMemorySDK:
         )
         observations = build_observation_log(single_turn_sample)
         events = build_event_calendar(single_turn_sample)
+        accepted = self._write_has_supported_memory(observations, events)
+        if accepted:
+            self._upsert_session(session_id, turn, request.timestamp)
         return MemoryWriteResult(
             session_id=session_id,
             turn_id=turn_id,
+            accepted=accepted,
             observations_written=len(observations),
             events_written=len(events),
             observations=[
@@ -378,10 +448,13 @@ class SparkMemorySDK:
                 for entry in observations
             ],
             events=[self._event_record(entry) for entry in events],
+            unsupported_reason=None if accepted else "no_structured_memory_extracted",
             trace={
                 "operation": "write_memory",
+                "status": "accepted" if accepted else "unsupported_write",
                 "speaker": request.speaker,
                 "timestamp": request.timestamp,
+                "persisted": accepted,
             },
         )
 
@@ -505,6 +578,63 @@ class SparkMemorySDK:
         if entry.predicate == "raw_turn":
             return "episodic"
         return "structured_evidence"
+
+    def _write_has_supported_memory(
+        self,
+        observations: list[ObservationEntry],
+        events: list[EventCalendarEntry],
+    ) -> bool:
+        if events:
+            return True
+        return any(self._observation_memory_role(entry) != "episodic" for entry in observations)
+
+    def _normalize_subject(self, subject: str) -> str:
+        return str(subject or "").strip().lower()
+
+    def _normalize_predicate(self, predicate: str) -> str:
+        return str(predicate or "").strip().lower()
+
+    def _normalize_optional_subject(self, subject: str | None) -> str | None:
+        cleaned = self._normalize_subject(subject or "")
+        return cleaned or None
+
+    def _normalize_optional_predicate(self, predicate: str | None) -> str | None:
+        cleaned = self._normalize_predicate(predicate or "")
+        return cleaned or None
+
+    def _invalid_subject_predicate_reason(self, subject: str, predicate: str) -> str | None:
+        if not self._normalize_subject(subject):
+            return "subject_required"
+        if not self._normalize_predicate(predicate):
+            return "predicate_required"
+        return None
+
+    def _invalid_lookup_result(
+        self,
+        *,
+        operation: str,
+        subject: str,
+        predicate: str,
+        reason: str,
+        extra_trace: JsonDict | None = None,
+    ) -> MemoryLookupResult:
+        trace: JsonDict = {
+            "operation": operation,
+            "status": "invalid_request",
+            "reason": reason,
+            "subject": subject,
+            "predicate": predicate,
+        }
+        if extra_trace:
+            trace.update(extra_trace)
+        return MemoryLookupResult(
+            found=False,
+            value=None,
+            text=None,
+            memory_role="unknown",
+            provenance=[],
+            trace=trace,
+        )
 
     def _observation_record(self, entry: ObservationEntry, *, memory_role: MemoryRole) -> RetrievedMemoryRecord:
         return RetrievedMemoryRecord(
