@@ -56,10 +56,10 @@ python -m domain_chip_memory.cli demo-product-memory-scorecards
 
 ## Current local status
 
-As of 2026-03-26, the two lead memory systems are now `874/874` on this lane:
+As of 2026-03-26, the two lead memory systems are now `894/894` on this lane:
 
-- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x191, `pronoun_referential_ambiguity` x216, `temporal_wording_disambiguation` x42
-- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x191, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x216
+- `observational_temporal_memory`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x192, `pronoun_referential_ambiguity` x217, `temporal_wording_disambiguation` x42
+- `dual_store_event_calendar_hybrid`: `correction` x31, `deletion` x8, `stale_state_drift`, `evidence_preservation` x38, `ambiguity_abstention` x61, `cross_facet_disambiguation` x12, `operation_disambiguation` x2, `dense_turn_disambiguation` x10, `pronoun_turn_disambiguation` x192, `temporal_wording_disambiguation` x42, `pronoun_referential_ambiguity` x217
 
 The deletion closure came from substrate work, not responder-only cleanup:
 
@@ -186,6 +186,7 @@ The deletion closure came from substrate work, not responder-only cleanup:
 - seven-facet comparative update scoped-pronoun overlap stability is now explicit too, so the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument facets still hold when the overlapping clause carries comparative update wording like `update it later`
 - seven-facet value-bearing scoped-pronoun overlap stability is now explicit too, so the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument facets still hold when the overlapping clause carries an explicit target value like `update it to blue later`
 - seven-facet chronology-bearing scoped-pronoun overlap stability is now explicit too, so the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument facets still hold when the overlapping clause carries a timing cue like `update it in February later`
+- seven-facet comparative delete/update scoped-pronoun overlap stability is now explicit too, so the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument facets still hold when the overlapping clause carries comparative delete wording like `please forget it later`
 - current-state bike-count questions like `How many bikes do I own now?` now stay source-aligned on `current_state_memory` instead of being forced onto the generic aggregate/evidence path by the broad count-question gate
 - selective facet-preserving edits plus historical recall are now explicit too, so deleting one facet and later updating another facet still preserves current-state separation and historical recall for both the deleted facet and the edited facet
 - rollback/edit sequences plus historical recall are now explicit too, so rolling one facet back and later editing another facet still preserves current-state separation and historical recall for both facets
