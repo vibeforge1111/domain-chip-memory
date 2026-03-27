@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .contracts import NormalizedQuestion
     from .memory_systems import ObservationEntry
 
 
@@ -64,3 +66,23 @@ def has_active_state_deletion(
         if observation.predicate == predicate:
             deleted = False
     return deleted
+
+
+def has_active_current_state_deletion(
+    question: "NormalizedQuestion",
+    observations: list["ObservationEntry"],
+    *,
+    is_current_state_question: Callable[["NormalizedQuestion"], bool],
+    question_subjects: Callable[["NormalizedQuestion"], list[str]],
+    question_predicates: Callable[["NormalizedQuestion"], list[str]],
+) -> bool:
+    if not is_current_state_question(question):
+        return False
+    predicates = set(question_predicates(question))
+    if not predicates:
+        return False
+    return any(
+        has_active_state_deletion(observations, subject=subject, predicate=predicate)
+        for subject in question_subjects(question)
+        for predicate in predicates
+    )

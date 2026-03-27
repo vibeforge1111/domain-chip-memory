@@ -7,7 +7,8 @@ from typing import Any
 
 from .answer_candidates import build_answer_candidate
 from .contracts import AnswerCandidate, JsonDict, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
-from .memory_views import build_current_state_view, has_active_state_deletion, is_current_state_question, select_current_state_entries
+from .memory_updates import build_current_state_view, has_active_current_state_deletion
+from .memory_views import is_current_state_question, select_current_state_entries
 from .runs import BaselinePromptPacket, RetrievedContextItem, build_run_manifest
 
 
@@ -2161,23 +2162,6 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
     if not predicates:
         predicates.append("raw_turn")
     return predicates
-
-
-def _has_active_current_state_deletion(
-    question: NormalizedQuestion,
-    observations: list[ObservationEntry],
-) -> bool:
-    if not is_current_state_question(question):
-        return False
-    predicates = set(_question_predicates(question))
-    if not predicates:
-        return False
-    return any(
-        has_active_state_deletion(observations, subject=subject, predicate=predicate)
-        for subject in _question_subjects(question)
-        for predicate in predicates
-    )
-
 
 def _is_preference_question(question: NormalizedQuestion) -> bool:
     question_lower = question.question.lower()
@@ -6685,7 +6669,13 @@ def build_observational_temporal_memory_packets(
         reflected = reflect_observations(observations)
         raw_user_entries = _raw_user_turn_entries(sample)
         for question in sample.questions:
-            current_state_deleted = _has_active_current_state_deletion(question, observations)
+            current_state_deleted = has_active_current_state_deletion(
+                question,
+                observations,
+                is_current_state_question=is_current_state_question,
+                question_subjects=_question_subjects,
+                question_predicates=_question_predicates,
+            )
             observation_limit, reflection_limit = _question_aware_observation_limits(
                 sample,
                 question,
@@ -7084,7 +7074,13 @@ def build_dual_store_event_calendar_hybrid_packets(
             key=lambda entry: (entry.timestamp or "", entry.observation_id),
         )[-max_observations:]
         for question in sample.questions:
-            current_state_deleted = _has_active_current_state_deletion(question, observations)
+            current_state_deleted = has_active_current_state_deletion(
+                question,
+                observations,
+                is_current_state_question=is_current_state_question,
+                question_subjects=_question_subjects,
+                question_predicates=_question_predicates,
+            )
             ranked_reflections = sorted(
                 reflected,
                 key=lambda entry: (_observation_score(question, entry), entry.timestamp or "", entry.observation_id),
