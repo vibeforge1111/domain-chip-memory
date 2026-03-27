@@ -841,7 +841,7 @@ def test_product_memory_binds_pronoun_heavy_turn_clauses_to_the_right_facet_and_
     pronoun_turn_samples = [
         sample
         for sample in product_memory_samples()
-        if sample.sample_id in {"product-memory-pronoun-turn-1", "product-memory-pronoun-turn-2", "product-memory-pronoun-turn-3", "product-memory-pronoun-turn-4", "product-memory-pronoun-turn-5", "product-memory-pronoun-turn-6", "product-memory-pronoun-turn-7", "product-memory-pronoun-turn-8", "product-memory-pronoun-turn-9", "product-memory-pronoun-turn-10", "product-memory-pronoun-turn-11", "product-memory-pronoun-turn-12", "product-memory-pronoun-turn-13", "product-memory-pronoun-turn-14", "product-memory-pronoun-turn-15", "product-memory-pronoun-turn-16", "product-memory-pronoun-turn-17", "product-memory-pronoun-turn-18", "product-memory-pronoun-turn-19", "product-memory-pronoun-turn-20", "product-memory-pronoun-turn-21", "product-memory-pronoun-turn-22", "product-memory-pronoun-turn-23", "product-memory-pronoun-turn-24", "product-memory-pronoun-turn-25", "product-memory-pronoun-turn-26", "product-memory-pronoun-turn-27", "product-memory-pronoun-turn-28", "product-memory-pronoun-turn-29", "product-memory-pronoun-turn-30", "product-memory-pronoun-turn-31", "product-memory-pronoun-turn-32", "product-memory-pronoun-turn-33", "product-memory-pronoun-turn-34", "product-memory-pronoun-turn-35", "product-memory-pronoun-turn-36", "product-memory-pronoun-turn-37", "product-memory-pronoun-turn-38", "product-memory-pronoun-turn-39", "product-memory-pronoun-turn-40", "product-memory-pronoun-turn-41", "product-memory-pronoun-turn-42", "product-memory-pronoun-turn-43", "product-memory-pronoun-turn-44", "product-memory-pronoun-turn-45", "product-memory-pronoun-turn-46", "product-memory-pronoun-turn-47", "product-memory-pronoun-turn-48", "product-memory-pronoun-turn-49", "product-memory-pronoun-turn-50", "product-memory-pronoun-turn-51", "product-memory-pronoun-turn-52", "product-memory-pronoun-turn-53", "product-memory-pronoun-turn-54"}
+        if sample.sample_id in {"product-memory-pronoun-turn-1", "product-memory-pronoun-turn-2", "product-memory-pronoun-turn-3", "product-memory-pronoun-turn-4", "product-memory-pronoun-turn-5", "product-memory-pronoun-turn-6", "product-memory-pronoun-turn-7", "product-memory-pronoun-turn-8", "product-memory-pronoun-turn-9", "product-memory-pronoun-turn-10", "product-memory-pronoun-turn-11", "product-memory-pronoun-turn-12", "product-memory-pronoun-turn-13", "product-memory-pronoun-turn-14", "product-memory-pronoun-turn-15", "product-memory-pronoun-turn-16", "product-memory-pronoun-turn-17", "product-memory-pronoun-turn-18", "product-memory-pronoun-turn-19", "product-memory-pronoun-turn-20", "product-memory-pronoun-turn-21", "product-memory-pronoun-turn-22", "product-memory-pronoun-turn-23", "product-memory-pronoun-turn-24", "product-memory-pronoun-turn-25", "product-memory-pronoun-turn-26", "product-memory-pronoun-turn-27", "product-memory-pronoun-turn-28", "product-memory-pronoun-turn-29", "product-memory-pronoun-turn-30", "product-memory-pronoun-turn-31", "product-memory-pronoun-turn-32", "product-memory-pronoun-turn-33", "product-memory-pronoun-turn-34", "product-memory-pronoun-turn-35", "product-memory-pronoun-turn-36", "product-memory-pronoun-turn-37", "product-memory-pronoun-turn-38", "product-memory-pronoun-turn-39", "product-memory-pronoun-turn-40", "product-memory-pronoun-turn-41", "product-memory-pronoun-turn-42", "product-memory-pronoun-turn-43", "product-memory-pronoun-turn-44", "product-memory-pronoun-turn-45", "product-memory-pronoun-turn-46", "product-memory-pronoun-turn-47", "product-memory-pronoun-turn-48", "product-memory-pronoun-turn-49", "product-memory-pronoun-turn-50", "product-memory-pronoun-turn-51", "product-memory-pronoun-turn-52", "product-memory-pronoun-turn-53", "product-memory-pronoun-turn-54", "product-memory-pronoun-turn-55"}
     ]
 
     for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
@@ -1832,13 +1832,43 @@ def test_product_memory_binds_pronoun_heavy_turn_clauses_to_the_right_facet_and_
         assert "dubai" in predictions["product-memory-pronoun-turn-54:q10"]["predicted_answer"].lower()
         assert predictions["product-memory-pronoun-turn-54:q10"]["is_correct"] is True
         assert predictions["product-memory-pronoun-turn-54:q10"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert predictions["product-memory-pronoun-turn-55:q1"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-turn-55:q1"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q1"]["metadata"]["primary_answer_candidate_source"] == "current_state_deletion"
+        assert "sharjah" in predictions["product-memory-pronoun-turn-55:q2"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-55:q2"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q2"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "espresso" in predictions["product-memory-pronoun-turn-55:q3"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-55:q3"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q3"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "beagle" in predictions["product-memory-pronoun-turn-55:q4"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-55:q4"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q4"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "two" in predictions["product-memory-pronoun-turn-55:q5"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-55:q5"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q5"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "summer vibes" in predictions["product-memory-pronoun-turn-55:q6"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-55:q6"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q6"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "clarinet" in predictions["product-memory-pronoun-turn-55:q7"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-55:q7"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q7"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "spotify" in predictions["product-memory-pronoun-turn-55:q8"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-55:q8"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q8"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "red" in predictions["product-memory-pronoun-turn-55:q9"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-55:q9"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q9"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
+        assert "dubai" in predictions["product-memory-pronoun-turn-55:q10"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-turn-55:q10"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-turn-55:q10"]["metadata"]["primary_answer_candidate_source"] == "evidence_memory"
 
 
 def test_product_memory_abstains_on_mixed_facet_pronoun_scope_ambiguity():
     ambiguity_samples = [
         sample
         for sample in product_memory_samples()
-        if sample.sample_id in {"product-memory-pronoun-ambiguity-1", "product-memory-pronoun-ambiguity-2", "product-memory-pronoun-ambiguity-3", "product-memory-pronoun-ambiguity-4", "product-memory-pronoun-ambiguity-5", "product-memory-pronoun-ambiguity-6", "product-memory-pronoun-ambiguity-7", "product-memory-pronoun-ambiguity-8", "product-memory-pronoun-ambiguity-9", "product-memory-pronoun-ambiguity-10", "product-memory-pronoun-ambiguity-11", "product-memory-pronoun-ambiguity-12", "product-memory-pronoun-ambiguity-13", "product-memory-pronoun-ambiguity-14", "product-memory-pronoun-ambiguity-15", "product-memory-pronoun-ambiguity-16", "product-memory-pronoun-ambiguity-17", "product-memory-pronoun-ambiguity-18", "product-memory-pronoun-ambiguity-19", "product-memory-pronoun-ambiguity-20", "product-memory-pronoun-ambiguity-21", "product-memory-pronoun-ambiguity-22", "product-memory-pronoun-ambiguity-23", "product-memory-pronoun-ambiguity-24", "product-memory-pronoun-ambiguity-25", "product-memory-pronoun-ambiguity-26", "product-memory-pronoun-ambiguity-27", "product-memory-pronoun-ambiguity-28", "product-memory-pronoun-ambiguity-29", "product-memory-pronoun-ambiguity-30", "product-memory-pronoun-ambiguity-31", "product-memory-pronoun-ambiguity-32", "product-memory-pronoun-ambiguity-33", "product-memory-pronoun-ambiguity-34", "product-memory-pronoun-ambiguity-35", "product-memory-pronoun-ambiguity-36", "product-memory-pronoun-ambiguity-37", "product-memory-pronoun-ambiguity-38", "product-memory-pronoun-ambiguity-39", "product-memory-pronoun-ambiguity-40", "product-memory-pronoun-ambiguity-41", "product-memory-pronoun-ambiguity-42", "product-memory-pronoun-ambiguity-43", "product-memory-pronoun-ambiguity-44", "product-memory-pronoun-ambiguity-45", "product-memory-pronoun-ambiguity-46", "product-memory-pronoun-ambiguity-47", "product-memory-pronoun-ambiguity-48", "product-memory-pronoun-ambiguity-49", "product-memory-pronoun-ambiguity-50", "product-memory-pronoun-ambiguity-51", "product-memory-pronoun-ambiguity-52", "product-memory-pronoun-ambiguity-53", "product-memory-pronoun-ambiguity-54"}
+        if sample.sample_id in {"product-memory-pronoun-ambiguity-1", "product-memory-pronoun-ambiguity-2", "product-memory-pronoun-ambiguity-3", "product-memory-pronoun-ambiguity-4", "product-memory-pronoun-ambiguity-5", "product-memory-pronoun-ambiguity-6", "product-memory-pronoun-ambiguity-7", "product-memory-pronoun-ambiguity-8", "product-memory-pronoun-ambiguity-9", "product-memory-pronoun-ambiguity-10", "product-memory-pronoun-ambiguity-11", "product-memory-pronoun-ambiguity-12", "product-memory-pronoun-ambiguity-13", "product-memory-pronoun-ambiguity-14", "product-memory-pronoun-ambiguity-15", "product-memory-pronoun-ambiguity-16", "product-memory-pronoun-ambiguity-17", "product-memory-pronoun-ambiguity-18", "product-memory-pronoun-ambiguity-19", "product-memory-pronoun-ambiguity-20", "product-memory-pronoun-ambiguity-21", "product-memory-pronoun-ambiguity-22", "product-memory-pronoun-ambiguity-23", "product-memory-pronoun-ambiguity-24", "product-memory-pronoun-ambiguity-25", "product-memory-pronoun-ambiguity-26", "product-memory-pronoun-ambiguity-27", "product-memory-pronoun-ambiguity-28", "product-memory-pronoun-ambiguity-29", "product-memory-pronoun-ambiguity-30", "product-memory-pronoun-ambiguity-31", "product-memory-pronoun-ambiguity-32", "product-memory-pronoun-ambiguity-33", "product-memory-pronoun-ambiguity-34", "product-memory-pronoun-ambiguity-35", "product-memory-pronoun-ambiguity-36", "product-memory-pronoun-ambiguity-37", "product-memory-pronoun-ambiguity-38", "product-memory-pronoun-ambiguity-39", "product-memory-pronoun-ambiguity-40", "product-memory-pronoun-ambiguity-41", "product-memory-pronoun-ambiguity-42", "product-memory-pronoun-ambiguity-43", "product-memory-pronoun-ambiguity-44", "product-memory-pronoun-ambiguity-45", "product-memory-pronoun-ambiguity-46", "product-memory-pronoun-ambiguity-47", "product-memory-pronoun-ambiguity-48", "product-memory-pronoun-ambiguity-49", "product-memory-pronoun-ambiguity-50", "product-memory-pronoun-ambiguity-51", "product-memory-pronoun-ambiguity-52", "product-memory-pronoun-ambiguity-53", "product-memory-pronoun-ambiguity-54", "product-memory-pronoun-ambiguity-55"}
     ]
 
     for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
@@ -2982,6 +3012,42 @@ def test_product_memory_abstains_on_mixed_facet_pronoun_scope_ambiguity():
         assert predictions["product-memory-pronoun-ambiguity-54:q12"]["predicted_answer"].lower() == "unknown"
         assert predictions["product-memory-pronoun-ambiguity-54:q12"]["is_correct"] is True
         assert predictions["product-memory-pronoun-ambiguity-54:q12"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
+        assert predictions["product-memory-pronoun-ambiguity-55:q1"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-ambiguity-55:q1"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q1"]["metadata"]["primary_answer_candidate_source"] == "current_state_deletion"
+        assert "sharjah" in predictions["product-memory-pronoun-ambiguity-55:q2"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-ambiguity-55:q2"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q2"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "espresso" in predictions["product-memory-pronoun-ambiguity-55:q3"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-ambiguity-55:q3"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q3"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "beagle" in predictions["product-memory-pronoun-ambiguity-55:q4"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-ambiguity-55:q4"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q4"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "two" in predictions["product-memory-pronoun-ambiguity-55:q5"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-ambiguity-55:q5"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q5"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "summer vibes" in predictions["product-memory-pronoun-ambiguity-55:q6"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-ambiguity-55:q6"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q6"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "clarinet" in predictions["product-memory-pronoun-ambiguity-55:q7"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-ambiguity-55:q7"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q7"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert "spotify" in predictions["product-memory-pronoun-ambiguity-55:q8"]["predicted_answer"].lower()
+        assert predictions["product-memory-pronoun-ambiguity-55:q8"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q8"]["metadata"]["primary_answer_candidate_source"] == "current_state_memory"
+        assert predictions["product-memory-pronoun-ambiguity-55:q9"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-ambiguity-55:q9"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q9"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
+        assert predictions["product-memory-pronoun-ambiguity-55:q10"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-ambiguity-55:q10"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q10"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
+        assert predictions["product-memory-pronoun-ambiguity-55:q11"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-ambiguity-55:q11"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q11"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
+        assert predictions["product-memory-pronoun-ambiguity-55:q12"]["predicted_answer"].lower() == "unknown"
+        assert predictions["product-memory-pronoun-ambiguity-55:q12"]["is_correct"] is True
+        assert predictions["product-memory-pronoun-ambiguity-55:q12"]["metadata"]["primary_answer_candidate_source"] == "referential_ambiguity"
 
 
 def test_extract_memory_atoms_supports_direct_dog_breed_statements():
