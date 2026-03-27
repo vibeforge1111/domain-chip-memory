@@ -17,6 +17,10 @@ def _timestamp_key(timestamp: str | None) -> str:
     return timestamp or ""
 
 
+def _normalize_scalar(value: str | None) -> str:
+    return re.sub(r"\s+", " ", str(value or "")).strip()
+
+
 @dataclass(frozen=True)
 class MemoryWriteRequest:
     text: str
@@ -24,6 +28,10 @@ class MemoryWriteRequest:
     timestamp: str | None = None
     session_id: str | None = None
     turn_id: str | None = None
+    operation: str = "auto"
+    subject: str | None = None
+    predicate: str | None = None
+    value: str | None = None
     metadata: JsonDict = field(default_factory=dict)
 
 
@@ -123,12 +131,14 @@ class SparkMemorySDK:
     def __init__(self) -> None:
         self._sessions: list[NormalizedSession] = []
         self._session_counter = 0
+        self._manual_observations: list[ObservationEntry] = []
+        self._manual_events: list[EventCalendarEntry] = []
 
     def write_observation(self, request: MemoryWriteRequest) -> MemoryWriteResult:
-        return self._write(request)
+        return self._write(request, write_kind="observation")
 
     def write_event(self, request: MemoryWriteRequest) -> MemoryWriteResult:
-        return self._write(request)
+        return self._write(request, write_kind="event")
 
     def get_current_state(self, request: CurrentStateRequest) -> MemoryLookupResult:
         invalid_reason = self._invalid_subject_predicate_reason(request.subject, request.predicate)
@@ -395,12 +405,16 @@ class SparkMemorySDK:
             },
         )
 
-    def _write(self, request: MemoryWriteRequest) -> MemoryWriteResult:
+    def _write(self, request: MemoryWriteRequest, *, write_kind: str) -> MemoryWriteResult:
+        operation = _normalize_scalar(request.operation).lower() or "auto"
         cleaned_text = str(request.text or "").strip()
-        if not cleaned_text:
+        session_id = request.session_id or self._next_session_id()
+        turn_id = request.turn_id or self._next_turn_id(session_id)
+
+        if operation == "auto" and not cleaned_text:
             return MemoryWriteResult(
-                session_id=request.session_id or "",
-                turn_id=request.turn_id or "",
+                session_id=session_id,
+                turn_id=turn_id,
                 accepted=False,
                 observations_written=0,
                 events_written=0,
@@ -411,32 +425,107 @@ class SparkMemorySDK:
                     "operation": "write_memory",
                     "status": "unsupported_write",
                     "reason": "empty_text",
+                    "write_kind": write_kind,
+                    "write_operation": operation,
+                    "persisted": False,
                 },
             )
-        session_id = request.session_id or self._next_session_id()
-        turn_id = request.turn_id or self._next_turn_id(session_id)
+
+        invalid_operation_reason = self._unsupported_operation_reason(operation, write_kind=write_kind)
+        if invalid_operation_reason:
+            return MemoryWriteResult(
+                session_id=session_id,
+                turn_id=turn_id,
+                accepted=False,
+                observations_written=0,
+                events_written=0,
+                observations=[],
+                events=[],
+                unsupported_reason=invalid_operation_reason,
+                trace={
+                    "operation": "write_memory",
+                    "status": "unsupported_write",
+                    "reason": invalid_operation_reason,
+                    "write_kind": write_kind,
+                    "write_operation": operation,
+                    "persisted": False,
+                },
+            )
+
+        observations: list[ObservationEntry] = []
+        events: list[EventCalendarEntry] = []
+        manual_write = operation != "auto"
+        turn_metadata = dict(request.metadata)
+        if manual_write:
+            explicit_memory = self._explicit_memory_entries(
+                request,
+                write_kind=write_kind,
+                write_operation=operation,
+                session_id=session_id,
+                turn_id=turn_id,
+            )
+            if explicit_memory["unsupported_reason"] is not None:
+                return MemoryWriteResult(
+                    session_id=session_id,
+                    turn_id=turn_id,
+                    accepted=False,
+                    observations_written=0,
+                    events_written=0,
+                    observations=[],
+                    events=[],
+                    unsupported_reason=str(explicit_memory["unsupported_reason"]),
+                    trace={
+                        "operation": "write_memory",
+                        "status": "unsupported_write",
+                        "reason": str(explicit_memory["unsupported_reason"]),
+                        "write_kind": write_kind,
+                        "write_operation": operation,
+                        "persisted": False,
+                    },
+                )
+            observations = list(explicit_memory["observations"])
+            events = list(explicit_memory["events"])
+            turn_metadata.update(
+                {
+                    "sdk_explicit_operation": operation,
+                    "sdk_manual_memory": True,
+                }
+            )
+
         turn = NormalizedTurn(
             turn_id=turn_id,
             speaker=request.speaker,
-            text=cleaned_text,
+            text=cleaned_text
+            or self._manual_turn_text(
+                write_operation=operation,
+                write_kind=write_kind,
+                subject=request.subject,
+                predicate=request.predicate,
+                value=request.value,
+            ),
             timestamp=request.timestamp,
-            metadata=dict(request.metadata),
+            metadata=turn_metadata,
         )
-        single_turn_sample = self._sample_for_sessions(
-            [
-                NormalizedSession(
-                    session_id=session_id,
-                    turns=[turn],
-                    timestamp=request.timestamp,
-                    metadata={},
-                )
-            ]
-        )
-        observations = build_observation_log(single_turn_sample)
-        events = build_event_calendar(single_turn_sample)
+        if not manual_write:
+            single_turn_sample = self._sample_for_sessions(
+                [
+                    NormalizedSession(
+                        session_id=session_id,
+                        turns=[turn],
+                        timestamp=request.timestamp,
+                        metadata={},
+                    )
+                ]
+            )
+            observations = build_observation_log(single_turn_sample)
+            events = build_event_calendar(single_turn_sample)
+
         accepted = self._write_has_supported_memory(observations, events)
         if accepted:
             self._upsert_session(session_id, turn, request.timestamp)
+            if manual_write:
+                self._manual_observations.extend(observations)
+                self._manual_events.extend(events)
         return MemoryWriteResult(
             session_id=session_id,
             turn_id=turn_id,
@@ -454,6 +543,8 @@ class SparkMemorySDK:
                 "status": "accepted" if accepted else "unsupported_write",
                 "speaker": request.speaker,
                 "timestamp": request.timestamp,
+                "write_kind": write_kind,
+                "write_operation": operation,
                 "persisted": accepted,
             },
         )
@@ -502,13 +593,23 @@ class SparkMemorySDK:
         )
 
     def _runtime_sample(self) -> NormalizedBenchmarkSample:
-        return self._sample_for_sessions(self._sessions)
+        filtered_sessions: list[NormalizedSession] = []
+        for session in self._sessions:
+            filtered_sessions.append(
+                NormalizedSession(
+                    session_id=session.session_id,
+                    turns=[turn for turn in session.turns if not bool(turn.metadata.get("sdk_manual_memory"))],
+                    timestamp=session.timestamp,
+                    metadata=dict(session.metadata),
+                )
+            )
+        return self._sample_for_sessions(filtered_sessions)
 
     def _observations(self) -> list[ObservationEntry]:
-        return build_observation_log(self._runtime_sample())
+        return [*build_observation_log(self._runtime_sample()), *self._manual_observations]
 
     def _events(self) -> list[EventCalendarEntry]:
-        return build_event_calendar(self._runtime_sample())
+        return [*build_event_calendar(self._runtime_sample()), *self._manual_events]
 
     def _deletion_entries(
         self,
@@ -578,6 +679,136 @@ class SparkMemorySDK:
         if entry.predicate == "raw_turn":
             return "episodic"
         return "structured_evidence"
+
+    def _unsupported_operation_reason(self, operation: str, *, write_kind: str) -> str | None:
+        supported_by_kind = {
+            "observation": {"auto", "create", "update", "delete"},
+            "event": {"auto", "event"},
+        }
+        if operation in supported_by_kind.get(write_kind, set()):
+            return None
+        return "unsupported_operation"
+
+    def _explicit_memory_entries(
+        self,
+        request: MemoryWriteRequest,
+        *,
+        write_kind: str,
+        write_operation: str,
+        session_id: str,
+        turn_id: str,
+    ) -> JsonDict:
+        subject = self._normalize_subject(request.subject or "")
+        predicate = self._normalize_predicate(request.predicate or "")
+        value = _normalize_scalar(request.value)
+        if not subject:
+            return {"unsupported_reason": "subject_required", "observations": [], "events": []}
+        if not predicate:
+            return {"unsupported_reason": "predicate_required", "observations": [], "events": []}
+        if write_kind == "event":
+            if not value:
+                return {"unsupported_reason": "value_required", "observations": [], "events": []}
+            return {
+                "unsupported_reason": None,
+                "observations": [],
+                "events": [
+                    EventCalendarEntry(
+                        event_id=f"{turn_id}:event:1",
+                        subject=subject,
+                        predicate=predicate,
+                        text=self._manual_turn_text(
+                            write_operation=write_operation,
+                            write_kind=write_kind,
+                            subject=subject,
+                            predicate=predicate,
+                            value=value,
+                        ),
+                        session_id=session_id,
+                        turn_ids=[turn_id],
+                        timestamp=request.timestamp,
+                        metadata={
+                            **dict(request.metadata),
+                            "value": value,
+                            "write_operation": write_operation,
+                        },
+                    )
+                ],
+            }
+        if write_operation in {"create", "update"} and not value:
+            return {"unsupported_reason": "value_required", "observations": [], "events": []}
+        if write_operation == "delete":
+            return {
+                "unsupported_reason": None,
+                "observations": [
+                    ObservationEntry(
+                        observation_id=f"{turn_id}:observation:1",
+                        subject=subject,
+                        predicate="state_deletion",
+                        text=self._manual_turn_text(
+                            write_operation=write_operation,
+                            write_kind=write_kind,
+                            subject=subject,
+                            predicate=predicate,
+                            value=value,
+                        ),
+                        session_id=session_id,
+                        turn_ids=[turn_id],
+                        timestamp=request.timestamp,
+                        metadata={
+                            **dict(request.metadata),
+                            "target_predicate": predicate,
+                            "deleted_value": value,
+                            "write_operation": write_operation,
+                        },
+                    )
+                ],
+                "events": [],
+            }
+        return {
+            "unsupported_reason": None,
+            "observations": [
+                ObservationEntry(
+                    observation_id=f"{turn_id}:observation:1",
+                    subject=subject,
+                    predicate=predicate,
+                    text=self._manual_turn_text(
+                        write_operation=write_operation,
+                        write_kind=write_kind,
+                        subject=subject,
+                        predicate=predicate,
+                        value=value,
+                    ),
+                    session_id=session_id,
+                    turn_ids=[turn_id],
+                    timestamp=request.timestamp,
+                    metadata={
+                        **dict(request.metadata),
+                        "value": value,
+                        "entity_key": value.lower(),
+                        "write_operation": write_operation,
+                    },
+                )
+            ],
+            "events": [],
+        }
+
+    def _manual_turn_text(
+        self,
+        *,
+        write_operation: str,
+        write_kind: str,
+        subject: str | None,
+        predicate: str | None,
+        value: str | None,
+    ) -> str:
+        subject_text = _normalize_scalar(subject) or "user"
+        predicate_text = _normalize_scalar(predicate) or "memory"
+        value_text = _normalize_scalar(value)
+        if write_kind == "event":
+            return f"event {predicate_text} for {subject_text}: {value_text}"
+        if write_operation == "delete":
+            return f"delete {predicate_text} for {subject_text}: {value_text}".strip(" :")
+        return f"{subject_text} {predicate_text} {value_text}".strip()
 
     def _write_has_supported_memory(
         self,
@@ -665,6 +896,10 @@ def build_sdk_contract_summary() -> dict[str, Any]:
     return {
         "runtime_class": "SparkMemorySDK",
         "write_methods": ["write_observation", "write_event"],
+        "write_operations": {
+            "write_observation": ["auto", "create", "update", "delete"],
+            "write_event": ["auto", "event"],
+        },
         "read_methods": [
             "get_current_state",
             "get_historical_state",
