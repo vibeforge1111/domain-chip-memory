@@ -243,6 +243,69 @@ def _build_demo_shadow_report_payload() -> dict:
     }
 
 
+def _load_shadow_report_payload(data_file: str) -> dict:
+    payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Shadow replay file must contain a JSON object.")
+    raw_conversations = payload.get("conversations", [])
+    if not isinstance(raw_conversations, list):
+        raise ValueError("Shadow replay file must contain a conversations list.")
+
+    writable_roles = payload.get("writable_roles")
+    if isinstance(writable_roles, list):
+        adapter = SparkShadowIngestAdapter(writable_roles=tuple(str(role) for role in writable_roles))
+    else:
+        adapter = SparkShadowIngestAdapter()
+
+    evaluations = []
+    for index, item in enumerate(raw_conversations):
+        if not isinstance(item, dict):
+            raise ValueError(f"Conversation at index {index} must be an object.")
+        conversation_id = str(item.get("conversation_id", "")).strip()
+        if not conversation_id:
+            raise ValueError(f"Conversation at index {index} must include conversation_id.")
+        turns = [
+            SparkShadowTurn(
+                message_id=str(turn.get("message_id", "")),
+                role=str(turn.get("role", "")),
+                content=str(turn.get("content", "")),
+                timestamp=str(turn.get("timestamp")) if turn.get("timestamp") is not None else None,
+                metadata=dict(turn.get("metadata", {})),
+            )
+            for turn in item.get("turns", [])
+            if isinstance(turn, dict)
+        ]
+        probes = [
+            SparkShadowProbe(
+                probe_id=str(probe.get("probe_id", "")),
+                probe_type=str(probe.get("probe_type", "")),
+                subject=str(probe.get("subject")) if probe.get("subject") is not None else None,
+                predicate=str(probe.get("predicate")) if probe.get("predicate") is not None else None,
+                query=str(probe.get("query")) if probe.get("query") is not None else None,
+                as_of=str(probe.get("as_of")) if probe.get("as_of") is not None else None,
+                expected_value=str(probe.get("expected_value")) if probe.get("expected_value") is not None else None,
+                min_results=int(probe.get("min_results", 1) or 1),
+            )
+            for probe in item.get("probes", [])
+            if isinstance(probe, dict)
+        ]
+        ingest_result = adapter.ingest_conversation(
+            SparkShadowIngestRequest(
+                conversation_id=conversation_id,
+                session_id=str(item.get("session_id")) if item.get("session_id") is not None else None,
+                turns=turns,
+                metadata=dict(item.get("metadata", {})),
+            )
+        )
+        evaluations.append(adapter.evaluate_ingest(ingest_result, probes=probes))
+
+    report = build_shadow_report(evaluations)
+    return {
+        "evaluations": [asdict(evaluation) for evaluation in evaluations],
+        "report": asdict(report),
+    }
+
+
 def main() -> None:
     load_dotenv(Path.cwd() / ".env")
 
@@ -267,6 +330,9 @@ def main() -> None:
     subparsers.add_parser("demo-product-memory-scorecards", help="Run local product-memory scorecards for correction, deletion, and stale-state drift.")
     demo_spark_shadow = subparsers.add_parser("demo-spark-shadow-report", help="Run a local Spark shadow ingest/report demo.")
     demo_spark_shadow.add_argument("--write")
+    run_spark_shadow = subparsers.add_parser("run-spark-shadow-report", help="Replay Builder-style shadow traffic from JSON and emit a shadow report.")
+    run_spark_shadow.add_argument("data_file")
+    run_spark_shadow.add_argument("--write")
     subparsers.add_parser("loader-contracts", help="Show benchmark file loader summary.")
     subparsers.add_parser("provider-contracts", help="Show model-provider interface summary.")
     subparsers.add_parser("runner-contracts", help="Show executable baseline runner summary.")
@@ -465,6 +531,13 @@ def main() -> None:
 
     if args.command == "demo-spark-shadow-report":
         payload = _build_demo_shadow_report_payload()
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-shadow-report":
+        payload = _load_shadow_report_payload(args.data_file)
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
