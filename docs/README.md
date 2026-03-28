@@ -5,6 +5,7 @@ This index groups the active documentation surface by job instead of by filename
 ## Start Here
 
 - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
+- [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
 - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
@@ -49,6 +50,7 @@ This index groups the active documentation surface by job instead of by filename
 
 ## Session Logs And Handoffs
 
+- [Frontier Status 2026-03-28](FRONTIER_STATUS_2026-03-28.md)
 - [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
 - [Tomorrow Start Checklist 2026-03-28](TOMORROW_START_CHECKLIST_2026-03-28.md)
 - [Session Log 2026-03-26](SESSION_LOG_2026-03-26.md)
@@ -70,6 +72,7 @@ Use these routes depending on the task.
 
 - Restarting work after a pause:
   - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
+  - [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
   - [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
   - [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-28.md)
 - Understanding the architecture direction:
