@@ -6,7 +6,8 @@ from .memory_beam_builder import build_beam_ready_temporal_atom_router_packets a
 from .memory_contract_summary import build_memory_system_contract_summary
 from .memory_dual_store_builder import build_dual_store_event_calendar_hybrid_packets as _build_dual_store_event_calendar_hybrid_packets_impl
 from .memory_observational_builder import build_observational_temporal_memory_packets as _build_observational_temporal_memory_packets_impl
-from .runs import BaselinePromptPacket
+from .memory_roles import strategy_memory_role
+from .runs import BaselinePromptPacket, build_run_manifest
 
 
 def build_observational_temporal_memory_packets(
@@ -50,8 +51,8 @@ def build_observational_temporal_memory_packets(
         has_referential_ambiguity=_runtime._has_referential_ambiguity,
         should_use_current_state_exact_value=_runtime._should_use_current_state_exact_value,
         build_answer_candidate=_runtime.build_answer_candidate,
-        build_run_manifest=_runtime.build_run_manifest,
-        strategy_memory_role=_runtime.strategy_memory_role,
+        build_run_manifest=build_run_manifest,
+        strategy_memory_role=strategy_memory_role,
     )
 
 
@@ -75,8 +76,8 @@ def build_beam_ready_temporal_atom_router_packets(
         should_use_current_state_exact_value=_runtime._should_use_current_state_exact_value,
         answer_candidate_surface_text=_runtime._answer_candidate_surface_text,
         build_answer_candidate=_runtime.build_answer_candidate,
-        build_run_manifest=_runtime.build_run_manifest,
-        strategy_memory_role=_runtime.strategy_memory_role,
+        build_run_manifest=build_run_manifest,
+        strategy_memory_role=strategy_memory_role,
     )
 
 
@@ -117,8 +118,8 @@ def build_dual_store_event_calendar_hybrid_packets(
         should_use_current_state_exact_value=_runtime._should_use_current_state_exact_value,
         answer_candidate_surface_text=_runtime._answer_candidate_surface_text,
         build_answer_candidate=_runtime.build_answer_candidate,
-        build_run_manifest=_runtime.build_run_manifest,
-        strategy_memory_role=_runtime.strategy_memory_role,
+        build_run_manifest=build_run_manifest,
+        strategy_memory_role=strategy_memory_role,
     )
 
 

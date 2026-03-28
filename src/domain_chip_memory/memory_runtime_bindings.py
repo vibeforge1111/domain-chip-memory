@@ -88,7 +88,6 @@ from .memory_time import parse_question_state_anchor as _parse_question_state_an
 from .memory_time import shift_month as _shift_month
 from .memory_updates import build_current_state_view, has_active_current_state_deletion
 from .memory_views import is_current_state_question, select_current_state_entries
-from .runs import build_run_manifest
 
 
 def build_observation_log(sample: NormalizedBenchmarkSample) -> list[ObservationEntry]:
