@@ -20,6 +20,8 @@ from .memory_answer_inference import infer_shared_answer as _infer_shared_answer
 from .memory_answer_routing import choose_answer_candidate as _choose_answer_candidate_impl
 from .memory_answer_routing import entry_combined_text as _entry_combined_text_impl
 from .memory_answer_routing import question_needs_raw_aggregate_context as _question_needs_raw_aggregate_context
+from .memory_atom_routing import atom_score as _atom_score_impl
+from .memory_atom_routing import choose_atoms as _choose_atoms_impl
 from .memory_beam_builder import build_beam_ready_temporal_atom_router_packets as _build_beam_ready_temporal_atom_router_packets_impl
 from .memory_contract_summary import build_memory_system_contract_summary as _build_memory_system_contract_summary_impl
 from .memory_dual_store_builder import build_dual_store_event_calendar_hybrid_packets as _build_dual_store_event_calendar_hybrid_packets_impl
@@ -937,65 +939,26 @@ def build_event_calendar(sample: NormalizedBenchmarkSample) -> list[EventCalenda
 
 
 def _atom_score(question: NormalizedQuestion, atom: MemoryAtom) -> float:
-    score = 0.0
-    subject = _question_subject(question)
-    subjects = set(_question_subjects(question))
-    predicates = _question_predicates(question)
-    question_tokens = set(_tokenize(question.question))
-    atom_tokens = set(_tokenize(atom.source_text))
-    question_bigrams = _token_bigrams(question.question)
-    atom_bigrams = _token_bigrams(atom.source_text)
-
-    if atom.subject == subject:
-        score += 3.0
-    elif atom.subject in subjects:
-        score += 2.5
-    if atom.predicate in predicates:
-        score += 4.0
-    score += float(len(question_tokens.intersection(atom_tokens)))
-    score += 1.5 * min(len(question_bigrams.intersection(atom_bigrams)), 3)
-    if atom.timestamp:
-        score += 0.001 * sum(ord(char) for char in atom.timestamp)
-    if question.category in {"knowledge-update", "temporal", "temporal-reasoning"} and atom.timestamp:
-        score += 1.0
-    if atom.metadata.get("fallback"):
-        score -= 2.0
-    return score
+    return _atom_score_impl(
+        question,
+        atom,
+        question_subject=_question_subject,
+        question_subjects=_question_subjects,
+        question_predicates=_question_predicates,
+        tokenize=_tokenize,
+        token_bigrams=_token_bigrams,
+    )
 
 
 def _choose_atoms(question: NormalizedQuestion, atoms: list[MemoryAtom], limit: int) -> list[MemoryAtom]:
-    predicates = set(_question_predicates(question))
-    subjects = set(_question_subjects(question))
-    latest_by_key: dict[tuple[str, str], MemoryAtom] = {}
-    other_atoms: list[MemoryAtom] = []
-    for atom in atoms:
-        key = (atom.subject, atom.predicate)
-        if atom.subject in subjects and atom.predicate in predicates:
-            current = latest_by_key.get(key)
-            if current is None or (atom.timestamp or "") >= (current.timestamp or ""):
-                latest_by_key[key] = atom
-        else:
-            other_atoms.append(atom)
-
-    scored = sorted(
-        [*latest_by_key.values(), *other_atoms],
-        key=lambda atom: (_atom_score(question, atom), atom.timestamp or "", atom.atom_id),
-        reverse=True,
+    return _choose_atoms_impl(
+        question,
+        atoms,
+        limit,
+        question_predicates=_question_predicates,
+        question_subjects=_question_subjects,
+        atom_score=_atom_score,
     )
-    chosen: list[MemoryAtom] = []
-    seen_keys: set[tuple[str, str]] = set()
-    for atom in scored:
-        key = (atom.subject, atom.predicate)
-        if atom.subject in subjects and atom.predicate in predicates:
-            if key in seen_keys:
-                continue
-            seen_keys.add(key)
-            chosen.append(atom)
-        elif len(chosen) < limit:
-            chosen.append(atom)
-        if len(chosen) >= limit:
-            break
-    return chosen
 
 
 def _evidence_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
