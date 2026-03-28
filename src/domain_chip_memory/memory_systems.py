@@ -23,6 +23,9 @@ from .memory_queries import _question_predicates, _question_subject, _question_s
 from .memory_numbers import extract_first_numeric_match as _extract_first_numeric_match
 from .memory_numbers import format_count_value as _format_count_value
 from .memory_numbers import parse_small_number as _parse_small_number
+from .memory_observation_utils import candidate_sentences as _candidate_sentences
+from .memory_observation_utils import dedupe_observations as _dedupe_observations
+from .memory_observation_utils import session_lookup as _session_lookup
 from .memory_relative_time import generic_relative_anchor_candidates as _generic_relative_anchor_candidates
 from .memory_relative_time import has_ambiguous_generic_relative_anchor as _has_ambiguous_generic_relative_anchor
 from .memory_relative_time import infer_generic_relative_anchor_time as _infer_generic_relative_anchor_time
@@ -1198,38 +1201,6 @@ def _choose_atoms(question: NormalizedQuestion, atoms: list[MemoryAtom], limit: 
         if len(chosen) >= limit:
             break
     return chosen
-
-
-def _session_lookup(sample: NormalizedBenchmarkSample) -> dict[str, NormalizedSession]:
-    return {session.session_id: session for session in sample.sessions}
-
-
-def _dedupe_observations(entries: list[ObservationEntry]) -> list[ObservationEntry]:
-    deduped: list[ObservationEntry] = []
-    seen_keys: set[tuple[str, str, str]] = set()
-    for entry in entries:
-        if entry.predicate == "raw_turn":
-            entity_key = entry.observation_id
-        else:
-            entity_key = str(entry.metadata.get("entity_key", "")).strip()
-            if entity_key and entry.predicate in {"activity", "trip_duration"} and entry.timestamp:
-                entity_key = f"{entity_key}|{entry.timestamp}"
-            if not entity_key:
-                entity_key = entry.text.strip().lower() or entry.observation_id
-        key = (entry.subject, entry.predicate, entity_key)
-        if key in seen_keys:
-            continue
-        seen_keys.add(key)
-        deduped.append(entry)
-    return deduped
-
-
-def _candidate_sentences(text: str) -> list[str]:
-    candidates = [
-        re.sub(r"\s+", " ", sentence).strip(" .,:;!?")
-        for sentence in re.split(r"(?<=[.!?])\s+", text.strip())
-    ]
-    return [candidate for candidate in candidates if candidate]
 
 
 def _raw_evidence_span(question: NormalizedQuestion, observation: ObservationEntry) -> str:
