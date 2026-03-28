@@ -42,6 +42,8 @@ from .memory_relative_time import parse_generic_relative_anchor_phrase as _parse
 from .memory_rendering import answer_candidate_surface_text as _answer_candidate_surface_text
 from .memory_rendering import observation_surface_text as _observation_surface_text
 from .memory_rendering import serialize_session as _serialize_session
+from .memory_selection import select_evidence_entries as _select_evidence_entries_impl
+from .memory_selection import select_preference_support_entries as _select_preference_support_entries_impl
 from .memory_roles import strategy_memory_role
 from .memory_time import format_full_date as _format_full_date
 from .memory_time import format_month_year as _format_month_year
@@ -1171,27 +1173,18 @@ def _select_preference_support_entries(
     *,
     limit: int = 4,
 ) -> list[ObservationEntry]:
-    ranked = sorted(
+    return _select_preference_support_entries_impl(
+        question,
         entries,
-        key=lambda entry: (_evidence_score(question, entry), _observation_score(question, entry), entry.timestamp or "", entry.observation_id),
-        reverse=True,
+        evidence_score=_evidence_score,
+        observation_score=_observation_score,
+        entry_source_corpus=_entry_source_corpus,
+        preference_anchor_match=_preference_anchor_match,
+        preference_overlap=_preference_overlap,
+        preference_phrase_bonus=_preference_phrase_bonus,
+        observation_evidence_text=_observation_evidence_text,
+        limit=limit,
     )
-    selected: list[ObservationEntry] = []
-    seen_surfaces: set[str] = set()
-    for entry in ranked:
-        source_corpus = _entry_source_corpus(entry)
-        if not _preference_anchor_match(question, source_corpus):
-            continue
-        if _preference_overlap(question, source_corpus) <= 0 and _preference_phrase_bonus(question, source_corpus) <= 0:
-            continue
-        surface = _observation_evidence_text(question, entry).strip().lower()
-        if not surface or surface in seen_surfaces:
-            continue
-        seen_surfaces.add(surface)
-        selected.append(entry)
-        if len(selected) >= limit:
-            break
-    return selected
 
 
 def _select_evidence_entries(
@@ -1200,61 +1193,16 @@ def _select_evidence_entries(
     *,
     limit: int = 4,
 ) -> list[ObservationEntry]:
-    ranked = sorted(
+    return _select_evidence_entries_impl(
+        question,
         observations,
-        key=lambda entry: (_evidence_score(question, entry), _observation_score(question, entry), entry.timestamp or "", entry.observation_id),
-        reverse=True,
+        evidence_score=_evidence_score,
+        observation_score=_observation_score,
+        question_subjects=_question_subjects,
+        entry_combined_text=_entry_combined_text,
+        observation_evidence_text=_observation_evidence_text,
+        limit=limit,
     )
-    selected: list[ObservationEntry] = []
-    seen_surfaces: set[str] = set()
-    subjects = set(_question_subjects(question))
-    question_lower = question.question.lower()
-    if len(subjects) >= 2:
-        for subject in subjects:
-            subject_entries = [entry for entry in ranked if entry.subject == subject]
-            if "both have in common" in question_lower:
-                preferred_entries = [
-                    entry for entry in subject_entries
-                    if any(
-                        token in _entry_combined_text(question, entry)
-                        for token in ("lost my job", "lost his job", "lost her job", "own business", "online clothing store", "dance studio", "started my own")
-                    )
-                ]
-                if preferred_entries:
-                    subject_entries = preferred_entries + [entry for entry in subject_entries if entry not in preferred_entries]
-            if question_lower.startswith("do ") and "start businesses" in question_lower:
-                preferred_entries = [
-                    entry for entry in subject_entries
-                    if any(
-                        token in _entry_combined_text(question, entry)
-                        for token in ("passion", "love", "doing something i love", "turn my dancing passion into a business", "online clothing store")
-                    )
-                ]
-                if preferred_entries:
-                    subject_entries = preferred_entries + [entry for entry in subject_entries if entry not in preferred_entries]
-            if "destress" in question_lower and "both" in question_lower:
-                preferred_entries = [
-                    entry for entry in subject_entries
-                    if "dance" in _entry_combined_text(question, entry)
-                ]
-                if preferred_entries:
-                    subject_entries = preferred_entries + [entry for entry in subject_entries if entry not in preferred_entries]
-            for entry in subject_entries:
-                surface = _observation_evidence_text(question, entry).strip().lower()
-                if not surface or surface in seen_surfaces:
-                    continue
-                seen_surfaces.add(surface)
-                selected.append(entry)
-                break
-    for entry in ranked:
-        surface = _observation_evidence_text(question, entry).strip().lower()
-        if not surface or surface in seen_surfaces:
-            continue
-        seen_surfaces.add(surface)
-        selected.append(entry)
-        if len(selected) >= limit:
-            break
-    return selected
 
 
 def _choose_answer_candidate(
