@@ -63,6 +63,13 @@ from .memory_rendering import serialize_session as _serialize_session
 from .memory_scoring import evidence_score as _evidence_score_impl
 from .memory_selection import select_evidence_entries as _select_evidence_entries_impl
 from .memory_selection import select_preference_support_entries as _select_preference_support_entries_impl
+from .memory_state_inference import dated_state_target_predicates as _dated_state_target_predicates_impl
+from .memory_state_inference import has_ambiguous_relative_state_anchor as _has_ambiguous_relative_state_anchor_impl
+from .memory_state_inference import has_referential_ambiguity as _has_referential_ambiguity_impl
+from .memory_state_inference import infer_anchor_time_from_phrase as _infer_anchor_time_from_phrase_impl
+from .memory_state_inference import infer_dated_state_answer as _infer_dated_state_answer_impl
+from .memory_state_inference import infer_event_anchored_state_time as _infer_event_anchored_state_time_impl
+from .memory_state_inference import infer_relative_state_answer as _infer_relative_state_answer_impl
 from .memory_temporal_answers import infer_temporal_answer as _infer_temporal_answer_impl
 from .memory_temporal_answers import infer_yes_no_answer as _infer_yes_no_answer_impl
 from .memory_roles import strategy_memory_role
@@ -1477,125 +1484,38 @@ def _infer_anchor_time_from_phrase(
     *,
     include_location_entries: bool = False,
 ) -> datetime | None:
-    if not anchor_phrase.strip():
-        return None
-
-    anchor_phrase_lower = anchor_phrase.lower()
-    target_anchor, target_start, target_end = _parse_question_state_anchor(anchor_phrase_lower)
-    normalized_anchor_phrase = re.sub(
-        r"\s+at\s+\d{1,2}(?::\d{2})?\s*[ap]m\s+on\s+\d{1,2}\s+"
-        r"(?:january|february|march|april|may|june|july|august|september|october|november|december)"
-        r"\s+\d{4}\b",
-        "",
-        anchor_phrase_lower,
+    return _infer_anchor_time_from_phrase_impl(
+        anchor_phrase,
+        candidate_entries,
+        include_location_entries=include_location_entries,
+        parse_question_state_anchor=_parse_question_state_anchor,
+        tokenize=_tokenize,
+        token_bigrams=_token_bigrams,
+        parse_observation_anchor=_parse_observation_anchor,
     )
-    normalized_anchor_phrase = re.sub(
-        r"\s+on\s+\d{1,2}\s+"
-        r"(?:january|february|march|april|may|june|july|august|september|october|november|december)"
-        r"\s+\d{4}\b",
-        "",
-        normalized_anchor_phrase,
-    )
-    normalized_anchor_phrase = re.sub(
-        r"\s+in\s+"
-        r"(?:january|february|march|april|may|june|july|august|september|october|november|december)"
-        r"\s+\d{4}\b",
-        "",
-        normalized_anchor_phrase,
-    )
-    normalized_anchor_phrase = re.sub(r"\s+", " ", normalized_anchor_phrase).strip()
-
-    question_tokens = set(_tokenize(normalized_anchor_phrase or anchor_phrase_lower))
-    question_bigrams = _token_bigrams(normalized_anchor_phrase or anchor_phrase_lower)
-    location_anchor_phrase = bool(
-        include_location_entries
-        and re.search(r"\b(?:live|lived|living|move|moved|moving)\b", normalized_anchor_phrase or anchor_phrase_lower)
-    )
-    best_anchor: datetime | None = None
-    best_score: tuple[int, int, int] | None = None
-
-    for entry in candidate_entries:
-        if entry.predicate == "location" and not include_location_entries:
-            continue
-        anchor = _parse_observation_anchor(entry.timestamp or "")
-        if anchor is None:
-            continue
-        if target_anchor is not None and anchor != target_anchor:
-            continue
-        if target_start is not None and target_end is not None and not (target_start <= anchor < target_end):
-            continue
-        entry_corpus = " ".join(
-            part
-            for part in (
-                entry.text,
-                str(entry.metadata.get("source_text", "")),
-                str(entry.metadata.get("value", "")),
-            )
-            if part
-        )
-        entry_tokens = set(_tokenize(entry_corpus))
-        token_overlap = len(question_tokens.intersection(entry_tokens))
-        value_tokens = set(_tokenize(str(entry.metadata.get("value", ""))))
-        location_value_overlap = len(question_tokens.intersection(value_tokens))
-        if location_anchor_phrase and entry.predicate == "location" and location_value_overlap:
-            token_overlap = max(token_overlap, 2)
-        if token_overlap == 0:
-            continue
-        bigram_overlap = len(question_bigrams.intersection(_token_bigrams(entry_corpus)))
-        score = (bigram_overlap, token_overlap, len(entry_corpus))
-        if best_score is None or score > best_score:
-            best_score = score
-            best_anchor = anchor
-
-    if best_score is None:
-        return None
-    if best_score[0] == 0 and best_score[1] < 2:
-        return None
-    return best_anchor
 
 
 def _infer_event_anchored_state_time(
     question: NormalizedQuestion,
     candidate_entries: list[ObservationEntry | EventCalendarEntry],
 ) -> datetime | None:
-    question_lower = question.question.lower()
-    patterns = (
-        r"^where (?:did i live|was i living) when\s+(.+)$",
-        r"^what did i prefer when\s+(.+)$",
-        r"^what was my favou?rite colou?r when\s+(.+)$",
+    return _infer_event_anchored_state_time_impl(
+        question,
+        candidate_entries,
+        infer_anchor_time_from_phrase=_infer_anchor_time_from_phrase,
     )
-    for pattern in patterns:
-        match = re.match(pattern, question_lower)
-        if not match:
-            continue
-        anchor_phrase = match.group(1).strip().rstrip(".!?")
-        if anchor_phrase:
-            return _infer_anchor_time_from_phrase(
-                anchor_phrase,
-                candidate_entries,
-                include_location_entries=True,
-            )
-    return None
 
 
 def _has_ambiguous_relative_state_anchor(
     question: NormalizedQuestion,
     candidate_entries: list[ObservationEntry | EventCalendarEntry],
 ) -> bool:
-    question_lower = question.question.lower()
-    mode, anchor_phrase, target_predicates = _extract_relative_state_anchor(question_lower)
-    if mode is None or not anchor_phrase or not target_predicates:
-        return False
-    specialized_anchor_phrase = _specialize_relative_state_anchor_phrase(
+    return _has_ambiguous_relative_state_anchor_impl(
         question,
-        anchor_phrase,
-        target_predicates,
         candidate_entries,
-    )
-    return _has_ambiguous_generic_relative_anchor(
-        specialized_anchor_phrase,
-        target_predicates,
-        candidate_entries,
+        extract_relative_state_anchor=_extract_relative_state_anchor,
+        specialize_relative_state_anchor_phrase=_specialize_relative_state_anchor_phrase,
+        has_ambiguous_generic_relative_anchor=_has_ambiguous_generic_relative_anchor,
     )
 
 
@@ -1603,157 +1523,41 @@ def _has_referential_ambiguity(
     question: NormalizedQuestion,
     candidate_entries: list[ObservationEntry | EventCalendarEntry],
 ) -> bool:
-    predicates = set(_question_predicates(question))
-    if not predicates:
-        return False
-    for entry in candidate_entries:
-        if entry.predicate != "referential_ambiguity":
-            continue
-        target_predicates = {
-            str(predicate).strip()
-            for predicate in entry.metadata.get("target_predicates", [])
-            if str(predicate).strip()
-        }
-        if predicates.intersection(target_predicates):
-            return True
-    return False
+    return _has_referential_ambiguity_impl(
+        question,
+        candidate_entries,
+        question_predicates=_question_predicates,
+    )
 
 
 def _dated_state_target_predicates(question: NormalizedQuestion) -> list[str]:
-    question_lower = question.question.lower()
-    if question_lower.startswith("what did i prefer"):
-        return ["preference"]
-    if question_lower.startswith(
-        (
-            "what was my favorite color",
-            "what was my favourite color",
-            "what was my favorite colour",
-            "what was my favourite colour",
-        )
-    ):
-        return ["favorite_color"]
-    return ["location"]
+    return _dated_state_target_predicates_impl(question)
 
 
 def _infer_relative_state_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry | EventCalendarEntry]) -> str:
-    question_lower = question.question.lower()
-    mode, anchor_phrase, target_predicates = _extract_relative_state_anchor(question_lower)
-    if mode is None or not anchor_phrase or not target_predicates:
-        return ""
-    specialized_anchor_phrase = _specialize_relative_state_anchor_phrase(
+    return _infer_relative_state_answer_impl(
         question,
-        anchor_phrase,
-        target_predicates,
         candidate_entries,
-    )
-    if _has_ambiguous_generic_relative_anchor(specialized_anchor_phrase, target_predicates, candidate_entries):
-        return "unknown"
-
-    anchor = _infer_generic_relative_anchor_time(specialized_anchor_phrase, target_predicates, candidate_entries)
-    if anchor is None:
-        anchor = _infer_anchor_time_from_phrase(
-            anchor_phrase,
-            candidate_entries,
-            include_location_entries=True,
-        )
-    if anchor is None:
-        return ""
-
-    dated_states = sorted(
-        [
-            entry
-            for entry in candidate_entries
-            if entry.predicate in target_predicates and _parse_observation_anchor(entry.timestamp or "")
-        ],
-        key=lambda entry: (
-            _parse_observation_anchor(entry.timestamp or ""),
-            getattr(entry, "observation_id", getattr(entry, "event_id", "")),
-        ),
-    )
-    selected: ObservationEntry | EventCalendarEntry | None = None
-    if mode == "before":
-        for entry in dated_states:
-            state_anchor = _parse_observation_anchor(entry.timestamp or "")
-            if state_anchor is None:
-                continue
-            if state_anchor < anchor:
-                selected = entry
-            elif state_anchor >= anchor:
-                break
-    else:
-        for entry in dated_states:
-            state_anchor = _parse_observation_anchor(entry.timestamp or "")
-            if state_anchor is None:
-                continue
-            if state_anchor > anchor:
-                selected = entry
-                break
-
-    if selected is None:
-        return ""
-    value = str(selected.metadata.get("value", "")).strip()
-    if value:
-        return value
-    return _answer_candidate_surface_text(
-        selected.subject,
-        selected.predicate,
-        selected.metadata.get("value", ""),
-        selected.text,
+        extract_relative_state_anchor=_extract_relative_state_anchor,
+        specialize_relative_state_anchor_phrase=_specialize_relative_state_anchor_phrase,
+        has_ambiguous_generic_relative_anchor=_has_ambiguous_generic_relative_anchor,
+        infer_generic_relative_anchor_time=_infer_generic_relative_anchor_time,
+        infer_anchor_time_from_phrase=_infer_anchor_time_from_phrase,
+        parse_observation_anchor=_parse_observation_anchor,
+        answer_candidate_surface_text=_answer_candidate_surface_text,
     )
 
 
 def _infer_dated_state_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry | EventCalendarEntry]) -> str:
-    question_lower = question.question.lower()
-    if not _is_dated_state_question(question):
-        return ""
-    target_predicates = _dated_state_target_predicates(question)
-    if not target_predicates:
-        return ""
-
-    event_anchor = _infer_event_anchored_state_time(question, candidate_entries)
-    target_anchor, target_start, target_end = _parse_question_state_anchor(question_lower)
-    if event_anchor is not None:
-        target_anchor = event_anchor
-        target_start = None
-        target_end = None
-    elif target_anchor is None and (target_start is None or target_end is None):
-        return ""
-
-    dated_locations = sorted(
-        [
-            entry
-            for entry in candidate_entries
-            if entry.predicate in target_predicates and _parse_observation_anchor(entry.timestamp or "")
-        ],
-        key=lambda entry: (
-            _parse_observation_anchor(entry.timestamp or ""),
-            getattr(entry, "observation_id", getattr(entry, "event_id", "")),
-        ),
-    )
-    selected: ObservationEntry | EventCalendarEntry | None = None
-    for entry in dated_locations:
-        anchor = _parse_observation_anchor(entry.timestamp or "")
-        if anchor is None:
-            continue
-        if target_anchor is not None:
-            if anchor <= target_anchor:
-                selected = entry
-            elif anchor > target_anchor:
-                break
-        elif anchor < target_end:
-            selected = entry
-        elif anchor >= target_end:
-            break
-    if selected is None:
-        return ""
-    value = str(selected.metadata.get("value", "")).strip()
-    if value:
-        return value
-    return _answer_candidate_surface_text(
-        selected.subject,
-        selected.predicate,
-        selected.metadata.get("value", ""),
-        selected.text,
+    return _infer_dated_state_answer_impl(
+        question,
+        candidate_entries,
+        is_dated_state_question=_is_dated_state_question,
+        dated_state_target_predicates=_dated_state_target_predicates,
+        infer_event_anchored_state_time=_infer_event_anchored_state_time,
+        parse_question_state_anchor=_parse_question_state_anchor,
+        parse_observation_anchor=_parse_observation_anchor,
+        answer_candidate_surface_text=_answer_candidate_surface_text,
     )
 
 
