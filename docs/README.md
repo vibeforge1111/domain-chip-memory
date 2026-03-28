@@ -4,6 +4,7 @@ This index groups the active documentation surface by job instead of by filename
 
 ## Start Here
 
+- [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
 - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
@@ -23,6 +24,7 @@ This index groups the active documentation surface by job instead of by filename
 
 ## Current Architecture Direction
 
+- [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
 - [Memory Architecture Evolution Plan](MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md)
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
 - [Spark Memory Integration Outlook](SPARK_MEMORY_INTEGRATION_OUTLOOK_2026-03-27.md)
@@ -67,9 +69,11 @@ For benchmark-grounded and research-grounded materials, start in:
 Use these routes depending on the task.
 
 - Restarting work after a pause:
+  - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
   - [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
   - [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-28.md)
 - Understanding the architecture direction:
+  - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
   - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
   - [Memory Architecture Evolution Plan](MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md)
   - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)

@@ -1,111 +1,144 @@
 # Tasks
 
-Date: 2026-03-27
+Date: 2026-03-28
 Status: active
 
 ## Objective
 
-Turn the current memory SDK and Spark integration surface into a production-safe rollout path without losing benchmark strength.
+Turn `domain-chip-memory` into a state-of-the-art memory system that:
 
-## Phase 1: Keep Spark In Shadow Mode
+- beats the strongest practical frontier bars on `LongMemEval`, `LoCoMo`, `GoodAI LTM Benchmark`, and `BEAM`
+- functions as a true product memory layer with strong correction, deletion, supersession, provenance, and abstention behavior
+- stays lightweight enough for real runtime use
+- reaches Spark through shadow-mode evidence, not premature live promotion
+
+## Program Rules
+
+- Keep Spark integration on `shadow-only` until replay evidence says otherwise.
+- Do not split the architecture into separate benchmark and product-memory stacks.
+- Prefer reusable operators over benchmark-specific rescue logic.
+- Keep provider rescue as a guardrail, not the main source of correctness.
+- Re-run benchmark and product-memory gates after every real behavior mutation.
+
+## Workstream 1: Lock The Current Frontier
+
+- Promote the already-green next local `ProductMemory` lane.
+- Reconcile active docs so one frontier snapshot is authoritative.
+- Freeze the current baseline ledger for:
+  - `LongMemEval_s`
+  - clean `LoCoMo`
+  - local `BEAM`
+  - local `ProductMemory`
+
+## Workstream 2: Separate The Architecture
+
+- Split extraction logic into `memory_extraction.py`.
+- Move generic retrieval logic into `memory_operators.py`.
+- Keep lifecycle and supersession logic in `memory_updates.py`.
+- Keep view logic in `memory_views.py`.
+- Make `packet_builders.py` a real boundary instead of a re-export shell.
+- Reduce `memory_systems.py` from architecture center to compatibility shell or orchestrator layer.
+
+## Workstream 3: Govern The Update Engine
+
+- Make these lifecycle operations first-class:
+  - `create`
+  - `update`
+  - `delete`
+  - `supersede`
+  - `restore`
+  - `contradict`
+  - current-state rebuild from evidence
+- Keep tombstone handling explicit.
+- Keep historical reconstruction explicit.
+- Prove deletion and restore behavior on local `ProductMemory`.
+
+## Workstream 4: Clean Up Retrieval And Answering
+
+- Keep role-clean read paths:
+  - `get_current_state(...)`
+  - `get_historical_state(...)`
+  - `retrieve_evidence(...)`
+  - `retrieve_events(...)`
+  - `explain_answer(...)`
+- Keep answer-candidate authority explicit.
+- Move exact-answer integrity earlier into the substrate.
+- Reduce dependence on provider-side rescue.
+
+## Workstream 5: Finish Benchmark Completion
+
+- Extend `LongMemEval_s` beyond the current measured frontier.
+- Broaden clean `LoCoMo` coverage beyond the currently bounded lanes.
+- Lock the first canonical `GoodAI LTM Benchmark` configuration and run.
+- Keep the local `BEAM` pilot lane active while the official evaluation surface remains unpinned.
+- Pin the official `BEAM` implementation path as soon as it becomes reproducible in-repo.
+
+## Workstream 6: Add Architecture Ablations
+
+- Tag every meaningful mutation as one of:
+  - extraction improvement
+  - update and supersession improvement
+  - retrieval improvement
+  - operator improvement
+  - provider-rescue improvement
+  - maintenance improvement
+  - benchmark-closure-only improvement
+  - `BEAM` transfer improvement
+- Keep comparison artifacts that explain why gains happened, not only whether they happened.
+
+## Workstream 7: Prove Real Runtime Quality
+
+- Measure and report:
+  - p50 and p95 latency
+  - prompt and total tokens
+  - memory growth
+  - stale-state error rate
+  - correction success rate
+  - deletion reliability
+  - provenance support rate
+  - abstention honesty
+  - maintenance stability
+- Add replay tests, soak tests, and maintenance regression tests.
+
+## Workstream 8: Keep Spark In Shadow Mode
 
 - Keep the Spark Intelligence Builder integration on `shadow-only`.
-- Do not promote the memory SDK to the primary live memory layer yet.
-- Use the orchestration prompt and integration contract as the current Builder doctrine.
-- Require replayable traces and reports before any broader rollout decision.
-
-## Phase 2: Finish The Maintenance Contract Surface
-
-- Add the SDK maintenance replay contract summary.
-- Add checked-in example maintenance replay payloads.
-- Add a docs page for the maintenance replay schema and usage.
-- Add a CLI contract command for maintenance replay, parallel to the Spark shadow contract commands.
-
-## Phase 3: Get Real Spark Shadow Trace Batches
-
-- Have Spark export Builder-style shadow replay files.
-- Require each replay file to include:
-- `turns`
-- normalized write attempts
-- probes
-- `session_id`
-- `turn_id`
-- `timestamp`
-- Preserve enough metadata for deterministic replay and provenance inspection.
-
-## Phase 4: Replay Spark Traces In This Repo
-
-- Run `run-spark-shadow-report` on single trace files.
-- Run `run-spark-shadow-report-batch` on trace directories.
-- Run `run-sdk-maintenance-report` on explicit SDK write traces.
-- Collect:
-- accepted writes
-- rejected writes
-- skipped turns
-- unsupported write reasons
-- probe hit rates
-- memory-role mix
-- maintenance before/after results
-
-## Phase 5: Turn Shadow Failures Into Runtime Fixes
-
-- Fix bad write gating.
-- Fix wrong read routing.
-- Fix stale current-state behavior.
-- Fix missing abstentions.
-- Fix weak provenance propagation.
-- Fix reconsolidation gaps.
-- Prefer narrow, benchmark-backed fixes over broad rewrites.
-
-## Phase 6: Re-Run Benchmark Safety Gates After Behavior Changes
-
-- After each real runtime mutation, rerun:
-- local `ProductMemory`
-- local `BEAM`
-- targeted `LoCoMo`
-- targeted `LongMemEval_s`
-- Do not merge behavior changes that regress the active benchmark baseline without explicit documentation.
-
-## Phase 7: Add A Spark Rollout Gate
-
-- Define promotion criteria from shadow evidence, not intuition.
-- Require:
-- high accepted-write precision
-- low residue persistence
-- correct abstentions
-- stable provenance
-- maintenance that preserves current-state and historical read quality
-
-## Phase 8: Move To Limited Assist Mode
-
-- First live scope should stay narrow.
-- Start with:
-- explicit profile facts
-- explicit preferences
-- explicit events
-- Do not begin with broad conversational memory.
+- Require replayable shadow traces with:
+  - `turns`
+  - normalized write attempts
+  - probes
+  - `session_id`
+  - `turn_id`
+  - `timestamp`
+- Replay traces here and report:
+  - accepted writes
+  - rejected writes
+  - skipped turns
+  - unsupported-write reasons
+  - probe hit rates
+  - memory-role mix
+  - maintenance before/after results
+- Turn real shadow failures into substrate fixes.
+- Re-run benchmark safety gates after every real runtime mutation.
+- Define rollout gates from shadow evidence, not intuition.
 
 ## Immediate Next Actions
 
-- Here in this repo:
-- build the maintenance replay contract summary
-- add maintenance replay docs and examples
-- prepare the replay analysis workflow for incoming Spark traces
+- Promote the already-green next local `ProductMemory` lane.
+- Reconcile docs so one frontier snapshot is authoritative.
+- Create the first real code migration plan out of `memory_systems.py`.
+- Extract the next architecture boundary into a dedicated module.
+- Run the next honest `LongMemEval_s` extension slice.
+- Choose the next clean `LoCoMo` lane.
+- Lock the first canonical `GoodAI` run.
+- Add runtime metric capture to serious comparison artifacts.
+- Get the first real Spark shadow trace batch from Builder.
 
-- On the Spark side:
-- finish adapter wiring
-- emit the first shadow trace batch
+## Definition Of Done For This Program Phase
 
-- After the first trace batch lands:
-- replay it here
-- inspect the reports
-- convert failures into substrate fixes
-- rerun benchmark safety gates
-
-## Definition Of Done For This Stage
-
-- Spark can export shadow traces reliably.
-- This repo can replay Spark traces and produce stable reports.
-- We can identify memory failures from those reports and fix them safely.
-- Benchmark strength remains intact after runtime fixes.
-- Only then do we consider limited live rollout.
+- The architecture is role-clean and no longer monolithic in practice.
+- The benchmark story is broad, honest, and reproducible.
+- The system is strong on product-memory behavior, not only benchmark QA.
+- Runtime quality is measured directly instead of inferred.
+- Spark shadow evidence is stable enough to support a future rollout gate.
+- Only then do we consider limited live promotion.
