@@ -42,6 +42,7 @@ from .memory_relative_time import parse_generic_relative_anchor_phrase as _parse
 from .memory_rendering import answer_candidate_surface_text as _answer_candidate_surface_text
 from .memory_rendering import observation_surface_text as _observation_surface_text
 from .memory_rendering import serialize_session as _serialize_session
+from .memory_scoring import evidence_score as _evidence_score_impl
 from .memory_selection import select_evidence_entries as _select_evidence_entries_impl
 from .memory_selection import select_preference_support_entries as _select_preference_support_entries_impl
 from .memory_roles import strategy_memory_role
@@ -1001,86 +1002,11 @@ def _choose_atoms(question: NormalizedQuestion, atoms: list[MemoryAtom], limit: 
 
 
 def _evidence_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
-    score = _observation_score(question, observation)
-    predicates = set(_question_predicates(question))
-    question_lower = question.question.lower()
-    evidence_text = _observation_evidence_text(question, observation)
-    observation_context_lower = observation.text.lower()
-    evidence_tokens = set(_tokenize(evidence_text))
-    question_tokens = set(_tokenize(question.question))
-    score += 2.0 * float(len(question_tokens.intersection(evidence_tokens)))
-    if _is_preference_question(question):
-        source_corpus = _entry_source_corpus(observation)
-        preference_overlap = _preference_overlap(question, source_corpus)
-        score += 6.0 * float(preference_overlap)
-        score += _preference_phrase_bonus(question, source_corpus)
-        if not _preference_anchor_match(question, source_corpus):
-            score -= 10.0
-        if observation.predicate == "raw_turn" and _is_recommendation_request_text(source_corpus):
-            score += 5.0
-        if preference_overlap >= 2 and observation.predicate == "raw_turn":
-            score += 4.0
-        if _is_generic_followup_preference_text(source_corpus):
-            score -= 6.0
-        if preference_overlap == 0:
-            score -= 8.0
-            if "prefer" in evidence_text.lower():
-                score -= 6.0
-            if _is_recommendation_request_text(source_corpus):
-                score -= 2.0
-    if observation.predicate != "raw_turn":
-        score += 2.5
-        if observation.predicate in predicates:
-            score += 6.0
-        if observation.metadata.get("value"):
-            score += 1.5
-    else:
-        score -= 1.5
-    if len(evidence_tokens) <= 8:
-        score += 1.0
-    if question_lower.startswith("how did") and "appreciate" in evidence_text.lower():
-        score += 3.0
-    if (
-        question_lower.startswith("how did")
-        and "support" in question_lower
-        and "appreciate" in evidence_text.lower()
-        and any(token in observation_context_lower for token in ("support", "family"))
-    ):
-        score += 12.0
-    if "support" in question_lower and "real support" in observation_context_lower:
-        score += 10.0
-    if "support" in question_lower and evidence_text.lower().startswith("appreciate them"):
-        score += 6.0
-    if "support" in question_lower and any(
-        token in evidence_text.lower() for token in ("support", "appreciate", "thankful", "grateful")
-    ):
-        score += 4.0
-    if question_lower.startswith("when ") and "festival" in question_lower and "next month" in evidence_text.lower():
-        score += 10.0
-    if question_lower.startswith("when ") and "tattoo" in question_lower and "few years ago" in evidence_text.lower():
-        score += 12.0
-    if question_lower.startswith("when ") and "accepted" in question_lower and "accepted" in evidence_text.lower():
-        score += 12.0
-    if question_lower.startswith("when ") and "start reading" in question_lower and "reading" in evidence_text.lower():
-        score += 10.0
-    if question_lower.startswith("when ") and "social media presence" in question_lower and "social media presence" in evidence_text.lower():
-        score += 10.0
-    if question_lower.startswith("which city") and "both" in question_lower and any(
-        token in observation_context_lower for token in ("rome", "paris", "trip to", "visit it", "been only to")
-    ):
-        score += 12.0
-    if "road trip" in question_lower and "relax" in question_lower and any(
-        token in evidence_text.lower() for token in ("hike", "walk")
-    ):
-        score += 6.0
-    if question_lower.startswith("did ") and evidence_text.lower() in {"yes", "no"}:
-        score += 5.0
-    if "both have in common" in question_lower and any(
-        token in observation_context_lower
-        for token in ("lost my job", "lost his job", "lost her job", "starting my own store", "own business", "online clothing store", "dance studio")
-    ):
-        score += 12.0
-    return score
+    return _evidence_score_impl(
+        question,
+        observation,
+        observation_score=_observation_score,
+    )
 
 
 def _infer_preference_answer(
