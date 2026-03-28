@@ -19,6 +19,7 @@ from .provider_rescue_actions import did_action_yes_answer as _did_action_yes_an
 from .provider_rescue_navigation import location_anchor_from_phrase as _location_anchor_from_phrase_impl
 from .provider_rescue_navigation import ordered_location_rows as _ordered_location_rows_impl
 from .provider_rescue_navigation import ordered_sequence_labels as _ordered_sequence_labels_impl
+from .provider_rescue_numeric import numeric_rescue as _numeric_rescue
 from .provider_rescue_profile import profile_and_object_rescue as _profile_and_object_rescue
 from .provider_temporal_rescue import COUNT_WORDS, COUNT_WORD_TO_INT
 from .provider_temporal_rescue import extract_count_answer as _extract_count_answer_impl
@@ -241,66 +242,9 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     if count_answer:
         return count_answer
 
-    if "what speed" in question_lower or "internet plan" in question_lower:
-        match = re.search(r"\b(\d+\s*(?:mbps|gbps))\b", combined, re.IGNORECASE)
-        if match:
-            return match.group(1)
-
-    if question_lower.startswith("how much"):
-        for pattern in (
-            r"\$(\d+(?:,\d{3})*(?:\.\d+)?)",
-            r"\b(\d+\s*dollars)\b",
-            r"(?<!\S)(\d+%)(?!\S)",
-            r"\b(\d+:\d+)\b",
-            r"\b(\d+gb)\b",
-        ):
-            match = re.search(pattern, combined, re.IGNORECASE)
-            if match:
-                value = match.group(1).strip()
-                if pattern.startswith(r"\$("):
-                    return f"${value}"
-                return value
-
-    if "discount" in question_lower:
-        match = re.search(r"(?<!\S)(\d+%)(?!\S)", answer, re.IGNORECASE) or re.search(
-            r"(?<!\S)(\d+%)(?!\S)",
-            combined,
-            re.IGNORECASE,
-        )
-        if match:
-            return match.group(1)
-
-    if "how old was i" in question_lower:
-        match = re.search(r"\bmy\s+(\d+)(?:st|nd|rd|th)\s+birthday\b", combined, re.IGNORECASE)
-        if match:
-            return match.group(1)
-
-    if " ratio" in question_lower or "ratio " in question_lower:
-        match = re.search(r"\b(\d+:\d+)\b", combined, re.IGNORECASE)
-        if match:
-            return match.group(1)
-
-    if question_lower.startswith("how long ago"):
-        match = re.search(
-            r"\b(" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r"|\d+)\s+(years?|months?|weeks?|days?)\s+ago\b",
-            combined,
-            re.IGNORECASE,
-        )
-        if match:
-            raw_count = match.group(1).lower()
-            count = raw_count if raw_count.isdigit() else str(COUNT_WORD_TO_INT.get(raw_count, raw_count))
-            return f"{count} {match.group(2)} ago"
-
-    if question_lower.startswith("how long") and "married" not in question_lower:
-        match = re.search(
-            r"\b(" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r"|\d+)\s+(hours?|days?|weeks?|months?|years?)\b",
-            combined,
-            re.IGNORECASE,
-        )
-        if match:
-            raw_count = match.group(1).lower()
-            count = raw_count if raw_count.isdigit() else str(COUNT_WORD_TO_INT.get(raw_count, raw_count))
-            return f"{count} {match.group(2)}"
+    numeric_answer = _numeric_rescue(question_lower, answer, combined)
+    if numeric_answer:
+        return numeric_answer
 
     if "what is the name of my" in question_lower:
         match = re.search(r"\bname is ([A-Z][A-Za-z]+)\b", combined, re.IGNORECASE)
