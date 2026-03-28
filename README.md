@@ -223,6 +223,7 @@ Export those results into upstream-style answer files and summarize upstream eva
 
 ```powershell
 python -m domain_chip_memory.cli export-beam-public-answers artifacts\\benchmark_runs\\beam_public_scorecard.json artifacts\\beam_results --result-file-name domain_chip_memory_answers.json
+python -m domain_chip_memory.cli run-beam-official-evaluation path\\to\\beam_upstream_repo artifacts\\beam_results --chat-size 128K --result-file-name domain_chip_memory_answers.json --dry-run
 python -m domain_chip_memory.cli summarize-beam-evaluation path\\to\\evaluation-domain_chip_memory_answers.json
 ```
 

@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from domain_chip_memory import cli
+from domain_chip_memory import beam_official_eval
 from domain_chip_memory.baselines import build_baseline_contract_summary
 from domain_chip_memory.adapters import build_adapter_contract_summary
 from domain_chip_memory.canonical_configs import get_canonical_configs
@@ -1068,6 +1069,117 @@ def test_summarize_beam_evaluation_cli_writes_compact_summary(tmp_path: Path, mo
     assert payload["overall_average"] == 0.75
     assert payload["categories"][0]["category"] == "event_ordering"
     assert payload["categories"][1]["average_score"] == 0.75
+
+
+def test_run_beam_official_evaluation_cli_validates_and_writes_manifest(tmp_path: Path, monkeypatch):
+    upstream_repo = tmp_path / "beam_repo"
+    answers_dir = tmp_path / "beam_results"
+    output_file = tmp_path / "artifacts" / "beam_official_eval_manifest.json"
+
+    (upstream_repo / "src" / "evaluation").mkdir(parents=True)
+    (upstream_repo / "src" / "evaluation" / "run_evaluation.py").write_text("print('ok')\n", encoding="utf-8")
+    (upstream_repo / "src" / "llms_config.json").write_text(json.dumps({"gpt": {"api_key": "test"}}), encoding="utf-8")
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions").mkdir(parents=True)
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps({"information_extraction": []}),
+        encoding="utf-8",
+    )
+    (answers_dir / "100K" / "1").mkdir(parents=True)
+    (answers_dir / "100K" / "1" / "domain_chip_memory_answers.json").write_text(
+        json.dumps({"information_extraction": []}),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-official-evaluation",
+            str(upstream_repo),
+            str(answers_dir),
+            "--chat-size",
+            "128K",
+            "--dry-run",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["benchmark_name"] == "BEAM"
+    assert payload["status"] == "validated"
+    assert payload["official_chat_size_dir"] == "100K"
+    assert payload["conversation_ids"] == ["1"]
+    assert payload["command"][1] == "src/evaluation/run_evaluation.py"
+
+
+def test_run_beam_official_evaluation_cli_invokes_upstream_subprocess(tmp_path: Path, monkeypatch):
+    upstream_repo = tmp_path / "beam_repo"
+    answers_dir = tmp_path / "beam_results"
+    output_file = tmp_path / "artifacts" / "beam_official_eval_result.json"
+
+    (upstream_repo / "src" / "evaluation").mkdir(parents=True)
+    (upstream_repo / "src" / "evaluation" / "run_evaluation.py").write_text("print('ok')\n", encoding="utf-8")
+    (upstream_repo / "src" / "llms_config.json").write_text(json.dumps({"gpt": {"api_key": "test"}}), encoding="utf-8")
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions").mkdir(parents=True)
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps({"information_extraction": []}),
+        encoding="utf-8",
+    )
+    (answers_dir / "100K" / "1").mkdir(parents=True)
+    answer_file = answers_dir / "100K" / "1" / "custom_answers.json"
+    answer_file.write_text(
+        json.dumps({"information_extraction": [{"question": "x", "llm_response": "y"}]}),
+        encoding="utf-8",
+    )
+
+    class FakeCompletedProcess:
+        def __init__(self):
+            self.returncode = 0
+            self.stdout = "Question Type: information_extraction\nQuestion Index: 0\n"
+            self.stderr = ""
+
+    def fake_run(command, *, cwd, capture_output, text, check):
+        assert command[0] == "python-custom"
+        assert command[-1] == "custom_answers.json"
+        assert cwd == str(upstream_repo)
+        assert capture_output is True
+        assert text is True
+        assert check is False
+        (answers_dir / "100K" / "1" / "evaluation-custom_answers.json").write_text(
+            json.dumps({"information_extraction": [{"llm_judge_score": 1.0}]}),
+            encoding="utf-8",
+        )
+        return FakeCompletedProcess()
+
+    monkeypatch.setattr(beam_official_eval.subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-official-evaluation",
+            str(upstream_repo),
+            str(answers_dir),
+            "--chat-size",
+            "128K",
+            "--result-file-name",
+            "custom_answers.json",
+            "--python-executable",
+            "python-custom",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["status"] == "completed"
+    assert payload["exit_code"] == 0
+    assert payload["evaluation_files"] == [str(answers_dir / "100K" / "1" / "evaluation-custom_answers.json")]
+    assert "information_extraction" in payload["stdout_tail"][0]
 
 
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):

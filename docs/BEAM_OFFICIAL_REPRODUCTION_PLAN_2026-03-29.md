@@ -69,10 +69,14 @@ We should not call any run `official BEAM reproduction` until all of the followi
    - `500K`
    - `1M`
    - `10M`
-3. pin the official answer-generation flow
-4. pin the official evaluation flow
-5. map their result schema into our scorecard contract
-6. run the first exact reproduction on one scale before broadening
+3. keep the in-repo official-public flow explicit:
+   - `run-beam-public-baseline`
+   - `export-beam-public-answers`
+   - `run-beam-official-evaluation`
+   - `summarize-beam-evaluation`
+4. pin the official answer-generation flow
+5. pin the official evaluation flow and judge config
+6. run the first exact reproduction on one small scale before broadening
 7. compare our local pilot signals against the official run to see what transfers and what does not
 
 ## Local pilot relationship

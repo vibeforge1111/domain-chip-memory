@@ -38,6 +38,7 @@ from .sdk import (
 from .baselines import build_full_context_packets, build_lexical_packets
 from .beam_official_eval import (
     export_beam_public_answers_from_scorecard,
+    run_beam_official_evaluation,
     summarize_beam_official_evaluation,
 )
 from .spark_shadow import (
@@ -659,6 +660,18 @@ def main() -> None:
     summarize_beam_eval.add_argument("evaluation_file")
     summarize_beam_eval.add_argument("--write")
 
+    run_beam_official_eval = subparsers.add_parser("run-beam-official-evaluation", help="Run the pinned upstream BEAM evaluation script over exported official-public answer files.")
+    run_beam_official_eval.add_argument("upstream_repo_dir")
+    run_beam_official_eval.add_argument("answers_dir")
+    run_beam_official_eval.add_argument("--chat-size", required=True)
+    run_beam_official_eval.add_argument("--result-file-name", default="domain_chip_memory_answers.json")
+    run_beam_official_eval.add_argument("--start-index", type=int, default=0)
+    run_beam_official_eval.add_argument("--end-index", type=int)
+    run_beam_official_eval.add_argument("--max-workers", type=int, default=10)
+    run_beam_official_eval.add_argument("--python-executable")
+    run_beam_official_eval.add_argument("--dry-run", action="store_true")
+    run_beam_official_eval.add_argument("--write")
+
     compare_longmemeval = subparsers.add_parser("compare-longmemeval-local", help="Run all default systems over a LongMemEval JSON file and emit a compact comparison.")
     compare_longmemeval.add_argument("data_file")
     compare_longmemeval.add_argument("--provider", default="heuristic_v1")
@@ -1009,6 +1022,23 @@ def main() -> None:
 
     if args.command == "summarize-beam-evaluation":
         payload = summarize_beam_official_evaluation(args.evaluation_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-beam-official-evaluation":
+        payload = run_beam_official_evaluation(
+            args.upstream_repo_dir,
+            args.answers_dir,
+            chat_size=args.chat_size,
+            result_file_name=args.result_file_name,
+            start_index=args.start_index,
+            end_index=args.end_index,
+            max_workers=args.max_workers,
+            python_executable=args.python_executable,
+            dry_run=args.dry_run,
+        )
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)

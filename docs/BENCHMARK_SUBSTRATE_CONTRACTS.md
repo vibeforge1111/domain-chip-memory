@@ -129,7 +129,7 @@ The stack still does not:
 - download benchmark data
 - run official scoring
 - build full retrieval traces
-- reproduce official `BEAM` yet; current support now includes an unpacked official-public chats loader plus export and summary bridges, but not the upstream answer-generation and evaluation flow itself
+- reproduce full official `BEAM` yet; current support now includes an unpacked official-public chats loader, upstream answer export, an upstream evaluation wrapper, and evaluation summary bridges, but not the upstream answer-generation flow or a checked-in exact small-lane official run artifact
 
 ## Schemas
 
@@ -195,6 +195,9 @@ python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_
 python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline observational_temporal_memory --provider heuristic_v1 --limit 10
 python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --limit 10
 python -m domain_chip_memory.cli run-beam-baseline artifacts\\benchmark_runs\\beam_local_pilot_v1_source.json --baseline observational_temporal_memory --provider heuristic_v1 --write artifacts\\benchmark_runs\\beam_local_pilot_observational_heuristic_v1.json
+python -m domain_chip_memory.cli run-beam-public-baseline path\\to\\chats --chat-size 128K --baseline observational_temporal_memory --provider heuristic_v1 --limit 1 --upstream-commit 3e12035532eb85768f1a7cd779832b650c4b2ef9
+python -m domain_chip_memory.cli export-beam-public-answers artifacts\\benchmark_runs\\beam_public_scorecard.json artifacts\\beam_results --result-file-name domain_chip_memory_answers.json
+python -m domain_chip_memory.cli run-beam-official-evaluation path\\to\\beam_upstream_repo artifacts\\beam_results --chat-size 128K --result-file-name domain_chip_memory_answers.json --dry-run
 python -m domain_chip_memory.cli run-locomo-baseline path\\to\\locomo10.json --baseline full_context --provider heuristic_v1 --limit 3
 python -m domain_chip_memory.cli run-goodai-baseline path\\to\\benchmark-v3-32k.yml path\\to\\definitions --baseline lexical --provider heuristic_v1 --dataset-name Colours --limit 5
 python -m domain_chip_memory.cli compare-longmemeval-local path\\to\\longmemeval_s_cleaned.json --provider heuristic_v1 --write artifacts\\benchmark_runs\\longmemeval_s_system_comparison.json

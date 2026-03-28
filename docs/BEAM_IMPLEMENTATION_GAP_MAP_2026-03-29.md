@@ -18,6 +18,7 @@ What we already have:
 - `run-beam-baseline` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
 - `run-beam-public-baseline` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
 - `export-beam-public-answers` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
+- `run-beam-official-evaluation` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
 - `summarize-beam-evaluation` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
 - `BEAM` scorecard handling in [scorecards.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/scorecards.py)
 - local regression tests in [tests/test_adapters.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_adapters.py) and [tests/test_cli.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_cli.py)
@@ -28,14 +29,15 @@ What that support actually means:
 - we can run our baselines over an unpacked official-public `BEAM` chats directory
 - we can score that slice with our own scorecard contract
 - we can export official-public `BEAM` scorecards into the per-conversation answer JSON shape expected by upstream `run_evaluation.py`
+- we can validate and invoke the pinned upstream `run_evaluation.py` path against exported answer files
 - we can summarize upstream evaluation JSON back into a compact in-repo view
 - we can use the local pilot lane as a fast regression benchmark
 
 What it does not mean:
 
 - we do not yet reproduce the official upstream answer-generation flow
-- we do not yet reproduce the official upstream evaluation flow
-- we do not yet have one command that can honestly claim `official BEAM reproduction`
+- we do not yet reproduce the official upstream answer-generation flow
+- we still need a first measured exact small-lane run artifact, not just the wrapper
 
 ## Official upstream surface
 
@@ -87,11 +89,11 @@ Missing:
 Current:
 
 - our scorecard contract measures correctness inside our own benchmark substrate
+- `run-beam-official-evaluation` can validate and invoke the upstream `run_evaluation.py` surface against exported result files
 - `summarize-beam-evaluation` can read upstream evaluation outputs into a compact in-repo summary
 
 Missing:
 
-- explicit wrapper or replay path around upstream `run_evaluation.py`
 - pinned judge settings used by the official evaluation path
 - mapping from upstream evaluation outputs into our scorecard fields
 - explicit policy for comparing our scores against upstream reported numbers
@@ -105,7 +107,6 @@ Current:
 
 Missing:
 
-- a separate command for exact official public `BEAM` evaluation reproduction
 - command naming that makes it impossible to confuse:
   - internal local pilot
   - official public reproduction
@@ -119,9 +120,8 @@ Current:
 Missing:
 
 - one official artifact naming scheme
-- one manifest field for upstream commit hash
-- one manifest field for official dataset scale
-- one manifest field for evaluation mode and judge configuration
+- one manifest field for evaluation mode and judge configuration inside the final measured artifact
+- one checked-in exact small-lane artifact proving the wrapper against the pinned upstream repo
 
 ## Recommended implementation order
 
@@ -132,8 +132,9 @@ Missing:
    - `dataset_scale`
 3. Add separate CLI entrypoints for official-public `BEAM`.
 4. Add result normalization for upstream evaluation outputs.
-5. Run one exact small official lane first.
-6. Only then broaden the scale ladder.
+5. Run one exact small official lane first through the new wrapper.
+6. Pin the judge configuration used for that run.
+7. Only then broaden the scale ladder.
 
 ## Decision rule
 
