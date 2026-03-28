@@ -14,6 +14,7 @@ from .memory_answer_routing import choose_answer_candidate as _choose_answer_can
 from .memory_answer_routing import entry_combined_text as _entry_combined_text_impl
 from .memory_answer_routing import question_needs_raw_aggregate_context as _question_needs_raw_aggregate_context
 from .memory_beam_builder import build_beam_ready_temporal_atom_router_packets as _build_beam_ready_temporal_atom_router_packets_impl
+from .memory_dual_store_builder import build_dual_store_event_calendar_hybrid_packets as _build_dual_store_event_calendar_hybrid_packets_impl
 from .memory_extraction import (
     EventCalendarEntry,
     MemoryAtom,
@@ -4226,260 +4227,38 @@ def build_dual_store_event_calendar_hybrid_packets(
     max_topic_support: int = 2,
     run_id: str = "dual-store-event-calendar-hybrid-v1",
 ) -> tuple[dict[str, Any], list[BaselinePromptPacket]]:
-    packets: list[BaselinePromptPacket] = []
-    for sample in samples:
-        observations = build_observation_log(sample)
-        reflected = reflect_observations(observations)
-        events = build_event_calendar(sample)
-        stable_window = sorted(
-            observations,
-            key=lambda entry: (entry.timestamp or "", entry.observation_id),
-        )[-max_observations:]
-        for question in sample.questions:
-            current_state_deleted = has_active_current_state_deletion(
-                question,
-                observations,
-                is_current_state_question=is_current_state_question,
-                question_subjects=_question_subjects,
-                question_predicates=_question_predicates,
-            )
-            ranked_reflections = sorted(
-                reflected,
-                key=lambda entry: (_observation_score(question, entry), entry.timestamp or "", entry.observation_id),
-                reverse=True,
-            )[:2]
-            current_state_entries = select_current_state_entries(
-                question,
-                reflected,
-                limit=2,
-                score_entry=lambda entry: _observation_score(question, entry),
-                preferred_predicates=set(_question_predicates(question)),
-            )
-            ranked_events = sorted(
-                events,
-                key=lambda entry: (_event_score(question, entry), entry.timestamp or "", entry.event_id),
-                reverse=True,
-            )[:top_k_events]
-            topic_summary = ""
-            topical_support: list[ObservationEntry] = []
-            if sample.benchmark_name == "LoCoMo":
-                topic_summary, topical_support = _topical_episode_support(
-                    question,
-                    stable_window,
-                    observations,
-                    max_support=max_topic_support,
-                )
-            evidence_entries = _select_evidence_entries(
-                question,
-                _dedupe_observations([*stable_window, *topical_support, *observations]),
-                limit=max(4, max_topic_support + 2),
-            )
-
-            context_blocks = ["stable_memory_window:"]
-            retrieved_items: list[RetrievedContextItem] = []
-            for entry in stable_window:
-                line = f"observation: {entry.text}"
-                context_blocks.append(line)
-                retrieved_items.append(
-                    RetrievedContextItem(
-                        session_id=entry.session_id,
-                        turn_ids=entry.turn_ids,
-                        score=0.25,
-                        strategy="hybrid_observation_window",
-                        text=line,
-                        memory_role=strategy_memory_role("hybrid_observation_window"),
-                        metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
-                    )
-                )
-
-            context_blocks.append("evidence_memory:")
-            for entry in evidence_entries:
-                line = f"evidence: {_observation_evidence_text(question, entry)}"
-                context_blocks.append(line)
-                retrieved_items.append(
-                    RetrievedContextItem(
-                        session_id=entry.session_id,
-                        turn_ids=entry.turn_ids,
-                        score=_evidence_score(question, entry),
-                        strategy="evidence_memory",
-                        text=line,
-                        memory_role=strategy_memory_role("evidence_memory"),
-                        metadata={
-                            "timestamp": entry.timestamp,
-                            "predicate": entry.predicate,
-                            "subject": entry.subject,
-                            "topic_id": entry.metadata.get("topic_id"),
-                        },
-                    )
-                )
-
-            if topical_support:
-                context_blocks.append("topical_episode:")
-                if topic_summary:
-                    context_blocks.append(f"topic_summary: {topic_summary}")
-                for entry in topical_support:
-                    line = f"episode_observation: {entry.text}"
-                    context_blocks.append(line)
-                    retrieved_items.append(
-                        RetrievedContextItem(
-                            session_id=entry.session_id,
-                            turn_ids=entry.turn_ids,
-                            score=_observation_score(question, entry),
-                            strategy="topic_continuity",
-                            text=line,
-                            memory_role=strategy_memory_role("topic_continuity"),
-                            metadata={
-                                "timestamp": entry.timestamp,
-                                "predicate": entry.predicate,
-                                "subject": entry.subject,
-                                "topic_id": entry.metadata.get("topic_id"),
-                            },
-                        )
-                    )
-
-            if current_state_entries:
-                context_blocks.append("current_state_memory:")
-                for entry in current_state_entries:
-                    line = f"current_state: {entry.text}"
-                    context_blocks.append(line)
-                    retrieved_items.append(
-                        RetrievedContextItem(
-                            session_id=entry.session_id,
-                            turn_ids=entry.turn_ids,
-                            score=_observation_score(question, entry),
-                            strategy="current_state_memory",
-                            text=line,
-                            memory_role=strategy_memory_role("current_state_memory"),
-                            metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
-                        )
-                    )
-
-            context_blocks.append("event_calendar:")
-            for entry in ranked_events:
-                prefix = f"{entry.timestamp} " if entry.timestamp else ""
-                line = f"event: {prefix}{entry.text}"
-                context_blocks.append(line)
-                retrieved_items.append(
-                    RetrievedContextItem(
-                        session_id=entry.session_id,
-                        turn_ids=entry.turn_ids,
-                        score=_event_score(question, entry),
-                        strategy="event_calendar",
-                        text=line,
-                        memory_role=strategy_memory_role("event_calendar"),
-                        metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
-                    )
-                )
-
-            context_blocks.append("belief_memory:")
-            for entry in ranked_reflections:
-                line = f"reflection: {entry.text}"
-                context_blocks.append(line)
-                retrieved_items.append(
-                    RetrievedContextItem(
-                        session_id=entry.session_id,
-                        turn_ids=entry.turn_ids,
-                        score=_observation_score(question, entry),
-                        strategy="belief_memory",
-                        text=line,
-                        memory_role=strategy_memory_role("belief_memory"),
-                        metadata={"timestamp": entry.timestamp, "predicate": entry.predicate, "subject": entry.subject},
-                    )
-                )
-
-            raw_candidate_pool = [*stable_window, *ranked_events, *observations, *ranked_reflections]
-            answer_text = _choose_answer_candidate(
-                question,
-                evidence_entries,
-                ranked_reflections,
-                raw_candidate_pool if (_is_dated_state_question(question) or _is_relative_state_question(question)) else _dedupe_observations(raw_candidate_pool),
-            )
-            ambiguous_relative_state = _has_ambiguous_relative_state_anchor(question, raw_candidate_pool)
-            referential_ambiguity = _has_referential_ambiguity(question, raw_candidate_pool)
-            answer_source = "evidence_memory" if evidence_entries else "belief_memory"
-            if _should_use_current_state_exact_value(question) and current_state_entries:
-                current_state_value = str(current_state_entries[0].metadata.get("value", "")).strip()
-                if current_state_value:
-                    answer_text = current_state_value
-                    answer_source = "current_state_memory"
-            elif current_state_deleted:
-                answer_text = "unknown"
-                answer_source = "current_state_deletion"
-            elif referential_ambiguity and answer_text.lower() == "unknown":
-                answer_source = "referential_ambiguity"
-            elif ambiguous_relative_state and answer_text.lower() == "unknown":
-                answer_source = "temporal_ambiguity"
-            if ranked_events:
-                top_entry = ranked_events[0]
-                answer_value = str(top_entry.metadata.get("value", "")).strip()
-                event_answer_text = (
-                    answer_value
-                    if _should_use_current_state_exact_value(question) and answer_value
-                    else _answer_candidate_surface_text(
-                        top_entry.subject,
-                        top_entry.predicate,
-                        top_entry.metadata.get("value", ""),
-                        top_entry.text,
-                    )
-                )
-                if (
-                    not question.should_abstain
-                    and not current_state_deleted
-                    and is_current_state_question(question)
-                    and not current_state_entries
-                    and "location" in _question_predicates(question)
-                    and event_answer_text
-                ):
-                    answer_text = event_answer_text
-                    answer_source = "event_calendar"
-                elif not answer_text and event_answer_text:
-                    answer_text = event_answer_text
-                    answer_source = "event_calendar"
-            answer_candidates: list[AnswerCandidate] = []
-            if answer_text:
-                answer_candidate = build_answer_candidate(
-                    question.question,
-                    answer_text,
-                    source=answer_source,
-                    metadata={"question_id": question.question_id},
-                )
-                answer_candidates.append(answer_candidate)
-                context_blocks.append(f"answer_candidate: {answer_candidate.text}")
-
-            packets.append(
-                BaselinePromptPacket(
-                    benchmark_name=sample.benchmark_name,
-                    baseline_name="dual_store_event_calendar_hybrid",
-                    sample_id=sample.sample_id,
-                    question_id=question.question_id,
-                    question=question.question,
-                    assembled_context="\n\n".join(context_blocks),
-                    retrieved_context_items=retrieved_items,
-                    metadata={
-                        "route": "dual_store_event_calendar_hybrid",
-                        "max_observations": max_observations,
-                        "top_k_events": top_k_events,
-                        "max_topic_support": max_topic_support,
-                        "primary_answer_candidate_type": answer_candidates[0].candidate_type if answer_candidates else None,
-                    },
-                    answer_candidates=answer_candidates,
-                )
-            )
-
-    manifest = build_run_manifest(
+    return _build_dual_store_event_calendar_hybrid_packets_impl(
         samples,
-        baseline_name="dual_store_event_calendar_hybrid",
+        max_observations=max_observations,
+        top_k_events=top_k_events,
+        max_topic_support=max_topic_support,
         run_id=run_id,
-        metadata={
-            "baseline_type": "candidate_memory_system",
-            "system_name": "Dual-Store Event Calendar Hybrid",
-            "max_observations": max_observations,
-            "top_k_events": top_k_events,
-            "max_topic_support": max_topic_support,
-        },
+        build_observation_log=build_observation_log,
+        reflect_observations=reflect_observations,
+        build_event_calendar=build_event_calendar,
+        has_active_current_state_deletion=has_active_current_state_deletion,
+        is_current_state_question=is_current_state_question,
+        question_subjects=_question_subjects,
+        question_predicates=_question_predicates,
+        observation_score=_observation_score,
+        event_score=_event_score,
+        select_current_state_entries=select_current_state_entries,
+        topical_episode_support=_topical_episode_support,
+        select_evidence_entries=_select_evidence_entries,
+        dedupe_observations=_dedupe_observations,
+        observation_evidence_text=_observation_evidence_text,
+        evidence_score=_evidence_score,
+        choose_answer_candidate=_choose_answer_candidate,
+        is_dated_state_question=_is_dated_state_question,
+        is_relative_state_question=_is_relative_state_question,
+        has_ambiguous_relative_state_anchor=_has_ambiguous_relative_state_anchor,
+        has_referential_ambiguity=_has_referential_ambiguity,
+        should_use_current_state_exact_value=_should_use_current_state_exact_value,
+        answer_candidate_surface_text=_answer_candidate_surface_text,
+        build_answer_candidate=build_answer_candidate,
+        build_run_manifest=build_run_manifest,
+        strategy_memory_role=strategy_memory_role,
     )
-    return manifest.to_dict(), packets
-
 
 def build_memory_system_contract_summary() -> dict[str, Any]:
     return {
@@ -4509,6 +4288,7 @@ def build_memory_system_contract_summary() -> dict[str, Any]:
             "BaselinePromptPacket",
         ],
     }
+
 
 
 
