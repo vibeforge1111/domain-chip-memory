@@ -8,7 +8,7 @@ from .memory_updates import build_current_state_view, has_active_state_deletion
 
 if TYPE_CHECKING:
     from .contracts import NormalizedQuestion
-    from .memory_systems import ObservationEntry
+    from .memory_extraction import ObservationEntry
 
 
 def is_current_state_question(question: "NormalizedQuestion") -> bool:

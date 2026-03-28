@@ -5,7 +5,8 @@ import re
 from typing import Any
 
 from .contracts import JsonDict, MemoryRole, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
-from .memory_systems import EventCalendarEntry, ObservationEntry, build_event_calendar, build_observation_log
+from .memory_extraction import EventCalendarEntry, ObservationEntry
+from .memory_systems import build_event_calendar, build_observation_log
 from .memory_updates import build_current_state_view, has_active_state_deletion, state_deletion_target
 
 

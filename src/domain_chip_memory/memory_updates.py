@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .contracts import NormalizedQuestion
-    from .memory_systems import ObservationEntry
+    from .memory_extraction import ObservationEntry
 
 
 def entry_sort_key(observation: "ObservationEntry") -> tuple[str, str]:
