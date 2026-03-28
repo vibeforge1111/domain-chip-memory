@@ -901,6 +901,8 @@ def test_run_beam_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["overall"]["total"] == 1
     assert payload["run_manifest"]["benchmark_name"] == "BEAM"
+    assert payload["run_manifest"]["metadata"]["source_modes"] == ["local_pilot"]
+    assert payload["run_manifest"]["metadata"]["slice_statuses"] == ["paper_pinned_local_slice"]
     assert payload["benchmark_slices"]["temporal_scope"][0]["label"] == "undated"
 
 

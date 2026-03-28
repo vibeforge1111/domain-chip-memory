@@ -368,6 +368,7 @@ class BEAMAdapter:
             questions=questions,
             metadata={
                 "source_format": "beam_local_slice",
+                "source_mode": str(instance.get("source_mode", "local_pilot")),
                 "slice_status": str(instance.get("slice_status", "paper_pinned_local_slice")),
                 **dict(instance.get("metadata", {})),
             },

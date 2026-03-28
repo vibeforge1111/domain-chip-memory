@@ -80,6 +80,53 @@ def build_run_manifest(
             inferred_benchmark = "mixed"
     sample_ids = [sample.sample_id for sample in samples]
     question_ids = [question.question_id for sample in samples for question in sample.questions]
+    derived_metadata: JsonDict = {}
+    sample_source_formats = sorted(
+        {
+            str(sample.metadata.get("source_format", "")).strip()
+            for sample in samples
+            if str(sample.metadata.get("source_format", "")).strip()
+        }
+    )
+    if sample_source_formats:
+        derived_metadata["sample_source_formats"] = sample_source_formats
+    if inferred_benchmark == "BEAM":
+        source_modes = sorted(
+            {
+                str(sample.metadata.get("source_mode", "")).strip()
+                for sample in samples
+                if str(sample.metadata.get("source_mode", "")).strip()
+            }
+        )
+        slice_statuses = sorted(
+            {
+                str(sample.metadata.get("slice_status", "")).strip()
+                for sample in samples
+                if str(sample.metadata.get("slice_status", "")).strip()
+            }
+        )
+        dataset_scales = sorted(
+            {
+                str(sample.metadata.get("dataset_scale", "")).strip()
+                for sample in samples
+                if str(sample.metadata.get("dataset_scale", "")).strip()
+            }
+        )
+        upstream_commits = sorted(
+            {
+                str(sample.metadata.get("upstream_commit", "")).strip()
+                for sample in samples
+                if str(sample.metadata.get("upstream_commit", "")).strip()
+            }
+        )
+        if source_modes:
+            derived_metadata["source_modes"] = source_modes
+        if slice_statuses:
+            derived_metadata["slice_statuses"] = slice_statuses
+        if dataset_scales:
+            derived_metadata["dataset_scales"] = dataset_scales
+        if upstream_commits:
+            derived_metadata["upstream_commits"] = upstream_commits
     return BenchmarkRunManifest(
         run_id=run_id,
         benchmark_name=inferred_benchmark,
@@ -87,5 +134,5 @@ def build_run_manifest(
         sample_ids=sample_ids,
         question_ids=question_ids,
         question_count=len(question_ids),
-        metadata=metadata or {},
+        metadata={**derived_metadata, **(metadata or {})},
     )

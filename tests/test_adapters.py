@@ -176,5 +176,6 @@ def test_beam_adapter_normalizes_local_slice_instance():
     assert sample.sample_id == "beam-1"
     assert sample.questions[0].expected_answers == ["Dubai"]
     assert sample.questions[0].evidence_turn_ids == ["t1"]
+    assert sample.metadata["source_mode"] == "local_pilot"
     assert sample.metadata["slice_status"] == "paper_pinned_local_slice"
     assert any(item["benchmark_name"] == "BEAM" for item in summary["official_benchmark_adapters"])
