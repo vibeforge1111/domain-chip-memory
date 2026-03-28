@@ -1,13 +1,126 @@
 from __future__ import annotations
 
-from typing import Any
+from . import memory_systems as _memory_systems
+from .contracts import NormalizedBenchmarkSample
+from .memory_beam_builder import build_beam_ready_temporal_atom_router_packets as _build_beam_ready_temporal_atom_router_packets_impl
+from .memory_contract_summary import build_memory_system_contract_summary
+from .memory_dual_store_builder import build_dual_store_event_calendar_hybrid_packets as _build_dual_store_event_calendar_hybrid_packets_impl
+from .memory_observational_builder import build_observational_temporal_memory_packets as _build_observational_temporal_memory_packets_impl
+from .runs import BaselinePromptPacket
 
-from .memory_systems import (
-    build_beam_ready_temporal_atom_router_packets,
-    build_dual_store_event_calendar_hybrid_packets,
-    build_memory_system_contract_summary,
-    build_observational_temporal_memory_packets,
-)
+
+def build_observational_temporal_memory_packets(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    max_observations: int = 8,
+    max_reflections: int = 4,
+    max_topic_support: int = 2,
+    run_id: str = "observational-temporal-memory-v1",
+) -> tuple[dict[str, object], list[BaselinePromptPacket]]:
+    return _build_observational_temporal_memory_packets_impl(
+        samples,
+        max_observations=max_observations,
+        max_reflections=max_reflections,
+        max_topic_support=max_topic_support,
+        run_id=run_id,
+        build_observation_log=_memory_systems.build_observation_log,
+        reflect_observations=_memory_systems.reflect_observations,
+        raw_user_turn_entries=_memory_systems._raw_user_turn_entries,
+        has_active_current_state_deletion=_memory_systems.has_active_current_state_deletion,
+        is_current_state_question=_memory_systems.is_current_state_question,
+        question_subjects=_memory_systems._question_subjects,
+        question_predicates=_memory_systems._question_predicates,
+        question_aware_observation_limits=_memory_systems._question_aware_observation_limits,
+        is_preference_question=_memory_systems._is_preference_question,
+        select_preference_support_entries=_memory_systems._select_preference_support_entries,
+        observation_score=_memory_systems._observation_score,
+        select_current_state_entries=_memory_systems.select_current_state_entries,
+        topical_episode_support=_memory_systems._topical_episode_support,
+        dedupe_observations=_memory_systems._dedupe_observations,
+        select_evidence_entries=_memory_systems._select_evidence_entries,
+        question_needs_raw_aggregate_context=_memory_systems._question_needs_raw_aggregate_context,
+        select_aggregate_support_entries=_memory_systems._select_aggregate_support_entries,
+        observation_evidence_text=_memory_systems._observation_evidence_text,
+        evidence_score=_memory_systems._evidence_score,
+        entry_source_corpus=_memory_systems._entry_source_corpus,
+        choose_answer_candidate=_memory_systems._choose_answer_candidate,
+        is_dated_state_question=_memory_systems._is_dated_state_question,
+        is_relative_state_question=_memory_systems._is_relative_state_question,
+        has_ambiguous_relative_state_anchor=_memory_systems._has_ambiguous_relative_state_anchor,
+        has_referential_ambiguity=_memory_systems._has_referential_ambiguity,
+        should_use_current_state_exact_value=_memory_systems._should_use_current_state_exact_value,
+        build_answer_candidate=_memory_systems.build_answer_candidate,
+        build_run_manifest=_memory_systems.build_run_manifest,
+        strategy_memory_role=_memory_systems.strategy_memory_role,
+    )
+
+
+def build_beam_ready_temporal_atom_router_packets(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    top_k_atoms: int = 3,
+    include_rehydrated_sessions: int = 1,
+    run_id: str = "beam-temporal-atom-router-v1",
+) -> tuple[dict[str, object], list[BaselinePromptPacket]]:
+    return _build_beam_ready_temporal_atom_router_packets_impl(
+        samples,
+        top_k_atoms=top_k_atoms,
+        include_rehydrated_sessions=include_rehydrated_sessions,
+        run_id=run_id,
+        extract_memory_atoms=_memory_systems.extract_memory_atoms,
+        session_lookup=_memory_systems._session_lookup,
+        choose_atoms=_memory_systems._choose_atoms,
+        atom_score=_memory_systems._atom_score,
+        serialize_session=_memory_systems._serialize_session,
+        should_use_current_state_exact_value=_memory_systems._should_use_current_state_exact_value,
+        answer_candidate_surface_text=_memory_systems._answer_candidate_surface_text,
+        build_answer_candidate=_memory_systems.build_answer_candidate,
+        build_run_manifest=_memory_systems.build_run_manifest,
+        strategy_memory_role=_memory_systems.strategy_memory_role,
+    )
+
+
+def build_dual_store_event_calendar_hybrid_packets(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    max_observations: int = 6,
+    top_k_events: int = 3,
+    max_topic_support: int = 2,
+    run_id: str = "dual-store-event-calendar-hybrid-v1",
+) -> tuple[dict[str, object], list[BaselinePromptPacket]]:
+    return _build_dual_store_event_calendar_hybrid_packets_impl(
+        samples,
+        max_observations=max_observations,
+        top_k_events=top_k_events,
+        max_topic_support=max_topic_support,
+        run_id=run_id,
+        build_observation_log=_memory_systems.build_observation_log,
+        reflect_observations=_memory_systems.reflect_observations,
+        build_event_calendar=_memory_systems.build_event_calendar,
+        has_active_current_state_deletion=_memory_systems.has_active_current_state_deletion,
+        is_current_state_question=_memory_systems.is_current_state_question,
+        question_subjects=_memory_systems._question_subjects,
+        question_predicates=_memory_systems._question_predicates,
+        observation_score=_memory_systems._observation_score,
+        event_score=_memory_systems._event_score,
+        select_current_state_entries=_memory_systems.select_current_state_entries,
+        topical_episode_support=_memory_systems._topical_episode_support,
+        select_evidence_entries=_memory_systems._select_evidence_entries,
+        dedupe_observations=_memory_systems._dedupe_observations,
+        observation_evidence_text=_memory_systems._observation_evidence_text,
+        evidence_score=_memory_systems._evidence_score,
+        choose_answer_candidate=_memory_systems._choose_answer_candidate,
+        is_dated_state_question=_memory_systems._is_dated_state_question,
+        is_relative_state_question=_memory_systems._is_relative_state_question,
+        has_ambiguous_relative_state_anchor=_memory_systems._has_ambiguous_relative_state_anchor,
+        has_referential_ambiguity=_memory_systems._has_referential_ambiguity,
+        should_use_current_state_exact_value=_memory_systems._should_use_current_state_exact_value,
+        answer_candidate_surface_text=_memory_systems._answer_candidate_surface_text,
+        build_answer_candidate=_memory_systems.build_answer_candidate,
+        build_run_manifest=_memory_systems.build_run_manifest,
+        strategy_memory_role=_memory_systems.strategy_memory_role,
+    )
+
 
 __all__ = [
     "build_beam_ready_temporal_atom_router_packets",

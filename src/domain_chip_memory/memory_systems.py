@@ -502,41 +502,14 @@ def build_observational_temporal_memory_packets(
     max_topic_support: int = 2,
     run_id: str = "observational-temporal-memory-v1",
 ) -> tuple[dict[str, Any], list[BaselinePromptPacket]]:
-    return _build_observational_temporal_memory_packets_impl(
+    from .packet_builders import build_observational_temporal_memory_packets as _build_packets
+
+    return _build_packets(
         samples,
         max_observations=max_observations,
         max_reflections=max_reflections,
         max_topic_support=max_topic_support,
         run_id=run_id,
-        build_observation_log=build_observation_log,
-        reflect_observations=reflect_observations,
-        raw_user_turn_entries=_raw_user_turn_entries,
-        has_active_current_state_deletion=has_active_current_state_deletion,
-        is_current_state_question=is_current_state_question,
-        question_subjects=_question_subjects,
-        question_predicates=_question_predicates,
-        question_aware_observation_limits=_question_aware_observation_limits,
-        is_preference_question=_is_preference_question,
-        select_preference_support_entries=_select_preference_support_entries,
-        observation_score=_observation_score,
-        select_current_state_entries=select_current_state_entries,
-        topical_episode_support=_topical_episode_support,
-        dedupe_observations=_dedupe_observations,
-        select_evidence_entries=_select_evidence_entries,
-        question_needs_raw_aggregate_context=_question_needs_raw_aggregate_context,
-        select_aggregate_support_entries=_select_aggregate_support_entries,
-        observation_evidence_text=_observation_evidence_text,
-        evidence_score=_evidence_score,
-        entry_source_corpus=_entry_source_corpus,
-        choose_answer_candidate=_choose_answer_candidate,
-        is_dated_state_question=_is_dated_state_question,
-        is_relative_state_question=_is_relative_state_question,
-        has_ambiguous_relative_state_anchor=_has_ambiguous_relative_state_anchor,
-        has_referential_ambiguity=_has_referential_ambiguity,
-        should_use_current_state_exact_value=_should_use_current_state_exact_value,
-        build_answer_candidate=build_answer_candidate,
-        build_run_manifest=build_run_manifest,
-        strategy_memory_role=strategy_memory_role,
     )
 
 
@@ -547,21 +520,13 @@ def build_beam_ready_temporal_atom_router_packets(
     include_rehydrated_sessions: int = 1,
     run_id: str = "beam-temporal-atom-router-v1",
 ) -> tuple[dict[str, Any], list[BaselinePromptPacket]]:
-    return _build_beam_ready_temporal_atom_router_packets_impl(
+    from .packet_builders import build_beam_ready_temporal_atom_router_packets as _build_packets
+
+    return _build_packets(
         samples,
         top_k_atoms=top_k_atoms,
         include_rehydrated_sessions=include_rehydrated_sessions,
         run_id=run_id,
-        extract_memory_atoms=extract_memory_atoms,
-        session_lookup=_session_lookup,
-        choose_atoms=_choose_atoms,
-        atom_score=_atom_score,
-        serialize_session=_serialize_session,
-        should_use_current_state_exact_value=_should_use_current_state_exact_value,
-        answer_candidate_surface_text=_answer_candidate_surface_text,
-        build_answer_candidate=build_answer_candidate,
-        build_run_manifest=build_run_manifest,
-        strategy_memory_role=strategy_memory_role,
     )
 
 
@@ -573,41 +538,20 @@ def build_dual_store_event_calendar_hybrid_packets(
     max_topic_support: int = 2,
     run_id: str = "dual-store-event-calendar-hybrid-v1",
 ) -> tuple[dict[str, Any], list[BaselinePromptPacket]]:
-    return _build_dual_store_event_calendar_hybrid_packets_impl(
+    from .packet_builders import build_dual_store_event_calendar_hybrid_packets as _build_packets
+
+    return _build_packets(
         samples,
         max_observations=max_observations,
         top_k_events=top_k_events,
         max_topic_support=max_topic_support,
         run_id=run_id,
-        build_observation_log=build_observation_log,
-        reflect_observations=reflect_observations,
-        build_event_calendar=build_event_calendar,
-        has_active_current_state_deletion=has_active_current_state_deletion,
-        is_current_state_question=is_current_state_question,
-        question_subjects=_question_subjects,
-        question_predicates=_question_predicates,
-        observation_score=_observation_score,
-        event_score=_event_score,
-        select_current_state_entries=select_current_state_entries,
-        topical_episode_support=_topical_episode_support,
-        select_evidence_entries=_select_evidence_entries,
-        dedupe_observations=_dedupe_observations,
-        observation_evidence_text=_observation_evidence_text,
-        evidence_score=_evidence_score,
-        choose_answer_candidate=_choose_answer_candidate,
-        is_dated_state_question=_is_dated_state_question,
-        is_relative_state_question=_is_relative_state_question,
-        has_ambiguous_relative_state_anchor=_has_ambiguous_relative_state_anchor,
-        has_referential_ambiguity=_has_referential_ambiguity,
-        should_use_current_state_exact_value=_should_use_current_state_exact_value,
-        answer_candidate_surface_text=_answer_candidate_surface_text,
-        build_answer_candidate=build_answer_candidate,
-        build_run_manifest=build_run_manifest,
-        strategy_memory_role=strategy_memory_role,
     )
 
 def build_memory_system_contract_summary() -> dict[str, Any]:
-    return _build_memory_system_contract_summary_impl()
+    from .packet_builders import build_memory_system_contract_summary as _build_summary
+
+    return _build_summary()
 
 
 
