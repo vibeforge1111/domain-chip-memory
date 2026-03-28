@@ -15,6 +15,7 @@ from .image_title_hints import resolve_titles_from_image_urls
 from .provider_candidate_payloads import candidate_payloads as _candidate_payloads_impl
 from .provider_context_text import QUESTION_STOPWORDS
 from .provider_context_text import question_tokens as _question_tokens_impl
+from .provider_rescue_actions import did_action_yes_answer as _did_action_yes_answer
 from .provider_rescue_navigation import location_anchor_from_phrase as _location_anchor_from_phrase_impl
 from .provider_rescue_navigation import ordered_location_rows as _ordered_location_rows_impl
 from .provider_rescue_navigation import ordered_sequence_labels as _ordered_sequence_labels_impl
@@ -170,35 +171,9 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
                         if location.lower() != target:
                             return location
 
-    if question_lower.startswith("did "):
-        did_match = re.match(r"did\s+([a-z][a-z'-]*)\s+(.+?)\??$", question_lower)
-        if did_match:
-            subject = did_match.group(1)
-            action_phrase = did_match.group(2)
-            action_tokens = [
-                token
-                for token in re.findall(r"[a-z0-9]+", action_phrase)
-                if token not in QUESTION_STOPWORDS and len(token) > 2
-            ]
-            irregular_variants = {
-                "make": ("made",),
-                "go": ("went",),
-                "take": ("took",),
-                "see": ("saw",),
-                "find": ("found",),
-                "run": ("ran",),
-                "buy": ("bought",),
-                "get": ("got",),
-                "feel": ("felt",),
-                "have": ("had",),
-                "leave": ("left",),
-                "write": ("wrote",),
-            }
-            if subject in combined_lower and action_tokens and all(
-                token in combined_lower or any(variant in combined_lower for variant in irregular_variants.get(token, ()))
-                for token in action_tokens
-            ):
-                return "Yes"
+    did_action_answer = _did_action_yes_answer(question_lower, combined_lower)
+    if did_action_answer:
+        return did_action_answer
 
     if "practicing art" in question_lower and "seven years" in (answer.lower() + " " + combined_lower):
         year_match = re.search(r"on \d{1,2}:\d{2}\s+[ap]m on \d{1,2}\s+[A-Za-z]+,\s+(\d{4})", combined, re.IGNORECASE)
