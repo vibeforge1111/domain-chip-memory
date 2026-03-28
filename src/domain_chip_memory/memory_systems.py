@@ -15,6 +15,7 @@ from .memory_aggregate_support import select_aggregate_support_entries as _selec
 from .memory_answer_inference import extract_place_candidates as _extract_place_candidates_impl
 from .memory_answer_inference import infer_explanatory_answer as _infer_explanatory_answer_impl
 from .memory_answer_inference import infer_aggregate_answer as _infer_aggregate_answer_impl
+from .memory_answer_inference import infer_factoid_answer as _infer_factoid_answer_impl
 from .memory_answer_inference import infer_shared_answer as _infer_shared_answer_impl
 from .memory_answer_routing import choose_answer_candidate as _choose_answer_candidate_impl
 from .memory_answer_routing import entry_combined_text as _entry_combined_text_impl
@@ -1460,118 +1461,12 @@ def _infer_aggregate_answer(question: NormalizedQuestion, candidate_entries: lis
 
 
 def _infer_factoid_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry]) -> str:
-    question_lower = question.question.lower()
-    texts = [_entry_combined_text(question, entry) for entry in candidate_entries]
-    combined = "\n".join(texts)
-    combined_source = "\n".join(_entry_source_corpus(entry) for entry in candidate_entries)
-    combined_corpus = "\n".join(_entry_source_corpus(entry).lower() for entry in candidate_entries)
-    duration_with_place_pattern = lambda place: re.compile(
-        rf"(?:\b(?:spent|stayed|was|went|travel(?:ed)?|trip)\b[^.\n]{{0,80}}\b(?:in|to|around)\s+(?:south\s+)?{place}\b[^.\n]{{0,80}}\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|few)\s+(?:days?|weeks?|months?|years?)\b)"
-        rf"|(?:\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|few)\s+(?:days?|weeks?|months?|years?)\b[^.\n]{{0,80}}\b(?:in|to|around)\s+(?:south\s+)?{place}\b)",
-        re.IGNORECASE,
+    return _infer_factoid_answer_impl(
+        question,
+        candidate_entries,
+        entry_combined_text=_entry_combined_text,
+        entry_source_corpus=_entry_source_corpus,
     )
-
-    if question_lower.startswith("what size") and "tv" in question_lower:
-        match = re.search(r"\b(\d{2,3}-inch)\b", combined, re.IGNORECASE)
-        if match:
-            return match.group(1)
-
-    if question_lower.startswith("what time") and "get home from work" in question_lower:
-        match = re.search(r"\b(\d{1,2}:\d{2}\s*[ap]m)\b", combined, re.IGNORECASE)
-        if match:
-            return match.group(1)
-
-    if question_lower.startswith("what is my ethnicity"):
-        match = re.search(r"mixed ethnicity\s*[-:]\s*([A-Za-z]+)\s+and\s+([A-Za-z]+)", combined, re.IGNORECASE)
-        if match:
-            return f"A mix of {match.group(1).title()} and {match.group(2).title()}"
-
-    if question_lower.startswith("what book am i currently reading"):
-        book_patterns = (
-            r'currently (?:devouring|reading)\s+"([^"]+)"',
-            r'just passed the halfway mark on\s+"([^"]+)"',
-            r'making good progress on\s+"([^"]+)"',
-            r'i\'m now on page \d+\s+out of \d+\s+(?:of|in)\s+"([^"]+)"',
-            r'i recently started\s+"([^"]+)"',
-        )
-        for pattern in book_patterns:
-            matches = re.findall(pattern, combined_source, re.IGNORECASE)
-            if matches:
-                return matches[-1].strip()
-
-    if question_lower.startswith("where does my sister emily live"):
-        match = re.search(r"\bmy sister Emily in ([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*)\b", combined_source)
-        if match:
-            return match.group(1).strip()
-
-    if question_lower.startswith("where did i meet "):
-        person_fragment = question.question[len("Where did I meet ") :].strip().rstrip(" ?")
-        if person_fragment:
-            person_pattern = re.escape(person_fragment)
-            for pattern in (
-                rf"\bFor {person_pattern}, it was ((?:a|an|the)\s+[^.\n]+)",
-                rf"\bI met {person_pattern} (?:at|in)\s+((?:a|an|the)\s+[^.\n]+|[A-Z][^.\n]+)",
-            ):
-                match = re.search(pattern, combined_source, re.IGNORECASE)
-                if match:
-                    return match.group(1).strip(" .,:;!?")
-
-    if question_lower.startswith("what brand of shampoo do i currently use"):
-        brand_patterns = (
-            r"shampoo[^.\n]{0,120}\bat\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*(?:'s)?)",
-            r"picked up on a whim at\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*(?:'s)?)",
-        )
-        for pattern in brand_patterns:
-            match = re.search(pattern, combined_source, re.IGNORECASE)
-            if match:
-                return match.group(1).strip()
-
-    if question_lower.startswith("how much time") and "practicing guitar" in question_lower:
-        match = re.search(r"\b(\d+\s+minutes?)\s+daily\b", combined, re.IGNORECASE)
-        if match:
-            return match.group(1)
-
-    if question_lower.startswith("what health issue") and "just a cold" in question_lower:
-        match = re.search(r"bad case of ([a-z][a-z ]+?) that i initially thought was just a cold", combined, re.IGNORECASE)
-        if match:
-            return match.group(1).strip()
-
-    if question_lower.startswith("what game") and "beat last weekend" in question_lower:
-        match = re.search(r"beat .* in the ([A-Za-z0-9][A-Za-z0-9 ':-]+?) last weekend", combined, re.IGNORECASE)
-        if match:
-            return match.group(1).strip()
-
-    if question_lower.startswith("what is the name of my hamster"):
-        if "hamster" not in combined_corpus and "cat" in combined_corpus:
-            return "unknown"
-
-    if question_lower.startswith("how long have i been collecting vintage films"):
-        if "vintage films" not in combined_corpus and "vintage cameras" in combined_corpus:
-            return "unknown"
-
-    if question_lower.startswith("what did i bake for my uncle's birthday party"):
-        if "uncle" not in combined_corpus and "niece's birthday party" in combined_corpus:
-            return "unknown"
-
-    if question_lower.startswith("how long was i in korea for"):
-        korea_duration = duration_with_place_pattern("korea").search(combined_corpus)
-        japan_duration = duration_with_place_pattern("japan").search(combined_corpus)
-        if not korea_duration and japan_duration:
-            return "unknown"
-
-    if question_lower.startswith("how much time") and "practicing violin" in question_lower:
-        has_violin_practice = re.search(r"\bpractic\w+\b[^.\n]{0,60}\bviolin\b|\bviolin\b[^.\n]{0,60}\bdaily\b", combined_corpus)
-        has_guitar_practice = re.search(r"\bpractic\w+\b[^.\n]{0,60}\bguitar\b|\bguitar\b[^.\n]{0,60}\bdaily\b", combined_corpus)
-        if not has_violin_practice and has_guitar_practice:
-            return "unknown"
-
-    if question_lower.startswith("what did my dad gave me as a birthday gift"):
-        has_dad_gift = re.search(r"\bbirthday gift from my dad\b|\bmy dad gave me\b|\bgift from my dad\b", combined_corpus)
-        has_sister_gift = re.search(r"\bbirthday gift from my sister\b|\bmy sister gave me\b|\bgift from my sister\b", combined_corpus)
-        if not has_dad_gift and has_sister_gift:
-            return "unknown"
-
-    return ""
 
 
 def _infer_anchor_time_from_phrase(
