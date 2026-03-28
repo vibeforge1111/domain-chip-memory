@@ -129,7 +129,7 @@ The stack still does not:
 - download benchmark data
 - run official scoring
 - build full retrieval traces
-- reproduce official `BEAM` yet; current support now includes an unpacked official-public chats loader, but not the upstream answer-generation and evaluation flow
+- reproduce official `BEAM` yet; current support now includes an unpacked official-public chats loader plus export and summary bridges, but not the upstream answer-generation and evaluation flow itself
 
 ## Schemas
 

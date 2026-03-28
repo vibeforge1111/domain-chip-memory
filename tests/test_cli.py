@@ -974,6 +974,102 @@ def test_run_beam_public_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
 
 
+def test_export_beam_public_answers_cli_writes_upstream_shape(tmp_path: Path, monkeypatch):
+    scorecard_file = tmp_path / "beam_scorecard.json"
+    output_dir = tmp_path / "beam_results"
+    manifest_file = tmp_path / "artifacts" / "beam_export_manifest.json"
+    scorecard_file.write_text(
+        json.dumps(
+            {
+                "run_manifest": {
+                    "benchmark_name": "BEAM",
+                    "metadata": {
+                        "source_modes": ["official_public"],
+                        "dataset_scales": ["128K"],
+                    },
+                },
+                "predictions": [
+                    {
+                        "sample_id": "beam-128k-1",
+                        "question_id": "1:information_extraction:1",
+                        "question": "Where do I live?",
+                        "category": "information_extraction",
+                        "predicted_answer": "Dubai",
+                    },
+                    {
+                        "sample_id": "beam-128k-1",
+                        "question_id": "1:abstention:2",
+                        "question": "What is my favorite food?",
+                        "category": "abstention",
+                        "predicted_answer": "Based on the provided chat, there is no information related to your favorite food.",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "export-beam-public-answers",
+            str(scorecard_file),
+            str(output_dir),
+            "--result-file-name",
+            "answers.json",
+            "--write",
+            str(manifest_file),
+        ],
+    )
+    cli.main()
+
+    manifest_payload = json.loads(manifest_file.read_text(encoding="utf-8"))
+    exported_payload = json.loads((output_dir / "100K" / "1" / "answers.json").read_text(encoding="utf-8"))
+    assert manifest_payload["conversation_count"] == 1
+    assert exported_payload["information_extraction"][0]["llm_response"] == "Dubai"
+    assert exported_payload["abstention"][0]["question"] == "What is my favorite food?"
+
+
+def test_summarize_beam_evaluation_cli_writes_compact_summary(tmp_path: Path, monkeypatch):
+    evaluation_file = tmp_path / "evaluation.json"
+    output_file = tmp_path / "artifacts" / "beam_eval_summary.json"
+    evaluation_file.write_text(
+        json.dumps(
+            {
+                "information_extraction": [
+                    {"llm_judge_score": 1.0},
+                    {"llm_judge_score": 0.5},
+                ],
+                "event_ordering": [
+                    {"tau_norm": 0.75, "llm_judge_score": 1.0},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "summarize-beam-evaluation",
+            str(evaluation_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["benchmark_name"] == "BEAM"
+    assert payload["overall_average"] == 0.75
+    assert payload["categories"][0]["category"] == "event_ordering"
+    assert payload["categories"][1]["average_score"] == 0.75
+
+
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "locomo.json"
     output_file = tmp_path / "artifacts" / "locomo_scorecard.json"

@@ -17,6 +17,8 @@ What we already have:
 - `load_beam_public_dir` in [loaders.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/loaders.py)
 - `run-beam-baseline` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
 - `run-beam-public-baseline` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
+- `export-beam-public-answers` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
+- `summarize-beam-evaluation` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
 - `BEAM` scorecard handling in [scorecards.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/scorecards.py)
 - local regression tests in [tests/test_adapters.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_adapters.py) and [tests/test_cli.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_cli.py)
 
@@ -25,6 +27,8 @@ What that support actually means:
 - we can run our baselines over an internal normalized `BEAM`-shaped JSON slice
 - we can run our baselines over an unpacked official-public `BEAM` chats directory
 - we can score that slice with our own scorecard contract
+- we can export official-public `BEAM` scorecards into the per-conversation answer JSON shape expected by upstream `run_evaluation.py`
+- we can summarize upstream evaluation JSON back into a compact in-repo view
 - we can use the local pilot lane as a fast regression benchmark
 
 What it does not mean:
@@ -73,7 +77,7 @@ Current:
 Missing:
 
 - exact mapping from our baselines to the official upstream answer-generation interface
-- commit-pinned documentation for upstream environment variables and result file naming
+- commit-pinned documentation for upstream environment variables and result file naming beyond the export bridge
 - clear distinction between:
   - our native baselines on official BEAM data
   - exact reproduction of upstream LIGHT or baseline flows
@@ -83,6 +87,7 @@ Missing:
 Current:
 
 - our scorecard contract measures correctness inside our own benchmark substrate
+- `summarize-beam-evaluation` can read upstream evaluation outputs into a compact in-repo summary
 
 Missing:
 

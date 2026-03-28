@@ -219,6 +219,13 @@ Run a first official-public `BEAM` smoke lane once you have an unpacked upstream
 python -m domain_chip_memory.cli run-beam-public-baseline path\\to\\chats --chat-size 128K --baseline observational_temporal_memory --provider heuristic_v1 --limit 1 --upstream-commit 3e12035532eb85768f1a7cd779832b650c4b2ef9
 ```
 
+Export those results into upstream-style answer files and summarize upstream evaluation output:
+
+```powershell
+python -m domain_chip_memory.cli export-beam-public-answers artifacts\\benchmark_runs\\beam_public_scorecard.json artifacts\\beam_results --result-file-name domain_chip_memory_answers.json
+python -m domain_chip_memory.cli summarize-beam-evaluation path\\to\\evaluation-domain_chip_memory_answers.json
+```
+
 Generate compact comparison artifacts across all current systems:
 
 ```powershell

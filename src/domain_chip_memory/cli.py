@@ -36,6 +36,10 @@ from .sdk import (
     build_sdk_maintenance_replay_contract_summary,
 )
 from .baselines import build_full_context_packets, build_lexical_packets
+from .beam_official_eval import (
+    export_beam_public_answers_from_scorecard,
+    summarize_beam_official_evaluation,
+)
 from .spark_shadow import (
     SparkShadowIngestAdapter,
     SparkShadowIngestRequest,
@@ -645,6 +649,16 @@ def main() -> None:
     run_beam_public.add_argument("--write")
     run_beam_public.add_argument("--resume-from")
 
+    export_beam_public = subparsers.add_parser("export-beam-public-answers", help="Export an official-public BEAM scorecard into upstream-style per-conversation answer files.")
+    export_beam_public.add_argument("scorecard_file")
+    export_beam_public.add_argument("output_dir")
+    export_beam_public.add_argument("--result-file-name", default="domain_chip_memory_answers.json")
+    export_beam_public.add_argument("--write")
+
+    summarize_beam_eval = subparsers.add_parser("summarize-beam-evaluation", help="Summarize an upstream BEAM evaluation JSON file into a compact in-repo view.")
+    summarize_beam_eval.add_argument("evaluation_file")
+    summarize_beam_eval.add_argument("--write")
+
     compare_longmemeval = subparsers.add_parser("compare-longmemeval-local", help="Run all default systems over a LongMemEval JSON file and emit a compact comparison.")
     compare_longmemeval.add_argument("data_file")
     compare_longmemeval.add_argument("--provider", default="heuristic_v1")
@@ -979,6 +993,24 @@ def main() -> None:
         )
         if args.write:
             _write_json(write_path, payload)
+        _print(payload)
+        return
+
+    if args.command == "export-beam-public-answers":
+        payload = export_beam_public_answers_from_scorecard(
+            args.scorecard_file,
+            args.output_dir,
+            result_file_name=args.result_file_name,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "summarize-beam-evaluation":
+        payload = summarize_beam_official_evaluation(args.evaluation_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
         _print(payload)
         return
 
