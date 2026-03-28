@@ -47,6 +47,10 @@ from .memory_observation_support import build_event_calendar as _build_event_cal
 from .memory_observation_support import build_observation_log as _build_observation_log_support_impl
 from .memory_observation_support import reflect_observations as _reflect_observations_impl
 from .memory_observation_support import topical_episode_support as _topical_episode_support_impl
+from .memory_orchestration import choose_answer_candidate as _choose_answer_candidate_support_impl
+from .memory_orchestration import evidence_score as _evidence_score_support_impl
+from .memory_orchestration import select_evidence_entries as _select_evidence_entries_support_impl
+from .memory_orchestration import select_preference_support_entries as _select_preference_support_entries_support_impl
 from .memory_packet_utils import event_score as _event_score
 from .memory_packet_utils import question_aware_observation_limits as _question_aware_observation_limits
 from .memory_observation_utils import dedupe_observations as _dedupe_observations
@@ -163,9 +167,10 @@ def _choose_atoms(question: NormalizedQuestion, atoms: list[MemoryAtom], limit: 
 
 
 def _evidence_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
-    return _evidence_score_impl(
+    return _evidence_score_support_impl(
         question,
         observation,
+        evidence_score_impl=_evidence_score_impl,
         observation_score=_observation_score,
     )
 
@@ -176,9 +181,11 @@ def _select_preference_support_entries(
     *,
     limit: int = 4,
 ) -> list[ObservationEntry]:
-    return _select_preference_support_entries_impl(
+    return _select_preference_support_entries_support_impl(
         question,
         entries,
+        limit=limit,
+        select_preference_support_entries_impl=_select_preference_support_entries_impl,
         evidence_score=_evidence_score,
         observation_score=_observation_score,
         entry_source_corpus=_entry_source_corpus,
@@ -186,7 +193,6 @@ def _select_preference_support_entries(
         preference_overlap=_preference_overlap,
         preference_phrase_bonus=_preference_phrase_bonus,
         observation_evidence_text=_observation_evidence_text,
-        limit=limit,
     )
 
 
@@ -196,15 +202,16 @@ def _select_evidence_entries(
     *,
     limit: int = 4,
 ) -> list[ObservationEntry]:
-    return _select_evidence_entries_impl(
+    return _select_evidence_entries_support_impl(
         question,
         observations,
+        limit=limit,
+        select_evidence_entries_impl=_select_evidence_entries_impl,
         evidence_score=_evidence_score,
         observation_score=_observation_score,
         question_subjects=_question_subjects,
         entry_combined_text=_entry_combined_text,
         observation_evidence_text=_observation_evidence_text,
-        limit=limit,
     )
 
 
@@ -215,12 +222,13 @@ def _choose_answer_candidate(
     context_entries: list[ObservationEntry] | None = None,
     aggregate_entries: list[ObservationEntry] | None = None,
 ) -> str:
-    return _choose_answer_candidate_impl(
+    return _choose_answer_candidate_support_impl(
         question,
         evidence_entries,
         belief_entries,
         context_entries=context_entries,
         aggregate_entries=aggregate_entries,
+        choose_answer_candidate_impl=_choose_answer_candidate_impl,
         question_needs_raw_aggregate_context=_question_needs_raw_aggregate_context,
         infer_dated_state_answer=_infer_dated_state_answer,
         infer_relative_state_answer=_infer_relative_state_answer,
