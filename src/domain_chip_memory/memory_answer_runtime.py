@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 from .contracts import NormalizedQuestion
-from .memory_answer_inference import extract_place_candidates as _extract_place_candidates_impl
-from .memory_answer_inference import infer_explanatory_answer as _infer_explanatory_answer_impl
 from .memory_answer_inference import infer_aggregate_answer as _infer_aggregate_answer_impl
 from .memory_answer_inference import infer_factoid_answer as _infer_factoid_answer_impl
-from .memory_answer_inference import infer_shared_answer as _infer_shared_answer_impl
 from .memory_answer_routing import choose_answer_candidate as _choose_answer_candidate_impl
 from .memory_answer_routing import entry_combined_text as _entry_combined_text_impl
 from .memory_answer_routing import question_needs_raw_aggregate_context as _question_needs_raw_aggregate_context
@@ -24,6 +21,9 @@ from .memory_preferences import preference_phrase_bonus as _preference_phrase_bo
 from .memory_preference_answers import infer_preference_answer as _infer_preference_answer
 from .memory_queries import _question_subject, _question_subjects
 from .memory_rendering import answer_candidate_surface_text as _answer_candidate_surface_text
+from .memory_relational_answers import extract_place_candidates as _extract_place_candidates_impl
+from .memory_relational_answers import infer_explanatory_answer as _infer_explanatory_answer_impl
+from .memory_relational_answers import infer_shared_answer as _infer_shared_answer_impl
 from .memory_scoring import evidence_score as _evidence_score_impl
 from .memory_selection import select_evidence_entries as _select_evidence_entries_impl
 from .memory_selection import select_preference_support_entries as _select_preference_support_entries_impl
