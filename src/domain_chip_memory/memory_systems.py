@@ -7,6 +7,9 @@ from typing import Any
 
 from .answer_candidates import build_answer_candidate
 from .contracts import AnswerCandidate, JsonDict, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
+from .memory_evidence import entry_source_corpus as _entry_source_corpus
+from .memory_evidence import observation_evidence_text as _observation_evidence_text
+from .memory_evidence import raw_evidence_span as _raw_evidence_span
 from .memory_extraction import (
     EventCalendarEntry,
     MemoryAtom,
@@ -23,7 +26,6 @@ from .memory_queries import _question_predicates, _question_subject, _question_s
 from .memory_numbers import extract_first_numeric_match as _extract_first_numeric_match
 from .memory_numbers import format_count_value as _format_count_value
 from .memory_numbers import parse_small_number as _parse_small_number
-from .memory_observation_utils import candidate_sentences as _candidate_sentences
 from .memory_observation_utils import dedupe_observations as _dedupe_observations
 from .memory_observation_utils import session_lookup as _session_lookup
 from .memory_preferences import is_generic_followup_preference_text as _is_generic_followup_preference_text
@@ -996,64 +998,6 @@ def _choose_atoms(question: NormalizedQuestion, atoms: list[MemoryAtom], limit: 
     return chosen
 
 
-def _raw_evidence_span(question: NormalizedQuestion, observation: ObservationEntry) -> str:
-    source_text = str(observation.metadata.get("source_text", "")).strip() or observation.text
-    sentences = _candidate_sentences(source_text)
-    if not sentences:
-        return source_text.strip()
-
-    question_lower = question.question.lower()
-    question_tokens = set(_tokenize(question.question))
-    best_sentence = sentences[0]
-    best_score = float("-inf")
-    for sentence in sentences:
-        sentence_lower = sentence.lower()
-        sentence_tokens = set(_tokenize(sentence))
-        score = 2.0 * float(len(question_tokens.intersection(sentence_tokens)))
-        if len(sentence_tokens) <= 8:
-            score += 1.0
-        if question_lower.startswith("how did") and any(
-            token in sentence_lower for token in ("appreciate", "grateful", "thankful", "happy", "sad", "scared", "relieved")
-        ):
-            score += 3.0
-        if question_lower.startswith("what did") and any(
-            token in sentence_lower for token in ("went", "read", "paint", "made", "saw", "did", "hike", "walk", "attended")
-        ):
-            score += 2.0
-        if question_lower.startswith("did ") and sentence_lower in {"yes", "no"}:
-            score += 4.0
-        if "road trip" in question_lower and "relax" in question_lower and any(
-            token in sentence_lower for token in ("hike", "walk")
-        ):
-            score += 6.0
-        if _is_preference_question(question):
-            preference_overlap = len(_preference_domain_tokens(question).intersection(sentence_tokens))
-            score += 4.0 * float(preference_overlap)
-            score += _preference_phrase_bonus(question, sentence)
-            if _is_recommendation_request_text(sentence):
-                score += 2.0
-            if _is_generic_followup_preference_text(sentence):
-                score -= 5.0
-            if preference_overlap == 0:
-                score -= 2.0
-        if score > best_score:
-            best_score = score
-            best_sentence = sentence
-    return best_sentence
-
-
-def _observation_evidence_text(question: NormalizedQuestion, observation: ObservationEntry) -> str:
-    if observation.predicate == "raw_turn":
-        return _raw_evidence_span(question, observation)
-    value = str(observation.metadata.get("value", "")).strip()
-    return _answer_candidate_surface_text(
-        observation.subject,
-        observation.predicate,
-        value,
-        str(observation.metadata.get("source_text", observation.text)),
-    )
-
-
 def _evidence_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
     score = _observation_score(question, observation)
     predicates = set(_question_predicates(question))
@@ -1706,18 +1650,6 @@ def _entry_combined_text(question: NormalizedQuestion, entry: ObservationEntry) 
             _observation_evidence_text(question, entry),
             entry.text,
             str(entry.metadata.get("source_text", "")),
-            str(entry.metadata.get("value", "")),
-        )
-        if part
-    )
-
-
-def _entry_source_corpus(entry: ObservationEntry) -> str:
-    return " ".join(
-        part
-        for part in (
-            str(entry.metadata.get("source_text", "")),
-            entry.text,
             str(entry.metadata.get("value", "")),
         )
         if part
