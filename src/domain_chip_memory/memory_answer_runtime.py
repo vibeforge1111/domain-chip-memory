@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .contracts import NormalizedQuestion
-from .memory_answer_inference import infer_aggregate_answer as _infer_aggregate_answer_impl
+from .memory_aggregate_answers import infer_aggregate_answer as _infer_aggregate_answer_impl
 from .memory_answer_routing import choose_answer_candidate as _choose_answer_candidate_impl
 from .memory_answer_routing import entry_combined_text as _entry_combined_text_impl
 from .memory_answer_routing import question_needs_raw_aggregate_context as _question_needs_raw_aggregate_context
