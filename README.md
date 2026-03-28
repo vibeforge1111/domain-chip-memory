@@ -213,6 +213,12 @@ python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_
 python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --limit 10
 ```
 
+Run a first official-public `BEAM` smoke lane once you have an unpacked upstream chats directory:
+
+```powershell
+python -m domain_chip_memory.cli run-beam-public-baseline path\\to\\chats --chat-size 128K --baseline observational_temporal_memory --provider heuristic_v1 --limit 1 --upstream-commit 3e12035532eb85768f1a7cd779832b650c4b2ef9
+```
+
 Generate compact comparison artifacts across all current systems:
 
 ```powershell

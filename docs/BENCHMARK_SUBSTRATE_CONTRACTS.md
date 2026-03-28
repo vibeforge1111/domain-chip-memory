@@ -129,7 +129,7 @@ The stack still does not:
 - download benchmark data
 - run official scoring
 - build full retrieval traces
-- reproduce official `BEAM` yet; current support is an internal local pilot slice plus a public-surface pinning plan
+- reproduce official `BEAM` yet; current support now includes an unpacked official-public chats loader, but not the upstream answer-generation and evaluation flow
 
 ## Schemas
 

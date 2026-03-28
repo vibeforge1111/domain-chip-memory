@@ -14,19 +14,21 @@ What we already have:
 
 - `BEAMAdapter.normalize_instance` in [adapters.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/adapters.py)
 - `load_beam_json` in [loaders.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/loaders.py)
+- `load_beam_public_dir` in [loaders.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/loaders.py)
 - `run-beam-baseline` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
+- `run-beam-public-baseline` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
 - `BEAM` scorecard handling in [scorecards.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/scorecards.py)
 - local regression tests in [tests/test_adapters.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_adapters.py) and [tests/test_cli.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_cli.py)
 
 What that support actually means:
 
 - we can run our baselines over an internal normalized `BEAM`-shaped JSON slice
+- we can run our baselines over an unpacked official-public `BEAM` chats directory
 - we can score that slice with our own scorecard contract
 - we can use the local pilot lane as a fast regression benchmark
 
 What it does not mean:
 
-- we do not yet ingest the official upstream `BEAM` dataset shape directly
 - we do not yet reproduce the official upstream answer-generation flow
 - we do not yet reproduce the official upstream evaluation flow
 - we do not yet have one command that can honestly claim `official BEAM reproduction`
@@ -54,13 +56,13 @@ Relevant upstream paths at that commit:
 Current:
 
 - `load_beam_json` expects a local JSON list of already-normalized slice instances
+- `load_beam_public_dir` can ingest unpacked official-public conversation directories and normalize them into our contracts
 
 Missing:
 
-- loader path for official public `BEAM` dataset objects
-- loader path for official public `BEAM-10M` dataset objects
-- normalization of official conversation, profile, seed, and probing-question structures into our contracts
-- explicit scale metadata for `128K`, `500K`, `1M`, and `10M`
+- richer normalization of upstream metadata such as profiles, seeds, and narrative labels when needed
+- validation on real `500K`, `1M`, and `10M` fixtures, not only the first official-style shape
+- any loader path we may need for Hugging Face-native artifacts before local unpacking
 
 ### Gap 2: Official answer-generation contract
 
@@ -94,11 +96,11 @@ Missing:
 Current:
 
 - `run-beam-baseline` means `run our baseline on a local BEAM-style slice`
+- `run-beam-public-baseline` means `run our baseline on an unpacked official-public BEAM chats directory`
 
 Missing:
 
-- a separate command for official public `BEAM` ingestion
-- a separate command for official public `BEAM` reproduction
+- a separate command for exact official public `BEAM` evaluation reproduction
 - command naming that makes it impossible to confuse:
   - internal local pilot
   - official public reproduction
