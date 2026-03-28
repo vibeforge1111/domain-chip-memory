@@ -20,6 +20,9 @@ from .memory_extraction import (
     build_observation_log as _build_observation_log,
 )
 from .memory_queries import _question_predicates, _question_subject, _question_subjects
+from .memory_numbers import extract_first_numeric_match as _extract_first_numeric_match
+from .memory_numbers import format_count_value as _format_count_value
+from .memory_numbers import parse_small_number as _parse_small_number
 from .memory_rendering import answer_candidate_surface_text as _answer_candidate_surface_text
 from .memory_rendering import observation_surface_text as _observation_surface_text
 from .memory_rendering import serialize_session as _serialize_session
@@ -2365,55 +2368,6 @@ def _infer_explanatory_answer(question: NormalizedQuestion, evidence_entries: li
             return ", ".join(event_bits)
 
     return ""
-
-
-_SMALL_NUMBER_WORDS = {
-    "a": 1.0,
-    "an": 1.0,
-    "one": 1.0,
-    "two": 2.0,
-    "three": 3.0,
-    "four": 4.0,
-    "five": 5.0,
-    "six": 6.0,
-    "seven": 7.0,
-    "eight": 8.0,
-    "nine": 9.0,
-    "ten": 10.0,
-}
-
-
-def _parse_small_number(raw_value: str) -> float | None:
-    value = raw_value.strip().lower().replace(",", "")
-    if not value:
-        return None
-    if value in _SMALL_NUMBER_WORDS:
-        return _SMALL_NUMBER_WORDS[value]
-    try:
-        return float(value)
-    except ValueError:
-        return None
-
-
-def _format_count_value(value: float, unit: str = "") -> str:
-    if value.is_integer():
-        text = str(int(value))
-    else:
-        text = f"{value:.1f}".rstrip("0").rstrip(".")
-    return f"{text} {unit}".strip()
-
-
-def _extract_first_numeric_match(pattern: str, text: str) -> float | None:
-    match = re.search(pattern, text, re.IGNORECASE)
-    if not match:
-        return None
-    for group in match.groups():
-        if group is None:
-            continue
-        parsed = _parse_small_number(group)
-        if parsed is not None:
-            return parsed
-    return None
 
 
 def _infer_aggregate_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry]) -> str:
