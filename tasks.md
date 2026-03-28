@@ -51,7 +51,7 @@ What is not fully proven:
 - Broaden clean `LoCoMo` coverage beyond the currently bounded slices.
 - Lock the first canonical `GoodAI` run.
 - Maintain the local `BEAM` pilot lane.
-- Pin and reproduce the official `BEAM` path.
+- Run and pin the first exact small-lane official-public `BEAM` reproduction path.
 
 ### 3. Finish The Memory Architecture
 
@@ -128,7 +128,8 @@ Question:
 ## Immediate Next Actions
 
 - keep the current docs organized around one honest current-state view
-- pin the official `BEAM` reproduction path
+- run the first exact small official-public `BEAM` lane through the upstream evaluation wrapper
+- pin the judge configuration used for that run
 - extend the next honest `LongMemEval_s` slice
 - choose the next clean `LoCoMo` lane
 - lock the first canonical `GoodAI` run
@@ -142,4 +143,3 @@ Question:
 - runtime quality is measured directly
 - benchmark wins transfer to product-memory behavior
 - Spark shadow evidence is good enough to define rollout gates
-

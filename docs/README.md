@@ -63,6 +63,8 @@ These are historical and useful, but they should not override the current-state 
 
 - [Frontier Status 2026-03-28](FRONTIER_STATUS_2026-03-28.md)
 - [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
+- [Session Log 2026-03-29](SESSION_LOG_2026-03-29.md)
+- [Tomorrow Start Checklist 2026-03-30](TOMORROW_START_CHECKLIST_2026-03-30.md)
 - [Tomorrow Start Checklist 2026-03-28](TOMORROW_START_CHECKLIST_2026-03-28.md)
 - [Session Log 2026-03-26](SESSION_LOG_2026-03-26.md)
 - [Session Log 2026-03-25](SESSION_LOG_2026-03-25.md)
