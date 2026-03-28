@@ -128,7 +128,7 @@ def build_loader_contract_summary() -> dict[str, object]:
             {
                 "benchmark_name": "BEAM",
                 "entrypoint": "load_beam_json",
-                "required_input": "path to a paper-pinned local BEAM slice JSON",
+                "required_input": "path to an internal BEAM local-slice JSON; official public BEAM reproduction still needs a separate loader path",
             },
         ]
     }

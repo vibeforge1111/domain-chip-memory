@@ -438,7 +438,7 @@ def build_adapter_contract_summary() -> JsonDict:
             {
                 "benchmark_name": BEAMAdapter.benchmark_name,
                 "entrypoint": "BEAMAdapter.normalize_instance",
-                "source_shape": "paper-pinned local BEAM slice with sessions or flat conversation plus scoreable questions",
+                "source_shape": "internal BEAM local slice with sessions or flat conversation plus scoreable questions",
             },
         ],
         "shadow_benchmark_adapters": [
