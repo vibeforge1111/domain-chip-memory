@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 from .contracts import AnswerCandidate, NormalizedBenchmarkSample, NormalizedQuestion
+from .memory_builder_sections import append_retrieved_entries, build_entry_metadata
 from .memory_extraction import ObservationEntry
 from .runs import BaselinePromptPacket, RetrievedContextItem
 
@@ -128,141 +129,86 @@ def build_observational_temporal_memory_packets(
 
             context_blocks = ["stable_memory_window:"]
             retrieved_items: list[RetrievedContextItem] = []
-            for entry in stable_window:
-                line = f"observation: {entry.text}"
-                item_metadata = {
-                    "timestamp": entry.timestamp,
-                    "predicate": entry.predicate,
-                    "subject": entry.subject,
-                }
-                for field_name in ("img_url", "blip_caption", "search_query"):
-                    if field_name in entry.metadata:
-                        item_metadata[field_name] = entry.metadata[field_name]
-                context_blocks.append(line)
-                retrieved_items.append(
-                    RetrievedContextItem(
-                        session_id=entry.session_id,
-                        turn_ids=entry.turn_ids,
-                        score=0.25,
-                        strategy="observation_log",
-                        text=line,
-                        memory_role=strategy_memory_role("observation_log"),
-                        metadata=item_metadata,
-                    )
-                )
+            append_retrieved_entries(
+                context_blocks,
+                retrieved_items,
+                stable_window,
+                header=None,
+                line_builder=lambda entry: f"observation: {entry.text}",
+                score_builder=lambda _entry: 0.25,
+                strategy="observation_log",
+                memory_role=strategy_memory_role("observation_log"),
+                metadata_builder=lambda entry: build_entry_metadata(entry, include_media_fields=True),
+            )
 
-            context_blocks.append("evidence_memory:")
-            for entry in evidence_entries:
-                line = f"evidence: {observation_evidence_text(question, entry)}"
-                item_metadata = {
-                    "timestamp": entry.timestamp,
-                    "predicate": entry.predicate,
-                    "subject": entry.subject,
-                    "topic_id": entry.metadata.get("topic_id"),
-                }
-                context_blocks.append(line)
-                retrieved_items.append(
-                    RetrievedContextItem(
-                        session_id=entry.session_id,
-                        turn_ids=entry.turn_ids,
-                        score=evidence_score(question, entry),
-                        strategy="evidence_memory",
-                        text=line,
-                        memory_role=strategy_memory_role("evidence_memory"),
-                        metadata=item_metadata,
-                    )
-                )
+            append_retrieved_entries(
+                context_blocks,
+                retrieved_items,
+                evidence_entries,
+                header="evidence_memory:",
+                line_builder=lambda entry: f"evidence: {observation_evidence_text(question, entry)}",
+                score_builder=lambda entry: evidence_score(question, entry),
+                strategy="evidence_memory",
+                memory_role=strategy_memory_role("evidence_memory"),
+                metadata_builder=lambda entry: build_entry_metadata(entry, include_topic_id=True),
+            )
 
             if aggregate_support_entries:
-                context_blocks.append("aggregate_memory:")
-                for entry in aggregate_support_entries:
-                    line = f"aggregate: {entry_source_corpus(entry)}"
-                    context_blocks.append(line)
-                    retrieved_items.append(
-                        RetrievedContextItem(
-                            session_id=entry.session_id,
-                            turn_ids=entry.turn_ids,
-                            score=evidence_score(question, entry),
-                            strategy="aggregate_memory",
-                            text=line,
-                            memory_role=strategy_memory_role("aggregate_memory"),
-                            metadata={
-                                "timestamp": entry.timestamp,
-                                "predicate": entry.predicate,
-                                "subject": entry.subject,
-                            },
-                        )
-                    )
+                append_retrieved_entries(
+                    context_blocks,
+                    retrieved_items,
+                    aggregate_support_entries,
+                    header="aggregate_memory:",
+                    line_builder=lambda entry: f"aggregate: {entry_source_corpus(entry)}",
+                    score_builder=lambda entry: evidence_score(question, entry),
+                    strategy="aggregate_memory",
+                    memory_role=strategy_memory_role("aggregate_memory"),
+                    metadata_builder=build_entry_metadata,
+                )
 
             if topical_support:
-                context_blocks.append("topical_episode:")
                 if topic_summary:
+                    context_blocks.append("topical_episode:")
                     context_blocks.append(f"topic_summary: {topic_summary}")
-                for entry in topical_support:
-                    line = f"episode_observation: {entry.text}"
-                    item_metadata = {
-                        "timestamp": entry.timestamp,
-                        "predicate": entry.predicate,
-                        "subject": entry.subject,
-                        "topic_id": entry.metadata.get("topic_id"),
-                    }
-                    context_blocks.append(line)
-                    retrieved_items.append(
-                        RetrievedContextItem(
-                            session_id=entry.session_id,
-                            turn_ids=entry.turn_ids,
-                            score=observation_score(question, entry),
-                            strategy="topic_continuity",
-                            text=line,
-                            memory_role=strategy_memory_role("topic_continuity"),
-                            metadata=item_metadata,
-                        )
-                    )
+                    topical_header = None
+                else:
+                    topical_header = "topical_episode:"
+                append_retrieved_entries(
+                    context_blocks,
+                    retrieved_items,
+                    topical_support,
+                    header=topical_header,
+                    line_builder=lambda entry: f"episode_observation: {entry.text}",
+                    score_builder=lambda entry: observation_score(question, entry),
+                    strategy="topic_continuity",
+                    memory_role=strategy_memory_role("topic_continuity"),
+                    metadata_builder=lambda entry: build_entry_metadata(entry, include_topic_id=True),
+                )
 
             if current_state_entries:
-                context_blocks.append("current_state_memory:")
-                for entry in current_state_entries:
-                    line = f"current_state: {entry.text}"
-                    context_blocks.append(line)
-                    retrieved_items.append(
-                        RetrievedContextItem(
-                            session_id=entry.session_id,
-                            turn_ids=entry.turn_ids,
-                            score=observation_score(question, entry),
-                            strategy="current_state_memory",
-                            text=line,
-                            memory_role=strategy_memory_role("current_state_memory"),
-                            metadata={
-                                "timestamp": entry.timestamp,
-                                "predicate": entry.predicate,
-                                "subject": entry.subject,
-                            },
-                        )
-                    )
-
-            context_blocks.append("belief_memory:")
-            for entry in ranked_reflections:
-                line = f"reflection: {entry.text}"
-                item_metadata = {
-                    "timestamp": entry.timestamp,
-                    "predicate": entry.predicate,
-                    "subject": entry.subject,
-                }
-                for field_name in ("img_url", "blip_caption", "search_query"):
-                    if field_name in entry.metadata:
-                        item_metadata[field_name] = entry.metadata[field_name]
-                context_blocks.append(line)
-                retrieved_items.append(
-                    RetrievedContextItem(
-                        session_id=entry.session_id,
-                        turn_ids=entry.turn_ids,
-                        score=observation_score(question, entry),
-                        strategy="belief_memory",
-                        text=line,
-                        memory_role=strategy_memory_role("belief_memory"),
-                        metadata=item_metadata,
-                    )
+                append_retrieved_entries(
+                    context_blocks,
+                    retrieved_items,
+                    current_state_entries,
+                    header="current_state_memory:",
+                    line_builder=lambda entry: f"current_state: {entry.text}",
+                    score_builder=lambda entry: observation_score(question, entry),
+                    strategy="current_state_memory",
+                    memory_role=strategy_memory_role("current_state_memory"),
+                    metadata_builder=build_entry_metadata,
                 )
+
+            append_retrieved_entries(
+                context_blocks,
+                retrieved_items,
+                ranked_reflections,
+                header="belief_memory:",
+                line_builder=lambda entry: f"reflection: {entry.text}",
+                score_builder=lambda entry: observation_score(question, entry),
+                strategy="belief_memory",
+                memory_role=strategy_memory_role("belief_memory"),
+                metadata_builder=lambda entry: build_entry_metadata(entry, include_media_fields=True),
+            )
 
             answer_text = choose_answer_candidate(
                 question,
