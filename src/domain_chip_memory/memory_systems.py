@@ -40,6 +40,10 @@ from .memory_queries import _question_predicates, _question_subject, _question_s
 from .memory_numbers import extract_first_numeric_match as _extract_first_numeric_match
 from .memory_numbers import format_count_value as _format_count_value
 from .memory_numbers import parse_small_number as _parse_small_number
+from .memory_observation_support import build_event_calendar as _build_event_calendar_support_impl
+from .memory_observation_support import build_observation_log as _build_observation_log_support_impl
+from .memory_observation_support import reflect_observations as _reflect_observations_impl
+from .memory_observation_support import topical_episode_support as _topical_episode_support_impl
 from .memory_packet_utils import event_score as _event_score
 from .memory_packet_utils import question_aware_observation_limits as _question_aware_observation_limits
 from .memory_observation_utils import dedupe_observations as _dedupe_observations
@@ -891,15 +895,19 @@ def extract_memory_atoms(sample: NormalizedBenchmarkSample) -> list[MemoryAtom]:
 
 
 def build_observation_log(sample: NormalizedBenchmarkSample) -> list[ObservationEntry]:
-    return _build_observation_log(
+    return _build_observation_log_support_impl(
         sample,
+        build_observation_log_impl=_build_observation_log,
         extract_memory_atoms=extract_memory_atoms,
         observation_surface_text=_observation_surface_text,
     )
 
 
 def reflect_observations(observations: list[ObservationEntry]) -> list[ObservationEntry]:
-    return build_current_state_view(observations)
+    return _reflect_observations_impl(
+        observations,
+        build_current_state_view=build_current_state_view,
+    )
 
 
 def _topical_episode_support(
@@ -909,65 +917,20 @@ def _topical_episode_support(
     *,
     max_support: int = 2,
 ) -> tuple[str, list[ObservationEntry]]:
-    if not stable_window or not observations:
-        return "", []
-
-    stable_ids = {entry.observation_id for entry in stable_window}
-    candidate_topic_scores: dict[str, float] = {}
-    candidate_topic_summaries: dict[str, str] = {}
-    for entry in stable_window:
-        topic_id = str(entry.metadata.get("topic_id", "")).strip()
-        if not topic_id:
-            continue
-        candidate_topic_scores[topic_id] = candidate_topic_scores.get(topic_id, 0.0) + max(_observation_score(question, entry), 0.0)
-        candidate_topic_summaries[topic_id] = str(entry.metadata.get("topic_summary", "")).strip()
-
-    if not candidate_topic_scores:
-        return "", []
-
-    topic_members: dict[str, list[ObservationEntry]] = {}
-    for observation in observations:
-        topic_id = str(observation.metadata.get("topic_id", "")).strip()
-        if topic_id:
-            topic_members.setdefault(topic_id, []).append(observation)
-
-    ranked_topic_ids = sorted(
-        candidate_topic_scores,
-        key=lambda topic_id: (
-            candidate_topic_scores[topic_id],
-            int(next(
-                (
-                    member.metadata.get("topic_member_count", 0)
-                    for member in topic_members.get(topic_id, [])
-                    if member.metadata.get("topic_member_count", 0)
-                ),
-                0,
-            )),
-            topic_id,
-        ),
-        reverse=True,
+    return _topical_episode_support_impl(
+        question,
+        stable_window,
+        observations,
+        max_support=max_support,
+        observation_score=_observation_score,
+        turn_order_key=_turn_order_key,
     )
-
-    for topic_id in ranked_topic_ids:
-        members = topic_members.get(topic_id, [])
-        if len(members) < 2:
-            continue
-        extras = [member for member in members if member.observation_id not in stable_ids]
-        if not extras:
-            continue
-        ranked_extras = sorted(
-            extras,
-            key=lambda entry: (_observation_score(question, entry), entry.timestamp or "", *_turn_order_key(entry.turn_ids), entry.observation_id),
-            reverse=True,
-        )[:max_support]
-        if ranked_extras:
-            return candidate_topic_summaries.get(topic_id, ""), ranked_extras
-    return "", []
 
 
 def build_event_calendar(sample: NormalizedBenchmarkSample) -> list[EventCalendarEntry]:
-    return _build_event_calendar(
+    return _build_event_calendar_support_impl(
         sample,
+        build_event_calendar_impl=_build_event_calendar,
         extract_memory_atoms=extract_memory_atoms,
         observation_surface_text=_observation_surface_text,
     )
