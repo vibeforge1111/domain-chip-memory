@@ -231,7 +231,7 @@ It should begin with these concrete goals:
 3. extract current-state and supersession logic from packet-local heuristics into a dedicated module surface
 4. choose the next clean `LoCoMo` lane after `conv-26 q150`
 5. pin the first canonical `GoodAI LTM Benchmark` configuration
-6. define the first `BEAM` adapter and scorecard contract skeleton if the implementation surface is available
+6. pin the first official `BEAM` reproduction contract now that the public surface is available
 
 ## What success would look like one week from now
 

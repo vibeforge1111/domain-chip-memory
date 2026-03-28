@@ -51,7 +51,7 @@ Benchmarks to support first:
 - `LongMemEval`
 - `LoCoMo`
 - `GoodAI LTM Benchmark`
-- `BEAM` once public implementation artifacts are pinned
+- `BEAM`
 
 Shadow benchmark:
 

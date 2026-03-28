@@ -21,7 +21,7 @@ This repo is allowed to learn from and selectively reuse open-source memory syst
 | `mastra-ai/mastra` | Apache 2.0 core + enterprise-licensed `ee/` paths | Framework and observational-memory implementation study | Reuse only from the Apache-covered core paths unless enterprise-licensed code is explicitly excluded |
 | `Chronos` paper (`arXiv:2603.16862`) | paper source only | Temporal-memory architecture study | Do not imply code reuse or exact reproducibility until public code exists |
 | `Supermemory ASMR` forthcoming release | pending public release | Agentic retrieval and benchmark-frontier study | Do not imply code reuse or pinned benchmark reproducibility until the release and exact implementation surface are public |
-| `BEAM` paper (`arXiv:2510.27246`) | paper source only | Frontier benchmark tracking and architecture study | Do not imply a public code harness exists until code or dataset artifacts are pinned |
+| `mohammadtavakoli78/BEAM` plus `Mohammadta/BEAM` and `Mohammadta/BEAM-10M` | MIT code plus CC BY-SA 4.0 datasets | Official BEAM benchmark reproduction, architecture study, and score comparison | Keep code and dataset attribution explicit, and do not imply reproduction unless repo commit, dataset path, and eval flow are pinned |
 | `Salesforce/ConvoMem` | CC BY-NC 4.0 | Benchmark evaluation target | Treat as benchmark and research use unless a commercial-rights position is explicitly cleared |
 
 ## Policy

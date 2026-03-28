@@ -49,7 +49,7 @@ The PRD is directionally correct, but the actual remaining work is more specific
 - deterministic `full_context` and `lexical` baseline packet builders
 - local scorecard contract and deterministic heuristic baseline executor
 - first canonical `GoodAI LTM Benchmark` configuration lock
-- `BEAM` added to the benchmark doctrine as a frontier higher-context target pending public implementation pinning
+- `BEAM` added to the benchmark doctrine as the core frontier stress benchmark, with public surface pinning still pending
 
 ### Not yet built
 
@@ -68,7 +68,7 @@ The PRD is directionally correct, but the actual remaining work is more specific
 1. exact `LoCoMo` public threshold pin
 2. the retrieval trace format
 3. the per-slice score aggregation format
-4. the public implementation surface for `BEAM`
+4. the exact commit-pinned official reproduction surface for `BEAM`
 
 ## Three initial systems to build
 

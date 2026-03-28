@@ -129,7 +129,7 @@ The stack still does not:
 - download benchmark data
 - run official scoring
 - build full retrieval traces
-- reproduce official `BEAM` yet; current support is a paper-pinned local pilot slice
+- reproduce official `BEAM` yet; current support is an internal local pilot slice plus a public-surface pinning plan
 
 ## Schemas
 

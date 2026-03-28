@@ -53,7 +53,7 @@ What is not finished:
 - `memory_systems.py` still holds too much architecture and behavior
 - provider-side rescue still carries too much correctness burden
 - memory-role separation is doctrinally clear but not fully runtime-clean
-- `LongMemEval`, `LoCoMo`, `GoodAI`, and `BEAM` are not all fully closed or fully pinned in-repo
+- `LongMemEval`, `LoCoMo`, and `GoodAI` are not all fully closed in-repo, and `BEAM` official reproduction is not yet exactly commit-pinned
 - real-time runtime metrics are only partially measured
 - Spark has shadow surfaces, but not enough real trace evidence yet for promotion
 
@@ -324,8 +324,8 @@ Required tasks:
 - extend `LongMemEval_s` beyond the current measured frontier
 - broaden clean `LoCoMo` coverage beyond the currently bounded lanes
 - lock the first canonical `GoodAI LTM Benchmark` configuration and run
-- keep the local `BEAM` pilot moving while the official implementation surface remains unpinned
-- pin the official `BEAM` evaluation path as soon as the public surface exists
+- keep the local `BEAM` pilot moving as an internal regression lane
+- pin the official `BEAM` evaluation path now that the public surface exists
 
 Definition of done:
 
@@ -477,7 +477,7 @@ Sequence:
 2. broaden clean `LoCoMo`
 3. lock canonical `GoodAI`
 4. keep local `BEAM` pilot honest
-5. pin official `BEAM` path when possible
+5. pin official `BEAM` path and run the first exact reproduction lane
 
 Exit criteria:
 
@@ -553,7 +553,7 @@ Exit criteria:
 - stop expanding wording ladders forever once they stop teaching new substrate lessons
 - stop letting provider rescue absorb every substrate weakness
 - stop treating partially separated modules as finished architecture
-- stop calling `BEAM` readiness finished before the evaluation surface is pinned
+- stop calling `BEAM` readiness finished before the official public surface is commit-pinned and reproduced
 - stop assuming benchmark wins automatically imply product-runtime quality
 
 ## Decision Rule For Next Work

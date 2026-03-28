@@ -26,6 +26,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [Benchmark Autoloop Program](BENCHMARK_AUTOLOOP_PROGRAM.md)
 - [AutoLoop Flywheel](AUTOLOOP_FLYWHEEL.md)
 - [Benchmark Substrate Contracts](BENCHMARK_SUBSTRATE_CONTRACTS.md)
+- [BEAM Official Reproduction Plan](BEAM_OFFICIAL_REPRODUCTION_PLAN_2026-03-29.md)
 - [BEAM Local Pilot Slice](BEAM_LOCAL_PILOT_SLICE_2026-03-25.md)
 
 ## Current Architecture Direction
@@ -39,6 +40,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [Spark Shadow Replay Examples](SPARK_SHADOW_REPLAY_EXAMPLES_2026-03-27.md)
 - [Unified Memory System Program](UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md)
 - [BEAM Readiness Program](BEAM_READINESS_PROGRAM_2026-03-24.md)
+- [BEAM Official Reproduction Plan](BEAM_OFFICIAL_REPRODUCTION_PLAN_2026-03-29.md)
 - [Memory Mutation Matrix](MEMORY_MUTATION_MATRIX_2026-03-24.md)
 - [Memory Variation Map And Three Builds](MEMORY_VARIATION_MAP_AND_THREE_BUILDS_2026-03-23.md)
 - [MiniMax Operational Notes](MINIMAX_OPERATIONAL_NOTES_2026-03-23.md)

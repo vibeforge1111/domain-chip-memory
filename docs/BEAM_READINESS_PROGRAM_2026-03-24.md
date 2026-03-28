@@ -2,6 +2,14 @@
 
 Status: active execution doctrine
 
+Update 2026-03-29:
+
+- official public `BEAM` repo is now available: `https://github.com/mohammadtavakoli78/BEAM`
+- official public datasets are now available:
+  - `https://huggingface.co/datasets/Mohammadta/BEAM`
+  - `https://huggingface.co/datasets/Mohammadta/BEAM-10M`
+- this program therefore shifts from `wait for BEAM release` to `pin exact BEAM reproduction`
+
 ## Why this exists
 
 `LongMemEval_s` and bounded `LoCoMo` slices are already giving strong signal, but they are not the final proof that the memory architecture will survive million-token pressure.
@@ -125,7 +133,7 @@ In repo terms, that suggests:
 2. Start the architecture consolidation track in parallel by adding typed `answer_candidate` contracts and explicit current-state separation.
 3. Start the next clean `LoCoMo` conversation slice instead of continuing to optimize the contaminated `conv-26 q151-199` tail.
 4. Lock the first canonical `GoodAI LTM Benchmark` run instead of leaving that frontier abstract.
-5. Add `BEAM` adapter and scorecard contracts as soon as the implementation surface is pin-able.
+5. Pin the exact public `BEAM` repo commit, dataset splits, and evaluation flow, then run the first official reproduction lane.
 6. Start testing architecture mutations against the question:
    - does this help million-token-scale memory pressure without breaking the already-closed slices?
 
@@ -135,5 +143,5 @@ Do not call the system `BEAM`-ready until all of the following are true:
 
 1. `LongMemEval_s` coverage is materially broader than the current partial slice
 2. `LoCoMo` coverage is materially broader than the current bounded `conv-26` slices
-3. a `BEAM` evaluation path exists in-repo
+3. a commit-pinned official `BEAM` evaluation path exists in-repo
 4. the architecture shows positive transfer rather than benchmark-specific overfit

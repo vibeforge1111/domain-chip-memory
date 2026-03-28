@@ -10,17 +10,24 @@ It is intentionally narrow:
 
 - one local pilot sample
 - shaped to the BEAM contract already added in code
-- explicitly marked as a paper-pinned local slice, not official BEAM data
+- explicitly marked as an internal local slice, not the official public BEAM benchmark
 
 ## Truthfulness rule
 
-This slice is not the public BEAM benchmark corpus.
+This slice is not the official public BEAM benchmark path.
 
 It exists to do three honest jobs now:
 
 1. verify that the BEAM adapter, loader, CLI, and scorecard path work end to end
 2. force the repo to track BEAM-style pressure slices explicitly
-3. give the current lead system a small deterministic BEAM-oriented regression lane while the official implementation surface remains unpinned
+3. give the current lead system a small deterministic BEAM-oriented regression lane while the official public reproduction path is being pinned
+
+Official public surfaces now exist:
+
+- repo: `https://github.com/mohammadtavakoli78/BEAM`
+- datasets:
+  - `https://huggingface.co/datasets/Mohammadta/BEAM`
+  - `https://huggingface.co/datasets/Mohammadta/BEAM-10M`
 
 ## Source-of-truth files
 
@@ -308,10 +315,12 @@ python -m domain_chip_memory.cli run-beam-baseline artifacts\benchmark_runs\beam
 
 ## Promotion rule
 
-Do not describe this as BEAM reproduction.
+Do not describe this as the main BEAM reproduction.
 
-It is only the first local pilot lane until one of these becomes true:
+It remains a fast internal regression lane even after public BEAM release.
 
-- official BEAM code is pinned
-- official BEAM data access is pinned
-- a paper-faithful public harness is pinned with evidence
+The separate official proof lane should be used for external BEAM claims once all of these are true:
+
+- one exact BEAM repo commit is pinned
+- one exact dataset path and scale ladder are pinned
+- one exact evaluation flow is pinned and reproduced in-repo

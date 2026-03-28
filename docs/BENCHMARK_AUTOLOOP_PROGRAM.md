@@ -147,7 +147,7 @@ The first real success state is:
 - `LongMemEval` frontier matched or exceeded
 - `LoCoMo` competitive or leading
 - `GoodAI LTM Benchmark` strong across the chosen published configuration set
-- `BEAM` adapter pinned and competitive once the public implementation surface is available
+- `BEAM` reproduced on a commit-pinned official public surface and competitive there
 - online path still small enough to feel productizable
 - `ConvoMem` shadow checks still clean enough that we are not overbuilding retrieval
 
@@ -162,7 +162,7 @@ The first real architecture comparison state is:
 
 1. Pin the exact public `LoCoMo` leader threshold.
 2. Track `Supermemory ASMR` as a pending experimental frontier claim until its public release is available.
-3. Track `BEAM` public code or dataset release and lock the adapter surface when available.
+3. Pin the exact public `BEAM` repo commit, datasets, and evaluation flow.
 4. Run the Beam-Ready Temporal Atom Router as the first serious benchmark candidate.
 5. Run Observational Temporal Memory as the first compression-first counterexample.
 6. Promote the Dual-Store Event Calendar Hybrid only after the first two systems expose the real long-context failure pattern.

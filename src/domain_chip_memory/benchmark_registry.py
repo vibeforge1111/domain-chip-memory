@@ -70,14 +70,14 @@ PUBLIC_TARGETS = [
     BenchmarkTarget(
         benchmark_name="BEAM",
         dataset_scope="100 coherent conversations and 2,000 validated questions up to 10M tokens",
-        target_type="frontier_paper_benchmark",
+        target_type="frontier_public_benchmark",
         current_public_leader="LIGHT framework from the paper",
-        reported_result="Paper reports LIGHT improving 3.5% to 12.69% over the strongest baselines depending on the backbone LLM.",
-        win_condition="Reproduce the benchmark definition faithfully once code or data access is pinned, then beat the strongest reported baseline on the chosen slice.",
-        status="paper_only",
-        source_url="https://arxiv.org/abs/2510.27246",
-        notes="High-value frontier benchmark for higher-context and million-token-scale memory pressure. Current source is the paper; the repo now has a paper-pinned local pilot slice, but the official implementation surface still needs pinning.",
-        next_action="Maintain the paper-pinned local pilot lane while tracking public code or dataset release for full reproduction.",
+        reported_result="Paper and official repo report LIGHT improving 3.5% to 12.69% over the strongest baselines depending on the backbone LLM.",
+        win_condition="Pin one exact public repo commit, exact dataset splits, and exact evaluation flow, then beat the strongest reported baseline on the same BEAM surface.",
+        status="public_surface_available_needs_pinning",
+        source_url="https://github.com/mohammadtavakoli78/BEAM",
+        notes="High-value frontier benchmark for higher-context and million-token-scale memory pressure. Public repo and datasets now exist, so the remaining job is exact reproduction pinning rather than waiting for a release.",
+        next_action="Pin the official repo commit, dataset sources, and evaluation flow; keep the local pilot lane as an internal regression slice rather than the main BEAM proof.",
     ),
 ]
 
@@ -126,8 +126,8 @@ BENCHMARK_INVENTORY = [
         "benchmark_name": "BEAM",
         "scope": "100 coherent and topically diverse conversations with 2,000 validated questions, designed to scale up to roughly 10M tokens",
         "core_strength_tested": ["million_token_memory", "long_context_reasoning", "episodic_memory", "working_memory", "scratchpad_support"],
-        "source_url": "https://arxiv.org/abs/2510.27246",
-        "license": "paper_source_only",
+        "source_url": "https://github.com/mohammadtavakoli78/BEAM",
+        "license": "MIT code plus CC BY-SA 4.0 datasets",
     },
 ]
 
@@ -234,7 +234,7 @@ def build_benchmark_scorecard() -> dict:
             "Supermemory ASMR is tracked separately as a pending experimental frontier claim rather than a pinned reproducible target. "
             "LoCoMo remains a frontier target with an exact public threshold still to pin. "
             "GoodAI LTM Benchmark is adopted as the third official benchmark harness. "
-            "BEAM is added as a frontier higher-context benchmark pending public implementation pinning. "
+            "BEAM is adopted as the core frontier stress benchmark, with public repo and dataset surfaces now available but exact reproduction still to pin. "
             "ConvoMem is retained as a shadow regression benchmark."
         ),
     }

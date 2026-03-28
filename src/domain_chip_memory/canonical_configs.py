@@ -19,9 +19,9 @@ CANONICAL_CONFIGS = [
         "config_id": "beam_local_pilot_v1_source.json",
         "status": "initial_local_pilot_slice",
         "rationale": (
-            "Program inference: until the official BEAM implementation surface is pinned, the repo needs "
-            "one explicit paper-pinned local slice to exercise adapter, scorecard, abstention, and "
-            "multi-session pressure without pretending it is full benchmark reproduction."
+            "Program inference: even with the public BEAM repo and datasets now available, the repo still "
+            "needs one explicit local pilot slice for fast deterministic regression on adapter, scorecard, "
+            "abstention, and multi-session pressure."
         ),
         "next_configs": [
             "beam_local_pilot_v2_source.json",
@@ -46,10 +46,26 @@ CANONICAL_CONFIGS = [
             "beam_local_pilot_v21_source.json",
             "beam_local_pilot_v22_source.json",
             "beam_local_pilot_v23_source.json",
-            "official_beam_slice_once_pinned",
+            "official_beam_public_reproduction_v1",
         ],
-        "source_url": "https://arxiv.org/abs/2510.27246",
-    }
+        "source_url": "https://github.com/mohammadtavakoli78/BEAM",
+    },
+    {
+        "benchmark_name": "BEAM",
+        "config_id": "official_beam_public_reproduction_v1",
+        "status": "public_surface_pending_exact_pin",
+        "rationale": (
+            "Program inference: the official public BEAM repo and Hugging Face datasets now exist, so the "
+            "next canonical step is not another paper memo but an exact commit-pinned reproduction contract."
+        ),
+        "next_configs": [
+            "official_beam_128k_reproduction_v1",
+            "official_beam_500k_reproduction_v1",
+            "official_beam_1m_reproduction_v1",
+            "official_beam_10m_reproduction_v1",
+        ],
+        "source_url": "https://github.com/mohammadtavakoli78/BEAM",
+    },
 ]
 
 

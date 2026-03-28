@@ -2,7 +2,7 @@
 
 `domain-chip-memory` is a Spark-style domain chip lab for one narrow goal:
 
-- build a benchmark-first agent memory system that can beat the strongest systems on `LongMemEval`, `LoCoMo`, and `GoodAI LTM Benchmark`
+- build a benchmark-first agent memory system that can beat the strongest systems on `BEAM`, `LongMemEval`, `LoCoMo`, and `GoodAI LTM Benchmark`
 
 Shadow benchmark:
 
@@ -103,7 +103,7 @@ The repo now has the standard Spark domain-chip scaffold:
 - a local evaluator for readiness scoring
 
 It now contains a benchmark substrate, baseline packet builders, local deterministic execution, file loaders, and an env-gated OpenAI provider path for bounded real benchmark runs.
-It does **not** yet contain official benchmark scoring or a production-grade memory engine.
+It does **not** yet contain full official benchmark reproduction across the whole stack or a production-grade memory engine.
 
 ## Docs
 
@@ -119,6 +119,7 @@ Most important current execution docs:
 - implementation plan: `docs/IMPLEMENTATION_PLAN.md`
 - current test and validation plan: `docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md`
 - frontier status: `docs/FRONTIER_STATUS_2026-03-28.md`
+- BEAM official reproduction plan: `docs/BEAM_OFFICIAL_REPRODUCTION_PLAN_2026-03-29.md`
 - memory architecture evolution plan: `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
 - unified memory system program: `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
 - spark memory sdk implementation path: `docs/SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md`
