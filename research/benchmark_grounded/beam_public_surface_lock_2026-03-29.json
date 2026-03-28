@@ -1,0 +1,43 @@
+{
+  "benchmark_name": "BEAM",
+  "locked_at": "2026-03-29T12:00:00Z",
+  "status": "public_surface_pinned_for_reproduction_planning",
+  "upstream_repo": {
+    "url": "https://github.com/mohammadtavakoli78/BEAM",
+    "commit": "3e12035532eb85768f1a7cd779832b650c4b2ef9"
+  },
+  "paper": {
+    "url": "https://arxiv.org/abs/2510.27246"
+  },
+  "datasets": [
+    {
+      "name": "BEAM",
+      "url": "https://huggingface.co/datasets/Mohammadta/BEAM",
+      "claimed_scales": ["128K", "500K", "1M"]
+    },
+    {
+      "name": "BEAM-10M",
+      "url": "https://huggingface.co/datasets/Mohammadta/BEAM-10M",
+      "claimed_scales": ["10M"]
+    }
+  ],
+  "official_paths": {
+    "dataset_download": "src/beam/download_dataset.py",
+    "dataset_pipeline": "src/beam/run_pipeline.sh",
+    "answer_generation": "src/answer_probing_questions/answer_generation.sh",
+    "evaluation": "src/evaluation/run_evaluation.py",
+    "reporting": "src/evaluation/report_results.py",
+    "light_reference": "src/answer_probing_questions/light.py"
+  },
+  "claimed_benchmark_shape": {
+    "conversation_count": 100,
+    "validated_questions": 2000,
+    "memory_abilities": 10
+  },
+  "known_open_questions": [
+    "Pin the exact official scale order we will reproduce first.",
+    "Pin the exact judge model and evaluation settings used by the official evaluation flow.",
+    "Verify the upstream naming mismatch between README scale wording (`128K`) and some repo-local directory names (`100K`) before making score claims."
+  ],
+  "local_repo_role": "Use this lock for official BEAM reproduction claims. Keep the local BEAM pilot as an internal regression lane."
+}

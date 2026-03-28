@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-24T10:00:00Z",
+  "generated_at": "2026-03-29T12:00:00Z",
   "benchmark_family": "agent_memory",
   "public_targets": [
     {
@@ -41,14 +41,14 @@
     {
       "benchmark_name": "BEAM",
       "dataset_scope": "100 coherent conversations and 2,000 validated questions up to 10M tokens",
-      "target_type": "frontier_paper_benchmark",
+      "target_type": "frontier_public_benchmark",
       "current_public_leader": "LIGHT framework from the paper",
-      "reported_result": "Paper reports LIGHT improving 3.5% to 12.69% over the strongest baselines depending on the backbone LLM.",
-      "win_condition": "Reproduce the benchmark definition faithfully once code or data access is pinned, then beat the strongest reported baseline on the chosen slice.",
-      "status": "paper_only",
-      "source_url": "https://arxiv.org/abs/2510.27246",
-      "notes": "High-value frontier benchmark for higher-context and million-token-scale memory pressure. Promote it now as an explicit key architecture target while keeping LongMemEval_s and LoCoMo as the honesty and regression gates.",
-      "next_action": "Track public code or dataset release, then lock the benchmark adapter and scorecard contract and use BEAM pressure to shape the next architecture mutations."
+      "reported_result": "Paper and official repo report LIGHT improving 3.5% to 12.69% over the strongest baselines depending on the backbone LLM.",
+      "win_condition": "Pin one exact public repo commit, exact dataset splits, and exact evaluation flow, then beat the strongest reported baseline on the same BEAM surface.",
+      "status": "public_surface_available_needs_pinning",
+      "source_url": "https://github.com/mohammadtavakoli78/BEAM",
+      "notes": "High-value frontier benchmark for higher-context and million-token-scale memory pressure. Public repo and datasets now exist, so the remaining job is exact reproduction pinning rather than waiting for a release.",
+      "next_action": "Pin the official repo commit, dataset sources, and evaluation flow; keep the local pilot lane as an internal regression slice rather than the main BEAM proof."
     }
   ],
   "experimental_frontier_claims": [
@@ -109,8 +109,8 @@
         "working_memory",
         "scratchpad_support"
       ],
-      "source_url": "https://arxiv.org/abs/2510.27246",
-      "license": "paper_source_only"
+      "source_url": "https://github.com/mohammadtavakoli78/BEAM",
+      "license": "MIT code plus CC BY-SA 4.0 datasets"
     }
   ],
   "shadow_benchmarks": [
@@ -192,5 +192,5 @@
     "pinned_threshold_count": 1,
     "unpinned_threshold_count": 3
   },
-  "verdict": "LongMemEval has a pinned public bar. Supermemory ASMR is tracked separately as a pending experimental frontier claim rather than a pinned reproducible target. LoCoMo remains a frontier target with an exact public threshold still to pin. BEAM is now promoted as an explicit key frontier benchmark target for architecture pressure, while LongMemEval_s and LoCoMo remain the honesty and regression benchmarks we must still finish. GoodAI LTM Benchmark is retained as a long-span durability harness. ConvoMem remains a shadow regression benchmark."
+  "verdict": "LongMemEval has a pinned public bar. Supermemory ASMR is tracked separately as a pending experimental frontier claim rather than a pinned reproducible target. LoCoMo remains a frontier target with an exact public threshold still to pin. GoodAI LTM Benchmark is adopted as the third official benchmark harness. BEAM is adopted as the core frontier stress benchmark, with public repo and dataset surfaces now available but exact reproduction still to pin. ConvoMem is retained as a shadow regression benchmark."
 }
