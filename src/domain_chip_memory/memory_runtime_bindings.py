@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta
-from typing import Any
 
 from .answer_candidates import build_answer_candidate
 from .contracts import AnswerCandidate, JsonDict, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
@@ -89,7 +88,6 @@ from .memory_time import parse_question_state_anchor as _parse_question_state_an
 from .memory_time import shift_month as _shift_month
 from .memory_updates import build_current_state_view, has_active_current_state_deletion
 from .memory_views import is_current_state_question, select_current_state_entries
-from .runs import BaselinePromptPacket, RetrievedContextItem, build_run_manifest
 
 
 def build_observation_log(sample: NormalizedBenchmarkSample) -> list[ObservationEntry]:
@@ -483,66 +481,6 @@ def _infer_yes_no_answer(question: NormalizedQuestion, evidence_entries: list[Ob
 
 def _observation_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
     return _observation_score_impl(question, observation)
-
-
-def build_observational_temporal_memory_packets(
-    samples: list[NormalizedBenchmarkSample],
-    *,
-    max_observations: int = 8,
-    max_reflections: int = 4,
-    max_topic_support: int = 2,
-    run_id: str = "observational-temporal-memory-v1",
-) -> tuple[dict[str, Any], list[BaselinePromptPacket]]:
-    from .packet_builders import build_observational_temporal_memory_packets as _build_packets
-
-    return _build_packets(
-        samples,
-        max_observations=max_observations,
-        max_reflections=max_reflections,
-        max_topic_support=max_topic_support,
-        run_id=run_id,
-    )
-
-
-def build_beam_ready_temporal_atom_router_packets(
-    samples: list[NormalizedBenchmarkSample],
-    *,
-    top_k_atoms: int = 3,
-    include_rehydrated_sessions: int = 1,
-    run_id: str = "beam-temporal-atom-router-v1",
-) -> tuple[dict[str, Any], list[BaselinePromptPacket]]:
-    from .packet_builders import build_beam_ready_temporal_atom_router_packets as _build_packets
-
-    return _build_packets(
-        samples,
-        top_k_atoms=top_k_atoms,
-        include_rehydrated_sessions=include_rehydrated_sessions,
-        run_id=run_id,
-    )
-
-
-def build_dual_store_event_calendar_hybrid_packets(
-    samples: list[NormalizedBenchmarkSample],
-    *,
-    max_observations: int = 6,
-    top_k_events: int = 3,
-    max_topic_support: int = 2,
-    run_id: str = "dual-store-event-calendar-hybrid-v1",
-) -> tuple[dict[str, Any], list[BaselinePromptPacket]]:
-    from .packet_builders import build_dual_store_event_calendar_hybrid_packets as _build_packets
-
-    return _build_packets(
-        samples,
-        max_observations=max_observations,
-        top_k_events=top_k_events,
-        max_topic_support=max_topic_support,
-        run_id=run_id,
-    )
-
-def build_memory_system_contract_summary() -> dict[str, Any]:
-    from .packet_builders import build_memory_system_contract_summary as _build_summary
-
-    return _build_summary()
 
 
 
