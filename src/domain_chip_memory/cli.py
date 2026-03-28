@@ -20,7 +20,7 @@ from .loaders import (
     load_locomo_json,
     load_longmemeval_json,
 )
-from .memory_systems import build_memory_system_contract_summary
+from .memory_contract_summary import build_memory_system_contract_summary
 from .packets import build_strategy_packet
 from .providers import build_provider_contract_summary, get_provider
 from .runner import build_runner_contract_summary, run_baseline
