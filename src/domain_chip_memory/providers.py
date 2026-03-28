@@ -23,6 +23,7 @@ from .provider_rescue_navigation import location_anchor_from_phrase as _location
 from .provider_rescue_navigation import ordered_location_rows as _ordered_location_rows_impl
 from .provider_rescue_navigation import ordered_sequence_labels as _ordered_sequence_labels_impl
 from .provider_rescue_numeric import numeric_rescue as _numeric_rescue
+from .provider_preference_guidance import looks_like_preference_guidance_question as _looks_like_preference_guidance_question_impl
 from .provider_rescue_profile import profile_and_object_rescue as _profile_and_object_rescue
 from .provider_temporal_rescue import COUNT_WORDS, COUNT_WORD_TO_INT
 from .provider_temporal_rescue import extract_count_answer as _extract_count_answer_impl
@@ -567,34 +568,7 @@ def _compact_context(question: str, context: str, *, max_lines: int = 8) -> str:
 
 
 def _looks_like_preference_guidance_question(question: str) -> bool:
-    question_lower = question.lower()
-    first_person_question = question_lower.startswith(("i ", "i'", "i’m", "i'm", "ive", "im ")) or any(
-        marker in question_lower for marker in (" i ", " my ", " i've", " i'm", " ive", " im ")
-    )
-    if question_lower.startswith(("can you recommend", "can you suggest", "what should i serve")):
-        return True
-    if (
-        any(token in question_lower for token in ("recommend", "suggest"))
-        and first_person_question
-        and not question_lower.startswith(("what did", "which", "who", "when", "where"))
-    ):
-        return True
-    if any(
-        phrase in question_lower
-        for phrase in (
-            "any tips",
-            "any advice",
-            "any suggestions",
-            "any ideas",
-            "any recommendations",
-            "helpful tips",
-            "what do you think",
-            "do you think",
-            "could there be a reason",
-        )
-    ):
-        return True
-    return False
+    return _looks_like_preference_guidance_question_impl(question)
 
 
 def _expand_answer_from_context(question: str, answer: str, context: str) -> str:
