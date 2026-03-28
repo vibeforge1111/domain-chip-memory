@@ -15,6 +15,9 @@ from .image_title_hints import resolve_titles_from_image_urls
 from .provider_candidate_payloads import candidate_payloads as _candidate_payloads_impl
 from .provider_context_text import QUESTION_STOPWORDS
 from .provider_context_text import question_tokens as _question_tokens_impl
+from .provider_rescue_navigation import location_anchor_from_phrase as _location_anchor_from_phrase_impl
+from .provider_rescue_navigation import ordered_location_rows as _ordered_location_rows_impl
+from .provider_rescue_navigation import ordered_sequence_labels as _ordered_sequence_labels_impl
 from .provider_temporal_rescue import COUNT_WORDS, COUNT_WORD_TO_INT
 from .provider_temporal_rescue import extract_count_answer as _extract_count_answer_impl
 from .provider_temporal_rescue import format_anchor_date as _format_anchor_date_impl
@@ -121,28 +124,7 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     combined = "\n".join(payloads)
     combined_lower = combined.lower()
 
-    def _ordered_sequence_labels() -> list[str]:
-        labels: list[str] = []
-        seen: set[str] = set()
-        patterns = (
-            r"\bi visited\s+([A-Z][A-Za-z0-9 .'-]+?)\s+in\b",
-            r"\bi booked\s+([A-Z][A-Za-z0-9 .'-]+?)\s+for\b",
-        )
-        for line in context_lines:
-            for pattern in patterns:
-                match = re.search(pattern, line, re.IGNORECASE)
-                if not match:
-                    continue
-                label = match.group(1).strip().rstrip(".!?")
-                key = label.lower()
-                if key in seen:
-                    break
-                seen.add(key)
-                labels.append(label)
-                break
-        return labels
-
-    ordered_labels = _ordered_sequence_labels()
+    ordered_labels = _ordered_sequence_labels_impl(context_lines)
     after_match = re.match(r"which (?:city|trip).*(?:visit|came)\s+after\s+(.+?)\??$", question_lower)
     if after_match and ordered_labels:
         anchor = after_match.group(1).strip().rstrip(".!?")
@@ -160,40 +142,12 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
             if anchor_index - 1 >= 0:
                 return ordered_labels[anchor_index - 1]
 
-    def _ordered_location_rows() -> list[tuple[int, str, str]]:
-        def _extract_location_rows(lines: list[str]) -> list[tuple[int, str, str]]:
-            rows: list[tuple[int, str, str]] = []
-            patterns = (
-                r"\b(?:live|lived)\s+in\s+([A-Za-z][A-Za-z0-9 .'-]+)",
-                r"\b(?:moved|move)\s+(?:back\s+)?to\s+([A-Za-z][A-Za-z0-9 .'-]+)",
-            )
-            for idx, line in enumerate(lines):
-                for pattern in patterns:
-                    location_match = re.search(pattern, line, re.IGNORECASE)
-                    if not location_match:
-                        continue
-                    rows.append((idx, location_match.group(1).strip().rstrip(".!?"), line.lower()))
-                    break
-            return rows
-
-        observation_lines = [line for line in context_lines if line.lower().startswith("observation:")]
-        return _extract_location_rows(observation_lines) or _extract_location_rows(context_lines)
-
-    def _location_anchor_from_phrase(phrase: str) -> tuple[str, bool] | None:
-        normalized = phrase.strip().rstrip(".!?")
-        if not normalized:
-            return None
-        location_match = re.search(r"\b(?:back to|to|in)\s+([a-z][a-z0-9 .'-]+)$", normalized)
-        if location_match:
-            return location_match.group(1).strip(), "back to" in normalized or "again" in normalized
-        return normalized, "back to" in normalized or "again" in normalized
-
-    location_rows = _ordered_location_rows()
+    location_rows = _ordered_location_rows_impl(context_lines)
 
     if question_lower.startswith("where did i live before "):
         target_match = re.search(r"where did i live before\s+(.+?)\??$", question_lower)
         if target_match and location_rows:
-            anchor = _location_anchor_from_phrase(target_match.group(1))
+            anchor = _location_anchor_from_phrase_impl(target_match.group(1))
             if anchor:
                 target, prefer_last = anchor
                 target_positions = [pos for pos, (_, location, _) in enumerate(location_rows) if location.lower() == target]
@@ -206,7 +160,7 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     if question_lower.startswith("where did i live after "):
         target_match = re.search(r"where did i live after\s+(.+?)\??$", question_lower)
         if target_match and location_rows:
-            anchor = _location_anchor_from_phrase(target_match.group(1))
+            anchor = _location_anchor_from_phrase_impl(target_match.group(1))
             if anchor:
                 target, prefer_last = anchor
                 target_positions = [pos for pos, (_, location, _) in enumerate(location_rows) if location.lower() == target]
