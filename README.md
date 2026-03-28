@@ -115,10 +115,13 @@ Start here instead of scanning the repo manually:
 
 Most important current execution docs:
 
+- honest current-state assessment: `docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md`
 - implementation plan: `docs/IMPLEMENTATION_PLAN.md`
+- current test and validation plan: `docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md`
+- frontier status: `docs/FRONTIER_STATUS_2026-03-28.md`
 - memory architecture evolution plan: `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
 - unified memory system program: `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
-- tomorrow start checklist: `docs/TOMORROW_START_CHECKLIST_2026-03-26.md`
+- spark memory sdk implementation path: `docs/SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md`
 
 Repo structure surfaces:
 

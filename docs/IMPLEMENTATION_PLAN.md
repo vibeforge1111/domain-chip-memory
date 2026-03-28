@@ -1,393 +1,339 @@
-# Agent Memory Implementation Plan
+# Memory System Implementation Plan
 
-Date: 2026-03-22
-Status: phase planning
+Date: 2026-03-29
+Status: active execution doctrine
 
-## Phase 0: Research scaffold
+## Purpose
 
-Goal:
+This is the current implementation plan for `domain-chip-memory`.
 
-- establish the same repo shape as the other Spark domain chips
-- lock the first build thesis with enough source-backed research to constrain implementation
+It replaces the older scaffold-era implementation framing.
 
-Deliverables:
+The job now is not to invent a benchmark substrate from scratch.
+The job now is to turn the current strong-but-partially-proven system into:
 
-- manifests
-- docs
-- research lanes
-- schemas
-- watchtower and evaluator
-- first-version research lock
+- a benchmark-leading memory architecture
+- a trustworthy real memory layer
+- a measured runtime system
+- a narrow, integration-safe substrate for Spark shadow use
 
-## Phase 1: Benchmark substrate
+## Planning Doctrine
 
-Goal:
+This plan is governed by three rules:
 
-- make the benchmarks first-class local objects
+1. We optimize for truth, not score theater.
+2. We optimize for architecture quality, not benchmark-specific hacks.
+3. We leave room for intent-driven work, not only rigid checklists.
 
-Deliverables:
+That means:
 
-- benchmark adapters for `LongMemEval`, `LoCoMo`, and `GoodAI LTM Benchmark`
-- normalized session and question contracts
-- baseline runner
-- public target ledger refresh command
+- exact tasks matter
+- open-ended intent lanes also matter
+- any mutation that improves one benchmark but weakens the memory substrate is suspect
+- any mutation that improves the substrate but is never benchmark-verified is unfinished
 
-Shadow deliverable:
+## Current Honest State
 
-- `ConvoMem` regression adapter or compatible evaluator path
+What is strongly proven right now:
 
-Frontier deliverable:
+- local `ProductMemory` on the checked-in corpus is `1266/1266` for both promoted lead systems
+- local `ProductMemory` is source-aligned on that same full lane for both promoted lead systems
+- contiguous measured `LongMemEval_s` coverage is currently `200/200`
+- clean bounded `LoCoMo` slices are strong on the active lead lane
+- the local `BEAM` pilot ladder is active and green on the promoted slices
+- the monolith breakup is materially real; `memory_systems.py` is now only a compatibility shell
 
-- `BEAM` adapter contract once the public implementation surface is pinned
-- `BEAM` scorecard contract that can track million-token stress slices separately from shorter benchmark slices
+What is strong but not fully proven:
 
-## Phase 2: Baseline memory systems
+- `LoCoMo` beyond the current clean bounded slices
+- `BEAM` as full official benchmark proof rather than local pilot pressure
+- the amount of win coming from substrate quality versus provider rescue
+- real runtime quality under long-running product traffic
 
-Goal:
+What is still unknown or under-measured:
 
-- establish honest comparison points before novel architecture work
+- full-benchmark `LongMemEval`
+- broad clean `LoCoMo`
+- first canonical `GoodAI LTM Benchmark` reproduction
+- true official `BEAM` reproduction path in-repo
+- p50/p95 latency under serious runs
+- deletion reliability as a measured runtime metric
+- correction success rate as a measured runtime metric
+- memory drift rate across maintenance cycles
+- Spark Builder shadow behavior under real trace batches
 
-Deliverables:
+## Benchmark Doctrine
 
-- full-context baseline
-- naive retrieval baseline
-- memory-atom baseline
-- category-level reports
+Use the benchmark stack this way:
 
-## Phase 3: Candidate memory engine
+- `BEAM` is the core proof benchmark for architecture quality
+- `LongMemEval_s` is the clean long-conversation correctness guardrail
+- clean `LoCoMo` is the conversational-linkage and temporal-reasoning guardrail
+- local `ProductMemory` is the fastest truth test for memory lifecycle behavior
 
-Goal:
+Interpretation:
 
-- implement a memory system that can reasonably challenge public leaders
-- implement it in a way that can extend to `BEAM` without sacrificing already-closed `LongMemEval_s` and `LoCoMo` slices
+- if `BEAM` improves but `LongMemEval_s` or clean `LoCoMo` regresses, we may be building the wrong system
+- if `LongMemEval_s` and `LoCoMo` improve but `BEAM` transfer stays weak, we may still be building a benchmark-shaped substrate
+- if all three improve but `ProductMemory` degrades, we are not building a real memory layer
 
-Current lead lane as of 2026-03-25:
+## Implementation North Star
 
-- `observational_temporal_memory + MiniMax-M2.7` is the active `LongMemEval` optimization path
-- real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
-- real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
-- real rerun on March 24, 2026 over `LongMemEval_s` samples `51-75`: `25/25` (`1.00`)
-- real rerun on March 24, 2026 over `LongMemEval_s` samples `76-100`: `25/25` (`1.00`)
-- real rerun on March 24, 2026 over `LongMemEval_s` samples `101-125`: `25/25` (`1.00`)
-- real rerun on March 24, 2026 over `LongMemEval_s` samples `126-150`: `25/25` (`1.00`)
-- real rerun on March 25, 2026 over `LongMemEval_s` samples `151-175`: `25/25` (`1.00`)
-- real rerun on March 25, 2026 over `LongMemEval_s` samples `176-200`: `25/25` (`1.00`)
-- contiguous measured `LongMemEval_s` coverage through sample `200`: `200/200` (`1.00`)
-- current bounded `LoCoMo` same-provider ladder on the first 25 `conv-26` questions:
-  - `observational_temporal_memory`: `24/25` raw, `24/24` audited
-  - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
-  - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
-- real rerun on March 24, 2026 over the next 25 `LoCoMo` `conv-26` questions (`q26-50`):
-  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
-- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q51-75`):
-  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
-- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q76-100`):
-  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
-- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q101-125`):
-  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
-  - measured progression on the same slice: `1/25 -> 23/25 -> 25/25`
-- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q126-150`):
-  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
-  - measured progression on the same slice: `3/25 -> 23/25 -> 24/25 -> 25/25`
-- real rerun on March 25, 2026 over `LoCoMo conv-30 q1-25`:
-  - `observational_temporal_memory`: `25/25` raw, `25/25` audited
-- measured `LoCoMo conv-26` tail status after `q150`:
-  - scoreable subset `q151`, `q152`, `q168`, `q179`: `4/4`
-  - the wider `q151-199` tail is benchmark-contaminated because many gold answers are empty in the source file
-- current clean `LoCoMo` limitation:
-  - the remaining first-slice audited-open issue is still the benchmark inconsistency on `conv-26-qa-6`
-- current local `BEAM` pilot ladder as of 2026-03-26:
-  - `observational_temporal_memory`: `60/60`
-  - `dual_store_event_calendar_hybrid`: `60/60`
-  - currently closed pressure families include:
-    - dated state recall at month, day, and clock-time granularity
-    - event-anchored state recall
-    - relative non-location state recall
-    - timed repeated-anchor state recall
-    - ambiguity abstention
-    - location-anchored relative non-location state recall
-    - non-location-transition-anchored relative non-location state recall
-- current local `ProductMemory` lane as of 2026-03-26:
-  - `observational_temporal_memory`: `1266/1266`
-  - `dual_store_event_calendar_hybrid`: `1266/1266`
-  - covered operation families now include:
-    - explicit correction
-    - explicit deletion with and without restated value
-    - stale-state drift / re-entry
-    - historical evidence preservation after current-state deletion and later update
-    - non-location historical evidence preservation after explicit correction, including broader change/update-style phrasing
-    - pre-delete historical evidence recall for both location and non-location facts
-    - slot-explicit pre-delete historical recall such as `before I deleted where I live`
-    - mixed slot-plus-target historical recall such as `before I changed where I live to Sharjah`
-    - fronted-clause historical recall such as `Before I changed my favorite color to green, what was my favorite color?`
-    - longer multi-clause historical recall with extra discourse filler
-    - anaphoric historical recall such as `What was my favorite color before that update?`
-    - explicit ambiguity abstention when generic anchors like `that update` or `that move` have more than one plausible target
-    - cross-facet generic-anchor binding when another facet changed nearby but the asked facet remains unambiguous
-    - operation-specific anchor binding when `that deletion` or similar phrasing must bind to a delete event instead of a later update on the same facet
-    - dense-turn clause binding when delete/update operations are mentioned in the same utterance but must stay distinguishable
-    - pronoun-scoped turn binding when a turn says `forget it` / `change it` after locally scoping the target facet
-    - explicit referential-ambiguity abstention when a pronoun-scoped turn points to more than one plausible facet
-    - temporal wording disambiguation when questions use phrases like `that earlier change`, `that later update`, or `that later deletion`
-    - first/last temporal wording disambiguation when questions use phrases like `that first change`, `that last update`, or `that last deletion`
-    - clause-heavy temporal wording disambiguation when questions add conversational suffixes like `we talked about`, `we mentioned`, or month phrases like `in May`
-    - competing clause-modifier disambiguation when questions combine discourse filler with `earlier` or `later` delete anchors on the same facet
-    - mixed operation wording disambiguation when questions combine discourse filler with update-vs-delete operator selection on the same facet
-    - multi-update ambiguity abstention when `earlier` or `later` update wording names more than two plausible same-facet update targets
-    - cross-facet temporal wording disambiguation when nearby updates on another facet should not poison same-facet `earlier` or `later` delete-anchor binding
-    - cross-facet update wording disambiguation when nearby updates on another facet should not poison same-facet `earlier` or `later` update-anchor binding
-    - cross-facet update ambiguity abstention when the asked facet already has more than two plausible updates and another facet is also active nearby
-    - mixed operation ambiguity disambiguation when same-facet delete anchors stay answerable even while same-facet `later update` wording must abstain under multi-update pressure and nearby other-facet activity
-    - delete-side ambiguity escalation when same-facet `earlier` or `later` deletion wording must abstain under multi-deletion pressure even with dense nearby updates on another facet
-    - mixed delete-overload competition when same-facet `later update` wording stays answerable but same-facet `later deletion` wording abstains under delete overload even with nearby other-facet deletions
-    - first/last mixed-operation overload when same-facet `first` or `last` update/deletion wording must keep the correct operator family under mixed update/delete pressure
-    - clause-heavy first/last overload when conversational suffixes like `we talked about` or `we mentioned` should not break `first` or `last` operator binding under mixed update/delete pressure
-    - anaphoric first/last ambiguity when underspecified forms like `that first one` or `that last one` must abstain under mixed update/delete pressure instead of borrowing the latest evidence path
-    - clause-carry anaphoric ambiguity when forms like `that first one we changed` or `that last one we removed` must also abstain under mixed update/delete pressure instead of falling back to generic evidence
-    - dense clause-carry ambiguity when multi-clause forms like `before that first one we changed, and before that last one we removed` must abstain under mixed update/delete pressure instead of inheriting a stray evidence span
-    - pronoun plus clause-carry ambiguity when the same multi-clause forms must still abstain under mixed update/delete pressure even if the underlying history was created from scoped `change it` / `forget it` turns
-    - mixed-facet pronoun plus clause-carry competition when those same scoped turns target more than one plausible facet and must surface `referential_ambiguity` instead of drifting into the wrong slot
-    - value-bearing mixed-facet ambiguity when clause-carry wording includes target values like `changed to green` but still leaves the facet under-specified and must surface `referential_ambiguity`
-    - chronology-bearing mixed-facet ambiguity when clause-carry wording includes chronology cues like `changed in February` or `removed later` but still leaves the facet under-specified and must surface `referential_ambiguity`
-    - fronted mixed-facet chronology-bearing ambiguity when questions start with clauses like `Before the one we changed in February...` or `Before the one we removed later...` and must still surface `referential_ambiguity` instead of drifting into a slot
-    - fronted mixed-facet value-bearing ambiguity when questions start with clauses like `Before the one we changed to green...` or `Before the one we removed...` and must still surface `referential_ambiguity` instead of drifting into a slot
-    - fronted mixed-facet pronoun plus clause-carry ambiguity when questions start with clauses like `Before the first one we changed and the last one we removed...` and must still surface `referential_ambiguity` instead of borrowing scoped discourse from one facet
-    - fronted mixed-facet chronology-bearing pronoun ambiguity when questions start with clauses like `Before the first one we changed in January and the last one we removed later...` and must still surface `referential_ambiguity` instead of borrowing scoped discourse from one facet
-    - delete-specific fronted pronoun ambiguity when questions start with clauses like `Before the one we removed later...` on scoped `forget it` histories and must still surface `referential_ambiguity` instead of borrowing one facet's delete trace
-    - update-specific fronted pronoun ambiguity when questions start with clauses like `Before the one we changed...` on scoped `change it` histories and must still surface `referential_ambiguity` instead of borrowing one facet's update trace
-    - lean fronted first/last pronoun ambiguity when questions start with clauses like `Before the first one...` or `Before the last one...` on scoped histories and must still surface `referential_ambiguity` instead of silently binding to one facet
-    - lean fronted earlier/later pronoun ambiguity when questions start with clauses like `Before the earlier one...` or `Before the later one...` on scoped histories and must still surface `referential_ambiguity` instead of silently binding to one facet
-    - clause-carry lean fronted earlier/later pronoun ambiguity when questions start with clauses like `Before the earlier one we changed...` or `Before the later one we removed...` on scoped histories and must still surface `referential_ambiguity` instead of silently binding to one facet
-    - selective facet-preserving edits plus historical recall when deleting one facet and later updating another must preserve current-state separation and historical recall for both facets
-    - rollback/edit sequences plus historical recall when rolling one facet back and later editing another must preserve current-state separation and historical recall for both facets
-    - delete-plus-rollback sequences plus historical recall when deleting one facet after rolling another back must preserve current-state separation and historical recall for both facets
-    - restore-after-delete plus other-facet-edit sequences when restoring one deleted facet and later editing another must preserve current-state separation and historical recall for both facets
-    - three-facet restore/edit stability when restoring one deleted facet, editing a second facet, and leaving a third facet untouched must preserve all three current-state boundaries plus historical recall for the edited facets
-    - three-facet restore-to-new-value stability when restoring a deleted facet to a different value, editing a second facet, and leaving a third facet untouched must preserve all three current-state boundaries plus historical recall for the edited facets
-    - three-facet delete-plus-rollback stability when rolling one facet back, deleting a second facet, and leaving a third facet untouched must preserve all three current-state boundaries plus historical recall for the changed facets
-    - three-facet delete-plus-restore-to-new-value stability when restoring one deleted facet to a different value, deleting a second facet, and leaving a third facet untouched must preserve all three current-state boundaries plus historical recall for the changed facets
-    - explicit correction of a previously deleted facet plus another-facet rollback history must preserve current-state separation, third-facet stability, and the other facet's historical chain in the same sample
-    - delete-after-correction plus another-facet rollback history must preserve the corrected facet's pre-delete state, current-state deletion, third-facet stability, and the other facet's historical chain in the same sample
-    - contradictory correction on a previously deleted facet plus another-facet delete/restore history must preserve both lifecycle chains independently while keeping a third facet stable
-    - mixed-lifecycle ambiguity across multiple facets must abstain cleanly when lean `before that change` phrasing leaves the asked facet's own lifecycle overdetermined instead of binding to the wrong chain
-    - mixed-lifecycle disambiguation across multiple facets must bind the intended chain when the question names the target operation or target value explicitly enough
-    - dense same-turn mixed lifecycles must still bind delete/update history by facet even when multiple facets mutate inside one user turn
-    - pronoun-heavy same-turn mixed lifecycles must still bind delete/update history by facet even when scoped `forget it` / `change it` references are used across multiple facets
-    - pronoun-heavy same-turn mixed-lifecycle ambiguity must abstain through `referential_ambiguity` when a scoped pronoun turn mutates more than one facet and a later history question asks `before that change`
-    - pronoun-heavy same-turn mixed-lifecycle value-target disambiguation must still bind the intended facet when a later history question names the target value explicitly enough, like `before that change to green` or `before that change to Sharjah`
-    - pronoun-heavy same-turn mixed-lifecycle value-bearing ambiguity must still abstain through `referential_ambiguity` when a later history question names a value like `before that change to blue` but the scoped pronoun turn still leaves the facet under-specified
-    - pronoun-heavy same-turn mixed-lifecycle chronology-bearing ambiguity must still abstain through `referential_ambiguity` when a later history question names a time cue like `before that change in February` but the scoped pronoun turn still leaves the facet under-specified
-    - pronoun-heavy same-turn mixed-lifecycle chronology-bearing value-target disambiguation must still bind the intended facet when a later history question combines both the time cue and the target value, like `before that change to green in February`
-    - pronoun-heavy same-turn delete chronology disambiguation must still bind the intended facet when a later history question asks about `before that deletion in February` on a mixed-facet scoped-pronoun turn
-    - pronoun-heavy same-turn delete chronology ambiguity must still abstain through `referential_ambiguity` when a later history question asks about `before that deletion in February` but the scoped pronoun turn itself still leaves the facet under-specified
-    - pronoun-heavy same-turn earlier/later delete disambiguation must still bind the intended facet when a later history question asks about `before that earlier deletion` or `before that later deletion` on a mixed-facet scoped-pronoun turn
-    - pronoun-heavy same-turn earlier/later delete ambiguity must still abstain through `referential_ambiguity` when `earlier` or `later` selects a turn but the scoped pronoun turn itself still leaves the facet under-specified
-    - pronoun-heavy same-turn earlier/later update disambiguation must still bind the intended facet when a later history question asks about `before that earlier change` or `before that later update` on a mixed-facet scoped-pronoun turn
-    - pronoun-heavy same-turn earlier/later update ambiguity must still abstain through `referential_ambiguity` when `earlier` or `later` selects a turn but the scoped pronoun turn itself still leaves the facet under-specified
-    - pronoun-heavy same-turn clause-carry earlier/later update disambiguation must still bind the intended facet when a later history question asks about `before that earlier one we changed` or `before that later one we updated` on a mixed-facet scoped-pronoun turn
-    - pronoun-heavy same-turn clause-carry earlier/later update ambiguity must still abstain through `referential_ambiguity` when those same clause-carry forms select a turn but the scoped pronoun turn itself still leaves the facet under-specified
-    - pronoun-heavy same-turn clause-carry earlier/later delete disambiguation must still bind the intended facet when a later history question asks about `before that earlier one we removed` or `before that later one we deleted` on a mixed-facet scoped-pronoun turn
-    - pronoun-heavy same-turn clause-carry earlier/later delete ambiguity must still abstain through `referential_ambiguity` when those same clause-carry forms select a turn but the scoped pronoun turn itself still leaves the facet under-specified
-    - pronoun-heavy same-turn fronted clause-carry earlier/later disambiguation must still bind the intended facet when a later history question asks about `Before that earlier one we changed...` or `Before that later one we deleted...` on a mixed-facet scoped-pronoun turn
-    - pronoun-heavy same-turn fronted clause-carry earlier/later ambiguity must still abstain through `referential_ambiguity` when those same fronted clause-carry forms select a turn but the scoped pronoun turn itself still leaves the facet under-specified
-    - pronoun-heavy same-turn fronted clause-carry first/last ambiguity must still abstain through `referential_ambiguity` when those same fronted clause-carry forms select a turn but the scoped pronoun turn itself still leaves the facet under-specified
-    - pronoun-heavy same-turn fronted clause-carry first/last disambiguation must still bind the intended facet when a later history question asks about `Before that first one we changed...` or `Before that last one we deleted...` on a mixed-facet scoped-pronoun history whose operation family is uniquely recoverable
-    - pronoun-heavy same-turn fronted value-bearing clause-carry first/last wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question asks about `Before that first one we changed to green...` or `Before that last one we changed to Sharjah...`
-    - pronoun-heavy same-turn fronted chronology-bearing clause-carry first/last wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question asks about `Before that first one we changed in January...` or `Before that last one we deleted later...`
-    - dense fronted same-turn chronology-bearing clause-carry first/last wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines both anchors in one clause
-    - dense fronted same-turn value-bearing clause-carry first/last wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines both anchors with explicit values in one clause
-    - dense fronted same-turn value-bearing clause-carry earlier/later wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines comparative anchors with explicit values in one clause
-    - dense fronted same-turn chronology-bearing clause-carry earlier/later wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines comparative anchors with explicit timing cues in one clause
-    - dense fronted same-turn mixed-operation value-bearing clause-carry earlier/later wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines an explicit target value on one anchor and a delete anchor on the other
-    - dense fronted same-turn mixed-operation value-plus-chronology clause-carry earlier/later wording must still bind on the single-facet scoped-turn surface while abstaining through `referential_ambiguity` on the mixed-facet scoped-turn surface when the later question combines an explicit target value on one anchor and a chronology-qualified delete anchor on the other
-    - three-facet same-turn scoped-pronoun binding must preserve current-state separation and historical recall when one clause updates favorite color, another deletes and restores location, and a third updates preference in the same turn
-    - three-facet same-turn scoped-pronoun ambiguity must still surface `referential_ambiguity` when one mixed clause scopes favorite color, location, and preference together instead of cleanly separating the facets
-    - mixed three-facet scoped-pronoun partial clause separability must preserve current-state updates and historical recall for the cleanly scoped clauses while keeping the genuinely mixed clause on `referential_ambiguity` instead of collapsing the whole turn
-    - overlapping-scope three-facet scoped-pronoun partial clause separability must preserve current-state updates and historical recall for the cleanly scoped clauses even when one of those facets also appears inside a separate mixed clause that should remain on `referential_ambiguity`
-    - inverse-overlap three-facet scoped-pronoun partial clause separability must preserve both clean updates and their historical anchors when the ambiguous middle clause overlaps each clean clause on opposite sides instead of letting the middle ambiguity wipe out both edges
-    - value-bearing ambiguous-middle three-facet scoped-pronoun partial clause separability must preserve the clean edge clauses even when the ambiguous middle clause names a target value like `change it to blue`, with the middle clause still routed to `referential_ambiguity`
-    - chronology-bearing ambiguous-middle three-facet scoped-pronoun partial clause separability must preserve the clean edge clauses even when the ambiguous middle clause carries a cue like `change it in February`, with the middle clause still routed to `referential_ambiguity`
-    - delete-oriented chronology-bearing ambiguous-middle three-facet scoped-pronoun partial clause separability must preserve the clean edge clauses even when the ambiguous middle clause says `forget it in February`, with the middle clause still routed to `referential_ambiguity`
-    - comparative delete/update ambiguous-middle three-facet scoped-pronoun partial clause separability must preserve the clean edge clauses even when the ambiguous middle clause says `forget it later`, with the middle clause still routed to `referential_ambiguity`
-    - comparative update ambiguous-middle three-facet scoped-pronoun partial clause separability must preserve the clean edge clauses even when the ambiguous middle clause says `update it later`, with the middle clause still routed to `referential_ambiguity`
-    - four-facet same-turn scoped-pronoun overlap stability must preserve clean favorite-color, location, and preference updates while the ambiguous middle clause still routes to `referential_ambiguity` and an untouched dog-breed facet remains stable in current-state answering
-    - four-facet same-turn scoped-pronoun inverse-overlap stability must preserve clean favorite-color and location edge updates while the ambiguous middle clause overlaps favorite color plus preference, with dog-breed staying untouched and the middle clause still routing to `referential_ambiguity`
-    - four-facet delete-side scoped-pronoun inverse-overlap stability must preserve clean favorite-color deletion state and pre-delete history while the ambiguous middle delete clause overlaps favorite color plus preference, a far-edge clean location update still binds, and dog-breed stays untouched
-    - four-facet delete-side value-bearing scoped-pronoun inverse-overlap stability must preserve the same clean delete/history split even when the ambiguous middle clause carries an explicit target value like `update it to blue later`
-    - four-facet delete-side chronology-bearing scoped-pronoun inverse-overlap stability must preserve the same clean delete/history split even when the ambiguous middle clause carries a timing cue like `update it later in February`
-    - four-facet delete-side comparative scoped-pronoun inverse-overlap stability must preserve the same clean delete/history split even when the ambiguous middle clause carries comparative wording like `update it later`
-    - four-facet mixed-lifecycle scoped-pronoun overlap stability must preserve one clean edge deletion, one clean edge location update, one ambiguous mixed lifecycle overlap clause, and one untouched stable facet without losing current-state separation, pre-delete history, or safe abstention
-    - four-facet mixed-lifecycle scoped-pronoun inverse-overlap stability must preserve the same delete plus update plus untouched-facet structure when the ambiguous overlap clause sits between the clean delete edge and the far-edge clean update
-    - four-facet mixed-lifecycle value-bearing scoped-pronoun inverse-overlap stability must preserve the same inverse overlap structure when the ambiguous middle clause carries an explicit target value like `update it to blue later`
-    - four-facet mixed-lifecycle chronology-bearing scoped-pronoun inverse-overlap stability must preserve the same inverse overlap structure when the ambiguous middle clause carries a timing cue like `update it in February later`
-    - four-facet mixed-lifecycle comparative scoped-pronoun inverse-overlap stability must preserve the same inverse overlap structure when the ambiguous middle clause carries comparative wording like `update it earlier instead`
-    - five-facet scoped-pronoun overlap stability must preserve a clean favorite-color deletion, a clean location update, an ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count facets without cross-facet leakage
-    - five-facet scoped-pronoun inverse-overlap stability must preserve a clean favorite-color deletion, an ambiguous favorite-color-plus-preference middle clause, a far-edge clean location update, and untouched dog-breed plus bike-count facets without cross-facet leakage
-    - five-facet value-bearing scoped-pronoun inverse-overlap stability must preserve the same clean delete edge, far-edge clean update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries an explicit target value like `update it to blue later`
-    - five-facet chronology-bearing scoped-pronoun inverse-overlap stability must preserve the same clean delete edge, far-edge clean update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries a timing cue like `update it in February later`
-    - five-facet comparative scoped-pronoun inverse-overlap stability must preserve the same clean delete edge, far-edge clean update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries comparative wording like `update it earlier instead`
-    - five-facet chronology-bearing scoped-pronoun overlap stability must preserve a clean favorite-color deletion, a clean location update, an ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count facets when the overlapping clause carries a timing cue like `update it in February later`
-    - five-facet comparative scoped-pronoun overlap stability must preserve a clean favorite-color deletion, a clean location update, an ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count facets when the overlapping clause carries comparative wording like `update it earlier instead`
-    - six-facet comparative scoped-pronoun overlap stability must preserve a clean favorite-color deletion, a clean location update, an ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist facets when the overlapping clause carries comparative wording like `update it earlier instead`
-    - six-facet value-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist facets when the overlapping clause carries an explicit target value like `update it to blue later`
-    - six-facet chronology-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist facets when the overlapping clause carries a timing cue like `update it in February later`
-    - six-facet comparative delete/update scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist facets when the overlapping clause carries comparative delete wording like `please forget it later`
-    - six-facet comparative update scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist facets when the overlapping clause carries comparative update wording like `update it later`
-    - seven-facet comparative update scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument facets when the overlapping clause carries comparative update wording like `update it later`
-    - seven-facet value-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument facets when the overlapping clause carries an explicit target value like `update it to blue later`
-    - seven-facet chronology-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument facets when the overlapping clause carries a timing cue like `update it in February later`
-    - seven-facet comparative delete/update scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument facets when the overlapping clause carries comparative delete wording like `please forget it later`
-    - eight-facet mixed-lifecycle scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service facets when the overlap is structural rather than wording-heavy
-    - eight-facet value-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service facets when the overlapping clause carries an explicit target value like `update it to blue later`
-    - eight-facet chronology-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service facets when the overlapping clause carries a timing cue like `update it in February later`
-    - eight-facet comparative scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service facets when the overlapping clause carries comparative wording like `update it earlier instead`
-    - nine-facet mixed-lifecycle scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration facets when the structure grows by one more stable facet
-    - nine-facet value-bearing scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration facets when the overlapping clause carries an explicit target value like `update it to blue later`
-    - nine-facet chronology-bearing scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration facets when the overlapping clause carries a timing cue like `update it in February later`
-    - nine-facet comparative scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration facets when the overlapping clause carries comparative wording like `update it later`
-    - ten-facet mixed-lifecycle scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration plus camping-plan facets when the structure grows by one more stable facet
-    - ten-facet value-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration plus camping-plan facets when the overlapping clause carries an explicit target value like `update it to blue later`
-    - ten-facet chronology-bearing scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration plus camping-plan facets when the overlapping clause carries a timing cue like `update it in February later`
-    - ten-facet comparative scoped-pronoun overlap stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration plus camping-plan facets when the overlapping clause carries comparative wording like `update it later`
-    - eleven-facet mixed-lifecycle scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration plus camping-plan plus dessert facets when the structure grows by one more stable facet
-    - eleven-facet value-bearing scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration plus camping-plan plus dessert facets when the overlapping clause carries an explicit target value like `update it to blue later`
-    - eleven-facet chronology-bearing scoped-pronoun stability must preserve the same clean favorite-color deletion, clean location update, ambiguous location-plus-preference overlap clause, and untouched dog-breed plus bike-count plus playlist plus instrument plus music-service plus commute-duration plus camping-plan plus dessert facets when the overlapping clause carries a timing cue like `update it in February later`
-    - five-facet inverse mixed-lifecycle scoped-pronoun stability must preserve a clean favorite-color deletion, an ambiguous location-plus-preference middle clause, a far-edge clean location update, and untouched dog-breed plus bike-count facets without cross-facet leakage
-    - five-facet value-bearing inverse mixed-lifecycle scoped-pronoun stability must preserve the same clean delete edge, far-edge clean location update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries an explicit target value like `update it to blue later`
-    - five-facet chronology-bearing inverse mixed-lifecycle scoped-pronoun stability must preserve the same clean delete edge, far-edge clean location update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries a timing cue like `update it in February later`
-    - five-facet comparative inverse mixed-lifecycle scoped-pronoun stability must preserve the same clean delete edge, far-edge clean location update, and untouched dog-breed plus bike-count facets when the ambiguous middle clause carries comparative wording like `update it earlier instead`
-    - six-facet comparative inverse mixed-lifecycle scoped-pronoun stability must preserve the same clean delete edge, far-edge clean location update, untouched dog-breed plus bike-count facets, and an untouched playlist facet when the ambiguous middle clause carries comparative wording like `update it earlier instead`
-    - current-state bike-count questions like `How many bikes do I own now?` must stay source-aligned on `current_state_memory` instead of being forced onto the generic aggregate/evidence path by the broad count-question gate
-    - relearn after deletion
-    - selective deletion with unrelated-facet preservation
-    - contradictory correction with explicit rollback to a prior value
-    - restore a deleted value, including reasserting the exact same value
-  - scorecards now slice this lane by `product_memory_task`, `memory_operation`, and `memory_scope`
-  - scorecards now also expose primary answer-candidate source/type so product-memory wins can be checked against the intended memory role
-  - local product-memory questions now declare `expected_answer_candidate_source`, and scorecards measure `primary_answer_candidate_source_alignment`
-  - current instrumentation note:
-    - both lead systems answer this lane through `current_state_memory` x568, `current_state_deletion` x98, `evidence_memory` x264, `temporal_ambiguity` x33, and `referential_ambiguity` x303
-    - both lead systems are now `1266/1266` source-aligned on the local lane
+Build one memory system that is:
 
-Candidate components:
+- role-clean
+- source-aligned
+- correction-safe
+- deletion-safe
+- supersession-aware
+- provenance-visible
+- abstention-honest
+- large-context capable
+- operationally practical
 
-- multi-pass observer ingestion
-- temporal and supersession layer
-- retrieval router
-- single answer layer with abstention
-- offline consolidation worker
+## Architecture Target
 
-Initial candidate systems:
+The target architecture has these runtime roles:
 
-- System 1: `EPI + ATOM + TIME + ROUTE + REHYDRATE + ABSTAIN`
-- System 2: `OBSERVE + REFLECT + TIME + PROFILE + ABSTAIN`
-- System 3: `OBSERVE + ATOM + TIME + EVENTS + ROUTE + REHYDRATE + RELATE + ABSTAIN`
+1. Raw episodic archive
+2. Structured evidence memory
+3. Current-state and profile memory
+4. Temporal-event memory
+5. Belief and reflection memory
+6. Working memory and scratchpad
+7. Offline maintenance and reconsolidation path
 
-Deferred until after the lightweight baseline is measured:
+These roles must become real runtime truths, not only documentation categories.
 
-- search-agent ensembles
-- answer forests
-- graph-database-first infra
-- learned memory-control policies
+## Proven Strengths To Preserve
 
-## Phase 3A: BEAM readiness track
+Do not regress the parts that are already meaningfully strong:
 
-Goal:
+- exact answer-bearing proposition recovery
+- current-state answering on the local product-memory lane
+- delete and restore handling on the local product-memory lane
+- evidence-preserving historical reconstruction
+- ambiguity abstention
+- dense pronoun and temporal wording disambiguation
+- exactness on the measured `LongMemEval_s` coverage
+- clean bounded `LoCoMo` linkage behavior
 
-- restructure the winning lane so it can survive million-token pressure while preserving current benchmark wins
+## Main Risks
 
-Required constraints:
+The current main risks are:
 
-- keep `LongMemEval_s` and `LoCoMo` as regression gates
-- do not treat current partial coverage as full-benchmark victory
+- provider rescue still owns too much correctness
+- some benchmark wins may still be answer-shape-sensitive
+- `BEAM` local pilot success may be mistaken for official proof
+- runtime quality is still more inferred than directly measured
+- role separation is still not fully explicit in storage and retrieval behavior
 
-Deliverables:
+## Workstreams
 
-- explicit working-memory, episodic-memory, stable-memory, and scratchpad-memory role separation
-- stronger hybridization path between observational memory and temporal-event structure
-- offline consolidation hooks for large-context pressure
-- compaction and rehydration rules that preserve exact answer-bearing spans
-- architecture ablations that test whether `BEAM`-oriented changes keep current `LongMemEval_s` and `LoCoMo` wins intact
+### Workstream A: Lock The Honest Frontier
 
-Current operating read as of 2026-03-26:
+Purpose:
 
-- the repo is no longer blocked on a vague `BEAM` adapter story
-- the local `BEAM` pilot ladder is now the active frontier pressure track
-- the next step is not adding random new slices; it is using each new slice to expose shared substrate debt
-- the most recent exposed debt was answer-candidate obedience across packet assembly and heuristic response
+- make sure the repo has one truthful current-state snapshot
 
-## Phase 3B: Architecture consolidation track
+Required outputs:
 
-Goal:
+- one source-of-truth frontier status doc
+- one source-of-truth implementation plan
+- one source-of-truth task queue
+- one source-of-truth current assessment doc
 
-- turn the current winning lane into a cleaner memory substrate instead of an ever-growing benchmark rescue layer
+Definition of done:
 
-Why now:
+- restart paths no longer depend on reading multiple historical handoff notes
 
-- the repo has enough measured wins to justify consolidation work
-- `LongMemEval_s` is closed through sample `200`
-- recent wins exposed real architectural debt in `memory_systems.py` and `providers.py`
+### Workstream B: Complete The Proof Stack
 
-Primary doctrine:
+Purpose:
 
-- keep the benchmark flywheel running
-- start substrate consolidation in parallel
-- prefer generic operators over question-shaped branches
+- turn partial benchmark strength into an honest complete proof story
 
-Required architecture moves:
+Required outputs:
 
-- separate raw episodic evidence, structured evidence memory, current-state memory, and derived belief memory
-- make supersession and current-state selection explicit instead of packet-local heuristics
-- introduce typed `answer_candidate` metadata so exact numeric, currency, date, and abstention answers are preserved before provider rescue
-- split extraction, update logic, operators, and packet assembly into separate module surfaces
-- add architecture ablations that distinguish:
-  - extraction gains
-  - update and supersession gains
-  - retrieval gains
-  - operator gains
-  - provider-rescue gains
+- extend `LongMemEval_s` beyond the currently measured frontier
+- broaden clean `LoCoMo` coverage beyond the current bounded slices
+- lock the first canonical `GoodAI` run
+- maintain local `BEAM` pressure lanes
+- pin and reproduce the official `BEAM` path
 
-Reference memo:
+Definition of done:
 
-- `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
-- `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
-- `docs/HARMONIZED_MEMORY_DOCTRINE_2026-03-26.md`
+- each benchmark has a pinned target, reproducible run path, and honest status
 
-Implementation path as of 2026-03-26:
+### Workstream C: Finish Role-Clean Memory Architecture
 
-1. Continue expanding the local `BEAM` ladder one honest pressure family at a time.
-2. Prefer pressure families that test state anchors, supersession, and answer integrity, not only more location chronology.
-3. After each new closed lane, capture the architectural lesson and decide whether the fix belongs in:
-   - extraction
-   - anchor resolution
-   - typed answer-candidate metadata
-   - packet assembly
-   - responder or provider normalization
-4. Use the first post-`v22` consolidation pass to turn answer-candidate precedence into explicit doctrine instead of heuristic spillover.
-5. Only return to older benchmark expansion memos if the `BEAM`-first path stops yielding transferable substrate lessons.
+Purpose:
 
-## Phase 4: Mutation flywheel
+- make the architecture genuinely clean instead of benchmark-shaped
 
-Goal:
+Required outputs:
 
-- improve by repeated benchmark pressure, not vibes
+- explicit lifecycle operators for `create`, `update`, `delete`, `restore`, `supersede`, and `contradict`
+- explicit read operators for current state, historical state, evidence, events, and abstention
+- role-clean store boundaries
+- evidence-versus-belief separation
+- reduced correctness burden inside provider rescue
 
-Deliverables:
+Definition of done:
 
-- mutation packet schema
-- evaluation packet schema
-- automatic failure bucketing
-- rollback policy
+- provider rescue is a guardrail, not the primary correctness engine
 
-## Phase 5: Promotion discipline
+### Workstream D: Measure Real Runtime Quality
 
-Goal:
+Purpose:
 
-- decide what actually deserves to become product doctrine
+- stop inferring runtime quality from benchmark wins
 
-Promotion gates:
+Required outputs:
 
-- benchmark improvement
-- no major category regression
-- attribution satisfied
-- implementation understandable enough to maintain
+- p50 latency
+- p95 latency
+- prompt tokens
+- total tokens
+- memory growth
+- stale-state error rate
+- correction success rate
+- deletion reliability
+- provenance support rate
+- abstention honesty
+- maintenance stability
+- memory drift rate
+
+Definition of done:
+
+- runtime quality can be inspected directly in artifacts
+
+### Workstream E: Spark Shadow Validation
+
+Purpose:
+
+- prove the substrate under real product traces without premature live rollout
+
+Required outputs:
+
+- replayable Builder trace batches
+- shadow reports on writes, rejections, probes, and role mix
+- trace-backed failure taxonomy
+- mutation loop from shadow failures back into substrate fixes
+
+Definition of done:
+
+- Spark promotion gates are evidence-based, not intuition-based
+
+## Intent Lanes
+
+These are deliberately open-ended on purpose.
+
+They are not excuses to wander.
+They are where we allow ourselves to push beyond literal checklists when the architecture needs it.
+
+### Intent Lane 1: Make Memory Roles Feel Real
+
+Prompt:
+
+- if this system had to survive messy real users for months, what role boundary would break first
+
+Allowed work:
+
+- new role contracts
+- new retrieval operators
+- store boundary cleanup
+- belief/evidence separation cleanup
+
+### Intent Lane 2: Make Current-State Handling Unbreakable
+
+Prompt:
+
+- what would make delete, correction, restore, and supersession fail under realistic complexity
+
+Allowed work:
+
+- lifecycle stress cases
+- operator cleanup
+- stale-state diagnostics
+- rollback and restore semantics
+
+### Intent Lane 3: Make Large-Context Pressure Honest
+
+Prompt:
+
+- what would fail if context size stopped being forgiving
+
+Allowed work:
+
+- `BEAM`-driven architecture mutations
+- retrieval budget discipline
+- compaction and maintenance work
+- working-memory and scratchpad refinement
+
+### Intent Lane 4: Make Benchmark Wins Transfer
+
+Prompt:
+
+- is this gain true architecture quality or just benchmark convenience
+
+Allowed work:
+
+- ablations
+- cross-benchmark reruns
+- source-alignment checks
+- product-memory transfer checks
+
+## Mutation Acceptance Rules
+
+Keep a change only if it satisfies one of these:
+
+- improves the architecture and survives the active gates
+- improves benchmark performance and clearly transfers to product-memory quality
+- improves runtime quality without degrading benchmark integrity
+
+Reject or quarantine a change if it:
+
+- only helps one benchmark in a question-shaped way
+- weakens source alignment
+- increases provider rescue dependence
+- regresses deletion, correction, abstention, or provenance behavior
+
+## Required Test Classes
+
+Every serious architecture mutation should be mapped to these test classes:
+
+- local `ProductMemory`
+- local `BEAM`
+- targeted `LongMemEval_s`
+- targeted clean `LoCoMo`
+- runtime metrics capture when behavior affects cost or latency
+- shadow replay checks when behavior affects SDK/runtime exposure
+
+## Immediate Phase Order
+
+1. Lock the honest current-state docs.
+2. Finish the next local `ProductMemory` promotion and keep the full-lane truth explicit.
+3. Update the benchmark doctrine around `BEAM`, `LongMemEval_s`, and clean `LoCoMo`.
+4. Pin the official `BEAM` reproduction path.
+5. Extend the measured `LongMemEval_s` frontier.
+6. Choose and close the next clean `LoCoMo` lane.
+7. Add direct runtime metrics.
+8. Get the first real Spark shadow trace batch.
+
+## Definition Of Success
+
+We should call this program successful only when:
+
+- the benchmark story is broad, honest, and reproducible
+- the architecture is role-clean in runtime reality
+- provider rescue is only a guardrail
+- runtime quality is measured directly
+- Spark shadow evidence says the system is safe enough to promote carefully
+
+Until then, the right mindset is:
+
+- strong
+- promising
+- incomplete
+

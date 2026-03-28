@@ -1,96 +1,84 @@
 # Tasks
 
-Date: 2026-03-28
+Date: 2026-03-29
 Status: active
 
 ## Objective
 
-Turn `domain-chip-memory` into a state-of-the-art memory system that:
+Turn `domain-chip-memory` into a memory system that:
 
-- beats the strongest practical frontier bars on `LongMemEval`, `LoCoMo`, `GoodAI LTM Benchmark`, and `BEAM`
-- functions as a true product memory layer with strong correction, deletion, supersession, provenance, and abstention behavior
-- stays lightweight enough for real runtime use
-- reaches Spark through shadow-mode evidence, not premature live promotion
+- wins the benchmark stack honestly across `BEAM`, `LongMemEval`, and clean `LoCoMo`
+- functions as a true memory layer with correction, deletion, supersession, provenance, abstention, and historical reconstruction
+- remains lightweight enough for real runtime use
+- reaches Spark only through shadow-mode evidence first
 
 ## Program Rules
 
-- Keep Spark integration on `shadow-only` until replay evidence says otherwise.
-- Do not split the architecture into separate benchmark and product-memory stacks.
-- Prefer reusable operators over benchmark-specific rescue logic.
-- Keep provider rescue as a guardrail, not the main source of correctness.
-- Re-run benchmark and product-memory gates after every real behavior mutation.
+- Do not optimize for score theater.
+- Do not split benchmark memory and product memory into separate stacks.
+- Keep provider rescue as a shrinking guardrail, not the main source of correctness.
+- Treat `BEAM` as the core architecture proof benchmark.
+- Treat `LongMemEval_s` and clean `LoCoMo` as non-negotiable guardrails around `BEAM`.
+- Re-run the relevant benchmark and product-memory gates after every real behavior mutation.
 
-## Workstream 1: Lock The Current Frontier
+## Current Truth
 
-- Promote the already-green next local `ProductMemory` lane.
-- Reconcile active docs so one frontier snapshot is authoritative.
-- Freeze the current baseline ledger for:
-  - `LongMemEval_s`
-  - clean `LoCoMo`
-  - local `BEAM`
-  - local `ProductMemory`
+What is strongly proven:
 
-## Workstream 2: Separate The Architecture
+- local `ProductMemory`
+- bounded `LongMemEval_s`
+- clean bounded `LoCoMo`
+- local `BEAM` pilot pressure
 
-- Split extraction logic into `memory_extraction.py`.
-- Move generic retrieval logic into `memory_operators.py`.
-- Keep lifecycle and supersession logic in `memory_updates.py`.
-- Keep view logic in `memory_views.py`.
-- Make `packet_builders.py` a real boundary instead of a re-export shell.
-- Reduce `memory_systems.py` from architecture center to compatibility shell or orchestrator layer.
+What is not fully proven:
 
-## Workstream 3: Govern The Update Engine
+- full benchmark closure
+- fully role-clean runtime architecture
+- runtime quality metrics
+- real Spark trace replay quality
 
-- Make these lifecycle operations first-class:
+## Exact Workstreams
+
+### 1. Keep The Frontier Honest
+
+- Keep [FRONTIER_STATUS_2026-03-28.md](docs/FRONTIER_STATUS_2026-03-28.md) or its successor as the single measured snapshot.
+- Keep [MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md](docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md) current.
+- Reconcile any drift between handoff docs and the active measured truth.
+
+### 2. Finish The Benchmark Proof Stack
+
+- Extend `LongMemEval_s` beyond the currently measured frontier.
+- Broaden clean `LoCoMo` coverage beyond the currently bounded slices.
+- Lock the first canonical `GoodAI` run.
+- Maintain the local `BEAM` pilot lane.
+- Pin and reproduce the official `BEAM` path.
+
+### 3. Finish The Memory Architecture
+
+- Make memory roles runtime-real:
+  - raw episodic archive
+  - structured evidence
+  - current-state/profile
+  - temporal-event memory
+  - belief/reflection
+  - working memory
+  - offline maintenance
+- Make lifecycle operators explicit:
   - `create`
   - `update`
   - `delete`
-  - `supersede`
   - `restore`
+  - `supersede`
   - `contradict`
-  - current-state rebuild from evidence
-- Keep tombstone handling explicit.
-- Keep historical reconstruction explicit.
-- Prove deletion and restore behavior on local `ProductMemory`.
+- Reduce correctness dependence inside provider rescue.
 
-## Workstream 4: Clean Up Retrieval And Answering
+### 4. Prove Runtime Quality
 
-- Keep role-clean read paths:
-  - `get_current_state(...)`
-  - `get_historical_state(...)`
-  - `retrieve_evidence(...)`
-  - `retrieve_events(...)`
-  - `explain_answer(...)`
-- Keep answer-candidate authority explicit.
-- Move exact-answer integrity earlier into the substrate.
-- Reduce dependence on provider-side rescue.
-
-## Workstream 5: Finish Benchmark Completion
-
-- Extend `LongMemEval_s` beyond the current measured frontier.
-- Broaden clean `LoCoMo` coverage beyond the currently bounded lanes.
-- Lock the first canonical `GoodAI LTM Benchmark` configuration and run.
-- Keep the local `BEAM` pilot lane active while the official evaluation surface remains unpinned.
-- Pin the official `BEAM` implementation path as soon as it becomes reproducible in-repo.
-
-## Workstream 6: Add Architecture Ablations
-
-- Tag every meaningful mutation as one of:
-  - extraction improvement
-  - update and supersession improvement
-  - retrieval improvement
-  - operator improvement
-  - provider-rescue improvement
-  - maintenance improvement
-  - benchmark-closure-only improvement
-  - `BEAM` transfer improvement
-- Keep comparison artifacts that explain why gains happened, not only whether they happened.
-
-## Workstream 7: Prove Real Runtime Quality
-
-- Measure and report:
-  - p50 and p95 latency
-  - prompt and total tokens
+- Add direct reporting for:
+  - p50 latency
+  - p95 latency
+  - prompt tokens
+  - total tokens
   - memory growth
   - stale-state error rate
   - correction success rate
@@ -98,47 +86,60 @@ Turn `domain-chip-memory` into a state-of-the-art memory system that:
   - provenance support rate
   - abstention honesty
   - maintenance stability
-- Add replay tests, soak tests, and maintenance regression tests.
+  - memory drift rate
 
-## Workstream 8: Keep Spark In Shadow Mode
+### 5. Keep Spark In Shadow
 
-- Keep the Spark Intelligence Builder integration on `shadow-only`.
-- Require replayable shadow traces with:
-  - `turns`
-  - normalized write attempts
-  - probes
-  - `session_id`
-  - `turn_id`
-  - `timestamp`
-- Replay traces here and report:
-  - accepted writes
-  - rejected writes
-  - skipped turns
-  - unsupported-write reasons
-  - probe hit rates
-  - memory-role mix
-  - maintenance before/after results
-- Turn real shadow failures into substrate fixes.
-- Re-run benchmark safety gates after every real runtime mutation.
-- Define rollout gates from shadow evidence, not intuition.
+- Keep Builder integration on `shadow-only`.
+- Require replayable traces.
+- Turn shadow failures into substrate fixes.
+- Do not promote from intuition.
+
+## Intent Lanes
+
+These are intentionally open-ended.
+
+Use them when the architecture needs exploration that a literal checklist would miss.
+
+### Intent Lane A: Make Memory Roles Feel Real
+
+Question:
+
+- what role boundary would break first under real product use
+
+### Intent Lane B: Make Current-State Handling Unbreakable
+
+Question:
+
+- what would still break delete, correction, restore, or supersession under realistic complexity
+
+### Intent Lane C: Make BEAM Pressure Transfer
+
+Question:
+
+- what fails when context stops being forgiving
+
+### Intent Lane D: Make Benchmark Wins Transfer
+
+Question:
+
+- is this gain true architecture quality or just benchmark convenience
 
 ## Immediate Next Actions
 
-- Promote the already-green next local `ProductMemory` lane.
-- Reconcile docs so one frontier snapshot is authoritative.
-- Create the first real code migration plan out of `memory_systems.py`.
-- Extract the next architecture boundary into a dedicated module.
-- Run the next honest `LongMemEval_s` extension slice.
-- Choose the next clean `LoCoMo` lane.
-- Lock the first canonical `GoodAI` run.
-- Add runtime metric capture to serious comparison artifacts.
-- Get the first real Spark shadow trace batch from Builder.
+- keep the current docs organized around one honest current-state view
+- pin the official `BEAM` reproduction path
+- extend the next honest `LongMemEval_s` slice
+- choose the next clean `LoCoMo` lane
+- lock the first canonical `GoodAI` run
+- add direct runtime metric capture to serious artifacts
+- get the first real Spark shadow trace batch
 
-## Definition Of Done For This Program Phase
+## Definition Of Done
 
-- The architecture is role-clean and no longer monolithic in practice.
-- The benchmark story is broad, honest, and reproducible.
-- The system is strong on product-memory behavior, not only benchmark QA.
-- Runtime quality is measured directly instead of inferred.
-- Spark shadow evidence is stable enough to support a future rollout gate.
-- Only then do we consider limited live promotion.
+- the benchmark story is broad, honest, and reproducible
+- the architecture is role-clean in runtime reality
+- runtime quality is measured directly
+- benchmark wins transfer to product-memory behavior
+- Spark shadow evidence is good enough to define rollout gates
+

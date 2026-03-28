@@ -1,22 +1,27 @@
 # Docs Index
 
 This index groups the active documentation surface by job instead of by filename age.
+The goal is to keep one honest current-state path and treat older handoff notes as historical context.
 
 ## Start Here
 
-- [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
-- [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
-- [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
+- [Memory System Honest Assessment](MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
+- [Current Test And Validation Plan](CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
+- [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
+- [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
-- [Unified Memory System Program](UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md)
-- [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
-- [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-28.md)
+- [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
+- [README](README.md)
 
 ## Active Program Docs
 
 - [PRD](PRD.md)
 - [Architecture](ARCHITECTURE.md)
+- [Memory System Honest Assessment](MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
+- [Implementation Plan](IMPLEMENTATION_PLAN.md)
+- [Current Test And Validation Plan](CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
+- [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
 - [Benchmark Strategy](BENCHMARK_STRATEGY.md)
 - [Benchmark Autoloop Program](BENCHMARK_AUTOLOOP_PROGRAM.md)
 - [AutoLoop Flywheel](AUTOLOOP_FLYWHEEL.md)
@@ -50,6 +55,8 @@ This index groups the active documentation surface by job instead of by filename
 
 ## Session Logs And Handoffs
 
+These are historical and useful, but they should not override the current-state docs above.
+
 - [Frontier Status 2026-03-28](FRONTIER_STATUS_2026-03-28.md)
 - [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
 - [Tomorrow Start Checklist 2026-03-28](TOMORROW_START_CHECKLIST_2026-03-28.md)
@@ -71,11 +78,15 @@ For benchmark-grounded and research-grounded materials, start in:
 Use these routes depending on the task.
 
 - Restarting work after a pause:
-  - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
+  - [Memory System Honest Assessment](MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
+  - [Implementation Plan](IMPLEMENTATION_PLAN.md)
+  - [Current Test And Validation Plan](CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
   - [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
-  - [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
-  - [Tomorrow Start Checklist](TOMORROW_START_CHECKLIST_2026-03-28.md)
+  - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
 - Understanding the architecture direction:
+  - [Memory System Honest Assessment](MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
+  - [Implementation Plan](IMPLEMENTATION_PLAN.md)
+  - [Current Test And Validation Plan](CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
   - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
   - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
   - [Memory Architecture Evolution Plan](MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md)
@@ -86,6 +97,7 @@ Use these routes depending on the task.
   - [Spark Shadow Replay Examples](SPARK_SHADOW_REPLAY_EXAMPLES_2026-03-27.md)
   - [Unified Memory System Program](UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md)
 - Understanding the mutation queue:
+  - [Implementation Plan](IMPLEMENTATION_PLAN.md)
   - [Memory Mutation Matrix](MEMORY_MUTATION_MATRIX_2026-03-24.md)
   - [BEAM Readiness Program](BEAM_READINESS_PROGRAM_2026-03-24.md)
 - Understanding benchmark targets and external bars:
