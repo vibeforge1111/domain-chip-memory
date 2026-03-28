@@ -36,8 +36,8 @@ from .memory_packet_utils import event_score as _event_score
 from .memory_packet_utils import question_aware_observation_limits as _question_aware_observation_limits
 from .memory_preferences import is_preference_question as _is_preference_question
 from .memory_queries import _question_predicates, _question_subjects
-from .memory_rendering import serialize_session as _serialize_session
 from .memory_roles import strategy_memory_role
+from .memory_session_rendering import serialize_session as _serialize_session
 from .memory_state_runtime import (
     _has_ambiguous_relative_state_anchor,
     _has_referential_ambiguity,
