@@ -9,20 +9,17 @@ from datetime import datetime, timedelta
 from typing import Any, Protocol
 from urllib import error, request
 
-from .contracts import JsonDict
 from .answer_candidates import context_primary_answer_candidate_text, looks_like_current_state_question
+from .contracts import JsonDict
 from .image_title_hints import resolve_titles_from_image_urls
+from .provider_context_text import QUESTION_STOPWORDS
+from .provider_context_text import question_tokens as _question_tokens_impl
 from .responders import heuristic_response
 from .runs import BaselinePromptPacket
 
 
 DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
 DEFAULT_MINIMAX_BASE_URL = "https://api.minimax.io/v1"
-QUESTION_STOPWORDS = {
-    "a", "an", "the", "what", "where", "when", "who", "which", "why", "how",
-    "is", "are", "was", "were", "do", "does", "did", "my", "your", "our",
-    "to", "for", "of", "on", "in", "at", "with", "from", "now", "there",
-}
 COUNT_WORDS = {
     "zero",
     "one",
@@ -123,10 +120,7 @@ def _extract_openai_answer(payload: JsonDict) -> str:
 
 
 def _question_tokens(question: str) -> set[str]:
-    return {
-        token for token in re.findall(r"[a-z0-9]+", question.lower())
-        if token not in QUESTION_STOPWORDS and len(token) > 2
-    }
+    return _question_tokens_impl(question)
 
 
 def _line_payload(line: str) -> str:
@@ -2038,7 +2032,7 @@ class OpenAIChatCompletionsProvider:
     def _context_image_urls(self, packet: BaselinePromptPacket) -> list[str]:
         if not self.include_context_images:
             return []
-        tokens = _question_tokens(packet.question)
+        tokens = _question_tokens_impl(packet.question)
         question_lower = packet.question.lower()
         scored_urls: list[tuple[float, str]] = []
         seen: set[str] = set()
