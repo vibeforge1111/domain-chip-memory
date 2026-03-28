@@ -16,6 +16,7 @@ from .memory_answer_routing import choose_answer_candidate as _choose_answer_can
 from .memory_answer_routing import entry_combined_text as _entry_combined_text_impl
 from .memory_answer_routing import question_needs_raw_aggregate_context as _question_needs_raw_aggregate_context
 from .memory_beam_builder import build_beam_ready_temporal_atom_router_packets as _build_beam_ready_temporal_atom_router_packets_impl
+from .memory_contract_summary import build_memory_system_contract_summary as _build_memory_system_contract_summary_impl
 from .memory_dual_store_builder import build_dual_store_event_calendar_hybrid_packets as _build_dual_store_event_calendar_hybrid_packets_impl
 from .memory_observational_builder import build_observational_temporal_memory_packets as _build_observational_temporal_memory_packets_impl
 from .memory_extraction import (
@@ -3834,33 +3835,7 @@ def build_dual_store_event_calendar_hybrid_packets(
     )
 
 def build_memory_system_contract_summary() -> dict[str, Any]:
-    return {
-        "candidate_memory_systems": [
-            {
-                "system_name": "beam_temporal_atom_router",
-                "entrypoint": "build_beam_ready_temporal_atom_router_packets",
-                "behavior": "Extract temporal atoms, apply recency-aware routing, then rehydrate the strongest source sessions.",
-            },
-            {
-                "system_name": "observational_temporal_memory",
-                "entrypoint": "build_observational_temporal_memory_packets",
-                "behavior": "Build a stable observation log, reflect it into a compressed memory window, and answer from that stable context.",
-            },
-            {
-                "system_name": "dual_store_event_calendar_hybrid",
-                "entrypoint": "build_dual_store_event_calendar_hybrid_packets",
-                "behavior": "Combine a stable observation window with an explicit event calendar and answer from the strongest hybrid signal.",
-            }
-        ],
-        "memory_contracts": [
-            "AnswerCandidate",
-            "MemoryAtom",
-            "ObservationEntry",
-            "EventCalendarEntry",
-            "RetrievedContextItem",
-            "BaselinePromptPacket",
-        ],
-    }
+    return _build_memory_system_contract_summary_impl()
 
 
 
