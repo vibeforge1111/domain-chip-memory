@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .answer_candidates import build_answer_candidate
 from .contracts import NormalizedBenchmarkSample
+from .memory_answer_rendering import answer_candidate_surface_text as _answer_candidate_surface_text
 from .memory_answer_runtime import (
     _choose_answer_candidate,
     _evidence_score,
@@ -35,7 +36,6 @@ from .memory_packet_utils import event_score as _event_score
 from .memory_packet_utils import question_aware_observation_limits as _question_aware_observation_limits
 from .memory_preferences import is_preference_question as _is_preference_question
 from .memory_queries import _question_predicates, _question_subjects
-from .memory_rendering import answer_candidate_surface_text as _answer_candidate_surface_text
 from .memory_rendering import serialize_session as _serialize_session
 from .memory_roles import strategy_memory_role
 from .memory_state_runtime import (

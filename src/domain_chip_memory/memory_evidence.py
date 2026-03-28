@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .contracts import NormalizedQuestion
+from .memory_answer_rendering import answer_candidate_surface_text
 from .memory_extraction import ObservationEntry, _tokenize
 from .memory_observation_utils import candidate_sentences
 from .memory_preferences import (
@@ -10,9 +11,6 @@ from .memory_preferences import (
     preference_domain_tokens,
     preference_phrase_bonus,
 )
-from .memory_rendering import answer_candidate_surface_text
-
-
 def entry_source_corpus(entry: ObservationEntry) -> str:
     return " ".join(
         part

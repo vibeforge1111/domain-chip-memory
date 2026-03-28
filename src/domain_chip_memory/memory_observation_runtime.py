@@ -10,7 +10,7 @@ from .memory_observation_support import build_event_calendar as _build_event_cal
 from .memory_observation_support import build_observation_log as _build_observation_log_support_impl
 from .memory_observation_support import reflect_observations as _reflect_observations_impl
 from .memory_observation_support import topical_episode_support as _topical_episode_support_impl
-from .memory_rendering import observation_surface_text as _observation_surface_text
+from .memory_observation_rendering import observation_surface_text as _observation_surface_text
 from .memory_updates import build_current_state_view
 
 
