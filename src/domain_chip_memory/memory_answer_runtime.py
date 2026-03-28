@@ -9,7 +9,7 @@ from .memory_answer_routing import question_needs_raw_aggregate_context as _ques
 from .memory_evidence import entry_source_corpus as _entry_source_corpus
 from .memory_evidence import observation_evidence_text as _observation_evidence_text
 from .memory_extraction import ObservationEntry, _tokenize
-from .memory_observation_scoring import observation_score as _observation_score_impl
+from .memory_observation_scoring_rules import observation_score as _observation_score_impl
 from .memory_orchestration import choose_answer_candidate as _choose_answer_candidate_support_impl
 from .memory_orchestration import evidence_score as _evidence_score_support_impl
 from .memory_orchestration import select_evidence_entries as _select_evidence_entries_support_impl
