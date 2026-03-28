@@ -30,21 +30,20 @@ from .memory_answer_runtime import (
 from .memory_atom_extraction import extract_memory_atoms
 from .memory_atom_routing import atom_score as _atom_score_impl
 from .memory_atom_routing import choose_atoms as _choose_atoms_impl
+from .memory_observation_runtime import (
+    _observation_score,
+    _topical_episode_support,
+    build_event_calendar,
+    build_observation_log,
+    reflect_observations,
+)
 from .memory_extraction import (
-    EventCalendarEntry,
     MemoryAtom,
     ObservationEntry,
     _token_bigrams,
     _tokenize,
-    _turn_order_key,
-    build_event_calendar as _build_event_calendar,
-    build_observation_log as _build_observation_log,
 )
 from .memory_queries import _question_predicates, _question_subject, _question_subjects
-from .memory_observation_support import build_event_calendar as _build_event_calendar_support_impl
-from .memory_observation_support import build_observation_log as _build_observation_log_support_impl
-from .memory_observation_support import reflect_observations as _reflect_observations_impl
-from .memory_observation_support import topical_episode_support as _topical_episode_support_impl
 from .memory_packet_utils import event_score as _event_score
 from .memory_packet_utils import question_aware_observation_limits as _question_aware_observation_limits
 from .memory_observation_utils import dedupe_observations as _dedupe_observations
@@ -57,7 +56,6 @@ from .memory_preferences import preference_domain_tokens as _preference_domain_t
 from .memory_relative_time import has_ambiguous_generic_relative_anchor as _has_ambiguous_generic_relative_anchor
 from .memory_relative_time import parse_generic_relative_anchor_phrase as _parse_generic_relative_anchor_phrase
 from .memory_rendering import answer_candidate_surface_text as _answer_candidate_surface_text
-from .memory_rendering import observation_surface_text as _observation_surface_text
 from .memory_rendering import serialize_session as _serialize_session
 from .memory_state_runtime import (
     _dated_state_target_predicates,
@@ -76,50 +74,8 @@ from .memory_state_runtime import (
     _specialize_relative_state_anchor_phrase,
 )
 from .memory_roles import strategy_memory_role
-from .memory_updates import build_current_state_view, has_active_current_state_deletion
+from .memory_updates import has_active_current_state_deletion
 from .memory_views import is_current_state_question, select_current_state_entries
-
-
-def build_observation_log(sample: NormalizedBenchmarkSample) -> list[ObservationEntry]:
-    return _build_observation_log_support_impl(
-        sample,
-        build_observation_log_impl=_build_observation_log,
-        extract_memory_atoms=extract_memory_atoms,
-        observation_surface_text=_observation_surface_text,
-    )
-
-
-def reflect_observations(observations: list[ObservationEntry]) -> list[ObservationEntry]:
-    return _reflect_observations_impl(
-        observations,
-        build_current_state_view=build_current_state_view,
-    )
-
-
-def _topical_episode_support(
-    question: NormalizedQuestion,
-    stable_window: list[ObservationEntry],
-    observations: list[ObservationEntry],
-    *,
-    max_support: int = 2,
-) -> tuple[str, list[ObservationEntry]]:
-    return _topical_episode_support_impl(
-        question,
-        stable_window,
-        observations,
-        max_support=max_support,
-        observation_score=_observation_score,
-        turn_order_key=_turn_order_key,
-    )
-
-
-def build_event_calendar(sample: NormalizedBenchmarkSample) -> list[EventCalendarEntry]:
-    return _build_event_calendar_support_impl(
-        sample,
-        build_event_calendar_impl=_build_event_calendar,
-        extract_memory_atoms=extract_memory_atoms,
-        observation_surface_text=_observation_surface_text,
-    )
 
 
 def _atom_score(question: NormalizedQuestion, atom: MemoryAtom) -> float:
