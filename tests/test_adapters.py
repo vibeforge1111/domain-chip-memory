@@ -6,6 +6,7 @@ from domain_chip_memory.adapters import (
     LongMemEvalAdapter,
     build_adapter_contract_summary,
 )
+from domain_chip_memory.loaders import load_beam_public_dir
 
 
 def test_longmemeval_adapter_normalizes_question_centric_instance():
@@ -179,3 +180,59 @@ def test_beam_adapter_normalizes_local_slice_instance():
     assert sample.metadata["source_mode"] == "local_pilot"
     assert sample.metadata["slice_status"] == "paper_pinned_local_slice"
     assert any(item["benchmark_name"] == "BEAM" for item in summary["official_benchmark_adapters"])
+
+
+def test_load_beam_public_dir_normalizes_official_style_fixture(tmp_path):
+    conversation_dir = tmp_path / "100K" / "1"
+    probing_dir = conversation_dir / "probing_questions"
+    probing_dir.mkdir(parents=True)
+    (conversation_dir / "chat.json").write_text(
+        """
+[
+  {
+    "batch_number": 1,
+    "time_anchor": "March-15-2024",
+    "turns": [
+      [
+        {"role": "user", "id": 1, "content": "I live in Dubai."},
+        {"role": "assistant", "id": 2, "content": "Noted."}
+      ]
+    ]
+  }
+]
+""".strip(),
+        encoding="utf-8",
+    )
+    (probing_dir / "probing_questions.json").write_text(
+        """
+{
+  "information_extraction": [
+    {
+      "question": "Where do I live?",
+      "answer": "Dubai",
+      "source_chat_ids": [1],
+      "rubric": ["Dubai"]
+    }
+  ],
+  "abstention": [
+    {
+      "question": "What is my favorite food?",
+      "ideal_response": "Based on the provided chat, there is no information related to your favorite food.",
+      "rubric": ["Based on the provided chat, there is no information related to your favorite food."]
+    }
+  ]
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    samples = load_beam_public_dir(tmp_path, chat_size="128K", upstream_commit="abc123")
+
+    assert len(samples) == 1
+    sample = samples[0]
+    assert sample.benchmark_name == "BEAM"
+    assert sample.metadata["source_mode"] == "official_public"
+    assert sample.metadata["dataset_scale"] == "128K"
+    assert sample.metadata["upstream_commit"] == "abc123"
+    assert sample.questions[0].evidence_turn_ids == ["1:batch-1:msg-1"]
+    assert sample.questions[1].should_abstain is True

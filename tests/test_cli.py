@@ -906,6 +906,74 @@ def test_run_beam_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     assert payload["benchmark_slices"]["temporal_scope"][0]["label"] == "undated"
 
 
+def test_run_beam_public_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "beam_public"
+    conversation_dir = data_dir / "100K" / "1"
+    probing_dir = conversation_dir / "probing_questions"
+    output_file = tmp_path / "artifacts" / "beam_public_scorecard.json"
+    probing_dir.mkdir(parents=True)
+    (conversation_dir / "chat.json").write_text(
+        json.dumps(
+            [
+                {
+                    "batch_number": 1,
+                    "time_anchor": "March-15-2024",
+                    "turns": [
+                        [
+                            {"role": "user", "id": 1, "content": "I live in Dubai."},
+                            {"role": "assistant", "id": 2, "content": "Noted."},
+                        ]
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (probing_dir / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [
+                    {
+                        "question": "Where do I live?",
+                        "answer": "Dubai",
+                        "source_chat_ids": [1],
+                        "rubric": ["Dubai"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-public-baseline",
+            str(data_dir),
+            "--chat-size",
+            "128K",
+            "--baseline",
+            "observational_temporal_memory",
+            "--provider",
+            "heuristic_v1",
+            "--upstream-commit",
+            "abc123",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["overall"]["total"] == 1
+    assert payload["run_manifest"]["benchmark_name"] == "BEAM"
+    assert payload["run_manifest"]["metadata"]["source_modes"] == ["official_public"]
+    assert payload["run_manifest"]["metadata"]["dataset_scales"] == ["128K"]
+    assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
+
+
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "locomo.json"
     output_file = tmp_path / "artifacts" / "locomo_scorecard.json"
