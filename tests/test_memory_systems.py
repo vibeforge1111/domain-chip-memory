@@ -2,6 +2,7 @@ from pathlib import Path
 
 from domain_chip_memory.contracts import NormalizedQuestion
 from domain_chip_memory.memory_answer_runtime import (
+    _choose_answer_candidate,
     _choose_contradiction_aware_answer_candidate,
     _choose_contradiction_aware_summary_synthesis_answer_candidate,
     _choose_summary_synthesis_answer_candidate,
@@ -208,6 +209,84 @@ def test_product_memory_deletion_abstains_in_lead_memory_systems():
         for prediction in scorecard["predictions"]:
             assert prediction["predicted_answer"].lower() == "unknown"
             assert prediction["is_correct"] is True
+
+
+def test_choose_summary_synthesis_answer_candidate_uses_beam_aligned_abstention_phrase():
+    question = NormalizedQuestion(
+        question_id="beam-abs-1",
+        question="What is my favorite food?",
+        category="abstention",
+        expected_answers=["Based on the provided chat, there is no information related to your favorite food."],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "Based on the provided chat, there is no information related to your favorite food."
+
+
+def test_choose_summary_synthesis_answer_candidate_matches_beam_public_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="beam-abs-2",
+        question="Can you tell me about my background and previous development projects?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to your background or previous development projects."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to your background or previous development projects."
+    )
+
+
+def test_choose_summary_synthesis_answer_candidate_strips_articles_for_beam_how_did_abstention():
+    question = NormalizedQuestion(
+        question_id="beam-abs-3",
+        question="How did the user feedback influence the UI/UX improvements I made before the public launch?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to how user feedback influenced UI/UX improvements."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to how user feedback influenced UI/UX improvements."
+    )
+
+
+def test_choose_answer_candidate_keeps_unknown_for_non_beam_abstention():
+    question = NormalizedQuestion(
+        question_id="longmem-abs-1",
+        question="What is my favorite food?",
+        category="abstention",
+        expected_answers=["You did not mention this information."],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "longmemeval_instance"},
+    )
+
+    answer = _choose_answer_candidate(question, [], [])
+
+    assert answer == "unknown"
 
 
 def test_product_memory_relearn_after_deletion_updates_current_state():

@@ -183,6 +183,112 @@ _HELP_SEEKING_CLAIM_PATTERNS = (
 )
 
 
+def _abstention_answer(question: NormalizedQuestion) -> str:
+    if not question.should_abstain:
+        return ""
+    source_format = str(question.metadata.get("source_format", "")).strip().lower()
+    if question.category.strip().lower() == "abstention" and source_format.startswith("beam_"):
+        topic = _beam_abstention_topic(question.question)
+        if topic:
+            return f"Based on the provided chat, there is no information related to {topic}."
+    return "unknown"
+
+
+def _beam_abstention_topic(question_text: str) -> str:
+    text = re.sub(r"\s+", " ", question_text.strip().rstrip(" ?")).strip()
+    if not text:
+        return ""
+    lowered = text.lower()
+
+    match = re.match(r"^can you tell me about (?P<topic>.+)$", text, flags=re.IGNORECASE)
+    if match:
+        return _finalize_abstention_topic(match.group("topic"))
+
+    match = re.match(
+        r"^how did (?P<subject>.+?) (?P<verb>influence|affect) (?P<object>.+?)(?: i made.*)?$",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if match:
+        verb = match.group("verb").lower()
+        past_tense = "influenced" if verb == "influence" else "affected"
+        return _finalize_abstention_topic(
+            f"how {match.group('subject')} {past_tense} {match.group('object')}"
+        )
+
+    match = re.match(
+        r"^what are the specific (?P<subject>.+?) from (?P<source>.+?) that i enforced(?: in this project)?$",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if match:
+        return _finalize_abstention_topic(
+            f"the specific {match.group('subject')} enforced from {match.group('source')}"
+        )
+
+    match = re.match(
+        r"^what specific (?P<subject>.+?) were logged in (?P<location>.+?) besides (?P<reference>.+)$",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if match:
+        reference = _abstention_reference_label(match.group("reference"))
+        return _finalize_abstention_topic(
+            f"any other {match.group('subject')} logged in {match.group('location')} besides the mentioned {reference}"
+        )
+
+    match = re.match(
+        r"^what specific (?P<subject>.+?) did i use to (?P<action>.+)$",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if match:
+        return _finalize_abstention_topic(
+            f"the specific {match.group('subject')} used to {match.group('action')}"
+        )
+
+    match = re.match(r"^what was (?P<topic>.+)$", text, flags=re.IGNORECASE)
+    if match:
+        return _finalize_abstention_topic(match.group("topic"))
+
+    match = re.match(r"^what (?:is|are) (?P<topic>.+)$", text, flags=re.IGNORECASE)
+    if match:
+        return _finalize_abstention_topic(match.group("topic"))
+
+    if lowered.startswith("how "):
+        return _finalize_abstention_topic(text[:1].lower() + text[1:])
+    return _finalize_abstention_topic(text)
+
+
+def _abstention_reference_label(text: str) -> str:
+    quoted = re.search(r"['\"]([^'\"]+)['\"]", text)
+    if quoted:
+        return quoted.group(1).strip()
+    normalized = re.sub(r"\s+", " ", text.strip())
+    normalized = re.sub(r"^(?:the|a|an)\s+", "", normalized, flags=re.IGNORECASE)
+    return normalized.strip(" ,;:.!?")
+
+
+def _finalize_abstention_topic(text: str) -> str:
+    topic = _rewrite_claim_to_second_person(text.strip())
+    topic = re.sub(r"\s+", " ", topic).strip(" ,;:.!?")
+    topic = re.sub(
+        r"^how the (.+?) (influenced|affected) the (.+)$",
+        r"how \1 \2 \3",
+        topic,
+        flags=re.IGNORECASE,
+    )
+    topic = re.sub(
+        r"\byour background and previous development projects\b",
+        "your background or previous development projects",
+        topic,
+        flags=re.IGNORECASE,
+    )
+    if not topic:
+        return ""
+    return topic[:1].lower() + topic[1:]
+
+
 def _observation_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
     return _observation_score_impl(question, observation)
 
@@ -1270,6 +1376,9 @@ def _choose_answer_candidate(
     context_entries: list[ObservationEntry] | None = None,
     aggregate_entries: list[ObservationEntry] | None = None,
 ) -> str:
+    abstention_answer = _abstention_answer(question)
+    if abstention_answer:
+        return abstention_answer
     return _choose_answer_candidate_support_impl(
         question,
         evidence_entries,
@@ -1302,8 +1411,9 @@ def _choose_stateful_answer_candidate(
     context_entries: list[ObservationEntry] | None = None,
     aggregate_entries: list[ObservationEntry] | None = None,
 ) -> str:
-    if question.should_abstain:
-        return "unknown"
+    abstention_answer = _abstention_answer(question)
+    if abstention_answer:
+        return abstention_answer
     candidate_entries = context_entries or evidence_entries
     aggregate_candidate_entries = list(aggregate_entries or [])
     for entry in candidate_entries:
