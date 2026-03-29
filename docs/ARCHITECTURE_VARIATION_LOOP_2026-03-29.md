@@ -560,3 +560,71 @@ What this teaches us:
   - event ordering / multi-session synthesis
   - instruction-following and preference-following answer shaping
 - the active leader remains `summary_synthesis_memory`, but the next change should be contradiction-focused rather than another broad architecture mutation
+
+## 2026-03-30: Contradiction Answer-Layer Tightening (`v15` -> `v18`)
+
+What the investigation found:
+
+- the first contradiction-focused answer-layer pass did improve local unit behavior:
+  - question-aligned claim summaries now prefer benchmark-relevant claims over nearby prompt noise
+  - conflict pairing now uses normalized claim text instead of raw fallback strings
+  - duplicate raw-turn and atom copies of the same claim no longer dominate the contradiction candidate list
+- but the real BEAM first-3 slice did not move
+- the live misses exposed two different failure layers:
+  - some contradiction candidates were still generic help-request fragments like `How can I improve this...`
+  - some true negated/affirmative claims were still not being surfaced cleanly enough from the upstream observation/atom layer
+
+Code changes:
+
+- `src/domain_chip_memory/memory_answer_runtime.py`
+  - added question-specific contradiction claim canonicalization for the current BEAM public failure shapes
+  - changed contradiction conflict detection to use normalized claim tokens instead of the stemmed raw-token path
+  - filtered generic help-request fragments out of contradiction pairing unless they carry a direct benchmark-aligned claim
+  - boosted direct question-specific contradiction claims in contradiction ranking
+- `src/domain_chip_memory/memory_contradiction_synthesis_builder.py`
+  - updated the contradiction helper wiring to match the new question-aware conflict signature
+- `tests/test_memory_systems.py`
+  - added regressions for homepage-route selection over Flask-version noise
+  - added regressions to reject `OperationalError` help-request fragments as contradiction partners
+  - kept the Flask-Login, API-key, autocomplete-bug-fix, and contact-form contradiction claim tests
+
+Verification:
+
+- focused contradiction regressions:
+  - `python -m pytest tests/test_memory_systems.py -k "homepage_route_claim or homepage_route_over_flask_version_noise or ignores_help_request_http_response_fragment or flask_login_integration_claim or api_key_claim or null_check_bug_fix_claim or bootstrap_classes_contact_form_claim"`
+  - result: `7 passed`
+- broader summary-synthesis regression slice:
+  - `python -m pytest tests/test_cli.py tests/test_memory_systems.py tests/test_providers.py -k "summary_synthesis_memory or summary_synthesis_answer_candidate or contradiction_aware_summary_synthesis or contradiction_clarification or run_beam_public_cli_can_write_scorecard or preserves_compact_latency_answer or preserves_compact_percentage_answer or preserves_compact_quota_answer or beam_aligned_abstention_phrase or beam_public_abstention_wording or strips_articles_for_beam_how_did_abstention or keeps_unknown_for_non_beam_abstention or homepage_route_claim or homepage_route_over_flask_version_noise or ignores_help_request_http_response_fragment or flask_login_integration_claim or api_key_claim or null_check_bug_fix_claim or bootstrap_classes_contact_form_claim"`
+  - result: `38 passed`
+
+Artifacts:
+
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v15_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v16_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v17_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v18_scorecard.json`
+
+Honest result:
+
+- `v15`: still `17/60`
+- `v16`: still `17/60`
+- `v17`: still `17/60`
+- `v18`: still `17/60`
+  - contradiction_resolution: still `0/6`
+  - abstention: still `6/6`
+  - knowledge_update: still `4/6`
+  - temporal_reasoning: still `4/6`
+  - information_extraction: still `2/6`
+  - multi_session_reasoning: still `1/6`
+
+What this teaches us:
+
+- contradiction answer-layer shaping is no longer the main bottleneck
+- the unit regressions improved and the contradiction answers changed shape, but the live BEAM slice still paired:
+  - nearby HTTP/help-request fragments instead of the real homepage-route contradiction
+  - adjacent login/session-management fragments instead of the exact Flask-Login negated-vs-integrated pair
+- that means the next loop should move upstream, not stay in the final answer surface
+- the highest-signal next work is:
+  - extract contradiction-ready claim atoms from raw turns instead of leaning on fallback atom summaries
+  - isolate negated vs affirmative contradiction candidates earlier in observation/packet construction
+  - inspect why the observation layer is surfacing `using Flask 2.3.1`, `focusing on user registration and login`, and similar adjacent context ahead of the benchmark-target claims

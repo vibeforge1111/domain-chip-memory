@@ -5,6 +5,8 @@ from domain_chip_memory.memory_answer_runtime import (
     _choose_answer_candidate,
     _choose_contradiction_aware_answer_candidate,
     _choose_contradiction_aware_summary_synthesis_answer_candidate,
+    _infer_question_aligned_contradiction_clarification,
+    _question_aligned_claim_summary,
     _choose_summary_synthesis_answer_candidate,
 )
 from domain_chip_memory.memory_extraction import ObservationEntry
@@ -287,6 +289,312 @@ def test_choose_answer_candidate_keeps_unknown_for_non_beam_abstention():
     answer = _choose_answer_candidate(question, [], [])
 
     assert answer == "unknown"
+
+
+def test_question_aligned_claim_summary_prefers_homepage_route_claim():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-routes",
+        question="Have I worked with Flask routes and handled HTTP requests in this project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entry = ObservationEntry(
+        observation_id="pos-1",
+        session_id="s1",
+        subject="user",
+        predicate="raw_turn",
+        text=(
+            "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app, "
+            "and I've already implemented the basic homepage route with Flask, returning static HTML."
+        ),
+        turn_ids=["t2"],
+        timestamp="2024-03-02T00:00:00Z",
+        metadata={
+            "source_text": (
+                "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app, "
+                "and I've already implemented the basic homepage route with Flask, returning static HTML."
+            )
+        },
+    )
+
+    summary = _question_aligned_claim_summary(question, entry)
+
+    assert summary == "implemented a basic homepage route with Flask"
+
+
+def test_question_aligned_contradiction_clarification_prefers_homepage_route_over_flask_version_noise():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-routes-full",
+        question="Have I worked with Flask routes and handled HTTP requests in this project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="neg-1",
+            session_id="s1",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never written any Flask routes or handled HTTP requests in this project.",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T00:00:00Z",
+            metadata={"source_text": "I've never written any Flask routes or handled HTTP requests in this project."},
+        ),
+        ObservationEntry(
+            observation_id="noise-1",
+            session_id="s2",
+            subject="user",
+            predicate="raw_turn",
+            text=(
+                "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app, "
+                "and I want to make sure I'm using Flask 2.3.1 correctly."
+            ),
+            turn_ids=["t2"],
+            timestamp="2024-03-02T00:00:00Z",
+            metadata={
+                "source_text": (
+                    "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app, "
+                    "and I want to make sure I'm using Flask 2.3.1 correctly."
+                )
+            },
+        ),
+        ObservationEntry(
+            observation_id="pos-1",
+            session_id="s3",
+            subject="user",
+            predicate="raw_turn",
+            text="I'm trying to implement the basic homepage route with Flask, and I've managed to return static HTML already.",
+            turn_ids=["t3"],
+            timestamp="2024-03-03T00:00:00Z",
+            metadata={
+                "source_text": "I'm trying to implement the basic homepage route with Flask, and I've managed to return static HTML already."
+            },
+        ),
+    ]
+
+    answer = _infer_question_aligned_contradiction_clarification(question, entries)
+
+    assert "homepage route with Flask" in answer
+    assert "Flask 2.3.1" not in answer
+
+
+def test_question_aligned_contradiction_clarification_ignores_help_request_http_response_fragment():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-routes-help",
+        question="Have I worked with Flask routes and handled HTTP requests in this project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="neg-help-1",
+            session_id="s1",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never written any Flask routes or handled HTTP requests in this project.",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T00:00:00Z",
+            metadata={"source_text": "I've never written any Flask routes or handled HTTP requests in this project."},
+        ),
+        ObservationEntry(
+            observation_id="help-fragment-1",
+            session_id="s2",
+            subject="user",
+            predicate="raw_turn",
+            text="How can I improve this to properly handle OperationalError and return the correct HTTP response?",
+            turn_ids=["t2"],
+            timestamp="2024-03-02T00:00:00Z",
+            metadata={
+                "source_text": "How can I improve this to properly handle OperationalError and return the correct HTTP response?"
+            },
+        ),
+        ObservationEntry(
+            observation_id="pos-help-1",
+            session_id="s3",
+            subject="user",
+            predicate="raw_turn",
+            text="I'm trying to implement the basic homepage route with Flask, and I've managed to return static HTML already.",
+            turn_ids=["t3"],
+            timestamp="2024-03-03T00:00:00Z",
+            metadata={
+                "source_text": "I'm trying to implement the basic homepage route with Flask, and I've managed to return static HTML already."
+            },
+        ),
+    ]
+
+    answer = _infer_question_aligned_contradiction_clarification(question, entries)
+
+    assert "homepage route with Flask" in answer
+    assert "OperationalError" not in answer
+
+
+def test_question_aligned_contradiction_clarification_prefers_flask_login_integration_claim():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-login",
+        question="Have I integrated Flask-Login for session management in my project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="neg-2",
+            session_id="s1",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never integrated Flask-Login or managed user sessions in this project.",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T00:00:00Z",
+            metadata={"source_text": "I've never integrated Flask-Login or managed user sessions in this project."},
+        ),
+        ObservationEntry(
+            observation_id="pos-2",
+            session_id="s1",
+            subject="user",
+            predicate="raw_turn",
+            text=(
+                "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app "
+                "to replace my manual session handling."
+            ),
+            turn_ids=["t2"],
+            timestamp="2024-03-02T00:00:00Z",
+            metadata={
+                "source_text": (
+                    "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app "
+                    "to replace my manual session handling."
+                )
+            },
+        ),
+    ]
+
+    answer = _infer_question_aligned_contradiction_clarification(question, entries)
+
+    assert "Flask-Login v0.6.2 was integrated for session management replacing manual session handling" in answer
+    assert "never integrated Flask-Login or managed user sessions" in answer
+
+
+def test_question_aligned_contradiction_clarification_prefers_api_key_claim():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-key",
+        question="Have I obtained an API key for this project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="neg-3",
+            session_id="s2",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never actually obtained an API key for this project.",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T00:00:00Z",
+            metadata={"source_text": "I've never actually obtained an API key for this project."},
+        ),
+        ObservationEntry(
+            observation_id="pos-3",
+            session_id="s2",
+            subject="user",
+            predicate="raw_turn",
+            text="How can I improve this to handle the rate limits for my OpenWeather API key obtained on March 10, 2024?",
+            turn_ids=["t2"],
+            timestamp="2024-03-02T00:00:00Z",
+            metadata={
+                "source_text": "How can I improve this to handle the rate limits for my OpenWeather API key obtained on March 10, 2024?"
+            },
+        ),
+    ]
+
+    answer = _infer_question_aligned_contradiction_clarification(question, entries)
+
+    assert "you have an API key for the project" in answer
+
+
+def test_question_aligned_claim_summary_prefers_null_check_bug_fix_claim():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-autocomplete",
+        question="Have I ever fixed any bugs related to the autocomplete feature in my project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entry = ObservationEntry(
+        observation_id="pos-4",
+        session_id="s2",
+        subject="user",
+        predicate="raw_turn",
+        text=(
+            "I've added null checks before accessing API response properties to reduce the error rate "
+            "from 12% to 1% in autocomplete.js."
+        ),
+        turn_ids=["t2"],
+        timestamp="2024-03-02T00:00:00Z",
+        metadata={
+            "source_text": (
+                "I've added null checks before accessing API response properties to reduce the error rate "
+                "from 12% to 1% in autocomplete.js."
+            )
+        },
+    )
+
+    summary = _question_aligned_claim_summary(question, entry)
+
+    assert summary == "you fixed bugs by adding null checks that reduced error rates"
+
+
+def test_question_aligned_contradiction_clarification_prefers_bootstrap_classes_contact_form_claim():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-contact",
+        question="Have I tested the contact form submission with any API integration before?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="neg-5",
+            session_id="s3",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never tested the contact form submission with any API integration before.",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T00:00:00Z",
+            metadata={"source_text": "I've never tested the contact form submission with any API integration before."},
+        ),
+        ObservationEntry(
+            observation_id="pos-5",
+            session_id="s3",
+            subject="user",
+            predicate="raw_turn",
+            text=(
+                "I've used Bootstrap's form-control and btn-primary classes for consistent styling and hover effects, "
+                "and I'm wiring the contact form into Formspree API v2."
+            ),
+            turn_ids=["t2"],
+            timestamp="2024-03-02T00:00:00Z",
+            metadata={
+                "source_text": (
+                    "I've used Bootstrap's form-control and btn-primary classes for consistent styling and hover effects, "
+                    "and I'm wiring the contact form into Formspree API v2."
+                )
+            },
+        ),
+    ]
+
+    answer = _infer_question_aligned_contradiction_clarification(question, entries)
+
+    assert "you used Bootstrap's form-control and btn-primary classes for consistent styling and hover effects" in answer
 
 
 def test_product_memory_relearn_after_deletion_updates_current_state():
@@ -7170,7 +7478,7 @@ def test_summary_synthesis_answer_candidate_prefers_question_aligned_contradicti
     answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
 
     assert "contradictory information" in answer.lower()
-    assert "you have never actually integrated flask-login" in answer.lower()
+    assert "never integrated flask-login" in answer.lower()
     assert "flask-login v0.6.2 was integrated for session management replacing manual session handling" in answer.lower()
     assert "dashboard api response time" not in answer.lower()
 

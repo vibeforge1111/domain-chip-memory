@@ -15,7 +15,7 @@ def _select_contradiction_entries(
     *,
     evidence_score: Callable[[NormalizedQuestion, ObservationEntry], float],
     observation_score: Callable[[NormalizedQuestion, ObservationEntry], float],
-    entries_conflict: Callable[[ObservationEntry, ObservationEntry], bool],
+    entries_conflict: Callable[[NormalizedQuestion, ObservationEntry, ObservationEntry], bool],
     conflict_pair_alignment_score: Callable[[NormalizedQuestion, ObservationEntry, ObservationEntry], float],
     limit: int = 2,
 ) -> list[ObservationEntry]:
@@ -31,7 +31,7 @@ def _select_contradiction_entries(
     best_score = float("-inf")
     for index, first in enumerate(filtered):
         for second in filtered[index + 1 :]:
-            if not entries_conflict(first, second):
+            if not entries_conflict(question, first, second):
                 continue
             pair_score = conflict_pair_alignment_score(question, first, second)
             if pair_score > best_score:

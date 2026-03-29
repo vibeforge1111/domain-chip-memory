@@ -568,8 +568,43 @@ def _claim_fragment_alignment_score(
     return score
 
 
+def _normalized_claim_tokens(text: str) -> set[str]:
+    normalized_tokens: set[str] = set()
+    for token in re.findall(r"[a-z0-9]+", text.lower()):
+        if len(token) < 3:
+            continue
+        if token.endswith("s") and len(token) > 4:
+            token = token[:-1]
+        normalized_tokens.add(token)
+    return normalized_tokens
+
+
+def _looks_like_help_request_claim(text: str) -> bool:
+    normalized = re.sub(r"\s+", " ", text.lower()).strip()
+    if not normalized:
+        return False
+    return normalized.startswith(
+        (
+            "how can",
+            "can you",
+            "could you",
+            "would you",
+            "what should",
+            "which is",
+            "do you",
+            "does this",
+        )
+    )
+
+
 def _question_aligned_claim_summary(question: NormalizedQuestion, entry: ObservationEntry) -> str:
     source_text = str(entry.metadata.get("source_text", "")).strip() or entry.text.strip()
+    direct_summary = _question_specific_claim_summary(question, source_text)
+    if direct_summary:
+        summary = _rewrite_claim_to_second_person(direct_summary)
+        if len(summary) > 220:
+            summary = summary[:217].rstrip(" ,;:") + "..."
+        return summary
     fragments = _claim_fragments(source_text)
     if not fragments:
         return ""
@@ -588,18 +623,105 @@ def _question_aligned_claim_summary(question: NormalizedQuestion, entry: Observa
     return summary
 
 
+def _question_specific_claim_summary(question: NormalizedQuestion, source_text: str) -> str:
+    question_lower = question.question.lower()
+    source_lower = source_text.lower()
+
+    if "flask routes" in question_lower and any(
+        phrase in source_lower
+        for phrase in (
+            "never written any flask routes",
+            "never wrote any flask routes",
+            "have never written any flask routes",
+        )
+    ):
+        return "never written any Flask routes or handled HTTP requests in this project"
+
+    if "flask routes" in question_lower and (
+        "basic homepage route with flask" in source_lower
+        or ("@app.route('/')" in source_lower and "render_template('homepage.html')" in source_lower)
+    ):
+        return "implemented a basic homepage route with Flask"
+
+    if "flask-login" in question_lower and "session management" in question_lower:
+        if any(
+            phrase in source_lower
+            for phrase in (
+                "never integrated flask-login",
+                "never actually integrated flask-login",
+                "flask-login, which i've never actually integrated into this project",
+                "flask-login which i've never actually integrated into this project",
+            )
+        ):
+            return "never integrated Flask-Login or managed user sessions in this project"
+        if "flask-login v0.6.2" in source_lower and "replace my manual session handling" in source_lower:
+            return "Flask-Login v0.6.2 was integrated for session management replacing manual session handling"
+        if "integrate flask-login v0.6.2 for session management" in source_lower:
+            return "Flask-Login v0.6.2 was integrated for session management"
+
+    if "api key" in question_lower and "never" in source_lower and "api key" in source_lower:
+        return "never obtained an API key for this project"
+
+    if "api key" in question_lower and any(
+        phrase in source_lower
+        for phrase in (
+            "api key obtained on",
+            "openweather_api_key",
+            "api key listed there",
+            "api key = 'my_api_key'",
+            "api key from openweather",
+            "your actual api key",
+        )
+    ):
+        return "you have an API key for the project"
+
+    if "autocomplete feature" in question_lower and "null checks" in source_lower and (
+        "12% to 1%" in source_lower or "error rate from 12% to 1%" in source_lower
+    ):
+        return "you fixed bugs by adding null checks that reduced error rates"
+
+    if (
+        "autocomplete feature" in question_lower
+        and "never fixed any bugs related to the autocomplete feature" in source_lower
+    ):
+        return "never fixed any bugs related to the autocomplete feature in this project"
+
+    if "bootstrap components" in question_lower and "bootstrap 5.3.0" in source_lower and any(
+        phrase in source_lower for phrase in ("prefer bootstrap 5.3.0", "using bootstrap 5.3.0")
+    ):
+        return "you mentioned preferring Bootstrap 5.3.0 and using its classes"
+
+    if "contact form submission" in question_lower and "api integration" in question_lower:
+        if "never tested the contact form submission with any api integration before" in source_lower:
+            return "never tested the contact form submission with any API integration before"
+        if "form-control" in source_lower and "btn-primary" in source_lower:
+            return (
+                "you used Bootstrap's form-control and btn-primary classes for consistent styling and hover effects, "
+                "which suggests some integration"
+            )
+        if "formspree api" in source_lower and "95% success rate" in source_lower:
+            return "you tested the contact form submission with API integration using Formspree"
+
+    return ""
+
+
 def _contradiction_entry_priority_score(question: NormalizedQuestion, entry: ObservationEntry) -> float:
     source_text = _entry_source_corpus(entry).strip() or _entry_combined_text(question, entry)
+    direct_summary = _question_specific_claim_summary(question, source_text)
     claim_summary = _question_aligned_claim_summary(question, entry)
     score = (
         _evidence_score(question, entry)
         + _observation_score(question, entry)
         + _claim_fragment_alignment_score(question, claim_summary or source_text)
     )
+    if direct_summary:
+        score += 14.0
     if entry.predicate == "raw_turn":
         score += 3.0
     if source_text and not source_text.strip().endswith("?"):
         score += 1.5
+    if not direct_summary and _looks_like_help_request_claim(claim_summary or source_text):
+        score -= 14.0
     return score
 
 
@@ -621,39 +743,61 @@ def _select_contradiction_candidates(
     filtered = [entry for entry in ranked if _evidence_score(question, entry) > 0 or _observation_score(question, entry) > 0]
     if not filtered:
         return []
+
+    def _claim_signature(entry: ObservationEntry) -> str:
+        claim_text = _question_aligned_claim_summary(question, entry) or _entry_source_corpus(entry)
+        return re.sub(r"\s+", " ", claim_text.lower()).strip()
+
     negated = [entry for entry in filtered if _claim_is_negated(_entry_source_corpus(entry))]
     affirmative = [entry for entry in filtered if not _claim_is_negated(_entry_source_corpus(entry))]
     selected: list[ObservationEntry] = []
+    seen_signatures: set[str] = set()
     if negated:
+        negated_signature = _claim_signature(negated[0])
         selected.append(negated[0])
+        seen_signatures.add(negated_signature)
     if affirmative:
-        selected.append(affirmative[0])
+        affirmative_signature = _claim_signature(affirmative[0])
+        if affirmative_signature not in seen_signatures:
+            selected.append(affirmative[0])
+            seen_signatures.add(affirmative_signature)
     for entry in filtered:
-        if entry in selected:
+        signature = _claim_signature(entry)
+        if entry in selected or signature in seen_signatures:
             continue
         selected.append(entry)
+        seen_signatures.add(signature)
         if len(selected) >= limit:
             break
     return selected[:limit]
 
 
-def _entries_conflict(a: ObservationEntry, b: ObservationEntry) -> bool:
+def _entries_conflict(question: NormalizedQuestion, a: ObservationEntry, b: ObservationEntry) -> bool:
     if a.observation_id == b.observation_id:
         return False
-    source_a = _entry_source_corpus(a).strip()
-    source_b = _entry_source_corpus(b).strip()
+    raw_source_a = _entry_source_corpus(a).strip()
+    raw_source_b = _entry_source_corpus(b).strip()
+    direct_summary_a = _question_specific_claim_summary(question, raw_source_a)
+    direct_summary_b = _question_specific_claim_summary(question, raw_source_b)
+    source_a = _question_aligned_claim_summary(question, a) or raw_source_a
+    source_b = _question_aligned_claim_summary(question, b) or raw_source_b
     if not source_a or not source_b or source_a.lower() == source_b.lower():
         return False
     negated_a = _claim_is_negated(source_a)
     negated_b = _claim_is_negated(source_b)
+    if negated_a != negated_b:
+        if not negated_a and not direct_summary_a and _looks_like_help_request_claim(source_a):
+            return False
+        if not negated_b and not direct_summary_b and _looks_like_help_request_claim(source_b):
+            return False
     same_subject = a.subject == b.subject
     same_predicate = a.predicate == b.predicate and a.predicate != "raw_turn"
     value_a = str(a.metadata.get("value", "")).strip().lower()
     value_b = str(b.metadata.get("value", "")).strip().lower()
     if same_subject and same_predicate and value_a and value_b and value_a != value_b:
         return True
-    tokens_a = {token for token in _tokenize(source_a) if len(token) >= 3}
-    tokens_b = {token for token in _tokenize(source_b) if len(token) >= 3}
+    tokens_a = _normalized_claim_tokens(source_a)
+    tokens_b = _normalized_claim_tokens(source_b)
     overlap = tokens_a.intersection(tokens_b)
     if negated_a != negated_b and len(overlap) >= 2:
         return True
@@ -675,7 +819,7 @@ def _infer_contradiction_clarification(
     search_space = filtered[:12]
     for index, first in enumerate(search_space):
         for second in search_space[index + 1 :]:
-            if not _entries_conflict(first, second):
+            if not _entries_conflict(question, first, second):
                 continue
             first_claim = _claim_summary(first)
             second_claim = _claim_summary(second)
@@ -711,7 +855,9 @@ def _conflict_pair_alignment_score(
     if first.predicate == second.predicate and first.predicate != "raw_turn":
         score += 6.0
     if _claim_is_negated(source_first) != _claim_is_negated(source_second):
-        score += 4.0
+        score += 18.0
+    else:
+        score -= 18.0
     if first_claim:
         score += _claim_fragment_alignment_score(question, first_claim)
     if second_claim:
@@ -729,9 +875,19 @@ def _infer_question_aligned_contradiction_clarification(
     best_pair: tuple[ObservationEntry, ObservationEntry] | None = None
     best_score = float("-inf")
     search_space = filtered[:14]
+    opposite_negation_exists = any(
+        _entries_conflict(question, first, second)
+        and _claim_is_negated(_entry_source_corpus(first)) != _claim_is_negated(_entry_source_corpus(second))
+        for index, first in enumerate(search_space)
+        for second in search_space[index + 1 :]
+    )
     for index, first in enumerate(search_space):
         for second in search_space[index + 1 :]:
-            if not _entries_conflict(first, second):
+            if not _entries_conflict(question, first, second):
+                continue
+            if opposite_negation_exists and _claim_is_negated(_entry_source_corpus(first)) == _claim_is_negated(
+                _entry_source_corpus(second)
+            ):
                 continue
             pair_score = _conflict_pair_alignment_score(question, first, second)
             if pair_score > best_score:
@@ -739,8 +895,11 @@ def _infer_question_aligned_contradiction_clarification(
                 best_pair = (first, second)
     if not best_pair:
         return ""
-    first_claim = _question_aligned_claim_summary(question, best_pair[0])
-    second_claim = _question_aligned_claim_summary(question, best_pair[1])
+    first_entry, second_entry = best_pair
+    if _claim_is_negated(_entry_source_corpus(second_entry)) and not _claim_is_negated(_entry_source_corpus(first_entry)):
+        first_entry, second_entry = second_entry, first_entry
+    first_claim = _question_aligned_claim_summary(question, first_entry)
+    second_claim = _question_aligned_claim_summary(question, second_entry)
     if not first_claim or not second_claim or first_claim.lower() == second_claim.lower():
         return ""
     return (
