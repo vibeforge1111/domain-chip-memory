@@ -22,6 +22,11 @@ def build_memory_system_contract_summary() -> dict[str, Any]:
                 "behavior": "Separate profile-style current state from conflict evidence and answer contradiction questions with clarification when opposing claims are both supported.",
             },
             {
+                "system_name": "contradiction_aware_summary_synthesis_memory",
+                "entrypoint": "build_contradiction_aware_summary_synthesis_memory_packets",
+                "behavior": "Pair the most question-aligned contradictory claims first, then route direct values and summaries through synthesis-first answer construction.",
+            },
+            {
                 "system_name": "dual_store_event_calendar_hybrid",
                 "entrypoint": "build_dual_store_event_calendar_hybrid_packets",
                 "behavior": "Combine a stable observation window with an explicit event calendar and answer from the strongest hybrid signal.",

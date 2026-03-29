@@ -185,3 +185,46 @@ Decision:
   - contradiction-aware claim pairing from `contradiction_aware_profile_memory`
   - synthesis-first answer routing from `summary_synthesis_memory`
   - stronger update disambiguation so later facts beat earlier ones without needing question-specific fallback rules
+
+### 4. `contradiction_aware_summary_synthesis_memory`
+
+Goal: merge the contradiction-aware pairing path with synthesis-first answer construction so the system can both clarify conflicts and keep direct update answers concise.
+
+Expected gain:
+
+- contradiction resolution
+- knowledge updates
+- preserve the small synthesis gains from `summary_synthesis_memory`
+
+Result after implementation:
+
+- baseline added as `contradiction_aware_summary_synthesis_memory`
+- local `BEAM` public `128K` first-3 slice scored `2/60`
+- this is worse than:
+  - `summary_synthesis_memory`: `3/60`
+- but still above:
+  - `typed_state_update_memory`: `0/60`
+
+Artifact:
+
+- scorecard: `artifacts/benchmark_runs/official_beam_128k_contradiction_aware_summary_synthesis_memory_heuristic_v1_first3_scorecard.json`
+
+What improved:
+
+- targeted unit tests now show better question-aligned contradiction pair selection than the earlier contradiction-only branch
+- targeted unit tests also show better deadline disambiguation when unrelated later dates are present
+
+What failed:
+
+- full `BEAM` performance regressed because contradiction and synthesis signals started polluting unrelated answer selection
+- contradiction questions still failed local exact-match despite cleaner internal pairing, which means benchmark wording remains too brittle for the current clarifier
+- update-aware extraction still picked the wrong evidence on real slices often enough that the local gains did not survive benchmark scale
+
+Decision:
+
+- keep this branch in the repo as a failed combination experiment
+- do not promote it over `summary_synthesis_memory`
+- the next move should be narrower, not broader:
+  - keep contradiction handling isolated to contradiction questions only
+  - improve update disambiguation without injecting contradiction context into non-contradiction prompts
+  - treat abstention alignment as its own answer-layer problem instead of bundling it into another large memory variant

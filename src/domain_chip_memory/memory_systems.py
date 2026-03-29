@@ -5,6 +5,7 @@ from .memory_observation_runtime import build_event_calendar, build_observation_
 from .packet_builders import (
     build_beam_ready_temporal_atom_router_packets,
     build_contradiction_aware_profile_memory_packets,
+    build_contradiction_aware_summary_synthesis_memory_packets,
     build_dual_store_event_calendar_hybrid_packets,
     build_memory_system_contract_summary,
     build_observational_temporal_memory_packets,
@@ -16,6 +17,7 @@ from .packet_builders import (
 __all__ = [
     "build_beam_ready_temporal_atom_router_packets",
     "build_contradiction_aware_profile_memory_packets",
+    "build_contradiction_aware_summary_synthesis_memory_packets",
     "build_dual_store_event_calendar_hybrid_packets",
     "build_event_calendar",
     "build_memory_system_contract_summary",

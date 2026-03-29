@@ -3,6 +3,7 @@ from pathlib import Path
 from domain_chip_memory.contracts import NormalizedQuestion
 from domain_chip_memory.memory_answer_runtime import (
     _choose_contradiction_aware_answer_candidate,
+    _choose_contradiction_aware_summary_synthesis_answer_candidate,
     _choose_summary_synthesis_answer_candidate,
 )
 from domain_chip_memory.memory_extraction import ObservationEntry
@@ -6419,6 +6420,7 @@ def test_memory_system_contract_summary_exists():
     assert "beam_temporal_atom_router" in names
     assert "observational_temporal_memory" in names
     assert "contradiction_aware_profile_memory" in names
+    assert "contradiction_aware_summary_synthesis_memory" in names
     assert "dual_store_event_calendar_hybrid" in names
     assert "stateful_event_reconstruction" in names
     assert "summary_synthesis_memory" in names
@@ -6498,6 +6500,101 @@ def test_summary_synthesis_answer_candidate_prefers_updated_numeric_answer():
     answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
 
     assert answer == "1,200 calls per day"
+
+
+def test_contradiction_aware_summary_synthesis_prefers_question_aligned_conflict():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="Have I worked with Flask routes and handled HTTP requests in this project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2", "s3"],
+        evidence_turn_ids=["t1", "t2", "t3"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I have never written any Flask routes or handled HTTP requests in this project.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "I have never written any Flask routes or handled HTTP requests in this project."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="I implemented a basic homepage route with Flask to handle HTTP requests.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-02T10:00:00Z",
+            metadata={"source_text": "I implemented a basic homepage route with Flask to handle HTTP requests."},
+        ),
+        ObservationEntry(
+            observation_id="o3",
+            subject="user",
+            predicate="raw_turn",
+            text="I need to document API endpoints and architecture decisions in Confluence for feedback.",
+            session_id="s3",
+            turn_ids=["t3"],
+            timestamp="2024-03-03T10:00:00Z",
+            metadata={"source_text": "I need to document API endpoints and architecture decisions in Confluence for feedback."},
+        ),
+    ]
+
+    answer = _choose_contradiction_aware_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert "homepage route with flask" in answer.lower()
+    assert "confluence" not in answer.lower()
+
+
+def test_contradiction_aware_summary_synthesis_prefers_relevant_updated_date():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="What is the deadline for completing the first sprint focused on the basic layout and navigation?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2", "s3"],
+        evidence_turn_ids=["t1", "t2", "t3"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="The first sprint deadline is April 1, 2024, for the basic layout and navigation.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "The first sprint deadline is April 1, 2024, for the basic layout and navigation."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="The first sprint deadline shifted to April 5, 2024, to allow extra accessibility improvements.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-20T10:00:00Z",
+            metadata={"source_text": "The first sprint deadline shifted to April 5, 2024, to allow extra accessibility improvements."},
+        ),
+        ObservationEntry(
+            observation_id="o3",
+            subject="user",
+            predicate="raw_turn",
+            text="The public launch is scheduled for May 10, 2024.",
+            session_id="s3",
+            turn_ids=["t3"],
+            timestamp="2024-03-25T10:00:00Z",
+            metadata={"source_text": "The public launch is scheduled for May 10, 2024."},
+        ),
+    ]
+
+    answer = _choose_contradiction_aware_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "April 5 2024"
 
 
 def test_extract_memory_atoms_captures_benchmark_specific_patterns():
