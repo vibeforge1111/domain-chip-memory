@@ -263,6 +263,51 @@ Decision after the second follow-up patch:
   - let contradiction retrieval ask for one negated typed claim and one affirmative typed claim before synthesis
   - separately attack `knowledge_update` and `temporal_reasoning`, because those two categories are still limiting the leader almost as much as contradiction resolution
 
+Third follow-up patch on `2026-03-30`:
+
+- attempted the next upstream move directly:
+  - added typed `contradiction_claim` atoms in extraction
+  - added contradiction-claim observation surfaces and scoring boosts
+  - tried two retrieval variants:
+    - unrestricted typed-claim injection
+    - contradiction-only scoping in `summary_synthesis_memory`
+- added targeted regression coverage for typed contradiction-claim atom extraction
+
+Third follow-up result:
+
+- targeted tests passed:
+  - `python -m pytest tests/test_cli.py tests/test_memory_systems.py -k "summary_synthesis_memory or contradiction or contract_summary_exists or run_beam_public_cli_can_write_scorecard or typed_contradiction_claim_atoms"`
+  - result: `14 passed`
+- real local `BEAM` public `128K` first-3 reruns:
+  - unrestricted typed-claim variant:
+    - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v6_scorecard.json`
+    - result: `2/60`
+  - contradiction-scoped typed-claim variant:
+    - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v7_scorecard.json`
+    - result: `1/60`
+
+What failed:
+
+- typed contradiction atoms polluted retrieval more aggressively than expected
+- even when scoped to contradiction questions in the packet builder, the typed claims still distorted the leader enough that:
+  - `information_extraction` regressed
+  - `multi_session_reasoning` regressed
+  - contradiction stayed at `0/6`
+- the contradiction answers were still not selecting the exact benchmark-grade opposing claims; they often paired:
+  - duplicated negated claims
+  - help-request fragments
+  - nearby implementation context that was semantically related but not the real contradiction target
+
+Decision after the third follow-up patch:
+
+- keep the artifacts and documentation as an honest failure record
+- do not keep the typed-claim mutation in the active `summary_synthesis_memory` leader
+- revert code back to the previous checkpointed leader state after recording the failed experiment
+- the better next move is narrower than new atom types:
+  - inspect exact retrieval and answer candidates for the best pre-regression leader
+  - target `knowledge_update` and `temporal_reasoning` next
+  - only revisit typed contradiction atoms after adding stricter retrieval isolation and stronger claim normalization
+
 ### 4. `contradiction_aware_summary_synthesis_memory`
 
 Goal: merge the contradiction-aware pairing path with synthesis-first answer construction so the system can both clarify conflicts and keep direct update answers concise.
