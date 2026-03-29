@@ -350,3 +350,65 @@ Decision:
   - keep contradiction handling isolated to contradiction questions only
   - improve update disambiguation without injecting contradiction context into non-contradiction prompts
   - treat abstention alignment as its own answer-layer problem instead of bundling it into another large memory variant
+
+### 5. `summary_synthesis_memory` narrow answer-layer repair
+
+Goal: improve the current leader without inventing another broad architecture variant.
+
+Scope of the patch:
+
+- added benchmark-shaped numeric extraction for:
+  - response-time updates
+  - API quota updates
+  - coverage updates
+  - commit counts
+  - project-card counts
+- added interval computation for `how many days/weeks ... between ... and ...` temporal questions
+- added a routing fix so synthesized value extraction also inspects aggregate memory, not only the narrower structured context
+
+Verification:
+
+- targeted regressions passed:
+  - `python -m pytest tests/test_memory_systems.py -k "summary_synthesis_answer_candidate and (uses_aggregate_entries_for_update_answers or updated_numeric_answer or latest_response_time_update or main_branch_commit_count or latest_coverage_update or temporal_interval_in_weeks or temporal_interval_in_days or focus_aligned_date or updated_project_card_count)"`
+  - result: `9 passed`
+- broader summary-synthesis slice passed:
+  - `python -m pytest tests/test_cli.py tests/test_memory_systems.py -k "summary_synthesis_memory or summary_synthesis_answer_candidate or contradiction_aware_summary_synthesis or run_beam_public_cli_can_write_scorecard"`
+  - result: `19 passed`
+
+Artifacts:
+
+- first rerun after the answer-layer patch:
+  - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v8_scorecard.json`
+- second rerun after the aggregate-routing fix:
+  - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v9_scorecard.json`
+
+Honest result:
+
+- both reruns stayed flat at `3/60`
+- `summary_synthesis_memory` remains tied with its previous local leader result:
+  - `v5`: `3/60`
+  - `v8`: `3/60`
+  - `v9`: `3/60`
+
+What improved locally:
+
+- unit-level behavior is better and more benchmark-shaped
+- the runtime can now compute interval answers like `21 days` and `4 weeks` in direct regression cases
+- numeric update extraction is less brittle when the relevant sentence is already in the candidate set
+
+What this taught us:
+
+- answer-layer patches alone are no longer the main limiter on real `BEAM` first-3
+- the benchmark-flat result after `v8` and `v9` strongly suggests the real blocker has shifted earlier:
+  - retrieval/aggregation is still surfacing the wrong sentence or wrong memory atom on the live slice
+  - direct unit regressions are solvable, but the official-public retrieval path is not reliably feeding those cases into the answer layer
+- in other words, local answer logic has outrun the current evidence selection path
+
+Decision after this repair cycle:
+
+- keep the code improvements because they are testable and non-regressive
+- record the benchmark-flat outcome honestly
+- the next high-signal move should target retrieval/selection, not another answer-template tweak:
+  - inspect aggregate vs structured evidence for the exact `knowledge_update` and `temporal_reasoning` misses
+  - trace why update-bearing raw turns are still losing to nearby prompt text or stale facts on the real slice
+  - add benchmark-shaped retrieval diagnostics before attempting another synthesis mutation

@@ -6502,6 +6502,157 @@ def test_summary_synthesis_answer_candidate_prefers_updated_numeric_answer():
     assert answer == "1,200 calls per day"
 
 
+def test_summary_synthesis_answer_candidate_uses_aggregate_entries_for_update_answers():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="What is the daily call quota for the API key used in my application?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    structured_entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="api_key",
+            text="API key configured for weather app.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-10T10:00:00Z",
+            metadata={"source_text": "API key configured for weather app."},
+        )
+    ]
+    aggregate_entries = [
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="My API key daily quota was updated to 1,200 calls per day to support testing.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-20T10:00:00Z",
+            metadata={"source_text": "My API key daily quota was updated to 1,200 calls per day to support testing."},
+        )
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(
+        question,
+        structured_entries,
+        [],
+        aggregate_entries=aggregate_entries,
+    )
+
+    assert answer == "1,200 calls per day"
+
+
+def test_summary_synthesis_answer_candidate_prefers_latest_response_time_update():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="What is the average response time of the dashboard API?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="Reduced dashboard API response time from 800ms to 300ms by optimizing SQL queries and caching results.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-10T10:00:00Z",
+            metadata={
+                "source_text": "Reduced dashboard API response time from 800ms to 300ms by optimizing SQL queries and caching results."
+            },
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="The dashboard API response time has recently improved further, now averaging around 250ms after additional caching tweaks.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-20T10:00:00Z",
+            metadata={
+                "source_text": "The dashboard API response time has recently improved further, now averaging around 250ms after additional caching tweaks."
+            },
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "Around 250ms due to caching optimizations"
+
+
+def test_summary_synthesis_answer_candidate_extracts_main_branch_commit_count():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="How many commits have been merged into the main branch of my Git repository?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I merged 165 commits into the main branch after finishing the release cleanup.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-25T10:00:00Z",
+            metadata={"source_text": "I merged 165 commits into the main branch after finishing the release cleanup."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "165 commits have been merged into the main branch."
+
+
+def test_summary_synthesis_answer_candidate_prefers_latest_coverage_update():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="What is the test coverage percentage for my API integration module?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="Achieved 65% test coverage on the API integration module after the initial Jest run.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-27T10:00:00Z",
+            metadata={"source_text": "Achieved 65% test coverage on the API integration module after the initial Jest run."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="The unit test coverage has recently increased to 78%, reflecting ongoing improvements in API integration reliability.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-04-02T10:00:00Z",
+            metadata={
+                "source_text": "The unit test coverage has recently increased to 78%, reflecting ongoing improvements in API integration reliability."
+            },
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "78%"
+
+
 def test_summary_synthesis_answer_candidate_prefers_focus_aligned_date():
     question = NormalizedQuestion(
         question_id="q1",
@@ -6547,6 +6698,82 @@ def test_summary_synthesis_answer_candidate_prefers_focus_aligned_date():
     answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
 
     assert answer == "My first sprint ends on March 29."
+
+
+def test_summary_synthesis_answer_candidate_computes_temporal_interval_in_weeks():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="How many weeks do I have between finishing the transaction management features and the final deployment deadline?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I finished the transaction management features on April 12, 2024, after wrapping up the CRUD edge cases.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-04-12T10:00:00Z",
+            metadata={
+                "source_text": "I finished the transaction management features on April 12, 2024, after wrapping up the CRUD edge cases."
+            },
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="The final deployment deadline is May 10, 2024, once QA and documentation are complete.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-04-20T10:00:00Z",
+            metadata={"source_text": "The final deployment deadline is May 10, 2024, once QA and documentation are complete."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "4 weeks"
+
+
+def test_summary_synthesis_answer_candidate_computes_temporal_interval_in_days():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="How many days were there between the end of my first sprint and the deadline for completing the analytics features in sprint 2?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="The first sprint ends on March 29, 2024, focusing on user registration and login.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "The first sprint ends on March 29, 2024, focusing on user registration and login."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="The deadline for completing the analytics features in sprint 2 is April 19, 2024.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-10T10:00:00Z",
+            metadata={"source_text": "The deadline for completing the analytics features in sprint 2 is April 19, 2024."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "21 days"
 
 
 def test_summary_synthesis_answer_candidate_prefers_updated_project_card_count():
