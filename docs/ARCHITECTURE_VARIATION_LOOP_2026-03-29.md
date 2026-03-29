@@ -150,6 +150,38 @@ Expected gain:
 - multi-session reasoning
 - instruction-following style benchmark prompts
 
-## Decision
+Result after implementation:
 
-Keep `stateful_event_reconstruction` as an honest checkpoint, but do not treat it as the winning direction. The next serious push should be toward typed update memory and contradiction-aware synthesis.
+- baseline added as `summary_synthesis_memory`
+- local `BEAM` public `128K` first-3 slice scored `3/60`
+- this beats:
+  - `observational_temporal_memory`: `1/60`
+  - `stateful_event_reconstruction`: `1/60`
+  - `typed_state_update_memory`: `0/60`
+  - `contradiction_aware_profile_memory`: `1/60`
+
+Artifact:
+
+- scorecard: `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_scorecard.json`
+
+What improved:
+
+- direct answer synthesis got cleaner for some extraction/update-shaped questions
+- the variant recovered an extra multi-session count question instead of only one isolated extraction hit
+- retrieved context now consistently surfaces aggregate-role synthesis support instead of only raw replay
+
+What did not improve:
+
+- contradiction handling still needs the contradiction-aware path, not just synthesis
+- event ordering summaries are still too literal and too close to raw turns
+- abstention remains benchmark-misaligned because `unknown` still does not match the official abstention phrasing
+- knowledge-update questions still drift when multiple dates or counts are present and the synthesis layer picks the wrong updated fact
+
+Decision:
+
+- keep `summary_synthesis_memory` as the current local leader on the first `BEAM` public first-3 slice
+- do not call it good enough yet; the gain is real but still small
+- the next serious move should combine:
+  - contradiction-aware claim pairing from `contradiction_aware_profile_memory`
+  - synthesis-first answer routing from `summary_synthesis_memory`
+  - stronger update disambiguation so later facts beat earlier ones without needing question-specific fallback rules

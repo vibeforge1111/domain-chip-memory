@@ -1,7 +1,10 @@
 from pathlib import Path
 
 from domain_chip_memory.contracts import NormalizedQuestion
-from domain_chip_memory.memory_answer_runtime import _choose_contradiction_aware_answer_candidate
+from domain_chip_memory.memory_answer_runtime import (
+    _choose_contradiction_aware_answer_candidate,
+    _choose_summary_synthesis_answer_candidate,
+)
 from domain_chip_memory.memory_extraction import ObservationEntry
 from domain_chip_memory.loaders import load_locomo_json, load_longmemeval_json
 from domain_chip_memory.memory_systems import (
@@ -6418,6 +6421,7 @@ def test_memory_system_contract_summary_exists():
     assert "contradiction_aware_profile_memory" in names
     assert "dual_store_event_calendar_hybrid" in names
     assert "stateful_event_reconstruction" in names
+    assert "summary_synthesis_memory" in names
     assert "typed_state_update_memory" in names
 
 
@@ -6457,6 +6461,43 @@ def test_contradiction_aware_answer_candidate_prefers_clarification():
 
     assert "contradictory information" in answer.lower()
     assert "clarify which is correct" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_prefers_updated_numeric_answer():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="What is the daily call quota for the API key used in my application?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="My API key allows 1,000 calls per day.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-10T10:00:00Z",
+            metadata={"source_text": "My API key allows 1,000 calls per day."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="The API key daily quota was updated to 1,200 calls per day for increased testing.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-20T10:00:00Z",
+            metadata={"source_text": "The API key daily quota was updated to 1,200 calls per day for increased testing."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "1,200 calls per day"
 
 
 def test_extract_memory_atoms_captures_benchmark_specific_patterns():

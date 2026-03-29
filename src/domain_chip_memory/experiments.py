@@ -15,6 +15,7 @@ DEFAULT_SYSTEMS = [
     "contradiction_aware_profile_memory",
     "dual_store_event_calendar_hybrid",
     "stateful_event_reconstruction",
+    "summary_synthesis_memory",
     "typed_state_update_memory",
 ]
 

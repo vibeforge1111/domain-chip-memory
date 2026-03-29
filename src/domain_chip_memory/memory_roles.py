@@ -32,6 +32,7 @@ _STRATEGY_MEMORY_ROLE: dict[str, MemoryRole] = {
     "contradiction_memory": "ambiguity",
     "event_calendar": "event",
     "aggregate_memory": "aggregate",
+    "summary_synthesis_memory": "aggregate",
     "temporal_atom_router": "aggregate",
 }
 

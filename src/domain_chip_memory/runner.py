@@ -15,6 +15,7 @@ from .packet_builders import (
     build_dual_store_event_calendar_hybrid_packets,
     build_observational_temporal_memory_packets,
     build_stateful_event_reconstruction_packets,
+    build_summary_synthesis_memory_packets,
     build_typed_state_update_memory_packets,
 )
 from .providers import ModelProvider, _expand_answer_from_context
@@ -199,6 +200,12 @@ def _build_manifest_and_packets(
             max_observations=max(top_k_sessions * 2, 6),
             max_reflections=max(fallback_sessions + 3, 3),
             top_k_events=max(fallback_sessions + 3, 3),
+        )
+    if baseline_name == "summary_synthesis_memory":
+        return build_summary_synthesis_memory_packets(
+            samples,
+            max_observations=max(top_k_sessions * 2, 6),
+            max_reflections=max(fallback_sessions + 2, 3),
         )
     if baseline_name == "typed_state_update_memory":
         return build_typed_state_update_memory_packets(
@@ -478,6 +485,7 @@ def build_runner_contract_summary() -> dict[str, object]:
             "contradiction_aware_profile_memory",
             "dual_store_event_calendar_hybrid",
             "stateful_event_reconstruction",
+            "summary_synthesis_memory",
             "typed_state_update_memory",
         ],
         "required_inputs": ["normalized_samples", "baseline_name", "provider"],
