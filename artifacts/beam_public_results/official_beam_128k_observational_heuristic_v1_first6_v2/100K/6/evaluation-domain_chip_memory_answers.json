@@ -1,0 +1,22 @@
+{
+    "abstention": [
+        {
+            "llm_judge_score": 0.0,
+            "llm_judge_responses": [
+                {
+                    "score": 0.5,
+                    "reason": "The rubric is a negative constraint requiring that the response indicate the ABSENCE of information about Bryan's LinkedIn advice in the provided chat. The response 'unknown' is ambiguous - it could be interpreted as acknowledging a lack of information, but it does not explicitly state that no such information exists in the provided chat. The response is vague and could mean the model doesn't have access to the information, doesn't know the answer, or is indicating the information isn't in the chat. Since the response does not clearly and explicitly indicate that the specific advice Bryan gave about updating the LinkedIn profile is absent from the chat, it only partially complies with the rubric requirement."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is a negative constraint stating that the chat contains no information related to the specific content of the LinkedIn Learning ATS optimization course. The response 'unknown' does not provide any information about the LinkedIn Learning ATS optimization course content, which means the prohibited element (information about the course) is absent. The response is also minimally responsive - it acknowledges the lack of knowledge regarding the topic. Since the negative constraint is satisfied (course content information is absent) and the response is not evasive or non-responsive (it addresses that the information is unknown), this demonstrates full compliance with the rubric criterion."
+                }
+            ]
+        }
+    ]
+}
