@@ -186,6 +186,42 @@ Decision:
   - synthesis-first answer routing from `summary_synthesis_memory`
   - stronger update disambiguation so later facts beat earlier ones without needing question-specific fallback rules
 
+Follow-up patch on `2026-03-30`:
+
+- narrowed `summary_synthesis_memory` answer routing to use a focused update-aware extractor for:
+  - date questions
+  - updated numeric/count questions
+  - project-card count questions
+- added targeted regressions covering:
+  - focus-aligned first-sprint date selection
+  - updated project-card count selection
+  - existing updated numeric answer selection
+
+Follow-up result:
+
+- targeted tests passed:
+  - `python -m pytest tests/test_cli.py tests/test_memory_systems.py -k "summary_synthesis_memory or summary_synthesis_answer_candidate or contract_summary_exists or run_beam_public_cli_can_write_scorecard"`
+  - result: `10 passed`
+- reran the same local `BEAM` public `128K` first-3 slice twice:
+  - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v2_scorecard.json`
+  - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v3_scorecard.json`
+- honest outcome: still `3/60`
+
+What changed without moving the score:
+
+- the deadline miss for conversation `3` narrowed from a clearly unrelated later date (`May 10, 2024`) to the original first-sprint date (`April 1, 2024`)
+- this suggests the focused extractor is helping with topic alignment, but the system still does not reliably surface the superseding update on the real benchmark slice
+
+Decision after the follow-up patch:
+
+- keep the patch because it improves targeted behavior and preserves the current leader
+- do not treat it as a benchmark win
+- the next high-signal move is no longer generic update extraction
+- the next move should target one of these explicitly:
+  - benchmark-aligned abstention phrasing for official-public `BEAM`
+  - contradiction-only routing with rubric-shaped clarifier text
+  - temporal reasoning that computes from two extracted dates instead of replaying one numeric token
+
 ### 4. `contradiction_aware_summary_synthesis_memory`
 
 Goal: merge the contradiction-aware pairing path with synthesis-first answer construction so the system can both clarify conflicts and keep direct update answers concise.

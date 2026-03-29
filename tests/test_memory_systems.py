@@ -6502,6 +6502,90 @@ def test_summary_synthesis_answer_candidate_prefers_updated_numeric_answer():
     assert answer == "1,200 calls per day"
 
 
+def test_summary_synthesis_answer_candidate_prefers_focus_aligned_date():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="When does my first sprint end?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2", "s3"],
+        evidence_turn_ids=["t1", "t2", "t3"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="The first sprint ends on March 29, focusing on user registration and login.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "The first sprint ends on March 29, focusing on user registration and login."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="The analytics deadline for sprint 2 is April 19.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-10T10:00:00Z",
+            metadata={"source_text": "The analytics deadline for sprint 2 is April 19."},
+        ),
+        ObservationEntry(
+            observation_id="o3",
+            subject="user",
+            predicate="raw_turn",
+            text="The public launch is on April 20.",
+            session_id="s3",
+            turn_ids=["t3"],
+            timestamp="2024-03-12T10:00:00Z",
+            metadata={"source_text": "The public launch is on April 20."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "My first sprint ends on March 29."
+
+
+def test_summary_synthesis_answer_candidate_prefers_updated_project_card_count():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="How many project cards are included in my gallery using Bootstrap 5.3.0?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I added a project gallery with 8 project cards using Bootstrap 5.3.0 card components.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "I added a project gallery with 8 project cards using Bootstrap 5.3.0 card components."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="The gallery now includes 10 project cards after adding two new projects.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-20T10:00:00Z",
+            metadata={"source_text": "The gallery now includes 10 project cards after adding two new projects."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "There are 10 project cards included in the gallery."
+
+
 def test_contradiction_aware_summary_synthesis_prefers_question_aligned_conflict():
     question = NormalizedQuestion(
         question_id="q1",

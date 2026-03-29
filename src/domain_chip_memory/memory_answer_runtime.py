@@ -100,6 +100,25 @@ _QUESTION_FOCUS_STOPWORDS = {
     "you",
 }
 
+_UPDATE_SIGNAL_TOKENS = (
+    "updated",
+    "shifted",
+    "now",
+    "recently",
+    "increased",
+    "improved",
+    "added",
+)
+
+_STRONG_UPDATE_SIGNAL_TOKENS = (
+    "updated",
+    "shifted",
+    "now",
+    "recently",
+    "increased",
+    "improved",
+)
+
 
 def _observation_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
     return _observation_score_impl(question, observation)
@@ -446,6 +465,14 @@ def _extract_latest_date_surface(text: str) -> str:
     return ""
 
 
+def _extract_first_date_surface(text: str) -> str:
+    pattern = re.compile(rf"\b({_MONTH_PATTERN})\s+\d{{1,2}}(?:,\s*\d{{4}})?\b", re.IGNORECASE)
+    match = pattern.search(text)
+    if match:
+        return _normalize_date_surface(match.group(0).strip())
+    return ""
+
+
 def _render_when_does_answer(question_text: str, date_text: str) -> str:
     lowered = question_text.strip().rstrip(" ?")
     if lowered.lower().startswith("when does "):
@@ -603,7 +630,7 @@ def _relevant_source_sentences(
             tokens = set(_tokenize(cleaned))
             overlap = len(focus_tokens.intersection(tokens))
             score = 4.0 * float(overlap) + _evidence_score(question, entry) + _observation_score(question, entry)
-            if any(token in normalized for token in ("updated", "shifted", "now", "recently", "increased", "improved", "added")):
+            if any(token in normalized for token in _UPDATE_SIGNAL_TOKENS):
                 score += 5.0
             if "deadline" in question_lower and "deadline" in normalized:
                 score += 8.0
@@ -624,6 +651,44 @@ def _relevant_source_sentences(
     return ranked[:limit]
 
 
+def _extract_focus_aligned_date_surface(
+    question: NormalizedQuestion,
+    candidate_entries: list[ObservationEntry],
+    *,
+    prefer_updates: bool = False,
+    required_terms: tuple[str, ...] = (),
+) -> str:
+    focused_sentences = _relevant_source_sentences(question, candidate_entries)
+    if not focused_sentences:
+        return ""
+
+    filtered_sentences = focused_sentences
+    if required_terms:
+        required_lower = tuple(term.lower() for term in required_terms)
+        matched = [
+            sentence
+            for sentence in focused_sentences
+            if any(term in sentence.lower() for term in required_lower)
+        ]
+        if matched:
+            filtered_sentences = matched
+
+    if prefer_updates:
+        update_sentences = [
+            sentence
+            for sentence in filtered_sentences
+            if any(token in sentence.lower() for token in _UPDATE_SIGNAL_TOKENS)
+        ]
+        if update_sentences:
+            filtered_sentences = update_sentences
+
+    for sentence in filtered_sentences:
+        date_surface = _extract_first_date_surface(sentence)
+        if date_surface:
+            return date_surface
+    return ""
+
+
 def _infer_update_aware_synthesized_value_answer(
     question: NormalizedQuestion,
     candidate_entries: list[ObservationEntry],
@@ -634,17 +699,30 @@ def _infer_update_aware_synthesized_value_answer(
         return _infer_synthesized_value_answer(question, candidate_entries)
 
     question_lower = question.question.lower()
+    strong_update_focused_sentences = [
+        sentence for sentence in focused_sentences if any(token in sentence.lower() for token in _STRONG_UPDATE_SIGNAL_TOKENS)
+    ]
+    update_focused_sentences = [
+        sentence for sentence in focused_sentences if any(token in sentence.lower() for token in _UPDATE_SIGNAL_TOKENS)
+    ]
+    strong_update_focused_corpus = "\n".join(strong_update_focused_sentences)
+    update_focused_corpus = "\n".join(update_focused_sentences)
+    if question_lower.startswith("when does "):
+        date_surface = _extract_focus_aligned_date_surface(question, candidate_entries)
+        if date_surface:
+            return _render_when_does_answer(question.question, date_surface)
     if "deadline for completing the first sprint" in question_lower:
-        deadline_sentences = [
-            sentence
-            for sentence in focused_sentences
-            if "deadline" in sentence.lower() or "sprint" in sentence.lower()
-        ]
-        date_surface = _extract_latest_date_surface("\n".join(deadline_sentences) or focused_corpus)
+        date_surface = _extract_focus_aligned_date_surface(
+            question,
+            candidate_entries,
+            prefer_updates=True,
+            required_terms=("deadline", "sprint"),
+        )
         if date_surface:
             return date_surface
     if "project cards" in question_lower:
-        matches = re.findall(r"\b(\d+)\s+project cards\b", focused_corpus, re.IGNORECASE)
+        preferred_corpus = strong_update_focused_corpus or update_focused_corpus or focused_corpus
+        matches = re.findall(r"\b(\d+)\s+project cards\b", preferred_corpus, re.IGNORECASE)
         if matches:
             total = matches[0]
             if "included in my gallery" in question_lower:
@@ -653,11 +731,13 @@ def _infer_update_aware_synthesized_value_answer(
                 return f"You have {total} project cards in total after adding the new ones."
             return f"{total} project cards"
     if "daily call quota" in question_lower and "api key" in question_lower:
-        matches = re.findall(r"\b(\d{1,3}(?:,\d{3})?)\s+calls(?:/|\s+per\s+)day\b", focused_corpus, re.IGNORECASE)
+        preferred_corpus = strong_update_focused_corpus or update_focused_corpus or focused_corpus
+        matches = re.findall(r"\b(\d{1,3}(?:,\d{3})?)\s+calls(?:/|\s+per\s+)day\b", preferred_corpus, re.IGNORECASE)
         if matches:
             return f"{matches[0]} calls per day"
     if "test coverage percentage" in question_lower or "test coverage" in question_lower:
-        matches = re.findall(r"\b(\d{1,3})%\b", focused_corpus)
+        preferred_corpus = strong_update_focused_corpus or update_focused_corpus or focused_corpus
+        matches = re.findall(r"\b(\d{1,3})%\b", preferred_corpus)
         if matches:
             return f"{matches[0]}%"
     return _infer_synthesized_value_answer(question, candidate_entries)
@@ -849,7 +929,7 @@ def _choose_summary_synthesis_answer_candidate(
     for entry in candidate_entries:
         if entry not in aggregate_candidate_entries:
             aggregate_candidate_entries.append(entry)
-    synthesized_value = _infer_synthesized_value_answer(question, candidate_entries)
+    synthesized_value = _infer_update_aware_synthesized_value_answer(question, candidate_entries)
     if synthesized_value:
         return synthesized_value
     if _question_prefers_summary_synthesis(question):
