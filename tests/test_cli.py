@@ -975,6 +975,74 @@ def test_run_beam_public_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
 
 
+def test_run_beam_public_cli_can_write_scorecard_for_stateful_event_reconstruction(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "beam_public"
+    conversation_dir = data_dir / "100K" / "1"
+    probing_dir = conversation_dir / "probing_questions"
+    output_file = tmp_path / "artifacts" / "beam_public_stateful_scorecard.json"
+    probing_dir.mkdir(parents=True)
+    (conversation_dir / "chat.json").write_text(
+        json.dumps(
+            [
+                {
+                    "batch_number": 1,
+                    "time_anchor": "March-15-2024",
+                    "turns": [
+                        [
+                            {"role": "user", "id": 1, "content": "I moved to Dubai in February and now work from JLT."},
+                            {"role": "assistant", "id": 2, "content": "Noted."},
+                        ]
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (probing_dir / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [
+                    {
+                        "question": "Where do I work now?",
+                        "answer": "JLT",
+                        "source_chat_ids": [1],
+                        "rubric": ["JLT"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-public-baseline",
+            str(data_dir),
+            "--chat-size",
+            "128K",
+            "--baseline",
+            "stateful_event_reconstruction",
+            "--provider",
+            "heuristic_v1",
+            "--upstream-commit",
+            "abc123",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["overall"]["total"] == 1
+    assert payload["run_manifest"]["baseline_name"] == "stateful_event_reconstruction"
+    assert payload["run_manifest"]["metadata"]["source_modes"] == ["official_public"]
+    assert payload["run_manifest"]["metadata"]["dataset_scales"] == ["128K"]
+    assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
+
+
 def test_run_beam_public_cli_handles_null_batch_anchor_with_official_date_format(tmp_path: Path, monkeypatch):
     data_dir = tmp_path / "beam_public"
     conversation_dir = data_dir / "100K" / "1"

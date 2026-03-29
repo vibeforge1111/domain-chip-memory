@@ -13,6 +13,7 @@ DEFAULT_SYSTEMS = [
     "beam_temporal_atom_router",
     "observational_temporal_memory",
     "dual_store_event_calendar_hybrid",
+    "stateful_event_reconstruction",
 ]
 
 

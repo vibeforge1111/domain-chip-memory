@@ -21,6 +21,11 @@ def build_memory_system_contract_summary() -> dict[str, Any]:
                 "entrypoint": "build_dual_store_event_calendar_hybrid_packets",
                 "behavior": "Combine a stable observation window with an explicit event calendar and answer from the strongest hybrid signal.",
             },
+            {
+                "system_name": "stateful_event_reconstruction",
+                "entrypoint": "build_stateful_event_reconstruction_packets",
+                "behavior": "Rehydrate scored event-calendar entries back into evidence, rebuild current state from events plus observations, and route temporal or summary questions through reconstruction-first answer selection.",
+            },
         ],
         "memory_contracts": [
             "AnswerCandidate",

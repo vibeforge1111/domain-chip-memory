@@ -6413,6 +6413,7 @@ def test_memory_system_contract_summary_exists():
     assert "beam_temporal_atom_router" in names
     assert "observational_temporal_memory" in names
     assert "dual_store_event_calendar_hybrid" in names
+    assert "stateful_event_reconstruction" in names
 
 
 def test_extract_memory_atoms_captures_benchmark_specific_patterns():

@@ -13,6 +13,7 @@ from .packet_builders import (
     build_beam_ready_temporal_atom_router_packets,
     build_dual_store_event_calendar_hybrid_packets,
     build_observational_temporal_memory_packets,
+    build_stateful_event_reconstruction_packets,
 )
 from .providers import ModelProvider, _expand_answer_from_context
 from .runs import BaselinePromptPacket
@@ -183,6 +184,13 @@ def _build_manifest_and_packets(
             samples,
             max_observations=max(top_k_sessions * 2, 4),
             top_k_events=max(fallback_sessions + 2, 2),
+        )
+    if baseline_name == "stateful_event_reconstruction":
+        return build_stateful_event_reconstruction_packets(
+            samples,
+            max_observations=max(top_k_sessions * 2, 6),
+            max_reflections=max(fallback_sessions + 3, 3),
+            top_k_events=max(fallback_sessions + 3, 3),
         )
     raise ValueError(f"Unsupported baseline: {baseline_name}")
 
@@ -453,6 +461,7 @@ def build_runner_contract_summary() -> dict[str, object]:
             "beam_temporal_atom_router",
             "observational_temporal_memory",
             "dual_store_event_calendar_hybrid",
+            "stateful_event_reconstruction",
         ],
         "required_inputs": ["normalized_samples", "baseline_name", "provider"],
     }

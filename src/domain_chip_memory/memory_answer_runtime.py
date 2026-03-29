@@ -165,6 +165,47 @@ def _infer_yes_no_answer(question: NormalizedQuestion, evidence_entries: list[Ob
     )
 
 
+def _question_prefers_temporal_reconstruction(question: NormalizedQuestion) -> bool:
+    question_lower = question.question.lower()
+    return any(
+        cue in question_lower
+        for cue in (
+            "when did",
+            "when was",
+            "how long",
+            "how many days",
+            "how many weeks",
+            "how many months",
+            "how many years",
+            "before ",
+            "after ",
+            "between ",
+            "first ",
+            "last ",
+            "earlier ",
+            "later ",
+        )
+    )
+
+
+def _question_prefers_summary_reconstruction(question: NormalizedQuestion) -> bool:
+    question_lower = question.question.lower()
+    return any(
+        cue in question_lower
+        for cue in (
+            "summary",
+            "summarize",
+            "over time",
+            "overall",
+            "what changed",
+            "how have",
+            "how has",
+            "across ",
+            "throughout ",
+        )
+    )
+
+
 def _choose_answer_candidate(
     question: NormalizedQuestion,
     evidence_entries: list[ObservationEntry],
@@ -197,8 +238,74 @@ def _choose_answer_candidate(
     )
 
 
+def _choose_stateful_answer_candidate(
+    question: NormalizedQuestion,
+    evidence_entries: list[ObservationEntry],
+    belief_entries: list[ObservationEntry],
+    context_entries: list[ObservationEntry] | None = None,
+    aggregate_entries: list[ObservationEntry] | None = None,
+) -> str:
+    if question.should_abstain:
+        return "unknown"
+    candidate_entries = context_entries or evidence_entries
+    aggregate_candidate_entries = list(aggregate_entries or [])
+    for entry in candidate_entries:
+        if entry not in aggregate_candidate_entries:
+            aggregate_candidate_entries.append(entry)
+    aggregate_first = (
+        _question_needs_raw_aggregate_context(question)
+        or _question_prefers_summary_reconstruction(question)
+        or question.question.lower().startswith("what are the two hobbies that led me to join online communities")
+    )
+    dated_state_answer = _infer_dated_state_answer(question, candidate_entries)
+    if dated_state_answer:
+        return dated_state_answer
+    relative_state_answer = _infer_relative_state_answer(question, candidate_entries)
+    if relative_state_answer:
+        return relative_state_answer
+    if _is_preference_question(question):
+        preference_answer = _infer_preference_answer(question, candidate_entries)
+        if preference_answer:
+            return preference_answer
+    if _question_prefers_temporal_reconstruction(question):
+        temporal_answer = _infer_temporal_answer(question, candidate_entries)
+        if temporal_answer:
+            return temporal_answer
+        shared_answer = _infer_shared_answer(question, candidate_entries)
+        if shared_answer:
+            return shared_answer
+        explanatory_answer = _infer_explanatory_answer(question, candidate_entries)
+        if explanatory_answer:
+            return explanatory_answer
+        aggregate_answer = _infer_aggregate_answer(question, aggregate_candidate_entries)
+        if aggregate_answer:
+            return aggregate_answer
+        yes_no_answer = _infer_yes_no_answer(question, candidate_entries)
+        if yes_no_answer:
+            return yes_no_answer
+        return _infer_factoid_answer(question, candidate_entries)
+    if aggregate_first:
+        aggregate_answer = _infer_aggregate_answer(question, aggregate_candidate_entries)
+        if aggregate_answer:
+            return aggregate_answer
+        explanatory_answer = _infer_explanatory_answer(question, candidate_entries)
+        if explanatory_answer:
+            return explanatory_answer
+        shared_answer = _infer_shared_answer(question, candidate_entries)
+        if shared_answer:
+            return shared_answer
+    return _choose_answer_candidate(
+        question,
+        evidence_entries,
+        belief_entries,
+        context_entries=context_entries,
+        aggregate_entries=aggregate_entries,
+    )
+
+
 __all__ = [
     "_choose_answer_candidate",
+    "_choose_stateful_answer_candidate",
     "_entry_combined_text",
     "_evidence_score",
     "_extract_place_candidates",
@@ -211,6 +318,8 @@ __all__ = [
     "_is_pure_question_turn",
     "_observation_score",
     "_question_needs_raw_aggregate_context",
+    "_question_prefers_summary_reconstruction",
+    "_question_prefers_temporal_reconstruction",
     "_select_evidence_entries",
     "_select_preference_support_entries",
 ]

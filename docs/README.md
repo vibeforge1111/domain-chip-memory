@@ -9,6 +9,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
 - [Current Test And Validation Plan](CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
 - [Today Plan 2026-03-29](TODAY_PLAN_2026-03-29.md)
+- [Architecture Variation Loop 2026-03-29](ARCHITECTURE_VARIATION_LOOP_2026-03-29.md)
 - [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
 - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
@@ -23,6 +24,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
 - [Current Test And Validation Plan](CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
 - [Today Plan 2026-03-29](TODAY_PLAN_2026-03-29.md)
+- [Architecture Variation Loop 2026-03-29](ARCHITECTURE_VARIATION_LOOP_2026-03-29.md)
 - [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
 - [Benchmark Strategy](BENCHMARK_STRATEGY.md)
 - [Benchmark Autoloop Program](BENCHMARK_AUTOLOOP_PROGRAM.md)
@@ -36,6 +38,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 ## Current Architecture Direction
 
 - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
+- [Architecture Variation Loop 2026-03-29](ARCHITECTURE_VARIATION_LOOP_2026-03-29.md)
 - [Memory Architecture Evolution Plan](MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md)
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
 - [Spark Memory Integration Outlook](SPARK_MEMORY_INTEGRATION_OUTLOOK_2026-03-27.md)
