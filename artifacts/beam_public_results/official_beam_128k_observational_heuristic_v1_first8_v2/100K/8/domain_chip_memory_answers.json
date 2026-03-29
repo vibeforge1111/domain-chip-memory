@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "What specific topics or questions were covered during the June 14 call with HR to finalize onboarding and benefits?",
+      "llm_response": "unknown",
+      "question_id": "8:abstention:1",
+      "predicted_answer": "unknown"
+    },
+    {
+      "question": "What are the qualifications of the senior content strategist who joined the May 12 interview panel?",
+      "llm_response": "unknown",
+      "question_id": "8:abstention:2",
+      "predicted_answer": "unknown"
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever collaborated remotely with Michael on any projects?",
+      "llm_response": "I've never worked with my child Michael on any projects, but I'm thinking of collaborating with him on something new, can you give me some tips on how to make it a successful experience",
+      "question_id": "8:contradiction_resolution:3",
+      "predicted_answer": "I've never worked with my child Michael on any projects, but I'm thinking of collaborating with him on something new, can you give me some tips on how to make it a successful experience"
+    },
+    {
+      "question": "Have I submitted my cover letter to Greg for review?",
+      "llm_response": "I've submitted my cover letter to Greg for review on April 10 and I'm kinda anxious to get his detailed feedback by April 14, you know, to see if I can improve it further ->-> 2,18",
+      "question_id": "8:contradiction_resolution:4",
+      "predicted_answer": "I've submitted my cover letter to Greg for review on April 10 and I'm kinda anxious to get his detailed feedback by April 14, you know, to see if I can improve it further ->-> 2,18"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you walk me through the order in which I brought up different aspects of my personal and professional progress throughout our conversations, in order? Mention ONLY and ONLY five items.",
+      "llm_response": "measurable progress to demonstrate my value to my team and supervisors",
+      "question_id": "8:event_ordering:5",
+      "predicted_answer": "measurable progress to demonstrate my value to my team and supervisors"
+    },
+    {
+      "question": "Can you walk me through the order in which I brought up different aspects of my professional connections and preparation throughout our conversations, in order? Mention ONLY and ONLY five items.",
+      "llm_response": "I'm getting ready for my interview with Island Media Group on May 12, and I'm worried that my cover letter, which I submitted on April 23, might not have stronger impact statements as Greg suggested during our mock interview on April 25, so I'm scheduled for a follow-up with him on May 8 to work on that ->-> 3,2",
+      "question_id": "8:event_ordering:6",
+      "predicted_answer": "I'm getting ready for my interview with Island Media Group on May 12, and I'm worried that my cover letter, which I submitted on April 23, might not have stronger impact statements as Greg suggested during our mock interview on April 25, so I'm scheduled for a follow-up with him on May 8 to work on that ->-> 3,2"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "Where did I say I met Laura?",
+      "llm_response": "How can I effectively incorporate the feedback from Laura about Island Media's focus on emotional intelligence, which I learned from her April 5 meeting with their HR, into my cover letter without sounding too generic or insincere",
+      "question_id": "8:information_extraction:7",
+      "predicted_answer": "How can I effectively incorporate the feedback from Laura about Island Media's focus on emotional intelligence, which I learned from her April 5 meeting with their HR, into my cover letter without sounding too generic or insincere"
+    },
+    {
+      "question": "How did I come to consider attending that networking event, and what prior connection influenced my decision?",
+      "llm_response": "I'm kinda worried that I chose to attend Michael's May 7 storytelling event at East Janethaven Community Center over a May 6 networking dinner at The Seaside Grill, was that a good decision to focus on my public speaking skills",
+      "question_id": "8:information_extraction:8",
+      "predicted_answer": "I'm kinda worried that I chose to attend Michael's May 7 storytelling event at East Janethaven Community Center over a May 6 networking dinner at The Seaside Grill, was that a good decision to focus on my public speaking skills"
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "How can I organize multiple points in my CV?",
+      "llm_response": "hmm, can I add multiple portfolio links or just one",
+      "question_id": "8:instruction_following:9",
+      "predicted_answer": "hmm, can I add multiple portfolio links or just one"
+    },
+    {
+      "question": "What is the amount offered for the position we discussed?",
+      "llm_response": "I do prefer clear",
+      "question_id": "8:instruction_following:10",
+      "predicted_answer": "I do prefer clear"
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "When is my Zoom call with the creative director scheduled?",
+      "llm_response": "5 May 2024",
+      "question_id": "8:knowledge_update:11",
+      "predicted_answer": "5 May 2024"
+    },
+    {
+      "question": "How many days a week am I scheduled to work remotely?",
+      "llm_response": "3",
+      "question_id": "8:knowledge_update:12",
+      "predicted_answer": "3"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How many times did I mention submitting or revising my cover letter before my interview preparation?",
+      "llm_response": "5",
+      "question_id": "8:multi_session_reasoning:13",
+      "predicted_answer": "5"
+    },
+    {
+      "question": "Considering my cover letter deadlines, the Zoom call with the creative director, and my interview clarity improvements, how should I prioritize my preparation efforts to maximize my chances for the senior producer role?",
+      "llm_response": "I've accepted Leslie's introduction offer and have a Zoom call with the creative director on April 21 at 3 PM, what are some key points I should discuss during the call to make a good impression",
+      "question_id": "8:multi_session_reasoning:14",
+      "predicted_answer": "I've accepted Leslie's introduction offer and have a Zoom call with the creative director on April 21 at 3 PM, what are some key points I should discuss during the call to make a good impression"
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "How should I structure my cover letter to best showcase my achievements from previous projects?",
+      "llm_response": "I'm kinda stuck on how to structure my cover letter anecdotes, should I use the STAR method, you know, Situation, Task, Action, Result, to make it more engaging for Island Media Group, since they emphasize community engagement and innovation ->-> 1,17",
+      "question_id": "8:preference_following:15",
+      "predicted_answer": "I'm kinda stuck on how to structure my cover letter anecdotes, should I use the STAR method, you know, Situation, Task, Action, Result, to make it more engaging for Island Media Group, since they emphasize community engagement and innovation ->-> 1,17"
+    },
+    {
+      "question": "How should I include links to my portfolio in my cover letter to make them easy to access?",
+      "llm_response": "I'm considering a two-column layout for my cover letter to make it easier to read, especially since I want to include links to my portfolio - how can I make this format work without looking too cluttered",
+      "question_id": "8:preference_following:16",
+      "predicted_answer": "I'm considering a two-column layout for my cover letter to make it easier to read, especially since I want to include links to my portfolio - how can I make this format work without looking too cluttered"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a comprehensive summary of how I\u2019ve been managing my professional development and project responsibilities over the past few months?",
+      "llm_response": "30 days",
+      "question_id": "8:summarization:17",
+      "predicted_answer": "30 days"
+    },
+    {
+      "question": "Can you give me a complete summary of how my preparations and plans have developed around the upcoming opportunities and challenges I've been discussing?",
+      "llm_response": "I have a feedback session with my supervisor planned for July 30 to discuss my first quarter goals and adjustments, and I want to make sure I'm prepared to talk about my progress and any challenges I've faced ->-> 5,15",
+      "question_id": "8:summarization:18",
+      "predicted_answer": "I have a feedback session with my supervisor planned for July 30 to discuss my first quarter goals and adjustments, and I want to make sure I'm prepared to talk about my progress and any challenges I've faced ->-> 5,15"
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many days are there between when I planned to finish revising my cover letter and my Zoom call with the creative director?",
+      "llm_response": "I want to end my cover letter with a strong call-to-action, like inviting the reader to a 30-minute Zoom call between April 15-20, but I'm not sure if specifying the dates is too restrictive - should I give a broader time frame or stick with my initial plan",
+      "question_id": "8:temporal_reasoning:19",
+      "predicted_answer": "I want to end my cover letter with a strong call-to-action, like inviting the reader to a 30-minute Zoom call between April 15-20, but I'm not sure if specifying the dates is too restrictive - should I give a broader time frame or stick with my initial plan"
+    },
+    {
+      "question": "How many days after I submitted my cover letter did I have my follow-up with Greg to improve it?",
+      "llm_response": "12",
+      "question_id": "8:temporal_reasoning:20",
+      "predicted_answer": "12"
+    }
+  ]
+}
