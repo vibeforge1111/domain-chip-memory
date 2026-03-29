@@ -18,5 +18,49 @@
                 }
             ]
         }
+    ],
+    "contradiction_resolution": [
+        {
+            "llm_judge_score": 0.25,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'there is contradictory information.' The response does not contain this statement anywhere. The user is asking about ATS optimization skills, and the response addresses that topic (making it responsive), but it completely fails to include the required element about contradictory information. Since the positive requirement is absent, this results in no compliance."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the LLM response to mention: 'You said you enrolled in a LinkedIn Learning course on ATS optimization'. The response explicitly denies having enrolled in any ATS optimization courses or training programs at all. It does not mention LinkedIn Learning, does not reference any previous statement about enrolling in such a course, and instead contradicts the premise entirely. The required element is absent from the response."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'you also mentioned never enrolling in any ATS optimization courses.' The response contains the statement 'I've never actually enrolled in any ATS optimization courses or training programs,' which semantically captures the same meaning as the rubric requirement - acknowledging that the user has never enrolled in such courses. This is a clear paraphrase that preserves the intent of the rubric requirement. The response is also responsive to the question, as it acknowledges the user's lack of ATS course enrollment before asking for further guidance on essential skills."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion requires the LLM response to 'mention which statement is correct.' The response does not identify or mention any statement as correct. Instead, the response consists of a personal observation ('I've never actually enrolled in any ATS optimization courses...') followed by a question asking for essential skills to focus on. There are no statements presented in the response for which correctness could be identified or verified. The required element (mentioning which statement is correct) is completely absent from the response."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.25,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion explicitly requires the LLM response to state 'there is contradictory information.' The response does not contain this statement or any semantic equivalent. The user mentions feeling 'confused' about their lack of workshop experience while exploring a career shift, but this is not the same as stating there is contradictory information. The required element is completely absent from the response, resulting in no compliance with the rubric criterion."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the LLM response to mention: 'You said you attended a workshop on international resume standards.' However, the response explicitly states the opposite: 'I have never attended any workshops or training sessions related to resume standards or ATS optimization.' The required mention is completely absent from the response. Instead of acknowledging or referencing a workshop the user supposedly attended, the response denies attending any such workshops. This constitutes a complete failure to comply with the positive requirement specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions 'never attended any workshops or training sessions' in the phrase 'I have never attended any workshops or training sessions related to resume standards or ATS optimization.' This is semantically equivalent to the rubric requirement 'you also mentioned never attending any workshops or training sessions.' The response acknowledges and reflects the user's stated lack of workshop/training experience while also addressing the user's question about career transition advice. The required element is present and properly integrated into the response."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the LLM response to mention 'which statement is correct'. The response completely fails to address this requirement. The response discusses the user's confusion about workshops/training on resume standards/ATS optimization and asks for career advice about shifting from TV production to digital streaming. There is no mention of any statements or identification of which statement is correct. The response is non-compliant with the rubric criterion."
+                }
+            ]
+        }
     ]
 }

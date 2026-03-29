@@ -18,5 +18,49 @@
                 }
             ]
         }
+    ],
+    "contradiction_resolution": [
+        {
+            "llm_judge_score": 0.0,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'there is contradictory information'. The response provided is a question about getting started with citation management software (like Zotero) and does not contain any statement about contradictory information. The required element is completely absent from the response. While the response is somewhat responsive to the general topic (citation management), it fails to satisfy the specific positive requirement stated in the rubric."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the response to mention 'You said you have downloaded Zotero to manage your references'. The response does not contain this required phrase. Instead, the response says 'I've never used any citation management software, like Zotero' which actually contradicts the expected acknowledgment. The positive requirement is completely absent, and there is no semantic equivalent of the required statement in the response."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response contains the content 'I've never used any citation management software' which addresses the topic of not having used citation management software. However, the rubric criterion specifically asks for the LLM to mention 'you also mentioned never having used any citation management software' - which implies an acknowledgment or reference to a prior statement from the user (using phrases like 'you mentioned' or 'as you mentioned'). The response instead has the user directly stating this fact without the LLM acknowledging it. This is a partial compliance - the content about never using citation management software is present, but the specific framing of acknowledging what the user mentioned is not executed. Therefore, this scores 0.5 (Partial Compliance)."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The response does not comply with the rubric criterion. The rubric requires the response to mention which statement is correct, but the response merely repeats the user's question with some cryptic text ('->-> 1,23') appended. It fails to answer the question about getting started with citation management software like Zotero, and does not contain any mention of which statement is correct. The response is non-responsive to the question and lacks the required element specified in the rubric."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.25,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion requires the LLM response to state that there is 'contradictory information'. This is a positive requirement - the response MUST include this statement. The response provided does not contain any mention of contradictory information whatsoever. Instead, it discusses progress on an essay, consistent attendance at writing sessions, and aiming for a high-quality draft. The required element (stating there is contradictory information) is completely absent from the response, resulting in no compliance with the rubric criterion."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the LLM response to mention that the user missed a writing session due to an unexpected meeting. The response does not mention this at all. Instead, it states the opposite: 'I've never missed any scheduled writing sessions or meetings related to my essay.' The required element (mentioning a missed session due to an unexpected meeting) is completely absent from the response. Since this is a positive requirement that the response SHOULD include specific content, and that content is entirely missing, this fails to comply with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the required element. It explicitly mentions 'I've never missed any scheduled writing sessions or meetings related to my essay,' which semantically satisfies the rubric requirement of mentioning that the speaker has never missed any scheduled writing sessions. The phrase appears in the response with the intended meaning preserved, even though the exact wording 'you also mentioned' is not used - the core content about not missing scheduled writing sessions is present."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the LLM response to mention 'which statement is correct.' The provided response does not identify or mention any correct statement - it only contains the user's self-reported progress about their essay (never missing sessions, aiming for high quality) but does not evaluate or indicate which statement is correct. The required element (identifying the correct statement) is entirely absent from the response. While the response touches on the general topic of essay progress, it completely fails to satisfy the specific rubric criterion about stating which is correct."
+                }
+            ]
+        }
     ]
 }

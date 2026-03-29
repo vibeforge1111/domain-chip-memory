@@ -2,14 +2,20 @@
   "benchmark_name": "BEAM",
   "source_mode": "official_public_evaluation",
   "evaluation_file": "artifacts\\beam_public_results\\official_beam_128k_observational_heuristic_v1_first7_v2\\100K\\7\\evaluation-domain_chip_memory_answers.json",
-  "category_count": 1,
-  "overall_average": 0.0,
+  "category_count": 2,
+  "overall_average": 0.0625,
   "categories": [
     {
       "category": "abstention",
       "metric": "llm_judge_score",
       "question_count": 2,
       "average_score": 0.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "metric": "llm_judge_score",
+      "question_count": 2,
+      "average_score": 0.125
     }
   ]
 }
