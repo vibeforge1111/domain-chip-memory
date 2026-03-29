@@ -8,6 +8,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [Memory System Honest Assessment](MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
 - [Current Test And Validation Plan](CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
+- [Today Plan 2026-03-29](TODAY_PLAN_2026-03-29.md)
 - [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
 - [Next Memory System Plan](NEXT_MEMORY_SYSTEM_PLAN_2026-03-28.md)
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
@@ -21,6 +22,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [Memory System Honest Assessment](MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
 - [Current Test And Validation Plan](CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
+- [Today Plan 2026-03-29](TODAY_PLAN_2026-03-29.md)
 - [Frontier Status](FRONTIER_STATUS_2026-03-28.md)
 - [Benchmark Strategy](BENCHMARK_STRATEGY.md)
 - [Benchmark Autoloop Program](BENCHMARK_AUTOLOOP_PROGRAM.md)
@@ -28,6 +30,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [Benchmark Substrate Contracts](BENCHMARK_SUBSTRATE_CONTRACTS.md)
 - [BEAM Official Reproduction Plan](BEAM_OFFICIAL_REPRODUCTION_PLAN_2026-03-29.md)
 - [BEAM Implementation Gap Map](BEAM_IMPLEMENTATION_GAP_MAP_2026-03-29.md)
+- [BEAM Official 128K Blocker](BEAM_OFFICIAL_128K_BLOCKER_2026-03-29.md)
 - [BEAM Local Pilot Slice](BEAM_LOCAL_PILOT_SLICE_2026-03-25.md)
 
 ## Current Architecture Direction
@@ -64,6 +67,8 @@ These are historical and useful, but they should not override the current-state 
 - [Frontier Status 2026-03-28](FRONTIER_STATUS_2026-03-28.md)
 - [Session Log 2026-03-27](SESSION_LOG_2026-03-27.md)
 - [Session Log 2026-03-29](SESSION_LOG_2026-03-29.md)
+- [Today Plan 2026-03-29](TODAY_PLAN_2026-03-29.md)
+- [BEAM Official 128K Blocker 2026-03-29](BEAM_OFFICIAL_128K_BLOCKER_2026-03-29.md)
 - [Tomorrow Start Checklist 2026-03-30](TOMORROW_START_CHECKLIST_2026-03-30.md)
 - [Tomorrow Start Checklist 2026-03-28](TOMORROW_START_CHECKLIST_2026-03-28.md)
 - [Session Log 2026-03-26](SESSION_LOG_2026-03-26.md)

@@ -225,6 +225,7 @@ def _build_prediction(
         predicted_answer=answer,
         expected_answers=question.expected_answers,
         is_correct=bool(normalized_pred) and _matches_expected_answer(normalized_pred, question.expected_answers),
+        question=question.question,
         metadata={
             "provider_name": provider.name,
             **provider_metadata,

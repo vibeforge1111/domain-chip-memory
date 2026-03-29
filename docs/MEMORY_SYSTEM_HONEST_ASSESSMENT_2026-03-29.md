@@ -117,6 +117,8 @@ What is good:
 Why this is not fully proven:
 
 - current local `BEAM` proof is still a pilot path, not yet the full official reproduction path in this repo
+- the first exact official-public `128K` lane now runs through export, but judged scoring is blocked by upstream OpenAI quota
+- see [BEAM Official 128K Blocker 2026-03-29](BEAM_OFFICIAL_128K_BLOCKER_2026-03-29.md)
 
 ## Unknown Or Under-Measured
 
@@ -128,6 +130,12 @@ Still unknown:
 - broader clean `LoCoMo`
 - first canonical `GoodAI` benchmark reproduction
 - full official `BEAM` reproduction in-repo
+
+Current exact blocker on official `BEAM`:
+
+- the first exact public `128K` lane reached the upstream judge path
+- the upstream judge failed with `429 insufficient_quota`
+- there is still no judged official `BEAM` score artifact
 
 ### 2. Runtime quality
 
@@ -210,6 +218,7 @@ These are the places where score gains may not equal true memory quality:
 - answer formatting rescue
 - predicate-specific question rescue
 - local pilot success mistaken for official benchmark proof
+- bridge completion mistaken for judged official benchmark proof
 - benchmark closure without runtime metrics
 - benchmark closure without real shadow trace replay
 
@@ -221,6 +230,7 @@ Right now the system is:
 - excellent on the measured bounded `LongMemEval_s` lane
 - excellent on the measured clean bounded `LoCoMo` lane
 - promising on `BEAM` pressure
+- partially proven on official-public `BEAM` reproduction infrastructure
 - not yet fully proven on full benchmark closure
 - not yet fully proven on runtime quality
 - not yet fully proven under real Spark trace replay
@@ -233,4 +243,3 @@ Use the following language honestly:
 - say `strong partial evidence` when coverage is bounded or local
 - say `promising` when transfer looks real but proof is incomplete
 - say `unknown` when we have not directly measured the behavior
-

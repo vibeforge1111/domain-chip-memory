@@ -209,7 +209,10 @@ def load_beam_public_dir(
     scale_dir = root / _beam_public_scale_dir_name(chat_size)
     if not scale_dir.exists():
         raise ValueError(f"BEAM public scale directory does not exist: {scale_dir}")
-    conversation_dirs = sorted(path for path in scale_dir.iterdir() if path.is_dir())
+    conversation_dirs = sorted(
+        (path for path in scale_dir.iterdir() if path.is_dir()),
+        key=lambda path: int(path.name) if path.name.isdigit() else path.name,
+    )
     if limit is not None:
         conversation_dirs = conversation_dirs[:limit]
     return [

@@ -109,6 +109,7 @@ def _load_resume_predictions(path: Path | None) -> list[BaselinePrediction]:
                 predicted_answer=str(item.get("predicted_answer", "")),
                 expected_answers=[str(answer) for answer in item.get("expected_answers", [])],
                 is_correct=bool(item.get("is_correct")),
+                question=str(item.get("question", "")),
                 metadata=dict(item.get("metadata", {})),
             )
         )
@@ -669,6 +670,10 @@ def main() -> None:
     run_beam_official_eval.add_argument("--end-index", type=int)
     run_beam_official_eval.add_argument("--max-workers", type=int, default=10)
     run_beam_official_eval.add_argument("--python-executable")
+    run_beam_official_eval.add_argument("--judge-provider", choices=("official_openai", "minimax"), default="minimax")
+    run_beam_official_eval.add_argument("--judge-model")
+    run_beam_official_eval.add_argument("--judge-base-url")
+    run_beam_official_eval.add_argument("--judge-api-key-env")
     run_beam_official_eval.add_argument("--dry-run", action="store_true")
     run_beam_official_eval.add_argument("--write")
 
@@ -1037,6 +1042,10 @@ def main() -> None:
             end_index=args.end_index,
             max_workers=args.max_workers,
             python_executable=args.python_executable,
+            judge_provider=args.judge_provider,
+            judge_model=args.judge_model,
+            judge_base_url=args.judge_base_url,
+            judge_api_key_env=args.judge_api_key_env,
             dry_run=args.dry_run,
         )
         if args.write:

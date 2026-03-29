@@ -22,6 +22,7 @@ class BaselinePrediction:
     predicted_answer: str
     expected_answers: list[str]
     is_correct: bool
+    question: str = ""
     metadata: JsonDict = field(default_factory=dict)
 
     def to_dict(self) -> JsonDict:
@@ -250,6 +251,7 @@ def run_baseline_predictions(
                 predicted_answer=predicted_answer,
                 expected_answers=question.expected_answers,
                 is_correct=is_correct,
+                question=question.question,
                 metadata={
                     "responder_name": responder_name,
                     "route": packet.metadata.get("route"),

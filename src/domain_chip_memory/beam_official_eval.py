@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
 from collections import defaultdict
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
+import importlib
 from pathlib import Path
 from typing import Any
+
+from langchain_openai import ChatOpenAI
+
+from .providers import DEFAULT_MINIMAX_BASE_URL, DEFAULT_OPENAI_BASE_URL
 
 
 _BEAM_SAMPLE_ID_PATTERN = re.compile(r"^beam-([^-]+)-(.+)$")
@@ -156,10 +164,14 @@ def run_beam_official_evaluation(
     end_index: int | None = None,
     max_workers: int = 10,
     python_executable: str | None = None,
+    judge_provider: str = "minimax",
+    judge_model: str | None = None,
+    judge_base_url: str | None = None,
+    judge_api_key_env: str | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    upstream_repo_path = Path(upstream_repo_dir)
-    answers_root_path = Path(answers_root)
+    upstream_repo_path = Path(upstream_repo_dir).resolve()
+    answers_root_path = Path(answers_root).resolve()
     official_scale_dir = _official_chat_size_dir(chat_size)
     answers_scale_dir = answers_root_path / official_scale_dir
 
@@ -214,22 +226,22 @@ def run_beam_official_evaluation(
             f"end_index={effective_end_index} exceeds available conversation count {len(answer_conversation_dirs)}."
         )
 
-    command = [
-        python_executable or sys.executable,
-        "src/evaluation/run_evaluation.py",
-        "--input_directory",
-        str(answers_scale_dir),
-        "--chat_size",
-        official_scale_dir,
-        "--start_index",
-        str(start_index),
-        "--end_index",
-        str(effective_end_index),
-        "--max_workers",
-        str(max_workers),
-        "--allowed_result_files",
-        result_file_name,
-    ]
+    judge_config = _resolve_beam_judge_config(
+        judge_provider=judge_provider,
+        judge_model=judge_model,
+        judge_base_url=judge_base_url,
+        judge_api_key_env=judge_api_key_env,
+    )
+    command = _beam_evaluation_command(
+        python_executable=python_executable or sys.executable,
+        answers_scale_dir=answers_scale_dir,
+        official_scale_dir=official_scale_dir,
+        start_index=start_index,
+        end_index=effective_end_index,
+        max_workers=max_workers,
+        result_file_name=result_file_name,
+        judge_config=judge_config,
+    )
 
     selected_conversations = answer_conversation_dirs[start_index:effective_end_index]
     payload: dict[str, Any] = {
@@ -249,19 +261,43 @@ def run_beam_official_evaluation(
         "command": command,
         "cwd": str(upstream_repo_path),
         "llm_config_file": str(llm_config),
+        "judge_config": {
+            key: value
+            for key, value in judge_config.items()
+            if key not in {"api_key"}
+        },
         "dry_run": dry_run,
     }
     if dry_run:
         payload["status"] = "validated"
         return payload
 
-    completed = subprocess.run(
-        command,
-        cwd=str(upstream_repo_path),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    if judge_config["mode"] == "official_upstream_openai":
+        completed = subprocess.run(
+            command,
+            cwd=str(upstream_repo_path),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        exit_code = int(completed.returncode)
+        stdout_tail = completed.stdout.splitlines()[-20:]
+        stderr_tail = completed.stderr.splitlines()[-20:]
+    else:
+        result = _run_openai_compatible_upstream_evaluation(
+            upstream_repo_path=upstream_repo_path,
+            answers_scale_dir=answers_scale_dir,
+            official_scale_dir=official_scale_dir,
+            start_index=start_index,
+            end_index=effective_end_index,
+            max_workers=max_workers,
+            result_file_name=result_file_name,
+            judge_config=judge_config,
+        )
+        exit_code = int(result["exit_code"])
+        stdout_tail = result["stdout_tail"]
+        stderr_tail = result["stderr_tail"]
+
     evaluation_files = [
         str(path / f"evaluation-{result_file_name}")
         for path in selected_conversations
@@ -269,11 +305,163 @@ def run_beam_official_evaluation(
     ]
     payload.update(
         {
-            "status": "completed" if completed.returncode == 0 else "failed",
-            "exit_code": int(completed.returncode),
-            "stdout_tail": completed.stdout.splitlines()[-20:],
-            "stderr_tail": completed.stderr.splitlines()[-20:],
+            "status": "completed" if exit_code == 0 and evaluation_files else "failed",
+            "exit_code": exit_code,
+            "stdout_tail": stdout_tail,
+            "stderr_tail": stderr_tail,
             "evaluation_files": evaluation_files,
         }
     )
     return payload
+
+
+def _resolve_beam_judge_config(
+    *,
+    judge_provider: str,
+    judge_model: str | None,
+    judge_base_url: str | None,
+    judge_api_key_env: str | None,
+) -> dict[str, Any]:
+    normalized = str(judge_provider or "minimax").strip().lower()
+    if normalized == "official_openai":
+        return {
+            "mode": "official_upstream_openai",
+            "provider": "openai",
+            "model": "gpt-4.1-mini",
+            "base_url": DEFAULT_OPENAI_BASE_URL,
+            "api_key_source": "upstream_llms_config.json",
+            "comparability": "exact_official_upstream_judge_path",
+        }
+    if normalized == "minimax":
+        env_name = judge_api_key_env or "MINIMAX_API_KEY"
+        api_key = os.getenv(env_name)
+        if not api_key:
+            raise ValueError(f"{env_name} must be set to use the MiniMax judge path.")
+        model = (
+            judge_model
+            or os.getenv("DOMAIN_CHIP_MEMORY_MINIMAX_MODEL")
+            or os.getenv("MINIMAX_MODEL")
+        )
+        if not model:
+            raise ValueError(
+                "MiniMax judge path requires --judge-model or DOMAIN_CHIP_MEMORY_MINIMAX_MODEL or MINIMAX_MODEL."
+            )
+        base_url = (
+            judge_base_url
+            or os.getenv("DOMAIN_CHIP_MEMORY_MINIMAX_BASE_URL")
+            or os.getenv("MINIMAX_BASE_URL")
+            or DEFAULT_MINIMAX_BASE_URL
+        )
+        return {
+            "mode": "openai_compatible_override",
+            "provider": "minimax",
+            "model": model,
+            "base_url": base_url,
+            "api_key_env": env_name,
+            "api_key": api_key,
+            "comparability": "alternate_openai_compatible_judge_not_exact_official",
+        }
+    raise ValueError(f"Unsupported BEAM judge provider: {judge_provider}")
+
+
+def _beam_evaluation_command(
+    *,
+    python_executable: str,
+    answers_scale_dir: Path,
+    official_scale_dir: str,
+    start_index: int,
+    end_index: int,
+    max_workers: int,
+    result_file_name: str,
+    judge_config: dict[str, Any],
+) -> list[str]:
+    if judge_config["mode"] != "official_upstream_openai":
+        return [
+            python_executable,
+            "<in-process-openai-compatible-judge>",
+            judge_config["provider"],
+            judge_config["model"],
+        ]
+    return [
+        python_executable,
+        "-m",
+        "src.evaluation.run_evaluation",
+        "--input_directory",
+        str(answers_scale_dir),
+        "--chat_size",
+        official_scale_dir,
+        "--start_index",
+        str(start_index),
+        "--end_index",
+        str(end_index),
+        "--max_workers",
+        str(max_workers),
+        "--allowed_result_files",
+        result_file_name,
+    ]
+
+
+def _run_openai_compatible_upstream_evaluation(
+    *,
+    upstream_repo_path: Path,
+    answers_scale_dir: Path,
+    official_scale_dir: str,
+    start_index: int,
+    end_index: int,
+    max_workers: int,
+    result_file_name: str,
+    judge_config: dict[str, Any],
+) -> dict[str, Any]:
+    upstream_repo_str = str(upstream_repo_path)
+    original_cwd = os.getcwd()
+    inserted_path = False
+    stdout_buffer = StringIO()
+    stderr_buffer = StringIO()
+    module_names = (
+        "src.llm",
+        "src.evaluation.compute_metrics",
+        "src.evaluation.run_evaluation",
+    )
+    try:
+        if not sys.path or sys.path[0] != upstream_repo_str:
+            sys.path.insert(0, upstream_repo_str)
+            inserted_path = True
+        for module_name in module_names:
+            sys.modules.pop(module_name, None)
+        os.chdir(upstream_repo_str)
+        run_evaluation_module = importlib.import_module("src.evaluation.run_evaluation")
+        judge_llm = ChatOpenAI(
+            model=judge_config["model"],
+            openai_api_key=judge_config["api_key"],
+            openai_api_base=judge_config["base_url"],
+            temperature=0,
+        )
+        with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
+            run_evaluation_module.batch_run_evaluation(
+                input_directory=str(answers_scale_dir),
+                chat_size=official_scale_dir,
+                model=judge_llm,
+                start_index=start_index,
+                end_index=end_index,
+                max_workers=max_workers,
+                allowed_result_files=[result_file_name],
+            )
+        return {
+            "exit_code": 0,
+            "stdout_tail": stdout_buffer.getvalue().splitlines()[-20:],
+            "stderr_tail": stderr_buffer.getvalue().splitlines()[-20:],
+        }
+    except Exception as exc:
+        stderr_lines = stderr_buffer.getvalue().splitlines()
+        stderr_lines.append(f"{type(exc).__name__}: {exc}")
+        return {
+            "exit_code": 1,
+            "stdout_tail": stdout_buffer.getvalue().splitlines()[-20:],
+            "stderr_tail": stderr_lines[-20:],
+        }
+    finally:
+        os.chdir(original_cwd)
+        for module_name in module_names:
+            sys.modules.pop(module_name, None)
+        if inserted_path and sys.path and sys.path[0] == upstream_repo_str:
+            sys.path.pop(0)

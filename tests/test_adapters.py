@@ -1,3 +1,5 @@
+import json
+
 from domain_chip_memory.adapters import (
     BEAMAdapter,
     ConvoMemShadowAdapter,
@@ -236,3 +238,46 @@ def test_load_beam_public_dir_normalizes_official_style_fixture(tmp_path):
     assert sample.metadata["upstream_commit"] == "abc123"
     assert sample.questions[0].evidence_turn_ids == ["1:batch-1:msg-1"]
     assert sample.questions[1].should_abstain is True
+
+
+def test_load_beam_public_dir_sorts_conversation_ids_numerically(tmp_path):
+    for conversation_id in ("1", "2", "10"):
+        conversation_dir = tmp_path / "100K" / conversation_id
+        probing_dir = conversation_dir / "probing_questions"
+        probing_dir.mkdir(parents=True)
+        (conversation_dir / "chat.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "batch_number": 1,
+                        "time_anchor": "March-15-2024",
+                        "turns": [
+                            [
+                                {"role": "user", "id": 1, "content": f"Conversation {conversation_id}."},
+                                {"role": "assistant", "id": 2, "content": "Noted."},
+                            ]
+                        ],
+                    }
+                ]
+            ),
+            encoding="utf-8",
+        )
+        (probing_dir / "probing_questions.json").write_text(
+            json.dumps(
+                {
+                    "information_extraction": [
+                        {
+                            "question": "Which conversation is this?",
+                            "answer": conversation_id,
+                            "source_chat_ids": [1],
+                            "rubric": [conversation_id],
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    samples = load_beam_public_dir(tmp_path, chat_size="128K", limit=2)
+
+    assert [sample.metadata["conversation_id"] for sample in samples] == ["1", "2"]

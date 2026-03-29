@@ -4,12 +4,20 @@ import re
 from datetime import datetime, timedelta
 
 
-def parse_observation_anchor(timestamp: str) -> datetime | None:
+def parse_observation_anchor(timestamp: str | None) -> datetime | None:
+    if not isinstance(timestamp, str):
+        return None
     timestamp = timestamp.strip()
     if not timestamp:
         return None
     normalized = timestamp.replace("am", "AM").replace("pm", "PM")
-    for pattern in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d", "%I:%M %p on %d %B, %Y", "%I:%M %p on %d %B %Y"):
+    for pattern in (
+        "%Y-%m-%dT%H:%M:%SZ",
+        "%Y-%m-%d",
+        "%B-%d-%Y",
+        "%I:%M %p on %d %B, %Y",
+        "%I:%M %p on %d %B %Y",
+    ):
         try:
             return datetime.strptime(normalized, pattern)
         except ValueError:

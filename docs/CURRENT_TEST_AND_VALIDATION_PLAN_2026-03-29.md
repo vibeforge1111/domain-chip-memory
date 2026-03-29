@@ -88,6 +88,24 @@ Interpretation:
 - real pressure lane
 - not yet equivalent to complete official `BEAM` reproduction
 
+### 5. Official-public BEAM reproduction bridge
+
+Currently stressed:
+
+- exact upstream repo commit pin
+- exact public `128K` first-lane loader path
+- baseline run over the first public conversation
+- upstream-style answer export
+- upstream evaluator wrapper validation
+- alternate MiniMax OpenAI-compatible judged evaluation on the same exported answers
+
+Interpretation:
+
+- the bridge is now tested through answer export on the exact public lane
+- the exact-official OpenAI judged path is still blocked by the current upstream judge quota
+- the first alternate explicit judged lane now exists on the same conversation with summary `overall_average = 0.125`
+- see [BEAM Official 128K Blocker 2026-03-29](BEAM_OFFICIAL_128K_BLOCKER_2026-03-29.md)
+
 ## Partially Tested Surface
 
 These are areas with meaningful signal but incomplete proof:
@@ -98,6 +116,16 @@ These are areas with meaningful signal but incomplete proof:
 - benchmark transfer to real runtime quality
 - maintenance stability over longer-running use
 - real product traffic replay
+
+Current official `BEAM` blocker:
+
+- first exact public `128K` lane reaches upstream evaluation but fails on OpenAI `429 insufficient_quota`
+- the blocker is logged in [BEAM Official 128K Blocker 2026-03-29](BEAM_OFFICIAL_128K_BLOCKER_2026-03-29.md)
+
+Current alternate `BEAM` status:
+
+- first exact public `128K` lane also produced a MiniMax-judged evaluation file and summary
+- that result is useful benchmark evidence but not exact-official comparability
 
 ## Untested Or Under-Measured Surface
 
@@ -191,7 +219,7 @@ Treat a benchmark gain as suspicious until it passes these checks:
 
 ## Current Validation Gaps To Close Next
 
-1. Pin the official `BEAM` reproduction path and separate it from the local pilot path.
+1. Clear the current exact-official `BEAM` judge blocker and land the first exact-official judged `128K` artifact.
 2. Extend the measured `LongMemEval_s` frontier beyond the current contiguous coverage.
 3. Move `LoCoMo` onto the next clean lane beyond the current bounded active slices.
 4. Lock the first canonical `GoodAI` run.
@@ -206,4 +234,3 @@ Use this language in future docs and reports:
 - `partially tested`: meaningful but bounded or incomplete coverage
 - `untested`: not directly measured yet
 - `unknown`: current evidence is too weak to justify a confidence claim
-

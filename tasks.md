@@ -128,8 +128,10 @@ Question:
 ## Immediate Next Actions
 
 - keep the current docs organized around one honest current-state view
-- run the first exact small official-public `BEAM` lane through the upstream evaluation wrapper
-- pin the judge configuration used for that run
+- keep the first MiniMax-scored official-public `BEAM` lane explicitly marked as alternate judge evidence
+- clear the current exact-official official-public `BEAM` judge blocker:
+  - restore OpenAI judge quota
+- rerun the first exact official-public `BEAM` `128K` judged lane once the OpenAI judge path is available
 - extend the next honest `LongMemEval_s` slice
 - choose the next clean `LoCoMo` lane
 - lock the first canonical `GoodAI` run

@@ -975,6 +975,103 @@ def test_run_beam_public_cli_can_write_scorecard(tmp_path: Path, monkeypatch):
     assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
 
 
+def test_run_beam_public_cli_handles_null_batch_anchor_with_official_date_format(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "beam_public"
+    conversation_dir = data_dir / "100K" / "1"
+    probing_dir = conversation_dir / "probing_questions"
+    output_file = tmp_path / "artifacts" / "beam_public_temporal_scorecard.json"
+    export_manifest_file = tmp_path / "artifacts" / "beam_public_export_manifest.json"
+    export_dir = tmp_path / "beam_results"
+    probing_dir.mkdir(parents=True)
+    (conversation_dir / "chat.json").write_text(
+        json.dumps(
+            [
+                {
+                    "batch_number": 1,
+                    "time_anchor": None,
+                    "turns": [
+                        [
+                            {
+                                "role": "user",
+                                "id": 1,
+                                "time_anchor": "April-15-2024",
+                                "content": "My first sprint ends today.",
+                            },
+                            {
+                                "role": "assistant",
+                                "id": 2,
+                                "time_anchor": "April-15-2024",
+                                "content": "Nice, that wraps the sprint on schedule.",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (probing_dir / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [
+                    {
+                        "question": "When does my first sprint end?",
+                        "answer": "15 April 2024",
+                        "source_chat_ids": [1],
+                        "rubric": ["15 April 2024"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-public-baseline",
+            str(data_dir),
+            "--chat-size",
+            "128K",
+            "--baseline",
+            "observational_temporal_memory",
+            "--provider",
+            "heuristic_v1",
+            "--upstream-commit",
+            "abc123",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["overall"]["total"] == 1
+    assert payload["predictions"][0]["predicted_answer"] == "15 April 2024"
+    assert payload["predictions"][0]["question"] == "When does my first sprint end?"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "export-beam-public-answers",
+            str(output_file),
+            str(export_dir),
+            "--write",
+            str(export_manifest_file),
+        ],
+    )
+    cli.main()
+
+    export_manifest = json.loads(export_manifest_file.read_text(encoding="utf-8"))
+    exported = json.loads((export_dir / "100K" / "1" / "domain_chip_memory_answers.json").read_text(encoding="utf-8"))
+    assert export_manifest["conversation_count"] == 1
+    assert exported["information_extraction"][0]["question"] == "When does my first sprint end?"
+
+
 def test_export_beam_public_answers_cli_writes_upstream_shape(tmp_path: Path, monkeypatch):
     scorecard_file = tmp_path / "beam_scorecard.json"
     output_dir = tmp_path / "beam_results"
@@ -1100,6 +1197,8 @@ def test_run_beam_official_evaluation_cli_validates_and_writes_manifest(tmp_path
             str(answers_dir),
             "--chat-size",
             "128K",
+            "--judge-provider",
+            "official_openai",
             "--dry-run",
             "--write",
             str(output_file),
@@ -1112,7 +1211,9 @@ def test_run_beam_official_evaluation_cli_validates_and_writes_manifest(tmp_path
     assert payload["status"] == "validated"
     assert payload["official_chat_size_dir"] == "100K"
     assert payload["conversation_ids"] == ["1"]
-    assert payload["command"][1] == "src/evaluation/run_evaluation.py"
+    assert payload["command"][1] == "-m"
+    assert payload["command"][2] == "src.evaluation.run_evaluation"
+    assert payload["input_directory"] == str((answers_dir / "100K").resolve())
 
 
 def test_run_beam_official_evaluation_cli_invokes_upstream_subprocess(tmp_path: Path, monkeypatch):
@@ -1143,8 +1244,11 @@ def test_run_beam_official_evaluation_cli_invokes_upstream_subprocess(tmp_path: 
 
     def fake_run(command, *, cwd, capture_output, text, check):
         assert command[0] == "python-custom"
+        assert command[1] == "-m"
+        assert command[2] == "src.evaluation.run_evaluation"
+        assert command[4] == str((answers_dir / "100K").resolve())
         assert command[-1] == "custom_answers.json"
-        assert cwd == str(upstream_repo)
+        assert cwd == str(upstream_repo.resolve())
         assert capture_output is True
         assert text is True
         assert check is False
@@ -1169,6 +1273,8 @@ def test_run_beam_official_evaluation_cli_invokes_upstream_subprocess(tmp_path: 
             "custom_answers.json",
             "--python-executable",
             "python-custom",
+            "--judge-provider",
+            "official_openai",
             "--write",
             str(output_file),
         ],
@@ -1180,6 +1286,194 @@ def test_run_beam_official_evaluation_cli_invokes_upstream_subprocess(tmp_path: 
     assert payload["exit_code"] == 0
     assert payload["evaluation_files"] == [str(answers_dir / "100K" / "1" / "evaluation-custom_answers.json")]
     assert "information_extraction" in payload["stdout_tail"][0]
+
+
+def test_run_beam_official_evaluation_cli_fails_when_upstream_writes_no_evaluation_files(tmp_path: Path, monkeypatch):
+    upstream_repo = tmp_path / "beam_repo"
+    answers_dir = tmp_path / "beam_results"
+    output_file = tmp_path / "artifacts" / "beam_official_eval_result.json"
+
+    (upstream_repo / "src" / "evaluation").mkdir(parents=True)
+    (upstream_repo / "src" / "evaluation" / "run_evaluation.py").write_text("print('ok')\n", encoding="utf-8")
+    (upstream_repo / "src" / "llms_config.json").write_text(json.dumps({"gpt": {"api_key": "test"}}), encoding="utf-8")
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions").mkdir(parents=True)
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps({"information_extraction": []}),
+        encoding="utf-8",
+    )
+    (answers_dir / "100K" / "1").mkdir(parents=True)
+    (answers_dir / "100K" / "1" / "custom_answers.json").write_text(
+        json.dumps({"information_extraction": [{"question": "x", "llm_response": "y"}]}),
+        encoding="utf-8",
+    )
+
+    class FakeCompletedProcess:
+        def __init__(self):
+            self.returncode = 0
+            self.stdout = "Error while processing a directory: quota"
+            self.stderr = ""
+
+    def fake_run(command, *, cwd, capture_output, text, check):
+        return FakeCompletedProcess()
+
+    monkeypatch.setattr(beam_official_eval.subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-official-evaluation",
+            str(upstream_repo),
+            str(answers_dir),
+            "--chat-size",
+            "128K",
+            "--result-file-name",
+            "custom_answers.json",
+            "--judge-provider",
+            "official_openai",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    assert payload["exit_code"] == 0
+    assert payload["evaluation_files"] == []
+
+
+def test_run_beam_official_evaluation_cli_supports_minimax_judge_override(tmp_path: Path, monkeypatch):
+    upstream_repo = tmp_path / "beam_repo"
+    answers_dir = tmp_path / "beam_results"
+    output_file = tmp_path / "artifacts" / "beam_official_eval_minimax_result.json"
+
+    (upstream_repo / "src" / "evaluation").mkdir(parents=True)
+    (upstream_repo / "src" / "evaluation" / "run_evaluation.py").write_text("print('ok')\n", encoding="utf-8")
+    (upstream_repo / "src" / "llms_config.json").write_text(json.dumps({"gpt": {"api_key": "test"}}), encoding="utf-8")
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions").mkdir(parents=True)
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps({"information_extraction": []}),
+        encoding="utf-8",
+    )
+    (answers_dir / "100K" / "1").mkdir(parents=True)
+    answer_file = answers_dir / "100K" / "1" / "custom_answers.json"
+    answer_file.write_text(
+        json.dumps({"information_extraction": [{"question": "x", "llm_response": "y"}]}),
+        encoding="utf-8",
+    )
+
+    def fake_run_openai_compatible_upstream_evaluation(**kwargs):
+        assert kwargs["judge_config"]["provider"] == "minimax"
+        assert kwargs["judge_config"]["model"] == "MiniMax-M2.7"
+        assert kwargs["judge_config"]["api_key_env"] == "MINIMAX_API_KEY"
+        assert kwargs["judge_config"]["comparability"] == "alternate_openai_compatible_judge_not_exact_official"
+        (answers_dir / "100K" / "1" / "evaluation-custom_answers.json").write_text(
+            json.dumps({"information_extraction": [{"llm_judge_score": 1.0}]}),
+            encoding="utf-8",
+        )
+        return {
+            "exit_code": 0,
+            "stdout_tail": ["ok"],
+            "stderr_tail": [],
+        }
+
+    monkeypatch.setattr(
+        beam_official_eval,
+        "_run_openai_compatible_upstream_evaluation",
+        fake_run_openai_compatible_upstream_evaluation,
+    )
+    monkeypatch.setenv("MINIMAX_API_KEY", "minimax-test-key")
+    monkeypatch.setenv("MINIMAX_MODEL", "MiniMax-M2.7")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-official-evaluation",
+            str(upstream_repo),
+            str(answers_dir),
+            "--chat-size",
+            "128K",
+            "--result-file-name",
+            "custom_answers.json",
+            "--judge-provider",
+            "minimax",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["status"] == "completed"
+    assert payload["judge_config"]["provider"] == "minimax"
+    assert payload["judge_config"]["model"] == "MiniMax-M2.7"
+    assert payload["evaluation_files"] == [str(answers_dir / "100K" / "1" / "evaluation-custom_answers.json")]
+
+
+def test_run_beam_official_evaluation_cli_defaults_to_minimax(tmp_path: Path, monkeypatch):
+    upstream_repo = tmp_path / "beam_repo"
+    answers_dir = tmp_path / "beam_results"
+    output_file = tmp_path / "artifacts" / "beam_official_eval_minimax_default_result.json"
+
+    (upstream_repo / "src" / "evaluation").mkdir(parents=True)
+    (upstream_repo / "src" / "evaluation" / "run_evaluation.py").write_text("print('ok')\n", encoding="utf-8")
+    (upstream_repo / "src" / "llms_config.json").write_text(json.dumps({"gpt": {"api_key": "test"}}), encoding="utf-8")
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions").mkdir(parents=True)
+    (upstream_repo / "chats" / "100K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps({"information_extraction": []}),
+        encoding="utf-8",
+    )
+    (answers_dir / "100K" / "1").mkdir(parents=True)
+    answer_file = answers_dir / "100K" / "1" / "custom_answers.json"
+    answer_file.write_text(
+        json.dumps({"information_extraction": [{"question": "x", "llm_response": "y"}]}),
+        encoding="utf-8",
+    )
+
+    def fake_run_openai_compatible_upstream_evaluation(**kwargs):
+        assert kwargs["judge_config"]["provider"] == "minimax"
+        assert kwargs["judge_config"]["model"] == "MiniMax-M2.7"
+        (answers_dir / "100K" / "1" / "evaluation-custom_answers.json").write_text(
+            json.dumps({"information_extraction": [{"llm_judge_score": 1.0}]}),
+            encoding="utf-8",
+        )
+        return {
+            "exit_code": 0,
+            "stdout_tail": ["ok"],
+            "stderr_tail": [],
+        }
+
+    monkeypatch.setattr(
+        beam_official_eval,
+        "_run_openai_compatible_upstream_evaluation",
+        fake_run_openai_compatible_upstream_evaluation,
+    )
+    monkeypatch.setenv("MINIMAX_API_KEY", "minimax-test-key")
+    monkeypatch.setenv("MINIMAX_MODEL", "MiniMax-M2.7")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-official-evaluation",
+            str(upstream_repo),
+            str(answers_dir),
+            "--chat-size",
+            "128K",
+            "--result-file-name",
+            "custom_answers.json",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["status"] == "completed"
+    assert payload["judge_config"]["provider"] == "minimax"
+    assert payload["judge_config"]["model"] == "MiniMax-M2.7"
 
 
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):
