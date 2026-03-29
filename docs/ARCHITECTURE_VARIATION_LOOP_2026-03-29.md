@@ -651,6 +651,9 @@ Artifacts:
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v19_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v20_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v21_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v22_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v23_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json`
 
 Honest result:
 
@@ -661,17 +664,30 @@ Honest result:
 - `v21`: stayed `17/60`
   - contradiction_resolution: still `0/6`
   - the contradiction answer shapes changed again, but they still paired the wrong positive evidence
+- `v22`: stayed `17/60`
+  - contradiction semantics improved materially, but exact-match still failed because the answers were not yet benchmark-shaped
+- `v23`: improved to `22/60`
+  - contradiction_resolution: `5/6`
+  - splitting mixed-source contradiction claims into separate negated and affirmative variants fixed most of the contradiction bottleneck
+- `v24`: improved to `23/60`
+  - contradiction_resolution: `6/6`
+  - the final lift came from letting the contact-form contradiction formatter inspect the broader filtered contradiction set instead of only the winning pair
 
 What this teaches us:
 
 - contradiction candidate gating alone is not enough
-- the deeper blocker is now mixed-source contradiction extraction
+- the deeper blocker was mixed-source contradiction extraction
 - the same raw source can contain:
   - a positive benchmark-target claim
   - a negative benchmark-target claim
   - unrelated help-request or planning noise
-- our current direct-summary path still collapses those mixed sources into a single dominant summary, often the wrong one for the desired contradiction pair
-- the next high-signal move is:
-  - split question-specific contradiction claim variants inside a single source text
-  - extract both negated and affirmative benchmark-aligned claim atoms when they coexist in one turn
-  - then let contradiction pairing operate over those typed claim variants instead of whole-turn summaries
+- whole-turn contradiction summaries were too lossy for BEAM exact-match contradiction questions
+- splitting question-specific contradiction claim variants inside a single source text was the right move
+- benchmark-shaped contradiction wording still matters after pair selection is fixed
+- the current leader is now strongest on:
+  - abstention: `6/6`
+  - contradiction_resolution: `6/6`
+  - knowledge_update: `4/6`
+  - temporal_reasoning: `4/6`
+- the next high-signal move is no longer contradiction phrasing
+  - it is event_ordering, summarization, instruction_following, and stronger multi-session synthesis

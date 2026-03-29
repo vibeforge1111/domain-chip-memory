@@ -653,6 +653,100 @@ def test_question_aligned_contradiction_clarification_prefers_bootstrap_classes_
     assert "you used Bootstrap's form-control and btn-primary classes for consistent styling and hover effects" in answer
 
 
+def test_question_aligned_contradiction_clarification_splits_mixed_source_route_claims():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-routes-mixed",
+        question="Have I worked with Flask routes and handled HTTP requests in this project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="neg-mixed-routes",
+            session_id="s1",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never written any Flask routes or handled HTTP requests in this project.",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T00:00:00Z",
+            metadata={"source_text": "I've never written any Flask routes or handled HTTP requests in this project."},
+        ),
+        ObservationEntry(
+            observation_id="pos-mixed-routes",
+            session_id="s2",
+            subject="user",
+            predicate="raw_turn",
+            text=(
+                "I'm trying to integrate Flask-Login v0.6.2 for session management, and I've already implemented "
+                "the basic homepage route with Flask returning static HTML, but I also mentioned I've never written "
+                "any Flask routes before while planning the rest of the auth work."
+            ),
+            turn_ids=["t2"],
+            timestamp="2024-03-02T00:00:00Z",
+            metadata={
+                "source_text": (
+                    "I'm trying to integrate Flask-Login v0.6.2 for session management, and I've already implemented "
+                    "the basic homepage route with Flask returning static HTML, but I also mentioned I've never written "
+                    "any Flask routes before while planning the rest of the auth work."
+                )
+            },
+        ),
+    ]
+
+    answer = _infer_question_aligned_contradiction_clarification(question, entries)
+
+    assert "homepage route with Flask" in answer
+    assert "Flask-Login" not in answer
+
+
+def test_question_aligned_contradiction_clarification_splits_mixed_source_flask_login_claims():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-login-mixed",
+        question="Have I integrated Flask-Login for session management in my project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="neg-login-mixed",
+            session_id="s1",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never integrated Flask-Login or managed user sessions in this project.",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T00:00:00Z",
+            metadata={"source_text": "I've never integrated Flask-Login or managed user sessions in this project."},
+        ),
+        ObservationEntry(
+            observation_id="pos-login-mixed",
+            session_id="s2",
+            subject="user",
+            predicate="raw_turn",
+            text=(
+                "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app to replace my manual "
+                "session handling, but elsewhere I said Flask-Login, which I've never actually integrated into this project."
+            ),
+            turn_ids=["t2"],
+            timestamp="2024-03-02T00:00:00Z",
+            metadata={
+                "source_text": (
+                    "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app to replace my manual "
+                    "session handling, but elsewhere I said Flask-Login, which I've never actually integrated into this project."
+                )
+            },
+        ),
+    ]
+
+    answer = _infer_question_aligned_contradiction_clarification(question, entries)
+
+    assert "Flask-Login v0.6.2 was integrated for session management replacing manual session handling" in answer
+    assert "never integrated Flask-Login or managed user sessions" in answer
+
+
 def test_product_memory_relearn_after_deletion_updates_current_state():
     relearn_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-correction-2"]
 

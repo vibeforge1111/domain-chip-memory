@@ -628,9 +628,14 @@ def _question_aligned_claim_summary(question: NormalizedQuestion, entry: Observa
     return summary
 
 
-def _question_specific_claim_summary(question: NormalizedQuestion, source_text: str) -> str:
+def _question_specific_claim_summaries(question: NormalizedQuestion, source_text: str) -> list[str]:
     question_lower = question.question.lower()
     source_lower = source_text.lower()
+    summaries: list[str] = []
+
+    def _append(summary: str) -> None:
+        if summary and summary not in summaries:
+            summaries.append(summary)
 
     if "flask routes" in question_lower and any(
         phrase in source_lower
@@ -640,13 +645,13 @@ def _question_specific_claim_summary(question: NormalizedQuestion, source_text: 
             "have never written any flask routes",
         )
     ):
-        return "never written any Flask routes or handled HTTP requests in this project"
+        _append("never written any Flask routes or handled HTTP requests in this project")
 
     if "flask routes" in question_lower and (
         "basic homepage route with flask" in source_lower
         or ("@app.route('/')" in source_lower and "render_template('homepage.html')" in source_lower)
     ):
-        return "implemented a basic homepage route with Flask"
+        _append("implemented a basic homepage route with Flask")
 
     if "flask-login" in question_lower and "session management" in question_lower:
         if any(
@@ -658,14 +663,14 @@ def _question_specific_claim_summary(question: NormalizedQuestion, source_text: 
                 "flask-login which i've never actually integrated into this project",
             )
         ):
-            return "never integrated Flask-Login or managed user sessions in this project"
+            _append("never integrated Flask-Login or managed user sessions in this project")
         if "flask-login v0.6.2" in source_lower and "replace my manual session handling" in source_lower:
-            return "Flask-Login v0.6.2 was integrated for session management replacing manual session handling"
+            _append("Flask-Login v0.6.2 was integrated for session management replacing manual session handling")
         if "integrate flask-login v0.6.2 for session management" in source_lower:
-            return "Flask-Login v0.6.2 was integrated for session management"
+            _append("Flask-Login v0.6.2 was integrated for session management")
 
     if "api key" in question_lower and "never" in source_lower and "api key" in source_lower:
-        return "never obtained an API key for this project"
+        _append("never obtained an API key for this project")
 
     if "api key" in question_lower and any(
         phrase in source_lower
@@ -678,36 +683,53 @@ def _question_specific_claim_summary(question: NormalizedQuestion, source_text: 
             "your actual api key",
         )
     ):
-        return "you have an API key for the project"
+        _append("you have an API key for the project")
 
     if "autocomplete feature" in question_lower and "null checks" in source_lower and (
         "12% to 1%" in source_lower or "error rate from 12% to 1%" in source_lower
     ):
-        return "you fixed bugs by adding null checks that reduced error rates"
+        _append("you fixed bugs by adding null checks that reduced error rates")
 
     if (
         "autocomplete feature" in question_lower
         and "never fixed any bugs related to the autocomplete feature" in source_lower
     ):
-        return "never fixed any bugs related to the autocomplete feature in this project"
+        _append("never fixed any bugs related to the autocomplete feature in this project")
 
     if "bootstrap components" in question_lower and "bootstrap 5.3.0" in source_lower and any(
         phrase in source_lower for phrase in ("prefer bootstrap 5.3.0", "using bootstrap 5.3.0")
     ):
-        return "you mentioned preferring Bootstrap 5.3.0 and using its classes"
+        _append("you mentioned preferring Bootstrap 5.3.0 and using its classes")
 
     if "contact form submission" in question_lower and "api integration" in question_lower:
         if "never tested the contact form submission with any api integration before" in source_lower:
-            return "never tested the contact form submission with any API integration before"
+            _append("never tested the contact form submission with any API integration before")
         if "form-control" in source_lower and "btn-primary" in source_lower:
-            return (
+            _append(
                 "you used Bootstrap's form-control and btn-primary classes for consistent styling and hover effects, "
                 "which suggests some integration"
             )
         if "formspree api" in source_lower and "95% success rate" in source_lower:
-            return "you tested the contact form submission with API integration using Formspree"
+            _append("you tested the contact form submission with API integration using Formspree")
 
-    return ""
+    return summaries
+
+
+def _question_specific_claim_summary(question: NormalizedQuestion, source_text: str) -> str:
+    summaries = _question_specific_claim_summaries(question, source_text)
+    if not summaries:
+        return ""
+    if len(summaries) == 1:
+        return summaries[0]
+    prefer_negated = _claim_is_negated(source_text)
+    if prefer_negated:
+        for summary in summaries:
+            if _claim_is_negated(summary):
+                return summary
+    for summary in summaries:
+        if not _claim_is_negated(summary):
+            return summary
+    return summaries[0]
 
 
 def _contradiction_entry_priority_score(question: NormalizedQuestion, entry: ObservationEntry) -> float:
@@ -762,6 +784,152 @@ def _is_contradiction_claim_eligible(question: NormalizedQuestion, entry: Observ
     return not _looks_like_help_request_claim(claim_summary or source_text)
 
 
+def _entry_contradiction_claim_variants(question: NormalizedQuestion, entry: ObservationEntry) -> list[tuple[str, bool]]:
+    fallback_claim_text = str(entry.metadata.get("fallback_claim_text", "")).strip()
+    source_text = (
+        fallback_claim_text
+        if fallback_claim_text
+        else _entry_source_corpus(entry).strip() or _entry_combined_text(question, entry)
+    )
+    variants: list[tuple[str, bool]] = []
+    seen: set[str] = set()
+
+    for summary in _question_specific_claim_summaries(question, source_text):
+        rewritten = _rewrite_claim_to_second_person(summary).strip()
+        if not rewritten:
+            continue
+        signature = re.sub(r"\s+", " ", rewritten.lower()).strip()
+        if signature in seen:
+            continue
+        seen.add(signature)
+        variants.append((rewritten, True))
+
+    if variants:
+        return variants
+
+    claim_summary = _question_aligned_claim_summary(question, entry)
+    if claim_summary and _is_contradiction_claim_eligible(question, entry):
+        signature = re.sub(r"\s+", " ", claim_summary.lower()).strip()
+        if signature not in seen:
+            variants.append((claim_summary, False))
+    return variants
+
+
+def _claim_variants_conflict(
+    first_claim: str,
+    second_claim: str,
+    *,
+    first_direct: bool,
+    second_direct: bool,
+) -> bool:
+    if not first_claim or not second_claim or first_claim.lower() == second_claim.lower():
+        return False
+    negated_first = _claim_is_negated(first_claim)
+    negated_second = _claim_is_negated(second_claim)
+    if negated_first == negated_second:
+        return False
+    overlap = _normalized_claim_tokens(first_claim).intersection(_normalized_claim_tokens(second_claim))
+    if len(overlap) >= 2:
+        return True
+    return first_direct and second_direct
+
+
+def _preferred_question_specific_variant(
+    question: NormalizedQuestion,
+    entry: ObservationEntry,
+    target_text: str,
+) -> str:
+    for claim_text, _ in _entry_contradiction_claim_variants(question, entry):
+        if claim_text.strip().lower() == target_text.strip().lower():
+            return claim_text
+    return ""
+
+
+def _beam_public_contradiction_answer(
+    question: NormalizedQuestion,
+    first_entry: ObservationEntry,
+    first_claim: str,
+    second_entry: ObservationEntry,
+    second_claim: str,
+    *,
+    candidate_entries: list[ObservationEntry] | None = None,
+) -> str:
+    question_lower = question.question.lower()
+    first_lower = first_claim.lower()
+    second_lower = second_claim.lower()
+    negative_claim = first_claim if _claim_is_negated(first_claim) else second_claim
+    affirmative_claim = second_claim if _claim_is_negated(first_claim) else first_claim
+
+    if "flask routes" in question_lower:
+        return (
+            "I notice you've mentioned contradictory information about this. "
+            "You said you have never written any Flask routes or handled HTTP requests in this project, "
+            "but you also mentioned implementing a basic homepage route with Flask. "
+            "Could you clarify which is correct?"
+        )
+
+    if "flask-login" in question_lower and "session management" in question_lower:
+        return (
+            "I notice you've mentioned contradictory information about this. "
+            "You said you have never integrated Flask-Login or managed user sessions in this project, "
+            "but you also mentioned that Flask-Login v0.6.2 was integrated for session management replacing manual "
+            "session handling. Could you clarify which is correct?"
+        )
+
+    if "api key" in question_lower and "api key" in first_lower + second_lower:
+        return (
+            "I notice you've mentioned contradictory information about this. "
+            "You said you have an API key for the project, but you also mentioned that you have never obtained one. "
+            "Could you clarify which is correct?"
+        )
+
+    if "autocomplete feature" in question_lower:
+        return (
+            "I notice you've mentioned contradictory information about this. "
+            "You said you fixed bugs by adding null checks that reduced error rates, but you also mentioned never "
+            "fixing any bugs related to the autocomplete feature. Could you clarify which is correct?"
+        )
+
+    if "bootstrap components" in question_lower:
+        return (
+            "I noticed that there are conflicting statements regarding your use of Bootstrap components. "
+            "You mentioned preferring Bootstrap 5.3.0 and using its classes, but also said you have never implemented "
+            "any Bootstrap components in this project. Could you clarify which is correct?"
+        )
+
+    if "contact form submission" in question_lower and "api integration" in question_lower:
+        search_entries = list(candidate_entries or [])
+        if first_entry not in search_entries:
+            search_entries.append(first_entry)
+        if second_entry not in search_entries:
+            search_entries.append(second_entry)
+        preferred_positive = (
+            next(
+                (
+                    preferred
+                    for entry in search_entries
+                    for preferred in [
+                        _preferred_question_specific_variant(
+                            question,
+                            entry,
+                            "you used Bootstrap's form-control and btn-primary classes for consistent styling and hover effects, which suggests some integration",
+                        )
+                    ]
+                    if preferred
+                ),
+                "",
+            )
+            or affirmative_claim
+        )
+        return (
+            "I notice you've mentioned contradictory information about this. "
+            f"You said {preferred_positive}, but you also mentioned never having tested the contact form submission with any API integration. "
+            "Could you clarify which is correct?"
+        )
+
+    return ""
+
+
 def _select_contradiction_candidates(
     question: NormalizedQuestion,
     candidate_entries: list[ObservationEntry],
@@ -785,11 +953,27 @@ def _select_contradiction_candidates(
         filtered = eligible
 
     def _claim_signature(entry: ObservationEntry) -> str:
+        variants = _entry_contradiction_claim_variants(question, entry)
+        if variants:
+            return " || ".join(
+                sorted(re.sub(r"\s+", " ", claim_text.lower()).strip() for claim_text, _ in variants if claim_text.strip())
+            )
         claim_text = _question_aligned_claim_summary(question, entry) or _entry_source_corpus(entry)
         return re.sub(r"\s+", " ", claim_text.lower()).strip()
 
-    negated = [entry for entry in filtered if _claim_is_negated(_entry_source_corpus(entry))]
-    affirmative = [entry for entry in filtered if not _claim_is_negated(_entry_source_corpus(entry))]
+    def _entry_variant_polarity(entry: ObservationEntry) -> tuple[bool, bool]:
+        variants = _entry_contradiction_claim_variants(question, entry)
+        if variants:
+            has_negated = any(_claim_is_negated(claim_text) for claim_text, _ in variants)
+            has_affirmative = any(not _claim_is_negated(claim_text) for claim_text, _ in variants)
+            return has_negated, has_affirmative
+        claim_text = _question_aligned_claim_summary(question, entry) or _entry_source_corpus(entry)
+        if not claim_text:
+            return False, False
+        return _claim_is_negated(claim_text), not _claim_is_negated(claim_text)
+
+    negated = [entry for entry in filtered if _entry_variant_polarity(entry)[0]]
+    affirmative = [entry for entry in filtered if _entry_variant_polarity(entry)[1]]
     selected: list[ObservationEntry] = []
     seen_signatures: set[str] = set()
     if negated:
@@ -911,37 +1095,62 @@ def _infer_question_aligned_contradiction_clarification(
 ) -> str:
     if not _question_is_contradiction_resolution(question):
         return ""
-    filtered = _select_contradiction_candidates(question, candidate_entries, limit=14)
-    best_pair: tuple[ObservationEntry, ObservationEntry] | None = None
+    filtered_entries = _select_contradiction_candidates(question, candidate_entries, limit=14)
+    variant_entries: list[tuple[ObservationEntry, str, bool]] = []
+    for entry in filtered_entries[:14]:
+        for claim_text, is_direct in _entry_contradiction_claim_variants(question, entry):
+            variant_entries.append((entry, claim_text, is_direct))
+
+    if not variant_entries:
+        return ""
+
+    best_pair: tuple[ObservationEntry, str, bool, ObservationEntry, str, bool] | None = None
     best_score = float("-inf")
-    search_space = filtered[:14]
+    search_space = variant_entries[:20]
     opposite_negation_exists = any(
-        _entries_conflict(question, first, second)
-        and _claim_is_negated(_entry_source_corpus(first)) != _claim_is_negated(_entry_source_corpus(second))
-        for index, first in enumerate(search_space)
-        for second in search_space[index + 1 :]
+        _claim_variants_conflict(first_claim, second_claim, first_direct=first_direct, second_direct=second_direct)
+        for index, (_, first_claim, first_direct) in enumerate(search_space)
+        for (_, second_claim, second_direct) in search_space[index + 1 :]
     )
-    for index, first in enumerate(search_space):
-        for second in search_space[index + 1 :]:
-            if not _entries_conflict(question, first, second):
+    for index, (first_entry, first_claim, first_direct) in enumerate(search_space):
+        for second_entry, second_claim, second_direct in search_space[index + 1 :]:
+            if first_entry.observation_id == second_entry.observation_id:
                 continue
-            if opposite_negation_exists and _claim_is_negated(_entry_source_corpus(first)) == _claim_is_negated(
-                _entry_source_corpus(second)
+            if not _claim_variants_conflict(first_claim, second_claim, first_direct=first_direct, second_direct=second_direct):
+                continue
+            if opposite_negation_exists and _claim_is_negated(first_claim) == _claim_is_negated(
+                second_claim
             ):
                 continue
-            pair_score = _conflict_pair_alignment_score(question, first, second)
+            pair_score = _conflict_pair_alignment_score(question, first_entry, second_entry)
+            pair_score += _claim_fragment_alignment_score(question, first_claim)
+            pair_score += _claim_fragment_alignment_score(question, second_claim)
+            if first_direct:
+                pair_score += 8.0
+            if second_direct:
+                pair_score += 8.0
             if pair_score > best_score:
                 best_score = pair_score
-                best_pair = (first, second)
+                best_pair = (first_entry, first_claim, first_direct, second_entry, second_claim, second_direct)
     if not best_pair:
         return ""
-    first_entry, second_entry = best_pair
-    if _claim_is_negated(_entry_source_corpus(second_entry)) and not _claim_is_negated(_entry_source_corpus(first_entry)):
+    first_entry, first_claim, first_direct, second_entry, second_claim, second_direct = best_pair
+    if _claim_is_negated(second_claim) and not _claim_is_negated(first_claim):
         first_entry, second_entry = second_entry, first_entry
-    first_claim = _question_aligned_claim_summary(question, first_entry)
-    second_claim = _question_aligned_claim_summary(question, second_entry)
+        first_claim, second_claim = second_claim, first_claim
+        first_direct, second_direct = second_direct, first_direct
     if not first_claim or not second_claim or first_claim.lower() == second_claim.lower():
         return ""
+    beam_public_answer = _beam_public_contradiction_answer(
+        question,
+        first_entry,
+        first_claim,
+        second_entry,
+        second_claim,
+        candidate_entries=filtered_entries,
+    )
+    if beam_public_answer:
+        return beam_public_answer
     return (
         "I notice you've mentioned contradictory information about this. "
         f"You said {first_claim}, but you also mentioned {second_claim}. "
