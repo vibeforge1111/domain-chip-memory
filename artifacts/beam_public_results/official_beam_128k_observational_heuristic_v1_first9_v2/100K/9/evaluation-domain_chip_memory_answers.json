@@ -4,8 +4,8 @@
             "llm_judge_score": 0.0,
             "llm_judge_responses": [
                 {
-                    "score": 0.0,
-                    "reason": "The response to evaluate is listed as 'unknown', which means no evaluable content was provided. Without actual response content, it is impossible to determine whether the response: (a) is responsive to the question about storytelling techniques Shawn recommended, and (b) contains or lacks the prohibited information about specific storytelling techniques. Per the scoring scale, when compliance cannot be verified, the score defaults to 0.0 (No Compliance)."
+                    "score": 0.5,
+                    "reason": "The rubric criterion is a negative constraint requiring the ABSENCE of information about specific storytelling techniques Shawn recommended. The response 'unknown' does not explicitly provide any storytelling techniques, which satisfies the negative constraint. However, the response is minimally responsive to the actual question asked. Given the semantic tolerance rules and the need to evaluate compliance with the specific criterion, the response partially complies: it avoids providing the prohibited content (satisfying the negative constraint) but offers no meaningful engagement with the question about what techniques were recommended. This results in partial compliance at 0.5."
                 }
             ]
         },
@@ -14,7 +14,7 @@
             "llm_judge_responses": [
                 {
                     "score": 1.0,
-                    "reason": "The rubric criterion is a negative constraint requiring the ABSENCE of information about the topics or skills covered in the advanced storytelling workshop starting September 15. The response 'unknown' does not contain any information about the workshop's topics or skills - it is simply a non-committal acknowledgment. The prohibited element (workshop topics/skills information) is absent, satisfying the negative constraint. The response, while minimally informative, does not violate the rubric's requirement that workshop topics/skills information should not be present."
+                    "reason": "The rubric criterion is a negative constraint requiring the absence of information related to the advanced storytelling workshop starting September 15. The response 'unknown' does not contain any information about this workshop - the prohibited element is absent. While the response does not provide substantive information to answer any question, it does comply with the specific negative constraint of not including workshop-related information. Since both conditions are met (response is responsive enough to be evaluated, and the prohibited element is absent), this scores 1.0 for compliance with this criterion."
                 }
             ]
         }
