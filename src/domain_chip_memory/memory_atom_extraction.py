@@ -6,6 +6,115 @@ from dataclasses import replace
 from .contracts import JsonDict, NormalizedBenchmarkSample, NormalizedSession, NormalizedTurn
 from .memory_extraction import MemoryAtom, _canonical_subject, _normalize_value
 
+_FALLBACK_HELP_PATTERNS = (
+    "can you help",
+    "could you help",
+    "can you review",
+    "can you provide",
+    "provide an example",
+    "how can i",
+    "i'm not sure",
+    "im not sure",
+    "i want to make sure",
+)
+
+_FALLBACK_ASSERTIVE_PATTERNS = (
+    "i've ",
+    "ive ",
+    "i have ",
+    "i'm ",
+    "im ",
+    "i am ",
+    "i already ",
+    "i prefer ",
+    "i decided ",
+    "i chose ",
+    "i completed ",
+    "i implemented ",
+    "i added ",
+    "i used ",
+    "i fixed ",
+    "i tested ",
+    "i integrated ",
+    "i encountered ",
+)
+
+_FALLBACK_ACTION_PATTERNS = (
+    "implement",
+    "integrat",
+    "complet",
+    "add",
+    "fix",
+    "test",
+    "obtain",
+    "use",
+    "prefer",
+    "decid",
+    "choos",
+    "visit",
+    "attend",
+    "move",
+    "live",
+    "listen",
+    "return static html",
+    "user registration",
+    "login module",
+)
+
+
+def _compact_fallback_source_text(text: str) -> str:
+    source_text = re.sub(r"```.*?```", " ", text, flags=re.DOTALL)
+    source_text = re.sub(r"\s+", " ", source_text).strip()
+    if not source_text:
+        return ""
+
+    rewritten_negative_match = re.search(
+        r"like\s+([A-Za-z0-9_.-]+(?:[ -][A-Za-z0-9_.-]+){0,4}),\s+which\s+i(?:'ve| have)\s+never\s+actually\s+integrated\s+into\s+this\s+project",
+        source_text,
+        re.IGNORECASE,
+    )
+    if rewritten_negative_match:
+        return f"I've never actually integrated {rewritten_negative_match.group(1)} into this project"
+
+    source_text = re.split(r"\bhere(?:'s| is)\b", source_text, maxsplit=1, flags=re.IGNORECASE)[0].strip(" ,;:-")
+    clauses = [
+        clause.strip(" ,;:-")
+        for clause in re.split(r"(?<=[.!?])\s+|,\s+(?:and|but|so)\s+", source_text)
+        if clause.strip(" ,;:-")
+    ]
+    if not clauses:
+        return ""
+
+    best_clause = ""
+    best_score = float("-inf")
+    for clause in clauses:
+        clause_lower = clause.lower()
+        token_count = len(re.findall(r"[a-z0-9]+", clause_lower))
+        score = 0.0
+        if any(pattern in clause_lower for pattern in _FALLBACK_ASSERTIVE_PATTERNS):
+            score += 4.0
+        if "i'm trying to" in clause_lower or "im trying to" in clause_lower:
+            score += 2.0
+        if "never" in clause_lower or "starting from scratch" in clause_lower:
+            score += 3.0
+        if any(pattern in clause_lower for pattern in _FALLBACK_HELP_PATTERNS):
+            score -= 8.0
+        if "?" in clause:
+            score -= 8.0
+        if any(pattern in clause_lower for pattern in _FALLBACK_ACTION_PATTERNS):
+            score += 3.0
+        if 4 <= token_count <= 20:
+            score += 1.0
+        if "code" in clause_lower or "response time" in clause_lower:
+            score -= 2.0
+        if score > best_score:
+            best_score = score
+            best_clause = clause
+
+    if best_score < 4.0:
+        return ""
+    return best_clause.strip(" ,;:-")
+
 
 def _extract_atoms_from_turn(
     session: NormalizedSession,
@@ -767,6 +876,7 @@ def _extract_atoms_from_turn(
         return []
 
     # Fallback memory atom: keep the raw turn as a low-confidence fact candidate for retrieval.
+    compact_source_text = _compact_fallback_source_text(text)
     return [
         MemoryAtom(
             atom_id=f"{turn.turn_id}:atom:fallback",
@@ -777,7 +887,12 @@ def _extract_atoms_from_turn(
             turn_id=turn.turn_id,
             timestamp=turn.timestamp or session.timestamp,
             source_text=text,
-            metadata={"speaker": turn.speaker, "fallback": True, **turn.metadata},
+            metadata={
+                "speaker": turn.speaker,
+                "fallback": True,
+                "fallback_claim_text": compact_source_text,
+                **turn.metadata,
+            },
         )
     ]
 

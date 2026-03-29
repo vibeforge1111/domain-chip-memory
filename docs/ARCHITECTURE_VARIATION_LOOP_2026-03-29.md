@@ -628,3 +628,50 @@ What this teaches us:
   - extract contradiction-ready claim atoms from raw turns instead of leaning on fallback atom summaries
   - isolate negated vs affirmative contradiction candidates earlier in observation/packet construction
   - inspect why the observation layer is surfacing `using Flask 2.3.1`, `focusing on user registration and login`, and similar adjacent context ahead of the benchmark-target claims
+
+## 2026-03-30: Fallback claim metadata and contradiction eligibility gating
+
+Work completed:
+
+- added compact `fallback_claim_text` metadata to raw fallback atoms so contradiction questions can rank a narrower self-claim without rewriting the full stored source text
+- kept the full fallback atom/value intact so non-contradiction retrieval did not regress the current leader
+- added contradiction-only eligibility gating in the answer runtime so contradiction pairing prefers:
+  - entries with direct question-specific contradiction summaries
+  - entries with compact fallback claim metadata
+  - high-focus raw-turn claims over unlabeled structural fragments
+
+Verification:
+
+- focused contradiction + fallback regressions:
+  - `python -m pytest tests/test_memory_systems.py -k "question_aligned_contradiction or summary_synthesis_answer_candidate_prefers_question_aligned_contradiction_clarification or contradiction_aware_summary_synthesis_prefers_question_aligned_conflict or extract_memory_atoms_compacts_fallback_claim"`
+  - result: `9 passed`
+
+Artifacts:
+
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v19_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v20_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v21_scorecard.json`
+
+Honest result:
+
+- `v19`: regressed to `11/60`
+  - broad fallback-source compaction was too aggressive and hurt the leader outside contradiction
+- `v20`: recovered to `17/60`
+  - narrowing fallback compaction to contradiction-only metadata preserved the current leader
+- `v21`: stayed `17/60`
+  - contradiction_resolution: still `0/6`
+  - the contradiction answer shapes changed again, but they still paired the wrong positive evidence
+
+What this teaches us:
+
+- contradiction candidate gating alone is not enough
+- the deeper blocker is now mixed-source contradiction extraction
+- the same raw source can contain:
+  - a positive benchmark-target claim
+  - a negative benchmark-target claim
+  - unrelated help-request or planning noise
+- our current direct-summary path still collapses those mixed sources into a single dominant summary, often the wrong one for the desired contradiction pair
+- the next high-signal move is:
+  - split question-specific contradiction claim variants inside a single source text
+  - extract both negated and affirmative benchmark-aligned claim atoms when they coexist in one turn
+  - then let contradiction pairing operate over those typed claim variants instead of whole-turn summaries

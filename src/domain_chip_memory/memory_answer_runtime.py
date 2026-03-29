@@ -598,7 +598,12 @@ def _looks_like_help_request_claim(text: str) -> bool:
 
 
 def _question_aligned_claim_summary(question: NormalizedQuestion, entry: ObservationEntry) -> str:
-    source_text = str(entry.metadata.get("source_text", "")).strip() or entry.text.strip()
+    fallback_claim_text = str(entry.metadata.get("fallback_claim_text", "")).strip()
+    source_text = (
+        fallback_claim_text
+        if _question_is_contradiction_resolution(question) and fallback_claim_text
+        else str(entry.metadata.get("source_text", "")).strip() or entry.text.strip()
+    )
     direct_summary = _question_specific_claim_summary(question, source_text)
     if direct_summary:
         summary = _rewrite_claim_to_second_person(direct_summary)
@@ -706,7 +711,12 @@ def _question_specific_claim_summary(question: NormalizedQuestion, source_text: 
 
 
 def _contradiction_entry_priority_score(question: NormalizedQuestion, entry: ObservationEntry) -> float:
-    source_text = _entry_source_corpus(entry).strip() or _entry_combined_text(question, entry)
+    fallback_claim_text = str(entry.metadata.get("fallback_claim_text", "")).strip()
+    source_text = (
+        fallback_claim_text
+        if fallback_claim_text
+        else _entry_source_corpus(entry).strip() or _entry_combined_text(question, entry)
+    )
     direct_summary = _question_specific_claim_summary(question, source_text)
     claim_summary = _question_aligned_claim_summary(question, entry)
     score = (
@@ -720,9 +730,36 @@ def _contradiction_entry_priority_score(question: NormalizedQuestion, entry: Obs
         score += 3.0
     if source_text and not source_text.strip().endswith("?"):
         score += 1.5
+    if entry.metadata.get("fallback") and not fallback_claim_text:
+        score -= 10.0
     if not direct_summary and _looks_like_help_request_claim(claim_summary or source_text):
         score -= 14.0
     return score
+
+
+def _is_contradiction_claim_eligible(question: NormalizedQuestion, entry: ObservationEntry) -> bool:
+    fallback_claim_text = str(entry.metadata.get("fallback_claim_text", "")).strip()
+    source_text = (
+        fallback_claim_text
+        if fallback_claim_text
+        else _entry_source_corpus(entry).strip() or _entry_combined_text(question, entry)
+    )
+    if not source_text:
+        return False
+    direct_summary = _question_specific_claim_summary(question, source_text)
+    if direct_summary:
+        return True
+    if fallback_claim_text:
+        return True
+    claim_summary = _question_aligned_claim_summary(question, entry)
+    focus_overlap = len(_question_focus_tokens(question).intersection(set(_tokenize(claim_summary.lower() or source_text.lower()))))
+    if focus_overlap < 2:
+        return False
+    if entry.metadata.get("fallback"):
+        return False
+    if entry.predicate != "raw_turn":
+        return False
+    return not _looks_like_help_request_claim(claim_summary or source_text)
 
 
 def _select_contradiction_candidates(
@@ -743,6 +780,9 @@ def _select_contradiction_candidates(
     filtered = [entry for entry in ranked if _evidence_score(question, entry) > 0 or _observation_score(question, entry) > 0]
     if not filtered:
         return []
+    eligible = [entry for entry in filtered if _is_contradiction_claim_eligible(question, entry)]
+    if len(eligible) >= 2:
+        filtered = eligible
 
     def _claim_signature(entry: ObservationEntry) -> str:
         claim_text = _question_aligned_claim_summary(question, entry) or _entry_source_corpus(entry)
@@ -775,8 +815,8 @@ def _select_contradiction_candidates(
 def _entries_conflict(question: NormalizedQuestion, a: ObservationEntry, b: ObservationEntry) -> bool:
     if a.observation_id == b.observation_id:
         return False
-    raw_source_a = _entry_source_corpus(a).strip()
-    raw_source_b = _entry_source_corpus(b).strip()
+    raw_source_a = str(a.metadata.get("fallback_claim_text", "")).strip() or _entry_source_corpus(a).strip()
+    raw_source_b = str(b.metadata.get("fallback_claim_text", "")).strip() or _entry_source_corpus(b).strip()
     direct_summary_a = _question_specific_claim_summary(question, raw_source_a)
     direct_summary_b = _question_specific_claim_summary(question, raw_source_b)
     source_a = _question_aligned_claim_summary(question, a) or raw_source_a

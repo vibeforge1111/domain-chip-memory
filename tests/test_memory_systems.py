@@ -480,6 +480,62 @@ def test_question_aligned_contradiction_clarification_prefers_flask_login_integr
     assert "never integrated Flask-Login or managed user sessions" in answer
 
 
+def test_question_aligned_contradiction_clarification_ignores_structural_auth_title_fragment():
+    question = NormalizedQuestion(
+        question_id="beam-contradiction-login-structural",
+        question="Have I integrated Flask-Login for session management in my project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="neg-structural",
+            session_id="s1",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never integrated Flask-Login or managed user sessions in this project.",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T00:00:00Z",
+            metadata={"source_text": "I've never integrated Flask-Login or managed user sessions in this project."},
+        ),
+        ObservationEntry(
+            observation_id="title-noise",
+            session_id="s1",
+            subject="user",
+            predicate="summary_synthesis",
+            text="**User Authentication** - Registration - Login - Logout 2",
+            turn_ids=["t2"],
+            timestamp="2024-03-02T00:00:00Z",
+            metadata={"source_text": "**User Authentication** - Registration - Login - Logout 2"},
+        ),
+        ObservationEntry(
+            observation_id="pos-structural",
+            session_id="s1",
+            subject="user",
+            predicate="raw_turn",
+            text=(
+                "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app "
+                "to replace my manual session handling."
+            ),
+            turn_ids=["t3"],
+            timestamp="2024-03-03T00:00:00Z",
+            metadata={
+                "source_text": (
+                    "I'm trying to integrate Flask-Login v0.6.2 for session management in my Flask app "
+                    "to replace my manual session handling."
+                )
+            },
+        ),
+    ]
+
+    answer = _infer_question_aligned_contradiction_clarification(question, entries)
+
+    assert "Flask-Login v0.6.2 was integrated for session management replacing manual session handling" in answer
+    assert "User Authentication" not in answer
+
+
 def test_question_aligned_contradiction_clarification_prefers_api_key_claim():
     question = NormalizedQuestion(
         question_id="beam-contradiction-key",
@@ -7727,6 +7783,107 @@ def test_extract_memory_atoms_captures_benchmark_specific_patterns():
     assert ("music_service", "Spotify") in pairs
     assert ("trip_duration", "two weeks") in pairs
     assert all(atom.metadata.get("speaker") != "assistant" or atom.predicate != "raw_turn" for atom in atoms)
+
+
+def test_extract_memory_atoms_compacts_fallback_claim_for_homepage_route():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-fallback-homepage",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [
+                        {
+                            "turn_id": "s1:t1",
+                            "speaker": "user",
+                            "text": (
+                                "I'm trying to implement the basic homepage route with Flask, and I've managed to return static HTML, "
+                                "but I'm not sure how to optimize it for better response times. Here's my current code: ```python app = Flask(__name__)```"
+                            ),
+                        }
+                    ],
+                }
+            ],
+            "questions": [],
+        }
+    )
+
+    atoms = extract_memory_atoms(sample)
+    fallback_atoms = [atom for atom in atoms if atom.atom_id.endswith(":atom:fallback")]
+
+    assert len(fallback_atoms) == 1
+    assert fallback_atoms[0].metadata.get("fallback_claim_text") == "I'm trying to implement the basic homepage route with Flask"
+    assert "response times" in fallback_atoms[0].source_text
+
+
+def test_extract_memory_atoms_compacts_negative_fallback_claim_for_flask_login():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-fallback-negative-login",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [
+                        {
+                            "turn_id": "s1:t1",
+                            "speaker": "user",
+                            "text": (
+                                "I'm trying to optimize the dashboard API response time, but I want to make sure I'm using the latest versions "
+                                "of my dependencies, like Flask-Login, which I've never actually integrated into this project, so I'm starting "
+                                "from scratch - can you help me implement user session management with Flask-Login 0.6.2?"
+                            ),
+                        }
+                    ],
+                }
+            ],
+            "questions": [],
+        }
+    )
+
+    atoms = extract_memory_atoms(sample)
+    fallback_atoms = [atom for atom in atoms if atom.atom_id.endswith(":atom:fallback")]
+
+    assert len(fallback_atoms) == 1
+    assert fallback_atoms[0].metadata.get("fallback_claim_text") == "I've never actually integrated Flask-Login into this project"
+
+
+def test_extract_memory_atoms_skips_pure_help_request_fallback_without_self_claim():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-fallback-help-noise",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [
+                        {
+                            "turn_id": "s1:t1",
+                            "speaker": "user",
+                            "text": (
+                                "I'm trying to handle OperationalError when making DB calls, can you help me add try-except blocks around these "
+                                "calls to catch the error and return an HTTP 500 response with error logs?"
+                            ),
+                        }
+                    ],
+                }
+            ],
+            "questions": [],
+        }
+    )
+
+    atoms = extract_memory_atoms(sample)
+    fallback_atoms = [atom for atom in atoms if atom.atom_id.endswith(":atom:fallback")]
+
+    assert len(fallback_atoms) == 1
+    assert not fallback_atoms[0].metadata.get("fallback_claim_text")
 
 
 def test_observational_memory_keeps_destination_specific_trip_duration():
