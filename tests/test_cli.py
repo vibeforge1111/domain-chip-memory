@@ -1043,6 +1043,74 @@ def test_run_beam_public_cli_can_write_scorecard_for_stateful_event_reconstructi
     assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
 
 
+def test_run_beam_public_cli_can_write_scorecard_for_typed_state_update_memory(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "beam_public"
+    conversation_dir = data_dir / "100K" / "1"
+    probing_dir = conversation_dir / "probing_questions"
+    output_file = tmp_path / "artifacts" / "beam_public_typed_state_scorecard.json"
+    probing_dir.mkdir(parents=True)
+    (conversation_dir / "chat.json").write_text(
+        json.dumps(
+            [
+                {
+                    "batch_number": 1,
+                    "time_anchor": "March-15-2024",
+                    "turns": [
+                        [
+                            {"role": "user", "id": 1, "content": "I moved from Sharjah to Dubai and now work from JLT."},
+                            {"role": "assistant", "id": 2, "content": "Noted."},
+                        ]
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (probing_dir / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [
+                    {
+                        "question": "Where do I work now?",
+                        "answer": "JLT",
+                        "source_chat_ids": [1],
+                        "rubric": ["JLT"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-public-baseline",
+            str(data_dir),
+            "--chat-size",
+            "128K",
+            "--baseline",
+            "typed_state_update_memory",
+            "--provider",
+            "heuristic_v1",
+            "--upstream-commit",
+            "abc123",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["overall"]["total"] == 1
+    assert payload["run_manifest"]["baseline_name"] == "typed_state_update_memory"
+    assert payload["run_manifest"]["metadata"]["source_modes"] == ["official_public"]
+    assert payload["run_manifest"]["metadata"]["dataset_scales"] == ["128K"]
+    assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
+
+
 def test_run_beam_public_cli_handles_null_batch_anchor_with_official_date_format(tmp_path: Path, monkeypatch):
     data_dir = tmp_path / "beam_public"
     conversation_dir = data_dir / "100K" / "1"

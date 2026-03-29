@@ -24,6 +24,7 @@ from .memory_contract_summary import build_memory_system_contract_summary
 from .memory_dual_store_builder import build_dual_store_event_calendar_hybrid_packets as _build_dual_store_event_calendar_hybrid_packets_impl
 from .memory_observational_builder import build_observational_temporal_memory_packets as _build_observational_temporal_memory_packets_impl
 from .memory_stateful_event_builder import build_stateful_event_reconstruction_packets as _build_stateful_event_reconstruction_packets_impl
+from .memory_typed_state_builder import build_typed_state_update_memory_packets as _build_typed_state_update_memory_packets_impl
 from .memory_evidence import entry_source_corpus as _entry_source_corpus
 from .memory_evidence import observation_evidence_text as _observation_evidence_text
 from .memory_observation_runtime import (
@@ -47,6 +48,7 @@ from .memory_state_runtime import (
     _is_relative_state_question,
     _should_use_current_state_exact_value,
 )
+from .memory_updates import build_current_state_view as _build_current_state_view
 from .memory_updates import has_active_current_state_deletion
 from .memory_views import is_current_state_question, select_current_state_entries
 from .runs import BaselinePromptPacket, build_run_manifest
@@ -215,10 +217,63 @@ def build_stateful_event_reconstruction_packets(
     )
 
 
+def build_typed_state_update_memory_packets(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    max_observations: int = 8,
+    max_reflections: int = 4,
+    top_k_events: int = 4,
+    max_topic_support: int = 2,
+    run_id: str = "typed-state-update-memory-v1",
+) -> tuple[dict[str, object], list[BaselinePromptPacket]]:
+    return _build_typed_state_update_memory_packets_impl(
+        samples,
+        max_observations=max_observations,
+        max_reflections=max_reflections,
+        top_k_events=top_k_events,
+        max_topic_support=max_topic_support,
+        run_id=run_id,
+        build_observation_log=build_observation_log,
+        reflect_observations=reflect_observations,
+        build_event_calendar=build_event_calendar,
+        raw_user_turn_entries=_raw_user_turn_entries,
+        build_current_state_view=_build_current_state_view,
+        has_active_current_state_deletion=has_active_current_state_deletion,
+        is_current_state_question=is_current_state_question,
+        question_subjects=_question_subjects,
+        question_predicates=_question_predicates,
+        question_aware_observation_limits=_question_aware_observation_limits,
+        is_preference_question=_is_preference_question,
+        select_preference_support_entries=_select_preference_support_entries,
+        observation_score=_observation_score,
+        event_score=_event_score,
+        select_current_state_entries=select_current_state_entries,
+        topical_episode_support=_topical_episode_support,
+        dedupe_observations=_dedupe_observations,
+        select_evidence_entries=_select_evidence_entries,
+        question_needs_raw_aggregate_context=_question_needs_raw_aggregate_context,
+        select_aggregate_support_entries=_select_aggregate_support_entries,
+        observation_evidence_text=_observation_evidence_text,
+        evidence_score=_evidence_score,
+        entry_source_corpus=_entry_source_corpus,
+        choose_answer_candidate=_choose_stateful_answer_candidate,
+        is_dated_state_question=_is_dated_state_question,
+        is_relative_state_question=_is_relative_state_question,
+        has_ambiguous_relative_state_anchor=_has_ambiguous_relative_state_anchor,
+        has_referential_ambiguity=_has_referential_ambiguity,
+        should_use_current_state_exact_value=_should_use_current_state_exact_value,
+        answer_candidate_surface_text=_answer_candidate_surface_text,
+        build_answer_candidate=build_answer_candidate,
+        build_run_manifest=build_run_manifest,
+        strategy_memory_role=strategy_memory_role,
+    )
+
+
 __all__ = [
     "build_beam_ready_temporal_atom_router_packets",
     "build_dual_store_event_calendar_hybrid_packets",
     "build_memory_system_contract_summary",
     "build_observational_temporal_memory_packets",
     "build_stateful_event_reconstruction_packets",
+    "build_typed_state_update_memory_packets",
 ]

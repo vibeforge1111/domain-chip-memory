@@ -91,6 +91,25 @@ Expected gain:
 - better knowledge updates
 - fewer huge benchmark answers copied from raw turns
 
+Result after implementation:
+
+- baseline added as `typed_state_update_memory`
+- local `BEAM` public `128K` first-3 slice scored `0/60`
+- this is worse than both:
+  - `observational_temporal_memory`: `1/60`
+  - `stateful_event_reconstruction`: `1/60`
+
+What failed:
+
+- compact typed updates became over-dominant and repeated generic high-level preference or summary fragments
+- contradiction handling did not improve
+- temporal or multi-session reconstruction did not improve
+
+Decision:
+
+- keep the variant in the repo as a failed but informative experiment
+- do not spend MiniMax judge cycles on it until retrieval and routing are narrowed enough to stop generic typed updates from dominating unrelated questions
+
 ### 2. `contradiction_aware_profile_memory`
 
 Goal: track superseded vs current claims explicitly and answer contradictions with clarification instead of replay.

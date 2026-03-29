@@ -8,6 +8,7 @@ from .packet_builders import (
     build_memory_system_contract_summary,
     build_observational_temporal_memory_packets,
     build_stateful_event_reconstruction_packets,
+    build_typed_state_update_memory_packets,
 )
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "build_observation_log",
     "build_observational_temporal_memory_packets",
     "build_stateful_event_reconstruction_packets",
+    "build_typed_state_update_memory_packets",
     "extract_memory_atoms",
     "reflect_observations",
 ]

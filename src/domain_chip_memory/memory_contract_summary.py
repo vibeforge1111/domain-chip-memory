@@ -26,6 +26,11 @@ def build_memory_system_contract_summary() -> dict[str, Any]:
                 "entrypoint": "build_stateful_event_reconstruction_packets",
                 "behavior": "Rehydrate scored event-calendar entries back into evidence, rebuild current state from events plus observations, and route temporal or summary questions through reconstruction-first answer selection.",
             },
+            {
+                "system_name": "typed_state_update_memory",
+                "entrypoint": "build_typed_state_update_memory_packets",
+                "behavior": "Compact state updates into canonical surfaces, compute current state over merged updates, and answer from typed state memory before raw passage replay.",
+            },
         ],
         "memory_contracts": [
             "AnswerCandidate",

@@ -6414,6 +6414,7 @@ def test_memory_system_contract_summary_exists():
     assert "observational_temporal_memory" in names
     assert "dual_store_event_calendar_hybrid" in names
     assert "stateful_event_reconstruction" in names
+    assert "typed_state_update_memory" in names
 
 
 def test_extract_memory_atoms_captures_benchmark_specific_patterns():
