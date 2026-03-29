@@ -236,5 +236,33 @@
                 }
             ]
         }
+    ],
+    "preference_following": [
+        {
+            "llm_judge_score": 0.0,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires a positive mention of 'the library as a good place to work,' but this element is completely absent from the response. The response discusses conference papers, journal submissions, and making essays more persuasive, but makes no reference to the library whatsoever. While the response may be partially responsive to some implied question about academic work or paper submissions, it fails to satisfy the specific rubric requirement that the library be mentioned as a good place to work."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion requires the response to acknowledge the user's favored location. However, the response contains no mention of any location whatsoever. The response only discusses the approach to a conference paper, working with Greg, and Robert's suggestion about submitting an essay to a journal. There is no acknowledgment of a location preference, nor any suggestion about places (home or otherwise). Since the required element (acknowledging favored location) is completely absent from the response, this fails to meet the rubric criterion."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.5,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion requires the response to recommend Microsoft Word. The response discusses prioritizing Robert's recommendation about using stronger warrants for claims on gender bias in an essay - there is no mention of Microsoft Word or any recommendation related to it. The required element (recommending Microsoft Word) is completely absent from the response, resulting in no compliance with the positive requirement."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires that the response avoids suggesting Google Docs as a primary option. The response provided is about deciding between prioritizing Robert's recommendation on warrants for gender bias claims versus focusing on other essay aspects. Google Docs is not mentioned anywhere in the response. The response is on-topic and responsive to the user's question, and the prohibited element (Google Docs suggestion) is completely absent, satisfying the negative constraint."
+                }
+            ]
+        }
     ]
 }
