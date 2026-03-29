@@ -984,6 +984,36 @@ def test_expand_answer_does_not_overwrite_matching_unknown_candidate():
     assert rescued == "unknown"
 
 
+def test_expand_answer_preserves_compact_latency_answer():
+    rescued = providers._expand_answer_from_context(
+        "What is the average response time of the dashboard API?",
+        "250ms",
+        "answer_candidate: I'm trying to optimize the dashboard API response time, which has recently improved to 250ms after adding some caching tweaks.",
+    )
+
+    assert rescued == "250ms"
+
+
+def test_expand_answer_preserves_compact_percentage_answer():
+    rescued = providers._expand_answer_from_context(
+        "What is the test coverage percentage for my API integration module?",
+        "78%",
+        "answer_candidate: The unit test coverage has recently increased to 78%, reflecting ongoing improvements in API integration reliability.",
+    )
+
+    assert rescued == "78%"
+
+
+def test_expand_answer_preserves_compact_quota_answer():
+    rescued = providers._expand_answer_from_context(
+        "What is the daily call quota for the API key used in my application?",
+        "1,200 calls per day",
+        "answer_candidate: I'm trying to update my API key settings to reflect the new daily quota of 1,200 calls per day, but I want to make sure I'm handling it correctly.",
+    )
+
+    assert rescued == "1,200 calls per day"
+
+
 def test_minimax_provider_includes_context_image_urls(monkeypatch):
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
     captured: dict[str, object] = {}

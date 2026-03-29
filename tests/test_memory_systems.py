@@ -6813,6 +6813,239 @@ def test_summary_synthesis_answer_candidate_prefers_updated_project_card_count()
     assert answer == "There are 10 project cards included in the gallery."
 
 
+def test_summary_synthesis_answer_candidate_prefers_updated_generic_gallery_card_count():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="How many project cards are included in my gallery using Bootstrap 5.3.0?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I added a project gallery with 8 project cards using Bootstrap 5.3.0 card components.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "I added a project gallery with 8 project cards using Bootstrap 5.3.0 card components."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="I've added two new projects, so now I have a total of 10 cards, and I want to make sure they're all displayed correctly.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-20T10:00:00Z",
+            metadata={
+                "source_text": "I've added two new projects, so now I have a total of 10 cards, and I want to make sure they're all displayed correctly."
+            },
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "There are 10 project cards included in the gallery."
+
+
+def test_summary_synthesis_answer_candidate_prefers_updated_gallery_count_over_noisy_modal_code():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="How many project cards are included in my gallery using Bootstrap 5.3.0?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2", "s3"],
+        evidence_turn_ids=["t1", "t2", "t3"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="summary_synthesis",
+            text="I'm trying to implement the project gallery with 8 cards using Bootstrap 5.3.0 card-deck and modal popups for project details.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={
+                "source_text": "I'm trying to implement the project gallery with 8 cards using Bootstrap 5.3.0 card-deck and modal popups for project details."
+            },
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text=(
+                "Here's my code: ```html <div class=\"card-deck\"> ... </div> ``` "
+                "Can you help me figure out why the modals aren't displaying correctly?"
+            ),
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-02T10:00:00Z",
+            metadata={
+                "source_text": (
+                    "Here's my code: ```html <div class=\"card-deck\"> ... </div> ``` "
+                    "Can you help me figure out why the modals aren't displaying correctly?"
+                )
+            },
+        ),
+        ObservationEntry(
+            observation_id="o3",
+            subject="user",
+            predicate="raw_turn",
+            text="I've added two new projects, so now I have a total of 10 cards, and I want to make sure they're all displayed correctly.",
+            session_id="s3",
+            turn_ids=["t3"],
+            timestamp="2024-03-20T10:00:00Z",
+            metadata={
+                "source_text": "I've added two new projects, so now I have a total of 10 cards, and I want to make sure they're all displayed correctly."
+            },
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "There are 10 project cards included in the gallery."
+
+
+def test_summary_synthesis_answer_candidate_prefers_updated_first_sprint_deadline():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="What is the deadline for completing the first sprint focused on the basic layout and navigation?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I'm trying to plan out my project timeline and I have a deadline of April 1, 2024, for the first sprint, which covers the basic layout and navigation of my single-page portfolio website.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={
+                "source_text": "I'm trying to plan out my project timeline and I have a deadline of April 1, 2024, for the first sprint, which covers the basic layout and navigation of my single-page portfolio website."
+            },
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="I'm trying to update my project timeline to reflect the new sprint deadline of April 5, 2024, but I'm having trouble figuring out how to adjust my Trello board to accommodate the extra time for accessibility improvements.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-10T10:00:00Z",
+            metadata={
+                "source_text": "I'm trying to update my project timeline to reflect the new sprint deadline of April 5, 2024, but I'm having trouble figuring out how to adjust my Trello board to accommodate the extra time for accessibility improvements."
+            },
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "April 5 2024"
+
+
+def test_summary_synthesis_answer_candidate_computes_interval_for_updated_accessibility_deadline():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="How many days are there between the deadline for my first sprint and the updated deadline for the accessibility improvements?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I've estimated that it will take 3 sprints of 2 weeks each to complete the website, with the first sprint deadline being April 1, 2024.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={
+                "source_text": "I've estimated that it will take 3 sprints of 2 weeks each to complete the website, with the first sprint deadline being April 1, 2024."
+            },
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="I'm trying to update my project timeline to reflect the new sprint deadline of April 5, 2024, but I'm having trouble figuring out how to adjust my Trello board to accommodate the extra time for accessibility improvements.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-10T10:00:00Z",
+            metadata={
+                "source_text": "I'm trying to update my project timeline to reflect the new sprint deadline of April 5, 2024, but I'm having trouble figuring out how to adjust my Trello board to accommodate the extra time for accessibility improvements."
+            },
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "4 days"
+
+
+def test_summary_synthesis_answer_candidate_prefers_planned_peer_review_date_for_interval():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="How many days passed between when I planned the peer review and when I completed the final code review for my project?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2", "s3"],
+        evidence_turn_ids=["t1", "t2", "t3"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I'm planning a peer review for April 2, 2024, and I want to focus on semantic HTML and accessibility compliance, specifically WCAG 2.1 AA.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-20T10:00:00Z",
+            metadata={
+                "source_text": "I'm planning a peer review for April 2, 2024, and I want to focus on semantic HTML and accessibility compliance, specifically WCAG 2.1 AA."
+            },
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="I'm getting ready for the scheduled peer review on April 15, 2024, and I want to make sure my code is perfect, especially the parts focusing on accessibility and API integration.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-04-10T10:00:00Z",
+            metadata={
+                "source_text": "I'm getting ready for the scheduled peer review on April 15, 2024, and I want to make sure my code is perfect, especially the parts focusing on accessibility and API integration."
+            },
+        ),
+        ObservationEntry(
+            observation_id="o3",
+            subject="user",
+            predicate="raw_turn",
+            text="I'm working on finalizing my portfolio site and I've just completed the final code review for my project, which was approved with minor comments on CSS naming conventions on May 3, 2024.",
+            session_id="s3",
+            turn_ids=["t3"],
+            timestamp="2024-05-03T10:00:00Z",
+            metadata={
+                "source_text": "I'm working on finalizing my portfolio site and I've just completed the final code review for my project, which was approved with minor comments on CSS naming conventions on May 3, 2024."
+            },
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "31 days"
+
+
 def test_summary_synthesis_answer_candidate_prefers_question_aligned_contradiction_clarification():
     question = NormalizedQuestion(
         question_id="q1",

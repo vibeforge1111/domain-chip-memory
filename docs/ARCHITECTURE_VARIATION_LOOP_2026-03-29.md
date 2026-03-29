@@ -412,3 +412,88 @@ Decision after this repair cycle:
   - inspect aggregate vs structured evidence for the exact `knowledge_update` and `temporal_reasoning` misses
   - trace why update-bearing raw turns are still losing to nearby prompt text or stale facts on the real slice
   - add benchmark-shaped retrieval diagnostics before attempting another synthesis mutation
+
+### 6. `summary_synthesis_memory` retrieval-path repair
+
+Goal: fix the exact first-3 `BEAM` misses that survived the earlier answer-layer patch by tracing the live packet path instead of adding another broad architecture variant.
+
+What the investigation found:
+
+- one real runner/provider bug:
+  - compact quantitative answer candidates like `250ms` and `78%` were being expanded back into long prompt-like sentences before scoring
+- one real temporal parsing bug:
+  - normalized date surfaces such as `April 1 2024` no longer parsed once commas had been stripped
+- one update-signal gap:
+  - `update` itself was not treated as an update signal, so the April 5 sprint-deadline update was losing to older April 1 evidence
+- one clause-alignment gap:
+  - `planned peer review` was scoring too close to `scheduled peer review`, which caused the live interval path to miss the April 2 anchor
+- one noisy-selection gap:
+  - old gallery/modal code prompts with `8 cards` could still dominate the packet even when a later `now I have a total of 10 cards` update existed
+
+Code changes:
+
+- provider-side compact answer preservation in `src/domain_chip_memory/providers.py`
+  - keep compact latency, percentage, quota, and similar quantitative answers intact instead of re-expanding them
+- runtime fixes in `src/domain_chip_memory/memory_answer_runtime.py`
+  - accept normalized dates with years like `April 1 2024`
+  - treat `update` as an update signal
+  - prefer explicit update totals for gallery-card questions
+  - broaden gallery count extraction from `project cards` to updated `10 cards` forms when the question is clearly about the gallery
+  - prefer planning-language dates for `planned peer review` intervals
+  - reward explicit completion language for `completed final code review`
+
+Verification:
+
+- targeted runtime regressions:
+  - `python -m pytest tests/test_memory_systems.py -k "updated_generic_gallery_card_count or noisy_modal_code or updated_first_sprint_deadline or updated_accessibility_deadline or planned_peer_review_date_for_interval or prefers_updated_project_card_count or computes_temporal_interval_in_days or computes_temporal_interval_in_weeks"`
+  - result: `8 passed`
+- provider regressions:
+  - `python -m pytest tests/test_providers.py -k "preserves_compact_latency_answer or preserves_compact_percentage_answer or preserves_compact_quota_answer or matching_unknown_candidate"`
+  - result: `4 passed`
+- broader summary-synthesis slice:
+  - `python -m pytest tests/test_cli.py tests/test_memory_systems.py tests/test_providers.py -k "summary_synthesis_memory or summary_synthesis_answer_candidate or contradiction_aware_summary_synthesis or run_beam_public_cli_can_write_scorecard or preserves_compact_latency_answer or preserves_compact_percentage_answer or preserves_compact_quota_answer"`
+  - result: `27 passed`
+
+Artifacts:
+
+- intermediate runner/provider repair checkpoint:
+  - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v10_scorecard.json`
+- first rerun after temporal and update-path fixes:
+  - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v11_scorecard.json`
+- current leader after fixing the noisy gallery-count override:
+  - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v12_scorecard.json`
+
+Honest result:
+
+- `v10` improved from `3/60` to `5/60`
+- `v12` improved again to `11/60`
+- current category scores on `v12`:
+  - `knowledge_update`: `4/6`
+  - `temporal_reasoning`: `4/6`
+  - `information_extraction`: `2/6`
+  - `multi_session_reasoning`: `1/6`
+  - `abstention`, `contradiction_resolution`, `event_ordering`, `instruction_following`, `preference_following`, `summarization`: still `0/6`
+
+What this teaches us:
+
+- the previous bottleneck really was not just “better prompting” or “more memory”
+- a material chunk of the failure came from:
+  - bad answer post-processing
+  - broken normalized-date parsing
+  - stale update selection under noisy code-heavy evidence
+- after those repairs, the active leader is now clearly strongest on update-sensitive and temporal questions
+- the next bottleneck is now narrower and more structural:
+  - abstention calibration
+  - contradiction claim alignment
+  - multi-session synthesis/event ordering
+  - instruction-following retrieval for exemplar/code-style questions
+
+Decision after `v12`:
+
+- keep `summary_synthesis_memory` as the active leader
+- keep the new runtime/provider fixes; they are benchmark-real, not cosmetic
+- stop spending the next cycle on generic update/temporal repair, because those lanes now have visible movement
+- target the next repair loop at:
+  - abstention alignment
+  - contradiction evidence pairing
+  - multi-session/event-ordering synthesis

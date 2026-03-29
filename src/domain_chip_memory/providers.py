@@ -600,6 +600,16 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     )
     currency_pattern = re.compile(r"^\$\d+(?:,\d{3})*(?:\.\d+)?$")
     percentage_pattern = re.compile(r"^\d+(?:\.\d+)?%$")
+    latency_pattern = re.compile(r"^(?:around\s+)?\d+(?:\.\d+)?ms(?:\s+due\s+to\s+.+)?$", re.IGNORECASE)
+    quota_pattern = re.compile(r"^\d{1,3}(?:,\d{3})?\s+(?:calls|requests)\s+per\s+day$", re.IGNORECASE)
+    commit_count_pattern = re.compile(
+        r"^\d{1,3}(?:,\d{3})?\s+commits?(?:\s+have\s+been\s+merged\s+into\s+the\s+main\s+branch\.?)?$",
+        re.IGNORECASE,
+    )
+    project_card_pattern = re.compile(
+        r"^(?:there\s+are\s+)?\d+\s+project\s+cards?(?:\s+included\s+in\s+the\s+gallery\.?)?$",
+        re.IGNORECASE,
+    )
     time_pattern = re.compile(r"^\d{1,2}(?::\d{2})?\s*(?:am|pm)$", re.IGNORECASE)
     relative_temporal_markers = (
         "yesterday",
@@ -665,6 +675,15 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     time_answer_candidate = _first_answer_candidate_matching(
         lambda candidate: bool(time_pattern.fullmatch(candidate))
     )
+    compact_quantitative_answer = bool(
+        percentage_pattern.fullmatch(cleaned)
+        or latency_pattern.fullmatch(cleaned)
+        or quota_pattern.fullmatch(cleaned)
+        or commit_count_pattern.fullmatch(cleaned)
+        or project_card_pattern.fullmatch(cleaned)
+    )
+    if compact_quantitative_answer:
+        return cleaned
     if (
         answer_candidate.lower() == "unknown"
         and cleaned_lower

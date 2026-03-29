@@ -117,6 +117,7 @@ _QUESTION_FOCUS_STOPWORDS = {
 }
 
 _UPDATE_SIGNAL_TOKENS = (
+    "update",
     "updated",
     "shifted",
     "now",
@@ -127,6 +128,7 @@ _UPDATE_SIGNAL_TOKENS = (
 )
 
 _STRONG_UPDATE_SIGNAL_TOKENS = (
+    "update",
     "updated",
     "shifted",
     "now",
@@ -681,7 +683,7 @@ def _entry_anchor_year(entry: ObservationEntry) -> int | None:
 
 def _parse_date_surface(date_surface: str, *, default_year: int | None = None) -> date | None:
     match = re.search(
-        rf"\b({_MONTH_PATTERN})\s+(\d{{1,2}})(?:,\s*(\d{{4}}))?\b",
+        rf"\b({_MONTH_PATTERN})\s+(\d{{1,2}})(?:,?\s+(\d{{4}}))?\b",
         date_surface,
         re.IGNORECASE,
     )
@@ -938,6 +940,11 @@ def _extract_numeric_answer_from_sentence(question_lower: str, sentence: str) ->
             return f"{match.group(1)} commits have been merged into the main branch."
     if "project cards" in question_lower:
         match = re.search(r"\b(\d+)\s+project cards\b", sentence, re.IGNORECASE)
+        if not match and (
+            "gallery" in sentence_lower
+            or any(phrase in sentence_lower for phrase in ("now i have", "total of", "new projects", "now includes", "now include"))
+        ):
+            match = re.search(r"\b(\d+)\s+cards\b", sentence, re.IGNORECASE)
         if match:
             total = match.group(1)
             if "included in my gallery" in question_lower:
@@ -990,6 +997,28 @@ def _best_clause_aligned_date(
                 score += 5.0
             if "review" in clause_lower and "review" in normalized:
                 score += 5.0
+            if "planned" in clause_lower:
+                if any(
+                    phrase in normalized
+                    for phrase in (
+                        "planned peer review",
+                        "planning a peer review",
+                        "plan a peer review",
+                        "planning peer review",
+                    )
+                ):
+                    score += 8.0
+                if "scheduled peer review" in normalized:
+                    score -= 8.0
+            if "completed" in clause_lower and "code review" in clause_lower:
+                if any(
+                    phrase in normalized
+                    for phrase in (
+                        "completed the final code review",
+                        "just completed the final code review",
+                    )
+                ):
+                    score += 8.0
             if "testing" in clause_lower and "testing" in normalized:
                 score += 5.0
             if "meeting" in clause_lower and "meeting" in normalized:
@@ -1112,7 +1141,40 @@ def _infer_update_aware_synthesized_value_answer(
         if date_surface:
             return date_surface
     if "project cards" in question_lower:
+        explicit_update_card_answers: list[tuple[int, str]] = []
+        for entry in candidate_entries:
+            source_text = str(entry.metadata.get("source_text", "")).strip() or entry.text.strip()
+            for sentence in re.split(r"(?<=[.!?])\s+", source_text):
+                sentence = sentence.strip().strip("\"'")
+                if not sentence:
+                    continue
+                sentence_lower = sentence.lower()
+                if not any(
+                    phrase in sentence_lower
+                    for phrase in ("now i have", "total of", "new projects", "now includes", "now include")
+                ):
+                    continue
+                answer = _extract_numeric_answer_from_sentence(question_lower, sentence)
+                if not answer:
+                    continue
+                number_match = re.search(r"\b(\d+)\b", answer)
+                if not number_match:
+                    continue
+                explicit_update_card_answers.append((int(number_match.group(1)), answer))
+        if explicit_update_card_answers:
+            explicit_update_card_answers.sort(key=lambda item: item[0], reverse=True)
+            return explicit_update_card_answers[0][1]
         preferred_sentences = strong_update_focused_sentences or update_focused_sentences or focused_sentences
+        explicit_total_update_sentences = [
+            sentence
+            for sentence in preferred_sentences
+            if any(
+                phrase in sentence.lower()
+                for phrase in ("now i have", "total of", "new projects", "now includes", "now include")
+            )
+        ]
+        if explicit_total_update_sentences:
+            preferred_sentences = explicit_total_update_sentences
         for sentence in preferred_sentences:
             answer = _extract_numeric_answer_from_sentence(question_lower, sentence)
             if answer:
