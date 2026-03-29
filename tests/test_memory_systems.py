@@ -6586,6 +6586,56 @@ def test_summary_synthesis_answer_candidate_prefers_updated_project_card_count()
     assert answer == "There are 10 project cards included in the gallery."
 
 
+def test_summary_synthesis_answer_candidate_prefers_question_aligned_contradiction_clarification():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="Have I integrated Flask-Login for session management in my project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never actually integrated Flask-Login or managed user sessions in this project.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "I've never actually integrated Flask-Login or managed user sessions in this project."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text=(
+                "I'm trying to optimize the dashboard API response time and can you help me review the code? "
+                "Flask-Login v0.6.2 was integrated for session management replacing manual session handling, "
+                "and I'd like to keep the existing SQLite schema intact."
+            ),
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-02T10:00:00Z",
+            metadata={
+                "source_text": (
+                    "I'm trying to optimize the dashboard API response time and can you help me review the code? "
+                    "Flask-Login v0.6.2 was integrated for session management replacing manual session handling, "
+                    "and I'd like to keep the existing SQLite schema intact."
+                )
+            },
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert "contradictory information" in answer.lower()
+    assert "you have never actually integrated flask-login" in answer.lower()
+    assert "flask-login v0.6.2 was integrated for session management replacing manual session handling" in answer.lower()
+    assert "dashboard api response time" not in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_question_aligned_conflict():
     question = NormalizedQuestion(
         question_id="q1",
@@ -6632,6 +6682,56 @@ def test_contradiction_aware_summary_synthesis_prefers_question_aligned_conflict
 
     assert "homepage route with flask" in answer.lower()
     assert "confluence" not in answer.lower()
+
+
+def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="Have I fixed any bugs related to the autocomplete feature in my project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=["s1", "s2", "s3"],
+        evidence_turn_ids=["t1", "t2", "t3"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I've never fixed any bugs related to the autocomplete feature in this project.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "I've never fixed any bugs related to the autocomplete feature in this project."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="Can you review my autocomplete code and suggest improvements for edge cases and styling?",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2024-03-02T10:00:00Z",
+            metadata={"source_text": "Can you review my autocomplete code and suggest improvements for edge cases and styling?"},
+        ),
+        ObservationEntry(
+            observation_id="o3",
+            subject="user",
+            predicate="raw_turn",
+            text="I fixed autocomplete bugs by adding null checks that reduced error rates in the dropdown renderer.",
+            session_id="s3",
+            turn_ids=["t3"],
+            timestamp="2024-03-03T10:00:00Z",
+            metadata={
+                "source_text": "I fixed autocomplete bugs by adding null checks that reduced error rates in the dropdown renderer."
+            },
+        ),
+    ]
+
+    answer = _choose_contradiction_aware_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert "null checks" in answer.lower()
+    assert "suggest improvements" not in answer.lower()
 
 
 def test_contradiction_aware_summary_synthesis_prefers_relevant_updated_date():

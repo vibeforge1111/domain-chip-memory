@@ -1111,6 +1111,92 @@ def test_run_beam_public_cli_can_write_scorecard_for_summary_synthesis_memory(tm
     assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
 
 
+def test_run_beam_public_cli_summary_synthesis_prefers_contradiction_claims(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "beam_public"
+    conversation_dir = data_dir / "100K" / "1"
+    probing_dir = conversation_dir / "probing_questions"
+    output_file = tmp_path / "artifacts" / "beam_public_summary_contradiction_scorecard.json"
+    probing_dir.mkdir(parents=True)
+    (conversation_dir / "chat.json").write_text(
+        json.dumps(
+            [
+                {
+                    "batch_number": 1,
+                    "time_anchor": "March-15-2024",
+                    "turns": [
+                        [
+                            {
+                                "role": "user",
+                                "id": 1,
+                                "content": "I've never written any Flask routes or handled HTTP requests in this project.",
+                            },
+                            {"role": "assistant", "id": 2, "content": "Noted."},
+                        ],
+                        [
+                            {
+                                "role": "user",
+                                "id": 3,
+                                "content": "Can you help me review Flask routing tutorials and session management examples?",
+                            },
+                            {"role": "assistant", "id": 4, "content": "Sure."},
+                        ],
+                        [
+                            {
+                                "role": "user",
+                                "id": 5,
+                                "content": "I'm trying to implement the basic homepage route with Flask, and I've managed to return static HTML already.",
+                            },
+                            {"role": "assistant", "id": 6, "content": "Nice progress."},
+                        ],
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (probing_dir / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "contradiction_resolution": [
+                    {
+                        "question": "Have I worked with Flask routes and handled HTTP requests in this project?",
+                        "answer": "Please clarify",
+                        "source_chat_ids": [1, 3, 5],
+                        "rubric": ["implementing a basic homepage route with Flask"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-public-baseline",
+            str(data_dir),
+            "--chat-size",
+            "128K",
+            "--baseline",
+            "summary_synthesis_memory",
+            "--provider",
+            "heuristic_v1",
+            "--upstream-commit",
+            "abc123",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    answer = payload["predictions"][0]["predicted_answer"].lower()
+    assert "homepage route with flask" in answer
+    assert "tutorials" not in answer
+
+
 def test_run_beam_public_cli_can_write_scorecard_for_contradiction_aware_summary_synthesis_memory(tmp_path: Path, monkeypatch):
     data_dir = tmp_path / "beam_public"
     conversation_dir = data_dir / "100K" / "1"

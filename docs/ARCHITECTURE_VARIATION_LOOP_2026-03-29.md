@@ -222,6 +222,47 @@ Decision after the follow-up patch:
   - contradiction-only routing with rubric-shaped clarifier text
   - temporal reasoning that computes from two extracted dates instead of replaying one numeric token
 
+Second follow-up patch on `2026-03-30`:
+
+- kept `summary_synthesis_memory` as the active leader branch
+- added contradiction-specific answer routing inside `summary_synthesis_memory`
+- added question-aligned contradiction claim extraction and second-person claim rewriting in the runtime layer
+- added contradiction-specific retrieval shaping in `summary_synthesis_memory` packets so contradiction questions explicitly pull top negated and affirmative raw claims into the packet
+- added targeted regressions covering:
+  - summary-synthesis contradiction clarification on long mixed prompts
+  - contradiction-aware preference for assertive bug-fix claims over help-request text
+  - summary-synthesis packet preference for homepage-route evidence over tutorial noise
+
+Second follow-up result:
+
+- targeted tests passed:
+  - `python -m pytest tests/test_cli.py tests/test_memory_systems.py -k "summary_synthesis_memory or contradiction or contract_summary_exists or run_beam_public_cli_can_write_scorecard"`
+  - result: `13 passed`
+- reran the same local `BEAM` public `128K` first-3 slice:
+  - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v4_scorecard.json`
+  - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v5_scorecard.json`
+- honest outcome: still `3/60`
+
+What changed without moving the score:
+
+- contradiction answers changed shape and now more reliably emit clarification-style outputs from the `summary_synthesis_memory` path instead of generic synthesis passages
+- retrieved aggregate items for contradiction questions increased because contradiction-specific raw claims are now being injected into the packet
+- despite that, the real benchmark still selects nearby development-context claims instead of the exact contradictory self-claims the rubric expects
+- examples from `v5`:
+  - `1:contradiction_resolution:3` paired `you are using Flask 2.3.1` against the negated route claim instead of the stronger `basic homepage route with Flask` evidence
+  - `1:contradiction_resolution:4` still paired two help-seeking session-management claims rather than the true integrated-vs-never-integrated contradiction
+  - `2:contradiction_resolution:4` still surfaced autocomplete implementation/error-handling instead of the stronger null-check bug-fix evidence
+
+Decision after the second follow-up patch:
+
+- keep the retrieval-shaping patch because it improves the internal path and regression coverage
+- do not count it as a benchmark win; the score stayed flat
+- the next real move should happen earlier than answer phrasing:
+  - extract contradiction-ready claim atoms from raw turns instead of relying on fallback raw-turn summaries
+  - type claims as `negated`, `implemented`, `integrated`, `fixed`, `obtained`, `updated`
+  - let contradiction retrieval ask for one negated typed claim and one affirmative typed claim before synthesis
+  - separately attack `knowledge_update` and `temporal_reasoning`, because those two categories are still limiting the leader almost as much as contradiction resolution
+
 ### 4. `contradiction_aware_summary_synthesis_memory`
 
 Goal: merge the contradiction-aware pairing path with synthesis-first answer construction so the system can both clarify conflicts and keep direct update answers concise.

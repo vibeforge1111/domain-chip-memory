@@ -119,6 +119,51 @@ _STRONG_UPDATE_SIGNAL_TOKENS = (
     "improved",
 )
 
+_ASSERTIVE_CLAIM_PATTERNS = (
+    "implemented",
+    "integrated",
+    "fixed",
+    "used",
+    "using",
+    "added",
+    "built",
+    "configured",
+    "set up",
+    "tested",
+    "created",
+    "launched",
+    "deployed",
+    "replaced",
+    "replace",
+    "enabled",
+    "reduced",
+    "obtained",
+    "includes",
+    "include",
+)
+
+_HELP_SEEKING_CLAIM_PATTERNS = (
+    "can you help",
+    "can you review",
+    "can you provide",
+    "please provide",
+    "walk me through",
+    "starting from scratch",
+    "i'm not sure",
+    "im not sure",
+    "i want to make sure",
+    "i'd appreciate",
+    "id appreciate",
+    "help me",
+    "suggest improvements",
+    "review my code",
+    "provide an example",
+    "explain the code",
+    "test scenarios",
+    "tutorial",
+    "tutorials",
+)
+
 
 def _observation_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
     return _observation_score_impl(question, observation)
@@ -335,6 +380,139 @@ def _claim_summary(entry: ObservationEntry) -> str:
     return summary
 
 
+def _claim_fragments(text: str) -> list[str]:
+    source_text = re.sub(r"```.*?```", " ", text, flags=re.DOTALL)
+    source_text = re.sub(r"`[^`]+`", " ", source_text)
+    source_text = re.sub(r"\s+", " ", source_text).strip()
+    if not source_text:
+        return []
+    fragments = [
+        fragment.strip().strip("\"'()[]{}")
+        for fragment in re.split(r"(?<=[.!?])\s+|[,;:]\s+|\s+-\s+", source_text)
+    ]
+    filtered: list[str] = []
+    for fragment in fragments:
+        fragment = re.sub(r"^(?:and|but|so|also)\s+", "", fragment, flags=re.IGNORECASE).strip()
+        if len(_tokenize(fragment)) < 4:
+            continue
+        filtered.append(fragment)
+    return filtered or [source_text]
+
+
+def _rewrite_claim_to_second_person(text: str) -> str:
+    rewritten = text.strip()
+    replacements = (
+        (r"\bI've\b", "you have"),
+        (r"\bIve\b", "you have"),
+        (r"\bI have\b", "you have"),
+        (r"\bI'm\b", "you are"),
+        (r"\bIm\b", "you are"),
+        (r"\bI am\b", "you are"),
+        (r"\bI'd\b", "you would"),
+        (r"\bId\b", "you would"),
+        (r"\bmy\b", "your"),
+        (r"\bme\b", "you"),
+        (r"\bI\b", "you"),
+    )
+    for pattern, replacement in replacements:
+        rewritten = re.sub(pattern, replacement, rewritten, flags=re.IGNORECASE)
+    return rewritten.strip().strip(" ,;:.!?")
+
+
+def _claim_fragment_alignment_score(
+    question: NormalizedQuestion,
+    fragment: str,
+    *,
+    prefer_negated: bool | None = None,
+) -> float:
+    normalized = f" {re.sub(r'\\s+', ' ', fragment.lower()).strip()} "
+    focus_tokens = _question_focus_tokens(question)
+    overlap = len(focus_tokens.intersection(set(_tokenize(normalized))))
+    score = 8.0 * float(overlap)
+    score += 4.0 * float(sum(1 for pattern in _ASSERTIVE_CLAIM_PATTERNS if pattern in normalized))
+    score -= 6.0 * float(sum(1 for pattern in _HELP_SEEKING_CLAIM_PATTERNS if pattern in normalized))
+    if "?" in fragment:
+        score -= 4.0
+    token_count = len(_tokenize(fragment))
+    if token_count > 24:
+        score -= min(token_count - 24, 36) * 0.35
+    if prefer_negated is not None:
+        if _claim_is_negated(fragment) == prefer_negated:
+            score += 6.0
+        else:
+            score -= 2.0
+    return score
+
+
+def _question_aligned_claim_summary(question: NormalizedQuestion, entry: ObservationEntry) -> str:
+    source_text = str(entry.metadata.get("source_text", "")).strip() or entry.text.strip()
+    fragments = _claim_fragments(source_text)
+    if not fragments:
+        return ""
+    prefer_negated = _claim_is_negated(source_text)
+    best_fragment = max(
+        fragments,
+        key=lambda fragment: (
+            _claim_fragment_alignment_score(question, fragment, prefer_negated=prefer_negated),
+            len(_question_focus_tokens(question).intersection(set(_tokenize(fragment.lower())))),
+            -(len(_tokenize(fragment))),
+        ),
+    )
+    summary = _rewrite_claim_to_second_person(best_fragment)
+    if len(summary) > 220:
+        summary = summary[:217].rstrip(" ,;:") + "..."
+    return summary
+
+
+def _contradiction_entry_priority_score(question: NormalizedQuestion, entry: ObservationEntry) -> float:
+    source_text = _entry_source_corpus(entry).strip() or _entry_combined_text(question, entry)
+    claim_summary = _question_aligned_claim_summary(question, entry)
+    score = (
+        _evidence_score(question, entry)
+        + _observation_score(question, entry)
+        + _claim_fragment_alignment_score(question, claim_summary or source_text)
+    )
+    if entry.predicate == "raw_turn":
+        score += 3.0
+    if source_text and not source_text.strip().endswith("?"):
+        score += 1.5
+    return score
+
+
+def _select_contradiction_candidates(
+    question: NormalizedQuestion,
+    candidate_entries: list[ObservationEntry],
+    *,
+    limit: int = 8,
+) -> list[ObservationEntry]:
+    ranked = sorted(
+        candidate_entries,
+        key=lambda entry: (
+            _contradiction_entry_priority_score(question, entry),
+            entry.timestamp or "",
+            entry.observation_id,
+        ),
+        reverse=True,
+    )
+    filtered = [entry for entry in ranked if _evidence_score(question, entry) > 0 or _observation_score(question, entry) > 0]
+    if not filtered:
+        return []
+    negated = [entry for entry in filtered if _claim_is_negated(_entry_source_corpus(entry))]
+    affirmative = [entry for entry in filtered if not _claim_is_negated(_entry_source_corpus(entry))]
+    selected: list[ObservationEntry] = []
+    if negated:
+        selected.append(negated[0])
+    if affirmative:
+        selected.append(affirmative[0])
+    for entry in filtered:
+        if entry in selected:
+            continue
+        selected.append(entry)
+        if len(selected) >= limit:
+            break
+    return selected[:limit]
+
+
 def _entries_conflict(a: ObservationEntry, b: ObservationEntry) -> bool:
     if a.observation_id == b.observation_id:
         return False
@@ -395,6 +573,8 @@ def _conflict_pair_alignment_score(
     focus_tokens = _question_focus_tokens(question)
     source_first = _entry_source_corpus(first).lower()
     source_second = _entry_source_corpus(second).lower()
+    first_claim = _question_aligned_claim_summary(question, first)
+    second_claim = _question_aligned_claim_summary(question, second)
     overlap_first = len(focus_tokens.intersection(set(_tokenize(source_first))))
     overlap_second = len(focus_tokens.intersection(set(_tokenize(source_second))))
     score = (
@@ -408,6 +588,10 @@ def _conflict_pair_alignment_score(
         score += 6.0
     if _claim_is_negated(source_first) != _claim_is_negated(source_second):
         score += 4.0
+    if first_claim:
+        score += _claim_fragment_alignment_score(question, first_claim)
+    if second_claim:
+        score += _claim_fragment_alignment_score(question, second_claim)
     return score
 
 
@@ -417,12 +601,7 @@ def _infer_question_aligned_contradiction_clarification(
 ) -> str:
     if not _question_is_contradiction_resolution(question):
         return ""
-    ranked = sorted(
-        candidate_entries,
-        key=lambda entry: (_evidence_score(question, entry), _observation_score(question, entry), entry.timestamp or "", entry.observation_id),
-        reverse=True,
-    )
-    filtered = [entry for entry in ranked if _evidence_score(question, entry) > 0 or _observation_score(question, entry) > 0]
+    filtered = _select_contradiction_candidates(question, candidate_entries, limit=14)
     best_pair: tuple[ObservationEntry, ObservationEntry] | None = None
     best_score = float("-inf")
     search_space = filtered[:14]
@@ -436,8 +615,8 @@ def _infer_question_aligned_contradiction_clarification(
                 best_pair = (first, second)
     if not best_pair:
         return ""
-    first_claim = _claim_summary(best_pair[0])
-    second_claim = _claim_summary(best_pair[1])
+    first_claim = _question_aligned_claim_summary(question, best_pair[0])
+    second_claim = _question_aligned_claim_summary(question, best_pair[1])
     if not first_claim or not second_claim or first_claim.lower() == second_claim.lower():
         return ""
     return (
@@ -929,6 +1108,9 @@ def _choose_summary_synthesis_answer_candidate(
     for entry in candidate_entries:
         if entry not in aggregate_candidate_entries:
             aggregate_candidate_entries.append(entry)
+    contradiction_answer = _infer_question_aligned_contradiction_clarification(question, aggregate_candidate_entries)
+    if contradiction_answer:
+        return contradiction_answer
     synthesized_value = _infer_update_aware_synthesized_value_answer(question, candidate_entries)
     if synthesized_value:
         return synthesized_value

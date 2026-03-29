@@ -6,8 +6,81 @@ from typing import Any
 
 from .contracts import AnswerCandidate, NormalizedBenchmarkSample, NormalizedQuestion
 from .memory_builder_sections import append_retrieved_entries, build_entry_metadata
-from .memory_extraction import ObservationEntry
+from .memory_extraction import ObservationEntry, _tokenize
 from .runs import BaselinePromptPacket, RetrievedContextItem
+
+_NEGATION_PATTERNS = (
+    " never ",
+    " not ",
+    " no ",
+    " without ",
+    " didn't ",
+    " dont ",
+    " don't ",
+    " havent ",
+    " haven't ",
+    " hasnt ",
+    " hasn't ",
+    " wasnt ",
+    " wasn't ",
+)
+
+_CONTRADICTION_FOCUS_STOPWORDS = {
+    "about",
+    "and",
+    "can",
+    "did",
+    "for",
+    "have",
+    "handled",
+    "how",
+    "i",
+    "in",
+    "is",
+    "it",
+    "me",
+    "my",
+    "of",
+    "project",
+    "the",
+    "this",
+    "to",
+    "with",
+    "worked",
+    "you",
+}
+
+_CONTRADICTION_ASSERTIVE_PATTERNS = (
+    "implemented",
+    "implement",
+    "integrated",
+    "integrate",
+    "fixed",
+    "added",
+    "used",
+    "using",
+    "obtained",
+    "replace",
+    "replacing",
+    "managed",
+    "tested",
+)
+
+_CONTRADICTION_HELP_PATTERNS = (
+    "can you help",
+    "can you review",
+    "can you provide",
+    "please provide",
+    "walk me through",
+    "starting from scratch",
+    "i'm not sure",
+    "im not sure",
+    "i want to make sure",
+    "review my code",
+    "provide an example",
+    "tutorial",
+    "tutorials",
+)
 
 
 def _compact_source_text(entry: ObservationEntry) -> str:
@@ -22,6 +95,87 @@ def _compact_source_text(entry: ObservationEntry) -> str:
     )
     source_text = re.sub(r"\b(?:can|could)\s+you\s+help\s+me\b.*$", "", source_text, flags=re.IGNORECASE).strip(" ,;:-")
     return source_text or entry.text.strip()
+
+
+def _is_contradiction_question(question: NormalizedQuestion) -> bool:
+    return question.category == "contradiction_resolution" or "contradiction" in question.question_id.lower()
+
+
+def _question_focus_tokens(question: NormalizedQuestion) -> set[str]:
+    return {
+        token
+        for token in _tokenize(question.question.lower())
+        if len(token) >= 3 and token not in _CONTRADICTION_FOCUS_STOPWORDS
+    }
+
+
+def _entry_claim_text(entry: ObservationEntry) -> str:
+    return str(entry.metadata.get("source_text", "")).strip() or entry.text.strip()
+
+
+def _claim_is_negated(text: str) -> bool:
+    normalized = f" {re.sub(r'\\s+', ' ', text.lower()).strip()} "
+    return any(pattern in normalized for pattern in _NEGATION_PATTERNS)
+
+
+def _contradiction_entry_score(question: NormalizedQuestion, entry: ObservationEntry) -> float:
+    claim_text = _entry_claim_text(entry)
+    normalized = f" {re.sub(r'\\s+', ' ', claim_text.lower()).strip()} "
+    focus_overlap = len(_question_focus_tokens(question).intersection(set(_tokenize(normalized))))
+    score = 8.0 * float(focus_overlap)
+    score += 4.0 * float(sum(1 for pattern in _CONTRADICTION_ASSERTIVE_PATTERNS if pattern in normalized))
+    score -= 5.0 * float(sum(1 for pattern in _CONTRADICTION_HELP_PATTERNS if pattern in normalized))
+    if entry.predicate == "raw_turn":
+        score += 3.0
+    if "?" in claim_text:
+        score -= 3.0
+    token_count = len(_tokenize(claim_text))
+    if token_count > 36:
+        score -= min(token_count - 36, 48) * 0.25
+    return score
+
+
+def _select_contradiction_support_entries(
+    question: NormalizedQuestion,
+    entries: list[ObservationEntry],
+    *,
+    dedupe_observations: Callable[[list[ObservationEntry]], list[ObservationEntry]],
+    limit: int = 4,
+) -> list[ObservationEntry]:
+    if not _is_contradiction_question(question):
+        return []
+    focus_tokens = _question_focus_tokens(question)
+    ranked = sorted(
+        dedupe_observations(entries),
+        key=lambda entry: (
+            _contradiction_entry_score(question, entry),
+            len(focus_tokens.intersection(set(_tokenize(_entry_claim_text(entry).lower())))),
+            entry.timestamp or "",
+            entry.observation_id,
+        ),
+        reverse=True,
+    )
+    candidates = [
+        entry
+        for entry in ranked
+        if focus_tokens.intersection(set(_tokenize(_entry_claim_text(entry).lower())))
+    ]
+    if not candidates:
+        return []
+    selected: list[ObservationEntry] = []
+    negated = [entry for entry in candidates if _claim_is_negated(_entry_claim_text(entry))]
+    affirmative = [entry for entry in candidates if not _claim_is_negated(_entry_claim_text(entry))]
+    if negated:
+        selected.append(negated[0])
+    if affirmative:
+        selected.append(affirmative[0])
+    for entry in candidates:
+        if entry in selected:
+            continue
+        selected.append(entry)
+        if len(selected) >= limit:
+            break
+    return dedupe_observations(selected[:limit])
 
 
 def _build_synthesis_entries(
@@ -158,16 +312,31 @@ def build_summary_synthesis_memory_packets(
                     observations,
                     max_support=max_topic_support,
                 )
+            contradiction_support = _select_contradiction_support_entries(
+                question,
+                [*raw_entries, *observations, *structured_observations],
+                dedupe_observations=dedupe_observations,
+                limit=max(4, max_topic_support + 2),
+            )
             synthesis_entries = _build_synthesis_entries(
                 question,
-                dedupe_observations([*structured_observations, *stable_window, *ranked_reflections]),
+                dedupe_observations([*contradiction_support, *structured_observations, *stable_window, *ranked_reflections]),
                 evidence_score=evidence_score,
                 observation_score=observation_score,
                 dedupe_observations=dedupe_observations,
                 limit=max(3, max_topic_support + 1),
             )
             evidence_pool = dedupe_observations(
-                [*synthesis_entries, *current_state_entries, *preference_support, *stable_window, *topical_support, *structured_observations, *observations]
+                [
+                    *contradiction_support,
+                    *synthesis_entries,
+                    *current_state_entries,
+                    *preference_support,
+                    *stable_window,
+                    *topical_support,
+                    *structured_observations,
+                    *observations,
+                ]
             )
             evidence_entries = select_evidence_entries(
                 question,
@@ -175,6 +344,7 @@ def build_summary_synthesis_memory_packets(
                 limit=max(5, max_topic_support + 3),
             )
             raw_candidate_pool = [
+                *contradiction_support,
                 *synthesis_entries,
                 *current_state_entries,
                 *preference_support,
@@ -196,6 +366,17 @@ def build_summary_synthesis_memory_packets(
 
             context_blocks = ["summary_synthesis_window:"]
             retrieved_items: list[RetrievedContextItem] = []
+            append_retrieved_entries(
+                context_blocks,
+                retrieved_items,
+                contradiction_support,
+                header="contradiction_memory:" if contradiction_support else None,
+                line_builder=lambda entry: f"claim: {_entry_claim_text(entry)}",
+                score_builder=lambda entry: _contradiction_entry_score(question, entry),
+                strategy="summary_synthesis_memory",
+                memory_role=strategy_memory_role("summary_synthesis_memory"),
+                metadata_builder=build_entry_metadata,
+            )
             append_retrieved_entries(
                 context_blocks,
                 retrieved_items,
