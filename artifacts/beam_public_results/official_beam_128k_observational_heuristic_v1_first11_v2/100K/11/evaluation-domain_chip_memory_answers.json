@@ -1,0 +1,22 @@
+{
+    "abstention": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is a negative constraint stating that the response should NOT contain information related to specific steps taken during a bias audit initiated on April 30. The response 'unknown' is a minimal, non-committal answer that does not provide any information about specific steps of a bias audit. The prohibited element (information about specific steps during the bias audit) is absent from the response. While 'unknown' is a sparse answer, it is technically responsive to the question and does not violate the constraint by including the prohibited information. Therefore, this response demonstrates compliance with the negative constraint."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.0,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion states that there is no information in the provided chat related to the specific feedback from two managers on April 28. The response 'unknown' does not address this question at all - it neither confirms nor denies the presence or absence of information about manager feedback. A response of 'unknown' is non-responsive and evasive, failing to engage with the substance of the question about what information exists in the chat. According to the evaluation instructions, if the response does not address the question, the score should be 0.0."
+                }
+            ]
+        }
+    ]
+}
