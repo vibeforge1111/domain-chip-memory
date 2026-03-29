@@ -597,7 +597,7 @@ def main() -> None:
 
     run_longmemeval = subparsers.add_parser("run-longmemeval-baseline", help="Run a baseline over a LongMemEval JSON file.")
     run_longmemeval.add_argument("data_file")
-    run_longmemeval.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
+    run_longmemeval.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "contradiction_aware_profile_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
     run_longmemeval.add_argument("--provider", default="heuristic_v1")
     run_longmemeval.add_argument("--limit", type=int)
     run_longmemeval.add_argument("--top-k-sessions", type=int, default=2)
@@ -607,7 +607,7 @@ def main() -> None:
 
     run_locomo = subparsers.add_parser("run-locomo-baseline", help="Run a baseline over a LoCoMo JSON file.")
     run_locomo.add_argument("data_file")
-    run_locomo.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
+    run_locomo.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "contradiction_aware_profile_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
     run_locomo.add_argument("--provider", default="heuristic_v1")
     run_locomo.add_argument("--limit", type=int)
     run_locomo.add_argument("--question-offset", type=int, default=0)
@@ -621,7 +621,7 @@ def main() -> None:
     run_goodai.add_argument("config_file")
     run_goodai.add_argument("definitions_dir")
     run_goodai.add_argument("--dataset-name")
-    run_goodai.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
+    run_goodai.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "contradiction_aware_profile_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
     run_goodai.add_argument("--provider", default="heuristic_v1")
     run_goodai.add_argument("--limit", type=int)
     run_goodai.add_argument("--top-k-sessions", type=int, default=2)
@@ -631,7 +631,7 @@ def main() -> None:
 
     run_beam = subparsers.add_parser("run-beam-baseline", help="Run a baseline over a local BEAM slice JSON file.")
     run_beam.add_argument("data_file")
-    run_beam.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
+    run_beam.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "contradiction_aware_profile_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
     run_beam.add_argument("--provider", default="heuristic_v1")
     run_beam.add_argument("--limit", type=int)
     run_beam.add_argument("--top-k-sessions", type=int, default=2)
@@ -642,7 +642,7 @@ def main() -> None:
     run_beam_public = subparsers.add_parser("run-beam-public-baseline", help="Run a baseline over an unpacked official-public BEAM chats directory.")
     run_beam_public.add_argument("data_dir")
     run_beam_public.add_argument("--chat-size", required=True)
-    run_beam_public.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
+    run_beam_public.add_argument("--baseline", choices=("full_context", "lexical", "beam_temporal_atom_router", "observational_temporal_memory", "contradiction_aware_profile_memory", "dual_store_event_calendar_hybrid", "stateful_event_reconstruction", "typed_state_update_memory"), default="full_context")
     run_beam_public.add_argument("--provider", default="heuristic_v1")
     run_beam_public.add_argument("--limit", type=int)
     run_beam_public.add_argument("--top-k-sessions", type=int, default=2)
@@ -779,6 +779,13 @@ def main() -> None:
                     top_k_sessions=2,
                     fallback_sessions=1,
                 ),
+                "contradiction_aware_profile_memory": run_baseline(
+                    samples,
+                    baseline_name="contradiction_aware_profile_memory",
+                    provider=get_provider("heuristic_v1"),
+                    top_k_sessions=2,
+                    fallback_sessions=1,
+                ),
                 "dual_store_event_calendar_hybrid": run_baseline(
                     samples,
                     baseline_name="dual_store_event_calendar_hybrid",
@@ -822,6 +829,13 @@ def main() -> None:
                 "observational_temporal_memory": run_baseline(
                     samples,
                     baseline_name="observational_temporal_memory",
+                    provider=get_provider("heuristic_v1"),
+                    top_k_sessions=2,
+                    fallback_sessions=1,
+                ),
+                "contradiction_aware_profile_memory": run_baseline(
+                    samples,
+                    baseline_name="contradiction_aware_profile_memory",
                     provider=get_provider("heuristic_v1"),
                     top_k_sessions=2,
                     fallback_sessions=1,

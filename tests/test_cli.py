@@ -1111,6 +1111,78 @@ def test_run_beam_public_cli_can_write_scorecard_for_typed_state_update_memory(t
     assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
 
 
+def test_run_beam_public_cli_can_write_scorecard_for_contradiction_aware_profile_memory(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "beam_public"
+    conversation_dir = data_dir / "100K" / "1"
+    probing_dir = conversation_dir / "probing_questions"
+    output_file = tmp_path / "artifacts" / "beam_public_contradiction_profile_scorecard.json"
+    probing_dir.mkdir(parents=True)
+    (conversation_dir / "chat.json").write_text(
+        json.dumps(
+            [
+                {
+                    "batch_number": 1,
+                    "time_anchor": "March-15-2024",
+                    "turns": [
+                        [
+                            {"role": "user", "id": 1, "content": "I have never written any Flask routes in this project."},
+                            {"role": "assistant", "id": 2, "content": "Noted."},
+                        ],
+                        [
+                            {"role": "user", "id": 3, "content": "I implemented a basic homepage route with Flask to handle requests."},
+                            {"role": "assistant", "id": 4, "content": "Noted."},
+                        ],
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (probing_dir / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "contradiction_resolution": [
+                    {
+                        "question": "Have I worked with Flask routes and handled HTTP requests in this project?",
+                        "answer": "Please clarify",
+                        "source_chat_ids": [1, 3],
+                        "rubric": ["clarify"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-beam-public-baseline",
+            str(data_dir),
+            "--chat-size",
+            "128K",
+            "--baseline",
+            "contradiction_aware_profile_memory",
+            "--provider",
+            "heuristic_v1",
+            "--upstream-commit",
+            "abc123",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["overall"]["total"] == 1
+    assert payload["run_manifest"]["baseline_name"] == "contradiction_aware_profile_memory"
+    assert payload["run_manifest"]["metadata"]["source_modes"] == ["official_public"]
+    assert payload["run_manifest"]["metadata"]["dataset_scales"] == ["128K"]
+    assert payload["run_manifest"]["metadata"]["upstream_commits"] == ["abc123"]
+
+
 def test_run_beam_public_cli_handles_null_batch_anchor_with_official_date_format(tmp_path: Path, monkeypatch):
     data_dir = tmp_path / "beam_public"
     conversation_dir = data_dir / "100K" / "1"

@@ -120,6 +120,26 @@ Expected gain:
 - current-state questions
 - benchmark honesty when evidence conflicts
 
+Result after implementation:
+
+- baseline added as `contradiction_aware_profile_memory`
+- local `BEAM` public `128K` first-3 slice scored `1/60`
+- that ties:
+  - `observational_temporal_memory`: `1/60`
+  - `stateful_event_reconstruction`: `1/60`
+- contradiction answers are qualitatively closer to benchmark intent because they now produce clarification-style responses instead of picking one side outright
+
+MiniMax judged status:
+
+- raw eval files were produced
+- the resulting summaries only populated `abstention` for conversations `1-3`
+- judged summaries therefore remain incomplete and cannot be treated as a full-category improvement signal
+
+Decision:
+
+- keep this branch as a partial win in answer behavior, but not yet a measured score win
+- if we revisit it, the next refinement should narrow contradiction pairing so the clarifier selects the actual conflicting claim pair rather than merely any negated-versus-affirmative high-overlap pair
+
 ### 3. `summary_synthesis_memory`
 
 Goal: assemble summary answers from multiple typed evidence packets instead of one dominant retrieved passage.

@@ -1,5 +1,8 @@
 from pathlib import Path
 
+from domain_chip_memory.contracts import NormalizedQuestion
+from domain_chip_memory.memory_answer_runtime import _choose_contradiction_aware_answer_candidate
+from domain_chip_memory.memory_extraction import ObservationEntry
 from domain_chip_memory.loaders import load_locomo_json, load_longmemeval_json
 from domain_chip_memory.memory_systems import (
     build_beam_ready_temporal_atom_router_packets,
@@ -6412,9 +6415,48 @@ def test_memory_system_contract_summary_exists():
     names = [item["system_name"] for item in payload["candidate_memory_systems"]]
     assert "beam_temporal_atom_router" in names
     assert "observational_temporal_memory" in names
+    assert "contradiction_aware_profile_memory" in names
     assert "dual_store_event_calendar_hybrid" in names
     assert "stateful_event_reconstruction" in names
     assert "typed_state_update_memory" in names
+
+
+def test_contradiction_aware_answer_candidate_prefers_clarification():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="Have I worked with Flask routes and handled HTTP requests in this project?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1", "t2"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I have never written any Flask routes or handled HTTP requests in this project.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "I have never written any Flask routes or handled HTTP requests in this project."},
+        ),
+        ObservationEntry(
+            observation_id="o2",
+            subject="user",
+            predicate="raw_turn",
+            text="I already implemented a basic homepage route with Flask to handle HTTP requests.",
+            session_id="s1",
+            turn_ids=["t2"],
+            timestamp="2024-03-02T10:00:00Z",
+            metadata={"source_text": "I already implemented a basic homepage route with Flask to handle HTTP requests."},
+        ),
+    ]
+
+    answer = _choose_contradiction_aware_answer_candidate(question, entries, [])
+
+    assert "contradictory information" in answer.lower()
+    assert "clarify which is correct" in answer.lower()
 
 
 def test_extract_memory_atoms_captures_benchmark_specific_patterns():

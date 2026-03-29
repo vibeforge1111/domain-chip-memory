@@ -17,6 +17,11 @@ def build_memory_system_contract_summary() -> dict[str, Any]:
                 "behavior": "Build a stable observation log, reflect it into a compressed memory window, and answer from that stable context.",
             },
             {
+                "system_name": "contradiction_aware_profile_memory",
+                "entrypoint": "build_contradiction_aware_profile_memory_packets",
+                "behavior": "Separate profile-style current state from conflict evidence and answer contradiction questions with clarification when opposing claims are both supported.",
+            },
+            {
                 "system_name": "dual_store_event_calendar_hybrid",
                 "entrypoint": "build_dual_store_event_calendar_hybrid_packets",
                 "behavior": "Combine a stable observation window with an explicit event calendar and answer from the strongest hybrid signal.",

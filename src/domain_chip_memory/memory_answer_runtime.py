@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from .memory_answer_rendering import answer_candidate_surface_text as _answer_candidate_surface_text
 from .contracts import NormalizedQuestion
 from .memory_aggregate_answers import infer_aggregate_answer as _infer_aggregate_answer_impl
@@ -34,6 +36,22 @@ from .memory_time import format_full_date as _format_full_date
 from .memory_time import format_month_year as _format_month_year
 from .memory_time import parse_observation_anchor as _parse_observation_anchor
 from .memory_time import shift_month as _shift_month
+
+_NEGATION_PATTERNS = (
+    " never ",
+    " not ",
+    " no ",
+    " without ",
+    " didn't ",
+    " dont ",
+    " don't ",
+    " havent ",
+    " haven't ",
+    " hasnt ",
+    " hasn't ",
+    " wasnt ",
+    " wasn't ",
+)
 
 
 def _observation_score(question: NormalizedQuestion, observation: ObservationEntry) -> float:
@@ -206,6 +224,76 @@ def _question_prefers_summary_reconstruction(question: NormalizedQuestion) -> bo
     )
 
 
+def _question_is_contradiction_resolution(question: NormalizedQuestion) -> bool:
+    return str(question.category or "").strip().lower() == "contradiction_resolution"
+
+
+def _claim_is_negated(text: str) -> bool:
+    normalized = f" {re.sub(r'\\s+', ' ', text.lower()).strip()} "
+    return any(pattern in normalized for pattern in _NEGATION_PATTERNS)
+
+
+def _claim_summary(entry: ObservationEntry) -> str:
+    source_text = str(entry.metadata.get("source_text", "")).strip() or entry.text.strip()
+    parts = re.split(r"(?<=[.!?])\s+", source_text)
+    summary = (parts[0] if parts else source_text).strip().strip("\"'")
+    if len(summary) > 220:
+        summary = summary[:217].rstrip(" ,;:") + "..."
+    return summary
+
+
+def _entries_conflict(a: ObservationEntry, b: ObservationEntry) -> bool:
+    if a.observation_id == b.observation_id:
+        return False
+    source_a = _entry_source_corpus(a).strip()
+    source_b = _entry_source_corpus(b).strip()
+    if not source_a or not source_b or source_a.lower() == source_b.lower():
+        return False
+    negated_a = _claim_is_negated(source_a)
+    negated_b = _claim_is_negated(source_b)
+    same_subject = a.subject == b.subject
+    same_predicate = a.predicate == b.predicate and a.predicate != "raw_turn"
+    value_a = str(a.metadata.get("value", "")).strip().lower()
+    value_b = str(b.metadata.get("value", "")).strip().lower()
+    if same_subject and same_predicate and value_a and value_b and value_a != value_b:
+        return True
+    tokens_a = {token for token in _tokenize(source_a) if len(token) >= 3}
+    tokens_b = {token for token in _tokenize(source_b) if len(token) >= 3}
+    overlap = tokens_a.intersection(tokens_b)
+    if negated_a != negated_b and len(overlap) >= 2:
+        return True
+    return bool(same_subject and same_predicate and negated_a != negated_b)
+
+
+def _infer_contradiction_clarification(
+    question: NormalizedQuestion,
+    candidate_entries: list[ObservationEntry],
+) -> str:
+    if not _question_is_contradiction_resolution(question):
+        return ""
+    ranked = sorted(
+        candidate_entries,
+        key=lambda entry: (_evidence_score(question, entry), _observation_score(question, entry), entry.timestamp or "", entry.observation_id),
+        reverse=True,
+    )
+    filtered = [entry for entry in ranked if _evidence_score(question, entry) > 0 or _observation_score(question, entry) > 0]
+    search_space = filtered[:12]
+    for index, first in enumerate(search_space):
+        for second in search_space[index + 1 :]:
+            if not _entries_conflict(first, second):
+                continue
+            first_claim = _claim_summary(first)
+            second_claim = _claim_summary(second)
+            if not first_claim or not second_claim or first_claim.lower() == second_claim.lower():
+                continue
+            return (
+                "I notice you've mentioned contradictory information about this. "
+                f"You said {first_claim}, but you also mentioned {second_claim}. "
+                "Could you clarify which is correct?"
+            )
+    return ""
+
+
 def _choose_answer_candidate(
     question: NormalizedQuestion,
     evidence_entries: list[ObservationEntry],
@@ -303,11 +391,34 @@ def _choose_stateful_answer_candidate(
     )
 
 
+def _choose_contradiction_aware_answer_candidate(
+    question: NormalizedQuestion,
+    evidence_entries: list[ObservationEntry],
+    belief_entries: list[ObservationEntry],
+    context_entries: list[ObservationEntry] | None = None,
+    aggregate_entries: list[ObservationEntry] | None = None,
+) -> str:
+    candidate_entries = context_entries or evidence_entries
+    contradiction_answer = _infer_contradiction_clarification(question, candidate_entries)
+    if contradiction_answer:
+        return contradiction_answer
+    return _choose_stateful_answer_candidate(
+        question,
+        evidence_entries,
+        belief_entries,
+        context_entries=context_entries,
+        aggregate_entries=aggregate_entries,
+    )
+
+
 __all__ = [
     "_choose_answer_candidate",
+    "_choose_contradiction_aware_answer_candidate",
     "_choose_stateful_answer_candidate",
+    "_claim_is_negated",
     "_entry_combined_text",
     "_evidence_score",
+    "_infer_contradiction_clarification",
     "_extract_place_candidates",
     "_infer_aggregate_answer",
     "_infer_explanatory_answer",
@@ -317,6 +428,7 @@ __all__ = [
     "_infer_yes_no_answer",
     "_is_pure_question_turn",
     "_observation_score",
+    "_question_is_contradiction_resolution",
     "_question_needs_raw_aggregate_context",
     "_question_prefers_summary_reconstruction",
     "_question_prefers_temporal_reconstruction",

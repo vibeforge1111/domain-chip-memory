@@ -11,6 +11,7 @@ from .contracts import NormalizedBenchmarkSample
 from .memory_roles import source_memory_role
 from .packet_builders import (
     build_beam_ready_temporal_atom_router_packets,
+    build_contradiction_aware_profile_memory_packets,
     build_dual_store_event_calendar_hybrid_packets,
     build_observational_temporal_memory_packets,
     build_stateful_event_reconstruction_packets,
@@ -176,6 +177,12 @@ def _build_manifest_and_packets(
         )
     if baseline_name == "observational_temporal_memory":
         return build_observational_temporal_memory_packets(
+            samples,
+            max_observations=max(top_k_sessions * 2, 4),
+            max_reflections=max(fallback_sessions + 2, 2),
+        )
+    if baseline_name == "contradiction_aware_profile_memory":
+        return build_contradiction_aware_profile_memory_packets(
             samples,
             max_observations=max(top_k_sessions * 2, 4),
             max_reflections=max(fallback_sessions + 2, 2),
@@ -468,6 +475,7 @@ def build_runner_contract_summary() -> dict[str, object]:
             "lexical",
             "beam_temporal_atom_router",
             "observational_temporal_memory",
+            "contradiction_aware_profile_memory",
             "dual_store_event_calendar_hybrid",
             "stateful_event_reconstruction",
             "typed_state_update_memory",
