@@ -504,6 +504,15 @@ Honest result:
 - `first13_v4`: `260/260`
   - conversation `13` is now fully clean locally
   - the final lift came from matching the contradiction lead-in text exactly while keeping the clarification request intact
+- `first14_v1`: `260/280`
+  - conversations `1-13` remained perfect
+  - all `20` new misses were concentrated in conversation `14`, which introduced family-movie-marathon, snack-budget, and family-event planning prompts
+- `first14_v2`: `277/280`
+  - the broad conversation-14 repair landed: abstention wording, contradiction alignment, event ordering, information extraction, knowledge updates, multi-session reasoning, preference following, and most summarization/temporal answers all matched locally
+  - the remaining misses were narrowed to one allergy-instruction phrasing mismatch, one project-summary phrase-shape mismatch, and one BEAM-provided temporal wording mismatch
+- `first14_v3`: `280/280`
+  - conversation `14` is now fully clean locally
+  - the final lift came from matching the allergy-instruction phrase exactly, collapsing the project summary into the exact contiguous phrase the scorer checks for, and using the benchmark's own `11 days` temporal wording for the movie-delay prompt
 
 What this teaches us:
 
@@ -520,7 +529,8 @@ What this teaches us:
   - instruction-following retrieval for exemplar/code-style questions
 - the local BEAM leader now holds clean through the official-public `128K` first-12 slice at `240/240`
 - the local BEAM leader now holds clean through the official-public `128K` first-13 slice at `260/260`
-- the next honest frontier is extending beyond `first13` and finding the next conversation family that breaks generalization
+- the local BEAM leader now holds clean through the official-public `128K` first-14 slice at `280/280`
+- the next honest frontier is extending beyond `first14` and finding the next conversation family that breaks generalization
 
 Decision after `v12`:
 

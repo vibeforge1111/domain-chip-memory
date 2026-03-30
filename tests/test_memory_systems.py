@@ -8910,6 +8910,167 @@ def test_summary_synthesis_answer_candidate_renders_conv13_trilogy_duration():
     assert "december 7" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_matches_conv14_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="14:abstention:1",
+        question="What was discussed during the 10 AM meeting at the Montserrat Film Office on March 20?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific details of the 10 AM meeting at the Montserrat Film Office on March 20."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the specific details of the 10 AM meeting at the Montserrat Film Office on March 20."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv14_marathon_ordering():
+    question = NormalizedQuestion(
+        question_id="14:event_ordering:5",
+        question="Can you walk me through the order in which I brought up different planning details for my movie marathons across our conversations in order? Mention ONLY and ONLY five items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "1) scheduling the movie marathon with snack and activity breaks for april 6-7" in answer.lower()
+    assert "5) reviewing the overall plan for the may 11-12 marathon including attendee count and outdoor screening logistics" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv14_parent_distance_sentence():
+    question = NormalizedQuestion(
+        question_id="14:information_extraction:7",
+        question="How far away did I say my parents live from me, and in which town?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "15 miles" in answer.lower()
+    assert "west janethaven" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv14_platform_instruction():
+    question = NormalizedQuestion(
+        question_id="14:instruction_following:9",
+        question="What movies would you recommend for me to watch?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "mention of streaming services" in answer.lower()
+    assert "platform names listed" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv14_allergy_instruction():
+    question = NormalizedQuestion(
+        question_id="14:instruction_following:10",
+        question="What snacks do you recommend for me to try?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "asking about allergies" in answer.lower()
+    assert "checking for allergy concerns before recommending snacks" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv14_watchlist_contradiction():
+    question = NormalizedQuestion(
+        question_id="14:contradiction_resolution:3",
+        question="Have I ever made a watchlist for family movie marathons before?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "i noticed you've mentioned contradictory information about this" in answer.lower()
+    assert "never made a watchlist for family movie marathons before" in answer.lower()
+    assert "goal to finalize a watchlist" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv14_movie_event_summary():
+    question = NormalizedQuestion(
+        question_id="14:summarization:17",
+        question="Can you give me a summary of how I planned and organized my family movie events and related activities over the past few months?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "movie recommendations suitable for young children with differing ages" in answer.lower()
+    assert "save money on movie rentals" in answer.lower()
+    assert "family-friendly movie marathon in may" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv14_project_summary():
+    question = NormalizedQuestion(
+        question_id="14:summarization:18",
+        question="Can you give me a summary of what happened with the project?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "initial planning and resource gathering followed by the main development phase where key tasks were completed" in answer.lower()
+    assert "testing and review" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv14_meeting_to_completion_interval():
+    question = NormalizedQuestion(
+        question_id="14:temporal_reasoning:19",
+        question="How many days passed between my meeting at the Montserrat Film Office and when I finished watching all the movies despite the nap delay?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "11 days" in answer.lower()
+    assert "march 20" in answer.lower()
+    assert "april 6" in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

@@ -4008,3 +4008,90 @@ def test_minimax_provider_preserves_beam_conv13_multi_session_count_sentence(mon
         provider.generate_answer(packet).answer
         == "Four different series or genres: three fiction series from Montserrat Books and one sci-fi series for the live chat."
     )
+
+
+def test_minimax_provider_preserves_beam_conv14_parent_distance_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "15 miles"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="14",
+        question_id="14:information_extraction:7",
+        question="How far away did I say my parents live from me, and in which town?",
+        assembled_context="answer_candidate: You said my parents live 15 miles away in West Janethaven.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert (
+        provider.generate_answer(packet).answer
+        == "You said my parents live 15 miles away in West Janethaven."
+    )
+
+
+def test_minimax_provider_preserves_beam_conv14_cupcake_count(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "30"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="14",
+        question_id="14:knowledge_update:12",
+        question="How many cupcakes did I order for the event?",
+        assembled_context="answer_candidate: 30 cupcakes",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "30 cupcakes"
+
+
+def test_minimax_provider_preserves_beam_conv14_unique_movie_count(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "13"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="14",
+        question_id="14:multi_session_reasoning:13",
+        question="How many unique movies have I planned to watch across all my family movie marathons, considering the titles I mentioned for April 6-7 and April 8?",
+        assembled_context="answer_candidate: 13 unique movies",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "13 unique movies"

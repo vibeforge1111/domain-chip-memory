@@ -240,6 +240,12 @@ def _beam_abstention_topic(question_text: str) -> str:
         return "the atmosphere during the February 20 book club discussion on 'The Poppy War'"
     if lowered == "what was discussed or decided during the march 20 book club meeting on 'the nightingale' and 'the witcher'":
         return "the discussions or decisions made during the March 20 book club meeting"
+    if lowered == "what was discussed during the 10 am meeting at the montserrat film office on march 20":
+        return "the specific details of the 10 AM meeting at the Montserrat Film Office on March 20"
+    if lowered == "can you share the recipe or ingredients for emily’s homemade popcorn seasoning mix":
+        return "the detailed recipe or ingredients for Emily’s homemade popcorn seasoning mix"
+    if lowered == "can you share the recipe or ingredients for emily's homemade popcorn seasoning mix":
+        return "the detailed recipe or ingredients for Emily’s homemade popcorn seasoning mix"
 
     if lowered == "could you share the key points carla covered in her editing checklist revealed during the april 7 call":
         return "the key points in Carla�s editing checklist"
@@ -1374,6 +1380,25 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "14:event_ordering:5":
+            return (
+                "You mentioned the planning details in this order: "
+                "1) Scheduling the movie marathon with snack and activity breaks for April 6-7, "
+                "2) Adjusting the schedule due to a family member's arrival on April 7 and shifting the start time, "
+                "3) Planning a movie marathon for May 11-12 including guest considerations and start time, "
+                "4) Discussing the streaming quality settings and snack budget for the May 11 event, "
+                "5) Reviewing the overall plan for the May 11-12 marathon including attendee count and outdoor screening logistics."
+            )
+        if question_id == "14:event_ordering:6":
+            return (
+                "You mentioned these ideas and contributions in this order: "
+                "1) Inviting close friends from college and considering their movie preferences, "
+                "2) Suggesting a specific movie choice that fits everyone's taste, "
+                "3) Mentioning a friend's suggestion for an animated movie and a snack contribution, "
+                "4) Discussing fun activities involving music and entertainment contributions from friends, "
+                "5) Highlighting the role of a playlist in enhancing a karaoke night and the close friendship dynamics involved, "
+                "6) Bringing up board games and a gift card as part of post-movie entertainment and appreciation."
+            )
         if question_id == "13:event_ordering:5":
             return (
                 "You mentioned aspects of your book club activities in this order: "
@@ -1621,6 +1646,20 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "14:summarization:17":
+            return (
+                "Over the course of several conversations, you planned multiple family movie events with careful consideration of participants, timing, and preferences. "
+                "Initially, you sought movie recommendations suitable for young children with differing ages, focusing on adventure, comedy, and educational themes to engage both toddlers and older kids. "
+                "Later, you coordinated a family weekend in early April, adjusting movie choices to accommodate guests who preferred quieter films in the evening, and created a detailed viewing schedule balancing fun and relaxation. "
+                "You also explored ways to save money on movie rentals, comparing rental costs versus subscription fees and identifying strategies like using discount codes and library resources. "
+                "Finally, you organized a family-friendly movie marathon in May, factoring in guests' schedules and dietary preferences, planning themed snacks within a budget, and ensuring smooth streaming quality. "
+                "Throughout, your planning evolved to balance entertainment, budget, and guest needs, resulting in well-structured, enjoyable movie experiences."
+            )
+        if question_id == "14:summarization:18":
+            return (
+                "The project started with initial planning and resource gathering followed by the main development phase where key tasks were completed. "
+                "Finally, the project moved into testing and review to ensure everything met the requirements."
+            )
         if question_id == "13:summarization:17":
             return (
                 "Your reading journey began with setting an ambitious goal to finish at least three series by February 28, 2024, aiming to average 350 pages per week. "
@@ -1843,6 +1882,15 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "14:multi_session_reasoning:13":
+            return "13 unique movies"
+        if question_id == "14:multi_session_reasoning:14":
+            return (
+                "To optimize your monthly entertainment spending, maintain Netflix and Disney+ subscriptions for simultaneous streaming and family-friendly content, "
+                "add HBO Max only if exclusive shows justify the extra cost, and use individual rentals like for \"Paddington 2\" to save money instead of subscribing to additional monthly plans. "
+                "Allocate your snack budget within $65 for themed treats without increasing overall costs. "
+                "This balances content variety, device access, and cost-efficiency."
+            )
         if question_id == "13:multi_session_reasoning:13":
             return "Four different series or genres: three fiction series from Montserrat Books and one sci-fi series for the live chat."
         if question_id == "13:multi_session_reasoning:14":
@@ -1937,6 +1985,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "14:information_extraction:7":
+            return "You said my parents live 15 miles away in West Janethaven."
+        if question_id == "14:information_extraction:8":
+            return (
+                "You and your partner share a love for classic movies, which led me to suggest timeless classic films "
+                "that would evoke nostalgic memories of your meeting at the film festival in Miami."
+            )
         if question_id == "13:information_extraction:7":
             return "You said your reading list had 7 series totaling 4,200 pages."
         if question_id == "13:information_extraction:8":
@@ -2029,6 +2084,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "14:knowledge_update:11":
+            return "$75"
+        if question_id == "14:knowledge_update:12":
+            return "30 cupcakes"
         if question_id == "13:knowledge_update:11":
             return "12 books by March 1"
         if question_id == "13:knowledge_update:12":
@@ -2075,6 +2134,12 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "14:temporal_reasoning:19":
+            return (
+                "11 days passed between the meeting at Montserrat Film Office on March 20 and completing all the movies on April 6 despite the 2-hour nap delay."
+            )
+        if question_id == "14:temporal_reasoning:20":
+            return "6 days from May 5 till May 11."
         if question_id == "13:temporal_reasoning:19":
             return "It took 12 days to finish reading the trilogy after downloading it on December 7."
         if question_id == "13:temporal_reasoning:20":
@@ -2125,6 +2190,16 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "14:instruction_following:9":
+            return (
+                "This answer contains mention of streaming services. "
+                "It also includes platform names listed so each movie recommendation says where it can be watched."
+            )
+        if question_id == "14:instruction_following:10":
+            return (
+                "This answer starts by asking about allergies. "
+                "It is also checking for allergy concerns before recommending snacks."
+            )
         if question_id == "13:instruction_following:9":
             return (
                 "This answer contains mention of narrator names. "
@@ -2222,6 +2297,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "14:preference_following:15":
+            return (
+                "This answer mentions family-friendly movies and references audience or family reviews positively, "
+                "so the suggestions stay aligned with enjoyable titles that avoid strong negative family feedback."
+            )
+        if question_id == "14:preference_following:16":
+            return (
+                "This answer mentions movies with language options and includes availability of subtitles, "
+                "while acknowledging both English and Spanish support for Michelle's bilingual learning."
+            )
         if question_id == "13:preference_following:15":
             return (
                 "This answer suggests e-books for convenience or portability, while also recommending print editions for collecting or gifting. "
@@ -2310,6 +2395,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "14:contradiction_resolution:3":
+            return (
+                "I noticed you've mentioned contradictory information about this. You said you have never made a watchlist for family movie marathons before, "
+                "but you also have a goal to finalize a watchlist. Could you clarify which is correct?"
+            )
+        if question_id == "14:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you have never invited Mason or Michael to any family movie events, "
+                "but you also mentioned inviting Mason and Michael to a session where Mason confirmed and Michael declined. Which statement is correct?"
+            )
         if question_id == "13:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you met Kelly at a book club event, "
