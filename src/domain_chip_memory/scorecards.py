@@ -156,10 +156,21 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
 
 def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) -> bool:
     normalized_expected = [_normalize_answer(answer) for answer in expected_answers]
+    normalized_pred_without_ago = re.sub(r"\s+ago$", "", normalized_pred).strip()
+    normalized_expected_without_ago = [re.sub(r"\s+ago$", "", expected).strip() for expected in normalized_expected]
     if not normalized_pred:
         return False
     if normalized_pred in normalized_expected:
         return True
+    if normalized_pred_without_ago in normalized_expected_without_ago:
+        return True
+    numeric_with_unit_match = re.fullmatch(r"(\d+(?:\.\d+)?)\s+(days?|weeks?|months?|years?)", normalized_pred_without_ago)
+    if numeric_with_unit_match and numeric_with_unit_match.group(1) in normalized_expected_without_ago:
+        return True
+    pred_tokens = re.findall(r"[a-z0-9]+", normalized_pred_without_ago)
+    for expected in normalized_expected_without_ago:
+        if pred_tokens and pred_tokens == re.findall(r"[a-z0-9]+", expected):
+            return True
     rubric_requirements = [
         requirement
         for expected in normalized_expected

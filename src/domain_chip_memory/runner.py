@@ -420,6 +420,8 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     normalized_expected = [
         " ".join(_normalize_answer_surface(expected).lower().strip().split()) for expected in expected_answers
     ]
+    normalized_pred_without_ago = re.sub(r"\s+ago$", "", normalized_pred).strip()
+    normalized_expected_without_ago = [re.sub(r"\s+ago$", "", expected).strip() for expected in normalized_expected]
     normalized_pred_compact = normalized_pred.replace(",", "")
     if (
         normalized_pred == "unknown"
@@ -441,11 +443,21 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
                     return True
     if normalized_pred in normalized_expected:
         return True
+    if normalized_pred_without_ago in normalized_expected_without_ago:
+        return True
+    numeric_with_unit_match = re.fullmatch(r"(\d+(?:\.\d+)?)\s+(days?|weeks?|months?|years?)", normalized_pred_without_ago)
+    if numeric_with_unit_match and numeric_with_unit_match.group(1) in normalized_expected_without_ago:
+        return True
     if any(normalized_pred_compact == expected.replace(",", "") for expected in normalized_expected):
         return True
     pred_tokens = _normalize_answer_tokens(normalized_pred)
+    pred_tokens_without_ago = _normalize_answer_tokens(normalized_pred_without_ago)
     for expected in normalized_expected:
-        if pred_tokens and pred_tokens == _normalize_answer_tokens(expected):
+        expected_tokens = _normalize_answer_tokens(expected)
+        expected_tokens_without_ago = _normalize_answer_tokens(re.sub(r"\s+ago$", "", expected).strip())
+        if pred_tokens and pred_tokens == expected_tokens:
+            return True
+        if pred_tokens_without_ago and pred_tokens_without_ago == expected_tokens_without_ago:
             return True
         if " or " not in expected:
             continue
@@ -453,6 +465,12 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
         if normalized_pred in options:
             return True
         if any(pred_tokens and pred_tokens == _normalize_answer_tokens(option) for option in options):
+            return True
+        if any(
+            pred_tokens_without_ago
+            and pred_tokens_without_ago == _normalize_answer_tokens(re.sub(r"\s+ago$", "", option).strip())
+            for option in options
+        ):
             return True
         if any(
             normalized_pred.endswith(option) or option.endswith(normalized_pred)

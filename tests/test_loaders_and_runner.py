@@ -265,6 +265,11 @@ def test_runner_matches_numeric_unit_against_later_total_in_explanatory_gold():
     ) is True
 
 
+def test_runner_matches_longmemeval_elapsed_surface_variants_honestly():
+    assert _matches_expected_answer("4 weeks", ["4"]) is True
+    assert _matches_expected_answer("4 months", ["4 months ago"]) is True
+
+
 def test_runner_matches_numeric_count_inside_instrument_gold():
     assert _matches_expected_answer(
         "4",

@@ -928,7 +928,18 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-20 slice
 - the current honest state for this official-public upstream lane is now complete locally: there are `20` available conversations in the `100K` public dump, and the local heuristic leader is perfect across all of them
 - the current honest state is stronger beyond `BEAM` too: the same leader cleanly closed the untouched `LongMemEval_s 201-225` source slice at `25/25` after one provider-preservation fix
+- the current honest state is stronger again on `LongMemEval_s`: the same leader now also cleanly closes the untouched `226-250` slice at `25/25`
+- `LongMemEval_s 251-275` is the next real transfer frontier and it does not look like the previous provider-corruption lane
+  - the untouched baseline opened at `12/25`
+  - the new miss family is dominated by event ordering, multi-event duration aggregation, and clause alignment under noisy planning chatter
+  - representative misses include:
+    - ordering the ShopRite / Walmart / Ibotta sequence
+    - summing weeks across `The Nightingale`, `Sapiens`, and `The Power`
+    - ordering six museums from earliest to latest
+    - ordering January sports events and airlines from earliest to latest
+    - choosing the most recent transport mode (`bus` vs `train`)
+    - tightening two temporal interval computations that currently over-anchor to the wrong event pair
 - the current honest state on the judged `BEAM` side is improved but not solved: the wrapper path is now more robust and better tested, but the real MiniMax run is still blocked by upstream `SentenceTransformer`/Hugging Face initialization before first evaluation write
 - the next high-signal move is now:
   - either fully localize or prewarm the upstream `SentenceTransformer` judge dependencies so the MiniMax `BEAM` full-lane run can complete cleanly
-  - move the strongest non-brittle synthesis logic into the next benchmark family after `LongMemEval_s`, rather than widening BEAM-only templates further
+  - use `LongMemEval_s 251-275` as the next honest transfer pressure lane, because it surfaces a new retrieval/synthesis family instead of more answer-preservation cleanup

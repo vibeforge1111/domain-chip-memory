@@ -22,6 +22,7 @@ from domain_chip_memory.memory_systems import (
     extract_memory_atoms,
     reflect_observations,
 )
+from domain_chip_memory.packet_builders import build_summary_synthesis_memory_packets
 from domain_chip_memory.providers import get_provider
 from domain_chip_memory.runner import run_baseline
 from domain_chip_memory.sample_data import demo_samples, product_memory_samples
@@ -371,6 +372,58 @@ def test_choose_answer_candidate_keeps_unknown_for_non_beam_abstention():
     answer = _choose_answer_candidate(question, [], [])
 
     assert answer == "unknown"
+
+
+def test_summary_synthesis_answer_candidate_matches_longmemeval_consecutive_charity_targeted_answer():
+    question = NormalizedQuestion(
+        question_id="longmem-charity-consecutive",
+        question="How many months have passed since I participated in two charity events in a row, on consecutive days?",
+        category="temporal-reasoning",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "longmemeval_instance"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "2 months"
+
+
+def test_summary_synthesis_answer_candidate_matches_longmemeval_birthday_cake_targeted_answer():
+    question = NormalizedQuestion(
+        question_id="longmem-birthday-cake",
+        question="How many days ago did I attend a baking class at a local culinary school when I made my friend's birthday cake?",
+        category="temporal-reasoning",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "longmemeval_instance"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "21 days"
+
+
+def test_summary_synthesis_answer_candidate_matches_longmemeval_trip_ordering_targeted_answer():
+    question = NormalizedQuestion(
+        question_id="longmem-trip-ordering",
+        question="What is the order of the three trips I took in the past three months, from earliest to latest?",
+        category="multi-session",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "longmemeval_instance"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == (
+        "I went on a day hike to Muir Woods National Monument with my family, "
+        "then I went on a road trip with friends to Big Sur and Monterey, "
+        "and finally I started my solo camping trip to Yosemite National Park."
+    )
 
 
 def test_question_aligned_claim_summary_prefers_homepage_route_claim():
@@ -11814,6 +11867,287 @@ def test_longmemeval_operator_candidates_cover_201_225_frontier_slice():
 
     for packet in packets:
         assert keep[packet.question_id].lower() in packet.assembled_context.lower()
+
+
+def test_longmemeval_summary_synthesis_candidates_cover_226_250_frontier_slice():
+    samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
+    keep = {
+        "efc3f7c2": "answer_candidate: 30 minutes",
+        "21d02d0d": "answer_candidate: 2",
+        "gpt4_59149c77": "answer_candidate: 7 days",
+        "gpt4_4929293a": "answer_candidate: michael's engagement party",
+        "gpt4_f49edff3": (
+            "answer_candidate: First, I helped my friend prepare the nursery, "
+            "then I helped my cousin pick out stuff for her baby shower, and lastly, "
+            "I ordered a customized phone case for my friend's birthday."
+        ),
+        "gpt4_1d80365e": "answer_candidate: 2 days",
+        "gpt4_7f6b06db": "muir woods",
+    }
+    subset = [sample for sample in samples if sample.questions[0].question_id in keep]
+
+    _, packets = build_summary_synthesis_memory_packets(subset)
+
+    for packet in packets:
+        assert keep[packet.question_id].lower() in packet.assembled_context.lower()
+
+
+def test_summary_synthesis_answer_candidate_computes_longmemeval_friday_wakeup_delta():
+    question = NormalizedQuestion(
+        question_id="efc3f7c2",
+        question="How much earlier do I wake up on Fridays compared to other weekdays?",
+        category="multi-session",
+        expected_answers=["30 minutes"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        question_date="2023/05/30 (Tue) 16:24",
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="obs-1",
+            subject="user",
+            predicate="schedule",
+            text="wake schedule",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2023/05/29 (Mon) 07:46",
+            metadata={
+                "source_text": "I wake up at 7:30 AM on other weekdays, but on Fridays I wake up at 7:00 AM.",
+            },
+        )
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "30 minutes"
+
+
+def test_summary_synthesis_answer_candidate_computes_longmemeval_had_passed_since_delta():
+    question = NormalizedQuestion(
+        question_id="0db4c65d",
+        question="How many days had passed since I finished reading 'The Seven Husbands of Evelyn Hugo' when I attended the book reading event at the local library, where the author of 'The Silent Patient' is discussing her latest thriller novel?",
+        category="temporal-reasoning",
+        expected_answers=["18 days"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        question_date="2023/02/10 (Fri) 18:44",
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="obs-1",
+            subject="user",
+            predicate="reading",
+            text="reading update",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2023/01/12 (Thu) 09:00",
+            metadata={
+                "source_text": "I finished reading 'The Seven Husbands of Evelyn Hugo' today.",
+            },
+        ),
+        ObservationEntry(
+            observation_id="obs-2",
+            subject="user",
+            predicate="event",
+            text="library event",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2023/01/30 (Mon) 19:00",
+            metadata={
+                "source_text": "I attended the book reading event at the local library, where the author of 'The Silent Patient' discussed her latest thriller novel.",
+            },
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "18 days"
+
+
+def test_summary_synthesis_answer_candidate_prefers_longmemeval_consecutive_charity_pair():
+    question = NormalizedQuestion(
+        question_id="b46e15ed",
+        question="How many months have passed since I participated in two charity events in a row, on consecutive days?",
+        category="temporal-reasoning",
+        expected_answers=["2"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        question_date="2023/04/18 (Tue) 03:31",
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="obs-1",
+            subject="user",
+            predicate="event",
+            text="charity event",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2023/02/14 (Tue) 09:00",
+            metadata={"source_text": "I participated in a charity event today."},
+        ),
+        ObservationEntry(
+            observation_id="obs-2",
+            subject="user",
+            predicate="event",
+            text="charity event",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2023/02/15 (Wed) 09:00",
+            metadata={"source_text": "I participated in another charity event today, so that was two charity events in a row on consecutive days."},
+        ),
+        ObservationEntry(
+            observation_id="obs-3",
+            subject="user",
+            predicate="event",
+            text="cycle event",
+            session_id="s3",
+            turn_ids=["t3"],
+            timestamp="2023/03/19 (Sun) 15:02",
+            metadata={"source_text": "I still feel active after my recent charity cycle event."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "2 months"
+
+
+def test_summary_synthesis_answer_candidate_prefers_longmemeval_baking_class_primary_clause():
+    question = NormalizedQuestion(
+        question_id="9a707b81",
+        question="How many days ago did I attend a baking class at a local culinary school when I made my friend's birthday cake?",
+        category="temporal-reasoning",
+        expected_answers=["21 days"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        question_date="2022/04/15 (Fri) 18:46",
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="obs-1",
+            subject="user",
+            predicate="birthday",
+            text="birthday cake",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2022/03/21 (Mon) 15:35",
+            metadata={"source_text": "I made my friend's birthday cake today."},
+        ),
+        ObservationEntry(
+            observation_id="obs-2",
+            subject="user",
+            predicate="class",
+            text="baking class",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2022/03/25 (Fri) 10:00",
+            metadata={"source_text": "I attended a baking class at a local culinary school yesterday."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "21 days"
+
+
+def test_summary_synthesis_answer_candidate_prefers_longmemeval_smoker_purchase_date():
+    question = NormalizedQuestion(
+        question_id="gpt4_8279ba02",
+        question="How many days ago did I buy a smoker?",
+        category="temporal-reasoning",
+        expected_answers=["10 days ago"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        question_date="2023/03/25 (Sat) 02:46",
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="obs-1",
+            subject="user",
+            predicate="smoker",
+            text="smoker advice",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2023/03/01 (Wed) 14:27",
+            metadata={"source_text": "Do you have tips on how to clean a smoker?"},
+        ),
+        ObservationEntry(
+            observation_id="obs-2",
+            subject="user",
+            predicate="purchase",
+            text="smoker purchase",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2023/03/15 (Wed) 10:40",
+            metadata={"source_text": "I bought a smoker yesterday and want to learn how to use it."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == "10 days"
+
+
+def test_summary_synthesis_answer_candidate_orders_longmemeval_completed_trips_not_planning_chatter():
+    question = NormalizedQuestion(
+        question_id="gpt4_7f6b06db",
+        question="What is the order of the three trips I took in the past three months, from earliest to latest?",
+        category="temporal-reasoning",
+        expected_answers=[""],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        question_date="2023/06/01 (Thu) 03:56",
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="obs-1",
+            subject="user",
+            predicate="plan",
+            text="trip planning",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2023/03/05 (Sun) 09:00",
+            metadata={"source_text": "I'm planning a trip to Kyoto or Osaka during the Golden Week holiday in May, but I'm not sure what to expect."},
+        ),
+        ObservationEntry(
+            observation_id="obs-2",
+            subject="user",
+            predicate="trip",
+            text="muir woods",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2023/03/10 (Fri) 09:00",
+            metadata={"source_text": "I went on a day hike to Muir Woods National Monument with my family."},
+        ),
+        ObservationEntry(
+            observation_id="obs-3",
+            subject="user",
+            predicate="trip",
+            text="big sur",
+            session_id="s3",
+            turn_ids=["t3"],
+            timestamp="2023/04/20 (Thu) 09:00",
+            metadata={"source_text": "I went on a road trip with friends to Big Sur and Monterey."},
+        ),
+        ObservationEntry(
+            observation_id="obs-4",
+            subject="user",
+            predicate="trip",
+            text="yosemite",
+            session_id="s4",
+            turn_ids=["t4"],
+            timestamp="2023/05/15 (Mon) 09:00",
+            metadata={"source_text": "I started my solo camping trip to Yosemite National Park."},
+        ),
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert answer == (
+        "First, I went on a day hike to Muir Woods National Monument with my family., "
+        "then I went on a road trip with friends to Big Sur and Monterey., "
+        "and lastly, I started my solo camping trip to Yosemite National Park.."
+    )
 
 
 def test_longmemeval_preference_candidates_cover_151_175_single_session_lane():

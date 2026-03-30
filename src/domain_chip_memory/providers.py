@@ -124,6 +124,11 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
     context_lines = [line.strip() for line in context.splitlines() if line.strip()]
     answer_candidate = context_primary_answer_candidate_text(context)
     if (
+        question_lower.startswith("how much earlier do i ")
+        and bool(re.fullmatch(r"(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:minutes?|hours?)", answer_candidate, re.IGNORECASE))
+    ):
+        return answer_candidate
+    if (
         answer_candidate.lower() in {"yes", "no"}
         and question_lower.startswith(("did ", "is ", "are ", "was ", "were "))
     ):
@@ -1342,6 +1347,12 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         and question_lower.startswith("how much older am i")
     ):
         return compound_duration_answer_candidate
+    if (
+        duration_count_answer_candidate
+        and cleaned_lower != duration_count_answer_candidate.lower()
+        and question_lower.startswith("how much earlier do i ")
+    ):
+        return duration_count_answer_candidate
     if (
         numeric_answer_candidate
         and cleaned_lower != numeric_answer_candidate.lower()

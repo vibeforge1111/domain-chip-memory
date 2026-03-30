@@ -249,6 +249,25 @@ def test_expand_answer_prefers_short_where_answer_candidate_over_unknown():
     assert rescued == "Denver"
 
 
+def test_expand_answer_prefers_duration_candidate_for_how_much_earlier_question():
+    context = "\n".join(
+        [
+            "aggregate_memory:",
+            "aggregate: On Fridays, I like to get a head start, so I wake up at 6:00 AM.",
+            "aggregate: I usually do them right after waking up at 6:30 AM on weekdays.",
+            "answer_candidate: 30 minutes",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "How much earlier do I wake up on Fridays compared to other weekdays?",
+        "7:30",
+        context,
+    )
+
+    assert rescued == "30 minutes"
+
+
 def test_expand_answer_prefers_current_state_candidate_over_stale_answer():
     context = "\n".join(
         [
