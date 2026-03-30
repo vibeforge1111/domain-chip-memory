@@ -566,6 +566,9 @@ Honest result:
 - `first20_v3`: `400/400`
   - conversation `20` is now fully clean locally
   - the final lift came from normalizing smart-apostrophe variants in the shared scorer path and aligning the July-through-September summary sentence to the official wording
+- `first21_v1`: capped rerun, still `400/400`
+  - the official-public upstream `100K` dump currently contains only `20` numbered conversations
+  - requesting `limit 21` did not expose a new frontier; the manifest still capped at `beam-128k-20`
 
 What this teaches us:
 
@@ -910,7 +913,7 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-11 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-19 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-20 slice
+- the current honest state for this official-public upstream lane is now complete locally: there are `20` available conversations in the `100K` public dump, and the local heuristic leader is perfect across all of them
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-20
-  - rerun MiniMax judging on the refreshed exports where useful
-  - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates
+  - rerun MiniMax judging on the refreshed full-lane exports where useful
+  - move the strongest non-brittle synthesis logic into the next benchmark family instead of widening BEAM-only templates further
