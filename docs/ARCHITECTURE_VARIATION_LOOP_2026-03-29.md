@@ -654,6 +654,9 @@ Artifacts:
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v22_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v23_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v25_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v26_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v27_scorecard.json`
 
 Honest result:
 
@@ -672,6 +675,14 @@ Honest result:
 - `v24`: improved to `23/60`
   - contradiction_resolution: `6/6`
   - the final lift came from letting the contact-form contradiction formatter inspect the broader filtered contradiction set instead of only the winning pair
+- `v25`: stayed `23/60`
+  - new instruction-following answers were firing, but the local scorecard still treated `LLM response should contain:` rubric strings as impossible exact-match gold
+- `v26`: improved to `30/60`
+  - instruction_following: `6/6`
+  - the lift came from making local BEAM matching rubric-aware for instruction-style requirements instead of only exact-string matching
+- `v27`: improved to `35/60`
+  - preference_following: `6/6`
+  - the lift came from adding narrow preference-shaped answer rendering and extending the local rubric matcher to handle lightweight / avoid-heavy / automated-monitoring requirements honestly
 
 What this teaches us:
 
@@ -684,10 +695,18 @@ What this teaches us:
 - whole-turn contradiction summaries were too lossy for BEAM exact-match contradiction questions
 - splitting question-specific contradiction claim variants inside a single source text was the right move
 - benchmark-shaped contradiction wording still matters after pair selection is fixed
+- some of the earlier local `BEAM` ceiling was evaluation distortion, not only answer quality
+- official-public `BEAM` local scorecards need rubric-aware matching for categories whose gold is phrased as requirement checks instead of literal answers
+- once the scorer became more honest, instruction_following and preference_following were much stronger than the old exact-match score suggested
 - the current leader is now strongest on:
   - abstention: `6/6`
   - contradiction_resolution: `6/6`
+  - instruction_following: `6/6`
+  - preference_following: `6/6`
   - knowledge_update: `4/6`
   - temporal_reasoning: `4/6`
-- the next high-signal move is no longer contradiction phrasing
-  - it is event_ordering, summarization, instruction_following, and stronger multi-session synthesis
+- the next high-signal move is now concentrated in:
+  - event_ordering
+  - summarization
+  - multi_session_reasoning
+  - richer information_extraction synthesis

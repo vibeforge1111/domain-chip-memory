@@ -7678,6 +7678,171 @@ def test_contradiction_aware_summary_synthesis_prefers_question_aligned_conflict
     answer = _choose_contradiction_aware_summary_synthesis_answer_candidate(question, entries, [])
 
     assert "homepage route with flask" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_instruction_following_login_code_block():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="Could you show me how to implement a login feature?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I want to add login support to my Flask app and keep the code simple.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={"source_text": "I want to add login support to my Flask app and keep the code simple."},
+        )
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert "```python" in answer
+    assert "@app.route" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_instruction_following_dependency_versions():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="Which libraries are used in this project?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+    )
+    entries = [
+        ObservationEntry(
+            observation_id="o1",
+            subject="user",
+            predicate="raw_turn",
+            text="I am using Python 3.11, Flask 2.3.1, Flask-Login 0.6.2, SQLite 3.39, and Redis 7.0 in this app.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2024-03-01T10:00:00Z",
+            metadata={
+                "source_text": "I am using Python 3.11, Flask 2.3.1, Flask-Login 0.6.2, SQLite 3.39, and Redis 7.0 in this app."
+            },
+        )
+    ]
+
+    answer = _choose_summary_synthesis_answer_candidate(question, entries, [])
+
+    assert "Python 3.11" in answer
+    assert "Flask 2.3.1" in answer
+    assert "Flask-Login 0.6.2" in answer
+    assert "SQLite 3.39" in answer
+    assert "Redis 7.0" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_instruction_following_error_codes():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="When building an application that communicates with a REST API, what typical errors should I be prepared to handle?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "400" in answer
+    assert "401" in answer
+    assert "404" in answer
+    assert "429" in answer
+    assert "500" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_instruction_following_semantic_html_tags():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="If I’m creating a blog layout, which HTML elements should I use to clearly define sections like the header, navigation, main content, and footer?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "<header>" in answer
+    assert "<nav>" in answer
+    assert "<main>" in answer
+    assert "<footer>" in answer
+    assert "defines the top section" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_preference_following_lightweight_budget_stack():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="I'm planning to add user login, income and expense tracking, and some basic analytics to my Flask app. What libraries or tools would you suggest I use to implement these features?",
+        category="preference_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "lightweight" in answer.lower()
+    assert "flask-login" in answer.lower()
+    assert "avoid large frameworks" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_preference_following_simple_cache_guidance():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="Can you help me set up a caching system for my app's API responses? I'd like to keep it simple and straightforward.",
+        category="preference_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "in-memory cache" in answer.lower() or "localstorage" in answer.lower()
+    assert "large libraries or frameworks" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_preference_following_deployment_monitoring():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="How can I track the status and results of each step in my deployment workflow?",
+        category="preference_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "github actions" in answer.lower()
+    assert "manual deployment checks" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_preference_following_bootstrap_layout_guidance():
+    question = NormalizedQuestion(
+        question_id="q1",
+        question="I'm planning to build a responsive portfolio website with sections like About, Skills, Projects, and Contact. Can you help me set up the layout and components for this site?",
+        category="preference_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "bootstrap 5.3.0" in answer.lower()
+    assert "components" in answer.lower()
+    assert "foundation" in answer.lower()
     assert "confluence" not in answer.lower()
 
 

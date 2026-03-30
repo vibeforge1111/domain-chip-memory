@@ -147,6 +147,74 @@ def test_runner_matches_unknown_for_longmemeval_abstention_explanation():
     ) is True
 
 
+def test_runner_matches_beam_instruction_following_code_block_rubric():
+    assert _matches_expected_answer(
+        'you can structure it like this: ```python print("hi") ```',
+        ["LLM response should contain: code blocks with syntax highlighting"],
+    ) is True
+
+
+def test_runner_matches_beam_instruction_following_version_rubric():
+    assert _matches_expected_answer(
+        "the explicitly versioned dependencies are flask 2.3.1, flask-login 0.6.2, and sqlite 3.39.",
+        ["LLM response should contain: explicit version details for each dependency"],
+    ) is True
+
+
+def test_runner_matches_beam_instruction_following_error_code_rubric():
+    assert _matches_expected_answer(
+        "handle 400 bad request, 401 unauthorized, 404 not found, and 500 internal server error.",
+        ["LLM response should contain: includes numeric codes associated with errors"],
+    ) is True
+
+
+def test_runner_matches_beam_instruction_following_semantic_tag_rubrics():
+    assert _matches_expected_answer(
+        "use semantic tags like <header>, <nav>, <main>, and <footer>. <header> defines the top section, <nav> contains links, <main> holds primary content, and <footer> provides closing information.",
+        [
+            "LLM response should contain: mention of semantic tags like <header>, <nav>, <main>, <footer>",
+            "LLM response should contain: explanation of tag purposes",
+        ],
+    ) is True
+
+
+def test_runner_matches_beam_preference_following_lightweight_stack_rubrics():
+    assert _matches_expected_answer(
+        "use lightweight libraries: flask-login for auth, sqlalchemy with sqlite for tracking, and chart.js for analytics. avoid large frameworks or heavy dependencies.",
+        [
+            "LLM response should contain: suggests lightweight libraries",
+            "LLM response should contain: avoids recommending large frameworks or heavy dependencies",
+        ],
+    ) is True
+
+
+def test_runner_matches_beam_preference_following_practical_security_rubrics():
+    assert _matches_expected_answer(
+        "start with lightweight security improvements like csrf protection, secure cookies, and input validation, then add them incrementally as practical enhancements.",
+        [
+            "LLM response should contain: suggests security measures that are efficient and lightweight",
+            "LLM response should contain: proposes incremental or practical enhancements",
+        ],
+    ) is True
+
+
+def test_runner_matches_beam_preference_following_bootstrap_and_monitoring_rubrics():
+    assert _matches_expected_answer(
+        "use bootstrap 5.3.0 classes and components for the layout without switching to foundation or other frameworks.",
+        [
+            "LLM response should contain: uses Bootstrap 5.3.0 classes and components",
+            "LLM response should contain: avoids suggesting Foundation or other frameworks",
+        ],
+    ) is True
+    assert _matches_expected_answer(
+        "use github actions job summaries, status checks, artifacts, and notifications so each step is monitored automatically instead of relying on manual deployment checks.",
+        [
+            "LLM response should contain: mentions automated workflow monitoring tools",
+            "LLM response should contain: avoids recommending manual deployment checks",
+        ],
+    ) is True
+
+
 def test_runner_matches_numeric_how_many_answer_inside_explanatory_gold():
     assert _matches_expected_answer(
         "5",

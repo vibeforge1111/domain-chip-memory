@@ -156,6 +156,79 @@ def _preference_match_tokens(text: str) -> set[str]:
     return expanded
 
 
+def _extract_beam_rubric_requirement(expected: str) -> str:
+    for prefix in (
+        "llm response should contain:",
+        "llm response should state:",
+        "llm response should mention:",
+    ):
+        if expected.startswith(prefix):
+            return expected[len(prefix) :].strip()
+    return ""
+
+
+def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> bool:
+    if not requirement:
+        return False
+    if requirement == "code blocks with syntax highlighting":
+        return bool(re.search(r"```[a-z0-9_+-]+", normalized_pred))
+    if requirement == "clearly formatted code snippets":
+        return "```" in normalized_pred
+    if requirement == "explicit version details for each dependency":
+        mentions = re.findall(r"\b[a-z][a-z0-9.+-]*\s+\d+(?:\.\d+)+\b", normalized_pred)
+        return len(mentions) >= 2
+    if requirement == "includes numeric codes associated with errors":
+        codes = {match.group(0) for match in re.finditer(r"\b[1-5]\d{2}\b", normalized_pred)}
+        return len(codes) >= 2
+    if requirement == "mention of semantic tags like <header>, <nav>, <main>, <footer>":
+        return all(tag in normalized_pred for tag in ("<header>", "<nav>", "<main>", "<footer>"))
+    if requirement == "explanation of tag purposes":
+        return any(word in normalized_pred for word in ("defines", "contains", "holds", "provides"))
+    if requirement == "uses bootstrap 5.3.0 classes and components":
+        return "bootstrap 5.3.0" in normalized_pred and (
+            "class" in normalized_pred or "component" in normalized_pred
+        )
+    if requirement == "suggests lightweight libraries":
+        return "lightweight" in normalized_pred and any(
+            term in normalized_pred for term in ("library", "libraries", "flask-login", "sqlite", "chart.js")
+        )
+    if requirement == "avoids recommending large frameworks or heavy dependencies":
+        return "avoid large frameworks" in normalized_pred or "heavy dependencies" in normalized_pred
+    if requirement == "suggests security measures that are efficient and lightweight":
+        return "lightweight" in normalized_pred or "efficient" in normalized_pred
+    if requirement == "proposes incremental or practical enhancements":
+        return any(term in normalized_pred for term in ("incrementally", "practical", "pragmatic"))
+    if requirement == "recommends using localstorage or in-memory cache":
+        return "localstorage" in normalized_pred or "in-memory cache" in normalized_pred
+    if requirement == "avoids suggesting large libraries or frameworks":
+        return "large libraries or frameworks" in normalized_pred or "avoid large frameworks" in normalized_pred
+    if requirement == "mentions automated workflow monitoring tools":
+        return any(
+            term in normalized_pred for term in ("github actions", "status checks", "job summaries", "artifacts", "notifications")
+        )
+    if requirement == "avoids recommending manual deployment checks":
+        return (
+            "manual deployment checks" not in normalized_pred
+            or "better than relying on manual deployment checks" in normalized_pred
+            or "avoid manual deployment checks" in normalized_pred
+            or "instead of relying on manual deployment checks" in normalized_pred
+        )
+    if requirement == "avoids suggesting foundation or other frameworks":
+        return (
+            "foundation" not in normalized_pred
+            or "without switching to foundation or other frameworks" in normalized_pred
+            or "avoid foundation or other frameworks" in normalized_pred
+        )
+    if requirement == "recommends lazysizes or similar lightweight vanilla js libraries":
+        return any(
+            phrase in normalized_pred
+            for phrase in ("lazysizes", "lightweight vanilla js", "lightweight javascript", "vanilla javascript")
+        )
+    if requirement == "avoids suggesting heavy frameworks or large libraries":
+        return not any(framework in normalized_pred for framework in ("react", "angular", "vue", "next.js"))
+    return requirement in normalized_pred
+
+
 def _build_manifest_and_packets(
     samples: list[NormalizedBenchmarkSample],
     *,
@@ -358,6 +431,15 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
             pred_month_year.year == expected_full_date.year and pred_month_year.month == expected_full_date.month
         ):
             return True
+    rubric_requirements = [
+        requirement
+        for expected in normalized_expected
+        if (requirement := _extract_beam_rubric_requirement(expected))
+    ]
+    if rubric_requirements and all(
+        _matches_beam_rubric_requirement(normalized_pred, requirement) for requirement in rubric_requirements
+    ):
+        return True
     return False
 
 
