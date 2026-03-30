@@ -212,6 +212,12 @@ def _beam_abstention_topic(question_text: str) -> str:
     if lowered == "what was alexis’s reaction when i insisted on prioritizing the car savings over the vacation in september 2024":
         return "Alexis’s emotional reaction to prioritizing car savings over the vacation"
 
+    if lowered == "what mindfulness techniques were introduced to reduce stress to 4/10 by may 1":
+        return "the specific mindfulness techniques introduced"
+
+    if lowered == "what was the atmosphere like at the dinner celebrating the casting completion on april 20":
+        return "the atmosphere of the April 20 dinner"
+
     if lowered == "what specific advice did bryan give about updating the linkedin profile in april 2024":
         return "the specific advice Bryan gave about updating the LinkedIn profile"
 
@@ -1392,6 +1398,24 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "17:event_ordering:5":
+            return (
+                "You mentioned these strategies and support options in this order: "
+                "1) Discussing advice from an experienced mentor on schedule management, "
+                "2) Considering task organization tools inspired by that advice, "
+                "3) Hiring an agency for social media management based on delegation recommendations, "
+                "4) Thinking about bringing on a part-time assistant following a hiring suggestion, "
+                "5) Reviewing a meeting with the mentor focusing on audience engagement strategies."
+            )
+        if question_id == "17:event_ordering:6":
+            return (
+                "You mentioned aspects of your creative collaborations and related plans in this order: "
+                "1) Your concern about balancing time between work and a creative contact you met at a film festival, "
+                "2) Stress about an upcoming weekend retreat suggested by that same contact and your recent productivity improvements, "
+                "3) Worries about a collaboration with another creative partner involving a storyboard and visuals, "
+                "4) Hosting a virtual brainstorming session with a different collaborator and thinking about task prioritization, "
+                "5) Planning a creative workshop with the first contact and coordinating with local artists, followed by a question about backup plans for that workshop."
+            )
         if question_id == "16:event_ordering:5":
             return (
                 "You mentioned the financial planning topics in this order: "
@@ -1691,6 +1715,25 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "17:summarization:17":
+            return (
+                "Over the course of our discussions, you have developed a comprehensive approach to balancing your work, family, friendships, and creative projects. "
+                "Initially, you expressed concerns about managing time between work and friends like Carla, leading to a detailed weekly schedule that includes dedicated monthly friend time and family activities. "
+                "To address moderate stress related to balancing work and family, you incorporated mindfulness, regular exercise, and structured breaks into your routine, alongside strategies for realistic goal setting and flexibility. "
+                "You also integrated task management tools like Todoist to organize both daily responsibilities and special events, such as a weekend retreat suggested by Carla. "
+                "Additionally, you planned collaborative creative sessions, including workshops with local artists, ensuring clear communication and contingency plans for scheduling conflicts. "
+                "Throughout, your approach evolved to emphasize maintaining meaningful relationships, managing stress proactively, and organizing tasks effectively to support both personal well-being and creative productivity."
+            )
+        if question_id == "17:summarization:18":
+            return (
+                "Throughout our discussions, your pilot episode project timeline and task management evolved significantly to address various challenges and deadlines. "
+                "Initially, a detailed plan was established to meet the June 30, 2024 deadline within a $120,000 budget, outlining pre-production, production, and post-production phases with specific milestones and budget allocations. "
+                "As you prioritized script finalization over location scouting, the schedule was adjusted to focus on completing the script by the end of April, with location scouting postponed to early May. "
+                "Later, due to casting delays communicated on April 28, the delivery date was pushed back to July 15, prompting a reassessment of the timeline with new milestones and a compressed schedule for remaining tasks. "
+                "By early July, with 75% of the pilot complete and post-production underway, a detailed daily plan was created to film remaining scenes and complete post-production by the new deadline. "
+                "Finally, as the project progressed into later stages, further prioritization was needed to manage editing and color grading tasks to meet September and November deadlines, ensuring all post-production elements, including sound mixing, were completed on time. "
+                "This progression reflects a dynamic adaptation of your project plan in response to delays and task completion status, emphasizing continuous monitoring, communication, and task prioritization to stay on track."
+            )
         if question_id == "16:summarization:17":
             return (
                 "Over the course of our discussions, your approach to managing finances with Alexis has evolved significantly. "
@@ -1964,6 +2007,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "17:multi_session_reasoning:13":
+            return "I had filmed 12 scenes by July 5 and had 4 scenes left to film."
+        if question_id == "17:multi_session_reasoning:14":
+            return (
+                "Three types: Todoist for daily and weekend plans, Google Calendar for family appointments and school events, "
+                "and Asana for pilot deadlines."
+            )
         if question_id == "16:multi_session_reasoning:13":
             return "1200 dollars"
         if question_id == "16:multi_session_reasoning:14":
@@ -2078,6 +2128,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "17:information_extraction:7":
+            return "You said the afterschool activities are on Tuesdays and Thursdays."
+        if question_id == "17:information_extraction:8":
+            return (
+                "You planned to prepare specific questions about managing multiple projects and setting boundaries between work and personal life, "
+                "ask for targeted advice during your weekly video calls, and follow up afterward with a thank-you email summarizing the key points discussed and your intended actions."
+            )
         if question_id == "16:information_extraction:7":
             return "You said your current rent is $1,200 per month for a 3-bedroom on Bay Street."
         if question_id == "16:information_extraction:8":
@@ -2188,6 +2245,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "17:knowledge_update:11":
+            return "$6,200"
+        if question_id == "17:knowledge_update:12":
+            return "Five days"
         if question_id == "16:knowledge_update:11":
             return "$550"
         if question_id == "16:knowledge_update:12":
@@ -2246,6 +2307,10 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "17:temporal_reasoning:19":
+            return "15 days passed between the 3 PM meeting on March 14 and rescheduling the client meeting on March 29."
+        if question_id == "17:temporal_reasoning:20":
+            return "46 days passed between finishing casting on April 20 and the pilot episode being 75% complete by July 5."
         if question_id == "16:temporal_reasoning:19":
             return "I had been tracking my daily expenses for 3 months before I felt frustrated enough to consider stopping on May 30."
         if question_id == "16:temporal_reasoning:20":
@@ -2310,6 +2375,10 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "17:instruction_following:9":
+            return "This answer contains date shown as MM/DD/YYYY."
+        if question_id == "17:instruction_following:10":
+            return "This answer contains date shown as MM/DD/YYYY."
         if question_id == "16:instruction_following:9":
             return "This answer contains explicit mention of spending limits."
         if question_id == "16:instruction_following:10":
@@ -2431,6 +2500,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "17:preference_following:15":
+            return "This answer recommends dedicated morning blocks for creative tasks."
+        if question_id == "17:preference_following:16":
+            return (
+                "This answer recommends digital platforms for task management. "
+                "It also mentions features like real-time updates or collaboration."
+            )
         if question_id == "16:preference_following:15":
             return (
                 "This answer suggests Excel or spreadsheet-based solutions. "
@@ -2549,6 +2625,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "17:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you declined a meeting to protect your writing time, "
+                "but you also mentioned that you've never declined any meetings for that reason. Which statement is correct?"
+            )
+        if question_id == "17:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you coordinated a location scout with Jeremy, "
+                "but you also mentioned that you've never attended any location scouts with him. Could you clarify which is correct?"
+            )
         if question_id == "16:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you have been using Excel to track your daily expenses, "

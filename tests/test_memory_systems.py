@@ -9364,6 +9364,124 @@ def test_summary_synthesis_answer_candidate_renders_conv16_spending_limit_instru
     assert answer == "This answer contains explicit mention of spending limits."
 
 
+def test_summary_synthesis_answer_candidate_matches_conv17_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="17:abstention:1",
+        question="What mindfulness techniques were introduced to reduce stress to 4/10 by May 1?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific mindfulness techniques introduced."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "Based on the provided chat, there is no information related to the specific mindfulness techniques introduced."
+
+
+def test_summary_synthesis_answer_candidate_renders_conv17_support_ordering():
+    question = NormalizedQuestion(
+        question_id="17:event_ordering:5",
+        question="Can you list the order in which I brought up different strategies and support options for managing my workload throughout our conversations in order? Mention ONLY and ONLY five items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "1) Discussing advice from an experienced mentor on schedule management" in answer
+    assert "5) Reviewing a meeting with the mentor focusing on audience engagement strategies." in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv17_afterschool_days():
+    question = NormalizedQuestion(
+        question_id="17:information_extraction:7",
+        question="Which days did I say my kids have their afterschool activities at their school?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "You said the afterschool activities are on Tuesdays and Thursdays."
+
+
+def test_summary_synthesis_answer_candidate_renders_conv17_date_format_instruction():
+    question = NormalizedQuestion(
+        question_id="17:instruction_following:9",
+        question="When is my meetings at Montserrat Studios?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "This answer contains date shown as MM/DD/YYYY."
+
+
+def test_summary_synthesis_answer_candidate_renders_conv17_postproduction_budget():
+    question = NormalizedQuestion(
+        question_id="17:knowledge_update:11",
+        question="What is the total budget allocated for post-production software licenses including any additional plugins?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "$6,200"
+
+
+def test_summary_synthesis_answer_candidate_renders_conv17_collaboration_summary():
+    question = NormalizedQuestion(
+        question_id="17:summarization:17",
+        question="Can you give me a summary of how I've been managing my time, stress, and creative collaborations throughout our recent conversations?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "managing time between work and friends like Carla" in answer
+    assert "task management tools like Todoist" in answer
+    assert "collaborative creative sessions, including workshops with local artists" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv17_casting_interval():
+    question = NormalizedQuestion(
+        question_id="17:temporal_reasoning:20",
+        question="How many days passed between when I finished casting and when my pilot episode was 75% complete?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "46 days passed between finishing casting on April 20 and the pilot episode being 75% complete by July 5."
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

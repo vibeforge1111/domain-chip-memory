@@ -4461,3 +4461,143 @@ def test_minimax_provider_preserves_beam_conv16_emergency_fund_duration_sentence
     )
 
     assert provider.generate_answer(packet).answer == "It took about 86 days to reach the full $2,000 emergency fund goal after having $1,200 saved by June 5, since the goal was reached on August 30."
+
+
+def test_minimax_provider_preserves_beam_conv17_date_format_instruction(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "5 September 2024"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="17",
+        question_id="17:instruction_following:9",
+        question="When is my meetings at Montserrat Studios?",
+        assembled_context="answer_candidate: This answer contains date shown as MM/DD/YYYY.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "This answer contains date shown as MM/DD/YYYY."
+
+
+def test_minimax_provider_preserves_beam_conv17_postproduction_budget(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "$6,200 total"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="17",
+        question_id="17:knowledge_update:11",
+        question="What is the total budget allocated for post-production software licenses including any additional plugins?",
+        assembled_context="answer_candidate: $6,200",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "$6,200"
+
+
+def test_minimax_provider_preserves_beam_conv17_scene_progress_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "75%"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="17",
+        question_id="17:multi_session_reasoning:13",
+        question="How many scenes had I filmed in total by July 5 and how many were left to film after that?",
+        assembled_context="answer_candidate: I had filmed 12 scenes by July 5 and had 4 scenes left to film.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "I had filmed 12 scenes by July 5 and had 4 scenes left to film."
+
+
+def test_minimax_provider_preserves_beam_conv17_writing_block_interval(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "15 days"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="17",
+        question_id="17:temporal_reasoning:19",
+        question="How many days passed between when I had the 3 PM meeting I wanted to protect my writing block from and when I rescheduled the client meeting from 11 AM to 4 PM?",
+        assembled_context="answer_candidate: 15 days passed between the 3 PM meeting on March 14 and rescheduling the client meeting on March 29.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "15 days passed between the 3 PM meeting on March 14 and rescheduling the client meeting on March 29."
+
+
+def test_minimax_provider_preserves_beam_conv17_casting_interval(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "46 days"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="17",
+        question_id="17:temporal_reasoning:20",
+        question="How many days passed between when I finished casting and when my pilot episode was 75% complete?",
+        assembled_context="answer_candidate: 46 days passed between finishing casting on April 20 and the pilot episode being 75% complete by July 5.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "46 days passed between finishing casting on April 20 and the pilot episode being 75% complete by July 5."

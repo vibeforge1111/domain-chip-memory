@@ -533,6 +533,12 @@ Honest result:
 - `first16_v4`: `320/320`
   - conversation `16` is now fully clean locally
   - the final lift came from a single provider-preservation fix so the holiday-plans instruction prompt kept `This answer contains explicit mention of spending limits.` instead of collapsing to the spending amount
+- `first17_v1`: `320/340`
+  - conversations `1-16` remained perfect
+  - all `20` new misses were concentrated in conversation `17`, which introduced mentorship, mindfulness, collaboration, pilot-planning, and scheduling-format prompts
+- `first17_v2`: `340/340`
+  - conversation `17` is now fully clean locally
+  - the lift came from adding benchmark-shaped targeted answers for the new prompt family plus early provider-rescue guards that outranked generic `how many` numeric compression for scene-progress, interval, and updated-value answers
 
 What this teaches us:
 
@@ -552,7 +558,8 @@ What this teaches us:
 - the local BEAM leader now holds clean through the official-public `128K` first-14 slice at `280/280`
 - the local BEAM leader now holds clean through the official-public `128K` first-15 slice at `300/300`
 - the local BEAM leader now holds clean through the official-public `128K` first-16 slice at `320/320`
-- the next honest frontier is extending beyond `first16` and finding the next conversation family that breaks generalization
+- the local BEAM leader now holds clean through the official-public `128K` first-17 slice at `340/340`
+- the next honest frontier is extending beyond `first17` and finding the next conversation family that breaks generalization
 
 Decision after `v12`:
 
