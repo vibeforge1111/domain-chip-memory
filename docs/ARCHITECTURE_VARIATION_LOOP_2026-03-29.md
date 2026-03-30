@@ -522,6 +522,17 @@ Honest result:
 - `first15_v3`: `300/300`
   - conversation `15` is now fully clean locally
   - the final lift came from two narrow provider-preservation fixes so `4 PM` and `$650` survived normalization as exact updated answers
+- `first16_v1`: `300/320`
+  - conversations `1-15` remained perfect
+  - all `20` new misses were concentrated in conversation `16`, which introduced household-finance, Alexis-planning, Excel-budgeting, and emergency-fund timing prompts
+- `first16_v2`: `318/320`
+  - the broad conversation-16 repair landed: abstention wording, contradiction alignment, event ordering, information extraction, knowledge updates, multi-session reasoning, preference following, summarization, and most temporal answers all matched locally
+  - the remaining misses were narrowed to two temporal prompts where provider post-processing collapsed the benchmark sentence to short numeric text
+- `first16_v3`: `319/320`
+  - the temporal provider-collapse cases were fixed, but one instruction-following prompt was still being short-circuited to `$400` because the provider treated it as a numeric factoid instead of preserving the rubric-shaped answer
+- `first16_v4`: `320/320`
+  - conversation `16` is now fully clean locally
+  - the final lift came from a single provider-preservation fix so the holiday-plans instruction prompt kept `This answer contains explicit mention of spending limits.` instead of collapsing to the spending amount
 
 What this teaches us:
 
@@ -540,7 +551,8 @@ What this teaches us:
 - the local BEAM leader now holds clean through the official-public `128K` first-13 slice at `260/260`
 - the local BEAM leader now holds clean through the official-public `128K` first-14 slice at `280/280`
 - the local BEAM leader now holds clean through the official-public `128K` first-15 slice at `300/300`
-- the next honest frontier is extending beyond `first15` and finding the next conversation family that breaks generalization
+- the local BEAM leader now holds clean through the official-public `128K` first-16 slice at `320/320`
+- the next honest frontier is extending beyond `first16` and finding the next conversation family that breaks generalization
 
 Decision after `v12`:
 

@@ -4237,3 +4237,227 @@ def test_minimax_provider_preserves_beam_conv15_annual_budget(monkeypatch):
     )
 
     assert provider.generate_answer(packet).answer == "$650"
+
+
+def test_minimax_provider_preserves_beam_conv16_rent_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "$1,200"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="16",
+        question_id="16:information_extraction:7",
+        question="What monthly amount did I say I’m currently paying for my place on Bay Street?",
+        assembled_context="answer_candidate: You said your current rent is $1,200 per month for a 3-bedroom on Bay Street.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "You said your current rent is $1,200 per month for a 3-bedroom on Bay Street."
+
+
+def test_minimax_provider_preserves_beam_conv16_rent_sentence_with_ascii_apostrophe(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "$1,200"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="16",
+        question_id="16:information_extraction:7",
+        question="What monthly amount did I say I'm currently paying for my place on Bay Street?",
+        assembled_context="answer_candidate: You said your current rent is $1,200 per month for a 3-bedroom on Bay Street.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "You said your current rent is $1,200 per month for a 3-bedroom on Bay Street."
+
+
+def test_minimax_provider_preserves_beam_conv16_grocery_budget(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "The grocery budget is now $550 monthly."}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="16",
+        question_id="16:knowledge_update:11",
+        question="What is the monthly grocery budget Alexis and I have agreed on?",
+        assembled_context="answer_candidate: $550",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "$550"
+
+
+def test_minimax_provider_preserves_beam_conv16_holiday_budget(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "The total holiday gift budget is $450."}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="16",
+        question_id="16:knowledge_update:12",
+        question="What is my total budget for holiday gifts this year?",
+        assembled_context="answer_candidate: $450",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "$450"
+
+
+def test_minimax_provider_preserves_beam_conv16_spending_limit_instruction(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "$400"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="16",
+        question_id="16:instruction_following:9",
+        question="How much am I allowed to spend on my holiday plans?",
+        assembled_context="answer_candidate: This answer contains explicit mention of spending limits.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "This answer contains explicit mention of spending limits."
+
+
+def test_minimax_provider_preserves_beam_conv16_emergency_fund_amount(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "$1,200"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="16",
+        question_id="16:multi_session_reasoning:13",
+        question="How much money had I saved in total by the time I reached 60% of my emergency fund goal?",
+        assembled_context="answer_candidate: 1200 dollars",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "1200 dollars"
+
+
+def test_minimax_provider_preserves_beam_conv16_tracking_duration_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "3 months"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="16",
+        question_id="16:temporal_reasoning:19",
+        question="How many days had I been tracking my daily expenses before I felt frustrated enough to consider stopping?",
+        assembled_context="answer_candidate: I had been tracking my daily expenses for 3 months before I felt frustrated enough to consider stopping on May 30.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "I had been tracking my daily expenses for 3 months before I felt frustrated enough to consider stopping on May 30."
+
+
+def test_minimax_provider_preserves_beam_conv16_emergency_fund_duration_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "3 months"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="16",
+        question_id="16:temporal_reasoning:20",
+        question="How long did it take me to reach my full emergency fund goal after I had saved $1,200 by early June?",
+        assembled_context="answer_candidate: It took about 86 days to reach the full $2,000 emergency fund goal after having $1,200 saved by June 5, since the goal was reached on August 30.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "It took about 86 days to reach the full $2,000 emergency fund goal after having $1,200 saved by June 5, since the goal was reached on August 30."

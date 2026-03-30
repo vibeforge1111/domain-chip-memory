@@ -9208,6 +9208,162 @@ def test_summary_synthesis_answer_candidate_renders_conv15_reorder_interval():
     assert answer == "One day passed between when I got the size 11 Ultraboost on April 30 and when I reordered the size 11.5 on May 1."
 
 
+def test_summary_synthesis_answer_candidate_matches_conv16_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="16:abstention:1",
+        question="What are Alexis’s specific plans and strategies for launching the freelance design business in January 2025?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to Alexis’s specific plans or strategies for launching the freelance design business."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "Based on the provided chat, there is no information related to Alexis’s specific plans or strategies for launching the freelance design business."
+
+
+def test_summary_synthesis_answer_candidate_renders_conv16_finance_ordering():
+    question = NormalizedQuestion(
+        question_id="16:event_ordering:5",
+        question="Can you walk me through the order in which I brought up different financial planning topics during our chats, in order? Mention ONLY and ONLY four items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "1) Talking about money-saving tips shared by my friend" in answer
+    assert "4) Discussing compromises on holiday gift budgets and how to handle similar situations in the future." in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv16_stress_ordering_with_chat_ids():
+    question = NormalizedQuestion(
+        question_id="16:event_ordering:6",
+        question="In what sequence did I mention topics related to managing financial stress, evening walks, sleep tracking, and meditation? Mention ONLY and ONLY four items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "(chat_id 24, 26)" in answer
+    assert "(chat_id 160, 162, 164)" in answer
+    assert answer.endswith("(chat_id 244).")
+
+
+def test_summary_synthesis_answer_candidate_renders_conv16_rent_sentence():
+    question = NormalizedQuestion(
+        question_id="16:information_extraction:7",
+        question="What monthly amount did I say I’m currently paying for my place on Bay Street?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "You said your current rent is $1,200 per month for a 3-bedroom on Bay Street."
+
+
+def test_summary_synthesis_answer_candidate_renders_conv16_excel_contradiction():
+    question = NormalizedQuestion(
+        question_id="16:contradiction_resolution:3",
+        question="Have U been using Excel to track my daily expenses?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == (
+        "I notice you've mentioned contradictory information about this. You said you have been using Excel to track your daily expenses, "
+        "but you also mentioned that you have never used Excel for tracking expenses. Which statement is correct?"
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv16_finance_summary():
+    question = NormalizedQuestion(
+        question_id="16:summarization:17",
+        question="Can you summarize how my approach to managing finances with Alexis has developed over time?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "shared household finances since 2020" in answer
+    assert "reduce your work hours to support Alexis's freelance business" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv16_emergency_fund_reasoning():
+    question = NormalizedQuestion(
+        question_id="16:multi_session_reasoning:14",
+        question="How will increasing our grocery budget while taking on the freelance contract affect my ability to support Ashlee's medical bills and still meet my savings goals?",
+        category="multi_session_reasoning",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "freelance contract's additional income more than offsets this" in answer
+    assert "accelerate your emergency and car savings goals" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv16_days_tracking_interval():
+    question = NormalizedQuestion(
+        question_id="16:temporal_reasoning:19",
+        question="How many days had I been tracking my daily expenses before I felt frustrated enough to consider stopping?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "3 months" in answer
+    assert "may 30" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv16_spending_limit_instruction():
+    question = NormalizedQuestion(
+        question_id="16:instruction_following:9",
+        question="Can you answer my question and make sure to explicitly mention spending limits?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "This answer contains explicit mention of spending limits."
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

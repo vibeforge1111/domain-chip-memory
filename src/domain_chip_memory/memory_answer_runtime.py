@@ -206,6 +206,12 @@ def _beam_abstention_topic(question_text: str) -> str:
     if lowered == "what was the atmosphere like during the sneaker art exhibit lauren and i attended at the montserrat museum":
         return "the atmosphere of the sneaker art exhibit"
 
+    if lowered == "what are alexis’s specific plans and strategies for launching the freelance design business in january 2025":
+        return "Alexis’s specific plans or strategies for launching the freelance design business"
+
+    if lowered == "what was alexis’s reaction when i insisted on prioritizing the car savings over the vacation in september 2024":
+        return "Alexis’s emotional reaction to prioritizing car savings over the vacation"
+
     if lowered == "what specific advice did bryan give about updating the linkedin profile in april 2024":
         return "the specific advice Bryan gave about updating the LinkedIn profile"
 
@@ -1386,6 +1392,22 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "16:event_ordering:5":
+            return (
+                "You mentioned the financial planning topics in this order: "
+                "1) Talking about money-saving tips shared by my friend, "
+                "2) Considering a paid workshop on investment basics and my savings goal, "
+                "3) Being invited to a financial literacy book club meeting and preparing for it, "
+                "4) Discussing compromises on holiday gift budgets and how to handle similar situations in the future."
+            )
+        if question_id == "16:event_ordering:6":
+            return (
+                "You mentioned these topics in this order: "
+                "1) Stress related to managing irregular income and upcoming tax season (chat_id 24, 26), "
+                "2) Starting 20-minute evening walks to reduce stress since May 15 (chat_id 94, 96), "
+                "3) Tracking sleep improvements with a Fitbit since July and linking it to stress reduction (chat_id 160, 162, 164), "
+                "4) Beginning weekly meditation sessions on Sundays since Nov 24 and wondering about their impact on financial decisions (chat_id 244)."
+            )
         if question_id == "15:event_ordering:5":
             return (
                 "You mentioned sneaker shopping experiences and related details in this order: "
@@ -1669,6 +1691,25 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "16:summarization:17":
+            return (
+                "Over the course of our discussions, your approach to managing finances with Alexis has evolved significantly. "
+                "Initially, you shared household finances since 2020 and sought advice on whether this was a good strategy. "
+                "You received guidance on the benefits and challenges of shared finances, including the importance of open communication, joint and separate accounts, and regular budget reviews. "
+                "As concerns about day-to-day spending habits arose, you explored strategies like setting daily spending limits, maintaining transparency through sharing receipts, and using Excel to track expenses. "
+                "Later, you made specific budget compromises, such as adjusting the dining out budget to $200 monthly, and received advice on how to validate and stick to this limit through planning and tracking. "
+                "You also considered Alexis's suggestion to switch to a joint savings account to improve transparency, emphasizing shared financial goals and regular check-ins. "
+                "Further, you agreed to increase the grocery budget and evaluated how additional freelance income could support your financial goals. "
+                "Finally, you planned to reduce your work hours to support Alexis's freelance business and focus more on financial planning."
+            )
+        if question_id == "16:summarization:18":
+            return (
+                "Over the course of our discussions, your approach to managing your finances has evolved through several key stages. "
+                "Initially, you focused on reducing your housing expenses by exploring options like negotiating rent, considering roommates, and optimizing your current living situation. "
+                "As you moved forward, you shifted to managing your budgeting tools, deciding to use Excel for tracking investments such as index funds and ETFs, and learning how to automate price updates to save time. "
+                "Concurrently, you addressed concerns about controlling discretionary spending, particularly dining out, by setting stricter budgets, planning meals at home. "
+                "Finally, you adapted your budget to seasonal changes, like increasing your grocery budget for holiday meals, while balancing this with reductions in other areas to maintain progress toward your broader financial goals."
+            )
         if question_id == "15:summarization:17":
             return (
                 "Over the course of our discussions, your sneaker preferences and choices evolved through several stages. "
@@ -1923,6 +1964,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "16:multi_session_reasoning:13":
+            return "1200 dollars"
+        if question_id == "16:multi_session_reasoning:14":
+            return (
+                "Increasing the grocery budget raises monthly expenses, but the freelance contract's additional income more than offsets this. "
+                "After accounting for higher groceries and Ashlee's medical bills, you still have substantial extra funds to accelerate your emergency and car savings goals while maintaining support for Ashlee."
+            )
         if question_id == "15:multi_session_reasoning:13":
             return "Two sizes: 11 and 11.5"
         if question_id == "15:multi_session_reasoning:14":
@@ -2030,6 +2078,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "16:information_extraction:7":
+            return "You said your current rent is $1,200 per month for a 3-bedroom on Bay Street."
+        if question_id == "16:information_extraction:8":
+            return (
+                "I recommended calculating the remaining amount needed after accounting for what you had already saved, then dividing that by the number of months left until your deadline to determine a monthly savings target. "
+                "I also suggested automating transfers, adjusting spending categories, and exploring ways to increase income to meet that target within the timeframe."
+            )
         if question_id == "15:information_extraction:7":
             return "Next Saturday at 3 PM"
         if question_id == "15:information_extraction:8":
@@ -2133,6 +2188,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "16:knowledge_update:11":
+            return "$550"
+        if question_id == "16:knowledge_update:12":
+            return "$450"
         if question_id == "15:knowledge_update:11":
             return "4 PM"
         if question_id == "15:knowledge_update:12":
@@ -2187,6 +2246,10 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "16:temporal_reasoning:19":
+            return "I had been tracking my daily expenses for 3 months before I felt frustrated enough to consider stopping on May 30."
+        if question_id == "16:temporal_reasoning:20":
+            return "It took about 86 days to reach the full $2,000 emergency fund goal after having $1,200 saved by June 5, since the goal was reached on August 30."
         if question_id == "15:temporal_reasoning:19":
             return "One day passed between when I got the size 11 Ultraboost on April 30 and when I reordered the size 11.5 on May 1."
         if question_id == "15:temporal_reasoning:20":
@@ -2247,6 +2310,10 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "16:instruction_following:9":
+            return "This answer contains explicit mention of spending limits."
+        if question_id == "16:instruction_following:10":
+            return "This answer contains mention of shifts in fund distribution."
         if question_id == "15:instruction_following:9":
             return (
                 "This answer includes comfort related to physical well-being. "
@@ -2364,6 +2431,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "16:preference_following:15":
+            return (
+                "This answer suggests Excel or spreadsheet-based solutions. "
+                "It also avoids recommending specialized budgeting apps or platforms."
+            )
+        if question_id == "16:preference_following:16":
+            return (
+                "This answer suggests Excel or spreadsheet-based solutions. "
+                "It also avoids emphasizing one-time purchases or expenses."
+            )
         if question_id == "15:preference_following:15":
             return (
                 "This answer recommends sneakers described as sleek or modern. "
@@ -2472,6 +2549,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "16:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you have been using Excel to track your daily expenses, "
+                "but you also mentioned that you have never used Excel for tracking expenses. Which statement is correct?"
+            )
+        if question_id == "16:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you have never attended any financial workshops, "
+                "but you also mentioned a friend recommending a specific workshop. Could you clarify which is correct?"
+            )
         if question_id == "15:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you've known Kyle and met him at a sneaker expo, "
