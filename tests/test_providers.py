@@ -957,6 +957,16 @@ def test_expand_answer_prefers_numeric_count_answer_candidate_for_how_many_quest
     assert rescued == "2"
 
 
+def test_expand_answer_preserves_descriptive_how_many_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many new columns did I want to add to the transactions table across my requests?",
+        "Two columns: 'category' and 'notes'.",
+        "answer_candidate: 2",
+    )
+
+    assert rescued == "Two columns: 'category' and 'notes'."
+
+
 def test_expand_answer_does_not_overwrite_matching_duration_candidate():
     context = "\n".join(
         [

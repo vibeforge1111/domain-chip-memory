@@ -684,6 +684,8 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     )
     if compact_quantitative_answer:
         return cleaned
+    if question_lower.startswith("how many") and ":" in cleaned and len(cleaned.split()) <= 16:
+        return cleaned
     if (
         answer_candidate.lower() == "unknown"
         and cleaned_lower

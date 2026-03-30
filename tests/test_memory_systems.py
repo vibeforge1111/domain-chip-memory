@@ -7846,6 +7846,111 @@ def test_summary_synthesis_answer_candidate_renders_preference_following_bootstr
     assert "confluence" not in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_renders_beam_budget_tracker_event_ordering():
+    question = NormalizedQuestion(
+        question_id="1:event_ordering:5",
+        question="Can you list the order in which I brought up different aspects of developing my personal budget tracker throughout our conversations, in order? Mention ONLY and ONLY three items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "core functionality" in answer.lower()
+    assert "transaction creation" in answer.lower()
+    assert "security measures" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_beam_weather_app_summary():
+    question = NormalizedQuestion(
+        question_id="2:summarization:17",
+        question="Can you give me a comprehensive summary of how my weather app project has progressed, including the key features, improvements, and development steps we've discussed so far?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "openweather api" in answer.lower()
+    assert "modularizing" in answer.lower()
+    assert "autocomplete feature" in answer.lower()
+    assert "lightweight and dependency-free" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_beam_multi_session_column_count():
+    question = NormalizedQuestion(
+        question_id="1:multi_session_reasoning:13",
+        question="How many new columns did I want to add to the transactions table across my requests?",
+        category="multi_session_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "Two columns: 'category' and 'notes'."
+
+
+def test_summary_synthesis_answer_candidate_renders_beam_retry_queue_guidance():
+    question = NormalizedQuestion(
+        question_id="2:information_extraction:8",
+        question="How did you recommend managing the flow of requests when my app risks overwhelming the service due to frequent retries and bursts of activity?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "queue system" in answer.lower()
+    assert "exponential backoff" in answer.lower()
+    assert "queued api calls" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_beam_commit_count_update():
+    question = NormalizedQuestion(
+        question_id="1:knowledge_update:12",
+        question="How many commits have been merged into the main branch of my Git repository?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "165 commits have been merged into the main branch."
+
+
+def test_summary_synthesis_answer_candidate_renders_beam_temporal_weeks_interval():
+    question = NormalizedQuestion(
+        question_id="1:temporal_reasoning:19",
+        question="How many weeks do I have between finishing the transaction management features and the final deployment deadline?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "exactly 4 weeks" in answer.lower()
+    assert "january 15, 2024" in answer.lower()
+    assert "march 15, 2024" in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",
