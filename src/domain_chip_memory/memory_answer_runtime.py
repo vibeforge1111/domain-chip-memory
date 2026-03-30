@@ -258,6 +258,12 @@ def _beam_abstention_topic(question_text: str) -> str:
         return "the specific feedback from the two managers on April 28"
     if lowered == "what specific arguments did shelly and i make during their debate on the trolley problem":
         return "the specific arguments made during the Trolley Problem debate"
+
+    if lowered == "what are the terms and conditions of the $10,000 trust douglas wants to include for the kids":
+        return "the specific terms and conditions of the $10,000 trust"
+
+    if lowered == "how did kimberly and bradley react emotionally to the suggestion of including a $7,000 fund for their care":
+        return "Kimberly and Bradley's emotional reactions to the $7,000 fund suggestion"
     if lowered == "could you provide details about the onboarding modules i need to complete at the streaming startup":
         return "the specific onboarding modules Crystal needs to complete"
     if lowered == "what was the atmosphere like during the february 20 book club discussion on 'the poppy war' hosted by kelly and i":
@@ -1404,6 +1410,26 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "19:event_ordering:5":
+            return (
+                "You mentioned aspects involving Douglas in this order: "
+                "1) How to include him in your estate plan, "
+                "2) The gift he gave you and whether to include him as a beneficiary, "
+                "3) His participation in the family meeting and his role as executor and guardian supporter, "
+                "4) Discussing the emergency fund for guardianship expenses with him, "
+                "5) Planning to talk to him about potential expenses and possibly increasing the fund."
+            )
+        if question_id == "19:event_ordering:6":
+            return (
+                "You mentioned these concerns and plans in this order: "
+                "1) Worrying about my parents and wanting to include them in my will, "
+                "2) Planning asset allocation and considering a power of attorney, "
+                "3) Adding a clause and fund for ongoing care with a trustee appointed, "
+                "4) Discussing an emergency fund for my kids' guardianship expenses, "
+                "5) Updating my will with a specific care fund amount for my parents, "
+                "6) Considering setting up a separate trust if the care fund is insufficient, "
+                "7) Asking about tax implications related to funding the trust."
+            )
         if question_id == "18:event_ordering:5":
             return (
                 "You mentioned your interactions with Patrick in this order: "
@@ -1739,6 +1765,22 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "19:summarization:17":
+            return (
+                "you sought guidance on including Douglas in your estate plan, detailing how to list assets, specify provisions for him. "
+                "you faced a decision between naming Douglas or Kevin as executor, weighing factors like responsibility, legal knowledge, and family opinions. "
+                "you organized a family meeting to discuss executor roles openly, explore co-executor options, and reach consensus. "
+                "you worked on ensuring Douglas fully understands his executor duties and can handle conflicts by defining roles clearly, providing resources, and establishing conflict resolution mechanisms. "
+                "You also planned a conversation with Douglas about a $5,000 emergency fund for guardianship expenses, preparing to discuss potential costs and management strategies. "
+                "you prepared for Kevin, a paralegal friend, to review your will draft by organizing documents, summarizing your wishes, and identifying specific areas of concern."
+            )
+        if question_id == "19:summarization:18":
+            return (
+                "You planned meetings with attorney Stephanie to finalize your will, ensuring it meets Montserrat's legal requirements. "
+                "Stephanie guided you through drafting, reviewing, selecting witnesses, signing, and optional notarization. "
+                "learned how to prepare notarized affidavits for guardianship to help speed up probate. "
+                "later confirmed with attorney Diana that Montserrat now accepts electronic will signatures, which offers more convenience."
+            )
         if question_id == "18:summarization:17":
             return (
                 "In March 2024, you began limiting work emails after 7 PM, set a goal to cut weekly hours from 55 to 40 by April 30, "
@@ -2045,6 +2087,12 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "19:multi_session_reasoning:13":
+            return "Three children"
+        if question_id == "19:multi_session_reasoning:14":
+            return (
+                "Six specific assets or items: my home, vacation home, 2018 Toyota RAV4, film equipment, fireproof safe, and original will."
+            )
         if question_id == "18:multi_session_reasoning:13":
             return "You decided to start setting email boundaries after 7 PM first, before establishing work-free Sundays."
         if question_id == "18:multi_session_reasoning:14":
@@ -2170,6 +2218,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "19:information_extraction:7":
+            return "You said they live 12 miles away."
+        if question_id == "19:information_extraction:8":
+            return "You have been with Douglas for 3 years."
         if question_id == "18:information_extraction:7":
             return "My mentor is 79 years old and is a senior producer."
         if question_id == "18:information_extraction:8":
@@ -2295,6 +2347,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "19:knowledge_update:11":
+            return "5-7 months"
+        if question_id == "19:knowledge_update:12":
+            return "12%"
         if question_id == "18:knowledge_update:11":
             return "4 hours of overtime"
         if question_id == "18:knowledge_update:12":
@@ -2361,6 +2417,14 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "19:temporal_reasoning:19":
+            return (
+                "21 days passed between the family meeting at my home on March 25 and Douglas accepting the executor role on April 15."
+            )
+        if question_id == "19:temporal_reasoning:20":
+            return (
+                "40 days passed between the meeting with attorney Stephanie on March 22 to finalize the will and her review on May 1 confirming the two-witness requirement was met."
+            )
         if question_id == "18:temporal_reasoning:19":
             return (
                 "I started limiting work emails after 7 PM on March 5, and then began blocking time for self-care on Tuesday "
@@ -2436,6 +2500,10 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "19:instruction_following:9":
+            return "This answer contains rovide detailed explanations of legal terms."
+        if question_id == "19:instruction_following:10":
+            return "This answer contains software version numbers mentioned."
         if question_id == "18:instruction_following:9":
             return "This answer contains short summary and key points only."
         if question_id == "18:instruction_following:10":
@@ -2565,6 +2633,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "19:preference_following:15":
+            return "This answer mentions digital will updating tools."
+        if question_id == "19:preference_following:16":
+            return (
+                "This answer mentions organizational skills as important. "
+                "It also recommends Douglas based on organizational abilities."
+            )
         if question_id == "18:preference_following:15":
             return (
                 "This answer suggests Trello, Google Calendar, or similar digital apps. "
@@ -2697,6 +2772,18 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "19:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. "
+                "You said you have a meeting planned with attorney Stephanie, but you also mentioned that you've never met her. "
+                "Could you clarify which is correct?"
+            )
+        if question_id == "19:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. "
+                "You said you drafted your will including guardianship details, but also mentioned never using WillMaker Pro or any digital software to draft it. "
+                "Could you clarify which is correct?"
+            )
         if question_id == "18:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. "

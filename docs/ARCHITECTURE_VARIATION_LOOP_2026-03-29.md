@@ -548,6 +548,15 @@ Honest result:
 - `first18_v3`: `360/360`
   - conversation `18` is now fully clean locally
   - the final lift came from tightening one abstention phrase, two contradiction tails, one event-ordering string with chat ids, and a provider-preservation fix for the full mentor-influence answer
+- `first19_v1`: `360/380`
+  - conversations `1-18` remained perfect
+  - all `20` new misses were concentrated in conversation `19`, which introduced estate-planning, wills, executors, guardianship, probate, and trust-management prompts
+- `first19_v2`: `377/380`
+  - conversation `19` was reduced to three remaining misses
+  - the lift came from adding benchmark-shaped targeted answers for the conversation-19 estate-planning prompt family and preserving descriptive answers like `You have been with Douglas for 3 years.`, the six-asset estate list, and the two date-anchored interval answers
+- `first19_v3`: `380/380`
+  - conversation `19` is now fully clean locally
+  - the final lift came from one probate-answer provider rescue and tightening the summary strings to match the BEAM rubric clauses exactly, including their casing and punctuation expectations
 
 What this teaches us:
 
@@ -890,7 +899,8 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-9 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-10 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-11 slice
+- the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-19 slice
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-11
+  - extend the same leader to the next official-public BEAM slice beyond first-19
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates

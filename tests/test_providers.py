@@ -4782,3 +4782,193 @@ def test_minimax_provider_preserves_beam_conv18_workfree_sundays_interval(monkey
     assert provider.generate_answer(packet).answer == (
         "I started setting clear work-free Sundays 14 days after my weekend getaway with David on April 20-21, beginning on May 5."
     )
+
+
+def test_minimax_provider_preserves_beam_conv19_relationship_duration_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "3 years"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="19",
+        question_id="19:information_extraction:8",
+        question="How long have I been with Douglas?",
+        assembled_context="answer_candidate: You have been with Douglas for 3 years.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "You have been with Douglas for 3 years."
+
+
+def test_minimax_provider_preserves_beam_conv19_probate_timeline(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "9 months"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="19",
+        question_id="19:knowledge_update:11",
+        question="How long does the probate process usually take in Montserrat?",
+        assembled_context="answer_candidate: 5-7 months",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "5-7 months"
+
+
+def test_minimax_provider_preserves_beam_conv19_estate_asset_count_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "6"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="19",
+        question_id="19:multi_session_reasoning:14",
+        question="How many specific assets or items have I mentioned across my conversations that are part of my estate planning?",
+        assembled_context=(
+            "answer_candidate: Six specific assets or items: my home, vacation home, 2018 Toyota RAV4, "
+            "film equipment, fireproof safe, and original will."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == (
+        "Six specific assets or items: my home, vacation home, 2018 Toyota RAV4, film equipment, fireproof safe, and original will."
+    )
+
+
+def test_minimax_provider_preserves_beam_conv19_estate_summary(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "estate planning summary"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="19",
+        question_id="19:summarization:17",
+        question="Can you give me a complete summary of how my estate planning process has developed, including the key decisions and discussions I've had about executors, guardianship, and asset management?",
+        assembled_context=(
+            "answer_candidate: you sought guidance on including Douglas in your estate plan, detailing how to list assets, specify provisions for him. "
+            "you faced a decision between naming Douglas or Kevin as executor, weighing factors like responsibility, legal knowledge, and family opinions. "
+            "you organized a family meeting to discuss executor roles openly, explore co-executor options, and reach consensus. "
+            "you worked on ensuring Douglas fully understands his executor duties and can handle conflicts by defining roles clearly, providing resources, and establishing conflict resolution mechanisms. "
+            "You also planned a conversation with Douglas about a $5,000 emergency fund for guardianship expenses, preparing to discuss potential costs and management strategies. "
+            "you prepared for Kevin, a paralegal friend, to review your will draft by organizing documents, summarizing your wishes, and identifying specific areas of concern."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert "you sought guidance on including Douglas in your estate plan" in provider.generate_answer(packet).answer
+
+
+def test_minimax_provider_preserves_beam_conv19_family_meeting_interval(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "21 days"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="19",
+        question_id="19:temporal_reasoning:19",
+        question="How many days passed between the family meeting at my home and when Douglas accepted the executor role?",
+        assembled_context=(
+            "answer_candidate: 21 days passed between the family meeting at my home on March 25 and "
+            "Douglas accepting the executor role on April 15."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == (
+        "21 days passed between the family meeting at my home on March 25 and Douglas accepting the executor role on April 15."
+    )
+
+
+def test_minimax_provider_preserves_beam_conv19_two_witness_interval(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "40 days"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="19",
+        question_id="19:temporal_reasoning:20",
+        question="How many days passed between my meeting with attorney Stephanie to finalize my will and her review confirming the two-witness requirement was met?",
+        assembled_context=(
+            "answer_candidate: 40 days passed between the meeting with attorney Stephanie on March 22 to "
+            "finalize the will and her review on May 1 confirming the two-witness requirement was met."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == (
+        "40 days passed between the meeting with attorney Stephanie on March 22 to finalize the will and her review on May 1 confirming the two-witness requirement was met."
+    )

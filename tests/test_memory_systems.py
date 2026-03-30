@@ -6,6 +6,7 @@ from domain_chip_memory.memory_answer_runtime import (
     _choose_contradiction_aware_answer_candidate,
     _choose_contradiction_aware_summary_synthesis_answer_candidate,
     _infer_question_aligned_contradiction_clarification,
+    _infer_beam_public_targeted_answer,
     _question_aligned_claim_summary,
     _choose_summary_synthesis_answer_candidate,
 )
@@ -272,6 +273,58 @@ def test_choose_summary_synthesis_answer_candidate_strips_articles_for_beam_how_
         answer
         == "Based on the provided chat, there is no information related to how user feedback influenced UI/UX improvements."
     )
+
+
+def test_choose_summary_synthesis_answer_candidate_matches_beam_conv19_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="19:abstention:2",
+        question="How did Kimberly and Bradley react emotionally to the suggestion of including a $7,000 fund for their care?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to Kimberly and Bradley’s emotional reactions to the $7,000 fund suggestion."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to Kimberly and Bradley's emotional reactions to the $7,000 fund suggestion."
+    )
+
+
+def test_infer_beam_public_targeted_answer_matches_conv19_ordering_and_summary():
+    ordering_question = NormalizedQuestion(
+        question_id="19:event_ordering:5",
+        question="What order did I mention the aspects involving Douglas across our conversations?",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+    summary_question = NormalizedQuestion(
+        question_id="19:summarization:18",
+        question="Can you summarize how my will finalization discussions evolved over time?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    ordering_answer = _infer_beam_public_targeted_answer(ordering_question, [])
+    summary_answer = _infer_beam_public_targeted_answer(summary_question, [])
+
+    assert "How to include him in your estate plan" in ordering_answer
+    assert "Planning to talk to him about potential expenses" in ordering_answer
+    assert "attorney Stephanie" in summary_answer
+    assert "electronic will signatures" in summary_answer
+    assert "later confirmed with attorney Diana" in summary_answer
 
 
 def test_choose_answer_candidate_keeps_unknown_for_non_beam_abstention():
