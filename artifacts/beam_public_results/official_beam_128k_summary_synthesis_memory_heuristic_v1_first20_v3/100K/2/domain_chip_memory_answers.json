@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "What are the specific ESLint rules from the Airbnb style guide that I enforced in this project?",
+      "llm_response": "Based on the provided chat, there is no information related to the specific ESLint rules enforced from the Airbnb style guide.",
+      "question_id": "2:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific ESLint rules enforced from the Airbnb style guide."
+    },
+    {
+      "question": "What specific bugs were logged in the Jira board besides the 'TypeError' in autocomplete.js?",
+      "llm_response": "Based on the provided chat, there is no information related to any other bugs logged in the Jira board besides the mentioned TypeError.",
+      "question_id": "2:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to any other bugs logged in the Jira board besides the mentioned TypeError."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I obtained an API key for this project?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have an API key for the project, but you also mentioned that you have never obtained one. Could you clarify which is correct",
+      "question_id": "2:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have an API key for the project, but you also mentioned that you have never obtained one. Could you clarify which is correct"
+    },
+    {
+      "question": "Have I ever fixed any bugs related to the autocomplete feature in my project?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you fixed bugs by adding null checks that reduced error rates, but you also mentioned never fixing any bugs related to the autocomplete feature. Could you clarify which is correct",
+      "question_id": "2:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you fixed bugs by adding null checks that reduced error rates, but you also mentioned never fixing any bugs related to the autocomplete feature. Could you clarify which is correct"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you list the order in which I brought up different aspects of implementing the city autocomplete feature across our conversations, in order? Mention ONLY and ONLY five items.",
+      "llm_response": "You mentioned aspects of the city autocomplete feature in this order: 1) Implementing debounce delay to reduce API calls, 2) Handling API response times exceeding the debounce delay, 3) Addressing rapid user input potentially bypassing debounce, 4) Managing the 5-item dropdown and error handling including HTTP 401 Unauthorized, 5) Reviewing event listener removal to prevent memory leaks in the autocomplete component",
+      "question_id": "2:event_ordering:5",
+      "predicted_answer": "You mentioned aspects of the city autocomplete feature in this order: 1) Implementing debounce delay to reduce API calls, 2) Handling API response times exceeding the debounce delay, 3) Addressing rapid user input potentially bypassing debounce, 4) Managing the 5-item dropdown and error handling including HTTP 401 Unauthorized, 5) Reviewing event listener removal to prevent memory leaks in the autocomplete component"
+    },
+    {
+      "question": "Can you list the order in which I brought up different aspects of handling errors and promise rejections in my weather app code throughout our conversations in order? Mention ONLY and ONLY five items.",
+      "llm_response": "You mentioned these aspects in this order: 1) Handling user-friendly messages for specific HTTP error codes while using asynchronous fetch calls, 2) Implementing try/catch blocks around async fetch calls to catch errors, 3) Encountering and addressing unhandled promise rejection warnings despite try/catch usage, 4) Improving error handling to better manage invalid city names, 5) Refining the fetch function to enhance user experience with error feedback",
+      "question_id": "2:event_ordering:6",
+      "predicted_answer": "You mentioned these aspects in this order: 1) Handling user-friendly messages for specific HTTP error codes while using asynchronous fetch calls, 2) Implementing try/catch blocks around async fetch calls to catch errors, 3) Encountering and addressing unhandled promise rejection warnings despite try/catch usage, 4) Improving error handling to better manage invalid city names, 5) Refining the fetch function to enhance user experience with error feedback"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "What technologies did I say I was using to start my project targeting that API endpoint?",
+      "llm_response": "You said you were using vanilla JavaScript ES2021, HTML5, and CSS3.",
+      "question_id": "2:information_extraction:7",
+      "predicted_answer": "You said you were using vanilla JavaScript ES2021, HTML5, and CSS3."
+    },
+    {
+      "question": "How did you recommend managing the flow of requests when my app risks overwhelming the service due to frequent retries and bursts of activity?",
+      "llm_response": "I recommended implementing a queue system combined with resetting counters based on elapsed time intervals, and to handle repeated retries, I suggested adding exponential backoff with capped delays to space out the queued API calls and prevent exceeding the allowed usage limits",
+      "question_id": "2:information_extraction:8",
+      "predicted_answer": "I recommended implementing a queue system combined with resetting counters based on elapsed time intervals, and to handle repeated retries, I suggested adding exponential backoff with capped delays to space out the queued API calls and prevent exceeding the allowed usage limits"
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "What are some common responses when something goes wrong with an API?",
+      "llm_response": "Typical API errors to handle include 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 429 Too Many Requests, and 500 Internal Server Error.",
+      "question_id": "2:instruction_following:9",
+      "predicted_answer": "Typical API errors to handle include 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 429 Too Many Requests, and 500 Internal Server Error."
+    },
+    {
+      "question": "When building an application that communicates with a REST API, what typical errors should I be prepared to handle?",
+      "llm_response": "Typical API errors to handle include 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 429 Too Many Requests, and 500 Internal Server Error",
+      "question_id": "2:instruction_following:10",
+      "predicted_answer": "Typical API errors to handle include 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 429 Too Many Requests, and 500 Internal Server Error"
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What is the daily call quota for the API key used in my application?",
+      "llm_response": "1,200 calls per day",
+      "question_id": "2:knowledge_update:11",
+      "predicted_answer": "1,200 calls per day"
+    },
+    {
+      "question": "What is the test coverage percentage for my API integration module?",
+      "llm_response": "78%",
+      "question_id": "2:knowledge_update:12",
+      "predicted_answer": "78%"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How many different features or concerns did I mention wanting to handle across my weather app conversations?",
+      "llm_response": "Four",
+      "question_id": "2:multi_session_reasoning:13",
+      "predicted_answer": "Four"
+    },
+    {
+      "question": "Between my fetch call latency and my autocomplete API response time, which one is currently faster based on my tests?",
+      "llm_response": "Your fetch call latency is faster than your autocomplete API response time.",
+      "question_id": "2:multi_session_reasoning:14",
+      "predicted_answer": "Your fetch call latency is faster than your autocomplete API response time."
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "Can you help me set up a caching system for my app's API responses? I'd like to keep it simple and straightforward.",
+      "llm_response": "Keep it simple with an in-memory cache or localStorage for short-lived API responses. That gives you a lightweight caching layer without introducing large libraries or frameworks",
+      "question_id": "2:preference_following:15",
+      "predicted_answer": "Keep it simple with an in-memory cache or localStorage for short-lived API responses. That gives you a lightweight caching layer without introducing large libraries or frameworks"
+    },
+    {
+      "question": "How can I track the status and results of each step in my deployment workflow?",
+      "llm_response": "Use automated workflow monitoring tools like GitHub Actions job summaries, status checks, artifacts, and notifications so each deployment step reports its result automatically. That is better than relying on manual deployment checks",
+      "question_id": "2:preference_following:16",
+      "predicted_answer": "Use automated workflow monitoring tools like GitHub Actions job summaries, status checks, artifacts, and notifications so each deployment step reports its result automatically. That is better than relying on manual deployment checks"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a comprehensive summary of how my weather app project has progressed, including the key features, improvements, and development steps we've discussed so far?",
+      "llm_response": "The weather app project began with a basic implementation using JavaScript and the OpenWeather API. I recommended modularizing the code, validating inputs, and managing configuration separately to enhance robustness. You explored adding an autocomplete feature with a debounce delay to improve user experience by reducing unnecessary API calls, implementing a debounce function, fetching suggestions, and updating the UI dynamically. You expressed a preference for keeping the app lightweight and dependency-free, prompting me to suggest simple caching mechanisms. You wanted to maintain full control by implementing custom features without external dependencies, leading to a step-by-step guide on defining requirements",
+      "question_id": "2:summarization:17",
+      "predicted_answer": "The weather app project began with a basic implementation using JavaScript and the OpenWeather API. I recommended modularizing the code, validating inputs, and managing configuration separately to enhance robustness. You explored adding an autocomplete feature with a debounce delay to improve user experience by reducing unnecessary API calls, implementing a debounce function, fetching suggestions, and updating the UI dynamically. You expressed a preference for keeping the app lightweight and dependency-free, prompting me to suggest simple caching mechanisms. You wanted to maintain full control by implementing custom features without external dependencies, leading to a step-by-step guide on defining requirements"
+    },
+    {
+      "question": "Can you summarize what I learned about implementing and improving city autocomplete features in my weather app?",
+      "llm_response": "You explored how to implement a city autocomplete feature using the OpenWeather Geocoding API with a 300ms debounce to reduce API calls. The implementation included adding error handling, displaying autocomplete suggestions, and fetching weather data for selected cities. You improved the feature by handling slow API responses with request cancellation using AbortController and considered adjusting debounce delays for rapid typing. You reviewed ways to optimize API call efficiency through caching, conditional fetching, and adding loading indicators",
+      "question_id": "2:summarization:18",
+      "predicted_answer": "You explored how to implement a city autocomplete feature using the OpenWeather Geocoding API with a 300ms debounce to reduce API calls. The implementation included adding error handling, displaying autocomplete suggestions, and fetching weather data for selected cities. You improved the feature by handling slow API responses with request cancellation using AbortController and considered adjusting debounce delays for rapid typing. You reviewed ways to optimize API call efficiency through caching, conditional fetching, and adding loading indicators"
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many days passed between when I obtained my OpenWeather API key and when I completed the UI wireframe for my weather app?",
+      "llm_response": "2 days",
+      "question_id": "2:temporal_reasoning:19",
+      "predicted_answer": "2 days"
+    },
+    {
+      "question": "How many days do I have between scheduling the meeting and the start of the testing period for my project?",
+      "llm_response": "21 days",
+      "question_id": "2:temporal_reasoning:20",
+      "predicted_answer": "21 days"
+    }
+  ]
+}

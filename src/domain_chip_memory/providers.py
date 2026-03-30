@@ -1465,6 +1465,18 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if (
         answer_candidate
         and cleaned_lower == answer_candidate.lower()
+        and question_lower.startswith(("how much more ", "how much faster", "what is the average ", "how many minutes did i exceed", "how many years older"))
+        and (
+            duration_or_count_pattern.fullmatch(answer_candidate)
+            or total_count_pattern.fullmatch(answer_candidate)
+            or compound_duration_pattern.fullmatch(answer_candidate)
+            or re.fullmatch(r"\d+(?:\.\d+)?", answer_candidate)
+        )
+    ):
+        return cleaned
+    if (
+        answer_candidate
+        and cleaned_lower == answer_candidate.lower()
         and question_lower.startswith(("how much time", "how long", "how many"))
         and (
             duration_or_count_pattern.fullmatch(answer_candidate)

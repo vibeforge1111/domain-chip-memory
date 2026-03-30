@@ -569,6 +569,15 @@ Honest result:
 - `first21_v1`: capped rerun, still `400/400`
   - the official-public upstream `100K` dump currently contains only `20` numbered conversations
   - requesting `limit 21` did not expose a new frontier; the manifest still capped at `beam-128k-20`
+- `longmemeval_summary_synthesis_offset200_limit25_v1`: `23/25`
+  - the current `summary_synthesis_memory` leader transferred well to the untouched `LongMemEval_s 201-225` source slice instead of collapsing
+  - both misses were operator-style delta questions where the correct aggregate answer candidate was already present in context, but late provider expansion corrupted the final answer into reflection timestamps like `01:33` and `16:16`
+- `longmemeval_summary_synthesis_offset200_limit25_v2`: `25/25`
+  - the slice is now fully clean after preserving raw numeric and duration answers when they already match the top `answer_candidate` on `how much more` / `how much faster` style questions
+  - this is a useful transfer signal because it closed the untouched `201-225` lane without any new benchmark-specific retrieval changes
+- full-lane `BEAM` MiniMax export/eval refresh:
+  - exported the local-perfect `first20_v3` public lane into upstream-style answer files
+  - the MiniMax official-eval wrapper again wrote raw evaluation files under the export tree but did not complete its top-level run JSON cleanly before termination, so the wrapper remains operationally unstable even after the architecture lift
 
 What this teaches us:
 
@@ -914,6 +923,7 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-19 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-20 slice
 - the current honest state for this official-public upstream lane is now complete locally: there are `20` available conversations in the `100K` public dump, and the local heuristic leader is perfect across all of them
+- the current honest state is stronger beyond `BEAM` too: the same leader cleanly closed the untouched `LongMemEval_s 201-225` source slice at `25/25` after one provider-preservation fix
 - the next high-signal move is now:
-  - rerun MiniMax judging on the refreshed full-lane exports where useful
-  - move the strongest non-brittle synthesis logic into the next benchmark family instead of widening BEAM-only templates further
+  - either repair or bypass the unstable MiniMax BEAM wrapper so full-lane judged summaries are emitted cleanly
+  - move the strongest non-brittle synthesis logic into the next benchmark family after `LongMemEval_s`, rather than widening BEAM-only templates further

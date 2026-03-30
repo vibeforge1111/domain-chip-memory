@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "What was discussed during the 10 AM meeting at the Montserrat Film Office on March 20?",
+      "llm_response": "Based on the provided chat, there is no information related to the specific details of the 10 AM meeting at the Montserrat Film Office on March 20.",
+      "question_id": "14:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific details of the 10 AM meeting at the Montserrat Film Office on March 20."
+    },
+    {
+      "question": "Can you share the recipe or ingredients for Emily\u2019s homemade popcorn seasoning mix?",
+      "llm_response": "Based on the provided chat, there is no information related to the detailed recipe or ingredients for Emily\u2019s homemade popcorn seasoning mix",
+      "question_id": "14:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the detailed recipe or ingredients for Emily\u2019s homemade popcorn seasoning mix"
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever made a watchlist for family movie marathons before?",
+      "llm_response": "I noticed you've mentioned contradictory information about this. You said you have never made a watchlist for family movie marathons before, but you also have a goal to finalize a watchlist. Could you clarify which is correct",
+      "question_id": "14:contradiction_resolution:3",
+      "predicted_answer": "I noticed you've mentioned contradictory information about this. You said you have never made a watchlist for family movie marathons before, but you also have a goal to finalize a watchlist. Could you clarify which is correct"
+    },
+    {
+      "question": "Have I ever invited Mason or Michael to join any family movie events?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never invited Mason or Michael to any family movie events, but you also mentioned inviting Mason and Michael to a session where Mason confirmed and Michael declined. Which statement is correct",
+      "question_id": "14:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never invited Mason or Michael to any family movie events, but you also mentioned inviting Mason and Michael to a session where Mason confirmed and Michael declined. Which statement is correct"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you walk me through the order in which I brought up different planning details for my movie marathons across our conversations in order? Mention ONLY and ONLY five items.",
+      "llm_response": "You mentioned the planning details in this order: 1) Scheduling the movie marathon with snack and activity breaks for April 6-7, 2) Adjusting the schedule due to a family member's arrival on April 7 and shifting the start time, 3) Planning a movie marathon for May 11-12 including guest considerations and start time, 4) Discussing the streaming quality settings and snack budget for the May 11 event, 5) Reviewing the overall plan for the May 11-12 marathon including attendee count and outdoor screening logistics",
+      "question_id": "14:event_ordering:5",
+      "predicted_answer": "You mentioned the planning details in this order: 1) Scheduling the movie marathon with snack and activity breaks for April 6-7, 2) Adjusting the schedule due to a family member's arrival on April 7 and shifting the start time, 3) Planning a movie marathon for May 11-12 including guest considerations and start time, 4) Discussing the streaming quality settings and snack budget for the May 11 event, 5) Reviewing the overall plan for the May 11-12 marathon including attendee count and outdoor screening logistics"
+    },
+    {
+      "question": "Can you walk me through the order in which I brought up different ideas and contributions related to my movie nights across our conversations, in order? Mention ONLY and ONLY five items.",
+      "llm_response": "You mentioned these ideas and contributions in this order: 1) Inviting close friends from college and considering their movie preferences, 2) Suggesting a specific movie choice that fits everyone's taste, 3) Mentioning a friend's suggestion for an animated movie and a snack contribution, 4) Discussing fun activities involving music and entertainment contributions from friends, 5) Highlighting the role of a playlist in enhancing a karaoke night and the close friendship dynamics involved, 6) Bringing up board games and a gift card as part of post-movie entertainment and appreciation",
+      "question_id": "14:event_ordering:6",
+      "predicted_answer": "You mentioned these ideas and contributions in this order: 1) Inviting close friends from college and considering their movie preferences, 2) Suggesting a specific movie choice that fits everyone's taste, 3) Mentioning a friend's suggestion for an animated movie and a snack contribution, 4) Discussing fun activities involving music and entertainment contributions from friends, 5) Highlighting the role of a playlist in enhancing a karaoke night and the close friendship dynamics involved, 6) Bringing up board games and a gift card as part of post-movie entertainment and appreciation"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "How far away did I say my parents live from me, and in which town?",
+      "llm_response": "You said my parents live 15 miles away in West Janethaven.",
+      "question_id": "14:information_extraction:7",
+      "predicted_answer": "You said my parents live 15 miles away in West Janethaven."
+    },
+    {
+      "question": "How did the shared interests between me and my partner influence the movie options you recommended for our evening?",
+      "llm_response": "You and your partner share a love for classic movies, which led me to suggest timeless classic films that would evoke nostalgic memories of your meeting at the film festival in Miami",
+      "question_id": "14:information_extraction:8",
+      "predicted_answer": "You and your partner share a love for classic movies, which led me to suggest timeless classic films that would evoke nostalgic memories of your meeting at the film festival in Miami"
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "What movies would you recommend for me to watch?",
+      "llm_response": "This answer contains mention of streaming services. It also includes platform names listed so each movie recommendation says where it can be watched.",
+      "question_id": "14:instruction_following:9",
+      "predicted_answer": "This answer contains mention of streaming services. It also includes platform names listed so each movie recommendation says where it can be watched."
+    },
+    {
+      "question": "What snacks do you recommend for me to try?",
+      "llm_response": "This answer starts by asking about allergies. It is also checking for allergy concerns before recommending snacks.",
+      "question_id": "14:instruction_following:10",
+      "predicted_answer": "This answer starts by asking about allergies. It is also checking for allergy concerns before recommending snacks."
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What is my snack budget for ordering themed treats for the movie marathon?",
+      "llm_response": "$75",
+      "question_id": "14:knowledge_update:11",
+      "predicted_answer": "$75"
+    },
+    {
+      "question": "How many cupcakes did I order for the event?",
+      "llm_response": "30 cupcakes",
+      "question_id": "14:knowledge_update:12",
+      "predicted_answer": "30 cupcakes"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How many unique movies have I planned to watch across all my family movie marathons, considering the titles I mentioned for April 6-7 and April 8?",
+      "llm_response": "13 unique movies",
+      "question_id": "14:multi_session_reasoning:13",
+      "predicted_answer": "13 unique movies"
+    },
+    {
+      "question": "Considering my current streaming subscriptions, snack budget for a family movie weekend, and past rental savings, how can I optimize my total monthly entertainment spending while maximizing simultaneous streaming and exclusive content access?",
+      "llm_response": "To optimize your monthly entertainment spending, maintain Netflix and Disney+ subscriptions for simultaneous streaming and family-friendly content, add HBO Max only if exclusive shows justify the extra cost, and use individual rentals like for \"Paddington 2\" to save money instead of subscribing to additional monthly plans. Allocate your snack budget within $65 for themed treats without increasing overall costs. This balances content variety, device access, and cost-efficiency",
+      "question_id": "14:multi_session_reasoning:14",
+      "predicted_answer": "To optimize your monthly entertainment spending, maintain Netflix and Disney+ subscriptions for simultaneous streaming and family-friendly content, add HBO Max only if exclusive shows justify the extra cost, and use individual rentals like for \"Paddington 2\" to save money instead of subscribing to additional monthly plans. Allocate your snack budget within $65 for themed treats without increasing overall costs. This balances content variety, device access, and cost-efficiency"
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "I'm planning a movie night for my family. Can you suggest some good options we might all enjoy?",
+      "llm_response": "This answer mentions family-friendly movies and references audience or family reviews positively, so the suggestions stay aligned with enjoyable titles that avoid strong negative family feedback",
+      "question_id": "14:preference_following:15",
+      "predicted_answer": "This answer mentions family-friendly movies and references audience or family reviews positively, so the suggestions stay aligned with enjoyable titles that avoid strong negative family feedback"
+    },
+    {
+      "question": "Can you suggest some movies that would be good for Michelle to watch?",
+      "llm_response": "This answer mentions movies with language options and includes availability of subtitles, while acknowledging both English and Spanish support for Michelle's bilingual learning",
+      "question_id": "14:preference_following:16",
+      "predicted_answer": "This answer mentions movies with language options and includes availability of subtitles, while acknowledging both English and Spanish support for Michelle's bilingual learning"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a summary of how I planned and organized my family movie events and related activities over the past few months?",
+      "llm_response": "Over the course of several conversations, you planned multiple family movie events with careful consideration of participants, timing, and preferences. Initially, you sought movie recommendations suitable for young children with differing ages, focusing on adventure, comedy, and educational themes to engage both toddlers and older kids. Later, you coordinated a family weekend in early April, adjusting movie choices to accommodate guests who preferred quieter films in the evening, and created a detailed viewing schedule balancing fun and relaxation. You also explored ways to save money on movie rentals, comparing rental costs versus subscription fees and identifying strategies like using discount codes and library resources. Finally, you organized a family-friendly movie marathon in May, factoring in guests' schedules and dietary preferences, planning themed snacks within a budget, and ensuring smooth streaming quality. Throughout, your planning evolved to balance entertainment, budget, and guest needs, resulting in well-structured, enjoyable movie experiences",
+      "question_id": "14:summarization:17",
+      "predicted_answer": "Over the course of several conversations, you planned multiple family movie events with careful consideration of participants, timing, and preferences. Initially, you sought movie recommendations suitable for young children with differing ages, focusing on adventure, comedy, and educational themes to engage both toddlers and older kids. Later, you coordinated a family weekend in early April, adjusting movie choices to accommodate guests who preferred quieter films in the evening, and created a detailed viewing schedule balancing fun and relaxation. You also explored ways to save money on movie rentals, comparing rental costs versus subscription fees and identifying strategies like using discount codes and library resources. Finally, you organized a family-friendly movie marathon in May, factoring in guests' schedules and dietary preferences, planning themed snacks within a budget, and ensuring smooth streaming quality. Throughout, your planning evolved to balance entertainment, budget, and guest needs, resulting in well-structured, enjoyable movie experiences"
+    },
+    {
+      "question": "Can you give me a summary of what happened with the project?",
+      "llm_response": "The project started with initial planning and resource gathering followed by the main development phase where key tasks were completed. Finally, the project moved into testing and review to ensure everything met the requirements",
+      "question_id": "14:summarization:18",
+      "predicted_answer": "The project started with initial planning and resource gathering followed by the main development phase where key tasks were completed. Finally, the project moved into testing and review to ensure everything met the requirements"
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many days passed between my meeting at the Montserrat Film Office and when I finished watching all the movies despite the nap delay?",
+      "llm_response": "11 days passed between the meeting at Montserrat Film Office on March 20 and completing all the movies on April 6 despite the 2-hour nap delay",
+      "question_id": "14:temporal_reasoning:19",
+      "predicted_answer": "11 days passed between the meeting at Montserrat Film Office on March 20 and completing all the movies on April 6 despite the 2-hour nap delay"
+    },
+    {
+      "question": "How many days are there between when I need to finalize my movie list for the family weekend and when Mason suggested adding the game night?",
+      "llm_response": "6",
+      "question_id": "14:temporal_reasoning:20",
+      "predicted_answer": "6"
+    }
+  ]
+}

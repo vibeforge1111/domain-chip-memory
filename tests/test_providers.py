@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -8,6 +9,7 @@ from domain_chip_memory.contracts import AnswerCandidate
 from domain_chip_memory.providers import (
     OpenAIChatCompletionsProvider,
     ProviderResponse,
+    _expand_answer_from_context,
     build_provider_contract_summary,
     get_provider,
 )
@@ -5058,3 +5060,19 @@ def test_minimax_provider_preserves_beam_conv20_prior_art_interval(monkeypatch):
     assert provider.generate_answer(packet).answer == (
         "There were 35 days between planning to complete the prior art search by April 10, 2024, and aiming to file the provisional patent by May 15, 2024."
     )
+
+
+def test_expand_answer_from_context_preserves_longmemeval_summary_synthesis_operator_candidates():
+    from domain_chip_memory.loaders import load_longmemeval_json
+    from domain_chip_memory.packet_builders import build_summary_synthesis_memory_packets
+
+    samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
+    subset = [sample for sample in samples if sample.questions[0].question_id in {"0ea62687", "61f8c8f8"}]
+    _, packets = build_summary_synthesis_memory_packets(subset, max_observations=6, max_reflections=3, max_topic_support=2)
+    packet_map = {packet.question_id: packet for packet in packets}
+
+    mpg_packet = packet_map["0ea62687"]
+    assert _expand_answer_from_context(mpg_packet.question, "2", mpg_packet.assembled_context) == "2"
+
+    run_packet = packet_map["61f8c8f8"]
+    assert _expand_answer_from_context(run_packet.question, "10 minutes", run_packet.assembled_context) == "10 minutes"

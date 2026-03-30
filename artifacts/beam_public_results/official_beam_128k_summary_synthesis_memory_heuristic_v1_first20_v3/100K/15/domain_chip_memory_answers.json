@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "What are the qualifications or expertise of the podiatrist whose article I read about Primeknit reducing blister risk?",
+      "llm_response": "Based on the provided chat, there is no information related to the podiatrist\u2019s qualifications or expertise.",
+      "question_id": "15:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to the podiatrist\u2019s qualifications or expertise."
+    },
+    {
+      "question": "What was the atmosphere like during the sneaker art exhibit Lauren and I attended at the Montserrat Museum?",
+      "llm_response": "Based on the provided chat, there is no information related to the atmosphere of the sneaker art exhibit.",
+      "question_id": "15:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the atmosphere of the sneaker art exhibit."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever met Kyle or been to any sneaker expos?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you've known Kyle and met him at a sneaker expo, but you also said you've never met Kyle or attended any sneaker expos. Could you clarify which is correct",
+      "question_id": "15:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you've known Kyle and met him at a sneaker expo, but you also said you've never met Kyle or attended any sneaker expos. Could you clarify which is correct"
+    },
+    {
+      "question": "Have I ever placed an online order for sneakers before?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you placed an online order for sneakers, but you also mentioned that you've never placed any online sneaker orders. Could you clarify which is correct",
+      "question_id": "15:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you placed an online order for sneakers, but you also mentioned that you've never placed any online sneaker orders. Could you clarify which is correct"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you list the order in which I brought up different sneaker shopping experiences and related details throughout our conversations in order? Mention ONLY and ONLY four items.",
+      "llm_response": "You mentioned sneaker shopping experiences and related details in this order: 1) Planning a visit to a specific store on Main Street, 2) Placing an online order with a discount code, 3) Visiting the same store to try a particular running shoe, 4) Trying another shoe model at the same store and discussing sizing preferences",
+      "question_id": "15:event_ordering:5",
+      "predicted_answer": "You mentioned sneaker shopping experiences and related details in this order: 1) Planning a visit to a specific store on Main Street, 2) Placing an online order with a discount code, 3) Visiting the same store to try a particular running shoe, 4) Trying another shoe model at the same store and discussing sizing preferences"
+    },
+    {
+      "question": "Can you walk me through the order in which I brought up different safety and comfort features of my sneakers during our chats, in order? Mention ONLY and ONLY five items.",
+      "llm_response": "You mentioned the sneaker features in this order: 1) Concerns about injury risk on uneven terrain and need for good grip soles, 2) The traction benefits of the Continental rubber outsole on Ultraboosts, 3) Considering switching to Brooks Ghost to avoid shin splints after May 5, 4) The reflective panels on New Balance 990v5 improving night visibility, 5) Using Nike Dunk Low with orthotic insoles and how they work with the Zoom Air unit for responsiveness",
+      "question_id": "15:event_ordering:6",
+      "predicted_answer": "You mentioned the sneaker features in this order: 1) Concerns about injury risk on uneven terrain and need for good grip soles, 2) The traction benefits of the Continental rubber outsole on Ultraboosts, 3) Considering switching to Brooks Ghost to avoid shin splints after May 5, 4) The reflective panels on New Balance 990v5 improving night visibility, 5) Using Nike Dunk Low with orthotic insoles and how they work with the Zoom Air unit for responsiveness"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "When am I planning to visit the store on Main Street in East Janethaven?",
+      "llm_response": "Next Saturday at 3 PM",
+      "question_id": "15:information_extraction:7",
+      "predicted_answer": "Next Saturday at 3 PM"
+    },
+    {
+      "question": "Which option did I say I chose after trying both at the store?",
+      "llm_response": "You said you chose the Adidas Ultraboost over the Nike React Infinity Run after trying both on March 30 at Foot Locker.",
+      "question_id": "15:information_extraction:8",
+      "predicted_answer": "You said you chose the Adidas Ultraboost over the Nike React Infinity Run after trying both on March 30 at Foot Locker."
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "What features I should pay attnetion to in sneakers?",
+      "llm_response": "This answer includes comfort related to physical well-being. It also includes injury prevention aspects such as support, cushioning, and reducing stress on the feet.",
+      "question_id": "15:instruction_following:9",
+      "predicted_answer": "This answer includes comfort related to physical well-being. It also includes injury prevention aspects such as support, cushioning, and reducing stress on the feet."
+    },
+    {
+      "question": "What materials are commonly used in making modern sneakers, and what should I know about their overall quality?",
+      "llm_response": "This answer mentions eco-friendly materials such as recycled or renewable components. It also discusses environmental impact of materials when describing overall sneaker quality.",
+      "question_id": "15:instruction_following:10",
+      "predicted_answer": "This answer mentions eco-friendly materials such as recycled or renewable components. It also discusses environmental impact of materials when describing overall sneaker quality."
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What time should I plan to visit Foot Locker next Saturday?",
+      "llm_response": "4 PM",
+      "question_id": "15:knowledge_update:11",
+      "predicted_answer": "4 PM"
+    },
+    {
+      "question": "What is my annual budget for buying sneakers?",
+      "llm_response": "$650",
+      "question_id": "15:knowledge_update:12",
+      "predicted_answer": "$650"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How many different shoe sizes have I mentioned across my messages?",
+      "llm_response": "Two sizes: 11 and 11.5",
+      "question_id": "15:multi_session_reasoning:13",
+      "predicted_answer": "Two sizes: 11 and 11.5"
+    },
+    {
+      "question": "How does the price I paid for the Ultraboost compare to my original budget limit for sneakers?",
+      "llm_response": "The price you paid for the Ultraboost is below your original budget limit of $200.",
+      "question_id": "15:multi_session_reasoning:14",
+      "predicted_answer": "The price you paid for the Ultraboost is below your original budget limit of $200."
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "I'm looking to buy a new pair of sneakers soon. Can you suggest some options I might like?",
+      "llm_response": "This answer recommends sneakers described as sleek or modern. It also includes options in neutral colors like black or gray",
+      "question_id": "15:preference_following:15",
+      "predicted_answer": "This answer recommends sneakers described as sleek or modern. It also includes options in neutral colors like black or gray"
+    },
+    {
+      "question": "I'm looking to get a new pair of shoes soon. What options would you suggest for different occasions?",
+      "llm_response": "This answer mentions multiple brands. It also suggests different shoes for different occasions or activities",
+      "question_id": "15:preference_following:16",
+      "predicted_answer": "This answer mentions multiple brands. It also suggests different shoes for different occasions or activities"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a summary of how my sneaker preferences and choices have developed over our conversations?",
+      "llm_response": "Over the course of our discussions, your sneaker preferences and choices evolved through several stages. Initially, you sought comfortable daily wear options suitable for an active lifestyle, leading to recommendations like the Adidas Ultraboost, Nike Air Zoom Pegasus 38, and others known for cushioning and support. You then focused on specific details such as sizing and breaking in the Ultraboosts to maximize comfort. Later, you considered Allbirds, influenced by your partner Lauren's preference, weighing their comfort, sustainability, and minimalist style against your existing Ultraboosts. This led to plans to try Allbirds to see how they compare. Subsequently, you evaluated loyalty between Brooks for running and Adidas for casual wear, reflecting on your 3-mile run experience and deciding to commit to Brooks Ghost 14 for running due to its cushioning and support, while continuing with Adidas Ultraboost for casual use. Finally, you explored options for hiking shoes suitable for Montserrat's Oriole Trail, comparing New Balance 990v5 with hiking-specific models like Salomon X Ultra 3 GTX and Merrell Moab 2, focusing on traction and moisture-wicking properties, with a recommendation toward specialized hiking footwear for better performance",
+      "question_id": "15:summarization:17",
+      "predicted_answer": "Over the course of our discussions, your sneaker preferences and choices evolved through several stages. Initially, you sought comfortable daily wear options suitable for an active lifestyle, leading to recommendations like the Adidas Ultraboost, Nike Air Zoom Pegasus 38, and others known for cushioning and support. You then focused on specific details such as sizing and breaking in the Ultraboosts to maximize comfort. Later, you considered Allbirds, influenced by your partner Lauren's preference, weighing their comfort, sustainability, and minimalist style against your existing Ultraboosts. This led to plans to try Allbirds to see how they compare. Subsequently, you evaluated loyalty between Brooks for running and Adidas for casual wear, reflecting on your 3-mile run experience and deciding to commit to Brooks Ghost 14 for running due to its cushioning and support, while continuing with Adidas Ultraboost for casual use. Finally, you explored options for hiking shoes suitable for Montserrat's Oriole Trail, comparing New Balance 990v5 with hiking-specific models like Salomon X Ultra 3 GTX and Merrell Moab 2, focusing on traction and moisture-wicking properties, with a recommendation toward specialized hiking footwear for better performance"
+    },
+    {
+      "question": "Can you give me a quick summary of the sneaker options and advice we've talked about for my daily wear and activities?",
+      "llm_response": "You explored several comfortable sneaker options for daily wear, including Adidas Ultraboost, Nike Air Zoom Pegasus 38, New Balance 990v5, Saucony Ride ISO 4, Brooks Ghost 14, and Asics Gel-Kayano 28. You showed particular interest in the Adidas Ultraboost for its cushioning and energy return, and received sizing and break-in tips for them. Later, you considered Allbirds as a comfortable, sustainable alternative favored by your partner, with advice on their features and how they compare to Ultraboosts. Additionally, you evaluated Brooks Ghost 14 for running and Adidas Ultraboost for casual wear based on your recent experiences, deciding to commit to Brooks for running and Adidas for daily use. Finally, for hiking on Montserrat's Oriole Trail, you were advised that specialized hiking shoes like Salomon X Ultra 3 GTX or Merrell Moab 2 would be better than New Balance 990v5 due to terrain and moisture-wicking needs",
+      "question_id": "15:summarization:18",
+      "predicted_answer": "You explored several comfortable sneaker options for daily wear, including Adidas Ultraboost, Nike Air Zoom Pegasus 38, New Balance 990v5, Saucony Ride ISO 4, Brooks Ghost 14, and Asics Gel-Kayano 28. You showed particular interest in the Adidas Ultraboost for its cushioning and energy return, and received sizing and break-in tips for them. Later, you considered Allbirds as a comfortable, sustainable alternative favored by your partner, with advice on their features and how they compare to Ultraboosts. Additionally, you evaluated Brooks Ghost 14 for running and Adidas Ultraboost for casual wear based on your recent experiences, deciding to commit to Brooks for running and Adidas for daily use. Finally, for hiking on Montserrat's Oriole Trail, you were advised that specialized hiking shoes like Salomon X Ultra 3 GTX or Merrell Moab 2 would be better than New Balance 990v5 due to terrain and moisture-wicking needs"
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many days passed between when I got the size 11 Ultraboost and when I reordered the size 11.5?",
+      "llm_response": "One day passed between when I got the size 11 Ultraboost on April 30 and when I reordered the size 11.5 on May 1.",
+      "question_id": "15:temporal_reasoning:19",
+      "predicted_answer": "One day passed between when I got the size 11 Ultraboost on April 30 and when I reordered the size 11.5 on May 1."
+    },
+    {
+      "question": "How many months are there between when I planned to reach my daily walking goal and the festival I\u2019m preparing my sneaker outfit for?",
+      "llm_response": "There are about 4 months between April 15, 2024, when I planned to reach my daily walking goal, and August 22, 2024, the date of the festival I\u2019m preparing my sneaker outfit for.",
+      "question_id": "15:temporal_reasoning:20",
+      "predicted_answer": "There are about 4 months between April 15, 2024, when I planned to reach my daily walking goal, and August 22, 2024, the date of the festival I\u2019m preparing my sneaker outfit for."
+    }
+  ]
+}

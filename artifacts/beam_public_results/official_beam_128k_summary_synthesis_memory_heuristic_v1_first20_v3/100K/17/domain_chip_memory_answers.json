@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "What mindfulness techniques were introduced to reduce stress to 4/10 by May 1?",
+      "llm_response": "Based on the provided chat, there is no information related to the specific mindfulness techniques introduced.",
+      "question_id": "17:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific mindfulness techniques introduced."
+    },
+    {
+      "question": "What was the atmosphere like at the dinner celebrating the casting completion on April 20?",
+      "llm_response": "Based on the provided chat, there is no information related to the atmosphere of the April 20 dinner.",
+      "question_id": "17:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the atmosphere of the April 20 dinner."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever declined meetings to protect my writing time?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you declined a meeting to protect your writing time, but you also mentioned that you've never declined any meetings for that reason. Which statement is correct",
+      "question_id": "17:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you declined a meeting to protect your writing time, but you also mentioned that you've never declined any meetings for that reason. Which statement is correct"
+    },
+    {
+      "question": "Have I ever attended any location scouts with Jeremy?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you coordinated a location scout with Jeremy, but you also mentioned that you've never attended any location scouts with him. Could you clarify which is correct",
+      "question_id": "17:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you coordinated a location scout with Jeremy, but you also mentioned that you've never attended any location scouts with him. Could you clarify which is correct"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you list the order in which I brought up different strategies and support options for managing my workload throughout our conversations in order? Mention ONLY and ONLY five items.",
+      "llm_response": "You mentioned these strategies and support options in this order: 1) Discussing advice from an experienced mentor on schedule management, 2) Considering task organization tools inspired by that advice, 3) Hiring an agency for social media management based on delegation recommendations, 4) Thinking about bringing on a part-time assistant following a hiring suggestion, 5) Reviewing a meeting with the mentor focusing on audience engagement strategies",
+      "question_id": "17:event_ordering:5",
+      "predicted_answer": "You mentioned these strategies and support options in this order: 1) Discussing advice from an experienced mentor on schedule management, 2) Considering task organization tools inspired by that advice, 3) Hiring an agency for social media management based on delegation recommendations, 4) Thinking about bringing on a part-time assistant following a hiring suggestion, 5) Reviewing a meeting with the mentor focusing on audience engagement strategies"
+    },
+    {
+      "question": "Can you list the order in which I brought up different aspects of my creative collaborations and related plans throughout our conversations in order? Mention ONLY and ONLY six items.",
+      "llm_response": "You mentioned aspects of your creative collaborations and related plans in this order: 1) Your concern about balancing time between work and a creative contact you met at a film festival, 2) Stress about an upcoming weekend retreat suggested by that same contact and your recent productivity improvements, 3) Worries about a collaboration with another creative partner involving a storyboard and visuals, 4) Hosting a virtual brainstorming session with a different collaborator and thinking about task prioritization, 5) Planning a creative workshop with the first contact and coordinating with local artists, followed by a question about backup plans for that workshop",
+      "question_id": "17:event_ordering:6",
+      "predicted_answer": "You mentioned aspects of your creative collaborations and related plans in this order: 1) Your concern about balancing time between work and a creative contact you met at a film festival, 2) Stress about an upcoming weekend retreat suggested by that same contact and your recent productivity improvements, 3) Worries about a collaboration with another creative partner involving a storyboard and visuals, 4) Hosting a virtual brainstorming session with a different collaborator and thinking about task prioritization, 5) Planning a creative workshop with the first contact and coordinating with local artists, followed by a question about backup plans for that workshop"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "Which days did I say my kids have their afterschool activities at their school?",
+      "llm_response": "You said the afterschool activities are on Tuesdays and Thursdays.",
+      "question_id": "17:information_extraction:7",
+      "predicted_answer": "You said the afterschool activities are on Tuesdays and Thursdays."
+    },
+    {
+      "question": "How did I plan to make the most of my regular video calls with that experienced industry professional to improve how I handle my busy schedule?",
+      "llm_response": "You planned to prepare specific questions about managing multiple projects and setting boundaries between work and personal life, ask for targeted advice during your weekly video calls, and follow up afterward with a thank-you email summarizing the key points discussed and your intended actions",
+      "question_id": "17:information_extraction:8",
+      "predicted_answer": "You planned to prepare specific questions about managing multiple projects and setting boundaries between work and personal life, ask for targeted advice during your weekly video calls, and follow up afterward with a thank-you email summarizing the key points discussed and your intended actions"
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "When is my meetings at Montserrat Studios?",
+      "llm_response": "This answer contains date shown as MM/DD/YYYY.",
+      "question_id": "17:instruction_following:9",
+      "predicted_answer": "This answer contains date shown as MM/DD/YYYY."
+    },
+    {
+      "question": "When was my meetings at East Janethaven Library?",
+      "llm_response": "This answer contains date shown as MM/DD/YYYY.",
+      "question_id": "17:instruction_following:10",
+      "predicted_answer": "This answer contains date shown as MM/DD/YYYY."
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What is the total budget allocated for post-production software licenses including any additional plugins?",
+      "llm_response": "$6,200",
+      "question_id": "17:knowledge_update:11",
+      "predicted_answer": "$6,200"
+    },
+    {
+      "question": "How many days are scheduled for the sound mixing sessions with Jeremy?",
+      "llm_response": "Five days",
+      "question_id": "17:knowledge_update:12",
+      "predicted_answer": "Five days"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How many scenes had I filmed in total by July 5 and how many were left to film after that?",
+      "llm_response": "I had filmed 12 scenes by July 5 and had 4 scenes left to film.",
+      "question_id": "17:multi_session_reasoning:13",
+      "predicted_answer": "I had filmed 12 scenes by July 5 and had 4 scenes left to film."
+    },
+    {
+      "question": "How many different types of reminders or plans have I mentioned using to manage my tasks and family events?",
+      "llm_response": "Three types: Todoist for daily and weekend plans, Google Calendar for family appointments and school events, and Asana for pilot deadlines.",
+      "question_id": "17:multi_session_reasoning:14",
+      "predicted_answer": "Three types: Todoist for daily and weekend plans, Google Calendar for family appointments and school events, and Asana for pilot deadlines."
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "How can I organize my workday to make the most of my productivity?",
+      "llm_response": "This answer recommends dedicated morning blocks for creative tasks.",
+      "question_id": "17:preference_following:15",
+      "predicted_answer": "This answer recommends dedicated morning blocks for creative tasks."
+    },
+    {
+      "question": "Can you help me organize my tasks so I can easily update and share them with others?",
+      "llm_response": "This answer recommends digital platforms for task management. It also mentions features like real-time updates or collaboration.",
+      "question_id": "17:preference_following:16",
+      "predicted_answer": "This answer recommends digital platforms for task management. It also mentions features like real-time updates or collaboration."
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a summary of how I've been managing my time, stress, and creative collaborations throughout our recent conversations?",
+      "llm_response": "Over the course of our discussions, you have developed a comprehensive approach to balancing your work, family, friendships, and creative projects. Initially, you expressed concerns about managing time between work and friends like Carla, leading to a detailed weekly schedule that includes dedicated monthly friend time and family activities. To address moderate stress related to balancing work and family, you incorporated mindfulness, regular exercise, and structured breaks into your routine, alongside strategies for realistic goal setting and flexibility. You also integrated task management tools like Todoist to organize both daily responsibilities and special events, such as a weekend retreat suggested by Carla. Additionally, you planned collaborative creative sessions, including workshops with local artists, ensuring clear communication and contingency plans for scheduling conflicts. Throughout, your approach evolved to emphasize maintaining meaningful relationships, managing stress proactively, and organizing tasks effectively to support both personal well-being and creative productivity",
+      "question_id": "17:summarization:17",
+      "predicted_answer": "Over the course of our discussions, you have developed a comprehensive approach to balancing your work, family, friendships, and creative projects. Initially, you expressed concerns about managing time between work and friends like Carla, leading to a detailed weekly schedule that includes dedicated monthly friend time and family activities. To address moderate stress related to balancing work and family, you incorporated mindfulness, regular exercise, and structured breaks into your routine, alongside strategies for realistic goal setting and flexibility. You also integrated task management tools like Todoist to organize both daily responsibilities and special events, such as a weekend retreat suggested by Carla. Additionally, you planned collaborative creative sessions, including workshops with local artists, ensuring clear communication and contingency plans for scheduling conflicts. Throughout, your approach evolved to emphasize maintaining meaningful relationships, managing stress proactively, and organizing tasks effectively to support both personal well-being and creative productivity"
+    },
+    {
+      "question": "Can you give me a summary of how my pilot episode project timeline and tasks have developed and changed throughout our conversations?",
+      "llm_response": "Throughout our discussions, your pilot episode project timeline and task management evolved significantly to address various challenges and deadlines. Initially, a detailed plan was established to meet the June 30, 2024 deadline within a $120,000 budget, outlining pre-production, production, and post-production phases with specific milestones and budget allocations. As you prioritized script finalization over location scouting, the schedule was adjusted to focus on completing the script by the end of April, with location scouting postponed to early May. Later, due to casting delays communicated on April 28, the delivery date was pushed back to July 15, prompting a reassessment of the timeline with new milestones and a compressed schedule for remaining tasks. By early July, with 75% of the pilot complete and post-production underway, a detailed daily plan was created to film remaining scenes and complete post-production by the new deadline. Finally, as the project progressed into later stages, further prioritization was needed to manage editing and color grading tasks to meet September and November deadlines, ensuring all post-production elements, including sound mixing, were completed on time. This progression reflects a dynamic adaptation of your project plan in response to delays and task completion status, emphasizing continuous monitoring, communication, and task prioritization to stay on track",
+      "question_id": "17:summarization:18",
+      "predicted_answer": "Throughout our discussions, your pilot episode project timeline and task management evolved significantly to address various challenges and deadlines. Initially, a detailed plan was established to meet the June 30, 2024 deadline within a $120,000 budget, outlining pre-production, production, and post-production phases with specific milestones and budget allocations. As you prioritized script finalization over location scouting, the schedule was adjusted to focus on completing the script by the end of April, with location scouting postponed to early May. Later, due to casting delays communicated on April 28, the delivery date was pushed back to July 15, prompting a reassessment of the timeline with new milestones and a compressed schedule for remaining tasks. By early July, with 75% of the pilot complete and post-production underway, a detailed daily plan was created to film remaining scenes and complete post-production by the new deadline. Finally, as the project progressed into later stages, further prioritization was needed to manage editing and color grading tasks to meet September and November deadlines, ensuring all post-production elements, including sound mixing, were completed on time. This progression reflects a dynamic adaptation of your project plan in response to delays and task completion status, emphasizing continuous monitoring, communication, and task prioritization to stay on track"
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many days passed between when I had the 3 PM meeting I wanted to protect my writing block from and when I rescheduled the client meeting from 11 AM to 4 PM?",
+      "llm_response": "15 days passed between the 3 PM meeting on March 14 and rescheduling the client meeting on March 29.",
+      "question_id": "17:temporal_reasoning:19",
+      "predicted_answer": "15 days passed between the 3 PM meeting on March 14 and rescheduling the client meeting on March 29."
+    },
+    {
+      "question": "How many days passed between when I finished casting and when my pilot episode was 75% complete?",
+      "llm_response": "46 days passed between finishing casting on April 20 and the pilot episode being 75% complete by July 5.",
+      "question_id": "17:temporal_reasoning:20",
+      "predicted_answer": "46 days passed between finishing casting on April 20 and the pilot episode being 75% complete by July 5."
+    }
+  ]
+}
