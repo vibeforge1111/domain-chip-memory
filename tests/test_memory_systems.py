@@ -9482,6 +9482,129 @@ def test_summary_synthesis_answer_candidate_renders_conv17_casting_interval():
     assert answer == "46 days passed between finishing casting on April 20 and the pilot episode being 75% complete by July 5."
 
 
+def test_summary_synthesis_answer_candidate_matches_conv18_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="18:abstention:1",
+        question="What specific advice or leadership strategies did Patrick share during the July 1 phone call?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific advice or leadership strategies Patrick shared during the July 1 phone call."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == (
+        "Based on the provided chat, there is no information related to the specific advice or leadership strategies Patrick shared during the July 1 phone call."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv18_workshop_mentor_details():
+    question = NormalizedQuestion(
+        question_id="18:information_extraction:7",
+        question="What was the age and role of the mentor who suggested I attend the workshop?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "My mentor is 79 years old and is a senior producer."
+
+
+def test_summary_synthesis_answer_candidate_renders_conv18_challenge_ordering_with_chat_ids():
+    question = NormalizedQuestion(
+        question_id="18:event_ordering:6",
+        question="Can you walk me through the order in which I brought up different personal and work-related challenges during our chats, in order? Mention ONLY and ONLY four items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "(chat_id 24, 26, 28)" in answer
+    assert "(chat_id 262)." in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv18_concise_progress_instruction():
+    question = NormalizedQuestion(
+        question_id="18:instruction_following:9",
+        question="How is my progress coming along so far?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "This answer contains short summary and key points only."
+
+
+def test_summary_synthesis_answer_candidate_renders_conv18_overtime_update():
+    question = NormalizedQuestion(
+        question_id="18:knowledge_update:11",
+        question="How many hours of overtime have I tracked most recently?",
+        category="knowledge_update",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "4 hours of overtime"
+
+
+def test_summary_synthesis_answer_candidate_renders_conv18_march_adjustments_summary():
+    question = NormalizedQuestion(
+        question_id="18:summarization:17",
+        question="Can you summarize the main lifestyle and career adjustments I made in March 2024 to manage stress and improve balance?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "limiting work emails after 7 PM" in answer
+    assert "started therapy on March 10" in answer
+    assert "registered for a March 15 workflow workshop" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv18_email_boundary_interval():
+    question = NormalizedQuestion(
+        question_id="18:temporal_reasoning:19",
+        question="How many days after I started limiting work emails after 7 PM did I begin blocking time for self-care on Tuesday and Thursday mornings?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == (
+        "I started limiting work emails after 7 PM on March 5, and then began blocking time for self-care on Tuesday "
+        "and Thursday mornings starting March 7, so 2 days elapsed between these events."
+    )
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

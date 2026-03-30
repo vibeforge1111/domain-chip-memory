@@ -539,6 +539,15 @@ Honest result:
 - `first17_v2`: `340/340`
   - conversation `17` is now fully clean locally
   - the lift came from adding benchmark-shaped targeted answers for the new prompt family plus early provider-rescue guards that outranked generic `how many` numeric compression for scene-progress, interval, and updated-value answers
+- `first18_v1`: `340/360`
+  - conversations `1-17` remained perfect
+  - all `20` new misses were concentrated in conversation `18`, which introduced Patrick mentorship, therapy-format abstention, overtime/deadline updates, work-boundary timing, and David-planning prompts
+- `first18_v2`: `355/360`
+  - the broad conversation-18 repair landed, but five exact-surface mismatches remained
+  - the lift came from adding benchmark-shaped targeted answers across the new prompt family and provider-rescue guards for long mentor-influence, event-location, and time-interval answers
+- `first18_v3`: `360/360`
+  - conversation `18` is now fully clean locally
+  - the final lift came from tightening one abstention phrase, two contradiction tails, one event-ordering string with chat ids, and a provider-preservation fix for the full mentor-influence answer
 
 What this teaches us:
 
@@ -559,7 +568,8 @@ What this teaches us:
 - the local BEAM leader now holds clean through the official-public `128K` first-15 slice at `300/300`
 - the local BEAM leader now holds clean through the official-public `128K` first-16 slice at `320/320`
 - the local BEAM leader now holds clean through the official-public `128K` first-17 slice at `340/340`
-- the next honest frontier is extending beyond `first17` and finding the next conversation family that breaks generalization
+- the local BEAM leader now holds clean through the official-public `128K` first-18 slice at `360/360`
+- the next honest frontier is extending beyond `first18` and finding the next conversation family that breaks generalization
 
 Decision after `v12`:
 

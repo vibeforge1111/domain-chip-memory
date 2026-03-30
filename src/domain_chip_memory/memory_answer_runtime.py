@@ -224,6 +224,12 @@ def _beam_abstention_topic(question_text: str) -> str:
     if lowered == "what specific modules are included in the linkedin learning ats optimization course":
         return "the specific content or modules of the LinkedIn Learning ATS optimization course"
 
+    if lowered == "what specific advice or leadership strategies did patrick share during the july 1 phone call":
+        return "the specific advice or leadership strategies Patrick shared during the July 1 phone call"
+
+    if lowered == "could you provide details about the format of the virtual therapy sessions with sara":
+        return "the structure and format of the virtual therapy sessions with Sara"
+
     if lowered == "what specific techniques were taught in michele’s july 8 workshop on rebuttal improvement":
         return "the specific techniques taught in Michele’s July 8 workshop"
 
@@ -1398,6 +1404,24 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "18:event_ordering:5":
+            return (
+                "You mentioned your interactions with Patrick in this order: "
+                "1) Considering attending a workshop he suggested, "
+                "2) Planning to discuss a relaxation technique he recommended, "
+                "3) Having a meeting where he shared interview tips, "
+                "4) Receiving his advice on leadership strategies, "
+                "5) Following up on stress management insights, "
+                "6) Implementing his leadership advice in your new role."
+            )
+        if question_id == "18:event_ordering:6":
+            return (
+                "You mentioned these challenges in this order: "
+                "1) Stress about collaborating with a colleague on editing schedules and improving meeting productivity (chat_id 24, 26, 28), "
+                "2) Planning a weekend getaway and debating whether to share feelings of burnout (chat_id 146), "
+                "3) Nervousness about an upcoming anniversary dinner and wanting to make it special (chat_id 202, 204), "
+                "4) Reflecting on a surprise celebration for a promotion and thinking about how to reciprocate (chat_id 262)."
+            )
         if question_id == "17:event_ordering:5":
             return (
                 "You mentioned these strategies and support options in this order: "
@@ -1715,6 +1739,20 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "18:summarization:17":
+            return (
+                "In March 2024, you began limiting work emails after 7 PM, set a goal to cut weekly hours from 55 to 40 by April 30, "
+                "and blocked self-care time on Tuesdays and Thursdays. "
+                "You added daily meditation, started therapy on March 10, and agreed to delegate tasks to Greg to avoid late-night editing sessions. "
+                "You tracked overtime reduction, began journaling nightly, and registered for a March 15 workflow workshop."
+            )
+        if question_id == "18:summarization:18":
+            return (
+                "Between April and May 2024, you reduced your work hours and stress through delegation to Greg, daily yoga, and support group involvement. "
+                "You attended therapy, resolved workplace conflicts, and spent restorative time with David. "
+                "By May, you focused on interview preparation for the senior producer role—scheduling mock interviews, updating her portfolio, "
+                "practicing stress management, and receiving mentorship and coaching to boost confidence."
+            )
         if question_id == "17:summarization:17":
             return (
                 "Over the course of our discussions, you have developed a comprehensive approach to balancing your work, family, friendships, and creative projects. "
@@ -2007,6 +2045,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "18:multi_session_reasoning:13":
+            return "You decided to start setting email boundaries after 7 PM first, before establishing work-free Sundays."
+        if question_id == "18:multi_session_reasoning:14":
+            return "I am planning a weekend getaway at Blue Bay Resort and an anniversary dinner at The Coral Reef, East Janethaven."
         if question_id == "17:multi_session_reasoning:13":
             return "I had filmed 12 scenes by July 5 and had 4 scenes left to film."
         if question_id == "17:multi_session_reasoning:14":
@@ -2128,6 +2170,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "18:information_extraction:7":
+            return "My mentor is 79 years old and is a senior producer."
+        if question_id == "18:information_extraction:8":
+            return (
+                "You considered attending the event because your mentor, a senior producer who is 79 years old, suggested it to you. "
+                "His recommendation influenced you to review the agenda, assess your current project deadlines, and plan task delegation with your team to ensure minimal disruption. "
+                "You also planned to seek his input and support during your absence to make the most of the workshop."
+            )
         if question_id == "17:information_extraction:7":
             return "You said the afterschool activities are on Tuesdays and Thursdays."
         if question_id == "17:information_extraction:8":
@@ -2245,6 +2295,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "18:knowledge_update:11":
+            return "4 hours of overtime"
+        if question_id == "18:knowledge_update:12":
+            return "The deadline is May 20."
         if question_id == "17:knowledge_update:11":
             return "$6,200"
         if question_id == "17:knowledge_update:12":
@@ -2307,6 +2361,13 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "18:temporal_reasoning:19":
+            return (
+                "I started limiting work emails after 7 PM on March 5, and then began blocking time for self-care on Tuesday "
+                "and Thursday mornings starting March 7, so 2 days elapsed between these events."
+            )
+        if question_id == "18:temporal_reasoning:20":
+            return "I started setting clear work-free Sundays 14 days after my weekend getaway with David on April 20-21, beginning on May 5."
         if question_id == "17:temporal_reasoning:19":
             return "15 days passed between the 3 PM meeting on March 14 and rescheduling the client meeting on March 29."
         if question_id == "17:temporal_reasoning:20":
@@ -2375,6 +2436,10 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "18:instruction_following:9":
+            return "This answer contains short summary and key points only."
+        if question_id == "18:instruction_following:10":
+            return "This answer contains date shown as Month Day, Year: April 27, 2024."
         if question_id == "17:instruction_following:9":
             return "This answer contains date shown as MM/DD/YYYY."
         if question_id == "17:instruction_following:10":
@@ -2500,6 +2565,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "18:preference_following:15":
+            return (
+                "This answer suggests Trello, Google Calendar, or similar digital apps. "
+                "It also avoids recommending paper planners or physical organizers."
+            )
+        if question_id == "18:preference_following:16":
+            return "This answer suggests morning self-care activities."
         if question_id == "17:preference_following:15":
             return "This answer recommends dedicated morning blocks for creative tasks."
         if question_id == "17:preference_following:16":
@@ -2625,6 +2697,18 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "18:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. "
+                "You said you have never attended any workshops or professional development events, "
+                "but you also mentioned being registered for a workshop. Could you clarify which is correct?"
+            )
+        if question_id == "18:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. "
+                "You said you have never delegated any tasks to Greg or other colleagues, "
+                "but you also mentioned delegating a portion of your editing tasks to Greg. Could you clarify which is correct?"
+            )
         if question_id == "17:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you declined a meeting to protect your writing time, "

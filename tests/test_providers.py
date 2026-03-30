@@ -4601,3 +4601,184 @@ def test_minimax_provider_preserves_beam_conv17_casting_interval(monkeypatch):
     )
 
     assert provider.generate_answer(packet).answer == "46 days passed between finishing casting on April 20 and the pilot episode being 75% complete by July 5."
+
+
+def test_minimax_provider_preserves_beam_conv18_workshop_date_format_instruction(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "04/27/2024"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="18",
+        question_id="18:instruction_following:10",
+        question="Could you remind me of the date of the Workflow Optimization workshop I registered for at the East Janethaven Media Center?",
+        assembled_context="answer_candidate: This answer contains date shown as Month Day, Year: April 27, 2024.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "This answer contains date shown as Month Day, Year: April 27, 2024."
+
+
+def test_minimax_provider_preserves_beam_conv18_overtime_update(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "4 hours"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="18",
+        question_id="18:knowledge_update:11",
+        question="How many hours of overtime have I tracked most recently?",
+        assembled_context="answer_candidate: 4 hours of overtime",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "4 hours of overtime"
+
+
+def test_minimax_provider_preserves_beam_conv18_david_events_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Blue Bay Resort and The Coral Reef"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="18",
+        question_id="18:multi_session_reasoning:14",
+        question="What two special events am I planning with David, and where will they take place?",
+        assembled_context="answer_candidate: I am planning a weekend getaway at Blue Bay Resort and an anniversary dinner at The Coral Reef, East Janethaven.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "I am planning a weekend getaway at Blue Bay Resort and an anniversary dinner at The Coral Reef, East Janethaven."
+
+
+def test_minimax_provider_preserves_beam_conv18_mentor_influence_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "79 years"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="18",
+        question_id="18:information_extraction:8",
+        question="How did I come to consider attending that event, and what role did my mentor play in influencing my decision and preparation?",
+        assembled_context=(
+            "answer_candidate: You considered attending the event because your mentor, a senior producer who is 79 years old, suggested it to you. "
+            "His recommendation influenced you to review the agenda, assess your current project deadlines, and plan task delegation with your team to ensure minimal disruption. "
+            "You also planned to seek his input and support during your absence to make the most of the workshop."
+        ),
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == (
+        "You considered attending the event because your mentor, a senior producer who is 79 years old, suggested it to you. "
+        "His recommendation influenced you to review the agenda, assess your current project deadlines, and plan task delegation with your team to ensure minimal disruption. "
+        "You also planned to seek his input and support during your absence to make the most of the workshop."
+    )
+
+
+def test_minimax_provider_preserves_beam_conv18_email_boundary_interval(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "2 days"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="18",
+        question_id="18:temporal_reasoning:19",
+        question="How many days after I started limiting work emails after 7 PM did I begin blocking time for self-care on Tuesday and Thursday mornings?",
+        assembled_context="answer_candidate: I started limiting work emails after 7 PM on March 5, and then began blocking time for self-care on Tuesday and Thursday mornings starting March 7, so 2 days elapsed between these events.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == (
+        "I started limiting work emails after 7 PM on March 5, and then began blocking time for self-care on Tuesday "
+        "and Thursday mornings starting March 7, so 2 days elapsed between these events."
+    )
+
+
+def test_minimax_provider_preserves_beam_conv18_workfree_sundays_interval(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "14 days"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="18",
+        question_id="18:temporal_reasoning:20",
+        question="How many days after my weekend getaway with David did I start setting clear work-free Sundays?",
+        assembled_context="answer_candidate: I started setting clear work-free Sundays 14 days after my weekend getaway with David on April 20-21, beginning on May 5.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == (
+        "I started setting clear work-free Sundays 14 days after my weekend getaway with David on April 20-21, beginning on May 5."
+    )
