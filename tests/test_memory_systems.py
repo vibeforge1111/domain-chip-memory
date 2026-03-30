@@ -8319,6 +8319,99 @@ def test_summary_synthesis_answer_candidate_renders_conv8_cover_letter_to_zoom_i
     assert "april 5" in answer.lower()
     assert "april 21" in answer.lower()
 
+
+def test_summary_synthesis_answer_candidate_matches_conv9_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="9:abstention:1",
+        question="What specific storytelling techniques did Shawn recommend during my meeting at Montserrat Media Hub?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific storytelling techniques Shawn recommended."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the specific storytelling techniques Shawn recommended."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv9_writing_schedule_preference():
+    question = NormalizedQuestion(
+        question_id="9:preference_following:15",
+        question="Can you help me plan my writing sessions for the upcoming week?",
+        category="preference_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "schedules writing sessions between 7-9 am" in answer.lower()
+    assert "prioritizes morning hours for writing" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv9_study_abroad_summary():
+    question = NormalizedQuestion(
+        question_id="9:summarization:17",
+        question="Can you give me a comprehensive summary of how my plans and preparations for studying abroad have developed over time?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "personal statement by april 20, 2024" in answer.lower()
+    assert "part-time role starting june 1" in answer.lower()
+    assert "$2,000 emergency fund" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv9_personal_statement_event_order():
+    question = NormalizedQuestion(
+        question_id="9:event_ordering:5",
+        question="Can you list the order in which I brought up different aspects of refining my personal statement throughout our conversations in order? Mention ONLY and ONLY five items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "you mentioned aspects of refining your personal statement in this order" in answer.lower()
+    assert "and 5)" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv9_professor_danielle_interval():
+    question = NormalizedQuestion(
+        question_id="9:temporal_reasoning:20",
+        question="How many days are there between my meeting with Professor Danielle to review my draft and my mock interview with her?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "27 days" in answer.lower()
+    assert "march 22" in answer.lower()
+    assert "april 18" in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

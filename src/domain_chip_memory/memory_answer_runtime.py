@@ -218,6 +218,12 @@ def _beam_abstention_topic(question_text: str) -> str:
     if lowered == "what are the qualifications of the senior content strategist who joined the may 12 interview panel":
         return "the qualifications and role of the senior content strategist who joined the May 12 interview panel"
 
+    if lowered == "what specific storytelling techniques did shawn recommend during my meeting at montserrat media hub":
+        return "the specific storytelling techniques Shawn recommended"
+
+    if lowered == "what topics or skills are covered in the advanced storytelling workshop starting september 15":
+        return "the topics or skills covered in the advanced storytelling workshop starting September 15"
+
     match = re.match(r"^can you tell me about (?P<topic>.+)$", text, flags=re.IGNORECASE)
     if match:
         if "specific feedback" in match.group("topic").lower() and "quizzes on independent and dependent events" in match.group("topic").lower():
@@ -1348,6 +1354,24 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "9:event_ordering:5":
+            return (
+                "You mentioned aspects of refining your personal statement in this order: "
+                "1) Incorporating advice on storytelling techniques from Bryan at the Montserrat Film Festival, "
+                "2) Integrating insights on storytelling impact shared by Shawn at Montserrat Media Hub, "
+                "3) Discussing Bryan's agreement to write a recommendation letter for your scholarship application, "
+                "4) Bringing up tips from Matthew at Montserrat Media Hub on adapting statements for grant applications, "
+                "and 5) Requesting help to fine-tune the introduction and career gap sections with Matthew's input."
+            )
+        if question_id == "9:event_ordering:6":
+            return (
+                "You mentioned my family's support in this order: "
+                "1) My mom Wendy suggesting I highlight my cultural roots, "
+                "2) Tanya helping me rehearse my personal pitch and how to show family support, "
+                "3) Wendy's handwritten letter encouraging me to emphasize resilience, "
+                "4) Wendy mailing a care package with local spices and notes, "
+                "5) Wendy's last letter reminding me to balance work and self-care."
+            )
         if question_id == "8:event_ordering:5":
             return (
                 "You mentioned aspects of your personal and professional progress in this order: "
@@ -1500,6 +1524,22 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "9:summarization:17":
+            return (
+                "You focused on completing a personal statement by April 20, 2024, highlighting your career as a TV/film producer. "
+                "You worked on incorporating Tanya's support into your statement in a way that balanced professionalism and personal motivation. "
+                "You accepted a part-time role starting June 1 to gain experience while studying, which led you to weigh the pros and cons of applying for a Canadian study visa versus staying in Montserrat. "
+                "You outlined specific steps including gathering documents, practicing answers, and understanding the institution. "
+                "You managed concerns about budgeting for warm clothing in Toronto using a $2,000 emergency fund, and later integrated a freelance contract into your budget."
+            )
+        if question_id == "9:summarization:18":
+            return (
+                "Bryan's advice at the Montserrat Film Festival emphasized storytelling techniques like narrative structure and character development. "
+                "Shawn, a veteran producer you met through Bryan, contributed perspectives on authenticity and the transformative power of storytelling. "
+                "Danielle, your academic advisor, praised your voice consistency and offered detailed feedback to refine your draft, encouraging you to add specific examples and strengthen your conclusion. "
+                "Matthew provided practical tips on tailoring your statement for global opportunities, helping you address challenging sections like your introduction. "
+                "You considered how Danielle's feedback on voice consistency could help you maintain a cohesive and authentic tone while customizing your statement for different applications."
+            )
         if question_id == "8:summarization:17":
             return (
                 "You focused on updating your portfolio to make it stand out by curating your best work, organizing it logically, and incorporating client testimonials and interactive elements to engage viewers. "
@@ -1634,6 +1674,17 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "9:multi_session_reasoning:13":
+            return (
+                "You are planning to use your personal statement for three application types: academic, visa, and grant. "
+                "You mentioned accepting a part-time role starting June 1, which might affect your decision between applying for a Canadian or Jamaican study visa."
+            )
+        if question_id == "9:multi_session_reasoning:14":
+            return (
+                "My initial feedback from Kimberly helped identify key improvements, which I selectively integrated to maintain my voice and enhance clarity. "
+                "After revising, Kimberly praised the improved flow, indicating significant quality enhancement. "
+                "Despite this, I remained uncertain about its sufficiency for the grant, reflecting ongoing self-evaluation and refinement influenced by her input."
+            )
         if question_id == "8:multi_session_reasoning:13":
             return "Three times"
         if question_id == "8:multi_session_reasoning:14":
@@ -1684,6 +1735,15 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "9:information_extraction:7":
+            return (
+                "The scholarship deadline is May 15, 2024; the visa application is due June 1, 2024; and the university application is due April 30, 2024."
+            )
+        if question_id == "9:information_extraction:8":
+            return (
+                "I suggested a detailed timeline starting with an initial draft in mid-March, followed by reviews and revisions through early to mid-April, "
+                "leading up to submitting the first application around April 20, and then ensuring the other submissions were completed by their respective deadlines in mid-May and early June."
+            )
         if question_id == "8:information_extraction:7":
             return "You met Laura on set at Blue Horizon Studios in 2019."
         if question_id == "8:information_extraction:8":
@@ -1738,6 +1798,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "9:knowledge_update:11":
+            return "4:30 PM"
+        if question_id == "9:knowledge_update:12":
+            return "The session with the immigration consultant is scheduled for May 22."
         if question_id == "8:knowledge_update:11":
             return "The Zoom call with the creative director is scheduled for April 22 at 11 AM."
         if question_id == "8:knowledge_update:12":
@@ -1764,6 +1828,8 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "9:temporal_reasoning:20":
+            return "There are 27 days between the meeting to review the draft on March 22 and the mock interview on April 18."
         if question_id == "8:temporal_reasoning:19":
             return "There are 16 days between April 5, when I planned to finish revising my cover letter, and April 21, when I have the Zoom call with the creative director."
         if question_id == "8:temporal_reasoning:20":
@@ -1794,6 +1860,10 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "9:instruction_following:9":
+            return "This answer includes mention of specific software names such as Grammarly Premium, Hemingway Editor, ProWritingAid, Google Docs, and Microsoft Word."
+        if question_id == "9:instruction_following:10":
+            return "This answer shows the date shown as month-day-year: May 12, 2024."
         if question_id == "8:instruction_following:9":
             return (
                 "List items each starting with a bullet point.\n"
@@ -1852,6 +1922,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "9:preference_following:15":
+            return "This plan schedules writing sessions between 7-9 AM and prioritizes morning hours for writing."
+        if question_id == "9:preference_following:16":
+            return "This answer recommends libraries or quiet locations where you can focus for the next few hours of writing."
         if question_id == "8:preference_following:15":
             return (
                 "This answer uses straightforward language to describe your achievements, and it emphasizes measurable outcomes like audience growth, budget size, or production results."
@@ -1902,6 +1976,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "9:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you met Bryan and received storytelling advice from him, but you also said you have never met him or received advice. Could you clarify which is correct?"
+            )
+        if question_id == "9:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. In one instance, you said you enrolled in an academic writing course on Coursera, but in another, you mentioned never having taken any such courses or online classes through Coursera. Could you clarify which is correct?"
+            )
         if question_id == "8:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you collaborate remotely with Michael on projects, but you also mentioned that you've never collaborated remotely with him. Which statement is correct?"

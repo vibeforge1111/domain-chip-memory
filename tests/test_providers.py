@@ -1067,6 +1067,29 @@ def test_expand_answer_preserves_when_is_scheduled_time_answer():
     assert rescued == "The Zoom call with the creative director is scheduled for April 22 at 11 AM."
 
 
+def test_expand_answer_preserves_when_is_month_date_answer():
+    rescued = providers._expand_answer_from_context(
+        "When is my session with the immigration consultant scheduled?",
+        "The session with the immigration consultant is scheduled for May 22.",
+        "answer_candidate: May 10, 2024",
+    )
+
+    assert rescued == "The session with the immigration consultant is scheduled for May 22."
+
+
+def test_expand_answer_preserves_how_many_different_application_types_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many different application types am I planning to use my personal statement for, and which roles or plans did I mention that might affect my visa application choice?",
+        (
+            "You are planning to use your personal statement for three application types: academic, visa, and grant. "
+            "You mentioned accepting a part-time role starting June 1, which might affect your decision between applying for a Canadian or Jamaican study visa."
+        ),
+        "answer_candidate: 3",
+    )
+
+    assert rescued.startswith("You are planning to use your personal statement for three application types")
+
+
 def test_expand_answer_does_not_overwrite_matching_duration_candidate():
     context = "\n".join(
         [

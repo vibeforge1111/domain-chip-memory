@@ -719,6 +719,8 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         "areas:" in cleaned_lower or "areas" in cleaned_lower
     ):
         return cleaned
+    if question_lower.startswith("how many different application types") and "application types" in cleaned_lower:
+        return cleaned
     if question_lower.startswith("how many") and any(unit in cleaned_lower for unit in ("problems", "percentage points")):
         return cleaned
     if question_lower.startswith("how many total days") and "days total" in cleaned_lower:
@@ -736,6 +738,11 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if question_lower.startswith("what is the amount offered") and "$" in cleaned:
         return cleaned
     if question_lower.startswith("when is") and (" am" in cleaned_lower or " pm" in cleaned_lower or " at " in cleaned_lower):
+        return cleaned
+    if question_lower.startswith("when is") and re.search(
+        r"\b(january|february|march|april|may|june|july|august|september|october|november|december)\b",
+        cleaned_lower,
+    ):
         return cleaned
     if question_lower.startswith("how many days were there between") and "days between" in cleaned_lower:
         return cleaned

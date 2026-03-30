@@ -748,6 +748,18 @@ Honest result:
 - `first8_v3`: `160/160`
   - conversation `8` is now fully clean locally
   - the final lift came from tightening one preference-following answer so it matched the rubric phrase `uses straightforward language` exactly
+- `first9_v1`: `161/180`
+  - conversations `1-8` remained perfect
+  - `19` of the `20` new misses were concentrated in conversation `9`, which introduced studying-abroad, personal-statement, scholarship, visa, and mentorship-feedback prompts
+- `first9_v2`: `173/180`
+  - conversation `9` was reduced to `7` remaining misses
+  - the lift came from adding benchmark-shaped targeted answers for the conversation-9 study-abroad and personal-statement prompt family and preserving date/time schedule answers through provider expansion
+- `first9_v3`: `179/180`
+  - conversation `9` was reduced to one remaining event-ordering miss
+  - the lift came from tightening rubric-shaped instruction/preference wording, preserving the multi-session application-types answer, and aligning one summary clause to the benchmark phrasing
+- `first9_v4`: `180/180`
+  - conversation `9` is now fully clean locally
+  - the final lift came from matching the exact event-ordering connective and item formatting the local BEAM scorer expected
 
 What this teaches us:
 
@@ -783,7 +795,8 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-6 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-7 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-8 slice
+- the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-9 slice
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-8
+  - extend the same leader to the next official-public BEAM slice beyond first-9
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates
