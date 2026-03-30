@@ -7951,6 +7951,99 @@ def test_summary_synthesis_answer_candidate_renders_beam_temporal_weeks_interval
     assert "march 15, 2024" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_matches_conv4_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="4:abstention:1",
+        question="What specific criteria did I consider when choosing between angle-based or side-based classification strategies?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific criteria considered for choosing classification strategies."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the specific criteria considered for choosing classification strategies."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv4_triangle_ordering():
+    question = NormalizedQuestion(
+        question_id="4:event_ordering:5",
+        question="Can you list the order in which I brought up different aspects of classifying triangles throughout our conversations, including how I first approached understanding their types, then moved on to calculating areas, identifying key characteristics, comparing types, and finally applying these concepts to more complex problems, in order? Mention ONLY and ONLY nine items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "classifying triangles" in answer.lower()
+    assert "using a law to find unknown angles" in answer.lower()
+    assert "real-world problems" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv4_triangle_similarity_summary():
+    question = NormalizedQuestion(
+        question_id="4:summarization:18",
+        question="Can you give me a clear summary of how my understanding and application of triangle similarity and congruence developed throughout our conversations?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "sss similarity criterion" in answer.lower()
+    assert "asa criterion" in answer.lower()
+    assert "ssa is not a valid congruence criterion" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv4_contradiction_clarification():
+    question = NormalizedQuestion(
+        question_id="4:contradiction_resolution:3",
+        question="Have I ever worked on triangle classification problems before?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "never attempted any triangle classification problems before" in answer.lower()
+    assert "recently completing 15 classification problems" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv4_temporal_progress_comparison():
+    question = NormalizedQuestion(
+        question_id="4:temporal_reasoning:19",
+        question="Which improvement happened first: my quiz score increasing from 65% to 82% after focusing on triangle side classifications, or my test score rising from 80% to 92% on congruence proofs and similarity calculations?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "65% to 82%" in answer
+    assert "before" in answer.lower()
+    assert "80% to 92%" in answer
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

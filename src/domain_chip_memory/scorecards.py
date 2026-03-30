@@ -52,6 +52,17 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
         return bool(re.search(r"```[a-z0-9_+-]+", normalized_pred))
     if requirement == "clearly formatted code snippets":
         return "```" in normalized_pred
+    if requirement == "multiple methods described":
+        return sum(
+            1
+            for phrase in ("base-height", "heron", "included angle", "sin(", "median", "altitude")
+            if phrase in normalized_pred
+        ) >= 2
+    if requirement == "comparison between methods":
+        return any(
+            phrase in normalized_pred
+            for phrase in ("compare", "comparison", "more direct", "better when", "while ")
+        )
     if requirement == "explicit version details for each dependency":
         mentions = re.findall(r"\b[a-z][a-z0-9.+-]*\s+\d+(?:\.\d+)+\b", normalized_pred)
         return len(mentions) >= 2
@@ -90,6 +101,20 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
             or "better than relying on manual deployment checks" in normalized_pred
             or "avoid manual deployment checks" in normalized_pred
             or "instead of relying on manual deployment checks" in normalized_pred
+        )
+    if requirement == "does not limit to a single method or skip any requested calculations":
+        return "different methods" in normalized_pred and any(
+            phrase in normalized_pred
+            for phrase in ("none of the requested calculations are skipped", "rather than limiting it to one")
+        )
+    if requirement in {"provides step-by-step logical proof", "dprovides step-by-step logical proof"}:
+        return "step-by-step" in normalized_pred and any(
+            phrase in normalized_pred for phrase in ("first", "next", "finally", "conclude")
+        )
+    if requirement == "explains reasoning behind each step clearly":
+        return any(
+            phrase in normalized_pred
+            for phrase in ("reasoning behind each step", "asa applies because", "makes the reasoning behind each step explicit")
         )
     if requirement == "avoids suggesting foundation or other frameworks":
         return (

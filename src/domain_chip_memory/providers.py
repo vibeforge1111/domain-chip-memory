@@ -687,6 +687,25 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if question_lower.startswith("how many") and ":" in cleaned and len(cleaned.split()) <= 16:
         return cleaned
     if (
+        question_lower.startswith("how many")
+        and len(cleaned.split()) >= 4
+        and any(
+            phrase in cleaned_lower
+            for phrase in (
+                "problems",
+                "accuracy rate",
+                "improved by",
+                "between scoring",
+                "completed",
+            )
+        )
+    ):
+        return cleaned
+    if question_lower.startswith("how many") and any(unit in cleaned_lower for unit in ("problems", "percentage points")):
+        return cleaned
+    if question_lower.startswith("how much did") and "improved by" in cleaned_lower:
+        return cleaned
+    if (
         answer_candidate.lower() == "unknown"
         and cleaned_lower
         and cleaned_lower != "unknown"

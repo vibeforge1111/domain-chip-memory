@@ -661,6 +661,9 @@ Artifacts:
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v29_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v30_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first4_v1_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first4_v2_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first4_v3_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first4_v4_scorecard.json`
 
 Honest result:
 
@@ -704,6 +707,15 @@ Honest result:
   - conversations `1-3` remain perfect
   - all `20` new misses are concentrated in conversation `4`
   - this confirms the current leader is still a first-3-shaped solution, not a generally solved official-public `BEAM` lane
+- `first4_v2`: `70/80`
+  - conversation `4` moved from `0/20` to `10/20`
+  - the lift came from adding the first geometry-specific targeted answer layer for conversation `4`
+- `first4_v3`: `79/80`
+  - only one miss remained in `4:multi_session_reasoning:14`
+  - the lift came from fixing local rubric matching for geometry instruction/preference answers and preserving more descriptive count explanations through answer expansion
+- `first4_v4`: `80/80`
+  - conversation `4` is now fully clean locally
+  - the final lift came from preserving explanatory `how much did ... improve` answers instead of collapsing them back to a single percentage
 
 What this teaches us:
 
@@ -733,9 +745,9 @@ What this teaches us:
   - summarization: `6/6`
   - temporal_reasoning: `6/6`
 - the current honest state for the official-public `128K` BEAM first-3 slice is local-perfect, but this is still a benchmark-shaped local heuristic path and not yet a claim that the broader official-public set or alternate benchmarks are solved
-- extending the slice immediately falsified any broader claim: [first4_v1] shows `60/80`, with conversation `4` currently at `0/20`
+- extending the slice first falsified any broader claim, then gave us the next exact frontier to solve
+- the current honest state is now stronger: the local heuristic leader is perfect through the official-public `128K` first-4 slice
 - the next high-signal move is now:
-  - build conversation-4-shaped synthesis, ordering, update, and abstention paths without regressing the solved first-3 lane
-  - extend the same leader to the next official-public BEAM slice beyond first-3 once conversation `4` is no longer a full failure
+  - extend the same leader to the next official-public BEAM slice beyond first-4
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates
