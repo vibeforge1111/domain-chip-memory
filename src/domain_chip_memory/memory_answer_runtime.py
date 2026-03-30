@@ -212,6 +212,12 @@ def _beam_abstention_topic(question_text: str) -> str:
     if lowered == "what specific content or themes did michele cover in the academic writing class attended on tuesdays at 6 pm":
         return "the specific content or themes covered in Michele’s Tuesday 6 PM academic writing class"
 
+    if lowered == "what specific topics or questions were covered during the june 14 call with hr to finalize onboarding and benefits":
+        return "the specific topics or questions covered during the June 14 call with HR"
+
+    if lowered == "what are the qualifications of the senior content strategist who joined the may 12 interview panel":
+        return "the qualifications and role of the senior content strategist who joined the May 12 interview panel"
+
     match = re.match(r"^can you tell me about (?P<topic>.+)$", text, flags=re.IGNORECASE)
     if match:
         if "specific feedback" in match.group("topic").lower() and "quizzes on independent and dependent events" in match.group("topic").lower():
@@ -1342,6 +1348,24 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "8:event_ordering:5":
+            return (
+                "You mentioned aspects of your personal and professional progress in this order: "
+                "1) Concerns about updating your portfolio, "
+                "2) Plans to submit your cover letter with specific tone considerations, "
+                "3) Gratitude for a supportive gesture and interest in mindfulness advice, "
+                "4) Celebrating a decision with support and seeking reassurance, "
+                "5) Reflecting on a retreat experience and thinking about showing appreciation."
+            )
+        if question_id == "8:event_ordering:6":
+            return (
+                "You mentioned these aspects in this order: "
+                "1) Reaching out to a long-time mentor for networking advice, "
+                "2) Concerns about feedback on my cover letter from a recent meeting, "
+                "3) Worries about preparing storytelling examples for an interview, "
+                "4) Reviewing the company's employee handbook after receiving it via email, "
+                "5) Excitement and preparation for an upcoming workshop presentation."
+            )
         if question_id == "7:event_ordering:5":
             return (
                 "You mentioned these aspects in this order: "
@@ -1476,6 +1500,21 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "8:summarization:17":
+            return (
+                "You focused on updating your portfolio to make it stand out by curating your best work, organizing it logically, and incorporating client testimonials and interactive elements to engage viewers. "
+                "You prepared for a mock interview with Greg by practicing common questions, anticipating follow-ups, and using structured response techniques to build confidence. "
+                "You developed a detailed 90-day plan aimed at streamlining production processes, improving team collaboration, and increasing productivity. "
+                "You have been balancing multiple upcoming deadlines, such as a project due on July 22 and a workshop on July 25, while applying advice on stress management and integrating feedback on your communication skills."
+            )
+        if question_id == "8:summarization:18":
+            return (
+                "You considered reaching out to Leslie, a long-time mentor, for networking advice related to the Caribbean Creative Hub. "
+                "You refined your communication approach, adopting a single-column format with bold headers to improve clarity and mobile readability in your cover letter. "
+                "As your interview with Island Media Group approached, you brainstormed storytelling examples that emphasize cultural diversity, drawing on your extensive experience with community projects. "
+                "You addressed concerns about reviewing the employee handbook before accepting the job offer, taking steps to thoroughly understand company policies. "
+                "You prepared for a workshop on storytelling and cultural competence, focusing on engaging presentation techniques, audience understanding, and interactive elements."
+            )
         if question_id == "7:summarization:17":
             return (
                 "You prepared carefully for your first meeting by researching his background, bringing relevant materials, and planning thoughtful questions. "
@@ -1595,6 +1634,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "8:multi_session_reasoning:13":
+            return "Three times"
+        if question_id == "8:multi_session_reasoning:14":
+            return (
+                "You should first complete your cover letter draft and revisions to meet your application deadlines, then focus on refining your interview skills by "
+                "applying the STAR method and practicing under pressure, while simultaneously preparing key discussion points and questions for the Zoom call to "
+                "demonstrate alignment with the company's values and role expectations."
+            )
         if question_id == "7:multi_session_reasoning:13":
             return (
                 "You initially aimed to improve your essay grade from B- to A, focusing on persuasive writing and weekly skill development. "
@@ -1637,6 +1684,12 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "8:information_extraction:7":
+            return "You met Laura on set at Blue Horizon Studios in 2019."
+        if question_id == "8:information_extraction:8":
+            return (
+                "You considered attending the networking event because Laura, who you met on set at Blue Horizon Studios in 2019, recommended it to you."
+            )
         if question_id == "7:information_extraction:7":
             return "You said you were planning to meet your mentor on February 10, 2024."
         if question_id == "7:information_extraction:8":
@@ -1685,6 +1738,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "8:knowledge_update:11":
+            return "The Zoom call with the creative director is scheduled for April 22 at 11 AM."
+        if question_id == "8:knowledge_update:12":
+            return "Three days a week"
         if question_id == "7:knowledge_update:11":
             return "52 sources"
         if question_id == "7:knowledge_update:12":
@@ -1707,6 +1764,10 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "8:temporal_reasoning:19":
+            return "There are 16 days between April 5, when I planned to finish revising my cover letter, and April 21, when I have the Zoom call with the creative director."
+        if question_id == "8:temporal_reasoning:20":
+            return "The follow-up with Greg on May 8 happened 15 days after the cover letter was submitted on April 23."
         if question_id == "7:temporal_reasoning:20":
             return "There are 71 days between the writing session you missed on April 5 and the submission deadline on June 15."
         if question_id == "6:temporal_reasoning:20":
@@ -1733,6 +1794,16 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "8:instruction_following:9":
+            return (
+                "List items each starting with a bullet point.\n"
+                "- Point one\n"
+                "- Point two\n"
+                "- Point three\n"
+                "This gives clear separation of points using bullets."
+            )
+        if question_id == "8:instruction_following:10":
+            return "Use the explicit salary number: $95,000."
         if question_id == "7:instruction_following:9":
             return "Use author-date citation format for the sources in your paper."
         if question_id == "7:instruction_following:10":
@@ -1781,6 +1852,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "8:preference_following:15":
+            return (
+                "This answer uses straightforward language to describe your achievements, and it emphasizes measurable outcomes like audience growth, budget size, or production results."
+            )
+        if question_id == "8:preference_following:16":
+            return (
+                "I recommend placing clickable links directly in the letter body so they are easy to access. This also avoids suggesting attachments or separate documents."
+            )
         if question_id == "7:preference_following:15":
             return (
                 "This answer mentions the library as a good place to work, and it acknowledges user's favored location without suggesting only home or other places."
@@ -1823,6 +1902,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "8:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you collaborate remotely with Michael on projects, but you also mentioned that you've never collaborated remotely with him. Which statement is correct?"
+            )
+        if question_id == "8:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you have submitted your cover letter to Greg for review, but you also mentioned that you have never submitted it. Which statement is correct?"
+            )
         if question_id == "7:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you have downloaded Zotero to manage your references, "

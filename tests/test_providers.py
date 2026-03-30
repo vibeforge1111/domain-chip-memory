@@ -1027,6 +1027,46 @@ def test_expand_answer_preserves_how_many_total_days_answer():
     assert rescued == "Three days total: one hour on one day plus two full days off."
 
 
+def test_expand_answer_preserves_how_many_days_a_week_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many days a week am I scheduled to work remotely?",
+        "Three days a week",
+        "answer_candidate: 3",
+    )
+
+    assert rescued == "Three days a week"
+
+
+def test_expand_answer_preserves_how_many_times_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many times did I mention submitting or revising my cover letter before my interview preparation?",
+        "Three times",
+        "answer_candidate: 3",
+    )
+
+    assert rescued == "Three times"
+
+
+def test_expand_answer_preserves_days_after_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many days after I submitted my cover letter did I have my follow-up with Greg to improve it?",
+        "The follow-up with Greg on May 8 happened 15 days after the cover letter was submitted on April 23.",
+        "answer_candidate: 15",
+    )
+
+    assert rescued == "The follow-up with Greg on May 8 happened 15 days after the cover letter was submitted on April 23."
+
+
+def test_expand_answer_preserves_when_is_scheduled_time_answer():
+    rescued = providers._expand_answer_from_context(
+        "When is my Zoom call with the creative director scheduled?",
+        "The Zoom call with the creative director is scheduled for April 22 at 11 AM.",
+        "answer_candidate: April 22",
+    )
+
+    assert rescued == "The Zoom call with the creative director is scheduled for April 22 at 11 AM."
+
+
 def test_expand_answer_does_not_overwrite_matching_duration_candidate():
     context = "\n".join(
         [

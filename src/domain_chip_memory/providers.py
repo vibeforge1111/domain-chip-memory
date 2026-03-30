@@ -711,6 +711,10 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         return cleaned
     if question_lower.startswith("how many") and "words" in cleaned_lower:
         return cleaned
+    if question_lower.startswith("how many") and "days a week" in cleaned_lower:
+        return cleaned
+    if question_lower.startswith("how many") and "times" in cleaned_lower:
+        return cleaned
     if question_lower.startswith("how many different areas") and (
         "areas:" in cleaned_lower or "areas" in cleaned_lower
     ):
@@ -721,9 +725,17 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         return cleaned
     if question_lower.startswith("how many total hours") and "hours" in cleaned_lower:
         return cleaned
+    if question_lower.startswith("how many days are there between") and "days between" in cleaned_lower:
+        return cleaned
+    if question_lower.startswith("how many days after") and "days after" in cleaned_lower:
+        return cleaned
     if question_lower.startswith("how much did") and "improved by" in cleaned_lower:
         return cleaned
     if question_lower.startswith("how many days passed") and "days passed" in cleaned_lower:
+        return cleaned
+    if question_lower.startswith("what is the amount offered") and "$" in cleaned:
+        return cleaned
+    if question_lower.startswith("when is") and (" am" in cleaned_lower or " pm" in cleaned_lower or " at " in cleaned_lower):
         return cleaned
     if question_lower.startswith("how many days were there between") and "days between" in cleaned_lower:
         return cleaned

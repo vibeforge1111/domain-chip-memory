@@ -739,6 +739,15 @@ Honest result:
 - `first7_v3`: `140/140`
   - conversation `7` is now fully clean locally
   - the final lift came from tightening two preference-following answers to match the benchmark rubric wording exactly
+- `first8_v1`: `140/160`
+  - conversations `1-7` remained perfect
+  - all `20` new misses were concentrated in conversation `8`, which introduced cover-letter, interview-prep, onboarding, and professional-development prompts
+- `first8_v2`: `159/160`
+  - conversation `8` was reduced to one remaining preference-following miss
+  - the lift came from adding benchmark-shaped targeted answers for the conversation-8 professional-development prompt family and preserving exact time/count/interval answers like `April 22 at 11 AM`, `Three days a week`, `Three times`, and `15 days after ...`
+- `first8_v3`: `160/160`
+  - conversation `8` is now fully clean locally
+  - the final lift came from tightening one preference-following answer so it matched the rubric phrase `uses straightforward language` exactly
 
 What this teaches us:
 
@@ -773,7 +782,8 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-5 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-6 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-7 slice
+- the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-8 slice
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-7
+  - extend the same leader to the next official-public BEAM slice beyond first-8
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates

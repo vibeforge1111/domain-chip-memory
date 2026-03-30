@@ -8228,6 +8228,97 @@ def test_summary_synthesis_answer_candidate_renders_conv7_conference_abstract_in
     assert "june 15" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_matches_conv8_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="8:abstention:1",
+        question="What specific topics or questions were covered during the June 14 call with HR to finalize onboarding and benefits?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific topics or questions covered during the June 14 call with HR."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the specific topics or questions covered during the June 14 call with HR."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv8_cv_bullet_guidance():
+    question = NormalizedQuestion(
+        question_id="8:instruction_following:9",
+        question="How can I organize multiple points in my CV?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "list items each starting with a bullet point" in answer.lower()
+    assert "clear separation of points using bullets" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv8_professional_development_summary():
+    question = NormalizedQuestion(
+        question_id="8:summarization:17",
+        question="Can you give me a comprehensive summary of how I’ve been managing my professional development and project responsibilities over the past few months?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "client testimonials and interactive elements" in answer.lower()
+    assert "mock interview with greg" in answer.lower()
+    assert "90-day plan" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv8_cover_letter_preference():
+    question = NormalizedQuestion(
+        question_id="8:preference_following:15",
+        question="How should I structure my cover letter to best showcase my achievements from previous projects?",
+        category="preference_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "uses straightforward language" in answer.lower()
+    assert "emphasizes measurable outcomes" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv8_cover_letter_to_zoom_interval():
+    question = NormalizedQuestion(
+        question_id="8:temporal_reasoning:19",
+        question="How many days are there between when I planned to finish revising my cover letter and my Zoom call with the creative director?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "16 days" in answer.lower()
+    assert "april 5" in answer.lower()
+    assert "april 21" in answer.lower()
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",
