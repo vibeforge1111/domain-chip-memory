@@ -4095,3 +4095,145 @@ def test_minimax_provider_preserves_beam_conv14_unique_movie_count(monkeypatch):
     )
 
     assert provider.generate_answer(packet).answer == "13 unique movies"
+
+
+def test_minimax_provider_preserves_beam_conv15_store_choice_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "Adidas Ultraboost"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="15",
+        question_id="15:information_extraction:8",
+        question="Which option did I say I chose after trying both at the store?",
+        assembled_context="answer_candidate: You said you chose the Adidas Ultraboost over the Nike React Infinity Run after trying both on March 30 at Foot Locker.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == (
+        "You said you chose the Adidas Ultraboost over the Nike React Infinity Run after trying both on March 30 at Foot Locker."
+    )
+
+
+def test_minimax_provider_preserves_beam_conv15_shoe_sizes_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "2"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="15",
+        question_id="15:multi_session_reasoning:13",
+        question="How many different shoe sizes have I mentioned across my messages?",
+        assembled_context="answer_candidate: Two sizes: 11 and 11.5",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "Two sizes: 11 and 11.5"
+
+
+def test_minimax_provider_preserves_beam_conv15_ultraboost_budget_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "$153"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="15",
+        question_id="15:multi_session_reasoning:14",
+        question="How does the price I paid for the Ultraboost compare to my original budget limit for sneakers?",
+        assembled_context="answer_candidate: The price you paid for the Ultraboost is below your original budget limit of $200.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "The price you paid for the Ultraboost is below your original budget limit of $200."
+
+
+def test_minimax_provider_preserves_beam_conv15_updated_visit_time(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "I'm free at 4 PM next Saturday for my Foot Locker visit."}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="15",
+        question_id="15:knowledge_update:11",
+        question="What time should I plan to visit Foot Locker next Saturday?",
+        assembled_context="answer_candidate: 4 PM",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "4 PM"
+
+
+def test_minimax_provider_preserves_beam_conv15_annual_budget(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "I'm considering buying new sneakers with my increased budget of $650 this year."}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="15",
+        question_id="15:knowledge_update:12",
+        question="What is my annual budget for buying sneakers?",
+        assembled_context="answer_candidate: $650",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "$650"

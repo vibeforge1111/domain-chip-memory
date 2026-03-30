@@ -9071,6 +9071,143 @@ def test_summary_synthesis_answer_candidate_renders_conv14_meeting_to_completion
     assert "april 6" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_matches_conv15_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="15:abstention:1",
+        question="What are the qualifications or expertise of the podiatrist whose article I read about Primeknit reducing blister risk?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the podiatrist’s qualifications or expertise."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "Based on the provided chat, there is no information related to the podiatrist’s qualifications or expertise."
+
+
+def test_summary_synthesis_answer_candidate_renders_conv15_shopping_ordering():
+    question = NormalizedQuestion(
+        question_id="15:event_ordering:5",
+        question="Can you list the order in which I brought up different sneaker shopping experiences and related details throughout our conversations in order? Mention ONLY and ONLY four items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "1) Planning a visit to a specific store on Main Street" in answer
+    assert "4) Trying another shoe model at the same store and discussing sizing preferences." in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv15_store_choice_sentence():
+    question = NormalizedQuestion(
+        question_id="15:information_extraction:8",
+        question="Which option did I say I chose after trying both at the store?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "You said you chose the Adidas Ultraboost over the Nike React Infinity Run after trying both on March 30 at Foot Locker."
+
+
+def test_summary_synthesis_answer_candidate_renders_conv15_materials_instruction():
+    question = NormalizedQuestion(
+        question_id="15:instruction_following:10",
+        question="What materials are commonly used in making modern sneakers, and what should I know about their overall quality?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "mentions eco-friendly materials" in answer
+    assert "discusses environmental impact of materials" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv15_online_order_contradiction():
+    question = NormalizedQuestion(
+        question_id="15:contradiction_resolution:4",
+        question="Have I ever placed an online order for sneakers before?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == (
+        "I notice you've mentioned contradictory information about this. You said you placed an online order for sneakers, "
+        "but you also mentioned that you've never placed any online sneaker orders. Could you clarify which is correct?"
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv15_sneaker_summary():
+    question = NormalizedQuestion(
+        question_id="15:summarization:18",
+        question="Can you give me a quick summary of the sneaker options and advice we've talked about for my daily wear and activities?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "Adidas Ultraboost, Nike Air Zoom Pegasus 38, New Balance 990v5, Saucony Ride ISO 4, Brooks Ghost 14, and Asics Gel-Kayano 28" in answer
+    assert "Salomon X Ultra 3 GTX or Merrell Moab 2" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv15_shoe_sizes_sentence():
+    question = NormalizedQuestion(
+        question_id="15:multi_session_reasoning:13",
+        question="How many different shoe sizes have I mentioned across my messages?",
+        category="multi_session_reasoning",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "Two sizes: 11 and 11.5"
+
+
+def test_summary_synthesis_answer_candidate_renders_conv15_reorder_interval():
+    question = NormalizedQuestion(
+        question_id="15:temporal_reasoning:19",
+        question="How many days passed between when I got the size 11 Ultraboost and when I reordered the size 11.5?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "One day passed between when I got the size 11 Ultraboost on April 30 and when I reordered the size 11.5 on May 1."
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

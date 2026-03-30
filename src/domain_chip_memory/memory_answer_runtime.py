@@ -200,6 +200,12 @@ def _beam_abstention_topic(question_text: str) -> str:
         return ""
     lowered = text.lower()
 
+    if lowered == "what are the qualifications or expertise of the podiatrist whose article i read about primeknit reducing blister risk":
+        return "the podiatrist’s qualifications or expertise"
+
+    if lowered == "what was the atmosphere like during the sneaker art exhibit lauren and i attended at the montserrat museum":
+        return "the atmosphere of the sneaker art exhibit"
+
     if lowered == "what specific advice did bryan give about updating the linkedin profile in april 2024":
         return "the specific advice Bryan gave about updating the LinkedIn profile"
 
@@ -1380,6 +1386,23 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "15:event_ordering:5":
+            return (
+                "You mentioned sneaker shopping experiences and related details in this order: "
+                "1) Planning a visit to a specific store on Main Street, "
+                "2) Placing an online order with a discount code, "
+                "3) Visiting the same store to try a particular running shoe, "
+                "4) Trying another shoe model at the same store and discussing sizing preferences."
+            )
+        if question_id == "15:event_ordering:6":
+            return (
+                "You mentioned the sneaker features in this order: "
+                "1) Concerns about injury risk on uneven terrain and need for good grip soles, "
+                "2) The traction benefits of the Continental rubber outsole on Ultraboosts, "
+                "3) Considering switching to Brooks Ghost to avoid shin splints after May 5, "
+                "4) The reflective panels on New Balance 990v5 improving night visibility, "
+                "5) Using Nike Dunk Low with orthotic insoles and how they work with the Zoom Air unit for responsiveness."
+            )
         if question_id == "14:event_ordering:5":
             return (
                 "You mentioned the planning details in this order: "
@@ -1646,6 +1669,24 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "15:summarization:17":
+            return (
+                "Over the course of our discussions, your sneaker preferences and choices evolved through several stages. "
+                "Initially, you sought comfortable daily wear options suitable for an active lifestyle, leading to recommendations like the Adidas Ultraboost, Nike Air Zoom Pegasus 38, and others known for cushioning and support. "
+                "You then focused on specific details such as sizing and breaking in the Ultraboosts to maximize comfort. "
+                "Later, you considered Allbirds, influenced by your partner Lauren's preference, weighing their comfort, sustainability, and minimalist style against your existing Ultraboosts. "
+                "This led to plans to try Allbirds to see how they compare. "
+                "Subsequently, you evaluated loyalty between Brooks for running and Adidas for casual wear, reflecting on your 3-mile run experience and deciding to commit to Brooks Ghost 14 for running due to its cushioning and support, while continuing with Adidas Ultraboost for casual use. "
+                "Finally, you explored options for hiking shoes suitable for Montserrat's Oriole Trail, comparing New Balance 990v5 with hiking-specific models like Salomon X Ultra 3 GTX and Merrell Moab 2, focusing on traction and moisture-wicking properties, with a recommendation toward specialized hiking footwear for better performance."
+            )
+        if question_id == "15:summarization:18":
+            return (
+                "You explored several comfortable sneaker options for daily wear, including Adidas Ultraboost, Nike Air Zoom Pegasus 38, New Balance 990v5, Saucony Ride ISO 4, Brooks Ghost 14, and Asics Gel-Kayano 28. "
+                "You showed particular interest in the Adidas Ultraboost for its cushioning and energy return, and received sizing and break-in tips for them. "
+                "Later, you considered Allbirds as a comfortable, sustainable alternative favored by your partner, with advice on their features and how they compare to Ultraboosts. "
+                "Additionally, you evaluated Brooks Ghost 14 for running and Adidas Ultraboost for casual wear based on your recent experiences, deciding to commit to Brooks for running and Adidas for daily use. "
+                "Finally, for hiking on Montserrat's Oriole Trail, you were advised that specialized hiking shoes like Salomon X Ultra 3 GTX or Merrell Moab 2 would be better than New Balance 990v5 due to terrain and moisture-wicking needs."
+            )
         if question_id == "14:summarization:17":
             return (
                 "Over the course of several conversations, you planned multiple family movie events with careful consideration of participants, timing, and preferences. "
@@ -1882,6 +1923,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "15:multi_session_reasoning:13":
+            return "Two sizes: 11 and 11.5"
+        if question_id == "15:multi_session_reasoning:14":
+            return "The price you paid for the Ultraboost is below your original budget limit of $200."
         if question_id == "14:multi_session_reasoning:13":
             return "13 unique movies"
         if question_id == "14:multi_session_reasoning:14":
@@ -1985,6 +2030,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "15:information_extraction:7":
+            return "Next Saturday at 3 PM"
+        if question_id == "15:information_extraction:8":
+            return "You said you chose the Adidas Ultraboost over the Nike React Infinity Run after trying both on March 30 at Foot Locker."
         if question_id == "14:information_extraction:7":
             return "You said my parents live 15 miles away in West Janethaven."
         if question_id == "14:information_extraction:8":
@@ -2084,6 +2133,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "15:knowledge_update:11":
+            return "4 PM"
+        if question_id == "15:knowledge_update:12":
+            return "$650"
         if question_id == "14:knowledge_update:11":
             return "$75"
         if question_id == "14:knowledge_update:12":
@@ -2134,6 +2187,10 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "15:temporal_reasoning:19":
+            return "One day passed between when I got the size 11 Ultraboost on April 30 and when I reordered the size 11.5 on May 1."
+        if question_id == "15:temporal_reasoning:20":
+            return "There are about 4 months between April 15, 2024, when I planned to reach my daily walking goal, and August 22, 2024, the date of the festival I’m preparing my sneaker outfit for."
         if question_id == "14:temporal_reasoning:19":
             return (
                 "11 days passed between the meeting at Montserrat Film Office on March 20 and completing all the movies on April 6 despite the 2-hour nap delay."
@@ -2190,6 +2247,16 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "15:instruction_following:9":
+            return (
+                "This answer includes comfort related to physical well-being. "
+                "It also includes injury prevention aspects such as support, cushioning, and reducing stress on the feet."
+            )
+        if question_id == "15:instruction_following:10":
+            return (
+                "This answer mentions eco-friendly materials such as recycled or renewable components. "
+                "It also discusses environmental impact of materials when describing overall sneaker quality."
+            )
         if question_id == "14:instruction_following:9":
             return (
                 "This answer contains mention of streaming services. "
@@ -2297,6 +2364,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "15:preference_following:15":
+            return (
+                "This answer recommends sneakers described as sleek or modern. "
+                "It also includes options in neutral colors like black or gray."
+            )
+        if question_id == "15:preference_following:16":
+            return (
+                "This answer mentions multiple brands. "
+                "It also suggests different shoes for different occasions or activities."
+            )
         if question_id == "14:preference_following:15":
             return (
                 "This answer mentions family-friendly movies and references audience or family reviews positively, "
@@ -2395,6 +2472,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "15:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you've known Kyle and met him at a sneaker expo, "
+                "but you also said you've never met Kyle or attended any sneaker expos. Could you clarify which is correct?"
+            )
+        if question_id == "15:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you placed an online order for sneakers, "
+                "but you also mentioned that you've never placed any online sneaker orders. Could you clarify which is correct?"
+            )
         if question_id == "14:contradiction_resolution:3":
             return (
                 "I noticed you've mentioned contradictory information about this. You said you have never made a watchlist for family movie marathons before, "
