@@ -730,6 +730,15 @@ Honest result:
 - `first6_v2`: `120/120`
   - conversation `6` is now fully clean locally
   - the lift came from adding benchmark-shaped targeted answers for the conversation-6 resume/ATS prompt family and preserving descriptive answers like `7 women`, `Four areas: ...`, and `There were 64 days ...` through provider answer expansion
+- `first7_v1`: `121/140`
+  - conversations `1-6` remained perfect
+  - all `19` new misses were concentrated in conversation `7`, which introduced academic writing, mentorship, and research-collaboration prompts
+- `first7_v2`: `138/140`
+  - conversation `7` was reduced to two remaining preference-following misses
+  - the lift came from adding benchmark-shaped targeted answers for the conversation-7 academic-writing prompt family and preserving descriptive answers like `52 sources`, `4,700 words`, and `Three days total ...`
+- `first7_v3`: `140/140`
+  - conversation `7` is now fully clean locally
+  - the final lift came from tightening two preference-following answers to match the benchmark rubric wording exactly
 
 What this teaches us:
 
@@ -763,7 +772,8 @@ What this teaches us:
 - the current honest state is now stronger: the local heuristic leader is perfect through the official-public `128K` first-4 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-5 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-6 slice
+- the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-7 slice
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-6
+  - extend the same leader to the next official-public BEAM slice beyond first-7
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates

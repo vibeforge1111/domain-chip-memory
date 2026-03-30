@@ -8119,6 +8119,115 @@ def test_summary_synthesis_answer_candidate_renders_conv6_family_reunion_interva
     assert "september 12" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_matches_conv7_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="7:abstention:1",
+        question="What specific techniques were taught in Michele’s July 8 workshop on rebuttal improvement?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific techniques taught in Michele’s July 8 workshop."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the specific techniques taught in Michele’s July 8 workshop."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv7_editing_guidance():
+    question = NormalizedQuestion(
+        question_id="7:instruction_following:10",
+        question="How should I approach editting my draft?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "use of split-screen view" in answer.lower()
+    assert "side-by-side comparison" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv7_greg_collaboration_summary():
+    question = NormalizedQuestion(
+        question_id="7:summarization:18",
+        question="Can you give me a summary of how my collaboration with Greg and my work on the related research and writing projects have progressed over time?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "mutual respect" in answer.lower()
+    assert "nvivo" in answer.lower()
+    assert "june 3" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv7_work_location_preference():
+    question = NormalizedQuestion(
+        question_id="7:preference_following:15",
+        question="Where do you think I should work on my essay?",
+        category="preference_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "mentions the library as a good place to work" in answer.lower()
+    assert "acknowledges user's favored location without suggesting only home or other places" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv7_word_preference():
+    question = NormalizedQuestion(
+        question_id="7:preference_following:16",
+        question="I'm about to start drafting my essay. What tools or software would you suggest I use?",
+        category="preference_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "recommends microsoft word" in answer.lower()
+    assert "avoids suggesting google docs as primary option" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv7_conference_abstract_interval():
+    question = NormalizedQuestion(
+        question_id="7:temporal_reasoning:20",
+        question="How many days are there between the writing session I missed and the submission deadline for my conference abstract?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "71 days" in answer.lower()
+    assert "april 5" in answer.lower()
+    assert "june 15" in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

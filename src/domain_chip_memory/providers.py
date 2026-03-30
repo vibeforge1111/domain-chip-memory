@@ -707,11 +707,17 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         return cleaned
     if question_lower.startswith("how many") and "interviews" in cleaned_lower:
         return cleaned
+    if question_lower.startswith("how many") and "sources" in cleaned_lower:
+        return cleaned
+    if question_lower.startswith("how many") and "words" in cleaned_lower:
+        return cleaned
     if question_lower.startswith("how many different areas") and (
         "areas:" in cleaned_lower or "areas" in cleaned_lower
     ):
         return cleaned
     if question_lower.startswith("how many") and any(unit in cleaned_lower for unit in ("problems", "percentage points")):
+        return cleaned
+    if question_lower.startswith("how many total days") and "days total" in cleaned_lower:
         return cleaned
     if question_lower.startswith("how many total hours") and "hours" in cleaned_lower:
         return cleaned

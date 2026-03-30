@@ -997,6 +997,36 @@ def test_expand_answer_preserves_how_many_days_between_answer():
     assert rescued == "There were 64 days between postponing the family reunion on July 10 and celebrating the promotion with Linda on September 12."
 
 
+def test_expand_answer_preserves_how_many_sources_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many sources are in my Zotero library?",
+        "52 sources",
+        "answer_candidate: 52",
+    )
+
+    assert rescued == "52 sources"
+
+
+def test_expand_answer_preserves_how_many_words_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many words does my final essay draft contain?",
+        "4,700 words",
+        "answer_candidate: 4700",
+    )
+
+    assert rescued == "4,700 words"
+
+
+def test_expand_answer_preserves_how_many_total_days_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many total days did I take off or breaks to manage stress and prevent burnout across my sessions?",
+        "Three days total: one hour on one day plus two full days off.",
+        "answer_candidate: 2",
+    )
+
+    assert rescued == "Three days total: one hour on one day plus two full days off."
+
+
 def test_expand_answer_does_not_overwrite_matching_duration_candidate():
     context = "\n".join(
         [
