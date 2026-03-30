@@ -31,7 +31,13 @@ class BaselinePrediction:
 
 
 def _normalize_answer(answer: str) -> str:
-    return " ".join(answer.lower().strip().split())
+    normalized = (
+        answer.replace("\u2019", "'")
+        .replace("\u2018", "'")
+        .replace("\u201c", '"')
+        .replace("\u201d", '"')
+    )
+    return " ".join(normalized.lower().strip().split())
 
 
 def _extract_beam_rubric_requirement(expected: str) -> str:

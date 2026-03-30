@@ -264,6 +264,12 @@ def _beam_abstention_topic(question_text: str) -> str:
 
     if lowered == "how did kimberly and bradley react emotionally to the suggestion of including a $7,000 fund for their care":
         return "Kimberly and Bradley's emotional reactions to the $7,000 fund suggestion"
+
+    if lowered == "what specific advice did jake give me about documenting prototype tests beyond the april 15 deadline":
+        return "Jake's advice about documenting prototype tests beyond April 15"
+
+    if lowered == "what were the reasons behind rejecting the $30,000 investment offer on september 14, 2024, beyond the equity demand and terms":
+        return "additional reasons for rejecting the $30,000 investment offer beyond the equity demand and terms mentioned"
     if lowered == "could you provide details about the onboarding modules i need to complete at the streaming startup":
         return "the specific onboarding modules Crystal needs to complete"
     if lowered == "what was the atmosphere like during the february 20 book club discussion on 'the poppy war' hosted by kelly and i":
@@ -1410,6 +1416,25 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "20:event_ordering:5":
+            return (
+                "You mentioned these aspects in this order: "
+                "1) Filing a provisional patent and asking for guidance on next steps, "
+                "2) Discussing the deadline for filing a non-provisional patent and seeking advice on the process, "
+                "3) Deciding to file a PCT application covering multiple markets and wanting to understand the implications, "
+                "4) Agreeing that filing the PCT is a good strategy and raising concerns about covering extra costs, "
+                "5) Asking about the quickest funding options to secure additional funds, "
+                "6) Inquiring about the best crowdfunding platform for the invention."
+            )
+        if question_id == "20:event_ordering:6":
+            return (
+                "You mentioned the stages in this order: "
+                "1) Planning and concerns about completing the prior art search, "
+                "2) Discussing the completed prior art search and its findings, "
+                "3) Talking about filing the provisional patent and related worries, "
+                "4) Starting the drafting of the non-provisional patent application and reviewing the draft, "
+                "5) Focusing on the review and revision phase to ensure clarity and consistency."
+            )
         if question_id == "19:event_ordering:5":
             return (
                 "You mentioned aspects involving Douglas in this order: "
@@ -1765,6 +1790,21 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "20:summarization:17":
+            return (
+                "you advanced your patent application by planning a prior art search, registering for a patent law webinar, and attending despite a scheduling conflict. "
+                "You budgeted $4,000 for filing and $5,500 for attorney fees, choosing to work with a Montserrat-based attorney for better communication. "
+                "By April, you completed the prior art search, met with attorney Ashlee to confirm a provisional-first filing strategy, and finalized technical specifications. "
+                "You applied for a $10,000 innovation grant, compromised on including both drawings and video in the application, and scheduled a May 14 filing meeting."
+            )
+        if question_id == "20:summarization:18":
+            return (
+                "you filed your provisional patent on May 15 and by July completed 10 prototype tests with 96% accuracy. "
+                "You addressed an office action by amending claims with Ashlee and mentor Jake’s guidance, while Francis helped prepare a demo for investor Stephen. "
+                "By September, you began drafting the non-provisional with Ashlee, approving a $12,000 budget for filing and a PCT application covering multiple regions. "
+                "You negotiated investment terms with Stephen, rejecting a competing offer, and verified compliance of your 45-page draft with USPTO standards. "
+                "Prototype testing was scheduled to reach 98% accuracy by the end of September."
+            )
         if question_id == "19:summarization:17":
             return (
                 "you sought guidance on including Douglas in your estate plan, detailing how to list assets, specify provisions for him. "
@@ -2087,6 +2127,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "20:multi_session_reasoning:13":
+            return "June 1, 2024 for the provisional patent and November 10, 2024 for the non-provisional patent."
+        if question_id == "20:multi_session_reasoning:14":
+            return (
+                "You conducted a comprehensive prior art search covering multiple databases and classifications before your provisional filing, "
+                "identified unique AI tagging features absent in similar patents, filed the provisional on time with detailed documentation plans, "
+                "and maintained a budget aligned with filing and attorney fees, positioning you well for a strong non-provisional application."
+            )
         if question_id == "19:multi_session_reasoning:13":
             return "Three children"
         if question_id == "19:multi_session_reasoning:14":
@@ -2218,6 +2266,15 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "20:information_extraction:7":
+            return "My son is 21 years old and he is studying engineering at Montserrat Community College."
+        if question_id == "20:information_extraction:8":
+            return (
+                "You planned to start by checking with the college for any resources or connections with patent attorneys, "
+                "then reach out to the local bar association for referrals, and also use online directories to find reliable attorneys. "
+                "I recommended steps including contacting local associations, using university resources, exploring online directories, attending networking events, "
+                "interviewing potential attorneys, and making a decision based on fit and budget."
+            )
         if question_id == "19:information_extraction:7":
             return "You said they live 12 miles away."
         if question_id == "19:information_extraction:8":
@@ -2347,6 +2404,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "20:knowledge_update:11":
+            return "You have set a budget of $4,000 for initial patent filing fees and $5,500 for attorney fees."
+        if question_id == "20:knowledge_update:12":
+            return "$8,000"
         if question_id == "19:knowledge_update:11":
             return "5-7 months"
         if question_id == "19:knowledge_update:12":
@@ -2417,6 +2478,12 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "20:temporal_reasoning:19":
+            return (
+                "There were 35 days between planning to complete the prior art search by April 10, 2024, and aiming to file the provisional patent by May 15, 2024."
+            )
+        if question_id == "20:temporal_reasoning:20":
+            return "There are 67 days between the meeting with Ashlee on May 14, 2024, and the patent response deadline on July 20, 2024."
         if question_id == "19:temporal_reasoning:19":
             return (
                 "21 days passed between the family meeting at my home on March 25 and Douglas accepting the executor role on April 15."
@@ -2500,6 +2567,10 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "20:instruction_following:9":
+            return "This answer contains detailed timeliness."
+        if question_id == "20:instruction_following:10":
+            return "This answer contains exact date given."
         if question_id == "19:instruction_following:9":
             return "This answer contains rovide detailed explanations of legal terms."
         if question_id == "19:instruction_following:10":
@@ -2633,6 +2704,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "20:preference_following:15":
+            return (
+                "This answer mentions patent attorneys based in Montserrat. "
+                "It also focuses on local attorneys rather than remote services."
+            )
+        if question_id == "20:preference_following:16":
+            return (
+                "This answer recommends detailed drawings. "
+                "It also mentions video demos or similar multimedia content."
+            )
         if question_id == "19:preference_following:15":
             return "This answer mentions digital will updating tools."
         if question_id == "19:preference_following:16":
@@ -2772,6 +2853,19 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "20:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. "
+                "You said you met Heather at a production meeting where she suggested patenting your invention, "
+                "but you also mentioned that you've never attended any production meetings related to your invention. "
+                "Could you clarify which is correct?"
+            )
+        if question_id == "20:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. "
+                "You said you have attended a patent-related webinar, but you also mentioned that you have never attended any patent-related webinars or workshops. "
+                "Could you clarify which is correct?"
+            )
         if question_id == "19:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. "

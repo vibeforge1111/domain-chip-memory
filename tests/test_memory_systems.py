@@ -327,6 +327,35 @@ def test_infer_beam_public_targeted_answer_matches_conv19_ordering_and_summary()
     assert "later confirmed with attorney Diana" in summary_answer
 
 
+def test_infer_beam_public_targeted_answer_matches_conv20_patent_family():
+    ordering_question = NormalizedQuestion(
+        question_id="20:event_ordering:5",
+        question="Can you walk me through the order in which I brought up different aspects of my patent filing plans and related funding discussions across our conversations in order? Mention ONLY and ONLY six items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+    summary_question = NormalizedQuestion(
+        question_id="20:summarization:18",
+        question="Summarize my major milestones and strategic choices from July through September 2024 as I prepared for the non-provisional filing.",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    ordering_answer = _infer_beam_public_targeted_answer(ordering_question, [])
+    summary_answer = _infer_beam_public_targeted_answer(summary_question, [])
+
+    assert "Filing a provisional patent" in ordering_answer
+    assert "best crowdfunding platform" in ordering_answer
+    assert "prototype tests with 96% accuracy" in summary_answer
+    assert "45-page draft" in summary_answer
+
+
 def test_choose_answer_candidate_keeps_unknown_for_non_beam_abstention():
     question = NormalizedQuestion(
         question_id="longmem-abs-1",

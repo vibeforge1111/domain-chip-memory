@@ -138,6 +138,15 @@ def _normalize_answer_tokens(text: str) -> list[str]:
     return normalized
 
 
+def _normalize_answer_surface(text: str) -> str:
+    return (
+        text.replace("\u2019", "'")
+        .replace("\u2018", "'")
+        .replace("\u201c", '"')
+        .replace("\u201d", '"')
+    )
+
+
 def _preference_match_tokens(text: str) -> set[str]:
     tokens = {
         token
@@ -358,7 +367,7 @@ def _build_prediction(
     provider_metadata: dict[str, Any],
 ) -> BaselinePrediction:
     answer = _expand_answer_from_context(packet.question, answer, packet.assembled_context)
-    normalized_pred = " ".join(answer.lower().strip().split())
+    normalized_pred = " ".join(_normalize_answer_surface(answer).lower().strip().split())
     primary_answer_candidate = packet.answer_candidates[0] if packet.answer_candidates else None
     retrieved_role_counts = Counter(
         item.memory_role for item in packet.retrieved_context_items if str(item.memory_role or "").strip()
@@ -407,7 +416,10 @@ def _build_prediction(
 
 
 def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) -> bool:
-    normalized_expected = [" ".join(expected.lower().strip().split()) for expected in expected_answers]
+    normalized_pred = " ".join(_normalize_answer_surface(normalized_pred).lower().strip().split())
+    normalized_expected = [
+        " ".join(_normalize_answer_surface(expected).lower().strip().split()) for expected in expected_answers
+    ]
     normalized_pred_compact = normalized_pred.replace(",", "")
     if (
         normalized_pred == "unknown"

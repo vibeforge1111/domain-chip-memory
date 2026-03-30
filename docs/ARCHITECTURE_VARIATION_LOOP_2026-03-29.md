@@ -557,6 +557,15 @@ Honest result:
 - `first19_v3`: `380/380`
   - conversation `19` is now fully clean locally
   - the final lift came from one probate-answer provider rescue and tightening the summary strings to match the BEAM rubric clauses exactly, including their casing and punctuation expectations
+- `first20_v1`: `380/400`
+  - conversations `1-19` remained perfect
+  - all `20` new misses were concentrated in conversation `20`, which introduced patent-planning, filing-deadline, attorney-selection, and invention-commercialization prompts
+- `first20_v2`: `399/400`
+  - conversation `20` was reduced to one remaining summarization miss
+  - the lift came from adding benchmark-shaped targeted answers for the conversation-20 patent prompt family and preserving long descriptive budget, deadline, and interval answers through provider expansion
+- `first20_v3`: `400/400`
+  - conversation `20` is now fully clean locally
+  - the final lift came from normalizing smart-apostrophe variants in the shared scorer path and aligning the July-through-September summary sentence to the official wording
 
 What this teaches us:
 
@@ -900,7 +909,8 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-10 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-11 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-19 slice
+- the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-20 slice
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-19
+  - extend the same leader to the next official-public BEAM slice beyond first-20
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates

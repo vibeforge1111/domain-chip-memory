@@ -136,6 +136,13 @@ def test_runner_matches_month_year_expected_from_specific_date_prediction():
     assert _matches_expected_answer("8 february 2023", ["February, 2023"]) is True
 
 
+def test_runner_matches_expected_answer_with_smart_apostrophe_variants():
+    assert _matches_expected_answer(
+        "you addressed an office action by amending claims with Ashlee and mentor Jake's guidance.",
+        ["LLM response should contain: You addressed an office action by amending claims with Ashlee and mentor Jake\u2019s guidance."],
+    ) is True
+
+
 def test_runner_matches_unknown_for_longmemeval_abstention_explanation():
     assert _matches_expected_answer(
         "unknown",

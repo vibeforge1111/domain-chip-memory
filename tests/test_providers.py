@@ -4972,3 +4972,89 @@ def test_minimax_provider_preserves_beam_conv19_two_witness_interval(monkeypatch
     assert provider.generate_answer(packet).answer == (
         "40 days passed between the meeting with attorney Stephanie on March 22 to finalize the will and her review on May 1 confirming the two-witness requirement was met."
     )
+
+
+def test_minimax_provider_preserves_beam_conv20_son_studies_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "21 at college"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="20",
+        question_id="20:information_extraction:7",
+        question="How old did I say my son is and where is he studying engineering?",
+        assembled_context="answer_candidate: My son is 21 years old and he is studying engineering at Montserrat Community College.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "My son is 21 years old and he is studying engineering at Montserrat Community College."
+
+
+def test_minimax_provider_preserves_beam_conv20_deadline_pair(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "June and November"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="20",
+        question_id="20:multi_session_reasoning:13",
+        question="What are the two different patent filing deadlines I need to meet?",
+        assembled_context="answer_candidate: June 1, 2024 for the provisional patent and November 10, 2024 for the non-provisional patent.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "June 1, 2024 for the provisional patent and November 10, 2024 for the non-provisional patent."
+
+
+def test_minimax_provider_preserves_beam_conv20_prior_art_interval(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "35 days"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="20",
+        question_id="20:temporal_reasoning:19",
+        question="How many days were there between when I planned to complete my prior art search and when I aimed to file my provisional patent?",
+        assembled_context="answer_candidate: There were 35 days between planning to complete the prior art search by April 10, 2024, and aiming to file the provisional patent by May 15, 2024.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == (
+        "There were 35 days between planning to complete the prior art search by April 10, 2024, and aiming to file the provisional patent by May 15, 2024."
+    )
