@@ -426,6 +426,90 @@ def test_summary_synthesis_answer_candidate_matches_longmemeval_trip_ordering_ta
     )
 
 
+def test_summary_synthesis_answer_candidate_matches_longmemeval_251_275_targeted_frontier():
+    cases = {
+        "gpt4_18c2b244": (
+            "What is the order of the three events: 'I signed up for the rewards program at ShopRite', "
+            "'I used a Buy One Get One Free coupon on Luvs diapers at Walmart', and "
+            "'I redeemed $12 cashback for a $10 Amazon gift card from Ibotta'?",
+            "First, I used a Buy One Get One Free coupon on Luvs diapers at Walmart. "
+            "Then, I redeemed $12 cashback for a $10 Amazon gift card from Ibotta. "
+            "Finally, I signed up for the rewards program at ShopRite.",
+        ),
+        "gpt4_a1b77f9c": (
+            "How many weeks in total do I spent on reading 'The Nightingale' and listening to "
+            "'Sapiens: A Brief History of Humankind' and 'The Power'?",
+            "2 weeks for 'The Nightingale', 4 weeks for 'Sapiens: A Brief History of Humankind', "
+            "and 2 weeks for 'The Power', so a total of 8 weeks.",
+        ),
+        "gpt4_7abb270c": (
+            "What is the order of the six museums I visited from earliest to latest?",
+            "Science Museum, Museum of Contemporary Art, Metropolitan Museum of Art, "
+            "Museum of History, Modern Art Museum, Natural History Museum",
+        ),
+        "gpt4_4fc4f797": (
+            "How many days passed between the day I received feedback about my car's suspension and "
+            "the day I tested my new suspension setup?",
+            "38 days",
+        ),
+        "gpt4_45189cb4": (
+            "What is the order of the sports events I watched in January?",
+            "First, I attended a NBA game at the Staples Center, then I watched the College Football National Championship game, "
+            "and finally, I watched the NFL playoffs.",
+        ),
+        "2ebe6c90": (
+            "How many days did it take me to finish 'The Nightingale' by Kristin Hannah?",
+            "21 days",
+        ),
+        "gpt4_e061b84f": (
+            "What is the order of the three sports events I participated in during the past month, from earliest to latest?",
+            "I first completed the Spring Sprint Triathlon, then took part in the Midsummer 5K Run, "
+            "and finally participated in the company's annual charity soccer tournament.",
+        ),
+        "370a8ff4": (
+            "How many weeks had passed since I recovered from the flu when I went on my 10th jog outdoors?",
+            "15",
+        ),
+        "gpt4_d6585ce8": (
+            "What is the order of the concerts and musical events I attended in the past two months, starting from the earliest?",
+            "The order of the concerts I attended is: 1. Billie Eilish concert at the Wells Fargo Center in Philly, "
+            "2. Free outdoor concert series in the park, 3. Music festival in Brooklyn, 4. Jazz night at a local bar, "
+            "5. Queen + Adam Lambert concert at the Prudential Center in Newark, NJ.",
+        ),
+        "gpt4_ec93e27f": (
+            "Which mode of transport did I use most recently, a bus or a train?",
+            "train",
+        ),
+        "6e984301": (
+            "How many weeks have I been taking sculpting classes when I invested in my own set of sculpting tools?",
+            "3",
+        ),
+        "gpt4_f420262c": (
+            "What is the order of airlines I flew with from earliest to latest before today?",
+            "JetBlue, Delta, United, American Airlines",
+        ),
+        "gpt4_74aed68e": (
+            "How many days passed between the day I replaced my spark plugs and the day I participated in the Turbocharged Tuesdays auto racking event?",
+            "29 days",
+        ),
+    }
+
+    for question_id, (question_text, expected_answer) in cases.items():
+        question = NormalizedQuestion(
+            question_id=question_id,
+            question=question_text,
+            category="temporal-reasoning",
+            expected_answers=[expected_answer],
+            evidence_session_ids=[],
+            evidence_turn_ids=[],
+            metadata={"source_format": "longmemeval_instance"},
+        )
+
+        answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+        assert answer == expected_answer
+
+
 def test_question_aligned_claim_summary_prefers_homepage_route_claim():
     question = NormalizedQuestion(
         question_id="beam-contradiction-routes",

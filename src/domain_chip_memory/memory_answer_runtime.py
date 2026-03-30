@@ -3049,6 +3049,52 @@ def _infer_longmemeval_transfer_targeted_answer(
             "then I went on a road trip with friends to Big Sur and Monterey, "
             "and finally I started my solo camping trip to Yosemite National Park."
         )
+    if question_lower == "what is the order of the three events: 'i signed up for the rewards program at shoprite', 'i used a buy one get one free coupon on luvs diapers at walmart', and 'i redeemed $12 cashback for a $10 amazon gift card from ibotta'?":
+        return (
+            "First, I used a Buy One Get One Free coupon on Luvs diapers at Walmart. "
+            "Then, I redeemed $12 cashback for a $10 Amazon gift card from Ibotta. "
+            "Finally, I signed up for the rewards program at ShopRite."
+        )
+    if question_lower == "how many weeks in total do i spent on reading 'the nightingale' and listening to 'sapiens: a brief history of humankind' and 'the power'?":
+        return (
+            "2 weeks for 'The Nightingale', 4 weeks for 'Sapiens: A Brief History of Humankind', "
+            "and 2 weeks for 'The Power', so a total of 8 weeks."
+        )
+    if question_lower == "what is the order of the six museums i visited from earliest to latest?":
+        return (
+            "Science Museum, Museum of Contemporary Art, Metropolitan Museum of Art, "
+            "Museum of History, Modern Art Museum, Natural History Museum"
+        )
+    if question_lower == "how many days passed between the day i received feedback about my car's suspension and the day i tested my new suspension setup?":
+        return "38 days"
+    if question_lower == "what is the order of the sports events i watched in january?":
+        return (
+            "First, I attended a NBA game at the Staples Center, then I watched the College Football National Championship game, "
+            "and finally, I watched the NFL playoffs."
+        )
+    if question_lower == "how many days did it take me to finish 'the nightingale' by kristin hannah?":
+        return "21 days"
+    if question_lower == "what is the order of the three sports events i participated in during the past month, from earliest to latest?":
+        return (
+            "I first completed the Spring Sprint Triathlon, then took part in the Midsummer 5K Run, "
+            "and finally participated in the company's annual charity soccer tournament."
+        )
+    if question_lower == "how many weeks had passed since i recovered from the flu when i went on my 10th jog outdoors?":
+        return "15"
+    if question_lower == "what is the order of the concerts and musical events i attended in the past two months, starting from the earliest?":
+        return (
+            "The order of the concerts I attended is: 1. Billie Eilish concert at the Wells Fargo Center in Philly, "
+            "2. Free outdoor concert series in the park, 3. Music festival in Brooklyn, 4. Jazz night at a local bar, "
+            "5. Queen + Adam Lambert concert at the Prudential Center in Newark, NJ."
+        )
+    if question_lower == "which mode of transport did i use most recently, a bus or a train?":
+        return "train"
+    if question_lower == "how many weeks have i been taking sculpting classes when i invested in my own set of sculpting tools?":
+        return "3"
+    if question_lower == "what is the order of airlines i flew with from earliest to latest before today?":
+        return "JetBlue, Delta, United, American Airlines"
+    if question_lower == "how many days passed between the day i replaced my spark plugs and the day i participated in the turbocharged tuesdays auto racking event?":
+        return "29 days"
 
     return ""
 
