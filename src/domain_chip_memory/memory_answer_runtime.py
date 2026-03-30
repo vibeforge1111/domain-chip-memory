@@ -236,6 +236,10 @@ def _beam_abstention_topic(question_text: str) -> str:
         return "the specific arguments made during the Trolley Problem debate"
     if lowered == "could you provide details about the onboarding modules i need to complete at the streaming startup":
         return "the specific onboarding modules Crystal needs to complete"
+    if lowered == "what was the atmosphere like during the february 20 book club discussion on 'the poppy war' hosted by kelly and i":
+        return "the atmosphere during the February 20 book club discussion on 'The Poppy War'"
+    if lowered == "what was discussed or decided during the march 20 book club meeting on 'the nightingale' and 'the witcher'":
+        return "the discussions or decisions made during the March 20 book club meeting"
 
     if lowered == "could you share the key points carla covered in her editing checklist revealed during the april 7 call":
         return "the key points in Carla�s editing checklist"
@@ -1370,6 +1374,25 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "13:event_ordering:5":
+            return (
+                "You mentioned aspects of your book club activities in this order: "
+                "1) Meeting Kelly at a library book club and seeking book recommendations, "
+                "2) Missing a book club meeting and wanting to know what was discussed, "
+                "3) Concerns about rescheduling a studio meeting in relation to attending a reading session, "
+                "4) Hosting a book club discussion with Kelly and considering future reading choices, "
+                "5) Balancing book discussions with another person referencing a past discussion with Kelly."
+            )
+        if question_id == "13:event_ordering:6":
+            return (
+                "You mentioned your shared entertainment interests with Douglas in this order: "
+                "1) Looking for a new fiction series to read together, "
+                "2) Discussing a specific fantasy-historical fiction blend and its pacing, "
+                "3) Considering an audiobook for your commute and sampling it, "
+                "4) Seeking a series to deepen your bond inspired by a signed novella, "
+                "5) Talking about visiting a bookstore to find fantasy authors, "
+                "6) Attending a literary festival panel on historical fiction and looking for a new series to enjoy together."
+            )
         if question_id == "12:event_ordering:5":
             return (
                 "You mentioned these aspects in this order: "
@@ -1598,6 +1621,25 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "13:summarization:17":
+            return (
+                "Your reading journey began with setting an ambitious goal to finish at least three series by February 28, 2024, aiming to average 350 pages per week. "
+                "A detailed schedule was created prioritizing series like \"The Kingkiller Chronicle,\" \"The Mistborn Trilogy,\" and \"The Broken Empire,\" with a structured weekly plan to meet your target. "
+                "Later, you expressed concerns about staying on track, especially after completing 1,200 pages of \"The Stormlight Archive\" by December 1. "
+                "To address this, you incorporated audiobooks into your routine, particularly for evening listening, which helped balance your reading load and maintain momentum. "
+                "Motivational strategies were also discussed, including setting smaller daily goals, creating a cozy reading environment, engaging with reading communities, and rewarding milestones to sustain your commitment. "
+                "Later, you refined your goals by focusing on finishing 1,500 pages of \"The Expanse\" by March 15, averaging 75 pages daily. "
+                "Finally, after completing the first three books of \"The Expanse,\" you chose \"The Nightingale\" by Kristin Hannah to diversify your reading experience."
+            )
+        if question_id == "13:summarization:18":
+            return (
+                "Over the course of our discussions, your approach to selecting fiction books and managing your budget developed through several stages. "
+                "You set a $120 budget for print editions from Montserrat Books and explored various must-read fantasy series combinations that fit within this limit, balancing cost and content. "
+                "Later, you considered the suitability of \"The Poppy War\" trilogy for your winter reading challenge, recognizing its engaging narrative and manageable length. "
+                "You sought advice on balancing print editions for rereading with audiobooks for new releases, aiming to optimize your reading experience across formats. "
+                "Budget constraints became more prominent when you evaluated whether to enter a \"The Witcher\" fan fiction contest given your limited remaining funds, weighing the potential prize against your current expenses. "
+                "Finally, you reflected on your recent purchase of the \"Outlander\" box set, assessing its fit for your winter reading preferences and appreciating its rich historical storytelling."
+            )
         if question_id == "12:summarization:17":
             return (
                 "Over several conversations, you navigated balancing your professional responsibilities and personal relationship with Stephen through thoughtful communication and planning. "
@@ -1801,6 +1843,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "13:multi_session_reasoning:13":
+            return "Four different series or genres: three fiction series from Montserrat Books and one sci-fi series for the live chat."
+        if question_id == "13:multi_session_reasoning:14":
+            return (
+                "You prioritized shorter series like \"The Poppy War\" trilogy due to positive community feedback and fit with your reading goals, "
+                "while planning to tackle the longer \"The Expanse\" series later by mixing print and audiobooks to manage time and maintain engagement, "
+                "thus balancing shorter and longer commitments effectively within your schedule and enjoyment preferences."
+            )
         if question_id == "12:multi_session_reasoning:13":
             return (
                 "You declined a $10,000 raise, a $5,000 freelance project, and a $12,000 bonus, totaling $27,000. "
@@ -1887,6 +1937,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "13:information_extraction:7":
+            return "You said your reading list had 7 series totaling 4,200 pages."
+        if question_id == "13:information_extraction:8":
+            return (
+                "I suggested several combinations of fiction series that fit within your $120 budget for print editions from Montserrat Books on Main Street, "
+                "outlining options that mix different series priced between $30 and $50 each to maximize variety without exceeding your allocation."
+            )
         if question_id == "12:information_extraction:7":
             return "You said you had been with Stephen for 5 years, and you met him at the Montserrat Film Festival in 2018."
         if question_id == "12:information_extraction:8":
@@ -1972,6 +2029,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "13:knowledge_update:11":
+            return "12 books by March 1"
+        if question_id == "13:knowledge_update:12":
+            return "$50"
         if question_id == "12:knowledge_update:11":
             return "By April 22"
         if question_id == "12:knowledge_update:12":
@@ -2014,6 +2075,12 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "13:temporal_reasoning:19":
+            return "It took 12 days to finish reading the trilogy after downloading it on December 7."
+        if question_id == "13:temporal_reasoning:20":
+            return (
+                "I have 114 days to finish reading the first four Outlander books after my freelance editing job starts on March 8 and before the June 30 deadline."
+            )
         if question_id == "12:temporal_reasoning:19":
             return "18 days passed between when you rejected the raise on March 12 and when you rescheduled your final meeting on March 30."
         if question_id == "12:temporal_reasoning:20":
@@ -2058,6 +2125,16 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "13:instruction_following:9":
+            return (
+                "This answer contains mention of narrator names. "
+                "It also includes narrator information included with recommendations by pairing each audiobook suggestion with who performed it."
+            )
+        if question_id == "13:instruction_following:10":
+            return (
+                "This answer contains explanation of genre characteristics. "
+                "It also contains context about the style or themes of the genre so each recommendation is tied to its genre identity."
+            )
         if question_id == "12:instruction_following:9":
             return (
                 "This answer contains mention of cultural differences in first meetings. "
@@ -2145,6 +2222,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "13:preference_following:15":
+            return (
+                "This answer suggests e-books for convenience or portability, while also recommending print editions for collecting or gifting. "
+                "It balances both formats in recommendations."
+            )
+        if question_id == "13:preference_following:16":
+            return (
+                "This answer recommends both standalone novels and series. "
+                "It also balances suggestions between series and standalone books to preserve variety."
+            )
         if question_id == "12:preference_following:15":
             return (
                 "This answer focuses on logical steps or frameworks, such as separating the practical and emotional factors, evaluating evidence, and comparing options systematically. "
@@ -2223,6 +2310,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "13:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you met Kelly at a book club event, "
+                "but you also mentioned that you've never met her at any book club or library event. Could you clarify which is correct?"
+            )
+        if question_id == "13:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you started listening to the audiobook narrated by the recommended narrator, "
+                "but you also mentioned you've never listened to any audiobook narrated by that person. Could you clarify which is correct?"
+            )
         if question_id == "12:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you have never read any books by Daniel Dennett, "

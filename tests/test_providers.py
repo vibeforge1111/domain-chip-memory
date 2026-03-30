@@ -3918,3 +3918,93 @@ def test_minimax_provider_preserves_beam_conv12_relationship_duration_sentence(m
         provider.generate_answer(packet).answer
         == "You said you had been with Stephen for 5 years, and you met him at the Montserrat Film Festival in 2018."
     )
+
+
+def test_minimax_provider_preserves_beam_conv13_reading_list_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "7"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="13",
+        question_id="13:information_extraction:7",
+        question="How many series did I say were on my reading list, and what was the total page count?",
+        assembled_context="answer_candidate: You said your reading list had 7 series totaling 4,200 pages.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert (
+        provider.generate_answer(packet).answer
+        == "You said your reading list had 7 series totaling 4,200 pages."
+    )
+
+
+def test_minimax_provider_preserves_beam_conv13_updated_reading_goal(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "12"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="13",
+        question_id="13:knowledge_update:11",
+        question="How many books am I aiming to read in my winter reading challenge?",
+        assembled_context="answer_candidate: 12 books by March 1",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "12 books by March 1"
+
+
+def test_minimax_provider_preserves_beam_conv13_multi_session_count_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "4"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="13",
+        question_id="13:multi_session_reasoning:13",
+        question="How many different book series or genres have I mentioned wanting to explore across my conversations?",
+        assembled_context="answer_candidate: Four different series or genres: three fiction series from Montserrat Books and one sci-fi series for the live chat.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert (
+        provider.generate_answer(packet).answer
+        == "Four different series or genres: three fiction series from Montserrat Books and one sci-fi series for the live chat."
+    )

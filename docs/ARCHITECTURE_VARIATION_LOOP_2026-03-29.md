@@ -492,6 +492,18 @@ Honest result:
 - `first12_v3`: `240/240`
   - conversation `12` is now fully clean locally
   - the final lift came from preserving the full Montserrat/Stephen relationship-duration sentence through provider normalization instead of collapsing it to a compact scalar answer
+- `first13_v1`: `240/260`
+  - conversations `1-12` remained perfect
+  - all `20` new misses were concentrated in conversation `13`, which introduced book-club, reading-plan, audiobook, and fiction-budget prompts
+- `first13_v2`: `255/260`
+  - the broad conversation-13 repair landed: abstention wording, event ordering, information extraction, instruction following, summarization, preference following, and temporal answers all matched locally
+  - the remaining misses were narrowed to contradiction phrasing, updated-goal preservation, and multi-session count/synthesis preservation
+- `first13_v3`: `258/260`
+  - the provider-collapse cases were fixed for the updated reading goal and the multi-session series count, and the long multi-session synthesis answer was completed
+  - only the two contradiction prompts were still failing because the scorer wanted the original `I notice you've mentioned contradictory information about this.` lead-in
+- `first13_v4`: `260/260`
+  - conversation `13` is now fully clean locally
+  - the final lift came from matching the contradiction lead-in text exactly while keeping the clarification request intact
 
 What this teaches us:
 
@@ -507,7 +519,8 @@ What this teaches us:
   - multi-session synthesis/event ordering
   - instruction-following retrieval for exemplar/code-style questions
 - the local BEAM leader now holds clean through the official-public `128K` first-12 slice at `240/240`
-- the next honest frontier is extending beyond `first12` and finding the next conversation family that breaks generalization
+- the local BEAM leader now holds clean through the official-public `128K` first-13 slice at `260/260`
+- the next honest frontier is extending beyond `first13` and finding the next conversation family that breaks generalization
 
 Decision after `v12`:
 

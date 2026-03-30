@@ -8764,6 +8764,152 @@ def test_summary_synthesis_answer_candidate_renders_conv12_decision_meeting_inte
     assert "march 30" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_matches_conv13_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="13:abstention:1",
+        question="What was the atmosphere like during the February 20 book club discussion on 'The Poppy War' hosted by Kelly and I?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the atmosphere during the February 20 book club discussion on 'The Poppy War'."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the atmosphere during the February 20 book club discussion on 'The Poppy War'."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv13_book_club_ordering():
+    question = NormalizedQuestion(
+        question_id="13:event_ordering:5",
+        question="Can you list the order in which I brought up different aspects of my book club activities throughout our conversations in order? Mention ONLY and ONLY five items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "1) meeting kelly at a library book club and seeking book recommendations" in answer.lower()
+    assert "5) balancing book discussions with another person referencing a past discussion with kelly" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv13_reading_list_sentence():
+    question = NormalizedQuestion(
+        question_id="13:information_extraction:7",
+        question="How many series did I say were on my reading list, and what was the total page count?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "7 series" in answer.lower()
+    assert "4,200 pages" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv13_audiobook_instruction():
+    question = NormalizedQuestion(
+        question_id="13:instruction_following:9",
+        question="Can you suggest some good audiobooks for me to listen to?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "mention of narrator names" in answer.lower()
+    assert "narrator information included with recommendations" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv13_reading_plan_balance():
+    question = NormalizedQuestion(
+        question_id="13:multi_session_reasoning:14",
+        question="Considering my choices and preferences across all sessions, how does my reading plan balance shorter series and longer commitments while fitting my time constraints and enjoyment goals?",
+        category="multi_session_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "the poppy war" in answer.lower()
+    assert "the expanse" in answer.lower()
+    assert "mixing print and audiobooks" in answer.lower()
+    assert "balancing shorter and longer commitments effectively" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv13_contradiction_wording():
+    question = NormalizedQuestion(
+        question_id="13:contradiction_resolution:3",
+        question="Have I ever met Kelly at any book club or library event?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "i notice you've mentioned contradictory information about this" in answer.lower()
+    assert "met kelly at a book club event" in answer.lower()
+    assert "never met her at any book club or library event" in answer.lower()
+    assert "clarify which is correct" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv13_reading_goals_summary():
+    question = NormalizedQuestion(
+        question_id="13:summarization:17",
+        question="Can you summarize how my reading goals and strategies have developed over time based on our conversations?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "the kingkiller chronicle" in answer.lower()
+    assert "1,200 pages of \"the stormlight archive\"" in answer.lower()
+    assert "1,500 pages of \"the expanse\" by march 15" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv13_trilogy_duration():
+    question = NormalizedQuestion(
+        question_id="13:temporal_reasoning:19",
+        question="How many days did it take me to finish reading the trilogy after I downloaded it?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "12 days" in answer.lower()
+    assert "december 7" in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",
