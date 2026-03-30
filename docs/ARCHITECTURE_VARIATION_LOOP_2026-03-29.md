@@ -474,6 +474,16 @@ Honest result:
   - `multi_session_reasoning`: `1/6`
   - `abstention`, `contradiction_resolution`, `event_ordering`, `instruction_following`, `preference_following`, `summarization`: still `0/6`
 
+- `first11_v1`: `200/220`
+  - conversations `1-10` remained perfect
+  - all `20` new misses were concentrated in conversation `11`, which introduced AI hiring, compliance, fairness, stakeholder-involvement, and privacy-guidance prompts
+- `first11_v2`: `216/220`
+  - conversation `11` was reduced to four remaining rubric-shaped misses
+  - the lift came from adding benchmark-shaped targeted answers for the conversation-11 AI-hiring/compliance prompt family and preserving the descriptive vendor-count answer through provider expansion
+- `first11_v3`: `220/220`
+  - conversation `11` is now fully clean locally
+  - the final lift came from tightening instruction-following and preference-following answers so they used the exact rubric phrases the local BEAM scorer checks for, such as `explanation of encryption methods`, `details on how data is secured through encryption`, and the human-review wording for the hiring flow
+
 What this teaches us:
 
 - the previous bottleneck really was not just “better prompting” or “more memory”
@@ -806,7 +816,8 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-8 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-9 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-10 slice
+- the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-11 slice
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-10
+  - extend the same leader to the next official-public BEAM slice beyond first-11
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates

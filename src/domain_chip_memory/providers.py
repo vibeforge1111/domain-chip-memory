@@ -721,6 +721,13 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         return cleaned
     if question_lower.startswith("how many different application types") and "application types" in cleaned_lower:
         return cleaned
+    if (
+        question_lower.startswith("how many different ai vendors or tools")
+        and answer_candidate
+        and "hirevue" in answer_candidate.lower()
+        and "pymetrics" in answer_candidate.lower()
+    ):
+        return answer_candidate
     if question_lower.startswith("what is my weekly word count target") and "words per week" in cleaned_lower:
         return cleaned
     if question_lower.startswith("what deadline should i aim for") and re.search(

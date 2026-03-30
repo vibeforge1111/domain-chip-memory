@@ -3803,3 +3803,87 @@ def test_minimax_provider_normalizes_locomo_pottery_break_missing_period(monkeyp
     )
 
     assert provider.generate_answer(packet).answer == "Read a book and paint."
+
+
+def test_minimax_provider_preserves_beam_conv11_updated_webinar_date(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "March 27"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="11",
+        question_id="11:knowledge_update:11",
+        question="When is the webinar on AI ethics in hiring scheduled to take place?",
+        assembled_context="answer_candidate: The webinar is scheduled for March 27 to accommodate additional guest speakers.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "March 27"
+
+
+def test_minimax_provider_preserves_beam_conv11_vendor_count_answer(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "2"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="11",
+        question_id="11:multi_session_reasoning:13",
+        question="How many different AI vendors or tools have I mentioned using or customizing for hiring automation?",
+        assembled_context="answer_candidate: Two vendors or tools: HireVue and Pymetrics.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "Two vendors or tools: HireVue and Pymetrics."
+
+
+def test_minimax_provider_preserves_beam_conv11_temporal_interval(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "19"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="11",
+        question_id="11:temporal_reasoning:19",
+        question="How many days are there between when my friend Carla suggested using AI for hiring over lunch and my upcoming webinar on AI ethics in hiring?",
+        assembled_context="answer_candidate: There are 19 days between Carla's suggestion over lunch on March 1 and the webinar on AI ethics in hiring on March 20.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert provider.generate_answer(packet).answer == "There are 19 days between Carla's suggestion over lunch on March 1 and the webinar on AI ethics in hiring on March 20."

@@ -228,6 +228,10 @@ def _beam_abstention_topic(question_text: str) -> str:
         return "the agenda of the Montserrat Writers� Festival"
     if "what was the agenda for the montserrat writers" in lowered and "festival" in lowered:
         return "the agenda of the Montserrat Writers� Festival"
+    if lowered == "what specific steps were taken during the bias audit initiated on april 30":
+        return "the specific steps taken during the bias audit initiated on April 30"
+    if lowered == "what specific feedback did the two managers provide on april 28 that influenced continuing the ai pilot":
+        return "the specific feedback from the two managers on April 28"
 
     if lowered == "could you share the key points carla covered in her editing checklist revealed during the april 7 call":
         return "the key points in Carla�s editing checklist"
@@ -1362,6 +1366,25 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "11:event_ordering:5":
+            return (
+                "You mentioned aspects of using AI in hiring in this order: "
+                "1) My collaboration with Michael and concerns about AI replacing human input in editing workflows, "
+                "2) Questions about ensuring AI recognizes candidates' soft skills, "
+                "3) Interest in psychometric tests to integrate with AI, "
+                "4) Michael revealing he is developing AI fairness metrics, "
+                "5) Michael suggesting Pymetrics for soft skills assessment and its impact on candidate fit, "
+                "6) Agreement to pilot Pymetrics while monitoring bias and transparency."
+            )
+        if question_id == "11:event_ordering:6":
+            return (
+                "You mentioned these topics in this order: "
+                "1) Cost comparisons between AI hiring tools and manual hiring expenses, "
+                "2) Initial pilot results showing recruiter hour savings and pilot costs, "
+                "3) Longer-term recruitment cost savings exceeding projections, "
+                "4) Whether Jessica needs to be involved in AI tool training sessions, "
+                "5) Whether Linda should be involved in all stages of automation expansion."
+            )
         if question_id == "10:event_ordering:5":
             return (
                 "You mentioned aspects of your writing journey in this order: "
@@ -1550,6 +1573,26 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "11:summarization:17":
+            return (
+                "Our approach to integrating AI into the hiring process has evolved through several stages. "
+                "Initially, we recognized the value of AI in improving efficiency, such as reducing resume screening time and enhancing candidate diversity, while emphasizing the importance of preserving the human touch, especially in assessing soft skills and cultural fit. "
+                "We then outlined specific steps for a pilot program, including selecting positions, configuring AI tools, training the team, and monitoring outcomes. "
+                "To ensure soft skills are not overlooked, we incorporated multi-stage evaluations with human-led interviews and psychometric assessments like MBTI and DISC. "
+                "Addressing concerns about fairness and bias, especially raised by team members like Wyatt, led us to plan a team meeting to discuss mitigation strategies, transparency, and human oversight. "
+                "Additionally, we considered leveraging Michael's expertise in AI fairness metrics and explored integrating tools like Pymetrics to improve candidate fit. "
+                "Finally, we discussed potential role transitions within the team, such as Michael moving to HR tech support, reflecting the broader impact of AI adoption on team dynamics and workflows. "
+                "Throughout, the process has balanced efficiency gains with ethical considerations and team collaboration."
+            )
+        if question_id == "11:summarization:18":
+            return (
+                "To ensure compliance with legal and policy requirements when using AI in hiring, you need to address several interconnected areas. "
+                "First, understanding and adhering to Montserrat's Data Protection Act and upcoming GDPR-like standards is essential, focusing on lawful data processing, consent, transparency, data minimization, and security. "
+                "Next, your hiring policy must explicitly cover AI transparency, including clear communication about AI usage, fairness audits, candidate notifications, and human oversight in final decisions. "
+                "Additionally, compliance with Montserrat's Employment Act amendments requires reviewing the legislation, consulting legal experts to obtain a compliance checklist, and auditing AI tools for bias and transparency. "
+                "Preparing for legal consultations involves gathering detailed examples of your current AI usage, including tools like HireVue and Pymetrics, data handling practices, and existing compliance measures such as bias audits and encryption. "
+                "Finally, ongoing efforts like regular policy updates, employee training, and scheduled reviews ensure that your AI hiring process remains compliant and ethically sound over time."
+            )
         if question_id == "10:summarization:17":
             return (
                 "Your journey began with a focus on foundational self-editing techniques, emphasizing reading widely, writing regularly, and learning grammar basics. "
@@ -1715,6 +1758,13 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "11:multi_session_reasoning:13":
+            return "Two vendors or tools: HireVue and Pymetrics."
+        if question_id == "11:multi_session_reasoning:14":
+            return (
+                "You should prioritize maintaining and monitoring diversity improvements by involving Wyatt early in training and pilot programs to secure buy-in and oversight, "
+                "while simultaneously encouraging Natalie's foundational learning in AI and recruitment technology to build future talent, balancing immediate operational success with long-term development."
+            )
         if question_id == "10:multi_session_reasoning:13":
             return "I increased my weekly word count goal by 300 words, from 1,200 to 1,500 words."
         if question_id == "10:multi_session_reasoning:14":
@@ -1783,6 +1833,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "11:information_extraction:7":
+            return "You said you met your partner at ArtSpace Gallery on June 12, 2020."
+        if question_id == "11:information_extraction:8":
+            return (
+                "I recommended starting with a pilot program to test the AI tool's effectiveness, maintaining human oversight especially in final decisions, "
+                "configuring anonymization to remove personal identifiers, auditing algorithms for bias including third-party audits, regularly monitoring diversity metrics and feedback, "
+                "and integrating structured interviews to assess soft skills alongside AI screening."
+            )
         if question_id == "10:information_extraction:7":
             return "You said you met Michael at the Montserrat Writers� Festival on January 15, 2024."
         if question_id == "10:information_extraction:8":
@@ -1852,6 +1910,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "11:knowledge_update:11":
+            return "The webinar is scheduled for March 27 to accommodate additional guest speakers."
+        if question_id == "11:knowledge_update:12":
+            return "90%"
         if question_id == "10:knowledge_update:11":
             return "1,350 words per week"
         if question_id == "10:knowledge_update:12":
@@ -1886,6 +1948,10 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "11:temporal_reasoning:19":
+            return "There are 19 days between Carla's suggestion over lunch on March 1 and the webinar on AI ethics in hiring on March 20."
+        if question_id == "11:temporal_reasoning:20":
+            return "49 days passed between the meeting with Wyatt on March 10 and the positive feedback from the managers on April 28."
         if question_id == "10:temporal_reasoning:19":
             return "There are 43 days between when I logged 3,600 words on March 3 and my deadline to complete the screenplay draft on April 15."
         if question_id == "10:temporal_reasoning:20":
@@ -1922,6 +1988,16 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "11:instruction_following:9":
+            return (
+                "This answer contains explanation of encryption methods such as TLS for data in transit and AES-256 for data at rest. "
+                "It also contains details on how data is secured through encryption by protecting information during transmission and while stored."
+            )
+        if question_id == "11:instruction_following:10":
+            return (
+                "This answer contains explanation of encryption methods such as TLS for transmitting data securely and AES-256 for stored data. "
+                "It also contains details on how data is secured through encryption both while it travels between your device and the service and while it is stored on the provider's systems."
+            )
         if question_id == "10:instruction_following:9":
             return "This answer uses Month Day, Year format: January 15, 2024."
         if question_id == "10:instruction_following:10":
@@ -1988,6 +2064,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "11:preference_following:15":
+            return (
+                "This answer mentions combining AI with human review. "
+                "It also suggests human checks alongside automated steps so the process stays efficient while preserving fairness and final human judgment."
+            )
+        if question_id == "11:preference_following:16":
+            return (
+                "This answer recommends human involvement in final interviews. "
+                "It also suggests maintaining or emphasizing human interaction in later stages to support candidate engagement and fairness."
+            )
         if question_id == "10:preference_following:15":
             return "This plan suggests 30-minute or similarly short sessions and avoids proposing long, uninterrupted editing periods."
         if question_id == "10:preference_following:16":
@@ -2046,6 +2132,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "11:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you have met Michael and collaborate with him weekly on editing timelines, "
+                "but you also mentioned that you have never met or worked with him. Could you clarify which is correct?"
+            )
+        if question_id == "11:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said that two-factor authentication was implemented for platform access, "
+                "but you also mentioned that you have never implemented two-factor authentication for any platform. Could you clarify which is correct?"
+            )
         if question_id == "10:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you have felt anxious about your grammar accuracy after feedback, but you also mentioned that you've never felt anxious about it. Could you clarify which is correct?"

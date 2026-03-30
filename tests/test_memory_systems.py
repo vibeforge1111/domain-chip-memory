@@ -8503,6 +8503,138 @@ def test_summary_synthesis_answer_candidate_renders_conv10_wordlog_to_deadline_i
     assert "april 15" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_matches_conv11_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="11:abstention:1",
+        question="What specific steps were taken during the bias audit initiated on April 30?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific steps taken during the bias audit initiated on April 30."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the specific steps taken during the bias audit initiated on April 30."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv11_contradiction_clarification():
+    question = NormalizedQuestion(
+        question_id="11:contradiction_resolution:3",
+        question="Have I worked with Michael on editing timelines before?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "contradictory information" in answer.lower()
+    assert "collaborate with him weekly on editing timelines" in answer.lower()
+    assert "never met or worked with him" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv11_ai_hiring_event_ordering():
+    question = NormalizedQuestion(
+        question_id="11:event_ordering:5",
+        question="Can you walk me through the order in which I brought up different aspects of using AI in our hiring process across our conversations, in order? Mention ONLY and ONLY six items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "aspects of using ai in hiring in this order" in answer.lower()
+    assert "1) my collaboration with michael" in answer.lower()
+    assert "6) agreement to pilot pymetrics" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv11_fairness_extraction():
+    question = NormalizedQuestion(
+        question_id="11:information_extraction:8",
+        question="What approach did you recommend to balance speeding up the hiring process with ensuring fairness throughout the candidate evaluation?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "pilot program" in answer.lower()
+    assert "human oversight" in answer.lower()
+    assert "anonymization" in answer.lower()
+    assert "structured interviews" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv11_encryption_instruction():
+    question = NormalizedQuestion(
+        question_id="11:instruction_following:9",
+        question="What should I know about keeping my information safe when using online services?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "encryption" in answer.lower()
+    assert "tls" in answer.lower()
+    assert "aes-256" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv11_ai_hiring_summary():
+    question = NormalizedQuestion(
+        question_id="11:summarization:17",
+        question="Can you give me a comprehensive summary of how we've approached integrating AI into our hiring process, including the key steps, challenges, and decisions we've discussed so far?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "improving efficiency" in answer.lower()
+    assert "pilot program" in answer.lower()
+    assert "mbti and disc" in answer.lower()
+    assert "pymetrics" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv11_webinar_interval():
+    question = NormalizedQuestion(
+        question_id="11:temporal_reasoning:19",
+        question="How many days are there between when my friend Carla suggested using AI for hiring over lunch and my upcoming webinar on AI ethics in hiring?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "19 days" in answer.lower()
+    assert "march 1" in answer.lower()
+    assert "march 20" in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",
