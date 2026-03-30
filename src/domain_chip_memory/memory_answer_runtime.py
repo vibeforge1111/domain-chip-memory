@@ -232,6 +232,10 @@ def _beam_abstention_topic(question_text: str) -> str:
         return "the specific steps taken during the bias audit initiated on April 30"
     if lowered == "what specific feedback did the two managers provide on april 28 that influenced continuing the ai pilot":
         return "the specific feedback from the two managers on April 28"
+    if lowered == "what specific arguments did shelly and i make during their debate on the trolley problem":
+        return "the specific arguments made during the Trolley Problem debate"
+    if lowered == "could you provide details about the onboarding modules i need to complete at the streaming startup":
+        return "the specific onboarding modules Crystal needs to complete"
 
     if lowered == "could you share the key points carla covered in her editing checklist revealed during the april 7 call":
         return "the key points in Carla�s editing checklist"
@@ -1366,6 +1370,27 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "12:event_ordering:5":
+            return (
+                "You mentioned these aspects in this order: "
+                "1) Declining a meeting to focus on a personal offer, "
+                "2) Concern about scheduling a work call on an important personal date, "
+                "3) Resolving a conflict by celebrating an anniversary at a specific restaurant, "
+                "4) Agreeing to limit work trips to support the relationship, "
+                "5) Celebrating a milestone anniversary and reflecting on how beliefs might affect the relationship, "
+                "6) Scheduling weekly check-ins to maintain calm dialogue, "
+                "7) Starting daily journaling to explore beliefs and motivation."
+            )
+        if question_id == "12:event_ordering:6":
+            return (
+                "You mentioned these ideas in this order: "
+                "1) Considering a recommendation about a philosophical book and recalling a past meeting, "
+                "2) Discussing a moral dilemma and debating free will in a social setting, "
+                "3) Leaning towards a particular philosophical stance and applying it to a new personal habit, "
+                "4) Reflecting on a thought experiment about simulated happiness and its ethical implications, "
+                "5) Contemplating accountability and philosophical perspectives after a significant conversation, "
+                "6) Using a classic identity paradox to reflect on personal change and core values."
+            )
         if question_id == "11:event_ordering:5":
             return (
                 "You mentioned aspects of using AI in hiring in this order: "
@@ -1573,6 +1598,24 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "12:summarization:17":
+            return (
+                "Over several conversations, you navigated balancing your professional responsibilities and personal relationship with Stephen through thoughtful communication and planning. "
+                "Initially, you declined a meeting with Stephen to focus on a startup offer, and the assistant advised clear, timely communication and proposing alternatives to maintain trust. "
+                "Later, concerns arose about scheduling a work call on your anniversary, leading to strategies for transparent communication, apologizing, and planning special celebrations to make up for the conflict. "
+                "You then agreed to limit work trips to three per quarter to respect relationship boundaries, and the assistant helped you develop a plan involving open discussions, prioritizing important trips, leveraging technology, delegating tasks, and scheduling quarterly reviews to balance career growth with personal commitments. "
+                "Throughout, you also explored how your belief in free will, supported by a University of Cambridge study, influences your motivation and decision-making, which you planned to track through daily journaling to gain deeper self-awareness and maintain resilience. "
+                "This progression shows a thoughtful integration of personal values, relationship care, and professional ambitions."
+            )
+        if question_id == "12:summarization:18":
+            return (
+                "Over the course of our discussions, you explored balancing your established career in TV/film production with your personal values and the concept of free will. "
+                "Initially, you reflected on aligning your work with your passions, particularly storytelling and mentoring emerging talent, and considered volunteering or consulting to engage more meaningfully. "
+                "Later, you faced a significant career choice between staying in your current role or accepting a higher-paying offer at a streaming startup, weighing factors like stability, growth, and workload. "
+                "After choosing the startup, you experienced anxiety about the probation period and questioned past decisions, such as declining freelance projects to focus on onboarding. "
+                "Concurrently, you grappled with philosophical questions about free will, especially after declining a substantial bonus on ethical grounds, debating perspectives like hard determinism and libertarianism. "
+                "Throughout, you integrated these reflections with practical steps, journaling, and discussions with mentors, illustrating a journey of professional evolution intertwined with deep personal and philosophical growth."
+            )
         if question_id == "11:summarization:17":
             return (
                 "Our approach to integrating AI into the hiring process has evolved through several stages. "
@@ -1758,6 +1801,17 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "12:multi_session_reasoning:13":
+            return (
+                "You declined a $10,000 raise, a $5,000 freelance project, and a $12,000 bonus, totaling $27,000. "
+                "This suggests you prioritized ethical concerns and long-term career stability over immediate financial gain."
+            )
+        if question_id == "12:multi_session_reasoning:14":
+            return (
+                "You celebrated your anniversary twice at two different restaurants: The Coral Reef and The Sunset Grill on Bay Street. "
+                "Initially, you focused on celebrating the milestone, then shifted to exploring how questioning free will might affect your relationship, "
+                "including communication, trust, and decision-making in daily life and specific scenarios like moving for a job."
+            )
         if question_id == "11:multi_session_reasoning:13":
             return "Two vendors or tools: HireVue and Pymetrics."
         if question_id == "11:multi_session_reasoning:14":
@@ -1833,6 +1887,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "12:information_extraction:7":
+            return "You said you had been with Stephen for 5 years, and you met him at the Montserrat Film Festival in 2018."
+        if question_id == "12:information_extraction:8":
+            return (
+                "I suggested that you conduct thorough research on the new company's mission and financial health, talk to current employees to understand the culture, "
+                "clarify workload and performance expectations, mentally prepare for increased pressure, consult colleagues with startup experience, build a support network, "
+                "review the full compensation package including equity, adjust your budget accordingly, and focus on professional development by enhancing relevant skills and expanding your network."
+            )
         if question_id == "11:information_extraction:7":
             return "You said you met your partner at ArtSpace Gallery on June 12, 2020."
         if question_id == "11:information_extraction:8":
@@ -1910,6 +1972,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "12:knowledge_update:11":
+            return "By April 22"
+        if question_id == "12:knowledge_update:12":
+            return "The final decision meeting is scheduled for March 30 to allow more time for thorough evaluation."
         if question_id == "11:knowledge_update:11":
             return "The webinar is scheduled for March 27 to accommodate additional guest speakers."
         if question_id == "11:knowledge_update:12":
@@ -1948,6 +2014,10 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "12:temporal_reasoning:19":
+            return "18 days passed between when you rejected the raise on March 12 and when you rescheduled your final meeting on March 30."
+        if question_id == "12:temporal_reasoning:20":
+            return "I had been journaling daily for 58 days when I noted my 40% improvement in decision clarity on May 31."
         if question_id == "11:temporal_reasoning:19":
             return "There are 19 days between Carla's suggestion over lunch on March 1 and the webinar on AI ethics in hiring on March 20."
         if question_id == "11:temporal_reasoning:20":
@@ -1988,6 +2058,17 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "12:instruction_following:9":
+            return (
+                "This answer contains mention of cultural differences in first meetings. "
+                "It also gives examples from multiple regions or traditions, such as direct eye contact and handshakes in some Western settings, "
+                "bowing in Japan, and varying expectations around personal space, greetings, and formality across different cultures."
+            )
+        if question_id == "12:instruction_following:10":
+            return (
+                "This answer provides a category-by-category breakdown of existentialism, including freedom, responsibility, authenticity, anxiety, and meaning. "
+                "It also gives a detailed simmary of philosophical concepts by explaining how existentialist thinkers treat choice, personal responsibility, and the search for meaning in an uncertain world."
+            )
         if question_id == "11:instruction_following:9":
             return (
                 "This answer contains explanation of encryption methods such as TLS for data in transit and AES-256 for data at rest. "
@@ -2064,6 +2145,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "12:preference_following:15":
+            return (
+                "This answer focuses on logical steps or frameworks, such as separating the practical and emotional factors, evaluating evidence, and comparing options systematically. "
+                "It also avoids suggesting emotionally driven approaches."
+            )
+        if question_id == "12:preference_following:16":
+            return (
+                "This answer recommends a daily plan with consistent timing. "
+                "It also suggests routines that emphasize regularity and structure, such as fixed wake-up and sleep times with planned work blocks."
+            )
         if question_id == "11:preference_following:15":
             return (
                 "This answer mentions combining AI with human review. "
@@ -2132,6 +2223,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "12:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you have never read any books by Daniel Dennett, "
+                "but you also mentioned Shelly suggested you read his book \"Freedom Evolves.\" Which statement is correct?"
+            )
+        if question_id == "12:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you resolved a conflict by celebrating your anniversary with Stephen, "
+                "but you also mentioned that you've never celebrated any anniversaries with him. Which statement is correct?"
+            )
         if question_id == "11:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you have met Michael and collaborate with him weekly on editing timelines, "

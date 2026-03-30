@@ -3887,3 +3887,34 @@ def test_minimax_provider_preserves_beam_conv11_temporal_interval(monkeypatch):
     )
 
     assert provider.generate_answer(packet).answer == "There are 19 days between Carla's suggestion over lunch on March 1 and the webinar on AI ethics in hiring on March 20."
+
+
+def test_minimax_provider_preserves_beam_conv12_relationship_duration_sentence(monkeypatch):
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+
+    def fake_urlopen(req, timeout):
+        return _FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "5 years"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 1, "total_tokens": 13},
+            }
+        )
+
+    monkeypatch.setattr(providers.request, "urlopen", fake_urlopen)
+    provider = get_provider("minimax:MiniMax-M2.7")
+
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="12",
+        question_id="12:information_extraction:7",
+        question="How long had I been with the person I mentioned meeting at that festival before we started dating?",
+        assembled_context="answer_candidate: You said you had been with Stephen for 5 years, and you met him at the Montserrat Film Festival in 2018.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory", "source_format": "beam_local_slice_question"},
+    )
+
+    assert (
+        provider.generate_answer(packet).answer
+        == "You said you had been with Stephen for 5 years, and you met him at the Montserrat Film Festival in 2018."
+    )

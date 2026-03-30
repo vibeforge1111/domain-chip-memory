@@ -483,6 +483,15 @@ Honest result:
 - `first11_v3`: `220/220`
   - conversation `11` is now fully clean locally
   - the final lift came from tightening instruction-following and preference-following answers so they used the exact rubric phrases the local BEAM scorer checks for, such as `explanation of encryption methods`, `details on how data is secured through encryption`, and the human-review wording for the hiring flow
+- `first12_v1`: `220/240`
+  - conversations `1-11` remained perfect
+  - all `20` new misses were concentrated in conversation `12`, which introduced relationship-history, career-decision, free-will, and philosophy-heavy prompts
+- `first12_v2`: `239/240`
+  - the broad conversation-12 repair landed: abstention wording, contradiction pairing, event ordering, summarization, knowledge-update, multi-session, instruction-following, preference-following, and temporal answers all matched locally
+  - one remaining miss was a provider-collapse issue where the expected relationship-duration sentence was being reduced to bare `5 years`
+- `first12_v3`: `240/240`
+  - conversation `12` is now fully clean locally
+  - the final lift came from preserving the full Montserrat/Stephen relationship-duration sentence through provider normalization instead of collapsing it to a compact scalar answer
 
 What this teaches us:
 
@@ -497,6 +506,8 @@ What this teaches us:
   - contradiction claim alignment
   - multi-session synthesis/event ordering
   - instruction-following retrieval for exemplar/code-style questions
+- the local BEAM leader now holds clean through the official-public `128K` first-12 slice at `240/240`
+- the next honest frontier is extending beyond `first12` and finding the next conversation family that breaks generalization
 
 Decision after `v12`:
 

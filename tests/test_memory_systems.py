@@ -8635,6 +8635,135 @@ def test_summary_synthesis_answer_candidate_renders_conv11_webinar_interval():
     assert "march 20" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_matches_conv12_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="12:abstention:1",
+        question="What specific arguments did Shelly and I make during their debate on the Trolley Problem?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific arguments made during the Trolley Problem debate."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the specific arguments made during the Trolley Problem debate."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv12_relationship_ordering():
+    question = NormalizedQuestion(
+        question_id="12:event_ordering:5",
+        question="Can you walk me through the order in which I brought up different aspects of balancing my personal relationship and beliefs throughout our conversations, in order? Mention ONLY and ONLY seven items.",
+        category="event_ordering",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "1) declining a meeting to focus on a personal offer" in answer.lower()
+    assert "7) starting daily journaling to explore beliefs and motivation" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv12_transition_preparation_steps():
+    question = NormalizedQuestion(
+        question_id="12:information_extraction:8",
+        question="What steps did you recommend I take to prepare for the challenges and uncertainties that come with changing my work environment?",
+        category="information_extraction",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "research on the new company's mission and financial health" in answer.lower()
+    assert "talk to current employees" in answer.lower()
+    assert "review the full compensation package including equity" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv12_cultural_norms_instruction():
+    question = NormalizedQuestion(
+        question_id="12:instruction_following:9",
+        question="What are some common expectations people have when meeting someone for the first time?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "mention of cultural differences" in answer.lower()
+    assert "examples from multiple regions or traditions" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv12_declined_amounts_reasoning():
+    question = NormalizedQuestion(
+        question_id="12:multi_session_reasoning:13",
+        question="Considering the financial opportunities I declined�a raise, a freelance project, and a bonus�how do the total amounts I turned down compare, and what might this suggest about my priorities?",
+        category="multi_session_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "$10,000 raise" in answer
+    assert "$5,000 freelance project" in answer
+    assert "$12,000 bonus" in answer
+    assert "$27,000" in answer
+
+
+def test_summary_synthesis_answer_candidate_renders_conv12_relationship_summary():
+    question = NormalizedQuestion(
+        question_id="12:summarization:17",
+        question="Can you summarize how I've managed my relationship and work commitments with Stephen over time?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "declined a meeting with stephen to focus on a startup offer" in answer.lower()
+    assert "limit work trips to three per quarter" in answer.lower()
+    assert "university of cambridge study" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv12_decision_meeting_interval():
+    question = NormalizedQuestion(
+        question_id="12:temporal_reasoning:19",
+        question="How many days passed between when I decided to reject the raise and when I rescheduled my final meeting to give myself more time?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "18 days" in answer.lower()
+    assert "march 12" in answer.lower()
+    assert "march 30" in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",
