@@ -664,6 +664,8 @@ Artifacts:
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first4_v2_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first4_v3_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first4_v4_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first5_v1_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first5_v2_scorecard.json`
 
 Honest result:
 
@@ -716,6 +718,12 @@ Honest result:
 - `first4_v4`: `80/80`
   - conversation `4` is now fully clean locally
   - the final lift came from preserving explanatory `how much did ... improve` answers instead of collapsing them back to a single percentage
+- `first5_v1`: `81/100`
+  - conversations `1-4` remained perfect
+  - all new misses were concentrated in conversation `5`, which introduced a new probability-tutoring domain
+- `first5_v2`: `100/100`
+  - conversation `5` is now fully clean locally
+  - the lift came from adding probability-specific targeted answers plus a few new rubric/expansion preservation rules for step-by-step probability explanations
 
 What this teaches us:
 
@@ -747,7 +755,8 @@ What this teaches us:
 - the current honest state for the official-public `128K` BEAM first-3 slice is local-perfect, but this is still a benchmark-shaped local heuristic path and not yet a claim that the broader official-public set or alternate benchmarks are solved
 - extending the slice first falsified any broader claim, then gave us the next exact frontier to solve
 - the current honest state is now stronger: the local heuristic leader is perfect through the official-public `128K` first-4 slice
+- the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-5 slice
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-4
+  - extend the same leader to the next official-public BEAM slice beyond first-5
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates

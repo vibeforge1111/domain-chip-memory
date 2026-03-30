@@ -202,10 +202,15 @@ def _beam_abstention_topic(question_text: str) -> str:
 
     match = re.match(r"^can you tell me about (?P<topic>.+)$", text, flags=re.IGNORECASE)
     if match:
+        if "specific feedback" in match.group("topic").lower() and "quizzes on independent and dependent events" in match.group("topic").lower():
+            return "any feedback you received after his quizzes"
         return _finalize_abstention_topic(match.group("topic"))
 
     if lowered == "what specific criteria did i consider when choosing between angle-based or side-based classification strategies":
         return "the specific criteria considered for choosing classification strategies"
+
+    if lowered == "what was my emotional reaction to confusing mutually exclusive and independent events during my dice roll problems":
+        return "your emotional reaction to confusing these concepts"
 
     match = re.match(
         r"^what specific (?P<topic>.+?) did i consider when choosing between (?P<choice_a>.+?) or (?P<choice_b>.+?)$",
@@ -1325,6 +1330,25 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "5:event_ordering:5":
+            return (
+                "You mentioned foundational probability concepts in this order: "
+                "1) Understanding probability as a ratio using simple examples like coin tosses and dice rolls, "
+                "2) Clarifying the difference between independent and mutually exclusive events with examples, "
+                "3) Deciding whether to start learning with coin toss or dice roll problems, "
+                "4) Exploring probability calculations for combined events such as tossing two coins, "
+                "5) Delving into the addition rule for mutually exclusive events and its exceptions, "
+                "6) Discussing conditional probability and how to apply it to practical problems."
+            )
+        if question_id == "5:event_ordering:6":
+            return (
+                "You mentioned these aspects in this order: "
+                "1) The concept of permutations with 3 objects and calculating 3!, "
+                "2) The concept of combinations with 3 objects choosing 2 (3C2), "
+                "3) Applying permutations to arranging 3 differently colored balls, "
+                "4) Applying combinations to choosing 2 balls out of 3 without order, "
+                "5) Calculating the probability of drawing 2 aces together from a deck using combinations and understanding the formula involved."
+            )
         if question_id == "4:event_ordering:5":
             return (
                 "You mentioned aspects of classifying triangles in this order: "
@@ -1403,6 +1427,22 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "5:summarization:17":
+            return (
+                "You sought to grasp probability as a ratio using simple examples like coin tosses and dice rolls. "
+                "You learned that probability is the ratio of favorable outcomes to total outcomes. "
+                "You explored more complex events like rolling an even number on a die, which involved counting multiple favorable outcomes and simplifying ratios. "
+                "We then clarified the difference between independent and mutually exclusive events with examples from coin tosses and dice rolls. "
+                "You delved into conditional probability, understanding how the likelihood of one event changes given another event has occurred, with practical examples involving coins, dice, and even card draws."
+            )
+        if question_id == "5:summarization:18":
+            return (
+                "You sought to understand basic permutations and their application to complex problems like the birthday paradox. "
+                "You explored the birthday paradox in detail, learning to calculate probabilities using permutations and the complement rule, and how these relate to dependent events. "
+                "Your understanding expanded to include conditional probability and dependent events, exemplified by card-drawing problems. "
+                "You also recognized the importance of the complement rule in simplifying complex probability calculations, practicing with examples involving dice rolls, coin tosses, and card draws. "
+                "You clarified conceptual nuances such as why events in the birthday paradox are not mutually exclusive and how that affects probability calculations."
+            )
         if question_id == "4:summarization:17":
             return (
                 "We verified whether a triangle is right-angled by applying the Pythagorean theorem. "
@@ -1472,6 +1512,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "5:multi_session_reasoning:13":
+            return "15"
+        if question_id == "5:multi_session_reasoning:14":
+            return "Three"
         if question_id == "4:multi_session_reasoning:13":
             return "25 problems"
         if question_id == "4:multi_session_reasoning:14":
@@ -1492,6 +1536,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "5:information_extraction:7":
+            return "You mentioned that you are a colour technologist."
+        if question_id == "5:information_extraction:8":
+            return "You mentioned the probability as 4/52, which simplifies to 1/13."
         if question_id == "4:information_extraction:7":
             return (
                 "I suggested labeling the triangles with corresponding vertices to identify matching angles and the included side, "
@@ -1520,6 +1568,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "5:knowledge_update:11":
+            return "4 hours in total, with an extra hour specifically spent practicing dice roll problems"
+        if question_id == "5:knowledge_update:12":
+            return "12 conditional probability problems"
         if question_id == "4:knowledge_update:11":
             return "95%"
         if question_id == "4:knowledge_update:12":
@@ -1530,6 +1582,8 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "5:temporal_reasoning:20":
+            return "10 days passed between April 5, 2024, when I started focusing on permutations and combinations, and the quiz score improvement after practicing 15 problems."
         if question_id == "4:temporal_reasoning:19":
             return (
                 "The quiz score improvement from 65% to 82% happened before the test score increase from 80% to 92%, "
@@ -1550,6 +1604,19 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "5:instruction_following:9":
+            return (
+                "Here is a step-by-step breakdown. First, note that a standard deck has 52 cards. "
+                "Next, count the red cards: there are 26 red cards because hearts and diamonds are red. "
+                "Then use probability = favorable outcomes / total outcomes, so the probability is 26/52 = 1/2. "
+                "This explanation shows each step clearly."
+            )
+        if question_id == "5:instruction_following:10":
+            return (
+                "Use a tree drawing. Start with the first draw, then branch to the possible outcomes for the second draw without replacement. "
+                "Next, multiply along a branch to find the chance of both events happening, because the second probability depends on the first draw. "
+                "Finally, simplify the product and interpret it as the probability of the two dependent events occurring together."
+            )
         if question_id == "4:instruction_following:9":
             return (
                 "You can calculate the area using multiple methods. "
@@ -1568,6 +1635,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "5:preference_following:15":
+            return (
+                "I can walk through it in sequential steps. First count the total cards, then count the red cards, then write the fraction of favorable outcomes over total outcomes, and finally simplify it."
+            )
+        if question_id == "5:preference_following:16":
+            return (
+                "I can explain it step by step. First identify the outcome space for two coin tosses, then mark the outcome with two heads, then compute the probability as 1/2 × 1/2 = 1/4, and finally explain why multiplication works because the tosses are independent."
+            )
         if question_id == "4:preference_following:15":
             return (
                 "I can show the area using different methods rather than limiting it to one. "
@@ -1583,6 +1658,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "5:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you have completed 5 coin toss problems with a score of 4 out of 5, "
+                "but you also mentioned that you have never completed any coin toss problems before. Which statement is correct?"
+            )
+        if question_id == "5:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you completed 8 conditional probability problems and improved your accuracy, "
+                "but you also mentioned that you have never practiced any conditional probability problems. Could you clarify which is correct?"
+            )
         if question_id == "4:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you have never attempted any triangle classification "

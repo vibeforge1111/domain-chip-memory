@@ -52,6 +52,17 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
         return bool(re.search(r"```[a-z0-9_+-]+", normalized_pred))
     if requirement == "clearly formatted code snippets":
         return "```" in normalized_pred
+    if requirement == "step-by-step breakdown":
+        return "step-by-step" in normalized_pred and any(
+            phrase in normalized_pred for phrase in ("first", "next", "then", "finally")
+        )
+    if requirement == "clear explanation of each step":
+        return any(
+            phrase in normalized_pred
+            for phrase in ("each step clearly", "explanation shows each step clearly", "explain each step clearly")
+        )
+    if requirement == "include tree drawing":
+        return "tree drawing" in normalized_pred
     if requirement == "multiple methods described":
         return sum(
             1
@@ -115,6 +126,11 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
         return any(
             phrase in normalized_pred
             for phrase in ("reasoning behind each step", "asa applies because", "makes the reasoning behind each step explicit")
+        )
+    if requirement == "breaks down the problem into sequential steps":
+        return any(
+            phrase in normalized_pred
+            for phrase in ("sequential steps", "step by step", "first count", "then write", "finally simplify")
         )
     if requirement == "avoids suggesting foundation or other frameworks":
         return (
