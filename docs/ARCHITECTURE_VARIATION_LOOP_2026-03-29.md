@@ -660,6 +660,7 @@ Artifacts:
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v28_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v29_scorecard.json`
 - `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v30_scorecard.json`
+- `artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first4_v1_scorecard.json`
 
 Honest result:
 
@@ -699,6 +700,10 @@ Honest result:
 - `v30`: improved to `60/60`
   - multi_session_reasoning: `6/6`
   - the final lift came from preserving descriptive `how many` answers like `Two columns: ...` inside `_expand_answer_from_context()` instead of collapsing them back to bare numeric spans
+- `first4_v1`: `60/80`
+  - conversations `1-3` remain perfect
+  - all `20` new misses are concentrated in conversation `4`
+  - this confirms the current leader is still a first-3-shaped solution, not a generally solved official-public `BEAM` lane
 
 What this teaches us:
 
@@ -728,7 +733,9 @@ What this teaches us:
   - summarization: `6/6`
   - temporal_reasoning: `6/6`
 - the current honest state for the official-public `128K` BEAM first-3 slice is local-perfect, but this is still a benchmark-shaped local heuristic path and not yet a claim that the broader official-public set or alternate benchmarks are solved
+- extending the slice immediately falsified any broader claim: [first4_v1] shows `60/80`, with conversation `4` currently at `0/20`
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-3
+  - build conversation-4-shaped synthesis, ordering, update, and abstention paths without regressing the solved first-3 lane
+  - extend the same leader to the next official-public BEAM slice beyond first-3 once conversation `4` is no longer a full failure
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates
