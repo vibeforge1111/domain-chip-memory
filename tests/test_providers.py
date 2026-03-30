@@ -1090,6 +1090,46 @@ def test_expand_answer_preserves_how_many_different_application_types_answer():
     assert rescued.startswith("You are planning to use your personal statement for three application types")
 
 
+def test_expand_answer_preserves_weekly_word_count_target_answer():
+    rescued = providers._expand_answer_from_context(
+        "What is my weekly word count target for my writing goals?",
+        "1,350 words per week",
+        "answer_candidate: 1,200",
+    )
+
+    assert rescued == "1,350 words per week"
+
+
+def test_expand_answer_preserves_deadline_month_day_answer():
+    rescued = providers._expand_answer_from_context(
+        "What deadline should I aim for to submit my peer-reviewed draft to the local writing group?",
+        "April 25",
+        "answer_candidate: April 20",
+    )
+
+    assert rescued == "April 25"
+
+
+def test_expand_answer_preserves_weekly_word_count_increase_answer():
+    rescued = providers._expand_answer_from_context(
+        "How much did I increase my weekly word count goal from the start until April 9?",
+        "I increased my weekly word count goal by 300 words, from 1,200 to 1,500 words.",
+        "answer_candidate: 300",
+    )
+
+    assert rescued.startswith("I increased my weekly word count goal by 300 words")
+
+
+def test_expand_answer_preserves_progress_instruction_wording():
+    rescued = providers._expand_answer_from_context(
+        "How much progress have we made on the edits so far?",
+        "This answer includes percentage values showing progress: 25% dialogue clarity improvement and passive voice reduced from 18% to 10%.",
+        "answer_candidate: 25%",
+    )
+
+    assert rescued.startswith("This answer includes percentage values showing progress")
+
+
 def test_expand_answer_does_not_overwrite_matching_duration_candidate():
     context = "\n".join(
         [

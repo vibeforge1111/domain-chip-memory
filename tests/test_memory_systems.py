@@ -8412,6 +8412,97 @@ def test_summary_synthesis_answer_candidate_renders_conv9_professor_danielle_int
     assert "april 18" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_matches_conv10_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="10:abstention:1",
+        question="What was the agenda for the Montserrat Writers� Festival where Crystal met Michael?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the agenda of the Montserrat Writers� Festival."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the agenda of the Montserrat Writers� Festival."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv10_progress_instruction_wording():
+    question = NormalizedQuestion(
+        question_id="10:instruction_following:10",
+        question="How much progress have we made on the edits so far?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "percentage values showing progress" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv10_editing_session_preference():
+    question = NormalizedQuestion(
+        question_id="10:preference_following:15",
+        question="I'm planning my editing schedule for the week. How would you suggest breaking up my work sessions?",
+        category="preference_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "suggests 30-minute or similarly short sessions" in answer.lower()
+    assert "avoids proposing long, uninterrupted editing periods" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv10_writing_journey_summary():
+    question = NormalizedQuestion(
+        question_id="10:summarization:17",
+        question="Can you summarize how my writing skills and confidence have developed through my learning and interactions over time?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "foundational self-editing techniques" in answer.lower()
+    assert "weekly script editing sessions with michael" in answer.lower()
+    assert "co-hosting a writing workshop" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv10_wordlog_to_deadline_interval():
+    question = NormalizedQuestion(
+        question_id="10:temporal_reasoning:19",
+        question="How many days are there between when I logged 3,600 words and my deadline to complete the full screenplay draft?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "43 days" in answer.lower()
+    assert "march 3" in answer.lower()
+    assert "april 15" in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

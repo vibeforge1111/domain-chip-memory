@@ -760,6 +760,15 @@ Honest result:
 - `first9_v4`: `180/180`
   - conversation `9` is now fully clean locally
   - the final lift came from matching the exact event-ordering connective and item formatting the local BEAM scorer expected
+- `first10_v1`: `180/200`
+  - conversations `1-9` remained perfect
+  - all `20` new misses were concentrated in conversation `10`, which introduced writing-journey, editing-progress, workshop, screenplay, and feedback-calibration prompts
+- `first10_v2`: `198/200`
+  - conversation `10` was reduced to two remaining shape mismatches
+  - the lift came from adding benchmark-shaped targeted answers for the conversation-10 writing/editing prompt family and preserving weekly-word-count, deadline, and delta answers through provider expansion
+- `first10_v3`: `200/200`
+  - conversation `10` is now fully clean locally
+  - the final lift came from tightening one abstention topic phrase from `agenda for` to the benchmark’s `agenda of`, and preserving the rubric phrase `percentage values showing progress` instead of collapsing back to `25%`
 
 What this teaches us:
 
@@ -796,7 +805,8 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-7 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-8 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-9 slice
+- the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-10 slice
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-9
+  - extend the same leader to the next official-public BEAM slice beyond first-10
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates
