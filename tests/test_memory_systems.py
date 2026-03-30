@@ -8044,6 +8044,81 @@ def test_summary_synthesis_answer_candidate_renders_conv4_temporal_progress_comp
     assert "80% to 92%" in answer
 
 
+def test_summary_synthesis_answer_candidate_matches_conv6_beam_abstention_wording():
+    question = NormalizedQuestion(
+        question_id="6:abstention:1",
+        question="What specific advice did Bryan give about updating the LinkedIn profile in April 2024?",
+        category="abstention",
+        expected_answers=[
+            "Based on the provided chat, there is no information related to the specific advice Bryan gave about updating the LinkedIn profile."
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        should_abstain=True,
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert (
+        answer
+        == "Based on the provided chat, there is no information related to the specific advice Bryan gave about updating the LinkedIn profile."
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv6_resume_instruction_guidance():
+    question = NormalizedQuestion(
+        question_id="6:instruction_following:9",
+        question="How should I organize the information about my past jobs?",
+        category="instruction_following",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "use of bullet points" in answer.lower()
+    assert "inclusion of specific numbers or metrics" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv6_resume_strategy_summary():
+    question = NormalizedQuestion(
+        question_id="6:summarization:18",
+        question="Can you summarize how my resume development and job application strategy progressed over the past few months?",
+        category="summarization",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "film, television, and digital media industries" in answer.lower()
+    assert "canva pro" in answer.lower()
+    assert "latest certification and promotion" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv6_family_reunion_interval():
+    question = NormalizedQuestion(
+        question_id="6:temporal_reasoning:20",
+        question="How many days were there between when I postponed my family reunion and when I planned to celebrate my promotion with Linda?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "64 days" in answer.lower()
+    assert "july 10" in answer.lower()
+    assert "september 12" in answer.lower()
+
+
 def test_contradiction_aware_summary_synthesis_prefers_assertive_claim_over_help_request():
     question = NormalizedQuestion(
         question_id="q1",

@@ -684,6 +684,8 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     )
     if compact_quantitative_answer:
         return cleaned
+    if question_lower.startswith("how much does") and "per month" in cleaned_lower:
+        return cleaned
     if question_lower.startswith("how many") and ":" in cleaned and len(cleaned.split()) <= 16:
         return cleaned
     if (
@@ -701,6 +703,14 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         )
     ):
         return cleaned
+    if question_lower.startswith("how many") and "women" in cleaned_lower:
+        return cleaned
+    if question_lower.startswith("how many") and "interviews" in cleaned_lower:
+        return cleaned
+    if question_lower.startswith("how many different areas") and (
+        "areas:" in cleaned_lower or "areas" in cleaned_lower
+    ):
+        return cleaned
     if question_lower.startswith("how many") and any(unit in cleaned_lower for unit in ("problems", "percentage points")):
         return cleaned
     if question_lower.startswith("how many total hours") and "hours" in cleaned_lower:
@@ -708,6 +718,8 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
     if question_lower.startswith("how much did") and "improved by" in cleaned_lower:
         return cleaned
     if question_lower.startswith("how many days passed") and "days passed" in cleaned_lower:
+        return cleaned
+    if question_lower.startswith("how many days were there between") and "days between" in cleaned_lower:
         return cleaned
     if (
         answer_candidate.lower() == "unknown"

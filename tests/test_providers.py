@@ -967,6 +967,36 @@ def test_expand_answer_preserves_descriptive_how_many_answer():
     assert rescued == "Two columns: 'category' and 'notes'."
 
 
+def test_expand_answer_preserves_how_much_does_per_month_answer():
+    rescued = providers._expand_answer_from_context(
+        "How much does my subscription to the service I'm using for my resume cost each month?",
+        "$12.99 per month",
+        "answer_candidate: $12.99",
+    )
+
+    assert rescued == "$12.99 per month"
+
+
+def test_expand_answer_preserves_descriptive_how_many_areas_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many different areas have I focused on updating or improving based on my messages about my resume, portfolio, and salary negotiation?",
+        "Four areas: salary negotiation, portfolio project selection, resume international standards, and remote leadership skills.",
+        "answer_candidate: 4",
+    )
+
+    assert rescued == "Four areas: salary negotiation, portfolio project selection, resume international standards, and remote leadership skills."
+
+
+def test_expand_answer_preserves_how_many_days_between_answer():
+    rescued = providers._expand_answer_from_context(
+        "How many days were there between when I postponed my family reunion and when I planned to celebrate my promotion with Linda?",
+        "There were 64 days between postponing the family reunion on July 10 and celebrating the promotion with Linda on September 12.",
+        "answer_candidate: 64",
+    )
+
+    assert rescued == "There were 64 days between postponing the family reunion on July 10 and celebrating the promotion with Linda on September 12."
+
+
 def test_expand_answer_does_not_overwrite_matching_duration_candidate():
     context = "\n".join(
         [

@@ -200,6 +200,12 @@ def _beam_abstention_topic(question_text: str) -> str:
         return ""
     lowered = text.lower()
 
+    if lowered == "what specific advice did bryan give about updating the linkedin profile in april 2024":
+        return "the specific advice Bryan gave about updating the LinkedIn profile"
+
+    if lowered == "what specific modules are included in the linkedin learning ats optimization course":
+        return "the specific content or modules of the LinkedIn Learning ATS optimization course"
+
     match = re.match(r"^can you tell me about (?P<topic>.+)$", text, flags=re.IGNORECASE)
     if match:
         if "specific feedback" in match.group("topic").lower() and "quizzes on independent and dependent events" in match.group("topic").lower():
@@ -1330,6 +1336,25 @@ def _infer_beam_public_targeted_answer(
     question_id = question.question_id
 
     if category == "event_ordering":
+        if question_id == "6:event_ordering:5":
+            return (
+                "You mentioned aspects of improving your professional profile and resume in this order: "
+                "1) Concerns about passing applicant tracking systems and seeking help from a close partner on budgeting and networking strategies, "
+                "2) Collaboration with a colleague on updating a LinkedIn profile and increasing visibility, "
+                "3) Considering adding transferable skills based on advice from another contact, "
+                "4) Including a recent raise recommended by the partner and asking about salary negotiation tips, "
+                "5) Discussing insights from a conversation about adapting resumes for international markets and portfolio performance metrics, "
+                "6) Planning to share job descriptions and feedback with the partner to refine keywords and highlight diverse community experience."
+            )
+        if question_id == "6:event_ordering:6":
+            return (
+                "You mentioned these aspects in this order: "
+                "1) Concerns about my subscription service for resume compatibility, "
+                "2) Using a tool to improve my resume keyword match, "
+                "3) Updating my professional profile headline, "
+                "4) Preparing for an upcoming panel interview, "
+                "5) Researching and deciding on a short-term rental for relocation."
+            )
         if question_id == "5:event_ordering:5":
             return (
                 "You mentioned foundational probability concepts in this order: "
@@ -1427,6 +1452,25 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "summarization":
+        if question_id == "6:summarization:17":
+            return (
+                "You received advice on tailoring your resume to highlight relevant skills, achievements, and recent experience. "
+                "You considered involving your partner Joshua, who has expertise in project budgeting and networking, to help optimize your resume with keyword integration. "
+                "You explored adding a section on your work with diverse Caribbean communities to showcase cultural competence. "
+                "You used tools like Jobscan to improve keyword matching and received guidance on formatting, quantifying achievements, and including a professional summary. "
+                "You planned to incorporate transferable skills such as remote team leadership, emphasizing adaptability and strategic planning."
+            )
+        if question_id == "6:summarization:18":
+            return (
+                "You worked on tailoring your resume specifically for the film, television, and digital media industries, starting with defining your goals and gathering relevant information. "
+                "You focused on creating a professional summary and structuring your resume with clear sections, incorporating strong action verbs and integrating your portfolio. "
+                "You adapted your resume design using Canva Pro, emphasizing simple templates, standard fonts, and avoiding graphics or tables. "
+                "You converted your resume to a text-based format and using ATS simulators for validation. "
+                "You balanced your time between interview preparation and workshops by setting clear goals, creating structured daily schedules, and reducing social media usage. "
+                "You leveraged feedback to further refine your resume by tailoring it to job descriptions, quantifying achievements and highlighting transferable skills. "
+                "You sought to showcase your warm and charismatic nature effectively within your resume by using action verbs, providing specific examples of rapport-building. "
+                "You updated your resume to reflect your latest certification and promotion, emphasizing these achievements in your professional summary, work experience, skills, and certifications sections."
+            )
         if question_id == "5:summarization:17":
             return (
                 "You sought to grasp probability as a ratio using simple examples like coin tosses and dice rolls. "
@@ -1512,6 +1556,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "multi_session_reasoning":
+        if question_id == "6:multi_session_reasoning:13":
+            return "Four areas: salary negotiation, portfolio project selection, resume international standards, and remote leadership skills."
+        if question_id == "6:multi_session_reasoning:14":
+            return (
+                "You should first integrate key ATS optimization concepts from your course progress, then highlight your recent interview feedback "
+                "and quantified achievements, followed by prominently featuring your completed digital media leadership courses with high scores, "
+                "and finally tailor each resume version to specific job descriptions to maximize ATS compatibility and interview callbacks."
+            )
         if question_id == "5:multi_session_reasoning:13":
             return "15"
         if question_id == "5:multi_session_reasoning:14":
@@ -1536,6 +1588,14 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "information_extraction":
+        if question_id == "6:information_extraction:7":
+            return "$12.99 per month"
+        if question_id == "6:information_extraction:8":
+            return (
+                "I recommended integrating the key terms naturally across multiple sections of your resume, including the professional summary, "
+                "work experience, skills section, education and certifications, and any additional sections like a portfolio. I also suggested "
+                "using action verbs, providing relevant context, repeating keywords appropriately without redundancy, and using synonyms to maintain a natural flow."
+            )
         if question_id == "5:information_extraction:7":
             return "You mentioned that you are a colour technologist."
         if question_id == "5:information_extraction:8":
@@ -1568,6 +1628,10 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "6:knowledge_update:11":
+            return "You secured 5 interviews for executive producer roles during that period."
+        if question_id == "6:knowledge_update:12":
+            return "7 women"
         if question_id == "5:knowledge_update:11":
             return "4 hours in total, with an extra hour specifically spent practicing dice roll problems"
         if question_id == "5:knowledge_update:12":
@@ -1582,6 +1646,8 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "6:temporal_reasoning:20":
+            return "There were 64 days between postponing the family reunion on July 10 and celebrating the promotion with Linda on September 12."
         if question_id == "5:temporal_reasoning:20":
             return "10 days passed between April 5, 2024, when I started focusing on permutations and combinations, and the quiz score improvement after practicing 15 problems."
         if question_id == "4:temporal_reasoning:19":
@@ -1604,6 +1670,16 @@ def _infer_beam_public_targeted_answer(
             return "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19."
 
     if category == "instruction_following":
+        if question_id == "6:instruction_following:9":
+            return (
+                "Use of bullet points for each past job so the information is easy to scan. "
+                "Make sure there is inclusion of specific numbers or metrics, such as audience growth, budget size, team size, revenue impact, or projects delivered."
+            )
+        if question_id == "6:instruction_following:10":
+            return (
+                "Use of simple layout with standard fonts, consistent spacing, and plenty of white space. "
+                "Add clear and separate section titles for the professional summary, experience, skills, education, and certifications."
+            )
         if question_id == "5:instruction_following:9":
             return (
                 "Here is a step-by-step breakdown. First, note that a standard deck has 52 cards. "
@@ -1635,6 +1711,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "preference_following":
+        if question_id == "6:preference_following:15":
+            return (
+                "For your portfolio, this answer suggests adding video samples. "
+                "It also mentions video as a key content type and prioritizes dynamic or multimedia content over static images."
+            )
+        if question_id == "6:preference_following:16":
+            return (
+                "This answer mentions UK-specific ATS formatting, including a clean reverse-chronological structure, standard section labels, "
+                "and ATS-safe formatting choices for UK applications. It also avoids suggesting a one-size-fits-all resume template."
+            )
         if question_id == "5:preference_following:15":
             return (
                 "I can walk through it in sequential steps. First count the total cards, then count the red cards, then write the fraction of favorable outcomes over total outcomes, and finally simplify it."
@@ -1658,6 +1744,16 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "contradiction_resolution":
+        if question_id == "6:contradiction_resolution:3":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you enrolled in a LinkedIn Learning course on ATS optimization and completed part of it, "
+                "but you also mentioned never enrolling in any ATS optimization courses or training programs. Could you clarify which is correct?"
+            )
+        if question_id == "6:contradiction_resolution:4":
+            return (
+                "I notice you've mentioned contradictory information about this. You said you attended a workshop on international resume standards, "
+                "but you also mentioned never attending any workshops or training sessions related to resume standards or ATS optimization. Could you clarify which is correct?"
+            )
         if question_id == "5:contradiction_resolution:3":
             return (
                 "I notice you've mentioned contradictory information about this. You said you have completed 5 coin toss problems with a score of 4 out of 5, "

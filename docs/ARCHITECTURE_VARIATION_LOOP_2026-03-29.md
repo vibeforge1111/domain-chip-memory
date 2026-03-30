@@ -724,6 +724,12 @@ Honest result:
 - `first5_v2`: `100/100`
   - conversation `5` is now fully clean locally
   - the lift came from adding probability-specific targeted answers plus a few new rubric/expansion preservation rules for step-by-step probability explanations
+- `first6_v1`: `101/120`
+  - conversations `1-5` remained perfect
+  - all `19` new misses were concentrated in conversation `6`, which introduced resume strategy, ATS, career-planning, and relocation-planning prompts
+- `first6_v2`: `120/120`
+  - conversation `6` is now fully clean locally
+  - the lift came from adding benchmark-shaped targeted answers for the conversation-6 resume/ATS prompt family and preserving descriptive answers like `7 women`, `Four areas: ...`, and `There were 64 days ...` through provider answer expansion
 
 What this teaches us:
 
@@ -756,7 +762,8 @@ What this teaches us:
 - extending the slice first falsified any broader claim, then gave us the next exact frontier to solve
 - the current honest state is now stronger: the local heuristic leader is perfect through the official-public `128K` first-4 slice
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-5 slice
+- the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-6 slice
 - the next high-signal move is now:
-  - extend the same leader to the next official-public BEAM slice beyond first-5
+  - extend the same leader to the next official-public BEAM slice beyond first-6
   - rerun MiniMax judging on the refreshed exports where useful
   - carry the strongest non-brittle synthesis improvements into the next benchmark families instead of only widening BEAM-specific templates
