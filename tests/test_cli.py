@@ -1650,6 +1650,47 @@ def test_run_beam_official_evaluation_cli_validates_and_writes_manifest(tmp_path
     assert payload["input_directory"] == str((answers_dir / "100K").resolve())
 
 
+def test_summarize_beam_official_evaluation_files_aggregates_across_conversations(tmp_path: Path):
+    evaluation_one = tmp_path / "evaluation-one.json"
+    evaluation_two = tmp_path / "evaluation-two.json"
+    evaluation_one.write_text(
+        json.dumps(
+            {
+                "information_extraction": [
+                    {"llm_judge_score": 1.0},
+                    {"llm_judge_score": 0.5},
+                ],
+                "event_ordering": [
+                    {"tau_norm": 0.5},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    evaluation_two.write_text(
+        json.dumps(
+            {
+                "information_extraction": [
+                    {"llm_judge_score": 0.0},
+                ],
+                "event_ordering": [
+                    {"tau_norm": 1.0},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = beam_official_eval.summarize_beam_official_evaluation_files([evaluation_one, evaluation_two])
+
+    assert payload["evaluation_file_count"] == 2
+    assert payload["overall_average"] == 0.625
+    assert payload["categories"][0]["category"] == "event_ordering"
+    assert payload["categories"][0]["average_score"] == 0.75
+    assert payload["categories"][1]["question_count"] == 3
+    assert payload["categories"][1]["average_score"] == 0.5
+
+
 def test_run_beam_official_evaluation_cli_invokes_upstream_subprocess(tmp_path: Path, monkeypatch):
     upstream_repo = tmp_path / "beam_repo"
     answers_dir = tmp_path / "beam_results"
@@ -1802,7 +1843,8 @@ def test_run_beam_official_evaluation_cli_supports_minimax_judge_override(tmp_pa
         assert kwargs["judge_config"]["model"] == "MiniMax-M2.7"
         assert kwargs["judge_config"]["api_key_env"] == "MINIMAX_API_KEY"
         assert kwargs["judge_config"]["comparability"] == "alternate_openai_compatible_judge_not_exact_official"
-        (answers_dir / "100K" / "1" / "evaluation-custom_answers.json").write_text(
+        evaluation_path = answers_dir / "100K" / "1" / "evaluation-custom_answers.json"
+        evaluation_path.write_text(
             json.dumps({"information_extraction": [{"llm_judge_score": 1.0}]}),
             encoding="utf-8",
         )
@@ -1810,6 +1852,7 @@ def test_run_beam_official_evaluation_cli_supports_minimax_judge_override(tmp_pa
             "exit_code": 0,
             "stdout_tail": ["ok"],
             "stderr_tail": [],
+            "evaluation_files": [str(evaluation_path)],
         }
 
     monkeypatch.setattr(
@@ -1844,6 +1887,7 @@ def test_run_beam_official_evaluation_cli_supports_minimax_judge_override(tmp_pa
     assert payload["judge_config"]["provider"] == "minimax"
     assert payload["judge_config"]["model"] == "MiniMax-M2.7"
     assert payload["evaluation_files"] == [str(answers_dir / "100K" / "1" / "evaluation-custom_answers.json")]
+    assert payload["aggregate_summary"]["overall_average"] == 1.0
 
 
 def test_run_beam_official_evaluation_cli_defaults_to_minimax(tmp_path: Path, monkeypatch):
@@ -1869,7 +1913,8 @@ def test_run_beam_official_evaluation_cli_defaults_to_minimax(tmp_path: Path, mo
     def fake_run_openai_compatible_upstream_evaluation(**kwargs):
         assert kwargs["judge_config"]["provider"] == "minimax"
         assert kwargs["judge_config"]["model"] == "MiniMax-M2.7"
-        (answers_dir / "100K" / "1" / "evaluation-custom_answers.json").write_text(
+        evaluation_path = answers_dir / "100K" / "1" / "evaluation-custom_answers.json"
+        evaluation_path.write_text(
             json.dumps({"information_extraction": [{"llm_judge_score": 1.0}]}),
             encoding="utf-8",
         )
@@ -1877,6 +1922,7 @@ def test_run_beam_official_evaluation_cli_defaults_to_minimax(tmp_path: Path, mo
             "exit_code": 0,
             "stdout_tail": ["ok"],
             "stderr_tail": [],
+            "evaluation_files": [str(evaluation_path)],
         }
 
     monkeypatch.setattr(
@@ -1908,6 +1954,7 @@ def test_run_beam_official_evaluation_cli_defaults_to_minimax(tmp_path: Path, mo
     assert payload["status"] == "completed"
     assert payload["judge_config"]["provider"] == "minimax"
     assert payload["judge_config"]["model"] == "MiniMax-M2.7"
+    assert payload["aggregate_summary"]["overall_average"] == 1.0
 
 
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):

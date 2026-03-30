@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import json
+import multiprocessing
 import os
 import re
 import subprocess
 import sys
+import time
 from collections import defaultdict
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 import importlib
 from pathlib import Path
+from functools import partial
 from typing import Any
 
 from langchain_openai import ChatOpenAI
@@ -113,45 +116,25 @@ def export_beam_public_answers_from_scorecard(
 
 
 def summarize_beam_official_evaluation(evaluation_path: str | Path) -> dict[str, Any]:
-    payload = json.loads(Path(evaluation_path).read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError("BEAM official evaluation summary expected a JSON object.")
+    payload = _load_beam_evaluation_payload(evaluation_path)
+    summary = _summarize_beam_evaluation_payload(payload)
+    summary["evaluation_file"] = str(Path(evaluation_path))
+    return summary
 
-    category_rows = []
-    total_score = 0.0
-    total_categories = 0
-    for category, items in payload.items():
-        if not isinstance(items, list) or not items:
-            continue
-        if category == "event_ordering":
-            metric_name = "tau_norm"
-            values = [float(item.get("tau_norm", 0.0)) for item in items if isinstance(item, dict)]
-        else:
-            metric_name = "llm_judge_score"
-            values = [float(item.get("llm_judge_score", 0.0)) for item in items if isinstance(item, dict)]
-        if not values:
-            continue
-        average_score = sum(values) / len(values)
-        category_rows.append(
-            {
-                "category": category,
-                "metric": metric_name,
-                "question_count": len(values),
-                "average_score": round(average_score, 4),
-            }
-        )
-        total_score += average_score
-        total_categories += 1
 
-    category_rows.sort(key=lambda row: row["category"])
-    return {
-        "benchmark_name": "BEAM",
-        "source_mode": "official_public_evaluation",
-        "evaluation_file": str(Path(evaluation_path)),
-        "category_count": total_categories,
-        "overall_average": round(total_score / total_categories, 4) if total_categories else 0.0,
-        "categories": category_rows,
-    }
+def summarize_beam_official_evaluation_files(evaluation_files: list[str | Path]) -> dict[str, Any]:
+    merged_payload: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    normalized_files = [str(Path(path)) for path in evaluation_files]
+    for path in evaluation_files:
+        payload = _load_beam_evaluation_payload(path)
+        for category, items in payload.items():
+            if not isinstance(items, list):
+                continue
+            merged_payload[category].extend(item for item in items if isinstance(item, dict))
+    summary = _summarize_beam_evaluation_payload(merged_payload)
+    summary["evaluation_files"] = normalized_files
+    summary["evaluation_file_count"] = len(normalized_files)
+    return summary
 
 
 def run_beam_official_evaluation(
@@ -297,19 +280,37 @@ def run_beam_official_evaluation(
         exit_code = int(result["exit_code"])
         stdout_tail = result["stdout_tail"]
         stderr_tail = result["stderr_tail"]
+        evaluation_files = result.get("evaluation_files", [])
 
-    evaluation_files = [
+    if judge_config["mode"] == "official_upstream_openai":
+        evaluation_files = [
+            str(path / f"evaluation-{result_file_name}")
+            for path in selected_conversations
+            if (path / f"evaluation-{result_file_name}").exists()
+        ]
+    expected_evaluation_files = [
         str(path / f"evaluation-{result_file_name}")
         for path in selected_conversations
-        if (path / f"evaluation-{result_file_name}").exists()
     ]
+    missing_evaluation_files = [
+        path for path in expected_evaluation_files if path not in set(evaluation_files)
+    ]
+    aggregate_summary = summarize_beam_official_evaluation_files(evaluation_files) if evaluation_files else None
     payload.update(
         {
-            "status": "completed" if exit_code == 0 and evaluation_files else "failed",
+            "status": (
+                "completed"
+                if exit_code == 0 and not missing_evaluation_files and evaluation_files
+                else "partial"
+                if evaluation_files
+                else "failed"
+            ),
             "exit_code": exit_code,
             "stdout_tail": stdout_tail,
             "stderr_tail": stderr_tail,
             "evaluation_files": evaluation_files,
+            "missing_evaluation_files": missing_evaluation_files,
+            "aggregate_summary": aggregate_summary,
         }
     )
     return payload
@@ -412,9 +413,106 @@ def _run_openai_compatible_upstream_evaluation(
     result_file_name: str,
     judge_config: dict[str, Any],
 ) -> dict[str, Any]:
+    selected_conversation_ids = sorted(
+        [
+            path.name
+            for path in answers_scale_dir.iterdir()
+            if path.is_dir()
+        ],
+        key=lambda name: int(name) if name.isdigit() else name,
+    )[start_index:end_index]
+    expected_outputs = [
+        answers_scale_dir / conversation_id / f"evaluation-{result_file_name}"
+        for conversation_id in selected_conversation_ids
+    ]
+    for output_path in expected_outputs:
+        if output_path.exists():
+            output_path.unlink()
+
+    ctx = multiprocessing.get_context("spawn")
+    result_queue: multiprocessing.Queue[dict[str, Any]] = ctx.Queue()
+    worker = ctx.Process(
+        target=_run_openai_compatible_evaluation_worker,
+        args=(
+            str(upstream_repo_path),
+            str(answers_scale_dir),
+            official_scale_dir,
+            selected_conversation_ids,
+            result_file_name,
+            judge_config,
+            result_queue,
+        ),
+    )
+    worker.start()
+
+    stdout_lines = [f"Started MiniMax BEAM evaluation worker for {len(selected_conversation_ids)} conversations."]
+    deadline_seconds = max(900, 180 * max(1, len(selected_conversation_ids)))
+    start_time_seconds = time.monotonic()
+    while worker.is_alive():
+        completed_outputs = [str(path) for path in expected_outputs if path.exists()]
+        if len(completed_outputs) == len(expected_outputs):
+            worker.terminate()
+            worker.join(timeout=10)
+            stdout_lines.append("All expected evaluation files were written; terminated lingering worker process.")
+            return {
+                "exit_code": 0,
+                "stdout_tail": stdout_lines[-20:],
+                "stderr_tail": [],
+                "evaluation_files": completed_outputs,
+            }
+        if time.monotonic() - start_time_seconds > deadline_seconds:
+            worker.terminate()
+            worker.join(timeout=10)
+            completed_outputs = [str(path) for path in expected_outputs if path.exists()]
+            return {
+                "exit_code": 1,
+                "stdout_tail": stdout_lines[-20:],
+                "stderr_tail": [
+                    f"Timed out waiting for MiniMax BEAM evaluation worker after {deadline_seconds} seconds."
+                ],
+                "evaluation_files": completed_outputs,
+            }
+        time.sleep(1.0)
+
+    worker.join(timeout=10)
+    completed_outputs = [str(path) for path in expected_outputs if path.exists()]
+    worker_payload: dict[str, Any] = {}
+    if not result_queue.empty():
+        worker_payload = result_queue.get()
+    stdout_lines.extend(worker_payload.get("stdout_tail", []))
+    stderr_lines = worker_payload.get("stderr_tail", [])
+    exit_code = int(worker_payload.get("exit_code", 1 if worker.exitcode else 0))
+    return {
+        "exit_code": exit_code,
+        "stdout_tail": stdout_lines[-20:],
+        "stderr_tail": stderr_lines[-20:],
+        "evaluation_files": completed_outputs,
+    }
+
+
+def _load_beam_evaluation_payload(evaluation_path: str | Path) -> dict[str, Any]:
+    payload = json.loads(Path(evaluation_path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("BEAM official evaluation summary expected a JSON object.")
+    return payload
+
+
+def _run_openai_compatible_evaluation_worker(
+    upstream_repo_dir: str,
+    answers_scale_dir: str,
+    official_scale_dir: str,
+    conversation_ids: list[str],
+    result_file_name: str,
+    judge_config: dict[str, Any],
+    result_queue: multiprocessing.Queue,
+) -> None:
+    upstream_repo_path = Path(upstream_repo_dir)
+    answers_scale_path = Path(answers_scale_dir)
     upstream_repo_str = str(upstream_repo_path)
     original_cwd = os.getcwd()
     inserted_path = False
+    original_hf_hub_offline = os.environ.get("HF_HUB_OFFLINE")
+    original_transformers_offline = os.environ.get("TRANSFORMERS_OFFLINE")
     stdout_buffer = StringIO()
     stderr_buffer = StringIO()
     module_names = (
@@ -423,45 +521,118 @@ def _run_openai_compatible_upstream_evaluation(
         "src.evaluation.run_evaluation",
     )
     try:
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        os.environ["TRANSFORMERS_OFFLINE"] = "1"
         if not sys.path or sys.path[0] != upstream_repo_str:
             sys.path.insert(0, upstream_repo_str)
             inserted_path = True
         for module_name in module_names:
             sys.modules.pop(module_name, None)
         os.chdir(upstream_repo_str)
+        compute_metrics_module = importlib.import_module("src.evaluation.compute_metrics")
         run_evaluation_module = importlib.import_module("src.evaluation.run_evaluation")
+        compute_metrics_module.SentenceTransformer = partial(
+            compute_metrics_module.SentenceTransformer,
+            local_files_only=True,
+        )
         judge_llm = ChatOpenAI(
             model=judge_config["model"],
             openai_api_key=judge_config["api_key"],
             openai_api_base=judge_config["base_url"],
             temperature=0,
         )
+        failures: list[str] = []
         with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-            run_evaluation_module.batch_run_evaluation(
-                input_directory=str(answers_scale_dir),
-                chat_size=official_scale_dir,
-                model=judge_llm,
-                start_index=start_index,
-                end_index=end_index,
-                max_workers=max_workers,
-                allowed_result_files=[result_file_name],
-            )
-        return {
-            "exit_code": 0,
-            "stdout_tail": stdout_buffer.getvalue().splitlines()[-20:],
-            "stderr_tail": stderr_buffer.getvalue().splitlines()[-20:],
-        }
+            compute_metrics_module.initialize_models()
+            run_evaluation_module.initialize_models = lambda: None
+            for conversation_id in conversation_ids:
+                result_file_address = answers_scale_path / conversation_id / result_file_name
+                output_address = answers_scale_path / conversation_id / f"evaluation-{result_file_name}"
+                probing_question_address = (
+                    upstream_repo_path
+                    / "chats"
+                    / official_scale_dir
+                    / conversation_id
+                    / "probing_questions"
+                    / "probing_questions.json"
+                )
+                try:
+                    print(f"************ Result File: {result_file_name}")
+                    run_evaluation_module.run_evaluation(
+                        probing_questions_address=str(probing_question_address),
+                        answers_directory=str(result_file_address),
+                        output_address=str(output_address),
+                        model=judge_llm,
+                    )
+                except Exception as exc:
+                    failures.append(f"{conversation_id}: {type(exc).__name__}: {exc}")
+        stderr_lines = stderr_buffer.getvalue().splitlines()
+        stderr_lines.extend(failures)
+        result_queue.put(
+            {
+                "exit_code": 0 if not failures else 1,
+                "stdout_tail": stdout_buffer.getvalue().splitlines()[-20:],
+                "stderr_tail": stderr_lines[-20:],
+            }
+        )
     except Exception as exc:
         stderr_lines = stderr_buffer.getvalue().splitlines()
         stderr_lines.append(f"{type(exc).__name__}: {exc}")
-        return {
-            "exit_code": 1,
-            "stdout_tail": stdout_buffer.getvalue().splitlines()[-20:],
-            "stderr_tail": stderr_lines[-20:],
-        }
+        result_queue.put(
+            {
+                "exit_code": 1,
+                "stdout_tail": stdout_buffer.getvalue().splitlines()[-20:],
+                "stderr_tail": stderr_lines[-20:],
+            }
+        )
     finally:
         os.chdir(original_cwd)
+        if original_hf_hub_offline is None:
+            os.environ.pop("HF_HUB_OFFLINE", None)
+        else:
+            os.environ["HF_HUB_OFFLINE"] = original_hf_hub_offline
+        if original_transformers_offline is None:
+            os.environ.pop("TRANSFORMERS_OFFLINE", None)
+        else:
+            os.environ["TRANSFORMERS_OFFLINE"] = original_transformers_offline
         for module_name in module_names:
             sys.modules.pop(module_name, None)
         if inserted_path and sys.path and sys.path[0] == upstream_repo_str:
             sys.path.pop(0)
+
+
+def _summarize_beam_evaluation_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    category_rows = []
+    total_score = 0.0
+    total_categories = 0
+    for category, items in payload.items():
+        if not isinstance(items, list) or not items:
+            continue
+        if category == "event_ordering":
+            metric_name = "tau_norm"
+            values = [float(item.get("tau_norm", 0.0)) for item in items if isinstance(item, dict)]
+        else:
+            metric_name = "llm_judge_score"
+            values = [float(item.get("llm_judge_score", 0.0)) for item in items if isinstance(item, dict)]
+        if not values:
+            continue
+        average_score = sum(values) / len(values)
+        category_rows.append(
+            {
+                "category": category,
+                "metric": metric_name,
+                "question_count": len(values),
+                "average_score": round(average_score, 4),
+            }
+        )
+        total_score += average_score
+        total_categories += 1
+
+    category_rows.sort(key=lambda row: row["category"])
+    return {
+        "benchmark_name": "BEAM",
+        "source_mode": "official_public_evaluation",
+        "category_count": total_categories,
+        "overall_average": round(total_score / total_categories, 4) if total_categories else 0.0,
+        "categories": category_rows,
+    }

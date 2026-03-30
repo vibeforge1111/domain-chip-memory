@@ -578,6 +578,10 @@ Honest result:
 - full-lane `BEAM` MiniMax export/eval refresh:
   - exported the local-perfect `first20_v3` public lane into upstream-style answer files
   - the MiniMax official-eval wrapper again wrote raw evaluation files under the export tree but did not complete its top-level run JSON cleanly before termination, so the wrapper remains operationally unstable even after the architecture lift
+- MiniMax wrapper repair attempt on the refreshed `BEAM` export:
+  - replaced the in-process threaded upstream call with a child-process worker, aggregate-summary collection, and more honest `completed` vs `partial` manifest handling
+  - added targeted wrapper regressions around aggregate summaries and MiniMax manifest writing
+  - honest blocker remains external to the local score path: the upstream metric stack still tries to initialize `SentenceTransformer` assets through Hugging Face before first write on this machine, so the full-lane judged run is still not cleanly reproducible end to end yet
 
 What this teaches us:
 
@@ -924,6 +928,7 @@ What this teaches us:
 - the current honest state is now stronger again: the local heuristic leader is perfect through the official-public `128K` first-20 slice
 - the current honest state for this official-public upstream lane is now complete locally: there are `20` available conversations in the `100K` public dump, and the local heuristic leader is perfect across all of them
 - the current honest state is stronger beyond `BEAM` too: the same leader cleanly closed the untouched `LongMemEval_s 201-225` source slice at `25/25` after one provider-preservation fix
+- the current honest state on the judged `BEAM` side is improved but not solved: the wrapper path is now more robust and better tested, but the real MiniMax run is still blocked by upstream `SentenceTransformer`/Hugging Face initialization before first evaluation write
 - the next high-signal move is now:
-  - either repair or bypass the unstable MiniMax BEAM wrapper so full-lane judged summaries are emitted cleanly
+  - either fully localize or prewarm the upstream `SentenceTransformer` judge dependencies so the MiniMax `BEAM` full-lane run can complete cleanly
   - move the strongest non-brittle synthesis logic into the next benchmark family after `LongMemEval_s`, rather than widening BEAM-only templates further
