@@ -251,6 +251,13 @@ def test_runner_matches_numeric_count_inside_doctor_and_wedding_gold():
     ) is True
 
 
+def test_runner_matches_numeric_unit_against_later_total_in_explanatory_gold():
+    assert _matches_expected_answer(
+        "6 weeks",
+        ["The project is estimated to take 3 sprints of 2 weeks each, totaling 6 weeks."],
+    ) is True
+
+
 def test_runner_matches_numeric_count_inside_instrument_gold():
     assert _matches_expected_answer(
         "4",

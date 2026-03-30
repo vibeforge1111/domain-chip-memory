@@ -410,13 +410,13 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     pred_month_year = _parse_month_year(normalized_pred)
     pred_full_date = _parse_full_date(normalized_pred)
     for expected in normalized_expected:
-        count_match = re.search(
+        count_matches = re.finditer(
             r"\b(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten)\s+"
             r"(?:(?:different|total|movie|art-related)\s+)?"
             r"(model kits?|projects?|days?|weeks?|hours?|items?|times?|children|movies|doctors?|weddings?|festivals?|services?|cuisines?|events?|properties?|musical instruments?|meals?)\b",
             expected,
         )
-        if count_match:
+        for count_match in count_matches:
             expected_count = _COUNT_WORD_TO_NUMBER.get(count_match.group(1), count_match.group(1))
             expected_unit = count_match.group(2)
             if normalized_pred in {expected_count, f"{expected_count} {expected_unit}"}:
