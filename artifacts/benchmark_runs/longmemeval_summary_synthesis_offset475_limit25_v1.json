@@ -1,0 +1,1400 @@
+{
+  "run_manifest": {
+    "run_id": "summary-synthesis-memory-v1",
+    "benchmark_name": "LongMemEval",
+    "baseline_name": "summary_synthesis_memory",
+    "sample_ids": [
+      "e3fc4d6e",
+      "51b23612",
+      "3e321797",
+      "e982271f",
+      "352ab8bd",
+      "fca762bc",
+      "7a8d0b71",
+      "a40e080f",
+      "8b9d4367",
+      "5809eb10",
+      "41275add",
+      "4388e9dd",
+      "4baee567",
+      "561fabcd",
+      "b759caee",
+      "ac031881",
+      "28bcfaac",
+      "16c90bf4",
+      "c8f1aeed",
+      "eaca4986",
+      "c7cf7dfd",
+      "e48988bc",
+      "1de5cff2",
+      "65240037",
+      "778164c6"
+    ],
+    "question_ids": [
+      "e3fc4d6e",
+      "51b23612",
+      "3e321797",
+      "e982271f",
+      "352ab8bd",
+      "fca762bc",
+      "7a8d0b71",
+      "a40e080f",
+      "8b9d4367",
+      "5809eb10",
+      "41275add",
+      "4388e9dd",
+      "4baee567",
+      "561fabcd",
+      "b759caee",
+      "ac031881",
+      "28bcfaac",
+      "16c90bf4",
+      "c8f1aeed",
+      "eaca4986",
+      "c7cf7dfd",
+      "e48988bc",
+      "1de5cff2",
+      "65240037",
+      "778164c6"
+    ],
+    "question_count": 25,
+    "metadata": {
+      "sample_source_formats": [
+        "longmemeval_instance"
+      ],
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Summary Synthesis Memory",
+      "max_observations": 6,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 0,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.0
+  },
+  "audited_overall": {
+    "correct": 0,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.0
+  },
+  "by_category": [
+    {
+      "category": "single-session-assistant",
+      "correct": 0,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.0
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "single-session-assistant",
+      "correct": 0,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.0
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "benchmark_slices": {},
+  "product_memory_summary": {
+    "measured_metrics": {
+      "latency_ms": {
+        "available": 25,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "available": 25,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "answer_candidate_support_rate": {
+        "supported": 21,
+        "total": 25,
+        "rate": 0.84
+      },
+      "primary_answer_candidate_sources": {
+        "supported": 21,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate_memory",
+            "count": 21
+          }
+        ]
+      },
+      "primary_answer_candidate_source_alignment": {
+        "aligned": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "primary_answer_candidate_roles": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 21
+          },
+          {
+            "label": "unknown",
+            "count": 4
+          }
+        ]
+      },
+      "primary_answer_candidate_types": {
+        "supported": 21,
+        "total": 25,
+        "rows": [
+          {
+            "label": "generic",
+            "count": 16
+          },
+          {
+            "label": "location",
+            "count": 1
+          },
+          {
+            "label": "preference",
+            "count": 4
+          }
+        ]
+      },
+      "retrieved_memory_roles": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 25
+          },
+          {
+            "label": "belief",
+            "count": 25
+          },
+          {
+            "label": "structured_evidence",
+            "count": 25
+          }
+        ]
+      },
+      "retrieved_memory_role_items": {
+        "supported": 275,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 75
+          },
+          {
+            "label": "belief",
+            "count": 75
+          },
+          {
+            "label": "structured_evidence",
+            "count": 125
+          }
+        ]
+      },
+      "provenance_support_rate": {
+        "supported": 25,
+        "total": 25,
+        "rate": 1.0
+      },
+      "abstention_honesty": {
+        "honest": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "current_state_accuracy": {
+        "correct": 0,
+        "total": 0,
+        "excluded": 0,
+        "accuracy": 0.0
+      }
+    },
+    "unmeasured_metrics": [
+      "stale_state_error_rate",
+      "correction_success_rate",
+      "deletion_reliability",
+      "memory_drift_rate"
+    ],
+    "notes": [
+      "This summary only reports metrics that current benchmark runs can measure honestly.",
+      "Correction, deletion, and drift metrics still require dedicated product-memory evaluation tasks."
+    ]
+  },
+  "predictions": [
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "e3fc4d6e",
+      "question_id": "e3fc4d6e",
+      "category": "single-session-assistant",
+      "predicted_answer": "predict the entities of this article one sentence by a time: For First Time, Researchers Produce More Energy from Fusion Than Was Used to Drive It, Promising Further Discovery in Clean Power and Nuclear Weapons Stewardship WASHINGTON, D.C. \u2014 The U.S. Department of Energy (DOE) and DOE\u2019s National Nuclear Security Administration (NNSA) today announced the achievement of fusion ignition at Lawrence Livermore National Laboratory (LLNL)\u2014a major scientific breakthrough decades in the making that will pave the way for advancements in national defense and the future of clean power. On December 5, a team at LLNL\u2019s National Ignition Facility (NIF) conducted the first controlled fusion experiment in history to reach this milestone, also known as scientific energy breakeven, meaning it produced more energy from fusion than the laser energy used to drive it. This historic, first-of-its kind achievement will provide unprecedented capability to support NNSA\u2019s Stockpile Stewardship Program and will provide invaluable insights into the prospects of clean fusion energy, which would be a game-changer for efforts to achieve President Biden\u2019s goal of a net-zero carbon economy. \u201cThis is a landmark achievement for the researchers and staff at the National Ignition Facility who have dedicated their careers to seeing fusion ignition become a reality, and this milestone will undoubtedly spark even more discovery,\u201d said U.S. Secretary of Energy Jennifer M. Granholm. \u201cThe Biden-Harris Administration is committed to supporting our world-class scientists\u2014like the team at NIF\u2014whose work will help us solve humanity\u2019s most complex and pressing problems, like providing clean power to combat climate change and maintaining a nuclear deterrent without nuclear testing.\u201d \u201cWe have had a theoretical understanding of fusion for over a century, but the journey from knowing to doing can be long and arduous. Today\u2019s milestone shows what we can do with perseverance,\u201d said Dr. Arati Prabhakar, the President\u2019s Chief Advisor for Science and Technology and Director of the White House Office of Science and Technology Policy. \u201cMonday, December 5, 2022, was a historic day in science thanks to the incredible people at Livermore Lab and the National Ignition Facility. In making this breakthrough, they have opened a new chapter in NNSA\u2019s Stockpile Stewardship Program,\u201d said NNSA Administrator Jill Hruby. \u201cI would like to thank the members of Congress who have supported the National Ignition Facility because their belief in the promise of visionary science has been critical for our mission. Our team from around the DOE national laboratories and our international partners have shown us the power of collaboration.\u201d \u201cThe pursuit of fusion ignition in the laboratory is one of the most significant scientific challenges ever tackled by humanity, and achieving it is a triumph of science, engineering, and most of all, people,\u201d LLNL Director Dr. Kim Budil said. \u201cCrossing this threshold is the vision that has driven 60 years of dedicated pursuit\u2014a continual process of learning, building, expanding knowledge and capability, and then finding ways to overcome the new challenges that emerged. These are the problems that the U.S. national laboratories were created to solve.\u201d",
+      "expected_answers": [
+        "Dr. Arati Prabhakar"
+      ],
+      "is_correct": false,
+      "question": "I wanted to follow up on our previous conversation about the fusion breakthrough at Lawrence Livermore National Laboratory. Can you remind me who is the President's Chief Advisor for Science and Technology mentioned in the article?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "51b23612",
+      "question_id": "51b23612",
+      "category": "single-session-assistant",
+      "predicted_answer": "Can you discuss any examples of political propaganda that relied heavily on humor or satire",
+      "expected_answers": [
+        "Nu, pogodi!"
+      ],
+      "is_correct": false,
+      "question": "I was going through our previous conversation about political propaganda and humor, and I was wondering if you could remind me of that Soviet cartoon you mentioned that mocked Western culture?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "3e321797",
+      "question_id": "3e321797",
+      "category": "single-session-assistant",
+      "predicted_answer": "On 2023/05/28 (Sun) 14:59, I said: What are some natural remedies for treating dark circles under the eyes",
+      "expected_answers": [
+        "10 minutes"
+      ],
+      "is_correct": false,
+      "question": "I wanted to follow up on our previous conversation about natural remedies for dark circles under the eyes. You mentioned applying tomato juice mixed with lemon juice, how long did you say I should leave it on for?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 0,
+        "primary_answer_candidate_type": null,
+        "primary_answer_candidate_source": null,
+        "primary_answer_candidate_role": "unknown",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "e982271f",
+      "question_id": "e982271f",
+      "category": "single-session-assistant",
+      "predicted_answer": "On 2023/05/27 (Sat) 15:20, I said: Let's start with the concert list then. I think I went to a music festival in San Francisco a week after the Arctic Monkeys show, and then a Phoebe Bridgers concert at The Fillmore the following weekend. Can you help me create a template to keep track of these concerts, including the date, venue, and any notable acts or memories",
+      "expected_answers": [
+        "Revolution Hall"
+      ],
+      "is_correct": false,
+      "question": "I was going through our previous chat. Can you remind me of the name of the last venue you recommended in the list of popular venues in Portland for indie music shows?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 0,
+        "primary_answer_candidate_type": null,
+        "primary_answer_candidate_source": null,
+        "primary_answer_candidate_role": "unknown",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "352ab8bd",
+      "question_id": "352ab8bd",
+      "category": "single-session-assistant",
+      "predicted_answer": "I typically wake up at 6:45 am and start my day with a 30-minute exercise routine. After that, I shower and get ready for work. I usually grab a quick breakfast and head out the door around 7:30 am. On Monday, when I overslept by 15 minutes, I had to rush through my exercise routine and skip breakfast to make it to work on time. It definitely threw off my entire morning and made me feel frazzled. I've been using an alarm clock to wake up, but I'm not sure if it's the most effective way to start my day. I've been considering trying a wake-up light or a smart alarm that can monitor my sleep patterns and wake me up during a lighter sleep phase. What do you think about wake-up lights or smart alarms? Have you heard of anyone using them successfully",
+      "expected_answers": [
+        "The average improvement in framerate was approximately 20% when using the Hardware-Aware Modular Training (HAMT) agent."
+      ],
+      "is_correct": false,
+      "question": "Can you remind me what was the average improvement in framerate when using the Hardware-Aware Modular Training (HAMT) agent in the 'To Adapt or Not to Adapt? Real-Time Adaptation for Semantic Segmentation' submission?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "fca762bc",
+      "question_id": "fca762bc",
+      "category": "single-session-assistant",
+      "predicted_answer": "I'm glad I could help! It sounds like you're motivated to make some positive changes to your daily routine. Remember, it's all about progress, not perfection. Start with small steps, and don't be too hard on yourself if you encounter setbacks. Before we wrap up, I just want to summarize the key takeaways from our conversation: * You're looking to establish a better daily routine, especially with meal times. * You want to cook more at home and reduce your reliance on takeout. * You're interested in incorporating more fruits and veggies into your meals, especially during lunchtime. * You want to stay hydrated throughout the day, especially on Fridays when you have a lot of meetings. * You're looking to curb your sugar cravings and make healthier choices. If you have any more questions or need further guidance, feel free to ask! Otherwise, I wish you all the best on your journey to a healthier and more balanced lifestyle",
+      "expected_answers": [
+        "Memrise"
+      ],
+      "is_correct": false,
+      "question": "I wanted to follow up on our previous conversation about language learning apps. You mentioned a few options, and I was wondering if you could remind me of the one that uses mnemonics to help learners memorize words and phrases?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "7a8d0b71",
+      "question_id": "7a8d0b71",
+      "category": "single-session-assistant",
+      "predicted_answer": "6 weeks",
+      "expected_answers": [
+        "$2,000"
+      ],
+      "is_correct": false,
+      "question": "I'm looking back at our previous chat about the DHL Wellness Retreats campaign. Can you remind me how much was allocated for influencer marketing in the campaign plan?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "a40e080f",
+      "question_id": "a40e080f",
+      "category": "single-session-assistant",
+      "predicted_answer": "Do you know of any other companies that prioritize safety and well-being like Triumvirate",
+      "expected_answers": [
+        "Patagonia and Southwest Airlines."
+      ],
+      "is_correct": false,
+      "question": "I was going through our previous conversation and I was wondering if you could remind me of the two companies you mentioned that prioritize employee safety and well-being like Triumvirate?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "8b9d4367",
+      "question_id": "8b9d4367",
+      "category": "single-session-assistant",
+      "predicted_answer": "Can you give me some examples of specific private sector businesses that have been particularly impactful in reducing poverty and unemployment in Chaudhary",
+      "expected_answers": [
+        "Jaipur Rugs"
+      ],
+      "is_correct": false,
+      "question": "I wanted to follow up on our previous conversation about private sector businesses in Chaudhary. Can you remind me of the company that employs over 40,000 people in the rug-manufacturing industry?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "5809eb10",
+      "question_id": "5809eb10",
+      "category": "single-session-assistant",
+      "predicted_answer": "Bajimaya v Reward Homes Pty Ltd - Case Summary The case of Bajimaya v Reward Homes Pty Ltd [2021] NSWCATAP 297 highlights the importance of understanding your rights as a homeowner in the construction process",
+      "expected_answers": [
+        "2014."
+      ],
+      "is_correct": false,
+      "question": "I'm looking back at our previous conversation about the Bajimaya v Reward Homes Pty Ltd case. Can you remind me what year the construction of the house began?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "41275add",
+      "question_id": "41275add",
+      "category": "single-session-assistant",
+      "predicted_answer": "any youtube video i can share with them",
+      "expected_answers": [
+        "The video is 'How to Sit Properly at a Desk to Avoid Back Pain' and the link is https://www.youtube.com/watch?v=UfOvNlX9Hh0."
+      ],
+      "is_correct": false,
+      "question": "I wanted to follow up on our previous conversation about YouTube videos for workplace posture. Can you remind me of the Mayo Clinic video you recommended?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "4388e9dd",
+      "question_id": "4388e9dd",
+      "category": "single-session-assistant",
+      "predicted_answer": "Write me the beginning of a script (formatted like a real movie script) for a comedy movie scene, based on the below information: Andy, a man in his 40s, is the Head of Computing at a rural high school. He has a loud, deep voice, and has more confidence than he has intelligence. He wants to be friends with his colleague exam invigilator John, so often tries and fails to impress him with his elaborate stories. He often bangs on about how he presents the school talent show. He has poor personal hygiene and can often be found making moaning noises while using disabled toilets, despite him having no obvious disability. Andy wears an untidy, stained white shirt. When addressing a group he starts with the words \"Right guys, settle down\". Roger, a man in his 50s, is a computing teacher working under Andy. He is an intelligent man, with grey hair and a laid back attitude to teaching. His classes are often out of control, while he sits there in despair. He has quiet contempt at the fact that Andy is the head of department, because he knows that he is much more qualified than Andy. John is a 69 year old man working as an exam invigilator. As he is past retirement it is unusual that he is still working, but we suspect it might be because he enjoys making people uncomfortable. John has wispy, grey hair and wears a pinstripe suit, several gold rings and red tinted glasses. He makes brazen, inappropriate remarks towards his colleagues. Ruth, a woman in her 40s, is a languages teacher at the high school. She is so obsessed with the German language and culture that she regularly speaks to people in German and they don't understand what she's saying. She is attracted to women and regularly has to deter John's advances",
+      "expected_answers": [
+        "Andy was wearing an untidy, stained white shirt."
+      ],
+      "is_correct": false,
+      "question": "I was going through our previous chat and I was wondering, what was Andy wearing in the script you wrote for the comedy movie scene?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "4baee567",
+      "question_id": "4baee567",
+      "category": "single-session-assistant",
+      "predicted_answer": "how many times have the chiefs played the jaguars",
+      "expected_answers": [
+        "The Chiefs played the Jaguars 12 times at Arrowhead Stadium."
+      ],
+      "is_correct": false,
+      "question": "I was looking back at our previous chat and I wanted to confirm, how many times did the Chiefs play the Jaguars at Arrowhead Stadium?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "561fabcd",
+      "question_id": "561fabcd",
+      "category": "single-session-assistant",
+      "predicted_answer": "I've been thinking about organizing my old photos on my computer, and I was wondering if you have any tips on how to do it efficiently",
+      "expected_answers": [
+        "Fissionator."
+      ],
+      "is_correct": false,
+      "question": "I was thinking back to our previous conversation about the Radiation Amplified zombie, and I was wondering if you remembered what we finally decided to name it?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "b759caee",
+      "question_id": "b759caee",
+      "category": "single-session-assistant",
+      "predicted_answer": "Write a blog post about guidance on how to buy a unique engagement rings direct from the designer, include examples of relevant designers and their instagram account",
+      "expected_answers": [
+        "@jessica_poole_jewellery"
+      ],
+      "is_correct": false,
+      "question": "I was looking back at our previous conversation about buying unique engagement rings directly from designers. Can you remind me of the Instagram handle of the UK-based designer who works with unusual gemstones?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "ac031881",
+      "question_id": "ac031881",
+      "category": "single-session-assistant",
+      "predicted_answer": "co-living accommodations since it provides them with a greater sense of independence",
+      "expected_answers": [
+        "The designation on your jumpsuit was 'LIV'."
+      ],
+      "is_correct": false,
+      "question": "I'm trying to recall what the designation on my jumpsuit was that helped me find the file number in the records room?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "28bcfaac",
+      "question_id": "28bcfaac",
+      "category": "single-session-assistant",
+      "predicted_answer": "the idea of it being a cozy gift that can provide comfort and warmth for the baby",
+      "expected_answers": [
+        "MusicTheory.net"
+      ],
+      "is_correct": false,
+      "question": "I'm going back to our previous conversation about music theory. You mentioned some online resources for learning music theory. Can you remind me of the website you recommended for free lessons and exercises?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "16c90bf4",
+      "question_id": "16c90bf4",
+      "category": "single-session-assistant",
+      "predicted_answer": "I'm trying to plan a trip to Arizona and I was wondering if you could recommend some must-see attractions and activities. By the way, I've been to the Grand Canyon before with my family on a road trip across the American Southwest a few years ago, but I'm looking to explore more of the state on my own this time",
+      "expected_answers": [
+        "I recommended using a Pilsner or Lager for the recipe."
+      ],
+      "is_correct": false,
+      "question": "I'm looking back at our previous conversation about the Seco de Cordero recipe from Ancash. You mentioned using a light or medium-bodied beer, but I was wondering if you could remind me what type of beer you specifically recommended?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "c8f1aeed",
+      "question_id": "c8f1aeed",
+      "category": "single-session-assistant",
+      "predicted_answer": "On 2023/05/21 (Sun) 03:02, I said: How has fracking affected the groundwater quality in the Marcellus Shale region, and what monitoring measures are being developed",
+      "expected_answers": [
+        "Pennsylvania"
+      ],
+      "is_correct": false,
+      "question": "I wanted to follow up on our previous conversation about fracking in the Marcellus Shale region. You mentioned that some states require fracking companies to monitor groundwater quality at nearby wells before drilling and for a certain period after drilling is complete. Can you remind me which state you mentioned as an example that has this requirement?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 0,
+        "primary_answer_candidate_type": null,
+        "primary_answer_candidate_source": null,
+        "primary_answer_candidate_role": "unknown",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "eaca4986",
+      "question_id": "eaca4986",
+      "category": "single-session-assistant",
+      "predicted_answer": "to each bullet point",
+      "expected_answers": [
+        "C D E F G A B A G F E D C"
+      ],
+      "is_correct": false,
+      "question": "I'm looking back at our previous conversation where you created two sad songs for me. Can you remind me what was the chord progression for the chorus in the second song?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "location",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "c7cf7dfd",
+      "question_id": "c7cf7dfd",
+      "category": "single-session-assistant",
+      "predicted_answer": "I'm really excited to start practicing traditional Indian embroidery and tailoring techniques. Do you have any recommendations for online communities or forums where I can connect with other enthusiasts and get feedback on my work",
+      "expected_answers": [
+        "Nostalgia"
+      ],
+      "is_correct": false,
+      "question": "I'm going back to our previous conversation about traditional Indian embroidery and tailoring techniques. Can you remind me of the name of that online store based in India that sells traditional Indian fabrics, threads, and embellishments?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "e48988bc",
+      "question_id": "e48988bc",
+      "category": "single-session-assistant",
+      "predicted_answer": "It's great to see companies like Patagonia taking the initiative to be environmentally responsible. I hope more companies follow suit and prioritize sustainability in their supply chain practices",
+      "expected_answers": [
+        "Patagonia"
+      ],
+      "is_correct": false,
+      "question": "I was looking back at our previous conversation about environmentally responsible supply chain practices, and I was wondering if you could remind me of the company you mentioned that's doing a great job with sustainability?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "1de5cff2",
+      "question_id": "1de5cff2",
+      "category": "single-session-assistant",
+      "predicted_answer": "How does a high-end fashion brand differ from fast fashion",
+      "expected_answers": [
+        "Veja"
+      ],
+      "is_correct": false,
+      "question": "I was going through our previous conversation about high-end fashion brands, and I was wondering if you could remind me of the brand that uses wild rubber sourced from the Amazon rainforest?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "65240037",
+      "question_id": "65240037",
+      "category": "single-session-assistant",
+      "predicted_answer": "02:14",
+      "expected_answers": [
+        "The recommended ratio is 1:10, meaning one part tea tree oil to ten parts carrier oil."
+      ],
+      "is_correct": false,
+      "question": "I remember you told me to dilute tea tree oil with a carrier oil before applying it to my skin. Can you remind me what the recommended ratio is?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 0,
+        "primary_answer_candidate_type": null,
+        "primary_answer_candidate_source": null,
+        "primary_answer_candidate_role": "unknown",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "778164c6",
+      "question_id": "778164c6",
+      "category": "single-session-assistant",
+      "predicted_answer": "the guy who wins and the guy who keeps making it fun is the guy who has a happy life i love that and you know i can relate with it on so many levels",
+      "expected_answers": [
+        "Grilled Snapper with Mango Salsa"
+      ],
+      "is_correct": false,
+      "question": "I was looking back at our previous conversation about Caribbean dishes and I was wondering, what was the name of that Jamaican dish you recommended I try with snapper that has fruit in it?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    }
+  ]
+}

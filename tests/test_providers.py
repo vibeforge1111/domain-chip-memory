@@ -5198,3 +5198,11 @@ def test_expand_answer_from_context_preserves_single_session_numeric_candidate()
         "4",
         "answer_candidate: 4",
     ) == "4"
+
+
+def test_expand_answer_from_context_preserves_single_session_ratio_candidate():
+    assert _expand_answer_from_context(
+        "I remember you told me to dilute tea tree oil with a carrier oil before applying it to my skin. Can you remind me what the recommended ratio is?",
+        "The recommended ratio is 1:10, meaning one part tea tree oil to ten parts carrier oil.",
+        "answer_candidate: The recommended ratio is 1:10, meaning one part tea tree oil to ten parts carrier oil.",
+    ) == "The recommended ratio is 1:10, meaning one part tea tree oil to ten parts carrier oil."

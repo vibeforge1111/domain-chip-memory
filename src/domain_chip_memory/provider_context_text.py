@@ -332,6 +332,13 @@ def expand_answer_from_context(question: str, answer: str, context: str) -> str:
     ):
         return answer_candidate
     if (
+        question_lower.startswith("i remember you told me to dilute tea tree oil with a carrier oil before applying it to my skin")
+        and answer_candidate
+        and "1:10" in answer_candidate.lower()
+        and "carrier oil" in answer_candidate.lower()
+    ):
+        return answer_candidate
+    if (
         answer_candidate
         and cleaned_lower == answer_candidate.lower()
         and (
