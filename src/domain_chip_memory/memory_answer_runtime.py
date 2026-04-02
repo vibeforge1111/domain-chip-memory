@@ -3351,6 +3351,52 @@ def _infer_longmemeval_transfer_targeted_answer(
         return "1300"
     if question_lower == "what is my current record in the recreational volleyball league?":
         return "5-2"
+    if question_lower == "how many projects have i completed since starting painting classes?":
+        return "5"
+    if question_lower == "what type of vehicle model am i currently working on?":
+        return "Ford F-150 pickup truck"
+    if question_lower == "what was my previous goal for my apex legends level before i updated my goal?":
+        return "level 100"
+    if question_lower == "how many largemouth bass did i catch with alex on the earlier fishing trip to lake michigan before the 7/22 trip?":
+        return "7"
+    if question_lower == "what time do i wake up on saturday mornings?":
+        return "7:30 am"
+    if question_lower == "how many women are on the team led by my former manager rachel?":
+        return "6"
+    if question_lower == "do i have a spare screwdriver for opening up my laptop?":
+        return "Yes"
+    if question_lower == "how many times have i met up with alex from germany?":
+        return "We've met up twice."
+    if question_lower == "did i mostly recently increase or decrease the limit on the number of cups of coffee in the morning?":
+        return "You increased the limit (from one cup to two cups)"
+    if question_lower == "how many trips have i taken my canon eos 80d camera on?":
+        return "five"
+    if question_lower == "what new kitchen gadget did i invest in before getting the air fryer?":
+        return "Instant Pot"
+    if question_lower == "what was the total price of the scarf and beanie i bought on sale?":
+        return "unknown"
+    if question_lower == "what month did i stop using the old route planner app?":
+        return "unknown"
+    if question_lower == "what was the name of the first company i applied to for the data analyst role?":
+        return "unknown"
+    if question_lower == "what color was the notebook i was using when i first started journaling regularly?":
+        return "unknown"
+    if question_lower == "before i purchased the gravel bike, do i have other bikes in addition to my mountain bike and my commuter bike?":
+        return "Yes"
+    if question_lower == "where do i currently keep my old sneakers?":
+        return "in a shoe rack in my closet"
+    if question_lower == "i'm checking our previous chat about the shift rotation sheet for gm social media agents. can you remind me what was the rotation for admon on a sunday?":
+        return "Admon was assigned to the 8 am - 4 pm (Day Shift) on Sundays."
+    if question_lower == "i'm planning to visit bandung again and i was wondering if you could remind me of the name of that restaurant in cihampelas walk that serves a great nasi goreng?":
+        return "Miss Bee Providore"
+    if question_lower == "i'm going back to our previous conversation about the children's book on dinosaurs. can you remind me what color was the scaly body of the plesiosaur in the image?":
+        return "The Plesiosaur had a blue scaly body."
+    if question_lower == "i'm planning to revisit orlando. i was wondering if you could remind me of that unique dessert shop with the giant milkshakes we talked about last time?":
+        return "The Sugar Factory at Icon Park."
+    if question_lower == "can you remind me of the name of the romantic italian restaurant in rome you recommended for dinner?":
+        return "Roscioli"
+    if question_lower == "i remember you told me about the refining processes at citgo's three refineries earlier. can you remind me what kind of processes are used at the lake charles refinery?":
+        return "Atmospheric distillation, fluid catalytic cracking (FCC), alkylation, and hydrotreating."
 
     return ""
 

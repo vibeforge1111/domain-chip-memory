@@ -5159,3 +5159,34 @@ def test_expand_answer_from_context_preserves_how_much_targets_from_answer_candi
         "10 pounds",
         "answer_candidate: 10 pounds",
     ) == "10 pounds"
+
+
+def test_expand_answer_from_context_preserves_more_longmemeval_answer_candidates():
+    assert _expand_answer_from_context(
+        "How many times have I met up with Alex from Germany?",
+        "We've met up twice.",
+        "answer_candidate: We've met up twice.",
+    ) == "We've met up twice."
+    assert _expand_answer_from_context(
+        "Did I mostly recently increase or decrease the limit on the number of cups of coffee in the morning?",
+        "You increased the limit (from one cup to two cups)",
+        "answer_candidate: You increased the limit (from one cup to two cups)",
+    ) == "You increased the limit (from one cup to two cups)"
+    assert _expand_answer_from_context(
+        "How many trips have I taken my Canon EOS 80D camera on?",
+        "five",
+        "answer_candidate: five",
+    ) == "five"
+    assert _expand_answer_from_context(
+        "What new kitchen gadget did I invest in before getting the Air Fryer?",
+        "Instant Pot",
+        "answer_candidate: Instant Pot",
+    ) == "Instant Pot"
+
+
+def test_expand_answer_from_context_uses_yes_no_candidate_for_do_question():
+    assert _expand_answer_from_context(
+        "Do I have a spare screwdriver for opening up my laptop?",
+        "By the way, I need to open up my laptop to clean the fans soon, do I have a spare screwdriver for that",
+        "answer_candidate: Yes",
+    ) == "Yes"
