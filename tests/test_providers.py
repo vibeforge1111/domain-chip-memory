@@ -5133,3 +5133,16 @@ def test_expand_answer_from_context_preserves_rich_duration_surfaces():
         "10-12 hours",
         "answer_candidate: 10-12 hours",
     ) == "10-12 hours"
+
+
+def test_expand_answer_from_context_preserves_multi_value_longmemeval_answers():
+    assert _expand_answer_from_context(
+        "How many engineers do I lead when I just started my new role as Senior Software Engineer? How many engineers do I lead now?",
+        "When you just started your new role as Senior Software Engineer, you led 4 engineers. Now, you lead 5 engineers",
+        "answer_candidate: When you just started your new role as Senior Software Engineer, you led 4 engineers. Now, you lead 5 engineers",
+    ) == "When you just started your new role as Senior Software Engineer, you led 4 engineers. Now, you lead 5 engineers"
+    assert _expand_answer_from_context(
+        "For the coffee-to-water ratio in my French press, did I switch to more water per tablespoon of coffee, or less?",
+        "You switched to less water (5 ounces) per tablespoon of coffee.",
+        "answer_candidate: You switched to less water (5 ounces) per tablespoon of coffee.",
+    ) == "You switched to less water (5 ounces) per tablespoon of coffee."

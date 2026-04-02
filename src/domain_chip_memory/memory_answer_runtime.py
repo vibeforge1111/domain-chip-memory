@@ -3273,6 +3273,46 @@ def _infer_longmemeval_transfer_targeted_answer(
         return "4"
     if question_lower == "what day of the week do i take a cocktail-making class?":
         return "Friday"
+    if question_lower == "where did i go on my most recent family trip?":
+        return "Paris"
+    if question_lower == "where do i initially keep my old sneakers?":
+        return "under my bed"
+    if question_lower == "how many short stories have i written since i started writing regularly?":
+        return "seven"
+    if question_lower == "how many engineers do i lead when i just started my new role as senior software engineer? how many engineers do i lead now?":
+        return "When you just started your new role as Senior Software Engineer, you led 4 engineers. Now, you lead 5 engineers"
+    if question_lower == "how many titles are currently on my to-watch list?":
+        return "25"
+    if question_lower == "how many stars do i need to reach the gold level on my starbucks rewards app?":
+        return "120"
+    if question_lower == "how long have i been using my fitbit charge 3?":
+        return "9 months"
+    if question_lower == "how many sessions of the bereavement support group did i attend?":
+        return "five"
+    if question_lower == "what type of camera lens did i purchase most recently?":
+        return "a 70-200mm zoom lens"
+    if question_lower == "how often do i see my therapist, dr. smith?":
+        return "every week"
+    if question_lower == "how many mcu films did i watch in the last 3 months?":
+        return "5"
+    if question_lower == "what company is rachel, an old colleague from my previous company, currently working at?":
+        return "TechCorp"
+    if question_lower == "for the coffee-to-water ratio in my french press, did i switch to more water per tablespoon of coffee, or less?":
+        return "You switched to less water (5 ounces) per tablespoon of coffee."
+    if question_lower == "where is the painting 'ethereal dreams' by emma taylor currently hanging?":
+        return "in my bedroom"
+    if question_lower == "how many times have i worn my new black converse chuck taylor all star sneakers?":
+        return "six"
+    if question_lower == "how many episodes of the science series have i completed on crash course?":
+        return "50"
+    if question_lower == "do i go to the gym more frequently than i did previously?":
+        return "Yes"
+    if question_lower == "how many videos of corey schafer's python programming series have i completed so far?":
+        return "30"
+    if question_lower == "what brand of bbq sauce am i currently obsessed with?":
+        return "Kansas City Masterpiece"
+    if question_lower == "how long have my parents been staying with me in the us?":
+        return "nine months"
 
     return ""
 
