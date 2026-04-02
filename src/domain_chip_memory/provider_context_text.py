@@ -162,6 +162,14 @@ def expand_answer_from_context(question: str, answer: str, context: str) -> str:
         r"(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?)$",
         re.IGNORECASE,
     )
+    duration_range_pattern = re.compile(
+        r"^\d+(?:\.\d+)?\s*-\s*\d+(?:\.\d+)?\s+(?:minutes?|hours?|days?|weeks?|months?|years?)$",
+        re.IGNORECASE,
+    )
+    multiunit_duration_pattern = re.compile(
+        r"^\d+(?:\.\d+)?\s+(?:minutes?|hours?)\s+and\s+\d+(?:\.\d+)?\s+(?:seconds?|minutes?)$",
+        re.IGNORECASE,
+    )
     total_count_pattern = re.compile(
         r"^(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)"
         r"(?:\s+(?:minutes?|hours?|days?|weeks?|months?|years?|times?|items?|projects?|kits?|meals?))?$",
@@ -225,6 +233,8 @@ def expand_answer_from_context(question: str, answer: str, context: str) -> str:
     )
     duration_count_answer_candidate = _first_answer_candidate_matching(
         lambda candidate: bool(duration_or_count_pattern.fullmatch(candidate))
+        or bool(duration_range_pattern.fullmatch(candidate))
+        or bool(multiunit_duration_pattern.fullmatch(candidate))
         or bool(total_count_pattern.fullmatch(candidate))
         or bool(compound_duration_pattern.fullmatch(candidate))
         or bool(re.fullmatch(r"\d+(?:\.\d+)?", candidate))
@@ -264,6 +274,15 @@ def expand_answer_from_context(question: str, answer: str, context: str) -> str:
         and not any(token in cleaned_lower for token in ("cake", "lemon", "poppyseed", "cookie", "dessert", "bake"))
     ):
         return answer_candidate
+    if (
+        answer_candidate
+        and cleaned_lower == answer_candidate.lower()
+        and (
+            duration_range_pattern.fullmatch(answer_candidate)
+            or multiunit_duration_pattern.fullmatch(answer_candidate)
+        )
+    ):
+        return cleaned
     if (
         current_state_question
         and answer_candidate
@@ -390,7 +409,10 @@ def expand_answer_from_context(question: str, answer: str, context: str) -> str:
             if cleaned.lower() in span.lower() or span.lower() in cleaned.lower():
                 return span
         if cleaned.lower() in payload.lower():
-            quoted = re.findall(r"\"([^\"]+)\"|'([^']+)'", payload)
+            quoted = re.findall(
+                r"\"([^\"]+)\"|(?<!\w)'([^'\n]+)'(?!\w)",
+                payload,
+            )
             for group in quoted:
                 span = next((item for item in group if item), "").strip()
                 if span and cleaned.lower() in span.lower():

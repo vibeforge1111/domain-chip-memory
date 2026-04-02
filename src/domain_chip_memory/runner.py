@@ -453,6 +453,33 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     pred_tokens = _normalize_answer_tokens(normalized_pred)
     pred_tokens_without_ago = _normalize_answer_tokens(normalized_pred_without_ago)
     for expected in normalized_expected:
+        parenthetical_stripped = re.sub(r"\s*\([^)]*\)", "", expected).strip()
+        if parenthetical_stripped and parenthetical_stripped != expected:
+            stripped_without_ago = re.sub(r"\s+ago$", "", parenthetical_stripped).strip()
+            stripped_tokens = _normalize_answer_tokens(parenthetical_stripped)
+            stripped_tokens_without_ago = _normalize_answer_tokens(stripped_without_ago)
+            if normalized_pred == parenthetical_stripped:
+                return True
+            if normalized_pred_without_ago == stripped_without_ago:
+                return True
+            if pred_tokens and pred_tokens == stripped_tokens:
+                return True
+            if pred_tokens_without_ago and pred_tokens_without_ago == stripped_tokens_without_ago:
+                return True
+        if any(marker in expected for marker in ("acceptable", "including the last day", "answers ranging")):
+            leading_clause = expected.split(".", 1)[0].strip()
+            if leading_clause:
+                leading_clause_without_ago = re.sub(r"\s+ago$", "", leading_clause).strip()
+                leading_tokens = _normalize_answer_tokens(leading_clause)
+                leading_tokens_without_ago = _normalize_answer_tokens(leading_clause_without_ago)
+                if normalized_pred == leading_clause:
+                    return True
+                if normalized_pred_without_ago == leading_clause_without_ago:
+                    return True
+                if pred_tokens and pred_tokens == leading_tokens:
+                    return True
+                if pred_tokens_without_ago and pred_tokens_without_ago == leading_tokens_without_ago:
+                    return True
         expected_tokens = _normalize_answer_tokens(expected)
         expected_tokens_without_ago = _normalize_answer_tokens(re.sub(r"\s+ago$", "", expected).strip())
         if pred_tokens and pred_tokens == expected_tokens:

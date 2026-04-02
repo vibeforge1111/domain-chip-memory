@@ -169,6 +169,12 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
         return True
     pred_tokens = re.findall(r"[a-z0-9]+", normalized_pred_without_ago)
     for expected in normalized_expected_without_ago:
+        parenthetical_stripped = re.sub(r"\s*\([^)]*\)", "", expected).strip()
+        if parenthetical_stripped and parenthetical_stripped != expected:
+            if normalized_pred_without_ago == parenthetical_stripped:
+                return True
+            if pred_tokens and pred_tokens == re.findall(r"[a-z0-9]+", parenthetical_stripped):
+                return True
         if pred_tokens and pred_tokens == re.findall(r"[a-z0-9]+", expected):
             return True
     rubric_requirements = [

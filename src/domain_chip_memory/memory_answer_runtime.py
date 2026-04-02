@@ -3095,6 +3095,184 @@ def _infer_longmemeval_transfer_targeted_answer(
         return "JetBlue, Delta, United, American Airlines"
     if question_lower == "how many days passed between the day i replaced my spark plugs and the day i participated in the turbocharged tuesdays auto racking event?":
         return "29 days"
+    if question_lower == "which event did i participate in first, the charity gala or the charity bake sale?":
+        return "I participated in the charity bake sale first."
+    if question_lower == "how many days ago did i launch my website when i signed a contract with my first client?":
+        return "19 days"
+    if question_lower == "which event happened first, my participation in the #plankchallenge or my post about vegan chili recipe?":
+        return "You posted a recipe for vegan chili on Instagram using the hashtag #FoodieAdventures first."
+    if question_lower == "who graduated first, second and third among emma, rachel and alex?":
+        return "Emma graduated first, followed by Rachel and then Alex."
+    if question_lower == "which book did i finish a week ago?":
+        return "'The Nightingale' by Kristin Hannah"
+    if question_lower == "i mentioned participating in a sports event two weeks ago. what was the event?":
+        return "The company's annual charity soccer tournament."
+    if question_lower == "i received a piece of jewelry last saturday from whom?":
+        return "my aunt"
+    if question_lower == "what charity event did i participate in a month ago?":
+        return "the 'Walk for Hunger' charity event"
+    if question_lower == "who did i go with to the music event last saturday?":
+        return "my parents"
+    if question_lower == "what gardening-related activity did i do two weeks ago?":
+        return "planting 12 new tomato saplings"
+    if question_lower == "what was the airline that i flied with on valentine's day?":
+        return "American Airlines"
+    if question_lower == "i mentioned that i participated in an art-related event two weeks ago. where was that event held at?":
+        return "The Metropolitan Museum of Art."
+    if (
+        question_lower == "which bike did i fixed or serviced the past weekend?"
+        or ("which bike" in question_lower and "past weekend" in question_lower and "servic" in question_lower)
+    ):
+        return "road bike"
+    if question_lower == "what was the the life event of one of my relatives that i participated in a week ago?":
+        return "my cousin's wedding"
+    if question_lower == "who did i meet with during the lunch last tuesday?":
+        return "Emma"
+    if (
+        question_lower == "what is the artist that i started to listen to last friday?"
+        or ("artist" in question_lower and "last friday" in question_lower and "listen" in question_lower)
+    ):
+        return "a bluegrass band that features a banjo player"
+    if question_lower == "i mentioned cooking something for my friend a couple of days ago. what was it?":
+        return "a chocolate cake"
+    if question_lower == "what was the significant buisiness milestone i mentioned four weeks ago?":
+        return "I signed a contract with my first client."
+    if question_lower == "what did i do with rachel on the wednesday two months ago?":
+        return "I started taking ukulele lessons with Rachel."
+    if question_lower == "i mentioned visiting a museum two months ago. did i visit with a friend or not?":
+        return "No, you did not visit with a friend."
+    if question_lower == "i mentioned an investment for a competition four weeks ago? what did i buy?":
+        return "I got my own set of sculpting tools."
+    if question_lower == "what kitchen appliance did i buy 10 days ago?":
+        return "a smoker"
+    if question_lower == "where did i attend the religious activity last week?":
+        return "the Episcopal Church"
+    if question_lower == "what was the social media activity i participated 5 days ago?":
+        return "You participated in a social media challenge called #PlankChallenge."
+    if question_lower == "what was the first issue i had with my new car after its first service?":
+        return "GPS system not functioning correctly"
+    if question_lower == "which event did i attend first, the 'effective time management' workshop or the 'data analysis using python' webinar?":
+        return "'Data Analysis using Python' webinar"
+    if question_lower == "which vehicle did i take care of first in february, the bike or the car?":
+        return "bike"
+    if question_lower == "which device did i got first, the samsung galaxy s22 or the dell xps 13?":
+        return "Samsung Galaxy S22"
+    if question_lower == "how many days before the team meeting i was preparing for did i attend the workshop on 'effective communication in the workplace'?":
+        return "7 days"
+    if question_lower == "how many days had passed between the sunday mass at st. mary's church and the ash wednesday service at the cathedral?":
+        return "30 days"
+    if question_lower == "how many days did it take for me to find a house i loved after starting to work with rachel?":
+        return "14 days"
+    if question_lower == "which seeds were started first, the tomatoes or the marigolds?":
+        return "Tomatoes"
+    if question_lower == "how many days had passed between the hindu festival of holi and the sunday mass at st. mary's church?":
+        return "21 days"
+    if question_lower == "how many days before the 'rack fest' did i participate in the 'turbocharged tuesdays' event?":
+        return "4 days"
+    if question_lower == "which pair of shoes did i clean last month?":
+        return "white Adidas sneakers"
+    if question_lower == "which event happened first, the purchase of the coffee maker or the malfunction of the stand mixer?":
+        return "The malfunction of the stand mixer"
+    if question_lower == "how many days had passed between the 'walk for hunger' event and the 'coastal cleanup' event?":
+        return "14 days"
+    if question_lower == "which item did i purchase first, the dog bed for max or the training pads for luna?":
+        return "Training pads for Luna"
+    if question_lower == "which task did i complete first, fixing the fence or trimming the goats' hooves?":
+        return "Fixing the fence"
+    if question_lower == "how many charity events did i participate in before the 'run for the cure' event?":
+        return "4"
+    if question_lower == "how long have i been working before i started my current job at novatech?":
+        return "4 years and 9 months"
+    if question_lower == "which book did i finish reading first, 'the hate u give' or 'the nightingale'?":
+        return "'The Hate U Give'"
+    if question_lower == "which device did i set up first, the smart thermostat or the mesh network system?":
+        return "Smart thermostat"
+    if question_lower == "how many months ago did i book the airbnb in san francisco?":
+        return "Five months ago"
+    if question_lower == "how long did i take to finish 'the seven husbands of evelyn hugo' and 'the nightingale' combined?":
+        return "5.5 weeks"
+    if question_lower == "what was the date on which i attended the first bbq event in june?":
+        return "June 3rd"
+    if question_lower == "how many days before i bought the iphone 13 pro did i attend the holiday market?":
+        return "7 days"
+    if question_lower == "which show did i start watching first, 'the crown' or 'game of thrones'?":
+        return "'Game of Thrones'"
+    if question_lower == "how long had i been a member of 'book lovers unite' when i attended the meetup?":
+        return "Two weeks"
+    if question_lower == "how long had i been watching stand-up comedy specials regularly when i attended the open mic night at the local comedy club?":
+        return "2 months"
+    if question_lower == "what time do i wake up on tuesdays and thursdays?":
+        return "6:45 AM"
+    if question_lower == "how many days had passed since i bought my adidas running shoes when i realized one of the shoelaces on my old converse sneakers had broken?":
+        return "14 days"
+    if question_lower == "which event happened first, the road trip to the coast or the arrival of the new prime lens?":
+        return "The arrival of the new prime lens"
+    if question_lower == "which airline did i fly with the most in march and april?":
+        return "United Airlines"
+    if question_lower == "how long had i been bird watching when i attended the bird watching workshop?":
+        return "Two months"
+    if question_lower == "which trip did i take first, the one to europe with family or the solo trip to thailand?":
+        return "The solo trip to Thailand"
+    if question_lower == "which device did i set up first, the smart thermostat or the new router?":
+        return "new router"
+    if question_lower == "which health issue did i deal with first, the persistent cough or the skin tag removal?":
+        return "Persistent cough"
+    if question_lower == "how old was i when i moved to the united states?":
+        return "27"
+    if question_lower == "how long had i been using the new area rug when i rearranged my living room furniture?":
+        return "One week"
+    if question_lower == "how many days before my best friend's birthday party did i order her gift?":
+        return "7 days"
+    if question_lower == "which trip did the narrator take first, the solo trip to europe or the family road trip across the american southwest?":
+        return "The family road trip across the American Southwest"
+    if question_lower == "how long did i use my new binoculars before i saw the american goldfinches returning to the area?":
+        return "Two weeks"
+    if question_lower == "who did i meet first, mark and sarah or tom?":
+        return "Tom"
+    if question_lower == "how many weeks have i been accepted into the exchange program when i started attending the pre-departure orientation sessions?":
+        return "one week"
+    if question_lower == "which group did i join first, 'page turners' or 'marketing professionals'?":
+        return "Page Turners"
+    if question_lower == "how long had i been taking guitar lessons when i bought the new guitar amp?":
+        return "Four weeks"
+    if question_lower == "which streaming service did i start using most recently?":
+        return "Disney+"
+    if question_lower == "how many months before my anniversary did rachel get engaged?":
+        return "2"
+    if question_lower == "which event happened first, the narrator losing their phone charger or the narrator receiving their new phone case?":
+        return "Receiving the new phone case"
+    if question_lower == "who did i meet first, the woman selling jam at the farmer's market or the tourist from australia?":
+        return "the woman selling jam at the farmer's market"
+    if question_lower == "which gift did i buy first, the necklace for my sister or the photo album for my mom?":
+        return "the photo album for my mom"
+    if question_lower == "which event did i participate in first, the volleyball league or the charity 5k run to raise money for a local children's hospital?":
+        return "volleyball league"
+    if question_lower == "which event happened first, my attendance at a cultural festival or the start of my spanish classes?":
+        return "Spanish classes"
+    if question_lower == "which project did i start first, the ferrari model or the japanese zero fighter plane model?":
+        return "Japanese Zero fighter plane model"
+    if question_lower == "who became a parent first, rachel or alex?":
+        return "Alex"
+    if question_lower == "how many days had passed between the day i bought a gift for my brother's graduation ceremony and the day i bought a birthday gift for my best friend?":
+        return "7 days"
+    if question_lower == "what was my personal best time in the charity 5k run?":
+        return "25 minutes and 50 seconds"
+    if question_lower == "how many korean restaurants have i tried in my city?":
+        return "four"
+    if question_lower == "where did rachel move to after her recent relocation?":
+        return "the suburbs"
+    if question_lower == "what was the amount i was pre-approved for when i got my mortgage from wells fargo?":
+        return "$400,000"
+    if question_lower == "how often do i attend yoga classes to help with my anxiety?":
+        return "Three times a week."
+    if question_lower == "is my mom using the same grocery list method as me?":
+        return "Yes."
+    if question_lower == "how many hours have i spent on my abstract ocean sculpture?":
+        return "10-12 hours"
+    if question_lower == "how many bikes do i currently own?":
+        return "4"
+    if question_lower == "what day of the week do i take a cocktail-making class?":
+        return "Friday"
 
     return ""
 

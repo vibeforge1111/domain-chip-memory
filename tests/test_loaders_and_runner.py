@@ -270,6 +270,20 @@ def test_runner_matches_longmemeval_elapsed_surface_variants_honestly():
     assert _matches_expected_answer("4 months", ["4 months ago"]) is True
 
 
+def test_runner_matches_primary_clause_of_expected_with_acceptable_range_suffix():
+    assert _matches_expected_answer(
+        "One week",
+        ["One week. Answers ranging from 7 days to 10 days are also acceptable."],
+    ) is True
+
+
+def test_runner_matches_expected_answer_with_parenthetical_alternate_suffix():
+    assert _matches_expected_answer(
+        "25 minutes and 50 seconds",
+        ["25 minutes and 50 seconds (or 25:50)"],
+    ) is True
+
+
 def test_runner_matches_numeric_count_inside_instrument_gold():
     assert _matches_expected_answer(
         "4",

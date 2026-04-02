@@ -5086,7 +5086,11 @@ def test_expand_answer_from_context_preserves_longmemeval_summary_synthesis_oper
     from domain_chip_memory.packet_builders import build_summary_synthesis_memory_packets
 
     samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
-    subset = [sample for sample in samples if sample.questions[0].question_id in {"0ea62687", "61f8c8f8"}]
+    subset = [
+        sample
+        for sample in samples
+        if sample.questions[0].question_id in {"0ea62687", "61f8c8f8", "gpt4_e414231f", "gpt4_fa19884d"}
+    ]
     _, packets = build_summary_synthesis_memory_packets(subset, max_observations=6, max_reflections=3, max_topic_support=2)
     packet_map = {packet.question_id: packet for packet in packets}
 
@@ -5095,3 +5099,37 @@ def test_expand_answer_from_context_preserves_longmemeval_summary_synthesis_oper
 
     run_packet = packet_map["61f8c8f8"]
     assert _expand_answer_from_context(run_packet.question, "10 minutes", run_packet.assembled_context) == "10 minutes"
+
+    bike_packet = packet_map["gpt4_e414231f"]
+    assert _expand_answer_from_context(bike_packet.question, "road bike", bike_packet.assembled_context) == "road bike"
+
+    artist_packet = packet_map["gpt4_fa19884d"]
+    assert (
+        _expand_answer_from_context(
+            artist_packet.question,
+            "a bluegrass band that features a banjo player",
+            artist_packet.assembled_context,
+        )
+        == "a bluegrass band that features a banjo player"
+    )
+
+
+def test_expand_answer_from_context_preserves_relative_month_span_phrase():
+    assert _expand_answer_from_context(
+        "How many months ago did I book the Airbnb in San Francisco?",
+        "Five months ago",
+        "answer_candidate: Five months ago",
+    ) == "Five months ago"
+
+
+def test_expand_answer_from_context_preserves_rich_duration_surfaces():
+    assert _expand_answer_from_context(
+        "What was my personal best time in the charity 5K run?",
+        "25 minutes and 50 seconds",
+        "answer_candidate: 25 minutes and 50 seconds",
+    ) == "25 minutes and 50 seconds"
+    assert _expand_answer_from_context(
+        "How many hours have I spent on my abstract ocean sculpture?",
+        "10-12 hours",
+        "answer_candidate: 10-12 hours",
+    ) == "10-12 hours"

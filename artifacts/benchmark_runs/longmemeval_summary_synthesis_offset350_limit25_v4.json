@@ -1,0 +1,1418 @@
+{
+  "run_manifest": {
+    "run_id": "summary-synthesis-memory-v1",
+    "benchmark_name": "LongMemEval",
+    "baseline_name": "summary_synthesis_memory",
+    "sample_ids": [
+      "6613b389",
+      "gpt4_78cf46a3",
+      "gpt4_0a05b494",
+      "gpt4_1a1dc16d",
+      "gpt4_2f584639",
+      "gpt4_213fd887",
+      "gpt4_5438fa52",
+      "gpt4_c27434e8",
+      "gpt4_fe651585",
+      "8c18457d",
+      "gpt4_70e84552_abs",
+      "gpt4_93159ced_abs",
+      "982b5123_abs",
+      "c8090214_abs",
+      "gpt4_c27434e8_abs",
+      "gpt4_fe651585_abs",
+      "6a1eabeb",
+      "6aeb4375",
+      "830ce83f",
+      "852ce960",
+      "945e3d21",
+      "d7c942c3",
+      "71315a70",
+      "89941a93",
+      "ce6d2d27"
+    ],
+    "question_ids": [
+      "6613b389",
+      "gpt4_78cf46a3",
+      "gpt4_0a05b494",
+      "gpt4_1a1dc16d",
+      "gpt4_2f584639",
+      "gpt4_213fd887",
+      "gpt4_5438fa52",
+      "gpt4_c27434e8",
+      "gpt4_fe651585",
+      "8c18457d",
+      "gpt4_70e84552_abs",
+      "gpt4_93159ced_abs",
+      "982b5123_abs",
+      "c8090214_abs",
+      "gpt4_c27434e8_abs",
+      "gpt4_fe651585_abs",
+      "6a1eabeb",
+      "6aeb4375",
+      "830ce83f",
+      "852ce960",
+      "945e3d21",
+      "d7c942c3",
+      "71315a70",
+      "89941a93",
+      "ce6d2d27"
+    ],
+    "question_count": 25,
+    "metadata": {
+      "sample_source_formats": [
+        "longmemeval_instance"
+      ],
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Summary Synthesis Memory",
+      "max_observations": 6,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 25,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "audited_overall": {
+    "correct": 25,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "by_category": [
+    {
+      "category": "knowledge-update",
+      "correct": 9,
+      "total": 9,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal-reasoning",
+      "correct": 16,
+      "total": 16,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "knowledge-update",
+      "correct": 9,
+      "total": 9,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal-reasoning",
+      "correct": 16,
+      "total": 16,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "benchmark_slices": {},
+  "product_memory_summary": {
+    "measured_metrics": {
+      "latency_ms": {
+        "available": 25,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "available": 25,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "answer_candidate_support_rate": {
+        "supported": 25,
+        "total": 25,
+        "rate": 1.0
+      },
+      "primary_answer_candidate_sources": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate_memory",
+            "count": 25
+          }
+        ]
+      },
+      "primary_answer_candidate_source_alignment": {
+        "aligned": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "primary_answer_candidate_roles": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 25
+          }
+        ]
+      },
+      "primary_answer_candidate_types": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "abstain",
+            "count": 6
+          },
+          {
+            "label": "currency",
+            "count": 1
+          },
+          {
+            "label": "exact_numeric",
+            "count": 2
+          },
+          {
+            "label": "generic",
+            "count": 15
+          },
+          {
+            "label": "location",
+            "count": 1
+          }
+        ]
+      },
+      "retrieved_memory_roles": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 25
+          },
+          {
+            "label": "belief",
+            "count": 25
+          },
+          {
+            "label": "structured_evidence",
+            "count": 25
+          }
+        ]
+      },
+      "retrieved_memory_role_items": {
+        "supported": 291,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 91
+          },
+          {
+            "label": "belief",
+            "count": 75
+          },
+          {
+            "label": "structured_evidence",
+            "count": 125
+          }
+        ]
+      },
+      "provenance_support_rate": {
+        "supported": 25,
+        "total": 25,
+        "rate": 1.0
+      },
+      "abstention_honesty": {
+        "honest": 6,
+        "total": 6,
+        "rate": 1.0
+      },
+      "current_state_accuracy": {
+        "correct": 0,
+        "total": 0,
+        "excluded": 0,
+        "accuracy": 0.0
+      }
+    },
+    "unmeasured_metrics": [
+      "stale_state_error_rate",
+      "correction_success_rate",
+      "deletion_reliability",
+      "memory_drift_rate"
+    ],
+    "notes": [
+      "This summary only reports metrics that current benchmark runs can measure honestly.",
+      "Correction, deletion, and drift metrics still require dedicated product-memory evaluation tasks."
+    ]
+  },
+  "predictions": [
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "6613b389",
+      "question_id": "6613b389",
+      "category": "temporal-reasoning",
+      "predicted_answer": "2",
+      "expected_answers": [
+        "2"
+      ],
+      "is_correct": true,
+      "question": "How many months before my anniversary did Rachel get engaged?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "exact_numeric",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_78cf46a3",
+      "question_id": "gpt4_78cf46a3",
+      "category": "temporal-reasoning",
+      "predicted_answer": "Receiving the new phone case",
+      "expected_answers": [
+        "Receiving the new phone case"
+      ],
+      "is_correct": true,
+      "question": "Which event happened first, the narrator losing their phone charger or the narrator receiving their new phone case?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_0a05b494",
+      "question_id": "gpt4_0a05b494",
+      "category": "temporal-reasoning",
+      "predicted_answer": "the woman selling jam at the farmer's market",
+      "expected_answers": [
+        "the woman selling jam at the farmer's market"
+      ],
+      "is_correct": true,
+      "question": "Who did I meet first, the woman selling jam at the farmer's market or the tourist from Australia?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_1a1dc16d",
+      "question_id": "gpt4_1a1dc16d",
+      "category": "temporal-reasoning",
+      "predicted_answer": "the meeting with Rachel",
+      "expected_answers": [
+        "The meeting with Rachel"
+      ],
+      "is_correct": true,
+      "question": "Which event happened first, the meeting with Rachel or the pride parade?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_2f584639",
+      "question_id": "gpt4_2f584639",
+      "category": "temporal-reasoning",
+      "predicted_answer": "the photo album for my mom",
+      "expected_answers": [
+        "the photo album for my mom"
+      ],
+      "is_correct": true,
+      "question": "Which gift did I buy first, the necklace for my sister or the photo album for my mom?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_213fd887",
+      "question_id": "gpt4_213fd887",
+      "category": "temporal-reasoning",
+      "predicted_answer": "volleyball league",
+      "expected_answers": [
+        "volleyball league"
+      ],
+      "is_correct": true,
+      "question": "Which event did I participate in first, the volleyball league or the charity 5K run to raise money for a local children's hospital?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_5438fa52",
+      "question_id": "gpt4_5438fa52",
+      "category": "temporal-reasoning",
+      "predicted_answer": "Spanish classes",
+      "expected_answers": [
+        "Spanish classes"
+      ],
+      "is_correct": true,
+      "question": "Which event happened first, my attendance at a cultural festival or the start of my Spanish classes?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_c27434e8",
+      "question_id": "gpt4_c27434e8",
+      "category": "temporal-reasoning",
+      "predicted_answer": "Japanese Zero fighter plane model",
+      "expected_answers": [
+        "Japanese Zero fighter plane model"
+      ],
+      "is_correct": true,
+      "question": "Which project did I start first, the Ferrari model or the Japanese Zero fighter plane model?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_fe651585",
+      "question_id": "gpt4_fe651585",
+      "category": "temporal-reasoning",
+      "predicted_answer": "Alex",
+      "expected_answers": [
+        "Alex"
+      ],
+      "is_correct": true,
+      "question": "Who became a parent first, Rachel or Alex?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "8c18457d",
+      "question_id": "8c18457d",
+      "category": "temporal-reasoning",
+      "predicted_answer": "7 days",
+      "expected_answers": [
+        "7 days. 8 days (including the last day) is also acceptable."
+      ],
+      "is_correct": true,
+      "question": "How many days had passed between the day I bought a gift for my brother's graduation ceremony and the day I bought a birthday gift for my best friend?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_70e84552_abs",
+      "question_id": "gpt4_70e84552_abs",
+      "category": "temporal-reasoning",
+      "predicted_answer": "unknown",
+      "expected_answers": [
+        "The information provided is not enough. You mentioned fixing the fence but did not mention purchasing cows from Peter."
+      ],
+      "is_correct": true,
+      "question": "Which task did I complete first, fixing the fence or purchasing three cows from Peter?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "abstain",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_93159ced_abs",
+      "question_id": "gpt4_93159ced_abs",
+      "category": "temporal-reasoning",
+      "predicted_answer": "unknown",
+      "expected_answers": [
+        "The information provided is not enough. From the information provided, You haven't started working at Google yet."
+      ],
+      "is_correct": true,
+      "question": "How long have I been working before I started my current job at Google?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "abstain",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "982b5123_abs",
+      "question_id": "982b5123_abs",
+      "category": "temporal-reasoning",
+      "predicted_answer": "unknown",
+      "expected_answers": [
+        "The information provided is not enough. You only mentioned booking Airbnb in San Francisco."
+      ],
+      "is_correct": true,
+      "question": "When did I book the Airbnb in Sacramento?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "abstain",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "c8090214_abs",
+      "question_id": "c8090214_abs",
+      "category": "temporal-reasoning",
+      "predicted_answer": "unknown",
+      "expected_answers": [
+        "The information provided is not enough. You mentioned getting the iPhone 13 Pro and attending the market, but you did not mention buying an iPad."
+      ],
+      "is_correct": true,
+      "question": "How many days before I bought my iPad did I attend the Holiday Market?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "abstain",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_c27434e8_abs",
+      "question_id": "gpt4_c27434e8_abs",
+      "category": "temporal-reasoning",
+      "predicted_answer": "unknown",
+      "expected_answers": [
+        "The information provided is not enough. You did not mention starting the Porsche 991 Turbo S model."
+      ],
+      "is_correct": true,
+      "question": "Which project did I start first, the Ferrari model or the Porsche 991 Turbo S model?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "abstain",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "gpt4_fe651585_abs",
+      "question_id": "gpt4_fe651585_abs",
+      "category": "temporal-reasoning",
+      "predicted_answer": "unknown",
+      "expected_answers": [
+        "The information provided is not enough. You mentioned Alex becoming a parent in January, but you didn't mention anything about Tom."
+      ],
+      "is_correct": true,
+      "question": "Who became a parent first, Tom or Alex?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "abstain",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "6a1eabeb",
+      "question_id": "6a1eabeb",
+      "category": "knowledge-update",
+      "predicted_answer": "25 minutes and 50 seconds",
+      "expected_answers": [
+        "25 minutes and 50 seconds (or 25:50)"
+      ],
+      "is_correct": true,
+      "question": "What was my personal best time in the charity 5K run?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "6aeb4375",
+      "question_id": "6aeb4375",
+      "category": "knowledge-update",
+      "predicted_answer": "four",
+      "expected_answers": [
+        "four"
+      ],
+      "is_correct": true,
+      "question": "How many Korean restaurants have I tried in my city?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "830ce83f",
+      "question_id": "830ce83f",
+      "category": "knowledge-update",
+      "predicted_answer": "the suburbs",
+      "expected_answers": [
+        "the suburbs"
+      ],
+      "is_correct": true,
+      "question": "Where did Rachel move to after her recent relocation?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "location",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "852ce960",
+      "question_id": "852ce960",
+      "category": "knowledge-update",
+      "predicted_answer": "$400,000",
+      "expected_answers": [
+        "$400,000"
+      ],
+      "is_correct": true,
+      "question": "What was the amount I was pre-approved for when I got my mortgage from Wells Fargo?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "currency",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "945e3d21",
+      "question_id": "945e3d21",
+      "category": "knowledge-update",
+      "predicted_answer": "Three times a week",
+      "expected_answers": [
+        "Three times a week."
+      ],
+      "is_correct": true,
+      "question": "How often do I attend yoga classes to help with my anxiety?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "d7c942c3",
+      "question_id": "d7c942c3",
+      "category": "knowledge-update",
+      "predicted_answer": "Yes",
+      "expected_answers": [
+        "Yes."
+      ],
+      "is_correct": true,
+      "question": "Is my mom using the same grocery list method as me?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "71315a70",
+      "question_id": "71315a70",
+      "category": "knowledge-update",
+      "predicted_answer": "10-12 hours",
+      "expected_answers": [
+        "10-12 hours"
+      ],
+      "is_correct": true,
+      "question": "How many hours have I spent on my abstract ocean sculpture?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "89941a93",
+      "question_id": "89941a93",
+      "category": "knowledge-update",
+      "predicted_answer": "4",
+      "expected_answers": [
+        "4"
+      ],
+      "is_correct": true,
+      "question": "How many bikes do I currently own?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "exact_numeric",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "ce6d2d27",
+      "question_id": "ce6d2d27",
+      "category": "knowledge-update",
+      "predicted_answer": "Friday",
+      "expected_answers": [
+        "Friday"
+      ],
+      "is_correct": true,
+      "question": "What day of the week do I take a cocktail-making class?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    }
+  ]
+}
