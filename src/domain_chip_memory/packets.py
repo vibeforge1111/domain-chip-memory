@@ -24,15 +24,15 @@ def build_strategy_packet() -> dict:
         ],
         "active_optimization_lane": {
             "benchmark": "LongMemEval",
-            "provider": "MiniMax-M2.7",
-            "system": "observational_temporal_memory",
-            "status": "current internal lead",
+            "provider": "heuristic_v1",
+            "system": "summary_synthesis_memory",
+            "status": "completed full-dataset coverage",
             "evidence": {
-                "slice": "first 50 LongMemEval_s samples",
-                "score": "50/50",
+                "slice": "full 500 LongMemEval_s samples",
+                "score": "500/500",
                 "accuracy": 1.0,
             },
-            "why": "Current best measured path in-repo; reached a perfect real rerun on the first 50 LongMemEval_s samples and remains materially ahead of the current beam comparison checkpoint.",
+            "why": "Current source-of-truth measured path in-repo; it closes contiguous coverage over the full official LongMemEval_s dataset and now serves as the finished benchmark reference rather than an open frontier slice.",
         },
         "ten_system_variants": [
             {

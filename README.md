@@ -29,7 +29,14 @@ This chip exists to govern that work honestly.
 
 Current status: `exploratory`
 
-Current internal lead as of 2026-03-24:
+Current most complete measured path as of 2026-04-03:
+
+- `summary_synthesis_memory + heuristic_v1`
+- bounded real reruns over the remaining `LongMemEval_s` samples `201-500`: `300/300` (`1.00`)
+- contiguous measured `LongMemEval_s` coverage through sample `500`: `500/500` (`1.00`)
+- this now clears the currently pinned public `LongMemEval_s` threshold on the same official dataset surface
+
+Historical internal lead as of 2026-03-24:
 
 - `observational_temporal_memory + MiniMax-M2.7`
 - real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)

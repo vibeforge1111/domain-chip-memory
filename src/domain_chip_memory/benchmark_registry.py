@@ -40,8 +40,8 @@ PUBLIC_TARGETS = [
         win_condition="Beat the best publicly sourced overall score with a reproducible run.",
         status="pinned",
         source_url="https://arxiv.org/abs/2603.16862",
-        notes="Chronos, submitted on March 17, 2026, is the highest public LongMemEvalS claim in the current source sweep. Mastra OM remains the strongest implementation-backed public claim at 94.87% with gpt-5-mini and 84.23% with gpt-4o.",
-        next_action="Treat Chronos as the frontier score target and Mastra OM as the strongest implementation-backed comparison point during reproduction.",
+        notes="Chronos, submitted on March 17, 2026, is the highest public LongMemEvalS claim in the current source sweep. Mastra OM remains the strongest implementation-backed public claim at 94.87% with gpt-5-mini and 84.23% with gpt-4o. Internal repo coverage now closes the official 500-question LongMemEval_s set at 500/500 with summary_synthesis_memory plus heuristic_v1.",
+        next_action="Package the full-dataset in-repo reproduction cleanly, keep Chronos as the pinned external score target, and shift new optimization pressure to the remaining benchmark surfaces rather than opening more LongMemEval slices.",
     ),
     BenchmarkTarget(
         benchmark_name="LoCoMo",
