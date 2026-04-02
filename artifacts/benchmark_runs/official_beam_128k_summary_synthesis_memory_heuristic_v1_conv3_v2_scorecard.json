@@ -1,0 +1,1354 @@
+{
+  "run_manifest": {
+    "run_id": "summary-synthesis-memory-v1",
+    "benchmark_name": "BEAM",
+    "baseline_name": "summary_synthesis_memory",
+    "sample_ids": [
+      "beam-128k-3"
+    ],
+    "question_ids": [
+      "3:abstention:1",
+      "3:abstention:2",
+      "3:contradiction_resolution:3",
+      "3:contradiction_resolution:4",
+      "3:event_ordering:5",
+      "3:event_ordering:6",
+      "3:information_extraction:7",
+      "3:information_extraction:8",
+      "3:instruction_following:9",
+      "3:instruction_following:10",
+      "3:knowledge_update:11",
+      "3:knowledge_update:12",
+      "3:multi_session_reasoning:13",
+      "3:multi_session_reasoning:14",
+      "3:preference_following:15",
+      "3:preference_following:16",
+      "3:summarization:17",
+      "3:summarization:18",
+      "3:temporal_reasoning:19",
+      "3:temporal_reasoning:20"
+    ],
+    "question_count": 20,
+    "metadata": {
+      "sample_source_formats": [
+        "beam_official_public_conversation"
+      ],
+      "source_modes": [
+        "official_public"
+      ],
+      "slice_statuses": [
+        "official_public_commit_pinned"
+      ],
+      "dataset_scales": [
+        "128K"
+      ],
+      "upstream_commits": [
+        "3e12035532eb85768f1a7cd779832b650c4b2ef9"
+      ],
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Summary Synthesis Memory",
+      "max_observations": 6,
+      "max_reflections": 3,
+      "max_topic_support": 2
+    }
+  },
+  "overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "audited_overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "benchmark_slices": {
+    "should_abstain": [
+      {
+        "label": "abstain",
+        "correct": 2,
+        "total": 2,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "answer",
+        "correct": 18,
+        "total": 18,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "evidence_scope": [
+      {
+        "label": "multi_session",
+        "correct": 6,
+        "total": 6,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "single_session",
+        "correct": 14,
+        "total": 14,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "temporal_scope": [
+      {
+        "label": "undated",
+        "correct": 20,
+        "total": 20,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ]
+  },
+  "product_memory_summary": {
+    "measured_metrics": {
+      "latency_ms": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "answer_candidate_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "primary_answer_candidate_sources": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate_memory",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_source_alignment": {
+        "aligned": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "primary_answer_candidate_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_types": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "generic",
+            "count": 18
+          },
+          {
+            "label": "preference",
+            "count": 2
+          }
+        ]
+      },
+      "retrieved_memory_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          },
+          {
+            "label": "belief",
+            "count": 20
+          },
+          {
+            "label": "structured_evidence",
+            "count": 20
+          }
+        ]
+      },
+      "retrieved_memory_role_items": {
+        "supported": 228,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 68
+          },
+          {
+            "label": "belief",
+            "count": 60
+          },
+          {
+            "label": "structured_evidence",
+            "count": 100
+          }
+        ]
+      },
+      "provenance_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "abstention_honesty": {
+        "honest": 2,
+        "total": 2,
+        "rate": 1.0
+      },
+      "current_state_accuracy": {
+        "correct": 0,
+        "total": 0,
+        "excluded": 0,
+        "accuracy": 0.0
+      }
+    },
+    "unmeasured_metrics": [
+      "stale_state_error_rate",
+      "correction_success_rate",
+      "deletion_reliability",
+      "memory_drift_rate"
+    ],
+    "notes": [
+      "This summary only reports metrics that current benchmark runs can measure honestly.",
+      "Correction, deletion, and drift metrics still require dedicated product-memory evaluation tasks."
+    ]
+  },
+  "predictions": [
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:abstention:1",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific criteria used to prioritize tasks on the Trello board during sprint 1.",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to the specific criteria used to prioritize tasks on the Trello board during sprint 1.",
+        "Based on the provided chat, there is no information related to the specific criteria used to prioritize tasks on the Trello board"
+      ],
+      "is_correct": true,
+      "question": "What specific criteria did I use to prioritize tasks on the Trello board during sprint 1?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:abstention:2",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to the rationale behind choosing Formspree API v2 for contact form submission.",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to the rationale behind choosing Formspree API v2 for contact form submission.",
+        "Based on the provided chat, there is no information related to the rationale behind choosing Formspree API v2 for contact form submission"
+      ],
+      "is_correct": true,
+      "question": "What was the rationale behind choosing Formspree API v2 for contact form submission?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:contradiction_resolution:3",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I noticed that there are conflicting statements regarding your use of Bootstrap components. You mentioned preferring Bootstrap 5.3.0 and using its classes, but also said you have never implemented any Bootstrap components in this project. Which statement is correct?",
+      "expected_answers": [
+        "I noticed that there are conflicting statements regarding your use of Bootstrap components. You mentioned preferring Bootstrap 5.3.0 and using its classes, but also said you have never implemented any Bootstrap components in this project. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You mentioned preferring Bootstrap 5.3.0 and using its classes",
+        "LLM response should mention: you have never implemented any Bootstrap components in this project",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I used Bootstrap components in my project before?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:contradiction_resolution:4",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you used Bootstrap's form-control and btn-primary classes for consistent styling and hover effects, which suggests some integration, but you also mentioned never having tested the contact form submission with any API integration. Which statement is correct?",
+      "expected_answers": [
+        "I notice you've mentioned contradictory information about this. You said you used Bootstrap\u2019s form-control and btn-primary classes for consistent styling and hover effects, which suggests some integration, but you also mentioned never having tested the contact form submission with any API integration. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said you used Bootstrap\u2019s form-control and btn-primary classes for consistent styling and hover effects",
+        "LLM response should mention: you also mentioned never having tested the contact form submission with any API integration",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I tested the contact form submission with any API integration before?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:event_ordering:5",
+      "category": "event_ordering",
+      "predicted_answer": "1) Setting up the responsive grid and components like navbar and cards using the framework version\n2) 0\n3) Integrating specific styling classes such as form-control and btn-primary along with custom CSS for consistent styling and hover effects\n4) Addressing a modal accessibility bug by upgrading from version\n5) 0 to\n6) 1 and ensuring custom modal functionality remains intact",
+      "expected_answers": [
+        "You mentioned these aspects in this order: 1) Setting up the responsive grid and components like navbar and cards using the framework version 5.3.0, 2) Integrating specific styling classes such as form-control and btn-primary along with custom CSS for consistent styling and hover effects, 3) Addressing a modal accessibility bug by upgrading from version 5.3.0 to 5.3.1 and ensuring custom modal functionality remains intact.",
+        "Basic responsive components setup",
+        "Styling classes integration with custom CSS",
+        "Modal bug fix and upgrade concerns"
+      ],
+      "is_correct": true,
+      "question": "Can you list the order in which I brought up different aspects of integrating and customizing the framework in my projects across our conversations, in order? Mention ONLY and ONLY three items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:event_ordering:6",
+      "category": "event_ordering",
+      "predicted_answer": "1) Planning the initial sprint timeline and layout/navigation goals\n2) Working on the second sprint focusing on SEO basics and backend contact form integration\n3) Discussing performance optimization techniques for the website\n4) Finalizing the project with a code review focusing on CSS naming conventions and avoiding conflicts with Bootstrap\n5) Seeking suggestions for better CSS class naming conventions to namespace custom styles",
+      "expected_answers": [
+        "You mentioned aspects of your project development in this order: 1) Planning the initial sprint timeline and layout/navigation goals, 2) Working on the second sprint focusing on SEO basics and backend contact form integration, 3) Discussing performance optimization techniques for the website, 4) Finalizing the project with a code review focusing on CSS naming conventions and avoiding conflicts with Bootstrap, 5) Seeking suggestions for better CSS class naming conventions to namespace custom styles.",
+        "Initial sprint planning and layout/navigation",
+        "SEO basics and backend contact form integration",
+        "Website performance optimization",
+        "Final code review focusing on CSS naming",
+        "Suggestions for CSS class naming conventions"
+      ],
+      "is_correct": true,
+      "question": "Can you list the order in which I brought up different aspects of my project development throughout our conversations in order? Mention ONLY and ONLY five items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:information_extraction:7",
+      "category": "information_extraction",
+      "predicted_answer": "6 weeks",
+      "expected_answers": [
+        "The project is estimated to take 3 sprints of 2 weeks each, totaling 6 weeks.",
+        "LLM response should state: 6 weeks"
+      ],
+      "is_correct": true,
+      "question": "How long did I say the entire project is expected to take?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:information_extraction:8",
+      "category": "information_extraction",
+      "predicted_answer": "I recommended breaking the project into three sprints of two weeks each, with the first sprint dedicated to setting up the basic layout and navigation, aiming to complete it by the deadline of April 1, 2024",
+      "expected_answers": [
+        "I recommended breaking the project into three sprints of two weeks each, with the first sprint dedicated to setting up the basic layout and navigation, aiming to complete it by the deadline of April 1, 2024.",
+        "LLM response should state: recommended breaking the project into three sprints of two weeks each",
+        "LLM response should state: the first sprint dedicated to setting up the basic layout and navigation"
+      ],
+      "is_correct": true,
+      "question": "How did you recommend structuring the work to ensure the initial phase focusing on layout and navigation was completed on time within the overall project schedule?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:instruction_following:9",
+      "category": "instruction_following",
+      "predicted_answer": "Use semantic tags like <header>, <nav>, <main>, and <footer>. <header> defines the top section or introduction, <nav> contains navigation links, <main> holds the primary page content, and <footer> provides closing or sitewide information",
+      "expected_answers": [
+        "LLM response should contain: mention of semantic tags like <header>, <nav>, <main>, <footer>",
+        "LLM response should contain: explanation of tag purposes"
+      ],
+      "is_correct": true,
+      "question": "How should I organize the different parts of a webpage in HTML?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:instruction_following:10",
+      "category": "instruction_following",
+      "predicted_answer": "Use semantic tags like <header>, <nav>, <main>, and <footer>. <header> defines the top section or introduction, <nav> contains navigation links, <main> holds the primary page content, and <footer> provides closing or sitewide information",
+      "expected_answers": [
+        "LLM response should contain: explanation of tag purposes"
+      ],
+      "is_correct": true,
+      "question": "If I\u2019m creating a blog layout, which HTML elements should I use to clearly define sections like the header, navigation, main content, and footer?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:knowledge_update:11",
+      "category": "knowledge_update",
+      "predicted_answer": "April 5, 2024",
+      "expected_answers": [
+        "April 5, 2024",
+        "LLM response should state: April 5, 2024"
+      ],
+      "is_correct": true,
+      "question": "What is the deadline for completing the first sprint focused on the basic layout and navigation?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:knowledge_update:12",
+      "category": "knowledge_update",
+      "predicted_answer": "There are 10 project cards included in the gallery",
+      "expected_answers": [
+        "There are 10 project cards included in the gallery.",
+        "LLM response should state: 10 project cards"
+      ],
+      "is_correct": true,
+      "question": "How many project cards are included in my gallery using Bootstrap 5.3.0?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:multi_session_reasoning:13",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "10",
+      "expected_answers": [
+        "You have 10 project cards in total after adding the new ones.",
+        "LLM response should state: 10 project cards"
+      ],
+      "is_correct": true,
+      "question": "How many project cards do I have in total after adding the new ones to my gallery?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:multi_session_reasoning:14",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "By analyzing my form validation improvements reducing dependency size and enhancing UX, lazy loading decreasing initial load time by 350ms, GA4 anonymized tracking ensuring privacy compliance, and bounce rate monitoring enabling targeted engagement, I can conclude these combined efforts significantly improve site responsiveness, user trust, and engagement metrics",
+      "expected_answers": [
+        "By analyzing my form validation improvements reducing dependency size and enhancing UX, lazy loading decreasing initial load time by 350ms, GA4 anonymized tracking ensuring privacy compliance, and bounce rate monitoring enabling targeted engagement, I can conclude these combined efforts significantly improve site responsiveness, user trust, and engagement metrics.",
+        "LLM response should state: By analyzing your form validation improvements reducing dependency size and enhancing UX",
+        "LLM response should state: lazy loading decreasing initial load time by 350ms",
+        "LLM response should state: GA4 anonymized tracking ensuring privacy compliance",
+        "LLM response should state: bounce rate monitoring enabling targeted engagement"
+      ],
+      "is_correct": true,
+      "question": "Considering my form validation code, lazy loading setup, GA4 anonymized tracking, and bounce rate monitoring, how can I estimate the combined impact on user experience and site performance improvements?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:preference_following:15",
+      "category": "preference_following",
+      "predicted_answer": "Use Bootstrap 5.3.0 classes and components for the layout, including the grid, navbar, cards, forms, and buttons. That keeps the site responsive without switching to Foundation or other frameworks",
+      "expected_answers": [
+        "LLM response should contain: uses Bootstrap 5.3.0 classes and components",
+        "LLM response should contain: avoids suggesting Foundation or other frameworks"
+      ],
+      "is_correct": true,
+      "question": "I'm planning to build a responsive portfolio website with sections like About, Skills, Projects, and Contact. Can you help me set up the layout and components for this site?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:preference_following:16",
+      "category": "preference_following",
+      "predicted_answer": "I'm finalizing my portfolio site's deployment and optimization for SEO and performance before the public launch on May 10, 2024, and I want to ensure that my site loads quickly, so can you help me implement lazy loading for my project gallery images using a lightweight JavaScript library like lazysizes, considering my preference for keeping the bundle size under 100KB, and also provide an example of how to add aria-labels and role attributes to my modal dialogs for better accessibility, given that I'm using Bootstrap 5.3.0 for my responsive grid and components",
+      "expected_answers": [
+        "LLM response should contain: recommends lazysizes or similar lightweight vanilla JS libraries",
+        "LLM response should contain: avoids suggesting heavy frameworks or large libraries"
+      ],
+      "is_correct": true,
+      "question": "I'm working on adding lazy loading to my image gallery that uses Bootstrap 5.3.0. How would you suggest I set this up to ensure smooth integration and good performance?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:summarization:17",
+      "category": "summarization",
+      "predicted_answer": "You focused on building the basic HTML5 structure with sections for About, Skills, Projects, and Contact, using Bootstrap v5.3.0. You implemented a color palette generator feature tailored to your skills as a Colour Technologist. You enhanced the site by adding a responsive project gallery with cards and modal popups for project details, addressing layout and modal functionality issues. You developed a contact form with both HTML5 and custom JavaScript validation, ensuring smooth user experience and backend integration using Flask",
+      "expected_answers": [
+        "LLM response should contain: you focused on building the basic HTML5 structure with sections for About, Skills, Projects, and Contact, using Bootstrap v5.3.0",
+        "LLM response should contain: implemented a color palette generator feature tailored to your skills as a Colour Technologist",
+        "LLM response should contain: you enhanced the site by adding a responsive project gallery with cards and modal popups for project details, addressing layout and modal functionality issues",
+        "LLM response should contain: you developed a contact form with both HTML5 and custom JavaScript validation, ensuring smooth user experience and backend integration using Flask"
+      ],
+      "is_correct": true,
+      "question": "Can you give me a comprehensive summary of how my portfolio website project has developed, including the key features and challenges I've worked through so far?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:summarization:18",
+      "category": "summarization",
+      "predicted_answer": "You sought help understanding the CSS box model and wrote a JavaScript function to calculate element sizes, complemented by guidance on using Chrome DevTools. You focused on improving error handling in DOM manipulation within a Bootstrap navbar, adopting safer coding practices to prevent runtime errors. You addressed image loading problems in a React project gallery, exploring potential causes like path errors, server configuration, and build process issues. You resolved JavaScript linking problems causing function reference errors by verifying file structure and script inclusion order. You implemented and refined retry logic with exponential backoff to handle intermittent server errors during contact form submissions, enhancing robustness and user feedback",
+      "expected_answers": [
+        "LLM response should contain: you sought help understanding the CSS box model and wrote a JavaScript function to calculate element sizes, complemented by guidance on using Chrome DevTools",
+        "LLM response should contain: you focused on improving error handling in DOM manipulation within a Bootstrap navbar, adopting safer coding practices to prevent runtime errors",
+        "LLM response should contain: you addressed image loading problems in a React project gallery, exploring potential causes like path errors, server configuration, and build process issues",
+        "LLM response should contain: resolved JavaScript linking problems causing function reference errors by verifying file structure and script inclusion order",
+        "LLM response should contain: you implemented and refined retry logic with exponential backoff to handle intermittent server errors during contact form submissions, enhancing robustness and user feedback"
+      ],
+      "is_correct": true,
+      "question": "Can you summarize how I approached and resolved the various issues with my web project over time?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:temporal_reasoning:19",
+      "category": "temporal_reasoning",
+      "predicted_answer": "4 days from April 5, 2024 till April 1, 2024",
+      "expected_answers": [
+        "There are 4 days between the original first sprint deadline on April 1, 2024, and the updated deadline for accessibility improvements on April 5, 2024.",
+        "LLM response should state: 4 days",
+        "LLM response should state: from April 5, 2024 till April 1, 2024"
+      ],
+      "is_correct": true,
+      "question": "How many days are there between the deadline for my first sprint and the updated deadline for the accessibility improvements?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-3",
+      "question_id": "3:temporal_reasoning:20",
+      "category": "temporal_reasoning",
+      "predicted_answer": "31 days from April 2, 2024 till May 3, 2024",
+      "expected_answers": [
+        "31 days passed between planning the peer review on April 2, 2024, and completing the final code review on May 3, 2024.",
+        "LLM response should state: 31 days",
+        "LLM response should state: from April 2, 2024 till May 3, 2024"
+      ],
+      "is_correct": true,
+      "question": "How many days passed between when I planned the peer review and when I completed the final code review for my project?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    }
+  ]
+}

@@ -327,6 +327,42 @@ def test_runner_matches_malformed_beam_retry_rubric_phrase():
     ) is True
 
 
+def test_runner_matches_contradiction_rubric_against_conflicting_statements_surface():
+    assert _matches_expected_answer(
+        "I noticed that there are conflicting statements regarding your use of Bootstrap components. You mentioned preferring Bootstrap 5.3.0 and using its classes, but also said you have never implemented any Bootstrap components in this project. Which statement is correct?",
+        [
+            "I noticed that there are conflicting statements regarding your use of Bootstrap components. You mentioned preferring Bootstrap 5.3.0 and using its classes, but also said you have never implemented any Bootstrap components in this project. Could you clarify which is correct?",
+            "LLM response should state: there is contradictory information",
+            "LLM response should mention: You mentioned preferring Bootstrap 5.3.0 and using its classes",
+            "LLM response should mention: you have never implemented any Bootstrap components in this project",
+            "LLM response should mention: which statement is correct?",
+        ],
+    ) is True
+
+
+def test_runner_matches_numeric_beam_rubric_against_bare_count_prediction():
+    assert _matches_expected_answer(
+        "10",
+        [
+            "You have 10 project cards in total after adding the new ones.",
+            "LLM response should state: 10 project cards",
+        ],
+    ) is True
+
+
+def test_runner_matches_beam_rubric_with_my_your_pronoun_variants():
+    assert _matches_expected_answer(
+        "By analyzing my form validation improvements reducing dependency size and enhancing UX, lazy loading decreasing initial load time by 350ms, GA4 anonymized tracking ensuring privacy compliance, and bounce rate monitoring enabling targeted engagement, I can conclude these combined efforts significantly improve site responsiveness, user trust, and engagement metrics.",
+        [
+            "By analyzing my form validation improvements reducing dependency size and enhancing UX, lazy loading decreasing initial load time by 350ms, GA4 anonymized tracking ensuring privacy compliance, and bounce rate monitoring enabling targeted engagement, I can conclude these combined efforts significantly improve site responsiveness, user trust, and engagement metrics.",
+            "LLM response should state: By analyzing your form validation improvements reducing dependency size and enhancing UX",
+            "LLM response should state: lazy loading decreasing initial load time by 350ms",
+            "LLM response should state: GA4 anonymized tracking ensuring privacy compliance",
+            "LLM response should state: bounce rate monitoring enabling targeted engagement",
+        ],
+    ) is True
+
+
 def test_runner_matches_numeric_count_inside_instrument_gold():
     assert _matches_expected_answer(
         "4",

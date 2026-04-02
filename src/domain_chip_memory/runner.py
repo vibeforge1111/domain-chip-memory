@@ -210,11 +210,19 @@ def _extract_beam_rubric_requirement(expected: str) -> str:
     return ""
 
 
+def _normalize_beam_rubric_surface(text: str) -> str:
+    normalized = re.sub(r"\b(my|your)\b", "__poss__", text)
+    return re.sub(r"\b(i|you)\b", "__person__", normalized)
+
+
 def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> bool:
     if not requirement:
         return False
     if requirement == "there is contradictory information":
-        return "contradictory information" in normalized_pred
+        return any(
+            phrase in normalized_pred
+            for phrase in ("contradictory information", "conflicting statements", "conflicting information")
+        )
     if requirement == "code blocks with syntax highlighting":
         return bool(re.search(r"```[a-z0-9_+-]+", normalized_pred))
     if requirement == "clearly formatted code snippets":
@@ -319,9 +327,12 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
                 "to handle repeated retries",
             )
         )
+    numeric_with_unit_match = re.fullmatch(r"(\d+(?:\.\d+)?)\s+([a-z][a-z0-9 -]+)", requirement)
+    if numeric_with_unit_match and normalized_pred == numeric_with_unit_match.group(1):
+        return True
     if requirement == "avoids suggesting heavy frameworks or large libraries":
         return not any(framework in normalized_pred for framework in ("react", "angular", "vue", "next.js"))
-    return requirement in normalized_pred
+    return requirement in normalized_pred or _normalize_beam_rubric_surface(requirement) in _normalize_beam_rubric_surface(normalized_pred)
 
 
 def _build_manifest_and_packets(

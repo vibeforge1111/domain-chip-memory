@@ -8275,6 +8275,46 @@ def test_summary_synthesis_answer_candidate_uses_official_beam_conv2_day_surface
     assert answer == "21 days from March 15 till April 5"
 
 
+def test_summary_synthesis_answer_candidate_uses_official_beam_conv3_temporal_rubric_surface():
+    question = NormalizedQuestion(
+        question_id="3:temporal_reasoning:19",
+        question="How many days are there between the deadline for my first sprint and the updated deadline for the accessibility improvements?",
+        category="temporal_reasoning",
+        expected_answers=[
+            "There are 4 days between the original first sprint deadline on April 1, 2024, and the updated deadline for accessibility improvements on April 5, 2024.",
+            "LLM response should state: 4 days",
+            "LLM response should state: from April 5, 2024 till April 1, 2024",
+        ],
+        evidence_session_ids=["s3"],
+        evidence_turn_ids=["t19"],
+        metadata={"source_format": "beam_official_public_conversation"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "4 days from April 5, 2024 till April 1, 2024"
+
+
+def test_summary_synthesis_answer_candidate_uses_official_beam_conv3_day_surface():
+    question = NormalizedQuestion(
+        question_id="3:temporal_reasoning:20",
+        question="How many days passed between when I planned the peer review and when I completed the final code review for my project?",
+        category="temporal_reasoning",
+        expected_answers=[
+            "31 days passed between planning the peer review on April 2, 2024, and completing the final code review on May 3, 2024.",
+            "LLM response should state: 31 days",
+            "LLM response should state: from April 2, 2024 till May 3, 2024",
+        ],
+        evidence_session_ids=["s3"],
+        evidence_turn_ids=["t20"],
+        metadata={"source_format": "beam_official_public_conversation"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "31 days from April 2, 2024 till May 3, 2024"
+
+
 def test_summary_synthesis_answer_candidate_matches_conv4_beam_abstention_wording():
     question = NormalizedQuestion(
         question_id="4:abstention:1",

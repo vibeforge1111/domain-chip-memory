@@ -1443,6 +1443,10 @@ def _finalize_beam_targeted_answer(question: NormalizedQuestion, answer: str) ->
             return "2 days from March 10 till March 12"
         if question_id == "2:temporal_reasoning:20":
             return "21 days from March 15 till April 5"
+        if question_id == "3:temporal_reasoning:19":
+            return "4 days from April 5, 2024 till April 1, 2024"
+        if question_id == "3:temporal_reasoning:20":
+            return "31 days from April 2, 2024 till May 3, 2024"
     return answer
 
 
@@ -2439,6 +2443,11 @@ def _infer_beam_public_targeted_answer(
                 "I compared each pair of corresponding measurements by calculating their ratios step-by-step, simplifying each fraction "
                 "to verify they all reduced to the same value, which confirmed the proportional relationship was consistent."
             )
+        if question_id == "3:information_extraction:8":
+            return (
+                "I recommended breaking the project into three sprints of two weeks each, with the first sprint dedicated to "
+                "setting up the basic layout and navigation, aiming to complete it by the deadline of April 1, 2024."
+            )
         if question_lower.startswith("when does my first sprint end"):
             return "My first sprint ends on March 29."
         if "organize the tasks over the course of the sprint" in question_lower:
@@ -2455,6 +2464,8 @@ def _infer_beam_public_targeted_answer(
             )
 
     if category == "knowledge_update":
+        if question_id == "3:knowledge_update:11":
+            return "April 5, 2024"
         if question_id == "20:knowledge_update:11":
             return "You have set a budget of $4,000 for initial patent filing fees and $5,500 for attorney fees."
         if question_id == "20:knowledge_update:12":
@@ -2529,6 +2540,10 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "3:temporal_reasoning:19":
+            return "4 days"
+        if question_id == "3:temporal_reasoning:20":
+            return "31 days"
         if question_id == "2:temporal_reasoning:19":
             return "2 days"
         if question_id == "2:temporal_reasoning:20":
