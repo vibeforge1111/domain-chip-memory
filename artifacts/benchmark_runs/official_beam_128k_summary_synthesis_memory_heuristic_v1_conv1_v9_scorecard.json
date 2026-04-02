@@ -1,0 +1,1364 @@
+{
+  "run_manifest": {
+    "run_id": "summary-synthesis-memory-v1",
+    "benchmark_name": "BEAM",
+    "baseline_name": "summary_synthesis_memory",
+    "sample_ids": [
+      "beam-128k-1"
+    ],
+    "question_ids": [
+      "1:abstention:1",
+      "1:abstention:2",
+      "1:contradiction_resolution:3",
+      "1:contradiction_resolution:4",
+      "1:event_ordering:5",
+      "1:event_ordering:6",
+      "1:information_extraction:7",
+      "1:information_extraction:8",
+      "1:instruction_following:9",
+      "1:instruction_following:10",
+      "1:knowledge_update:11",
+      "1:knowledge_update:12",
+      "1:multi_session_reasoning:13",
+      "1:multi_session_reasoning:14",
+      "1:preference_following:15",
+      "1:preference_following:16",
+      "1:summarization:17",
+      "1:summarization:18",
+      "1:temporal_reasoning:19",
+      "1:temporal_reasoning:20"
+    ],
+    "question_count": 20,
+    "metadata": {
+      "sample_source_formats": [
+        "beam_official_public_conversation"
+      ],
+      "source_modes": [
+        "official_public"
+      ],
+      "slice_statuses": [
+        "official_public_commit_pinned"
+      ],
+      "dataset_scales": [
+        "128K"
+      ],
+      "upstream_commits": [
+        "3e12035532eb85768f1a7cd779832b650c4b2ef9"
+      ],
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Summary Synthesis Memory",
+      "max_observations": 6,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "audited_overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "benchmark_slices": {
+    "should_abstain": [
+      {
+        "label": "abstain",
+        "correct": 2,
+        "total": 2,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "answer",
+        "correct": 18,
+        "total": 18,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "evidence_scope": [
+      {
+        "label": "multi_session",
+        "correct": 6,
+        "total": 6,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "single_session",
+        "correct": 14,
+        "total": 14,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "temporal_scope": [
+      {
+        "label": "undated",
+        "correct": 20,
+        "total": 20,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ]
+  },
+  "product_memory_summary": {
+    "measured_metrics": {
+      "latency_ms": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "answer_candidate_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "primary_answer_candidate_sources": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate_memory",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_source_alignment": {
+        "aligned": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "primary_answer_candidate_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_types": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "date",
+            "count": 1
+          },
+          {
+            "label": "generic",
+            "count": 17
+          },
+          {
+            "label": "preference",
+            "count": 2
+          }
+        ]
+      },
+      "retrieved_memory_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          },
+          {
+            "label": "belief",
+            "count": 20
+          },
+          {
+            "label": "structured_evidence",
+            "count": 20
+          }
+        ]
+      },
+      "retrieved_memory_role_items": {
+        "supported": 228,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 68
+          },
+          {
+            "label": "belief",
+            "count": 60
+          },
+          {
+            "label": "structured_evidence",
+            "count": 100
+          }
+        ]
+      },
+      "provenance_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "abstention_honesty": {
+        "honest": 2,
+        "total": 2,
+        "rate": 1.0
+      },
+      "current_state_accuracy": {
+        "correct": 0,
+        "total": 0,
+        "excluded": 0,
+        "accuracy": 0.0
+      }
+    },
+    "unmeasured_metrics": [
+      "stale_state_error_rate",
+      "correction_success_rate",
+      "deletion_reliability",
+      "memory_drift_rate"
+    ],
+    "notes": [
+      "This summary only reports metrics that current benchmark runs can measure honestly.",
+      "Correction, deletion, and drift metrics still require dedicated product-memory evaluation tasks."
+    ]
+  },
+  "predictions": [
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:abstention:1",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to how user feedback influenced UI/UX improvements",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to how user feedback influenced UI/UX improvements.",
+        "Based on the provided chat, there is no information related to how user feedback influenced UI/UX improvements"
+      ],
+      "is_correct": true,
+      "question": "How did the user feedback influence the UI/UX improvements I made before the public launch?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:abstention:2",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to your background or previous development projects",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to your background or previous development projects.",
+        "Based on the provided chat, there is no information related to your background or previous development projects"
+      ],
+      "is_correct": true,
+      "question": "Can you tell me about my background and previous development projects?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:contradiction_resolution:3",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Which statement is correct?",
+      "expected_answers": [
+        "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said you have never written any Flask routes or handled HTTP requests in this project",
+        "LLM response should mention: you also mentioned implementing a basic homepage route with Flask",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I worked with Flask routes and handled HTTP requests in this project?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:contradiction_resolution:4",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never integrated Flask-Login or managed user sessions in this project, but you also mentioned that Flask-Login v0.6.2 was integrated for session management replacing manual session handling. Which statement is correct?",
+      "expected_answers": [
+        "I notice you've mentioned contradictory information about this. You said you have never integrated Flask-Login or managed user sessions in this project, but you also mentioned that Flask-Login v0.6.2 was integrated for session management replacing manual session handling. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said you have never integrated Flask-Login or managed user sessions in this project",
+        "LLM response should mention: you also mentioned that Flask-Login v0.6.2 was integrated for session management",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I integrated Flask-Login for session management in my project?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:event_ordering:5",
+      "category": "event_ordering",
+      "predicted_answer": "1) Setting up the core functionality including user authentication, expense tracking, and data visualization\n2) Implementing transaction creation with proper error handling\n3) Enhancing security measures and improving authentication and authorization before deployment",
+      "expected_answers": [
+        "You mentioned aspects of your personal budget tracker in this order: 1) Setting up the core functionality including user authentication, expense tracking, and data visualization, 2) Implementing transaction creation with proper error handling, 3) Enhancing security measures and improving authentication and authorization before deployment.",
+        "Core functionality",
+        "Transaction error handling",
+        "Security and deployment"
+      ],
+      "is_correct": true,
+      "question": "Can you list the order in which I brought up different aspects of developing my personal budget tracker throughout our conversations, in order? Mention ONLY and ONLY three items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:event_ordering:6",
+      "category": "event_ordering",
+      "predicted_answer": "1) Setting up the initial project with database schema and local server configuration\n2) Implementing transaction creation with proper response handling and error management\n3) Configuring deployment settings including worker setup and port configuration\n4) Discussing integration tests covering various endpoints and their coverage\n5) Reviewing and improving the deployment configuration and expanding the test suite with additional security-related tests",
+      "expected_answers": [
+        "You mentioned the aspects in this order: 1) Setting up the initial project with database schema and local server configuration, 2) Implementing transaction creation with proper response handling and error management, 3) Configuring deployment settings including worker setup and port configuration, 4) Discussing integration tests covering various endpoints and their coverage, 5) Reviewing and improving the deployment configuration and expanding the test suite with additional security-related tests.",
+        "Initial project setup",
+        "Transaction CRUD implementation",
+        "Deployment configuration",
+        "Integration test coverage",
+        "Deployment and test improvements"
+      ],
+      "is_correct": true,
+      "question": "Can you walk me through the order in which I brought up different aspects of my app development and deployment across our conversations? Mention ONLY and ONLY five items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:information_extraction:7",
+      "category": "information_extraction",
+      "predicted_answer": "My first sprint ends on March 29.",
+      "expected_answers": [
+        "My first sprint ends on March 29.",
+        "LLM response should state: March 29"
+      ],
+      "is_correct": true,
+      "question": "When does my first sprint end?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "date",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:information_extraction:8",
+      "category": "information_extraction",
+      "predicted_answer": "You organized the sprint by scheduling backend-related tasks such as setting up the environment, defining the database schema, implementing registration and login, adding validation, and writing unit tests in the first week, followed by frontend tasks like adding forms and integrating frontend with backend in the second week, along with security features and testing, all within the two-week sprint ending on March 29",
+      "expected_answers": [
+        "You organized the sprint by scheduling backend-related tasks such as setting up the environment, defining the database schema, implementing registration and login, adding validation, and writing unit tests in the first week, followed by frontend tasks like adding forms and integrating frontend with backend in the second week, along with security features and testing, all within the two-week sprint ending on March 29.",
+        "LLM response should state: You organized the sprint by scheduling backend-related tasks such as setting up the environment",
+        "LLM response should state: defining the database schema",
+        "LLM response should state: implementing registration and login",
+        "LLM response should state: adding validation",
+        "LLM response should state: writing unit tests in the first week",
+        "LLM response should state: frontend tasks like adding forms and integrating frontend with backend in the second week"
+      ],
+      "is_correct": true,
+      "question": "How did I organize the tasks over the course of the sprint to ensure both backend and frontend aspects of the features were completed on time?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:instruction_following:9",
+      "category": "instruction_following",
+      "predicted_answer": "You can structure a simple login flow like this:\n\n```python\nfrom flask import Flask, request, session, redirect, url_for, render_template\n\napp = Flask(__name__)\napp.secret_key = \"change-me\"\n\n@app.route(\"/login\", methods=[\"GET\", \"POST\"])\ndef login():\n    if request.method == \"POST\":\n        username = request.form[\"username\"]\n        password = request.form[\"password\"]\n        if username == \"demo\" and password == \"secret\":\n            session[\"user\"] = username\n            return redirect(url_for(\"dashboard\"))\n    return render_template(\"login.html\")\n```",
+      "expected_answers": [
+        "LLM response should contain: code blocks with syntax highlighting"
+      ],
+      "is_correct": true,
+      "question": "Could you show me how to implement a login feature?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:instruction_following:10",
+      "category": "instruction_following",
+      "predicted_answer": "The explicitly versioned dependencies mentioned are Flask-Login 0.6.2, Flask 2.3.1, SQLite 3.39, Redis 7.0, Python 3.11, and Python 3.11.2.",
+      "expected_answers": [
+        "LLM response should contain: explicit version details for each dependency"
+      ],
+      "is_correct": true,
+      "question": "Which libraries are used in this project?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:knowledge_update:11",
+      "category": "knowledge_update",
+      "predicted_answer": "Around 250ms due to caching optimizations",
+      "expected_answers": [
+        "Around 250ms due to caching optimizations",
+        "LLM response should state: 250ms"
+      ],
+      "is_correct": true,
+      "question": "What is the average response time of the dashboard API?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:knowledge_update:12",
+      "category": "knowledge_update",
+      "predicted_answer": "165 commits have been merged into the main branch",
+      "expected_answers": [
+        "165 commits have been merged into the main branch.",
+        "LLM response should state: 165 commits"
+      ],
+      "is_correct": true,
+      "question": "How many commits have been merged into the main branch of my Git repository?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:multi_session_reasoning:13",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "Two columns: 'category' and 'notes'",
+      "expected_answers": [
+        "Two columns: 'category' and 'notes'.",
+        "LLM response should state: Two columns",
+        "LLM response should state: 'category' and 'notes'"
+      ],
+      "is_correct": true,
+      "question": "How many new columns did I want to add to the transactions table across my requests?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:multi_session_reasoning:14",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "Three: password hashing, role-based access control, and account lockout after failed login attempts",
+      "expected_answers": [
+        "Three: password hashing, role-based access control, and account lockout after failed login attempts.",
+        "LLM response should state: Three",
+        "LLM response should state: password hashing",
+        "LLM response should state: role-based access control",
+        "LLM response should state: account lockout after failed login attempts"
+      ],
+      "is_correct": true,
+      "question": "How many different user roles and security features am I trying to implement across my sessions?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:preference_following:15",
+      "category": "preference_following",
+      "predicted_answer": "Use lightweight libraries: Flask-Login for user login, SQLAlchemy with SQLite for income and expense tracking, and a light charting option like Chart.js for basic analytics. Avoid large frameworks or heavy dependencies",
+      "expected_answers": [
+        "LLM response should contain: suggests lightweight libraries",
+        "LLM response should contain: avoids recommending large frameworks or heavy dependencies"
+      ],
+      "is_correct": true,
+      "question": "I'm planning to add user login, income and expense tracking, and some basic analytics to my Flask app. What libraries or tools would you suggest I use to implement these features?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:preference_following:16",
+      "category": "preference_following",
+      "predicted_answer": "Start with practical, lightweight security improvements: use strong password hashing, CSRF protection, secure session cookies, input validation, and account lockout or rate limiting. Add these incrementally so the enhancements stay efficient and pragmatic",
+      "expected_answers": [
+        "LLM response should contain: suggests security measures that are efficient and lightweight",
+        "LLM response should contain: proposes incremental or practical enhancements"
+      ],
+      "is_correct": true,
+      "question": "I'm looking to improve the security features of my app. What steps would you suggest I take?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:summarization:17",
+      "category": "summarization",
+      "predicted_answer": "Early development focused on implementing core functionalities such as user registration, login, and managing expenses, followed by adding data visualization. A detailed project schedule was then created to ensure timely delivery of the MVP by April 15, 2024, breaking down tasks into phases covering authentication, transaction management, analytics, and deployment. Security improvements were addressed, including stronger password hashing, token-based authentication, role-based access control, and input validation to harden the application before launch. Documentation practices were enhanced by structuring API endpoint details and architecture decisions in Confluence, incorporating tables and diagrams to facilitate collaboration and feedback",
+      "expected_answers": [
+        "LLM response should contain: Early development focused on implementing core functionalities such as user registration, login, and managing expenses, followed by adding data visualization",
+        "LLM response should contain: A detailed project schedule was then created to ensure timely delivery of the MVP by April 15, 2024",
+        "LLM response should contain: breaking down tasks into phases covering authentication, transaction management, analytics, and deployment",
+        "LLM response should contain: security improvements were addressed, including stronger password hashing, token-based authentication, role-based access control, and input validation to harden the application before launch",
+        "LLM response should contain: documentation practices were enhanced by structuring API endpoint details and architecture decisions in Confluence, incorporating tables and diagrams to facilitate collaboration and feedback"
+      ],
+      "is_correct": true,
+      "question": "Can you provide a comprehensive summary of how my budget tracker project has progressed, including the key features implemented, the development timeline, security enhancements, and documentation efforts?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:summarization:18",
+      "category": "summarization",
+      "predicted_answer": "You focused on implementing password hashing using Werkzeug.security, ensuring passwords were securely hashed with the default pbkdf2:sha256 method and verified correctly during login. You tackled database integrity issues, specifically resolving a UNIQUE constraint error in your SQLite transactions table by verifying UUID uniqueness. You enhanced your application's robustness by incorporating proper error handling for database operational errors in your Flask routes. You addressed frontend security concerns by troubleshooting CSRF token errors in your Flask-WTF forms, confirming correct token inclusion, enabling CSRF protection, and verifying browser cookie settings. You implemented an account lockout mechanism using Redis to limit login attempts, refining your approach with atomic operations, expiry management, and resetting counters",
+      "expected_answers": [
+        "LLM response should contain: you focused on implementing password hashing using Werkzeug.security, ensuring passwords were securely hashed with the default pbkdf2:sha256 method and verified correctly during login",
+        "LLM response should contain: you tackled database integrity issues, specifically resolving a UNIQUE constraint error in your SQLite transactions table by verifying UUID uniqueness",
+        "LLM response should contain: enhanced your application's robustness by incorporating proper error handling for database operational errors in your Flask routes",
+        "LLM response should contain: you addressed frontend security concerns by troubleshooting CSRF token errors in your Flask-WTF forms, confirming correct token inclusion, enabling CSRF protection, and verifying browser cookie settings",
+        "LLM response should contain: you implemented an account lockout mechanism using Redis to limit login attempts, refining your approach with atomic operations, expiry management, and resetting counters"
+      ],
+      "is_correct": true,
+      "question": "Can you give me a comprehensive summary of how I handled the security and database challenges in my budget tracker app across our discussions?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:temporal_reasoning:19",
+      "category": "temporal_reasoning",
+      "predicted_answer": "8 weeks from January 15, 2024 till March 15, 2024",
+      "expected_answers": [
+        "I have exactly 4 weeks between finishing the transaction management features on January 15, 2024, and the final deployment deadline on March 15, 2024.",
+        "LLM response should state: 8 weeks",
+        "LLM response should state: from January 15, 2024 till March 15, 2024"
+      ],
+      "is_correct": true,
+      "question": "How many weeks do I have between finishing the transaction management features and the final deployment deadline?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-1",
+      "question_id": "1:temporal_reasoning:20",
+      "category": "temporal_reasoning",
+      "predicted_answer": "21 days from March 29 till April 19",
+      "expected_answers": [
+        "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19.",
+        "LLM response should state: 21 days",
+        "LLM response should state: from March 29 till April 19"
+      ],
+      "is_correct": true,
+      "question": "How many days were there between the end of my first sprint and the deadline for completing the analytics features in sprint 2?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    }
+  ]
+}

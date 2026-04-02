@@ -414,6 +414,21 @@ def expand_answer_from_context(question: str, answer: str, context: str) -> str:
         return temporal_answer_candidate
     if question_lower.startswith(("how long", "how much time")) and compound_duration_answer_candidate:
         return compound_duration_answer_candidate
+    if (
+        answer_candidate
+        and cleaned_lower == answer_candidate.lower()
+        and question_lower.startswith("how many")
+        and re.search(r"\b\d+\s+(?:days?|weeks?|months?|years?)\b", cleaned_lower)
+        and (
+            re.search(r"\bfrom\b.+\b(?:to|till|until)\b", cleaned_lower)
+            or re.search(r"\bbetween\b.+\band\b", cleaned_lower)
+            or re.search(
+                r"\b(january|february|march|april|may|june|july|august|september|october|november|december)\b",
+                cleaned_lower,
+            )
+        )
+    ):
+        return cleaned
     if question_lower.startswith("how many") and duration_count_answer_candidate:
         return duration_count_answer_candidate
     if question_lower.startswith(("how much", "what price", "what did", "what was the total")) and currency_answer_candidate:

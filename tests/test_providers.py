@@ -5280,3 +5280,16 @@ def test_expand_answer_from_context_preserves_beam_contradiction_statement_promp
         answer,
         "answer_candidate: I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
     ) == answer
+
+
+def test_expand_answer_from_context_preserves_beam_temporal_surface_with_dates():
+    assert _expand_answer_from_context(
+        "How many weeks do I have between finishing the transaction management features and the final deployment deadline?",
+        "8 weeks from January 15, 2024 till March 15, 2024",
+        "answer_candidate: 8 weeks from January 15, 2024 till March 15, 2024",
+    ) == "8 weeks from January 15, 2024 till March 15, 2024"
+    assert _expand_answer_from_context(
+        "How many days were there between the end of my first sprint and the deadline for completing the analytics features in sprint 2?",
+        "21 days from March 29 till April 19",
+        "answer_candidate: 21 days from March 29 till April 19",
+    ) == "21 days from March 29 till April 19"

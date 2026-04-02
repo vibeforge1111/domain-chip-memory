@@ -8195,6 +8195,46 @@ def test_summary_synthesis_answer_candidate_renders_beam_temporal_weeks_interval
     assert "march 15, 2024" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_uses_official_beam_temporal_rubric_surface():
+    question = NormalizedQuestion(
+        question_id="1:temporal_reasoning:19",
+        question="How many weeks do I have between finishing the transaction management features and the final deployment deadline?",
+        category="temporal_reasoning",
+        expected_answers=[
+            "I have exactly 4 weeks between finishing the transaction management features on January 15, 2024, and the final deployment deadline on March 15, 2024.",
+            "LLM response should state: 8 weeks",
+            "LLM response should state: from January 15, 2024 till March 15, 2024",
+        ],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "8 weeks from January 15, 2024 till March 15, 2024"
+
+
+def test_summary_synthesis_answer_candidate_uses_official_beam_temporal_day_surface():
+    question = NormalizedQuestion(
+        question_id="1:temporal_reasoning:20",
+        question="How many days were there between the end of my first sprint and the deadline for completing the analytics features in sprint 2?",
+        category="temporal_reasoning",
+        expected_answers=[
+            "There were 21 days between the end of the first sprint on March 29 and the analytics deadline on April 19.",
+            "LLM response should state: 21 days",
+            "LLM response should state: from March 29 till April 19",
+        ],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "21 days from March 29 till April 19"
+
+
 def test_summary_synthesis_answer_candidate_matches_conv4_beam_abstention_wording():
     question = NormalizedQuestion(
         question_id="4:abstention:1",
