@@ -5146,3 +5146,16 @@ def test_expand_answer_from_context_preserves_multi_value_longmemeval_answers():
         "You switched to less water (5 ounces) per tablespoon of coffee.",
         "answer_candidate: You switched to less water (5 ounces) per tablespoon of coffee.",
     ) == "You switched to less water (5 ounces) per tablespoon of coffee."
+
+
+def test_expand_answer_from_context_preserves_how_much_targets_from_answer_candidate():
+    assert _expand_answer_from_context(
+        "How much time do I dedicate to coding exercises each day?",
+        "about two hours",
+        "answer_candidate: about two hours",
+    ) == "about two hours"
+    assert _expand_answer_from_context(
+        "How much weight have I lost since I started going to the gym consistently?",
+        "10 pounds",
+        "answer_candidate: 10 pounds",
+    ) == "10 pounds"

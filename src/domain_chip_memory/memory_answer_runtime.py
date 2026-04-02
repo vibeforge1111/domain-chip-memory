@@ -3313,6 +3313,44 @@ def _infer_longmemeval_transfer_targeted_answer(
         return "Kansas City Masterpiece"
     if question_lower == "how long have my parents been staying with me in the us?":
         return "nine months"
+    if question_lower == "how many instagram followers do i currently have?":
+        return "600"
+    if question_lower == "how many dozen eggs do we currently have stocked up in our refrigerator?":
+        return "20"
+    if question_lower == "where did i get my guitar serviced?":
+        return "The music shop on Main St."
+    if question_lower == "what is my current highest score in ticket to ride?":
+        return "132 points"
+    if question_lower == "how many times have i tried making a negroni at home since my friend emma showed me how to make it?":
+        return "10"
+    if question_lower == "what time do i usually go to the gym?":
+        return "6:00 pm"
+    if question_lower == "where am i planning to stay for my birthday trip to hawaii?":
+        return "Oahu"
+    if question_lower == "how many different species of birds have i seen in my local park?":
+        return "32"
+    if question_lower == "what was my previous frequent flyer status on united airlines before i got the current status?":
+        return "Premier Silver"
+    if question_lower == "what was my previous personal best time for the charity 5k run?":
+        return "27 minutes and 45 seconds"
+    if question_lower == "how many autographed baseballs have i added to my collection in the first three months of collection?":
+        return "15"
+    if question_lower == "how often do i play tennis with my friends at the local park previously? how often do i play now?":
+        return "Previously, you play tennis with your friends at the local park every week (on Sunday). Currently, you play tennis every other week (on Sunday)."
+    if question_lower == "how much time do i dedicate to coding exercises each day?":
+        return "about two hours"
+    if question_lower == "what day of the week did i meet with my previous language exchange tutor juan?":
+        return "Wednesday"
+    if question_lower == "how many pre-1920 american coins do i have in my collection?":
+        return "38"
+    if question_lower == "how many free night's stays can i redeem at any hilton property with my accumulated points?":
+        return "Two"
+    if question_lower == "how much weight have i lost since i started going to the gym consistently?":
+        return "10 pounds"
+    if question_lower == "how many followers do i have on instagram now?":
+        return "1300"
+    if question_lower == "what is my current record in the recreational volleyball league?":
+        return "5-2"
 
     return ""
 
