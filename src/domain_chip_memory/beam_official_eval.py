@@ -448,18 +448,14 @@ def _run_openai_compatible_upstream_evaluation(
     stdout_lines = [f"Started MiniMax BEAM evaluation worker for {len(selected_conversation_ids)} conversations."]
     deadline_seconds = max(900, 180 * max(1, len(selected_conversation_ids)))
     start_time_seconds = time.monotonic()
+    logged_incremental_write_warning = False
     while worker.is_alive():
         completed_outputs = [str(path) for path in expected_outputs if path.exists()]
-        if len(completed_outputs) == len(expected_outputs):
-            worker.terminate()
-            worker.join(timeout=10)
-            stdout_lines.append("All expected evaluation files were written; terminated lingering worker process.")
-            return {
-                "exit_code": 0,
-                "stdout_tail": stdout_lines[-20:],
-                "stderr_tail": [],
-                "evaluation_files": completed_outputs,
-            }
+        if len(completed_outputs) == len(expected_outputs) and not logged_incremental_write_warning:
+            logged_incremental_write_warning = True
+            stdout_lines.append(
+                "All expected evaluation files were detected; waiting for worker exit because upstream writes them incrementally."
+            )
         if time.monotonic() - start_time_seconds > deadline_seconds:
             worker.terminate()
             worker.join(timeout=10)

@@ -1957,6 +1957,110 @@ def test_run_beam_official_evaluation_cli_defaults_to_minimax(tmp_path: Path, mo
     assert payload["aggregate_summary"]["overall_average"] == 1.0
 
 
+def test_run_openai_compatible_upstream_evaluation_waits_for_worker_exit_before_trusting_incremental_outputs(
+    tmp_path: Path,
+    monkeypatch,
+):
+    upstream_repo = tmp_path / "beam_repo"
+    answers_dir = tmp_path / "beam_results" / "100K" / "1"
+    answers_dir.mkdir(parents=True)
+    result_file_name = "custom_answers.json"
+    (answers_dir / result_file_name).write_text(json.dumps({"information_extraction": []}), encoding="utf-8")
+    evaluation_path = answers_dir / f"evaluation-{result_file_name}"
+
+    class FakeQueue:
+        def __init__(self):
+            self._items = []
+
+        def put(self, item):
+            self._items.append(item)
+
+        def empty(self):
+            return not self._items
+
+        def get(self):
+            return self._items.pop(0)
+
+    fake_queue = FakeQueue()
+    process_holder = {}
+
+    class FakeProcess:
+        def __init__(self):
+            self.exitcode = 0
+            self._poll_count = 0
+            self.terminated = False
+
+        def start(self):
+            return None
+
+        def is_alive(self):
+            self._poll_count += 1
+            if self._poll_count == 1:
+                evaluation_path.write_text(
+                    json.dumps({"abstention": [{"llm_judge_score": 1.0}]}),
+                    encoding="utf-8",
+                )
+                return True
+            if self._poll_count == 2:
+                evaluation_path.write_text(
+                    json.dumps(
+                        {
+                            "abstention": [{"llm_judge_score": 1.0}],
+                            "information_extraction": [{"llm_judge_score": 0.5}],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                fake_queue.put(
+                    {
+                        "exit_code": 0,
+                        "stdout_tail": ["worker finished"],
+                        "stderr_tail": [],
+                    }
+                )
+                return False
+            return False
+
+        def join(self, timeout=None):
+            return None
+
+        def terminate(self):
+            self.terminated = True
+
+    class FakeContext:
+        def Queue(self):
+            return fake_queue
+
+        def Process(self, target, args):
+            process = FakeProcess()
+            process_holder["process"] = process
+            return process
+
+    monkeypatch.setattr(beam_official_eval.multiprocessing, "get_context", lambda _: FakeContext())
+    monkeypatch.setattr(beam_official_eval.time, "sleep", lambda _: None)
+
+    result = beam_official_eval._run_openai_compatible_upstream_evaluation(
+        upstream_repo_path=upstream_repo,
+        answers_scale_dir=answers_dir.parent,
+        official_scale_dir="100K",
+        start_index=0,
+        end_index=1,
+        max_workers=10,
+        result_file_name=result_file_name,
+        judge_config={
+            "provider": "minimax",
+            "model": "MiniMax-M2.7",
+            "base_url": "https://api.minimax.io/v1",
+            "api_key": "test-key",
+        },
+    )
+
+    assert result["exit_code"] == 0
+    assert result["evaluation_files"] == [str(evaluation_path)]
+    assert process_holder["process"].terminated is False
+    assert "information_extraction" in json.loads(evaluation_path.read_text(encoding="utf-8"))
+
+
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "locomo.json"
     output_file = tmp_path / "artifacts" / "locomo_scorecard.json"
