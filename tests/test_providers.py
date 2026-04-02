@@ -5190,3 +5190,11 @@ def test_expand_answer_from_context_uses_yes_no_candidate_for_do_question():
         "By the way, I need to open up my laptop to clean the fans soon, do I have a spare screwdriver for that",
         "answer_candidate: Yes",
     ) == "Yes"
+
+
+def test_expand_answer_from_context_preserves_single_session_numeric_candidate():
+    assert _expand_answer_from_context(
+        "I'm going back to our previous chat about the Lost Temple of the Djinn one-shot. Can you remind me how many mummies the party will face in the temple?",
+        "4",
+        "answer_candidate: 4",
+    ) == "4"

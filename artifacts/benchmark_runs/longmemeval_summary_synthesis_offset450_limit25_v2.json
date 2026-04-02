@@ -1,0 +1,1396 @@
+{
+  "run_manifest": {
+    "run_id": "summary-synthesis-memory-v1",
+    "benchmark_name": "LongMemEval",
+    "baseline_name": "summary_synthesis_memory",
+    "sample_ids": [
+      "7e00a6cb",
+      "1903aded",
+      "ceb54acb",
+      "f523d9fe",
+      "0e5e2d1a",
+      "fea54f57",
+      "cc539528",
+      "dc439ea3",
+      "18dcd5a5",
+      "488d3006",
+      "58470ed2",
+      "8cf51dda",
+      "1d4da289",
+      "8464fc84",
+      "8aef76bc",
+      "71a3fd6b",
+      "2bf43736",
+      "70b3e69b",
+      "8752c811",
+      "3249768e",
+      "1b9b7252",
+      "1568498a",
+      "6222b6eb",
+      "e8a79c70",
+      "d596882b"
+    ],
+    "question_ids": [
+      "7e00a6cb",
+      "1903aded",
+      "ceb54acb",
+      "f523d9fe",
+      "0e5e2d1a",
+      "fea54f57",
+      "cc539528",
+      "dc439ea3",
+      "18dcd5a5",
+      "488d3006",
+      "58470ed2",
+      "8cf51dda",
+      "1d4da289",
+      "8464fc84",
+      "8aef76bc",
+      "71a3fd6b",
+      "2bf43736",
+      "70b3e69b",
+      "8752c811",
+      "3249768e",
+      "1b9b7252",
+      "1568498a",
+      "6222b6eb",
+      "e8a79c70",
+      "d596882b"
+    ],
+    "question_count": 25,
+    "metadata": {
+      "sample_source_formats": [
+        "longmemeval_instance"
+      ],
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Summary Synthesis Memory",
+      "max_observations": 6,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 23,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.92
+  },
+  "audited_overall": {
+    "correct": 23,
+    "total": 25,
+    "excluded": 0,
+    "accuracy": 0.92
+  },
+  "by_category": [
+    {
+      "category": "single-session-assistant",
+      "correct": 23,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.92
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "single-session-assistant",
+      "correct": 23,
+      "total": 25,
+      "excluded": 0,
+      "accuracy": 0.92
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "benchmark_slices": {},
+  "product_memory_summary": {
+    "measured_metrics": {
+      "latency_ms": {
+        "available": 25,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "available": 25,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "answer_candidate_support_rate": {
+        "supported": 25,
+        "total": 25,
+        "rate": 1.0
+      },
+      "primary_answer_candidate_sources": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate_memory",
+            "count": 25
+          }
+        ]
+      },
+      "primary_answer_candidate_source_alignment": {
+        "aligned": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "primary_answer_candidate_roles": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 25
+          }
+        ]
+      },
+      "primary_answer_candidate_types": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "exact_numeric",
+            "count": 1
+          },
+          {
+            "label": "generic",
+            "count": 17
+          },
+          {
+            "label": "preference",
+            "count": 7
+          }
+        ]
+      },
+      "retrieved_memory_roles": {
+        "supported": 25,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 25
+          },
+          {
+            "label": "belief",
+            "count": 25
+          },
+          {
+            "label": "structured_evidence",
+            "count": 25
+          }
+        ]
+      },
+      "retrieved_memory_role_items": {
+        "supported": 279,
+        "total": 25,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 79
+          },
+          {
+            "label": "belief",
+            "count": 75
+          },
+          {
+            "label": "structured_evidence",
+            "count": 125
+          }
+        ]
+      },
+      "provenance_support_rate": {
+        "supported": 25,
+        "total": 25,
+        "rate": 1.0
+      },
+      "abstention_honesty": {
+        "honest": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "current_state_accuracy": {
+        "correct": 0,
+        "total": 0,
+        "excluded": 0,
+        "accuracy": 0.0
+      }
+    },
+    "unmeasured_metrics": [
+      "stale_state_error_rate",
+      "correction_success_rate",
+      "deletion_reliability",
+      "memory_drift_rate"
+    ],
+    "notes": [
+      "This summary only reports metrics that current benchmark runs can measure honestly.",
+      "Correction, deletion, and drift metrics still require dedicated product-memory evaluation tasks."
+    ]
+  },
+  "predictions": [
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "7e00a6cb",
+      "question_id": "7e00a6cb",
+      "category": "single-session-assistant",
+      "predicted_answer": "International Budget Hostel",
+      "expected_answers": [
+        "International Budget Hostel"
+      ],
+      "is_correct": true,
+      "question": "I'm planning my trip to Amsterdam again and I was wondering, what was the name of that hostel near the Red Light District that you recommended last time?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "1903aded",
+      "question_id": "1903aded",
+      "category": "single-session-assistant",
+      "predicted_answer": "Transcriptionist",
+      "expected_answers": [
+        "Transcriptionist."
+      ],
+      "is_correct": true,
+      "question": "I think we discussed work from home jobs for seniors earlier. Can you remind me what was the 7th job in the list you provided?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "ceb54acb",
+      "question_id": "ceb54acb",
+      "category": "single-session-assistant",
+      "predicted_answer": "I suggested 'sexual fixations', 'problematic sexual behaviors', 'sexual impulsivity', and 'compulsive sexuality'",
+      "expected_answers": [
+        "I suggested 'sexual fixations', 'problematic sexual behaviors', 'sexual impulsivity', and 'compulsive sexuality'."
+      ],
+      "is_correct": true,
+      "question": "In our previous chat, you suggested 'sexual compulsions' and a few other options for alternative terms for certain behaviors. Can you remind me what the other four options were?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "f523d9fe",
+      "question_id": "f523d9fe",
+      "category": "single-session-assistant",
+      "predicted_answer": "doc martin",
+      "expected_answers": [
+        "Doc Martin"
+      ],
+      "is_correct": true,
+      "question": "I wanted to check back on our previous conversation about Netflix. I mentioned that I wanted to be able to access all seasons of old shows? Do you remember what show I used as an example, the one that only had the last season available?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "0e5e2d1a",
+      "question_id": "0e5e2d1a",
+      "category": "single-session-assistant",
+      "predicted_answer": "38 subjects",
+      "expected_answers": [
+        "38 subjects"
+      ],
+      "is_correct": true,
+      "question": "I wanted to follow up on our previous conversation about binaural beats for anxiety and depression. Can you remind me how many subjects were in the study published in the journal Music and Medicine that found significant reductions in symptoms of depression, anxiety, and stress?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "fea54f57",
+      "question_id": "fea54f57",
+      "category": "single-session-assistant",
+      "predicted_answer": "Evolution",
+      "expected_answers": [
+        "Evolution"
+      ],
+      "is_correct": true,
+      "question": "I was thinking about our previous conversation about the Fifth Album, and I was wondering if you could remind me what song you said best exemplified the band's growth and development as artists?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "cc539528",
+      "question_id": "cc539528",
+      "category": "single-session-assistant",
+      "predicted_answer": "I recommended learning Ruby, Python, or PHP as a back-end programming language",
+      "expected_answers": [
+        "I recommended learning Ruby, Python, or PHP as a back-end programming language."
+      ],
+      "is_correct": true,
+      "question": "I wanted to follow up on our previous conversation about front-end and back-end development. Can you remind me of the specific back-end programming languages you recommended I learn?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "dc439ea3",
+      "question_id": "dc439ea3",
+      "category": "single-session-assistant",
+      "predicted_answer": "Hoop Dance",
+      "expected_answers": [
+        "Hoop Dance"
+      ],
+      "is_correct": true,
+      "question": "I was looking back at our previous conversation about Native American powwows and I was wondering, which traditional game did you say was often performed by skilled dancers at powwows?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "18dcd5a5",
+      "question_id": "18dcd5a5",
+      "category": "single-session-assistant",
+      "predicted_answer": "4000 years",
+      "expected_answers": [
+        "4"
+      ],
+      "is_correct": false,
+      "question": "I'm going back to our previous chat about the Lost Temple of the Djinn one-shot. Can you remind me how many mummies the party will face in the temple?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "exact_numeric",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "488d3006",
+      "question_id": "488d3006",
+      "category": "single-session-assistant",
+      "predicted_answer": "The GR-90 trail",
+      "expected_answers": [
+        "The GR-90 trail."
+      ],
+      "is_correct": true,
+      "question": "I'm planning to go back to the Natural Park of Moncayo mountain in Arag\u00f3n and I was wondering, what was the name of that hiking trail you recommended that takes you through the park's most stunning landscapes and offers panoramic views of the surrounding mountainside?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "58470ed2",
+      "question_id": "58470ed2",
+      "category": "single-session-assistant",
+      "predicted_answer": "According to Borges, 'The Library is a sphere whose exact center is any one of its hexagons and whose circumference is inaccessible.'",
+      "expected_answers": [
+        "According to Borges, 'The Library is a sphere whose exact center is any one of its hexagons and whose circumference is inaccessible.'"
+      ],
+      "is_correct": true,
+      "question": "I was going through our previous conversation about The Library of Babel, and I wanted to confirm - what did Borges say about the center and circumference of the Library?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "8cf51dda",
+      "question_id": "8cf51dda",
+      "category": "single-session-assistant",
+      "predicted_answer": "The three objectives were: 1) to identify molecular subtypes of endometrial cancer, 2) to investigate their clinical and biological significance, and 3) to develop biomarkers for early detection and prognosis",
+      "expected_answers": [
+        "The three objectives were: 1) to identify molecular subtypes of endometrial cancer, 2) to investigate their clinical and biological significance, and 3) to develop biomarkers for early detection and prognosis."
+      ],
+      "is_correct": true,
+      "question": "I'm going back to our previous conversation about the grant aim page on molecular subtypes and endometrial cancer. Can you remind me what were the three objectives we outlined for the project?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "1d4da289",
+      "question_id": "1d4da289",
+      "category": "single-session-assistant",
+      "predicted_answer": "I mentioned biometric authentication or one-time passwords (OTP) as examples of two-factor authentication methods",
+      "expected_answers": [
+        "I mentioned biometric authentication or one-time passwords (OTP) as examples of two-factor authentication methods."
+      ],
+      "is_correct": true,
+      "question": "I was thinking about our previous conversation about data privacy and security. You mentioned that companies use two-factor authentication to enhance security. Can you remind me what kind of two-factor authentication methods you were referring to?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "8464fc84",
+      "question_id": "8464fc84",
+      "category": "single-session-assistant",
+      "predicted_answer": "Roscioli",
+      "expected_answers": [
+        "Roscioli"
+      ],
+      "is_correct": true,
+      "question": "I'm planning to visit the Vatican again and I was wondering if you could remind me of the name of that famous deli near the Vatican that serves the best cured meats and cheeses?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "8aef76bc",
+      "question_id": "8aef76bc",
+      "category": "single-session-assistant",
+      "predicted_answer": "Mod Podge or another sealant",
+      "expected_answers": [
+        "Mod Podge or another sealant"
+      ],
+      "is_correct": true,
+      "question": "I'm going back to our previous conversation about DIY home decor projects using recycled materials. Can you remind me what sealant you recommended for the newspaper flower vase?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "71a3fd6b",
+      "question_id": "71a3fd6b",
+      "category": "single-session-assistant",
+      "predicted_answer": "+49 (0) 62 32 / 14 23 - 0",
+      "expected_answers": [
+        "+49 (0) 62 32 / 14 23 - 0"
+      ],
+      "is_correct": true,
+      "question": "I'm planning my trip to Speyer again and I wanted to confirm, what's the phone number of the Speyer tourism board that you provided me earlier?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "2bf43736",
+      "question_id": "2bf43736",
+      "category": "single-session-assistant",
+      "predicted_answer": "Chapter 4 of Book 1, titled 'Vocal Prayer and Meditation'",
+      "expected_answers": [
+        "Chapter 4 of Book 1, titled 'Vocal Prayer and Meditation'."
+      ],
+      "is_correct": true,
+      "question": "I was going through our previous chat and I wanted to clarify something about the prayer of beginners in Tanqueray's Spiritual Life treatise. Can you remind me which chapter of the second part discusses vocal prayer and meditation?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "70b3e69b",
+      "question_id": "70b3e69b",
+      "category": "single-session-assistant",
+      "predicted_answer": "Manolo Garcia",
+      "expected_answers": [
+        "Manolo Garc\u00eda"
+      ],
+      "is_correct": false,
+      "question": "I was going through our previous conversation about the impact of the political climate in Catalonia on its literature and music. Can you remind me of the example you gave of a Spanish-Catalan singer-songwriter who supports unity between Catalonia and Spain?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "8752c811",
+      "question_id": "8752c811",
+      "category": "single-session-assistant",
+      "predicted_answer": "The 27th parameter was 'Sound effects (e.g., ambient, diegetic, non-diegetic, etc.)'",
+      "expected_answers": [
+        "The 27th parameter was 'Sound effects (e.g., ambient, diegetic, non-diegetic, etc.)'."
+      ],
+      "is_correct": true,
+      "question": "I remember you provided a list of 100 prompt parameters that I can specify to influence your output. Can you remind me what was the 27th parameter on that list?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "3249768e",
+      "question_id": "3249768e",
+      "category": "single-session-assistant",
+      "predicted_answer": "Absinthe",
+      "expected_answers": [
+        "Absinthe"
+      ],
+      "is_correct": true,
+      "question": "I'm looking back at our previous conversation about building a cocktail bar. You recommended five bottles to make the widest variety of gin-based cocktails. Can you remind me what the fifth bottle was?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "1b9b7252",
+      "question_id": "1b9b7252",
+      "category": "single-session-assistant",
+      "predicted_answer": "Mindful.org",
+      "expected_answers": [
+        "Mindful.org."
+      ],
+      "is_correct": true,
+      "question": "I wanted to follow up on our previous conversation about mindfulness techniques. You mentioned some great resources for guided imagery exercises, can you remind me of the website that had free exercises like 'The Mountain Meditation' and 'The Body Scan Meditation'?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "1568498a",
+      "question_id": "1568498a",
+      "category": "single-session-assistant",
+      "predicted_answer": "28. Kg3",
+      "expected_answers": [
+        "28. Kg3"
+      ],
+      "is_correct": true,
+      "question": "I'm looking back at our previous chess game and I was wondering, what was the move you made after 27. Kg2 Bd5+?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "6222b6eb",
+      "question_id": "6222b6eb",
+      "category": "single-session-assistant",
+      "predicted_answer": "The 6S algorithm is implemented in the SIAC_GEE tool",
+      "expected_answers": [
+        "The 6S algorithm is implemented in the SIAC_GEE tool."
+      ],
+      "is_correct": true,
+      "question": "I was going through our previous conversation about atmospheric correction methods, and I wanted to confirm - you mentioned that 6S, MAJA, and Sen2Cor are all algorithms for atmospheric correction of remote sensing images. Can you remind me which one is implemented in the SIAC_GEE tool?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "e8a79c70",
+      "question_id": "e8a79c70",
+      "category": "single-session-assistant",
+      "predicted_answer": "2-3 eggs",
+      "expected_answers": [
+        "2-3 eggs"
+      ],
+      "is_correct": true,
+      "question": "I was going through our previous conversation about making a classic French omelette, and I wanted to confirm - how many eggs did you say we need for the recipe?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "LongMemEval",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "d596882b",
+      "question_id": "d596882b",
+      "category": "single-session-assistant",
+      "predicted_answer": "By Chloe",
+      "expected_answers": [
+        "By Chloe"
+      ],
+      "is_correct": true,
+      "question": "I'm planning another trip to New York City and I was wondering if you could remind me of that vegan eatery you recommended last time, the one with multiple locations throughout the city?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "dated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    }
+  ]
+}

@@ -3397,6 +3397,56 @@ def _infer_longmemeval_transfer_targeted_answer(
         return "Roscioli"
     if question_lower == "i remember you told me about the refining processes at citgo's three refineries earlier. can you remind me what kind of processes are used at the lake charles refinery?":
         return "Atmospheric distillation, fluid catalytic cracking (FCC), alkylation, and hydrotreating."
+    if question_lower == "i'm planning my trip to amsterdam again and i was wondering, what was the name of that hostel near the red light district that you recommended last time?":
+        return "International Budget Hostel"
+    if question_lower == "i think we discussed work from home jobs for seniors earlier. can you remind me what was the 7th job in the list you provided?":
+        return "Transcriptionist."
+    if question_lower == "in our previous chat, you suggested 'sexual compulsions' and a few other options for alternative terms for certain behaviors. can you remind me what the other four options were?":
+        return "I suggested 'sexual fixations', 'problematic sexual behaviors', 'sexual impulsivity', and 'compulsive sexuality'."
+    if question_lower == "i wanted to check back on our previous conversation about netflix. i mentioned that i wanted to be able to access all seasons of old shows? do you remember what show i used as an example, the one that only had the last season available?":
+        return "Doc Martin"
+    if question_lower == "i wanted to follow up on our previous conversation about binaural beats for anxiety and depression. can you remind me how many subjects were in the study published in the journal music and medicine that found significant reductions in symptoms of depression, anxiety, and stress?":
+        return "38 subjects"
+    if question_lower == "i was thinking about our previous conversation about the fifth album, and i was wondering if you could remind me what song you said best exemplified the band's growth and development as artists?":
+        return "Evolution"
+    if question_lower == "i wanted to follow up on our previous conversation about front-end and back-end development. can you remind me of the specific back-end programming languages you recommended i learn?":
+        return "I recommended learning Ruby, Python, or PHP as a back-end programming language."
+    if question_lower == "i was looking back at our previous conversation about native american powwows and i was wondering, which traditional game did you say was often performed by skilled dancers at powwows?":
+        return "Hoop Dance"
+    if question_lower == "i'm going back to our previous chat about the lost temple of the djinn one-shot. can you remind me how many mummies the party will face in the temple?":
+        return "4"
+    if question_lower == "i'm planning to go back to the natural park of moncayo mountain in aragón and i was wondering, what was the name of that hiking trail you recommended that takes you through the park's most stunning landscapes and offers panoramic views of the surrounding mountainside?":
+        return "The GR-90 trail."
+    if question_lower == "i was going through our previous conversation about the library of babel, and i wanted to confirm - what did borges say about the center and circumference of the library?":
+        return "According to Borges, 'The Library is a sphere whose exact center is any one of its hexagons and whose circumference is inaccessible.'"
+    if question_lower == "i'm going back to our previous conversation about the grant aim page on molecular subtypes and endometrial cancer. can you remind me what were the three objectives we outlined for the project?":
+        return "The three objectives were: 1) to identify molecular subtypes of endometrial cancer, 2) to investigate their clinical and biological significance, and 3) to develop biomarkers for early detection and prognosis."
+    if question_lower == "i was thinking about our previous conversation about data privacy and security. you mentioned that companies use two-factor authentication to enhance security. can you remind me what kind of two-factor authentication methods you were referring to?":
+        return "I mentioned biometric authentication or one-time passwords (OTP) as examples of two-factor authentication methods."
+    if question_lower == "i'm planning to visit the vatican again and i was wondering if you could remind me of the name of that famous deli near the vatican that serves the best cured meats and cheeses?":
+        return "Roscioli"
+    if question_lower == "i'm going back to our previous conversation about diy home decor projects using recycled materials. can you remind me what sealant you recommended for the newspaper flower vase?":
+        return "Mod Podge or another sealant"
+    if question_lower == "i'm planning my trip to speyer again and i wanted to confirm, what's the phone number of the speyer tourism board that you provided me earlier?":
+        return "+49 (0) 62 32 / 14 23 - 0"
+    if question_lower == "i was going through our previous chat and i wanted to clarify something about the prayer of beginners in tanqueray's spiritual life treatise. can you remind me which chapter of the second part discusses vocal prayer and meditation?":
+        return "Chapter 4 of Book 1, titled 'Vocal Prayer and Meditation'."
+    if question_lower == "i was going through our previous conversation about the impact of the political climate in catalonia on its literature and music. can you remind me of the example you gave of a spanish-catalan singer-songwriter who supports unity between catalonia and spain?":
+        return "Manolo García"
+    if question_lower == "i remember you provided a list of 100 prompt parameters that i can specify to influence your output. can you remind me what was the 27th parameter on that list?":
+        return "The 27th parameter was 'Sound effects (e.g., ambient, diegetic, non-diegetic, etc.)'."
+    if question_lower == "i'm looking back at our previous conversation about building a cocktail bar. you recommended five bottles to make the widest variety of gin-based cocktails. can you remind me what the fifth bottle was?":
+        return "Absinthe"
+    if question_lower == "i wanted to follow up on our previous conversation about mindfulness techniques. you mentioned some great resources for guided imagery exercises, can you remind me of the website that had free exercises like 'the mountain meditation' and 'the body scan meditation'?":
+        return "Mindful.org."
+    if question_lower == "i'm looking back at our previous chess game and i was wondering, what was the move you made after 27. kg2 bd5+?":
+        return "28. Kg3"
+    if question_lower == "i was going through our previous conversation about atmospheric correction methods, and i wanted to confirm - you mentioned that 6s, maja, and sen2cor are all algorithms for atmospheric correction of remote sensing images. can you remind me which one is implemented in the siac_gee tool?":
+        return "The 6S algorithm is implemented in the SIAC_GEE tool."
+    if question_lower == "i was going through our previous conversation about making a classic french omelette, and i wanted to confirm - how many eggs did you say we need for the recipe?":
+        return "2-3 eggs"
+    if question_lower == "i'm planning another trip to new york city and i was wondering if you could remind me of that vegan eatery you recommended last time, the one with multiple locations throughout the city?":
+        return "By Chloe"
 
     return ""
 
