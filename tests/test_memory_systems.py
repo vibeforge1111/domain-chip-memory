@@ -8235,6 +8235,46 @@ def test_summary_synthesis_answer_candidate_uses_official_beam_temporal_day_surf
     assert answer == "21 days from March 29 till April 19"
 
 
+def test_summary_synthesis_answer_candidate_uses_official_beam_conv2_temporal_rubric_surface():
+    question = NormalizedQuestion(
+        question_id="2:temporal_reasoning:19",
+        question="How many days passed between when I obtained my OpenWeather API key and when I completed the UI wireframe for my weather app?",
+        category="temporal_reasoning",
+        expected_answers=[
+            "2 days passed between obtaining the OpenWeather API key on March 10, 2024, and completing the UI wireframe on March 12, 2024.",
+            "LLM response should state: 2 days",
+            "LLM response should state: from March 10 till March 12",
+        ],
+        evidence_session_ids=["s2"],
+        evidence_turn_ids=["t19"],
+        metadata={"source_format": "beam_official_public_conversation"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "2 days from March 10 till March 12"
+
+
+def test_summary_synthesis_answer_candidate_uses_official_beam_conv2_day_surface():
+    question = NormalizedQuestion(
+        question_id="2:temporal_reasoning:20",
+        question="How many days do I have between scheduling the meeting and the start of the testing period for my project?",
+        category="temporal_reasoning",
+        expected_answers=[
+            "There are 21 days between scheduling the meeting on March 15 and the start of the two-week testing period beginning April 5.",
+            "LLM response should state: 21 days",
+            "LLM response should state: from March 15 till April 5",
+        ],
+        evidence_session_ids=["s2"],
+        evidence_turn_ids=["t20"],
+        metadata={"source_format": "beam_official_public_conversation"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "21 days from March 15 till April 5"
+
+
 def test_summary_synthesis_answer_candidate_matches_conv4_beam_abstention_wording():
     question = NormalizedQuestion(
         question_id="4:abstention:1",

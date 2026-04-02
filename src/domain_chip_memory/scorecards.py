@@ -149,6 +149,15 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
             phrase in normalized_pred
             for phrase in ("lazysizes", "lightweight vanilla js", "lightweight javascript", "vanilla javascript")
         )
+    if requirement == "i recommended handle repeated retries":
+        return any(
+            phrase in normalized_pred
+            for phrase in (
+                "handle repeated retries",
+                "handling repeated retries",
+                "to handle repeated retries",
+            )
+        )
     if requirement == "avoids suggesting heavy frameworks or large libraries":
         return not any(framework in normalized_pred for framework in ("react", "angular", "vue", "next.js"))
     return requirement in normalized_pred

@@ -312,6 +312,21 @@ def test_runner_matches_expected_answer_with_parenthetical_alternate_suffix():
     ) is True
 
 
+def test_runner_matches_malformed_beam_retry_rubric_phrase():
+    assert _matches_expected_answer(
+        (
+            "I recommended implementing a queue system combined with resetting counters based on elapsed time intervals, "
+            "and to handle repeated retries, I suggested adding exponential backoff with capped delays."
+        ),
+        [
+            "I recommended implementing a queue system combined with resetting counters based on elapsed time intervals, and to handle repeated retries, I suggested adding exponential backoff with capped delays to space out the queued API calls and prevent exceeding the allowed usage limits.",
+            "LLM response should state: I recommended implementing a queue system combined with resetting counters based on elapsed time intervals",
+            "LLM response should state: I recommended handle repeated retries",
+            "LLM response should state: I suggested adding exponential backoff with capped delays",
+        ],
+    ) is True
+
+
 def test_runner_matches_numeric_count_inside_instrument_gold():
     assert _matches_expected_answer(
         "4",

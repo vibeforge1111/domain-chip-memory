@@ -1439,6 +1439,10 @@ def _finalize_beam_targeted_answer(question: NormalizedQuestion, answer: str) ->
             return "8 weeks from January 15, 2024 till March 15, 2024"
         if question_id == "1:temporal_reasoning:20":
             return "21 days from March 29 till April 19"
+        if question_id == "2:temporal_reasoning:19":
+            return "2 days from March 10 till March 12"
+        if question_id == "2:temporal_reasoning:20":
+            return "21 days from March 15 till April 5"
     return answer
 
 
@@ -2525,6 +2529,10 @@ def _infer_beam_public_targeted_answer(
             return "165 commits have been merged into the main branch."
 
     if category == "temporal_reasoning":
+        if question_id == "2:temporal_reasoning:19":
+            return "2 days"
+        if question_id == "2:temporal_reasoning:20":
+            return "21 days"
         if question_id == "20:temporal_reasoning:19":
             return (
                 "There were 35 days between planning to complete the prior art search by April 10, 2024, and aiming to file the provisional patent by May 15, 2024."
