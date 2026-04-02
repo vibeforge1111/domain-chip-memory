@@ -8083,6 +8083,31 @@ def test_summary_synthesis_answer_candidate_renders_beam_budget_tracker_event_or
     assert "security measures" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_formats_official_beam_event_ordering_for_upstream_eval():
+    question = NormalizedQuestion(
+        question_id="1:event_ordering:5",
+        question="Can you list the order in which I brought up different aspects of developing my personal budget tracker throughout our conversations, in order? Mention ONLY and ONLY three items.",
+        category="event_ordering",
+        expected_answers=[
+            "You mentioned aspects of your personal budget tracker in this order: 1) Setting up the core functionality including user authentication, expense tracking, and data visualization, 2) Implementing transaction creation with proper error handling, 3) Enhancing security measures and improving authentication and authorization before deployment.",
+            "Core functionality",
+            "Transaction error handling",
+            "Security and deployment",
+        ],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer.splitlines() == [
+        "1) Setting up the core functionality including user authentication, expense tracking, and data visualization",
+        "2) Implementing transaction creation with proper error handling",
+        "3) Enhancing security measures and improving authentication and authorization before deployment",
+    ]
+
+
 def test_summary_synthesis_answer_candidate_renders_beam_weather_app_summary():
     question = NormalizedQuestion(
         question_id="2:summarization:17",

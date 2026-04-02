@@ -51,16 +51,20 @@ def _beam_public_scale_dir_name(chat_size: str) -> str:
 
 
 def _beam_public_expected_answers(question_payload: dict[str, object]) -> list[str]:
+    answers: list[str] = []
     for field_name in ("answer", "ideal_answer", "ideal_response"):
         value = question_payload.get(field_name)
         if isinstance(value, str) and value.strip():
-            return [value.strip()]
+            stripped = value.strip()
+            if stripped not in answers:
+                answers.append(stripped)
     rubric = question_payload.get("rubric")
     if isinstance(rubric, list):
-        answers = [str(item).strip() for item in rubric if str(item).strip()]
-        if answers:
-            return answers
-    return []
+        for item in rubric:
+            stripped = str(item).strip()
+            if stripped and stripped not in answers:
+                answers.append(stripped)
+    return answers
 
 
 def _load_beam_public_conversation(

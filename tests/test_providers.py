@@ -328,6 +328,54 @@ def test_heuristic_response_compacts_explicit_slot_style_answer_candidate():
     assert heuristic_response(packet) == "Alserkal Avenue"
 
 
+def test_heuristic_response_preserves_beam_event_ordering_line_breaks():
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="beam-128k-1",
+        question_id="1:event_ordering:5",
+        question="Can you list the order in which I brought up different aspects of developing my personal budget tracker throughout our conversations, in order? Mention ONLY and ONLY three items.",
+        assembled_context="answer_candidate: 1) Setting up the core functionality including user authentication, expense tracking, and data visualization, 2) Implementing transaction creation with proper error handling, 3) Enhancing security measures and improving authentication and authorization before deployment.",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory"},
+        answer_candidates=[
+            build_answer_candidate(
+                "Can you list the order in which I brought up different aspects of developing my personal budget tracker throughout our conversations, in order? Mention ONLY and ONLY three items.",
+                "1) Setting up the core functionality including user authentication, expense tracking, and data visualization, 2) Implementing transaction creation with proper error handling, 3) Enhancing security measures and improving authentication and authorization before deployment.",
+                source="aggregate_memory",
+            )
+        ],
+    )
+
+    assert heuristic_response(packet) == (
+        "1) Setting up the core functionality including user authentication, expense tracking, and data visualization\n"
+        "2) Implementing transaction creation with proper error handling\n"
+        "3) Enhancing security measures and improving authentication and authorization before deployment"
+    )
+
+
+def test_heuristic_response_rewrites_beam_contradiction_prompt_to_statement_choice():
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="beam-128k-1",
+        question_id="1:contradiction_resolution:3",
+        question="Have I worked with Flask routes and handled HTTP requests in this project?",
+        assembled_context="answer_candidate: I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
+        retrieved_context_items=[],
+        metadata={"route": "summary_synthesis_memory"},
+        answer_candidates=[
+            build_answer_candidate(
+                "Have I worked with Flask routes and handled HTTP requests in this project?",
+                "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
+                source="aggregate_memory",
+            )
+        ],
+    )
+
+    assert heuristic_response(packet).endswith("Which statement is correct?")
+
+
 def test_expand_answer_preserves_short_slot_value_over_full_sentence_answer_candidate():
     context = "\n".join(
         [
@@ -5206,3 +5254,29 @@ def test_expand_answer_from_context_preserves_single_session_ratio_candidate():
         "The recommended ratio is 1:10, meaning one part tea tree oil to ten parts carrier oil.",
         "answer_candidate: The recommended ratio is 1:10, meaning one part tea tree oil to ten parts carrier oil.",
     ) == "The recommended ratio is 1:10, meaning one part tea tree oil to ten parts carrier oil."
+
+
+def test_expand_answer_from_context_preserves_multiline_beam_event_ordering_surface():
+    answer = (
+        "1) Setting up the core functionality including user authentication, expense tracking, and data visualization\n"
+        "2) Implementing transaction creation with proper error handling\n"
+        "3) Enhancing security measures and improving authentication and authorization before deployment"
+    )
+    assert _expand_answer_from_context(
+        "Can you list the order in which I brought up different aspects of developing my personal budget tracker throughout our conversations, in order? Mention ONLY and ONLY three items.",
+        answer,
+        "answer_candidate: You mentioned aspects of your personal budget tracker in this order: 1) Setting up the core functionality including user authentication, expense tracking, and data visualization, 2) Implementing transaction creation with proper error handling, 3) Enhancing security measures and improving authentication and authorization before deployment.",
+    ) == answer
+
+
+def test_expand_answer_from_context_preserves_beam_contradiction_statement_prompt():
+    answer = (
+        "I notice you've mentioned contradictory information about this. "
+        "You said you have never written any Flask routes or handled HTTP requests in this project, "
+        "but you also mentioned implementing a basic homepage route with Flask. Which statement is correct?"
+    )
+    assert _expand_answer_from_context(
+        "Have I worked with Flask routes and handled HTTP requests in this project?",
+        answer,
+        "answer_candidate: I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
+    ) == answer

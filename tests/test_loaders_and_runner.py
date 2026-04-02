@@ -161,6 +161,34 @@ def test_runner_matches_beam_instruction_following_code_block_rubric():
     ) is True
 
 
+def test_runner_enforces_beam_prefixed_rubric_requirements_over_ideal_answer_text():
+    expected_answers = [
+        "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said you have never written any Flask routes or handled HTTP requests in this project",
+        "LLM response should mention: you also mentioned implementing a basic homepage route with Flask",
+        "LLM response should mention: which statement is correct?",
+    ]
+
+    assert _matches_expected_answer(
+        "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
+        expected_answers,
+    ) is False
+    assert _matches_expected_answer(
+        "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Which statement is correct?",
+        expected_answers,
+    ) is True
+
+
+def test_runner_matches_numbered_list_prediction_against_single_line_gold():
+    assert _matches_expected_answer(
+        "1) Setting up the core functionality including user authentication, expense tracking, and data visualization\n2) Implementing transaction creation with proper error handling\n3) Enhancing security measures and improving authentication and authorization before deployment",
+        [
+            "You mentioned aspects of your personal budget tracker in this order: 1) Setting up the core functionality including user authentication, expense tracking, and data visualization, 2) Implementing transaction creation with proper error handling, 3) Enhancing security measures and improving authentication and authorization before deployment."
+        ],
+    ) is True
+
+
 def test_runner_matches_beam_instruction_following_version_rubric():
     assert _matches_expected_answer(
         "the explicitly versioned dependencies are flask 2.3.1, flask-login 0.6.2, and sqlite 3.39.",

@@ -240,6 +240,63 @@ def test_load_beam_public_dir_normalizes_official_style_fixture(tmp_path):
     assert sample.questions[1].should_abstain is True
 
 
+def test_load_beam_public_dir_appends_rubric_requirements_to_expected_answers(tmp_path):
+    conversation_dir = tmp_path / "100K" / "1"
+    probing_dir = conversation_dir / "probing_questions"
+    probing_dir.mkdir(parents=True)
+    (conversation_dir / "chat.json").write_text(
+        json.dumps(
+            [
+                {
+                    "batch_number": 1,
+                    "time_anchor": "March-15-2024",
+                    "turns": [
+                        [
+                            {
+                                "role": "user",
+                                "id": 1,
+                                "content": "I have never written any Flask routes or handled HTTP requests in this project.",
+                            },
+                            {
+                                "role": "user",
+                                "id": 2,
+                                "content": "I implemented a basic homepage route with Flask.",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (probing_dir / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "contradiction_resolution": [
+                    {
+                        "question": "Have I worked with Flask routes and handled HTTP requests in this project?",
+                        "ideal_answer": "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
+                        "source_chat_ids": [1, 2],
+                        "rubric": [
+                            "LLM response should state: there is contradictory information",
+                            "LLM response should mention: which statement is correct?",
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    samples = load_beam_public_dir(tmp_path, chat_size="128K")
+
+    assert samples[0].questions[0].expected_answers == [
+        "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: which statement is correct?",
+    ]
+
+
 def test_load_beam_public_dir_sorts_conversation_ids_numerically(tmp_path):
     for conversation_id in ("1", "2", "10"):
         conversation_dir = tmp_path / "100K" / conversation_id

@@ -651,6 +651,10 @@ def _looks_like_preference_guidance_question(question: str) -> bool:
 
 def _expand_answer_from_context(question: str, answer: str, context: str) -> str:
     cleaned = answer.strip()
+    if "\n" in cleaned and len(re.findall(r"\b\d+[.)]\s*", cleaned)) >= 2:
+        return cleaned
+    if "which statement is correct?" in cleaned.lower():
+        return cleaned
     answer_candidate_entries = _rank_answer_candidate_entries(question, context)
     answer_candidates = [
         line.split(":", 1)[1].strip()

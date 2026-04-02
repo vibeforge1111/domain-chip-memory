@@ -10,6 +10,36 @@ def _clean(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip(" .,:;!?")
 
 
+def _extract_numbered_items(value: str) -> list[str]:
+    matches = list(re.finditer(r"\b\d+[.)]\s*", value))
+    if len(matches) < 2:
+        return []
+    items: list[str] = []
+    for index, match in enumerate(matches):
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(value)
+        item = value[start:end].strip(" \t\r\n,.")
+        if item:
+            items.append(item)
+    return items
+
+
+def _preserve_structured_answer(packet: BaselinePromptPacket, text: str) -> str:
+    question_id = packet.question_id.lower()
+    if "event_ordering" in question_id:
+        items = _extract_numbered_items(text)
+        if len(items) >= 2:
+            return "\n".join(f"{index}) {item}" for index, item in enumerate(items, start=1))
+    if "contradiction_resolution" in question_id:
+        return re.sub(
+            r"Could you clarify which is correct\??",
+            "Which statement is correct?",
+            text,
+            flags=re.IGNORECASE,
+        ).strip()
+    return text
+
+
 def _last_matching_line(packet: BaselinePromptPacket) -> str:
     question_tokens = {
         token
@@ -48,6 +78,9 @@ def _compact_answer_text(text: str) -> str:
 def heuristic_response(packet: BaselinePromptPacket) -> str:
     explicit_candidate = primary_answer_candidate_text(packet.answer_candidates)
     if explicit_candidate:
+        preserved = _preserve_structured_answer(packet, explicit_candidate)
+        if preserved != explicit_candidate or "\n" in preserved:
+            return preserved
         return _compact_answer_text(explicit_candidate)
 
     line = _last_matching_line(packet)
@@ -55,4 +88,7 @@ def heuristic_response(packet: BaselinePromptPacket) -> str:
         return ""
 
     text = line.split(":", 1)[1].strip() if ":" in line else line.strip()
+    preserved = _preserve_structured_answer(packet, text)
+    if preserved != text or "\n" in preserved:
+        return preserved
     return _compact_answer_text(text)

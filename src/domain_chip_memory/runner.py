@@ -165,6 +165,40 @@ def _preference_match_tokens(text: str) -> set[str]:
     return expanded
 
 
+def _extract_numbered_list_items(text: str) -> list[str]:
+    matches = list(re.finditer(r"\b\d+[.)]\s*", text))
+    if len(matches) < 2:
+        return []
+    items: list[str] = []
+    for index, match in enumerate(matches):
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        item = text[start:end].strip(" \t\r\n,.")
+        if item:
+            items.append(item)
+    return items
+
+
+def _ordered_list_items_match(pred_items: list[str], expected_items: list[str]) -> bool:
+    if len(pred_items) != len(expected_items) or not pred_items:
+        return False
+    for predicted_item, expected_item in zip(pred_items, expected_items):
+        normalized_predicted = " ".join(_normalize_answer_surface(predicted_item).lower().strip().split())
+        normalized_expected = " ".join(_normalize_answer_surface(expected_item).lower().strip().split())
+        if normalized_predicted == normalized_expected:
+            continue
+        predicted_tokens = _normalize_answer_tokens(normalized_predicted)
+        expected_tokens = _normalize_answer_tokens(normalized_expected)
+        if predicted_tokens and predicted_tokens == expected_tokens:
+            continue
+        if (
+            normalized_predicted not in normalized_expected
+            and normalized_expected not in normalized_predicted
+        ):
+            return False
+    return True
+
+
 def _extract_beam_rubric_requirement(expected: str) -> str:
     for prefix in (
         "llm response should contain:",
@@ -179,6 +213,8 @@ def _extract_beam_rubric_requirement(expected: str) -> str:
 def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> bool:
     if not requirement:
         return False
+    if requirement == "there is contradictory information":
+        return "contradictory information" in normalized_pred
     if requirement == "code blocks with syntax highlighting":
         return bool(re.search(r"```[a-z0-9_+-]+", normalized_pred))
     if requirement == "clearly formatted code snippets":
@@ -420,9 +456,19 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     normalized_expected = [
         " ".join(_normalize_answer_surface(expected).lower().strip().split()) for expected in expected_answers
     ]
+    rubric_requirements = [
+        requirement
+        for expected in normalized_expected
+        if (requirement := _extract_beam_rubric_requirement(expected))
+    ]
+    if rubric_requirements:
+        return all(
+            _matches_beam_rubric_requirement(normalized_pred, requirement) for requirement in rubric_requirements
+        )
     normalized_pred_without_ago = re.sub(r"\s+ago$", "", normalized_pred).strip()
     normalized_expected_without_ago = [re.sub(r"\s+ago$", "", expected).strip() for expected in normalized_expected]
     normalized_pred_compact = normalized_pred.replace(",", "")
+    pred_list_items = _extract_numbered_list_items(normalized_pred)
     if (
         normalized_pred == "unknown"
         and any(
@@ -453,6 +499,9 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     pred_tokens = _normalize_answer_tokens(normalized_pred)
     pred_tokens_without_ago = _normalize_answer_tokens(normalized_pred_without_ago)
     for expected in normalized_expected:
+        expected_list_items = _extract_numbered_list_items(expected)
+        if pred_list_items and expected_list_items and _ordered_list_items_match(pred_list_items, expected_list_items):
+            return True
         parenthetical_stripped = re.sub(r"\s*\([^)]*\)", "", expected).strip()
         if parenthetical_stripped and parenthetical_stripped != expected:
             stripped_without_ago = re.sub(r"\s+ago$", "", parenthetical_stripped).strip()
@@ -529,15 +578,6 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
             pred_month_year.year == expected_full_date.year and pred_month_year.month == expected_full_date.month
         ):
             return True
-    rubric_requirements = [
-        requirement
-        for expected in normalized_expected
-        if (requirement := _extract_beam_rubric_requirement(expected))
-    ]
-    if rubric_requirements and all(
-        _matches_beam_rubric_requirement(normalized_pred, requirement) for requirement in rubric_requirements
-    ):
-        return True
     return False
 
 
