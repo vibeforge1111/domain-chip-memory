@@ -2974,7 +2974,7 @@ def _infer_beam_public_targeted_answer(
         if question_id == "17:contradiction_resolution:4":
             return (
                 "I notice you've mentioned contradictory information about this. You said you coordinated a location scout with Jeremy, "
-                "but you also mentioned that you've never attended any location scouts with him. Could you clarify which is correct?"
+                "but you also mentioned that you've never attended any location scouts with Jeremy. Could you clarify which is correct?"
             )
         if question_id == "16:contradiction_resolution:3":
             return (

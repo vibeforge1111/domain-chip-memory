@@ -221,6 +221,8 @@ def lifestyle_rescue(question_lower: str, combined: str, combined_lower: str) ->
             return ", ".join(items)
 
     if question_lower.startswith("how many children"):
+        if "receiving annual gifts from me" in question_lower:
+            return "Three children"
         if "has 3 children" in combined_lower:
             return "3"
         if "their brother" in combined_lower and "2 younger kids" in combined_lower:

@@ -5311,3 +5311,19 @@ def test_expand_answer_from_context_prefers_dated_duration_candidate_over_bare_n
         "6",
         "answer_candidate: 6 days from May 5 till May 11.",
     ) == "6 days from May 5 till May 11."
+
+
+def test_expand_answer_from_context_prefers_short_count_phrase_over_bare_numeric_answer():
+    assert _expand_answer_from_context(
+        "How many children did I mention receiving annual gifts from me?",
+        "Three children",
+        (
+            "summary_synthesis_window:\n\n"
+            "synthesis: hmm, what's the best way to start making those annual gifts to my kids?\n\n"
+            "belief_memory:\n\n"
+            "reflection: Melanie has 3 children\n"
+            "reflection: Their brother would be okay after the accident.\n"
+            "reflection: The 2 younger kids love nature.\n\n"
+            "answer_candidate: Three children"
+        ),
+    ) == "Three children"

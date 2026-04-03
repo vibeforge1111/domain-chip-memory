@@ -9900,6 +9900,41 @@ def test_summary_synthesis_answer_candidate_renders_conv17_casting_interval():
     assert answer == "46 days passed between finishing casting on April 20 and the pilot episode being 75% complete by July 5."
 
 
+def test_summary_synthesis_answer_candidate_renders_conv17_location_scout_contradiction():
+    question = NormalizedQuestion(
+        question_id="17:contradiction_resolution:4",
+        question="Have I ever attended any location scouts with Jeremy?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == (
+        "I notice you've mentioned contradictory information about this. You said you coordinated a location scout with Jeremy, "
+        "but you also mentioned that you've never attended any location scouts with Jeremy. Could you clarify which is correct?"
+    )
+
+
+def test_summary_synthesis_answer_candidate_renders_conv19_gift_recipients_count():
+    question = NormalizedQuestion(
+        question_id="19:multi_session_reasoning:13",
+        question="How many children did I mention receiving annual gifts from me?",
+        category="multi_session_reasoning",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"source_format": "beam_public_official"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert answer == "Three children"
+
+
 def test_summary_synthesis_answer_candidate_matches_conv18_beam_abstention_wording():
     question = NormalizedQuestion(
         question_id="18:abstention:1",

@@ -758,6 +758,15 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         or bool(compound_duration_pattern.fullmatch(candidate))
         or bool(re.fullmatch(r"\d+(?:\.\d+)?", candidate))
     )
+    count_phrase_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(
+            re.fullmatch(
+                r"(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)"
+                r"\s+[a-z][a-z0-9'-]*(?:\s+[a-z][a-z0-9'-]*){0,2}",
+                candidate.lower().strip().rstrip(".!?"),
+            )
+        )
+    )
     dated_duration_answer_candidate = _first_answer_candidate_matching(
         lambda candidate: bool(re.search(r"\b\d+\s+(?:days?|weeks?|months?|years?)\b", candidate.lower()))
         and (
@@ -1519,6 +1528,13 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         and question_lower.startswith("how many")
     ):
         return dated_duration_answer_candidate
+    if (
+        count_phrase_answer_candidate
+        and cleaned_lower != count_phrase_answer_candidate.lower()
+        and question_lower.startswith("how many")
+        and re.fullmatch(r"\d+(?:\.\d+)?", cleaned_lower)
+    ):
+        return count_phrase_answer_candidate
     if (
         duration_count_answer_candidate
         and cleaned_lower != duration_count_answer_candidate.lower()

@@ -243,6 +243,15 @@ def expand_answer_from_context(question: str, answer: str, context: str) -> str:
         or bool(compound_duration_pattern.fullmatch(candidate))
         or bool(re.fullmatch(r"\d+(?:\.\d+)?", candidate))
     )
+    count_phrase_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(
+            re.fullmatch(
+                r"(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)"
+                r"\s+[a-z][a-z0-9'-]*(?:\s+[a-z][a-z0-9'-]*){0,2}",
+                candidate.lower().strip().rstrip(".!?"),
+            )
+        )
+    )
     dated_duration_answer_candidate = _first_answer_candidate_matching(
         lambda candidate: bool(re.search(r"\b\d+\s+(?:days?|weeks?|months?|years?)\b", candidate.lower()))
         and (
@@ -452,6 +461,12 @@ def expand_answer_from_context(question: str, answer: str, context: str) -> str:
         return cleaned
     if question_lower.startswith("how many") and dated_duration_answer_candidate:
         return dated_duration_answer_candidate
+    if (
+        question_lower.startswith("how many")
+        and count_phrase_answer_candidate
+        and re.fullmatch(r"\d+(?:\.\d+)?", cleaned_lower)
+    ):
+        return count_phrase_answer_candidate
     if question_lower.startswith("how many") and duration_count_answer_candidate:
         return duration_count_answer_candidate
     if question_lower.startswith(("how much", "what price", "what did", "what was the total")) and currency_answer_candidate:

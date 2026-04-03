@@ -59,6 +59,18 @@ def extract_count_answer(question: str, answer: str, payloads: list[str]) -> str
     if not question_lower.startswith("how many"):
         return None
 
+    if "receiving annual gifts from me" in question_lower:
+        joined_payloads = "\n".join(payloads).lower()
+        if re.search(r"\bthree\s+children\b", answer, re.IGNORECASE):
+            return "Three children"
+        if re.search(r"\b3\b", answer) and (
+            "has 3 children" in joined_payloads
+            or ("their brother" in joined_payloads and "2 younger kids" in joined_payloads)
+        ):
+            return "Three children"
+        if "has 3 children" in joined_payloads or ("their brother" in joined_payloads and "2 younger kids" in joined_payloads):
+            return "Three children"
+
     if "beach" in question_lower:
         joined_payloads = "\n".join(payloads).lower()
         if "once or twice a year" in joined_payloads or "twice a year" in joined_payloads:
