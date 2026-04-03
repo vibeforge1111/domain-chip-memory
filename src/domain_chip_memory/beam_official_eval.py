@@ -572,11 +572,26 @@ def _resume_openai_compatible_single_conversation_evaluation(
 
 def _normalize_openai_compatible_judge_response(payload: Any) -> dict[str, Any]:
     if isinstance(payload, dict):
-        return payload
+        if "score" in payload:
+            return payload
+        for key, value in payload.items():
+            if str(key).lower() == "score":
+                normalized = dict(payload)
+                normalized["score"] = value
+                return normalized
+        for value in payload.values():
+            try:
+                return _normalize_openai_compatible_judge_response(value)
+            except (KeyError, TypeError):
+                continue
+        raise KeyError("score")
     if isinstance(payload, list):
         for item in payload:
-            if isinstance(item, dict) and "score" in item:
-                return item
+            try:
+                return _normalize_openai_compatible_judge_response(item)
+            except (KeyError, TypeError):
+                continue
+        raise KeyError("score")
     raise TypeError(f"Expected judge response object with score field, got {type(payload).__name__}")
 
 
