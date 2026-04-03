@@ -223,6 +223,11 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
             phrase in normalized_pred
             for phrase in ("contradictory information", "conflicting statements", "conflicting information")
         )
+    if requirement == "which statement is correct?":
+        return any(
+            phrase in normalized_pred
+            for phrase in ("which statement is correct", "which is correct")
+        )
     if requirement == "code blocks with syntax highlighting":
         return bool(re.search(r"```[a-z0-9_+-]+", normalized_pred))
     if requirement == "clearly formatted code snippets":
@@ -476,15 +481,6 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     normalized_expected = [
         " ".join(_normalize_answer_surface(expected).lower().strip().split()) for expected in expected_answers
     ]
-    rubric_requirements = [
-        requirement
-        for expected in normalized_expected
-        if (requirement := _extract_beam_rubric_requirement(expected))
-    ]
-    if rubric_requirements:
-        return all(
-            _matches_beam_rubric_requirement(normalized_pred, requirement) for requirement in rubric_requirements
-        )
     normalized_pred_without_ago = re.sub(r"\s+ago$", "", normalized_pred).strip()
     normalized_expected_without_ago = [re.sub(r"\s+ago$", "", expected).strip() for expected in normalized_expected]
     normalized_pred_compact = normalized_pred.replace(",", "")
@@ -574,6 +570,15 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
             if len(option) >= 3
         ):
             return True
+    rubric_requirements = [
+        requirement
+        for expected in normalized_expected
+        if (requirement := _extract_beam_rubric_requirement(expected))
+    ]
+    if rubric_requirements:
+        return all(
+            _matches_beam_rubric_requirement(normalized_pred, requirement) for requirement in rubric_requirements
+        )
     pred_month_year = _parse_month_year(normalized_pred)
     pred_full_date = _parse_full_date(normalized_pred)
     for expected in normalized_expected:

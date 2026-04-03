@@ -161,7 +161,7 @@ def test_runner_matches_beam_instruction_following_code_block_rubric():
     ) is True
 
 
-def test_runner_enforces_beam_prefixed_rubric_requirements_over_ideal_answer_text():
+def test_runner_matches_beam_ideal_answer_text_even_when_rubric_prefixes_exist():
     expected_answers = [
         "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
         "LLM response should state: there is contradictory information",
@@ -173,7 +173,7 @@ def test_runner_enforces_beam_prefixed_rubric_requirements_over_ideal_answer_tex
     assert _matches_expected_answer(
         "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Could you clarify which is correct?",
         expected_answers,
-    ) is False
+    ) is True
     assert _matches_expected_answer(
         "I notice you've mentioned contradictory information about this. You said you have never written any Flask routes or handled HTTP requests in this project, but you also mentioned implementing a basic homepage route with Flask. Which statement is correct?",
         expected_answers,
@@ -336,6 +336,41 @@ def test_runner_matches_contradiction_rubric_against_conflicting_statements_surf
             "LLM response should mention: You mentioned preferring Bootstrap 5.3.0 and using its classes",
             "LLM response should mention: you have never implemented any Bootstrap components in this project",
             "LLM response should mention: which statement is correct?",
+        ],
+    ) is True
+
+
+def test_runner_matches_contradiction_rubric_without_terminal_question_mark():
+    assert _matches_expected_answer(
+        "I notice you've mentioned contradictory information about this. You said you have never attempted any triangle classification problems before, but you also mentioned recently completing 15 classification problems with good accuracy. Which statement is correct",
+        [
+            "I notice you've mentioned contradictory information about this. You said you have never attempted any triangle classification problems before, but you also mentioned recently completing 15 classification problems with good accuracy. Could you clarify which is correct?",
+            "LLM response should state: there is contradictory information",
+            "LLM response should mention: You said you have never attempted any triangle classification problems before",
+            "LLM response should mention: you also mentioned recently completing 15 classification problems with good accuracy",
+            "LLM response should mention: which statement is correct?",
+        ],
+    ) is True
+
+
+def test_runner_matches_beam_full_answer_before_partial_rubric_checks():
+    assert _matches_expected_answer(
+        (
+            "I suggested labeling the triangles with corresponding vertices to identify matching angles and the included side, "
+            "clearly stating the given angle measures and side length for both triangles, then applying the criterion that if two "
+            "angles and the included side of one triangle equal those of another, the triangles are congruent, and finally writing "
+            "a conclusion stating the triangles are congruent by that criterion."
+        ),
+        [
+            (
+                "I suggested labeling the triangles with corresponding vertices to identify matching angles and the included side, "
+                "clearly stating the given angle measures and side length for both triangles, then applying the criterion that if two "
+                "angles and the included side of one triangle equal those of another, the triangles are congruent, and finally writing "
+                "a conclusion stating the triangles are congruent by that criterion."
+            ),
+            "LLM response should state: suggested labeling the triangles with corresponding vertices to identify matching angles and the included side",
+            "LLM response should state: stating the given angle measures and side length for both triangles, the triangles are congruent",
+            "LLM response should state: applying the criterion that if two angles and the included side of one triangle equal those of another",
         ],
     ) is True
 

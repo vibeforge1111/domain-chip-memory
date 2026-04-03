@@ -64,6 +64,11 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
             phrase in normalized_pred
             for phrase in ("contradictory information", "conflicting statements", "conflicting information")
         )
+    if requirement == "which statement is correct?":
+        return any(
+            phrase in normalized_pred
+            for phrase in ("which statement is correct", "which is correct")
+        )
     if requirement == "code blocks with syntax highlighting":
         return bool(re.search(r"```[a-z0-9_+-]+", normalized_pred))
     if requirement == "clearly formatted code snippets":
