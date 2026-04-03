@@ -23,6 +23,7 @@ from .providers import DEFAULT_MINIMAX_BASE_URL, DEFAULT_OPENAI_BASE_URL
 _BEAM_SAMPLE_ID_PATTERN = re.compile(r"^beam-([^-]+)-(.+)$")
 _BEAM_OPENAI_COMPATIBLE_REQUEST_TIMEOUT_SECONDS = 60
 _BEAM_OPENAI_COMPATIBLE_MAX_RETRIES = 2
+_BEAM_OPENAI_COMPATIBLE_BASE_DEADLINE_SECONDS = 900
 
 
 def _official_chat_size_dir(scale: str) -> str:
@@ -445,7 +446,7 @@ def _run_openai_compatible_upstream_evaluation(
     worker.start()
 
     stdout_lines = [f"Started MiniMax BEAM evaluation worker for {len(selected_conversation_ids)} conversations."]
-    deadline_seconds = max(900, 180 * max(1, len(selected_conversation_ids)))
+    deadline_seconds = _BEAM_OPENAI_COMPATIBLE_BASE_DEADLINE_SECONDS * max(1, len(selected_conversation_ids))
     start_time_seconds = time.monotonic()
     logged_incremental_write_warning = False
     while worker.is_alive():
