@@ -24,6 +24,14 @@ _BEAM_SAMPLE_ID_PATTERN = re.compile(r"^beam-([^-]+)-(.+)$")
 _BEAM_OPENAI_COMPATIBLE_REQUEST_TIMEOUT_SECONDS = 60
 _BEAM_OPENAI_COMPATIBLE_MAX_RETRIES = 2
 _BEAM_OPENAI_COMPATIBLE_BASE_DEADLINE_SECONDS = 900
+_BEAM_OPENAI_COMPATIBLE_RUBRIC_LIST_CATEGORIES = {
+    "instruction_following",
+    "knowledge_update",
+    "multi_session_reasoning",
+    "preference_following",
+    "summarization",
+    "temporal_reasoning",
+}
 
 
 def _official_chat_size_dir(scale: str) -> str:
@@ -542,16 +550,68 @@ def _resume_openai_compatible_single_conversation_evaluation(
             )
             llm_response = str(question.get("llm_response", ""))
             probing_question = str(question.get("question", ""))
-            result = evaluator(
-                rubric=rubric,
-                llm_response=llm_response,
-                probing_question=probing_question,
-                model=model,
-            )
+            if category in _BEAM_OPENAI_COMPATIBLE_RUBRIC_LIST_CATEGORIES:
+                result = _evaluate_openai_compatible_rubric_list_category(
+                    rubric=rubric,
+                    llm_response=llm_response,
+                    model=model,
+                    compute_metrics_module=compute_metrics_module,
+                )
+            else:
+                result = evaluator(
+                    rubric=rubric,
+                    llm_response=llm_response,
+                    probing_question=probing_question,
+                    model=model,
+                )
             category_rows.append(result)
 
         existing_payload[category] = category_rows
         output_file.write_text(json.dumps(existing_payload, indent=4), encoding="utf-8")
+
+
+def _normalize_openai_compatible_judge_response(payload: Any) -> dict[str, Any]:
+    if isinstance(payload, dict):
+        return payload
+    if isinstance(payload, list):
+        for item in payload:
+            if isinstance(item, dict) and "score" in item:
+                return item
+    raise TypeError(f"Expected judge response object with score field, got {type(payload).__name__}")
+
+
+def _evaluate_openai_compatible_rubric_list_category(
+    *,
+    rubric: Any,
+    llm_response: str,
+    model: Any,
+    compute_metrics_module: Any,
+) -> dict[str, Any]:
+    if not isinstance(rubric, list) or not rubric:
+        raise ValueError("Expected non-empty rubric list for openai-compatible rubric-list evaluation.")
+
+    base_prompt = str(getattr(compute_metrics_module, "unified_llm_judge_base_prompt"))
+    parse_json_response = getattr(compute_metrics_module, "parse_json_response")
+    repair_json = getattr(compute_metrics_module, "repair_json")
+
+    llm_judge_responses: list[dict[str, Any]] = []
+    score = 0
+    for item in rubric:
+        prompt = base_prompt.replace("<rubric_item>", str(item)).replace("<llm_response>", llm_response)
+        response_text = model.invoke(prompt).content.strip()
+        try:
+            parsed_response = parse_json_response(response=response_text)
+        except Exception:
+            parsed_response = json.loads(repair_json(response_text))
+        normalized_response = _normalize_openai_compatible_judge_response(parsed_response)
+        score += int(normalized_response["score"])
+        llm_judge_responses.append(normalized_response)
+
+    llm_judge_score = score / len(rubric)
+    return {
+        "llm_judge_score": llm_judge_score,
+        "llm_judge_responses": llm_judge_responses,
+    }
 
 
 def _load_beam_evaluation_payload(evaluation_path: str | Path) -> dict[str, Any]:
