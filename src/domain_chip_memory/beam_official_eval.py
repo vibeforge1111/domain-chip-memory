@@ -427,9 +427,6 @@ def _run_openai_compatible_upstream_evaluation(
         answers_scale_dir / conversation_id / f"evaluation-{result_file_name}"
         for conversation_id in selected_conversation_ids
     ]
-    for output_path in expected_outputs:
-        if output_path.exists():
-            output_path.unlink()
 
     ctx = multiprocessing.get_context("spawn")
     result_queue: multiprocessing.Queue[dict[str, Any]] = ctx.Queue()
@@ -486,6 +483,74 @@ def _run_openai_compatible_upstream_evaluation(
         "stderr_tail": stderr_lines[-20:],
         "evaluation_files": completed_outputs,
     }
+
+
+def _resume_openai_compatible_single_conversation_evaluation(
+    *,
+    probing_questions_address: Path,
+    answers_file: Path,
+    output_file: Path,
+    model: Any,
+    compute_metrics_module: Any,
+    run_evaluation_module: Any,
+) -> None:
+    answers_payload = json.loads(answers_file.read_text(encoding="utf-8"))
+    if not isinstance(answers_payload, dict):
+        raise ValueError(f"Expected BEAM answers payload to be an object: {answers_file}")
+
+    existing_payload: dict[str, Any] = {}
+    if output_file.exists():
+        try:
+            loaded_existing_payload = json.loads(output_file.read_text(encoding="utf-8"))
+            if isinstance(loaded_existing_payload, dict):
+                existing_payload = loaded_existing_payload
+        except json.JSONDecodeError:
+            existing_payload = {}
+
+    category_evaluators = {
+        "abstention": getattr(compute_metrics_module, "evaluate_abstention", None),
+        "contradiction_resolution": getattr(compute_metrics_module, "evaluate_contradiction_resolution", None),
+        "event_ordering": getattr(compute_metrics_module, "evaluate_event_ordering", None),
+        "information_extraction": getattr(compute_metrics_module, "evaluate_information_extraction", None),
+        "instruction_following": getattr(compute_metrics_module, "evaluate_instruction_following", None),
+        "knowledge_update": getattr(compute_metrics_module, "evaluate_knowledge_update", None),
+        "multi_session_reasoning": getattr(compute_metrics_module, "evaluate_multi_session_reasoning", None),
+        "preference_following": getattr(compute_metrics_module, "evaluate_preference_following", None),
+        "summarization": getattr(compute_metrics_module, "evaluate_summarization", None),
+        "temporal_reasoning": getattr(compute_metrics_module, "evaluate_temporal_reasoning", None),
+    }
+
+    for category, questions in answers_payload.items():
+        if category in existing_payload and existing_payload.get(category):
+            print(f"Skipping completed question type: {category}")
+            continue
+        if category not in category_evaluators:
+            continue
+        if not isinstance(questions, list):
+            continue
+
+        print(f"Question Type: {category}")
+        category_rows = []
+        evaluator = category_evaluators[category]
+        for index, question in enumerate(questions):
+            print(f"Question Index: {index}")
+            rubric = run_evaluation_module.get_rubric(
+                probing_questions_address=str(probing_questions_address),
+                key=category,
+                index=index,
+            )
+            llm_response = str(question.get("llm_response", ""))
+            probing_question = str(question.get("question", ""))
+            result = evaluator(
+                rubric=rubric,
+                llm_response=llm_response,
+                probing_question=probing_question,
+                model=model,
+            )
+            category_rows.append(result)
+
+        existing_payload[category] = category_rows
+        output_file.write_text(json.dumps(existing_payload, indent=4), encoding="utf-8")
 
 
 def _load_beam_evaluation_payload(evaluation_path: str | Path) -> dict[str, Any]:
@@ -558,11 +623,13 @@ def _run_openai_compatible_evaluation_worker(
                 )
                 try:
                     print(f"************ Result File: {result_file_name}")
-                    run_evaluation_module.run_evaluation(
-                        probing_questions_address=str(probing_question_address),
-                        answers_directory=str(result_file_address),
-                        output_address=str(output_address),
+                    _resume_openai_compatible_single_conversation_evaluation(
+                        probing_questions_address=probing_question_address,
+                        answers_file=result_file_address,
+                        output_file=output_address,
                         model=judge_llm,
+                        compute_metrics_module=compute_metrics_module,
+                        run_evaluation_module=run_evaluation_module,
                     )
                 except Exception as exc:
                     failures.append(f"{conversation_id}: {type(exc).__name__}: {exc}")

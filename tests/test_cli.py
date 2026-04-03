@@ -2103,13 +2103,16 @@ def test_run_openai_compatible_evaluation_worker_sets_request_timeout_and_retrie
         def initialize_models(self):
             return None
 
+        @staticmethod
+        def evaluate_information_extraction(**kwargs):
+            return {"llm_judge_score": 1.0, "llm_judge_responses": []}
+
     class FakeRunEvaluationModule:
         initialize_models = None
 
         @staticmethod
-        def run_evaluation(**kwargs):
-            output_path = Path(kwargs["output_address"])
-            output_path.write_text(json.dumps({"information_extraction": []}), encoding="utf-8")
+        def get_rubric(**kwargs):
+            return []
 
     original_import_module = importlib.import_module
 
@@ -2142,6 +2145,67 @@ def test_run_openai_compatible_evaluation_worker_sets_request_timeout_and_retrie
     assert worker_payload["exit_code"] == 0
     assert captured_chat_openai_kwargs["request_timeout"] == 60
     assert captured_chat_openai_kwargs["max_retries"] == 2
+
+
+def test_resume_openai_compatible_single_conversation_evaluation_skips_completed_categories(
+    tmp_path: Path,
+):
+    probing_questions_path = tmp_path / "probing_questions.json"
+    answers_path = tmp_path / "answers.json"
+    output_path = tmp_path / "evaluation-answers.json"
+
+    probing_questions_path.write_text(
+        json.dumps(
+            {
+                "abstention": [{"rubric": ["no agenda info"]}],
+                "information_extraction": [{"rubric": ["march 1"]}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    answers_path.write_text(
+        json.dumps(
+            {
+                "abstention": [{"question": "q1", "llm_response": "a1"}],
+                "information_extraction": [{"question": "q2", "llm_response": "a2"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output_path.write_text(
+        json.dumps({"abstention": [{"llm_judge_score": 1.0, "llm_judge_responses": []}]}),
+        encoding="utf-8",
+    )
+
+    class FakeComputeMetricsModule:
+        @staticmethod
+        def evaluate_abstention(**kwargs):
+            raise AssertionError("completed abstention category should have been skipped")
+
+        @staticmethod
+        def evaluate_information_extraction(**kwargs):
+            return {"llm_judge_score": 0.5, "llm_judge_responses": [{"score": 0.5}]}
+
+    class FakeRunEvaluationModule:
+        @staticmethod
+        def get_rubric(**kwargs):
+            if kwargs["key"] == "information_extraction":
+                return ["march 1"]
+            return ["no agenda info"]
+
+    beam_official_eval._resume_openai_compatible_single_conversation_evaluation(
+        probing_questions_address=probing_questions_path,
+        answers_file=answers_path,
+        output_file=output_path,
+        model=object(),
+        compute_metrics_module=FakeComputeMetricsModule(),
+        run_evaluation_module=FakeRunEvaluationModule(),
+    )
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert "abstention" in payload
+    assert "information_extraction" in payload
+    assert payload["information_extraction"][0]["llm_judge_score"] == 0.5
 
 
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):
