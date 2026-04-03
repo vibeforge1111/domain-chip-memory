@@ -297,6 +297,56 @@ def test_load_beam_public_dir_appends_rubric_requirements_to_expected_answers(tm
     ]
 
 
+def test_load_beam_public_dir_stamps_scale_metadata_on_questions(tmp_path):
+    conversation_dir = tmp_path / "500K" / "5"
+    probing_dir = conversation_dir / "probing_questions"
+    probing_dir.mkdir(parents=True)
+    (conversation_dir / "chat.json").write_text(
+        json.dumps(
+            [
+                {
+                    "batch_number": 1,
+                    "time_anchor": "March-15-2024",
+                    "turns": [
+                        [
+                            {"role": "user", "id": 1, "content": "I prefer lightweight dependencies."},
+                            {"role": "assistant", "id": 2, "content": "Noted."},
+                        ]
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (probing_dir / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "preference_following": [
+                    {
+                        "question": "What should I optimize for in the stack recommendation?",
+                        "source_chat_ids": [1],
+                        "question_type": "preference_following",
+                        "expected_compliance": "avoid heavy frameworks",
+                        "preference_being_tested": "lightweight dependencies",
+                        "compliance_indicators": ["lightweight libraries", "no heavy frameworks"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    samples = load_beam_public_dir(tmp_path, chat_size="500K")
+    metadata = samples[0].questions[0].metadata
+
+    assert metadata["sample_id"] == "beam-500k-5"
+    assert metadata["dataset_scale"] == "500K"
+    assert metadata["conversation_id"] == "5"
+    assert metadata["expected_compliance"] == "avoid heavy frameworks"
+    assert metadata["preference_being_tested"] == "lightweight dependencies"
+    assert metadata["compliance_indicators"] == ["lightweight libraries", "no heavy frameworks"]
+
+
 def test_load_beam_public_dir_sorts_conversation_ids_numerically(tmp_path):
     for conversation_id in ("1", "2", "10"):
         conversation_dir = tmp_path / "100K" / conversation_id

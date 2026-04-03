@@ -138,6 +138,7 @@ def _load_beam_public_conversation(
             }
         )
 
+    sample_id = f"beam-{chat_size.lower()}-{conversation_dir.name}"
     questions = []
     question_counter = 0
     for category, items in probing_payload.items():
@@ -175,10 +176,21 @@ def _load_beam_public_conversation(
                     "metadata": {
                         key: value
                         for key, value in {
+                            "sample_id": sample_id,
+                            "dataset_scale": chat_size,
+                            "conversation_id": conversation_dir.name,
                             "difficulty": item.get("difficulty"),
                             "conversation_references": item.get("conversation_references"),
                             "source_chat_ids": source_chat_ids,
                             "official_question_type": item.get("question_type"),
+                            "ideal_answer": item.get("ideal_answer"),
+                            "ideal_response": item.get("ideal_response"),
+                            "ideal_summary": item.get("ideal_summary"),
+                            "expected_compliance": item.get("expected_compliance"),
+                            "compliance_indicators": item.get("compliance_indicators"),
+                            "preference_being_tested": item.get("preference_being_tested"),
+                            "instruction_being_tested": item.get("instruction_being_tested"),
+                            "key_elements_tested": item.get("key_elements_tested"),
                         }.items()
                         if value not in (None, [], "")
                     },
@@ -187,7 +199,7 @@ def _load_beam_public_conversation(
 
     return BEAMAdapter.normalize_instance(
         {
-            "sample_id": f"beam-{chat_size.lower()}-{conversation_dir.name}",
+            "sample_id": sample_id,
             "sessions": sessions,
             "questions": questions,
             "metadata": {

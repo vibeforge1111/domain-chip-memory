@@ -3,6 +3,29 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass, field
 import re
+
+_CONTRADICTION_RUBRIC_STOPWORDS = {
+    "a",
+    "also",
+    "any",
+    "have",
+    "having",
+    "mentioned",
+    "the",
+    "with",
+    "you",
+    "your",
+}
+_BEAM_RUBRIC_TOKEN_STOPWORDS = _CONTRADICTION_RUBRIC_STOPWORDS | {
+    "and",
+    "for",
+    "into",
+    "of",
+    "or",
+    "that",
+    "to",
+    "using",
+}
 from typing import Any
 
 from .benchmark_issues import get_known_benchmark_issue
@@ -45,6 +68,7 @@ def _extract_beam_rubric_requirement(expected: str) -> str:
         "llm response should contain:",
         "llm response should state:",
         "llm response should mention:",
+        "llm response should ask for clarification on ",
     ):
         if expected.startswith(prefix):
             return expected[len(prefix) :].strip()
@@ -56,19 +80,40 @@ def _normalize_beam_rubric_surface(text: str) -> str:
     return re.sub(r"\b(i|you)\b", "__person__", normalized)
 
 
+def _normalize_answer_tokens(text: str) -> list[str]:
+    tokens = re.findall(r"[a-z0-9.]+", text.lower())
+    normalized: list[str] = []
+    for token in tokens:
+        if len(token) > 4 and token.endswith("ed"):
+            token = token[:-2]
+        elif len(token) > 5 and token.endswith("ing"):
+            token = token[:-3]
+        elif len(token) > 3 and token.endswith("s") and not token.endswith("ss"):
+            token = token[:-1]
+        normalized.append(token)
+    return normalized
+
+
 def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> bool:
     if not requirement:
         return False
-    if requirement == "there is contradictory information":
+    if requirement in {"there is contradictory information", "there is contradictory"}:
         return any(
             phrase in normalized_pred
             for phrase in ("contradictory information", "conflicting statements", "conflicting information")
         )
-    if requirement == "which statement is correct?":
+    if requirement in {"which statement is correct?", "which is correct", "ask for clarification on which is correct"}:
         return any(
             phrase in normalized_pred
-            for phrase in ("which statement is correct", "which is correct")
+            for phrase in ("which statement is correct", "which is correct", "could you clarify which is correct")
         )
+    if requirement.startswith(("you mentioned ", "you also mentioned ", "you have never ", "you mentioned both that you have and have not ")):
+        requirement_tokens = {
+            token for token in _normalize_answer_tokens(requirement) if token not in _CONTRADICTION_RUBRIC_STOPWORDS
+        }
+        predicted_tokens = set(_normalize_answer_tokens(normalized_pred))
+        if requirement_tokens and len(requirement_tokens & predicted_tokens) >= max(3, len(requirement_tokens) - 1):
+            return True
     if requirement == "code blocks with syntax highlighting":
         return bool(re.search(r"```[a-z0-9_+-]+", normalized_pred))
     if requirement == "clearly formatted code snippets":
@@ -173,6 +218,12 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
                 "to handle repeated retries",
             )
         )
+    requirement_tokens = {
+        token for token in _normalize_answer_tokens(requirement) if token not in _BEAM_RUBRIC_TOKEN_STOPWORDS
+    }
+    predicted_tokens = set(_normalize_answer_tokens(normalized_pred))
+    if requirement_tokens and len(requirement_tokens & predicted_tokens) >= max(3, len(requirement_tokens) - 2):
+        return True
     numeric_with_unit_match = re.fullmatch(r"(\d+(?:\.\d+)?)\s+([a-z][a-z0-9 -]+)", requirement)
     if numeric_with_unit_match and normalized_pred == numeric_with_unit_match.group(1):
         return True

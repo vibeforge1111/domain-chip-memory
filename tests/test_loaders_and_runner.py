@@ -180,6 +180,25 @@ def test_runner_matches_beam_ideal_answer_text_even_when_rubric_prefixes_exist()
     ) is True
 
 
+def test_runner_matches_beam_contradiction_clarification_rubric_variant():
+    assert _matches_expected_answer(
+        "I notice you've mentioned contradictory information about this. You said you have never synchronized your server time with any NTP service, but you also mentioned synchronizing it with the NTP service pool.ntp.org to fix token validation errors. Which statement is correct?",
+        [
+            "LLM response should state: there is contradictory information",
+            "LLM response should mention: you mentioned never synchronizing with NTP service",
+            "LLM response should mention: you also mentioned synchronizing with NTP service pool.ntp.org",
+            "LLM response should ask for clarification on which is correct",
+        ],
+    ) is True
+
+
+def test_runner_matches_beam_summary_rubric_with_rephrased_surface():
+    assert _matches_expected_answer(
+        "You worked on refactoring your Detector class to separate model inference and non-maximum suppression into distinct methods for better modularity.",
+        ["LLM response should contain: refactored Detector class with separate inference and NMS methods"],
+    ) is True
+
+
 def test_runner_matches_numbered_list_prediction_against_single_line_gold():
     assert _matches_expected_answer(
         "1) Setting up the core functionality including user authentication, expense tracking, and data visualization\n2) Implementing transaction creation with proper error handling\n3) Enhancing security measures and improving authentication and authorization before deployment",

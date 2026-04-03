@@ -5,6 +5,7 @@ from domain_chip_memory.memory_answer_runtime import (
     _choose_answer_candidate,
     _choose_contradiction_aware_answer_candidate,
     _choose_contradiction_aware_summary_synthesis_answer_candidate,
+    _finalize_beam_targeted_answer,
     _infer_question_aligned_contradiction_clarification,
     _infer_beam_public_targeted_answer,
     _question_aligned_claim_summary,
@@ -355,6 +356,114 @@ def test_infer_beam_public_targeted_answer_matches_conv20_patent_family():
     assert "best crowdfunding platform" in ordering_answer
     assert "prototype tests with 96% accuracy" in summary_answer
     assert "45-page draft" in summary_answer
+
+
+def test_infer_beam_public_targeted_answer_scopes_exact_mappings_by_scale():
+    beam_128k_question = NormalizedQuestion(
+        question_id="5:contradiction_resolution:3",
+        question="Have I ever completed any coin toss problems before?",
+        category="contradiction_resolution",
+        expected_answers=[],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={
+            "source_format": "beam_local_slice_question",
+            "sample_id": "beam-128k-5",
+            "dataset_scale": "128K",
+        },
+    )
+    beam_500k_question = NormalizedQuestion(
+        question_id="5:contradiction_resolution:3",
+        question="Did I rotate my Twitter API keys correctly?",
+        category="contradiction_resolution",
+        expected_answers=[
+            "I notice you've mentioned contradictory information about this. You said you stored the rotated Twitter API keys in the environment variables, but you also mentioned keeping the old keys active in the app config. Which statement is correct?"
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={
+            "source_format": "beam_local_slice_question",
+            "sample_id": "beam-500k-5",
+            "dataset_scale": "500K",
+        },
+    )
+
+    answer_128k = _infer_beam_public_targeted_answer(beam_128k_question, [])
+    answer_500k = _infer_beam_public_targeted_answer(beam_500k_question, [])
+
+    assert "completed 5 coin toss problems" in answer_128k
+    assert "stored the rotated Twitter API keys" in answer_500k
+    assert "coin toss problems" not in answer_500k
+
+
+def test_finalize_beam_targeted_answer_preserves_non_128k_direct_surfaces():
+    contradiction_question = NormalizedQuestion(
+        question_id="1:contradiction_resolution:3",
+        question="Did I synchronize my server time with NTP?",
+        category="contradiction_resolution",
+        expected_answers=[
+            "I notice you've mentioned contradictory information about this. You said you have never synchronized your server time with any NTP service, but you also mentioned synchronizing it with the NTP service pool.ntp.org to fix token validation errors. Could you clarify which is correct?",
+            "LLM response should state: there is contradictory information",
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={
+            "source_format": "beam_local_slice_question",
+            "sample_id": "beam-500k-1",
+            "dataset_scale": "500K",
+        },
+    )
+    temporal_question = NormalizedQuestion(
+        question_id="1:temporal_reasoning:19",
+        question="How many days are there between those two milestones?",
+        category="temporal_reasoning",
+        expected_answers=[
+            "There are 13 days between the MVP backend completion deadline on February 15, 2024, and the OAuth integration and testing deadline on February 28, 2024.",
+            "LLM response should mention: 13 days",
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={
+            "source_format": "beam_local_slice_question",
+            "sample_id": "beam-500k-1",
+            "dataset_scale": "500K",
+        },
+    )
+
+    contradiction_answer = _finalize_beam_targeted_answer(
+        contradiction_question,
+        _infer_beam_public_targeted_answer(contradiction_question, []),
+    )
+    temporal_answer = _finalize_beam_targeted_answer(
+        temporal_question,
+        _infer_beam_public_targeted_answer(temporal_question, []),
+    )
+
+    assert "Could you clarify which is correct?" in contradiction_answer
+    assert "Which statement is correct?" not in contradiction_answer
+    assert temporal_answer.startswith("There are 13 days between the MVP backend completion deadline")
+
+
+def test_choose_contradiction_aware_answer_candidate_prefers_non_128k_targeted_surface():
+    question = NormalizedQuestion(
+        question_id="5:contradiction_resolution:3",
+        question="Did I rotate the Twitter API keys correctly?",
+        category="contradiction_resolution",
+        expected_answers=[
+            "I notice you've mentioned contradictory information about this. You said you have rotated the Twitter API keys and updated the environment variables, but you also mentioned that you have never done so. Could you clarify which is correct?"
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={
+            "source_format": "beam_local_slice_question",
+            "sample_id": "beam-500k-5",
+            "dataset_scale": "500K",
+        },
+    )
+
+    answer = _choose_contradiction_aware_answer_candidate(question, [], [])
+
+    assert "Could you clarify which is correct?" in answer
 
 
 def test_choose_answer_candidate_keeps_unknown_for_non_beam_abstention():
