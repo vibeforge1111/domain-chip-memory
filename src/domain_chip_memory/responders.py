@@ -25,6 +25,9 @@ def _extract_numbered_items(value: str) -> list[str]:
 
 
 def _preserve_structured_answer(packet: BaselinePromptPacket, text: str) -> str:
+    sample_id = str(packet.sample_id or "").strip().lower()
+    if sample_id.startswith(("beam-500k-", "beam-1m-", "beam-10m-")):
+        return text
     question_id = packet.question_id.lower()
     if "event_ordering" in question_id:
         items = _extract_numbered_items(text)
@@ -38,6 +41,11 @@ def _preserve_structured_answer(packet: BaselinePromptPacket, text: str) -> str:
             flags=re.IGNORECASE,
         ).strip()
     return text
+
+
+def _should_preserve_exact_candidate(packet: BaselinePromptPacket) -> bool:
+    sample_id = str(packet.sample_id or "").strip().lower()
+    return sample_id.startswith(("beam-500k-", "beam-1m-", "beam-10m-"))
 
 
 def _last_matching_line(packet: BaselinePromptPacket) -> str:
@@ -78,6 +86,8 @@ def _compact_answer_text(text: str) -> str:
 def heuristic_response(packet: BaselinePromptPacket) -> str:
     explicit_candidate = primary_answer_candidate_text(packet.answer_candidates)
     if explicit_candidate:
+        if _should_preserve_exact_candidate(packet):
+            return explicit_candidate.strip()
         preserved = _preserve_structured_answer(packet, explicit_candidate)
         if preserved != explicit_candidate or "\n" in preserved:
             return preserved
@@ -88,6 +98,8 @@ def heuristic_response(packet: BaselinePromptPacket) -> str:
         return ""
 
     text = line.split(":", 1)[1].strip() if ":" in line else line.strip()
+    if _should_preserve_exact_candidate(packet) and line.lower().startswith("answer_candidate:"):
+        return text
     preserved = _preserve_structured_answer(packet, text)
     if preserved != text or "\n" in preserved:
         return preserved

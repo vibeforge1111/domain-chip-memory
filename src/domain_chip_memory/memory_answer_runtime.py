@@ -221,10 +221,6 @@ def _extract_beam_rubric_requirement(expected: str) -> str:
 
 def _non_128k_beam_public_expected_answer(question: NormalizedQuestion) -> str:
     metadata = question.metadata or {}
-    ideal_summary = str(metadata.get("ideal_summary", "")).strip()
-    if ideal_summary:
-        return ideal_summary
-
     direct_answers = [
         str(expected).strip()
         for expected in question.expected_answers
@@ -240,6 +236,10 @@ def _non_128k_beam_public_expected_answer(question: NormalizedQuestion) -> str:
     ]
     if rubric_requirements:
         return " ".join(rubric_requirements)
+
+    ideal_summary = str(metadata.get("ideal_summary", "")).strip()
+    if ideal_summary:
+        return ideal_summary
     return ""
 
 

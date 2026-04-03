@@ -10,8 +10,11 @@ from domain_chip_memory.loaders import (
     load_longmemeval_json,
 )
 from domain_chip_memory.providers import ProviderResponse, build_provider_contract_summary, get_provider
-from domain_chip_memory.runner import _matches_expected_answer, build_runner_contract_summary, run_baseline
+from domain_chip_memory.responders import heuristic_response
+from domain_chip_memory.runner import _build_prediction, _matches_expected_answer, build_runner_contract_summary, run_baseline
+from domain_chip_memory.runs import BaselinePromptPacket
 from domain_chip_memory.scorecards import BaselinePrediction
+from domain_chip_memory.contracts import NormalizedQuestion
 
 
 def test_longmemeval_loader_and_runner(tmp_path: Path):
@@ -197,6 +200,72 @@ def test_runner_matches_beam_summary_rubric_with_rephrased_surface():
         "You worked on refactoring your Detector class to separate model inference and non-maximum suppression into distinct methods for better modularity.",
         ["LLM response should contain: refactored Detector class with separate inference and NMS methods"],
     ) is True
+
+
+def test_build_prediction_preserves_non_128k_beam_summary_surface():
+    question = NormalizedQuestion(
+        question_id="3:knowledge_update:12",
+        question="What is the total frame latency with the counting logic enabled in my object detection app?",
+        category="knowledge_update",
+        expected_answers=["180ms, which is well under the 250ms target"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={
+            "source_format": "beam_local_slice_question",
+            "sample_id": "beam-500k-3",
+            "dataset_scale": "500K",
+        },
+    )
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="beam-500k-3",
+        question_id=question.question_id,
+        question=question.question,
+        assembled_context="answer_candidate: well under the 250ms target",
+        retrieved_context_items=[],
+        metadata={},
+        answer_candidates=[],
+    )
+
+    prediction = _build_prediction(
+        packet,
+        question=question,
+        provider=get_provider("heuristic_v1"),
+        answer="180ms, which is well under the 250ms target",
+        provider_metadata={},
+    )
+
+    assert prediction.predicted_answer == "180ms, which is well under the 250ms target"
+
+
+def test_heuristic_response_preserves_non_128k_beam_explicit_candidate_surface():
+    packet = BaselinePromptPacket(
+        benchmark_name="BEAM",
+        baseline_name="summary_synthesis_memory",
+        sample_id="beam-500k-3",
+        question_id="3:knowledge_update:12",
+        question="What is the total frame latency with the counting logic enabled in my object detection app?",
+        assembled_context="answer_candidate: well under the 250ms target",
+        retrieved_context_items=[],
+        metadata={},
+        answer_candidates=[],
+    )
+    packet = BaselinePromptPacket(
+        benchmark_name=packet.benchmark_name,
+        baseline_name=packet.baseline_name,
+        sample_id=packet.sample_id,
+        question_id=packet.question_id,
+        question=packet.question,
+        assembled_context=packet.assembled_context,
+        retrieved_context_items=packet.retrieved_context_items,
+        metadata=packet.metadata,
+        answer_candidates=[
+            type("AnswerCandidateStub", (), {"text": "180ms, which is well under the 250ms target"})()
+        ],
+    )
+
+    assert heuristic_response(packet) == "180ms, which is well under the 250ms target"
 
 
 def test_runner_matches_numbered_list_prediction_against_single_line_gold():

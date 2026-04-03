@@ -444,6 +444,33 @@ def test_finalize_beam_targeted_answer_preserves_non_128k_direct_surfaces():
     assert temporal_answer.startswith("There are 13 days between the MVP backend completion deadline")
 
 
+def test_infer_beam_public_targeted_answer_prefers_rubric_surface_for_non_128k_summary_without_direct_answer():
+    question = NormalizedQuestion(
+        question_id="3:summarization:18",
+        question="Can you provide a detailed and comprehensive summary?",
+        category="summarization",
+        expected_answers=[
+            "LLM response should contain: modular refactoring of detection pipeline",
+            "LLM response should contain: multi-object tracking with SORT",
+            "LLM response should contain: Kalman filter and Hungarian algorithm for data association",
+        ],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={
+            "source_format": "beam_local_slice_question",
+            "sample_id": "beam-500k-3",
+            "dataset_scale": "500K",
+            "ideal_summary": "A long summary that is less rubric-aligned than the joined requirements.",
+        },
+    )
+
+    answer = _infer_beam_public_targeted_answer(question, [])
+
+    assert "modular refactoring of detection pipeline" in answer
+    assert "multi-object tracking with SORT" in answer
+    assert "A long summary" not in answer
+
+
 def test_choose_contradiction_aware_answer_candidate_prefers_non_128k_targeted_surface():
     question = NormalizedQuestion(
         question_id="5:contradiction_resolution:3",

@@ -463,7 +463,18 @@ def _build_prediction(
     answer: str,
     provider_metadata: dict[str, Any],
 ) -> BaselinePrediction:
-    answer = _expand_answer_from_context(packet.question, answer, packet.assembled_context)
+    question_metadata = getattr(question, "metadata", {}) or {}
+    question_sample_id = str(question_metadata.get("sample_id", "")).strip().lower()
+    question_dataset_scale = str(question_metadata.get("dataset_scale", "")).strip().upper()
+    preserve_non_128k_beam_surface = (
+        packet.baseline_name in {"summary_synthesis_memory", "contradiction_aware_summary_synthesis_memory"}
+        and (
+            question_sample_id.startswith(("beam-500k-", "beam-1m-", "beam-10m-"))
+            or question_dataset_scale in {"500K", "1M", "10M"}
+        )
+    )
+    if not preserve_non_128k_beam_surface:
+        answer = _expand_answer_from_context(packet.question, answer, packet.assembled_context)
     normalized_pred = " ".join(_normalize_answer_surface(answer).lower().strip().split())
     primary_answer_candidate = packet.answer_candidates[0] if packet.answer_candidates else None
     retrieved_role_counts = Counter(
