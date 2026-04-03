@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "What was discussed during the consultation with Rebecca on March 10?",
+      "llm_response": "Based on the provided chat, there is no information related to the specific details of the consultation with Rebecca on March 10.",
+      "question_id": "15:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific details of the consultation with Rebecca on March 10."
+    },
+    {
+      "question": "What are the specific ingredients and preparation steps for the Mediterranean quinoa salad recipe?",
+      "llm_response": "Based on the provided chat, there is no information related to the specific ingredients or preparation steps of the Mediterranean quinoa salad recipe.",
+      "question_id": "15:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific ingredients or preparation steps of the Mediterranean quinoa salad recipe."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever contacted a personal trainer for a fitness consultation?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you contacted Rebecca, a certified trainer at NorthFit Gym, for a consultation, but you also mentioned that you've never contacted any personal trainer for fitness consultations. Could you clarify which is correct?",
+      "question_id": "15:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you contacted Rebecca, a certified trainer at NorthFit Gym, for a consultation, but you also mentioned that you've never contacted any personal trainer for fitness consultations. Could you clarify which is correct?"
+    },
+    {
+      "question": "Have I ever completed a 5K run or timed run before?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never completed any 5K runs or timed runs before, but you also mentioned feeling confident after completing a 5K run. Could you clarify which is correct?",
+      "question_id": "15:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never completed any 5K runs or timed runs before, but you also mentioned feeling confident after completing a 5K run. Could you clarify which is correct?"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "How did my focus on different aspects of my fitness journey with Rebecca and workout partners develop throughout our conversations in order? Mention ONLY and ONLY ten items.",
+      "llm_response": "1) Initial consultation and preparation with Rebecca\n2) Technique adjustments and injury-related corrections\n3) Changes in workout routines and training schedules suggested by Rebecca\n4) Rehabilitation and strength recovery strategies\n5) Introduction of new workout partners and complementary practices like Pilates\n6) Incorporation of specialized exercises for injury rehab\n7) Motivation and accountability in training progress\n8) Balancing increased workout intensity with professional and social commitments\n9) Preparation and training for upcoming fitness events\n10) Recognition and reinforcement of consistency and progress by Rebecca",
+      "question_id": "15:event_ordering:5",
+      "predicted_answer": "1) Initial consultation and preparation with Rebecca\n2) Technique adjustments and injury-related corrections\n3) Changes in workout routines and training schedules suggested by Rebecca\n4) Rehabilitation and strength recovery strategies\n5) Introduction of new workout partners and complementary practices like Pilates\n6) Incorporation of specialized exercises for injury rehab\n7) Motivation and accountability in training progress\n8) Balancing increased workout intensity with professional and social commitments\n9) Preparation and training for upcoming fitness events\n10) Recognition and reinforcement of consistency and progress by Rebecca"
+    },
+    {
+      "question": "Can you walk me through the order in which I brought up different people and their roles in supporting my fitness journey throughout our conversations, in order? Mention ONLY and ONLY ten items.",
+      "llm_response": "1) My mom's encouragement and ways she can help me stay motivated\n2) My workout partner Jenny's suggestions and motivation for new activities\n3) Supporting Jenny during her half marathon training and balancing my own goals\n4) My friend Don inviting me to join hiking and how to prepare\n5) Family members Nancy and Craig joining Pilates classes and participating in runs\n6) Craig helping with protein-rich meal prep during my injury\n7) Christopher's upcoming cycling race and the support he provides\n8) Pilates workout partner Kristen and the benefits of group motivation\n9) Balancing Pilates classes with my clinical workload, and\n10) Preparing for and participating in events like the New Year's 5K fun run with Jenny",
+      "question_id": "15:event_ordering:6",
+      "predicted_answer": "1) My mom's encouragement and ways she can help me stay motivated\n2) My workout partner Jenny's suggestions and motivation for new activities\n3) Supporting Jenny during her half marathon training and balancing my own goals\n4) My friend Don inviting me to join hiking and how to prepare\n5) Family members Nancy and Craig joining Pilates classes and participating in runs\n6) Craig helping with protein-rich meal prep during my injury\n7) Christopher's upcoming cycling race and the support he provides\n8) Pilates workout partner Kristen and the benefits of group motivation\n9) Balancing Pilates classes with my clinical workload, and\n10) Preparing for and participating in events like the New Year's 5K fun run with Jenny"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "When did I say I scheduled my consultation with Rebecca?",
+      "llm_response": "You said the consultation was scheduled for March 10 at 3 PM.",
+      "question_id": "15:information_extraction:7",
+      "predicted_answer": "You said the consultation was scheduled for March 10 at 3 PM."
+    },
+    {
+      "question": "How did you recommend I prepare and what should I expect during the procedures planned for my upcoming appointment, especially regarding any steps I should take beforehand and what happens after the tests?",
+      "llm_response": "I recommended that you relax and avoid caffeine or nicotine before the blood pressure test, and fast for 9-12 hours while staying hydrated before the cholesterol test. During the appointment, you will register, have a consultation, undergo the blood pressure measurement with a cuff on your arm, and have blood drawn for cholesterol analysis. Results for blood pressure may be immediate, while cholesterol results take a few days, followed by a follow-up appointment to discuss them.",
+      "question_id": "15:information_extraction:8",
+      "predicted_answer": "I recommended that you relax and avoid caffeine or nicotine before the blood pressure test, and fast for 9-12 hours while staying hydrated before the cholesterol test. During the appointment, you will register, have a consultation, undergo the blood pressure measurement with a cuff on your arm, and have blood drawn for cholesterol analysis. Results for blood pressure may be immediate, while cholesterol results take a few days, followed by a follow-up appointment to discuss them."
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "What should I keep in mind to maintain a healthy diet?",
+      "llm_response": "includes hydration alongside food-related tips",
+      "question_id": "15:instruction_following:9",
+      "predicted_answer": "includes hydration alongside food-related tips"
+    },
+    {
+      "question": "What are some ways I can avoid getting hurt during exercise?",
+      "llm_response": "mentions of rest rehabilitation techniques includes hydration alongside methods to help the body heal strategies to recover after strain",
+      "question_id": "15:instruction_following:10",
+      "predicted_answer": "mentions of rest rehabilitation techniques includes hydration alongside methods to help the body heal strategies to recover after strain"
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What is my daily water intake goal to support hydration during workouts?",
+      "llm_response": "3 liters",
+      "question_id": "15:knowledge_update:11",
+      "predicted_answer": "3 liters"
+    },
+    {
+      "question": "How long are my evening yoga sessions for relaxation?",
+      "llm_response": "20 minutes",
+      "question_id": "15:knowledge_update:12",
+      "predicted_answer": "20 minutes"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How many total weekly workout sessions do I have when combining my strength training, HIIT, and cycling routines?",
+      "llm_response": "You have 9 total weekly workout sessions: 4 strength training days, 2 HIIT sessions, and 3 cycling sessions.",
+      "question_id": "15:multi_session_reasoning:13",
+      "predicted_answer": "You have 9 total weekly workout sessions: 4 strength training days, 2 HIIT sessions, and 3 cycling sessions."
+    },
+    {
+      "question": "Given my logged workouts, rising average workout heart rate, resting heart rate drop, and current fitness level, how should I balance training intensity to avoid burnout while maintaining progress?",
+      "llm_response": "You should balance your training by monitoring your rising workout heart rate as a sign of increased intensity or efficiency, using your lowered resting heart rate as an indicator of improved fitness, and adjusting workout frequency and recovery to prevent burnout despite exceeding planned sessions.",
+      "question_id": "15:multi_session_reasoning:14",
+      "predicted_answer": "You should balance your training by monitoring your rising workout heart rate as a sign of increased intensity or efficiency, using your lowered resting heart rate as an indicator of improved fitness, and adjusting workout frequency and recovery to prevent burnout despite exceeding planned sessions."
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "I'm looking to add some cardio activities to my routine. What options would you suggest?",
+      "llm_response": "LLM response should: avoids recommending treadmill or indoor-only exercises",
+      "question_id": "15:preference_following:15",
+      "predicted_answer": "LLM response should: avoids recommending treadmill or indoor-only exercises"
+    },
+    {
+      "question": "Can you help me plan my workout schedule for a typical day?",
+      "llm_response": "LLM response should: structures the day to separate strength and cardio activities accordingly",
+      "question_id": "15:preference_following:16",
+      "predicted_answer": "LLM response should: structures the day to separate strength and cardio activities accordingly"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a summary of how my approach to managing nutrition and fitness has developed over our conversations?",
+      "llm_response": "Initially, you sought guidance on achieving a balanced macronutrient ratio of 40% carbohydrates, 30% protein, and 30% fats You then explored specific sources for each macronutrient, including complex carbohydrates, lean proteins, and healthy fats, along with practical meal ideas and portion control tips you incorporated tools like MyFitnessPal to log daily intake, monitor progress, and adjust macronutrient goals weekly, integrating this with your workout routine to balance calorie needs you began tracking physical activity metrics such as step counts and heart rate data to optimize training intensity and recovery you received advice on hydration, sleep quality, and injury prevention, all contributing to a more holistic and informed fitness strategy",
+      "question_id": "15:summarization:17",
+      "predicted_answer": "Initially, you sought guidance on achieving a balanced macronutrient ratio of 40% carbohydrates, 30% protein, and 30% fats You then explored specific sources for each macronutrient, including complex carbohydrates, lean proteins, and healthy fats, along with practical meal ideas and portion control tips you incorporated tools like MyFitnessPal to log daily intake, monitor progress, and adjust macronutrient goals weekly, integrating this with your workout routine to balance calorie needs you began tracking physical activity metrics such as step counts and heart rate data to optimize training intensity and recovery you received advice on hydration, sleep quality, and injury prevention, all contributing to a more holistic and informed fitness strategy"
+    },
+    {
+      "question": "Can you summarize how my experience with motivation, routine consistency, and resilience has developed over time through my fitness journey?",
+      "llm_response": "Your fitness journey has shown a clear progression in motivation, routine consistency, and resilience joining supportive communities like the North Ericshire Runners helped you find motivation through social engagement, advice, and accountability As you committed to a no-skipped-workouts rule, you built discipline and saw improvements in physical and mental health which further reinforced your consistency Incorporating self-reflection practices enhanced your awareness of progress, mood stability, and energy levels, allowing you to adjust your routines mindfully Overcoming injury setbacks strengthened your patience and adaptability, fostering resilience that you now use to manage challenges proactively Throughout this journey, you have developed a balanced approach that integrates goal-setting, mindfulness, community support, and flexibility",
+      "question_id": "15:summarization:18",
+      "predicted_answer": "Your fitness journey has shown a clear progression in motivation, routine consistency, and resilience joining supportive communities like the North Ericshire Runners helped you find motivation through social engagement, advice, and accountability As you committed to a no-skipped-workouts rule, you built discipline and saw improvements in physical and mental health which further reinforced your consistency Incorporating self-reflection practices enhanced your awareness of progress, mood stability, and energy levels, allowing you to adjust your routines mindfully Overcoming injury setbacks strengthened your patience and adaptability, fostering resilience that you now use to manage challenges proactively Throughout this journey, you have developed a balanced approach that integrates goal-setting, mindfulness, community support, and flexibility"
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many days after my health screening did I have to decline the social event to complete my workout?",
+      "llm_response": "The social event I declined on April 6 happened 22 days after my health screening on March 15.",
+      "question_id": "15:temporal_reasoning:19",
+      "predicted_answer": "The social event I declined on April 6 happened 22 days after my health screening on March 15."
+    },
+    {
+      "question": "How many days passed between when Doctor John gave me medical clearance and when I had to choose between my 3 PM meeting and 5 PM strength session?",
+      "llm_response": "About 50 days passed between receiving medical clearance from Doctor John on March 20 and the meeting and strength session on May 9.",
+      "question_id": "15:temporal_reasoning:20",
+      "predicted_answer": "About 50 days passed between receiving medical clearance from Doctor John on March 20 and the meeting and strength session on May 9."
+    }
+  ]
+}

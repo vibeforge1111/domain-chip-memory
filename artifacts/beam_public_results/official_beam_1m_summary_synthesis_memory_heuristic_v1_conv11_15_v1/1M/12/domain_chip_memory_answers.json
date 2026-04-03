@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "Can you tell me more about Cassandra's professional background and qualifications?",
+      "llm_response": "Based on the provided chat, there is no information related to Cassandra's professional background and qualifications.",
+      "question_id": "12:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to Cassandra's professional background and qualifications."
+    },
+    {
+      "question": "What specific feedback did Stephanie give on the cover letter critique on February 28?",
+      "llm_response": "Based on the provided chat, there is no information related to the specific feedback Stephanie gave on the cover letter critique.",
+      "question_id": "12:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific feedback Stephanie gave on the cover letter critique."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever updated my LinkedIn profile?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said your LinkedIn profile was updated and saw an increase in views, but you also mentioned that you've never updated your profile. Which statement is correct?",
+      "question_id": "12:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said your LinkedIn profile was updated and saw an increase in views, but you also mentioned that you've never updated your profile. Which statement is correct?"
+    },
+    {
+      "question": "Have I ever attended an interview at North Ericshire General Hospital?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have attended an interview at North Ericshire General Hospital, but you also mentioned that you have never attended any interview there. Could you clarify which is correct?",
+      "question_id": "12:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have attended an interview at North Ericshire General Hospital, but you also mentioned that you have never attended any interview there. Could you clarify which is correct?"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "How did my discussions about career development and compensation evolve in order? Mention ONLY and ONLY seven items.",
+      "llm_response": "1) Concerns about career guidance and mentoring from your mom\n2) Negotiations and comparisons between job offers including signing bonuses and contract details\n3) Preparation and strategies for salary negotiations and remote work adjustments\n4) Planning and tactics for requesting raises and bonuses with HR\n5) Approaches to performance reviews and managing expectations in your new role\n6) Evaluations of the impact of salary changes on your financial situation and related considerations\n7) Best practices for maintaining communication and alignment with your team and stakeholders",
+      "question_id": "12:event_ordering:5",
+      "predicted_answer": "1) Concerns about career guidance and mentoring from your mom\n2) Negotiations and comparisons between job offers including signing bonuses and contract details\n3) Preparation and strategies for salary negotiations and remote work adjustments\n4) Planning and tactics for requesting raises and bonuses with HR\n5) Approaches to performance reviews and managing expectations in your new role\n6) Evaluations of the impact of salary changes on your financial situation and related considerations\n7) Best practices for maintaining communication and alignment with your team and stakeholders"
+    },
+    {
+      "question": "How did my focus on different professional tools and collaboration methods develop throughout our conversations in order? Mention ONLY and ONLY nine items.",
+      "llm_response": "1) Discussing learning and collaboration with a colleague\n2) Exploring job options and work-life balance considerations\n3) Managing job applications and understanding their statuses\n4) Training and leveraging Slack for team communication\n5) Improving efficiency with electronic health record systems and telepsychology\n6) Organizing interview preparation using Notion\n7) Managing leadership projects with Asana\n8) Transitioning to and balancing Microsoft Teams for team collaboration\n9) Handling and confirming reservations effectively for professional meetings",
+      "question_id": "12:event_ordering:6",
+      "predicted_answer": "1) Discussing learning and collaboration with a colleague\n2) Exploring job options and work-life balance considerations\n3) Managing job applications and understanding their statuses\n4) Training and leveraging Slack for team communication\n5) Improving efficiency with electronic health record systems and telepsychology\n6) Organizing interview preparation using Notion\n7) Managing leadership projects with Asana\n8) Transitioning to and balancing Microsoft Teams for team collaboration\n9) Handling and confirming reservations effectively for professional meetings"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "When did I meet Sarah at the conference?",
+      "llm_response": "On November 12, 2023.",
+      "question_id": "12:information_extraction:7",
+      "predicted_answer": "On November 12, 2023."
+    },
+    {
+      "question": "How did my initial interaction at the conference influence the timeline and approach I took to revising my professional documents?",
+      "llm_response": "My initial interaction at the conference led Sarah to suggest updating my resume by a specific deadline, which shaped how I planned meetings, prepared materials, and structured the update process to meet that timeline.",
+      "question_id": "12:information_extraction:8",
+      "predicted_answer": "My initial interaction at the conference led Sarah to suggest updating my resume by a specific deadline, which shaped how I planned meetings, prepared materials, and structured the update process to meet that timeline."
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "What time does the Cappadocia trip flight leave and return?",
+      "llm_response": "use of 24-hour clock format no AM/PM or 12-hour format used",
+      "question_id": "12:instruction_following:9",
+      "predicted_answer": "use of 24-hour clock format no AM/PM or 12-hour format used"
+    },
+    {
+      "question": "How did the project perform compared to our initial goals?",
+      "llm_response": "mentions percentage improvements provides numeric improvement rates",
+      "question_id": "12:instruction_following:10",
+      "predicted_answer": "mentions percentage improvements provides numeric improvement rates"
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "How many job openings have I applied to, and what area am I targeting for my search?",
+      "llm_response": "You have applied to 18 job openings, expanding your search radius slightly beyond 50 km to include nearby towns.",
+      "question_id": "12:knowledge_update:11",
+      "predicted_answer": "You have applied to 18 job openings, expanding your search radius slightly beyond 50 km to include nearby towns."
+    },
+    {
+      "question": "What is the annual membership fee I paid to join the Turkish Psychological Association?",
+      "llm_response": "$175",
+      "question_id": "12:knowledge_update:12",
+      "predicted_answer": "$175"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "Between my CBT certification course and the Advanced CBT course, which one am I planning to invest more money in?",
+      "llm_response": "You are planning to invest more money in the CBT certification course, which costs $1,200, compared to the Advanced CBT course costing $900.",
+      "question_id": "12:multi_session_reasoning:13",
+      "predicted_answer": "You are planning to invest more money in the CBT certification course, which costs $1,200, compared to the Advanced CBT course costing $900."
+    },
+    {
+      "question": "How can I combine my clinical experience, use of Jobscan, telepsychology growth, and negotiation skills to maximize my chances of securing a senior role with the best contract terms?",
+      "llm_response": "You should highlight your 8 years of clinical experience with quantified achievements, tailor your resume using Jobscan to include senior role keywords, leverage the 15% telepsychology growth by emphasizing telehealth skills, and apply Cassandra's negotiation techniques to secure improved salary, benefits, and contract terms.",
+      "question_id": "12:multi_session_reasoning:14",
+      "predicted_answer": "You should highlight your 8 years of clinical experience with quantified achievements, tailor your resume using Jobscan to include senior role keywords, leverage the 15% telepsychology growth by emphasizing telehealth skills, and apply Cassandra's negotiation techniques to secure improved salary, benefits, and contract terms."
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "I'm looking at a few job listings and trying to figure out which ones might be the best fit for me. How would you help me narrow down the options?",
+      "llm_response": "focuses on job locations near North Ericshire mentions commute time considerations acknowledges user's need to limit commute",
+      "question_id": "12:preference_following:15",
+      "predicted_answer": "focuses on job locations near North Ericshire mentions commute time considerations acknowledges user's need to limit commute"
+    },
+    {
+      "question": "I'm exploring job opportunities and want to understand what kinds of work arrangements companies typically offer. Can you tell me about the different options available?",
+      "llm_response": "mentions flexible remote work options describes remote and hybrid work arrangements acknowledges variety in work setups that reduce commuting",
+      "question_id": "12:preference_following:16",
+      "predicted_answer": "mentions flexible remote work options describes remote and hybrid work arrangements acknowledges variety in work setups that reduce commuting"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a comprehensive summary of how my career planning and job search have developed over our conversations?",
+      "llm_response": "we examined how your current salary fits within the clinical psychology field, considering factors like experience, location, and work setting We then addressed concerns about age and its impact on job prospects, highlighting strategies to leverage your experience and adaptability we focused on enhancing your job search tools, including tailored resume updates guided by professional feedback and optimizing cover letters with keyword strategies we explored effective networking opportunities, such as attending workshops and engaging with contacts like Matthew and Sarah, to expand your professional connections we discussed interview preparation, negotiation tactics, and balancing personal support systems, such as mentorship from your mom and role-play practice with Sharon",
+      "question_id": "12:summarization:17",
+      "predicted_answer": "we examined how your current salary fits within the clinical psychology field, considering factors like experience, location, and work setting We then addressed concerns about age and its impact on job prospects, highlighting strategies to leverage your experience and adaptability we focused on enhancing your job search tools, including tailored resume updates guided by professional feedback and optimizing cover letters with keyword strategies we explored effective networking opportunities, such as attending workshops and engaging with contacts like Matthew and Sarah, to expand your professional connections we discussed interview preparation, negotiation tactics, and balancing personal support systems, such as mentorship from your mom and role-play practice with Sharon"
+    },
+    {
+      "question": "Can you give me a clear summary of how my job search and interview preparation have progressed over the past few weeks?",
+      "llm_response": "you focused on preparing for a behavioral interview at North Ericshire General Hospital by learning the STAR method, practicing sample questions you prepared for a technical interview with MedPsych Clinic by reviewing clinical psychology topics, practicing technical questions, and planning logistics for the interview day Alongside interview prep, you worked on negotiating job offers, balancing salary and benefits, and strategizing how to communicate your requests professionally You also managed your job applications systematically using tools like Trello and sought to maximize professional networking through the Turkish Psychological Association you balanced intensive preparation with personal life considerations, ensuring support from your partner Sharon and maintaining well-being",
+      "question_id": "12:summarization:18",
+      "predicted_answer": "you focused on preparing for a behavioral interview at North Ericshire General Hospital by learning the STAR method, practicing sample questions you prepared for a technical interview with MedPsych Clinic by reviewing clinical psychology topics, practicing technical questions, and planning logistics for the interview day Alongside interview prep, you worked on negotiating job offers, balancing salary and benefits, and strategizing how to communicate your requests professionally You also managed your job applications systematically using tools like Trello and sought to maximize professional networking through the Turkish Psychological Association you balanced intensive preparation with personal life considerations, ensuring support from your partner Sharon and maintaining well-being"
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many days did I have between meeting Sarah at the Istanbul conference and the deadline she suggested for updating my resume?",
+      "llm_response": "There were 123 days between meeting Sarah at the Istanbul conference on November 12, 2023, and the resume update deadline of March 15, 2024.",
+      "question_id": "12:temporal_reasoning:19",
+      "predicted_answer": "There were 123 days between meeting Sarah at the Istanbul conference on November 12, 2023, and the resume update deadline of March 15, 2024."
+    },
+    {
+      "question": "How many days do I have between finishing my resume optimization and starting my new job at MedPsych Clinic?",
+      "llm_response": "You have 52 days between finishing your resume optimization by March 10 and starting your new job on May 1, 2024.",
+      "question_id": "12:temporal_reasoning:20",
+      "predicted_answer": "You have 52 days between finishing your resume optimization by March 10 and starting your new job on May 1, 2024."
+    }
+  ]
+}

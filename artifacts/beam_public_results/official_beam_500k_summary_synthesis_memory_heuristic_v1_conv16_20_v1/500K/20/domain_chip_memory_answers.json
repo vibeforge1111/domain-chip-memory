@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "Can you tell me more about Christopher\u2019s professional background and expertise?",
+      "llm_response": "Based on the provided chat, there is no information related to Christopher\u2019s professional background and expertise.",
+      "question_id": "20:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to Christopher\u2019s professional background and expertise."
+    },
+    {
+      "question": "What specific techniques were covered in the leadership retreat at Saint Helena Resort on September 7-8?",
+      "llm_response": "Based on the provided chat, there is no information related to the specific techniques covered in the leadership retreat.",
+      "question_id": "20:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific techniques covered in the leadership retreat."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever attended any leadership workshops or training sessions?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never attended any leadership workshops or training sessions, but you also mentioned attending a leadership workshop. Could you clarify which is correct?",
+      "question_id": "20:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never attended any leadership workshops or training sessions, but you also mentioned attending a leadership workshop. Could you clarify which is correct?"
+    },
+    {
+      "question": "Have I ever coordinated a team or led project planning sessions before?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never coordinated any teams or led project planning sessions, but you also mentioned coordinating a 10-person team for project planning. Could you clarify which is correct?",
+      "question_id": "20:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never coordinated any teams or led project planning sessions, but you also mentioned coordinating a 10-person team for project planning. Could you clarify which is correct?"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you list the order in which I brought up different collaborations and advice related to my work projects in our conversations, in order (mention 8 items)?",
+      "llm_response": "1) Collaborating with Kelli on an article that boosted readership\n2) Meeting Mary at an editorial meeting and considering her guidance\n3) Reflecting on advice from James about aligning projects with company goals\n4) Building on the success of a strategy meeting co-presented with Mary\n5) Working closely with Kelli on a workshop about cross-department collaboration\n6) Receiving strategic advice from James for a sustainability project\n7) Co-authoring an article with Mary on project impact\n8) Considering how James's letter of recommendation might affect your application",
+      "question_id": "20:event_ordering:5",
+      "predicted_answer": "1) Collaborating with Kelli on an article that boosted readership\n2) Meeting Mary at an editorial meeting and considering her guidance\n3) Reflecting on advice from James about aligning projects with company goals\n4) Building on the success of a strategy meeting co-presented with Mary\n5) Working closely with Kelli on a workshop about cross-department collaboration\n6) Receiving strategic advice from James for a sustainability project\n7) Co-authoring an article with Mary on project impact\n8) Considering how James's letter of recommendation might affect your application"
+    },
+    {
+      "question": "Can you list the order in which I brought up different ways I\u2019m managing and showcasing my professional growth throughout our conversations, in order (mention 5 items)?",
+      "llm_response": "1) First, discussing effective ways to showcase skills and accomplishments by a deadline\n2) Then, talking about blocking time for project leadership tasks\n3) Next, mentioning scheduling mentoring sessions and reflecting on mentoring experience\n4) After that, bringing up balancing work and personal life with digital tools\n5) Finally, discussing drafting and preparing various project and promotion materials",
+      "question_id": "20:event_ordering:6",
+      "predicted_answer": "1) First, discussing effective ways to showcase skills and accomplishments by a deadline\n2) Then, talking about blocking time for project leadership tasks\n3) Next, mentioning scheduling mentoring sessions and reflecting on mentoring experience\n4) After that, bringing up balancing work and personal life with digital tools\n5) Finally, discussing drafting and preparing various project and promotion materials"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "How old did I say Raymond is when I mentioned my performance rating?",
+      "llm_response": "You said Raymond is 38 years old.",
+      "question_id": "20:information_extraction:7",
+      "predicted_answer": "You said Raymond is 38 years old."
+    },
+    {
+      "question": "When did I publish my article series that reached 15,500 views in one week?",
+      "llm_response": "You published the article series on April 25.",
+      "question_id": "20:information_extraction:8",
+      "predicted_answer": "You published the article series on April 25."
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "When is the project expected to be completed?",
+      "llm_response": "Response should include itemized dates or phases leading up to the completion, not just a single date or vague timeframe.",
+      "question_id": "20:instruction_following:9",
+      "predicted_answer": "Response should include itemized dates or phases leading up to the completion, not just a single date or vague timeframe."
+    },
+    {
+      "question": "How should I divide the funds for the upcoming tasks?",
+      "llm_response": "Response should include specific monetary figures related to the allocation rather than general statements.",
+      "question_id": "20:instruction_following:10",
+      "predicted_answer": "Response should include specific monetary figures related to the allocation rather than general statements."
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What is the deadline for completing the Green Tech article series?",
+      "llm_response": "July 7, 2024",
+      "question_id": "20:knowledge_update:11",
+      "predicted_answer": "July 7, 2024"
+    },
+    {
+      "question": "How many pages is the mentoring guide for junior writers?",
+      "llm_response": "7 pages",
+      "question_id": "20:knowledge_update:12",
+      "predicted_answer": "7 pages"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "Between my two article engagement updates, which one shows a higher average number of views per article?",
+      "llm_response": "The update with an average of 17,300 views per article shows a higher average than the one with 14,200 views.",
+      "question_id": "20:multi_session_reasoning:13",
+      "predicted_answer": "The update with an average of 17,300 views per article shows a higher average than the one with 14,200 views."
+    },
+    {
+      "question": "How much has my average article views increased from March to May based on my weekly engagement reports?",
+      "llm_response": "Your average article views increased by 3,100 from March to May.",
+      "question_id": "20:multi_session_reasoning:14",
+      "predicted_answer": "Your average article views increased by 3,100 from March to May."
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "I'm preparing for an important presentation soon. How would you suggest I organize my content to make it clear and engaging?",
+      "llm_response": "Response should include or prioritize the use of visual aids or suggest incorporating visual elements rather than relying solely on verbal explanations",
+      "question_id": "20:preference_following:15",
+      "predicted_answer": "Response should include or prioritize the use of visual aids or suggest incorporating visual elements rather than relying solely on verbal explanations"
+    },
+    {
+      "question": "I'm organizing my tasks for an upcoming project. What tools would you suggest I use to keep everything organized?",
+      "llm_response": "Response should recommend digital task management tools similar to Asana rather than email-based or non-digital methods, aligning with the user's preference for clarity through digital platforms.",
+      "question_id": "20:preference_following:16",
+      "predicted_answer": "Response should recommend digital task management tools similar to Asana rather than email-based or non-digital methods, aligning with the user's preference for clarity through digital platforms."
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a summary of how I can balance my online course with my family and work responsibilities?",
+      "llm_response": "Response should mention: You are managing an online course while balancing work and family life, including supporting your partner Brett and spending quality time with your children Ronald and Ryan.",
+      "question_id": "20:summarization:17",
+      "predicted_answer": "Response should mention: You are managing an online course while balancing work and family life, including supporting your partner Brett and spending quality time with your children Ronald and Ryan."
+    },
+    {
+      "question": "Can you provide a thorough summary that captures the full scope of the planning, challenges, adaptations, and outcomes involved in my recent professional initiatives and project developments?",
+      "llm_response": "Response should mention: The summary should comprehensively integrate the user's goal-setting and strategic planning efforts aimed at salary increase and leadership roles, detailing the structured approach including SMART goals, skill enhancement, and relationship building.",
+      "question_id": "20:summarization:18",
+      "predicted_answer": "Response should mention: The summary should comprehensively integrate the user's goal-setting and strategic planning efforts aimed at salary increase and leadership roles, detailing the structured approach including SMART goals, skill enhancement, and relationship building."
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "If I originally planned to complete my portfolio by mid-December but then moved the deadline a week later, how many days later is my new deadline compared to the original one?",
+      "llm_response": "The new deadline is 7 days later than the original mid-December deadline.",
+      "question_id": "20:temporal_reasoning:19",
+      "predicted_answer": "The new deadline is 7 days later than the original mid-December deadline."
+    },
+    {
+      "question": "How many months are there between my meeting with Raymond to discuss the stretch assignment proposal and the formal promotion discussion I plan to have with him?",
+      "llm_response": "There are about 6 months between the meeting to discuss the stretch assignment proposal in mid-May and the formal promotion discussion planned for November.",
+      "question_id": "20:temporal_reasoning:20",
+      "predicted_answer": "There are about 6 months between the meeting to discuss the stretch assignment proposal in mid-May and the formal promotion discussion planned for November."
+    }
+  ]
+}

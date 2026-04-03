@@ -1,0 +1,43 @@
+{
+  "benchmark_name": "BEAM",
+  "source_mode": "official_public",
+  "result_file_name": "domain_chip_memory_answers.json",
+  "conversation_count": 5,
+  "written_files": [
+    {
+      "dataset_scale": "1M",
+      "conversation_id": "16",
+      "output_file": "artifacts\\beam_public_results\\official_beam_1m_summary_synthesis_memory_heuristic_v1_conv16_20_v1\\1M\\16\\domain_chip_memory_answers.json",
+      "category_count": 10,
+      "question_count": 20
+    },
+    {
+      "dataset_scale": "1M",
+      "conversation_id": "17",
+      "output_file": "artifacts\\beam_public_results\\official_beam_1m_summary_synthesis_memory_heuristic_v1_conv16_20_v1\\1M\\17\\domain_chip_memory_answers.json",
+      "category_count": 10,
+      "question_count": 20
+    },
+    {
+      "dataset_scale": "1M",
+      "conversation_id": "18",
+      "output_file": "artifacts\\beam_public_results\\official_beam_1m_summary_synthesis_memory_heuristic_v1_conv16_20_v1\\1M\\18\\domain_chip_memory_answers.json",
+      "category_count": 10,
+      "question_count": 20
+    },
+    {
+      "dataset_scale": "1M",
+      "conversation_id": "19",
+      "output_file": "artifacts\\beam_public_results\\official_beam_1m_summary_synthesis_memory_heuristic_v1_conv16_20_v1\\1M\\19\\domain_chip_memory_answers.json",
+      "category_count": 10,
+      "question_count": 20
+    },
+    {
+      "dataset_scale": "1M",
+      "conversation_id": "20",
+      "output_file": "artifacts\\beam_public_results\\official_beam_1m_summary_synthesis_memory_heuristic_v1_conv16_20_v1\\1M\\20\\domain_chip_memory_answers.json",
+      "category_count": 10,
+      "question_count": 20
+    }
+  ]
+}

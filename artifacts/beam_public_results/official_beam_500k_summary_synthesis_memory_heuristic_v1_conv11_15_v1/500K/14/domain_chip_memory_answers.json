@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "Can you tell me more about Dr. Marie Leclerc\u2019s professional background and qualifications?",
+      "llm_response": "Based on the provided chat, there is no information related to Dr. Marie Leclerc\u2019s professional background and qualifications.",
+      "question_id": "14:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to Dr. Marie Leclerc\u2019s professional background and qualifications."
+    },
+    {
+      "question": "What was discussed or decided during the family counseling session with John on June 20, 2024?",
+      "llm_response": "Based on the provided chat, there is no information related to the discussions or decisions made during the June 20 family counseling session.",
+      "question_id": "14:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the discussions or decisions made during the June 20 family counseling session."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever apologized to Rachael in person for forgetting my anniversary?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never apologized to Rachael in person for forgetting your anniversary, but you also mentioned accepting full responsibility and apologizing in person. Could you clarify which is correct?",
+      "question_id": "14:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never apologized to Rachael in person for forgetting your anniversary, but you also mentioned accepting full responsibility and apologizing in person. Could you clarify which is correct?"
+    },
+    {
+      "question": "Have I ever apologized for missing any rehearsals?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never apologized for missing any rehearsals, but you also mentioned taking responsibility and apologizing for a missed rehearsal. Could you clarify which is correct?",
+      "question_id": "14:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never apologized for missing any rehearsals, but you also mentioned taking responsibility and apologizing for a missed rehearsal. Could you clarify which is correct?"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you walk me through the order in which I brought up different aspects of my relationship progress and goals throughout our conversations in order (mention 10 items)?",
+      "llm_response": "1) Concerns about maintaining the relationship and its origins\n2) Addressing trust issues and age difference\n3) Setting measurable trust improvement goals with surveys\n4) Discussing satisfaction targets and compromises\n5) Focusing on maintaining high satisfaction with ongoing communication\n6) Deepening emotional intimacy and closeness goals\n7) Planning creative collaboration and its impact\n8) Managing commitments during shared time and vacations\n9) Finalizing creative projects and related scheduling\n10) Sustaining satisfaction with communication and social compromises",
+      "question_id": "14:event_ordering:5",
+      "predicted_answer": "1) Concerns about maintaining the relationship and its origins\n2) Addressing trust issues and age difference\n3) Setting measurable trust improvement goals with surveys\n4) Discussing satisfaction targets and compromises\n5) Focusing on maintaining high satisfaction with ongoing communication\n6) Deepening emotional intimacy and closeness goals\n7) Planning creative collaboration and its impact\n8) Managing commitments during shared time and vacations\n9) Finalizing creative projects and related scheduling\n10) Sustaining satisfaction with communication and social compromises"
+    },
+    {
+      "question": "Can you walk me through the order in which I brought up different strategies and concerns related to managing my emotional well-being and relationship throughout our conversations, in order (mention 8 items)?",
+      "llm_response": "1) Concerns about couples counseling and rebuilding trust (chat_ids 86, 88, 98, 100\n2) Efforts to rebuild intimacy through shared music sessions (chat_ids 316, 318\n3) Using meditation and relaxation apps to reduce irritability (chat_ids 470, 472\n4) Applying breathing exercises to reduce conflict and emotional tension (chat_ids 574, 576\n5) Managing stress and emotional regulation during travel and packing (chat_ids 690, 780, 786, 788\n6) Addressing performance anxiety related to recording sessions with breathing techniques (chat_ids 1060, 1064\n7) Seeking alternative emotional regulation methods for recording stress and creative challenges (chat_ids 1164\n8) Using breathing exercises to manage nerves on a party day and applying those techniques to other stressful situations (chat_ids 1258",
+      "question_id": "14:event_ordering:6",
+      "predicted_answer": "1) Concerns about couples counseling and rebuilding trust (chat_ids 86, 88, 98, 100\n2) Efforts to rebuild intimacy through shared music sessions (chat_ids 316, 318\n3) Using meditation and relaxation apps to reduce irritability (chat_ids 470, 472\n4) Applying breathing exercises to reduce conflict and emotional tension (chat_ids 574, 576\n5) Managing stress and emotional regulation during travel and packing (chat_ids 690, 780, 786, 788\n6) Addressing performance anxiety related to recording sessions with breathing techniques (chat_ids 1060, 1064\n7) Seeking alternative emotional regulation methods for recording stress and creative challenges (chat_ids 1164\n8) Using breathing exercises to manage nerves on a party day and applying those techniques to other stressful situations (chat_ids 1258"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "What day and time do I usually talk to my son on the phone?",
+      "llm_response": "Every Sunday at 7 PM.",
+      "question_id": "14:information_extraction:7",
+      "predicted_answer": "Every Sunday at 7 PM."
+    },
+    {
+      "question": "What is my current annual salary in my job as a senior engineer?",
+      "llm_response": "You earn approximately $75,000 CAD annually.",
+      "question_id": "14:information_extraction:8",
+      "predicted_answer": "You earn approximately $75,000 CAD annually."
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "How long is the workshop tomorrow?",
+      "llm_response": "duration of the workshop",
+      "question_id": "14:instruction_following:9",
+      "predicted_answer": "duration of the workshop"
+    },
+    {
+      "question": "What options do I have for getting from New York to Paris next month?",
+      "llm_response": "itemized costs specific dollar amounts category-by-category breakdown",
+      "question_id": "14:instruction_following:10",
+      "predicted_answer": "itemized costs specific dollar amounts category-by-category breakdown"
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What is my annual salary as a senior engineer at Saint Pierre Manufacturing Ltd?",
+      "llm_response": "Approximately $80,000 CAD annually.",
+      "question_id": "14:knowledge_update:11",
+      "predicted_answer": "Approximately $80,000 CAD annually."
+    },
+    {
+      "question": "What is the nightly rate for the hotel room I booked for my Quebec City trip?",
+      "llm_response": "$270 CAD per night",
+      "question_id": "14:knowledge_update:12",
+      "predicted_answer": "$270 CAD per night"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How many different goals related to trust or satisfaction have I set with Rachael across our conversations?",
+      "llm_response": "Four goals",
+      "question_id": "14:multi_session_reasoning:13",
+      "predicted_answer": "Four goals"
+    },
+    {
+      "question": "How much did my communication quality rating improve from mid-March to August 2024?",
+      "llm_response": "Your communication quality rating improved by 5.2 points, from 4 in mid-March to 9.2 in August 2024.",
+      "question_id": "14:multi_session_reasoning:14",
+      "predicted_answer": "Your communication quality rating improved by 5.2 points, from 4 in mid-March to 9.2 in August 2024."
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "How should I organize my activities for the upcoming week to handle both planned events and unexpected changes?",
+      "llm_response": "creating a detailed schedule planning activities in advance",
+      "question_id": "14:preference_following:15",
+      "predicted_answer": "creating a detailed schedule planning activities in advance"
+    },
+    {
+      "question": "I'm looking for ways to strengthen the bond between me and my partner. What approaches could we try together?",
+      "llm_response": "collaborative creative activities working together on creative projects",
+      "question_id": "14:preference_following:16",
+      "predicted_answer": "collaborative creative activities working together on creative projects"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a detailed summary of everything we've covered about rebuilding trust and strengthening my relationship, including the challenges, strategies, interactions, and progress over time?",
+      "llm_response": "rebuilding trust and deepening their relationship with Rachael, capturing the initial recognition of trust issues and the emotional impact on both parties. acknowledging mistakes, taking responsibility, and communicating openly and honestly. structured conversations, such as the initial apology, ongoing weekly check-ins, and specific dialogue examples to foster transparency and empathy. personal growth efforts, like learning from an accountability course and applying those lessons to relationship dynamics. balancing personal development with sensitivity to Rachael's feelings, emphasizing active listening, patience, and consistent follow-through on commitments. involvement of trusted friends for perspective and support, managing professional relationships alongside personal goals, and strategies to create shared experiences and emotional connection through activities like coastal walks. progression over time, including setting milestones, handling setbacks such as forgotten anniversaries, and adapting plans based on feedback, woven into a coherent narrative that highlights the complexity and multi-threaded nature of rebuilding trust and nurturing a long-term relationship.",
+      "question_id": "14:summarization:17",
+      "predicted_answer": "rebuilding trust and deepening their relationship with Rachael, capturing the initial recognition of trust issues and the emotional impact on both parties. acknowledging mistakes, taking responsibility, and communicating openly and honestly. structured conversations, such as the initial apology, ongoing weekly check-ins, and specific dialogue examples to foster transparency and empathy. personal growth efforts, like learning from an accountability course and applying those lessons to relationship dynamics. balancing personal development with sensitivity to Rachael's feelings, emphasizing active listening, patience, and consistent follow-through on commitments. involvement of trusted friends for perspective and support, managing professional relationships alongside personal goals, and strategies to create shared experiences and emotional connection through activities like coastal walks. progression over time, including setting milestones, handling setbacks such as forgotten anniversaries, and adapting plans based on feedback, woven into a coherent narrative that highlights the complexity and multi-threaded nature of rebuilding trust and nurturing a long-term relationship."
+    },
+    {
+      "question": "Can you give me a summary of my efforts to rebuild trust with Rachael?",
+      "llm_response": "sincerely apologizing for past mistakes committing to consistent actions like taking over household chores for a set period planning special activities maintaining regular weekly check-ins to discuss progress tracking efforts through weekly journals and reflecting on progress together preparing for couples counseling with Dr. Marie Leclerc to further support your relationship and improve communication",
+      "question_id": "14:summarization:18",
+      "predicted_answer": "sincerely apologizing for past mistakes committing to consistent actions like taking over household chores for a set period planning special activities maintaining regular weekly check-ins to discuss progress tracking efforts through weekly journals and reflecting on progress together preparing for couples counseling with Dr. Marie Leclerc to further support your relationship and improve communication"
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many days passed between when I forgot our anniversary and when I apologized to Rachael in person at Caf\u00e9 La Mer?",
+      "llm_response": "11 days passed between forgetting the anniversary on February 28 and apologizing in person on March 10.",
+      "question_id": "14:temporal_reasoning:19",
+      "predicted_answer": "11 days passed between forgetting the anniversary on February 28 and apologizing in person on March 10."
+    },
+    {
+      "question": "How many days are there between my couples counseling session with Dr. Marie Leclerc and the date I want to rebuild trust with Rachael?",
+      "llm_response": "There are 86 days between the couples counseling session on April 5, 2024, and the goal to rebuild trust by June 30, 2024.",
+      "question_id": "14:temporal_reasoning:20",
+      "predicted_answer": "There are 86 days between the couples counseling session on April 5, 2024, and the goal to rebuild trust by June 30, 2024."
+    }
+  ]
+}

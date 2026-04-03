@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "What is Katherine\u2019s professional background or occupation?",
+      "llm_response": "Based on the provided chat, there is no information related to Katherine\u2019s professional background or occupation.",
+      "question_id": "15:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to Katherine\u2019s professional background or occupation."
+    },
+    {
+      "question": "What is the relationship history between Jessica and Meghan?",
+      "llm_response": "Based on the provided chat, there is no information related to the relationship history between Jessica and Meghan.",
+      "question_id": "15:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the relationship history between Jessica and Meghan."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever attended any art exhibits or family gatherings?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never attended any art exhibits or family gatherings, but you also mentioned being invited to an art exhibit opening. Could you clarify which is correct?",
+      "question_id": "15:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never attended any art exhibits or family gatherings, but you also mentioned being invited to an art exhibit opening. Could you clarify which is correct?"
+    },
+    {
+      "question": "Have I ever attended any science lectures or family brunches before?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never attended any science lectures or family brunches, but you also mentioned attending a science lecture given by Samantha. Could you clarify which is correct?",
+      "question_id": "15:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never attended any science lectures or family brunches, but you also mentioned attending a science lecture given by Samantha. Could you clarify which is correct?"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you walk me through the order in which I brought up different budget contributions and planning concerns across our conversations, in order (mention 9 items)?",
+      "llm_response": "1) Planning a birthday party budget and guest count\n2) Handling a partial contribution towards decorations and seeking advice\n3) Discussing a family gathering with a smaller group and event hosting\n4) Addressing increased contributions for joint celebrations and appreciation\n5) Managing Christmas decoration funds and allocation strategies\n6) Setting and monitoring budgets for seasonal brunch decorations\n7) Organizing feast decorations with budget oversight\n8) Planning for Labor Day decorations within a specified budget\n9) Revisiting Christmas decoration contributions with updated amounts and budget concerns",
+      "question_id": "15:event_ordering:5",
+      "predicted_answer": "1) Planning a birthday party budget and guest count\n2) Handling a partial contribution towards decorations and seeking advice\n3) Discussing a family gathering with a smaller group and event hosting\n4) Addressing increased contributions for joint celebrations and appreciation\n5) Managing Christmas decoration funds and allocation strategies\n6) Setting and monitoring budgets for seasonal brunch decorations\n7) Organizing feast decorations with budget oversight\n8) Planning for Labor Day decorations within a specified budget\n9) Revisiting Christmas decoration contributions with updated amounts and budget concerns"
+    },
+    {
+      "question": "Can you list the order in which I brought up different family and event planning topics throughout our conversations in order?",
+      "llm_response": "1) Improving active listening skills during disagreements\n2) Planning a joint 60th birthday party with budget considerations\n3) Navigating family dynamics with preferences for gathering sizes\n4) Handling unsolicited advice from a family member during gatherings\n5) Coordinating a Christmas Eve dinner for a large group",
+      "question_id": "15:event_ordering:6",
+      "predicted_answer": "1) Improving active listening skills during disagreements\n2) Planning a joint 60th birthday party with budget considerations\n3) Navigating family dynamics with preferences for gathering sizes\n4) Handling unsolicited advice from a family member during gatherings\n5) Coordinating a Christmas Eve dinner for a large group"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "When did I say the art event I was invited to is happening?",
+      "llm_response": "The event is happening on May 3rd.",
+      "question_id": "15:information_extraction:7",
+      "predicted_answer": "The event is happening on May 3rd."
+    },
+    {
+      "question": "What time did I say the dinner reservation was booked for?",
+      "llm_response": "The dinner reservation was booked for 3 PM.",
+      "question_id": "15:information_extraction:8",
+      "predicted_answer": "The dinner reservation was booked for 3 PM."
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "What should I consider when organizing my upcoming event?",
+      "llm_response": "LLM response should include: mention of exact monetary figures",
+      "question_id": "15:instruction_following:9",
+      "predicted_answer": "LLM response should include: mention of exact monetary figures"
+    },
+    {
+      "question": "What meditation practice would you recommend for someone trying to reduce stress?",
+      "llm_response": "LLM response should include: specific time mentioned for meditation",
+      "question_id": "15:instruction_following:10",
+      "predicted_answer": "LLM response should include: specific time mentioned for meditation"
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What budget have you and Katherine set for the blended family holiday celebration?",
+      "llm_response": "A budget slightly above $3,000 to allow for additional catering needs and more comfortable spending.",
+      "question_id": "15:knowledge_update:11",
+      "predicted_answer": "A budget slightly above $3,000 to allow for additional catering needs and more comfortable spending."
+    },
+    {
+      "question": "What is the budget allocated for the joint birthday party to cover decorations and entertainment?",
+      "llm_response": "$2,900 to include additional decorations and a live band",
+      "question_id": "15:knowledge_update:12",
+      "predicted_answer": "$2,900 to include additional decorations and a live band"
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How many guests in total did I plan to invite across Thanksgiving and Christmas Eve dinner?",
+      "llm_response": "43 guests in total (18 for Thanksgiving and 25 for Christmas Eve dinner).",
+      "question_id": "15:multi_session_reasoning:13",
+      "predicted_answer": "43 guests in total (18 for Thanksgiving and 25 for Christmas Eve dinner)."
+    },
+    {
+      "question": "How many different restaurants do I alternate between for my weekly Friday date nights with Katherine?",
+      "llm_response": "Two restaurants: The Olive Branch Caf\u00e9 and The Hearth.",
+      "question_id": "15:multi_session_reasoning:14",
+      "predicted_answer": "Two restaurants: The Olive Branch Caf\u00e9 and The Hearth."
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "I'm planning a family gathering and want to pick a day that works well for everyone. How should I decide when to schedule it?",
+      "llm_response": "LLM response should include: recommends weekend dates",
+      "question_id": "15:preference_following:15",
+      "predicted_answer": "LLM response should include: recommends weekend dates"
+    },
+    {
+      "question": "I want to get everyone involved in planning our next family event. How can I help make the coordination process smoother for everyone?",
+      "llm_response": "LLM response should include: recommends digital tools or apps for event coordination",
+      "question_id": "15:preference_following:16",
+      "predicted_answer": "LLM response should include: recommends digital tools or apps for event coordination"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a thorough summary of everything we've talked about regarding my family relationships and gatherings, capturing all the key concerns, plans, and strategies we've discussed to navigate these dynamics effectively?",
+      "llm_response": "LLM response should include: The discussions cover multiple facets of managing complex family relationships and events, focusing on maintaining harmony and inclusivity across various family members and situations.",
+      "question_id": "15:summarization:17",
+      "predicted_answer": "LLM response should include: The discussions cover multiple facets of managing complex family relationships and events, focusing on maintaining harmony and inclusivity across various family members and situations."
+    },
+    {
+      "question": "Can you summarize how Katherine and I are planning to handle our holiday celebrations and hosting duties?",
+      "llm_response": "LLM response should include: You and Katherine have agreed to manage your holiday celebrations by sticking to a $3,000 budget with careful planning, alternating Christmas traditions to respect both families, and splitting hosting duties evenly starting in 2024.",
+      "question_id": "15:summarization:18",
+      "predicted_answer": "LLM response should include: You and Katherine have agreed to manage your holiday celebrations by sticking to a $3,000 budget with careful planning, alternating Christmas traditions to respect both families, and splitting hosting duties evenly starting in 2024."
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many hours overlap between the time I reserved Pavilion 3 for the reunion and the time I reserved Pavilion 1 for the picnic, and during that overlap, how much more per person does the catering cost for the picnic compared to the reunion?",
+      "llm_response": "There is a 4-hour overlap between the Pavilion 3 reservation from 11 AM to 4 PM and the Pavilion 1 reservation from 12 PM to 5 PM. During this overlap, the catering for the picnic costs $5 more per person ($30 vs. $25).",
+      "question_id": "15:temporal_reasoning:19",
+      "predicted_answer": "There is a 4-hour overlap between the Pavilion 3 reservation from 11 AM to 4 PM and the Pavilion 1 reservation from 12 PM to 5 PM. During this overlap, the catering for the picnic costs $5 more per person ($30 vs. $25)."
+    },
+    {
+      "question": "How many days are there between Anita's 29th birthday and the St. Anthony's feast when Katherine's family visit is planned?",
+      "llm_response": "There are 52 days between Anita's birthday on April 22nd and the St. Anthony's feast on June 13th when Katherine's family visit is planned.",
+      "question_id": "15:temporal_reasoning:20",
+      "predicted_answer": "There are 52 days between Anita's birthday on April 22nd and the St. Anthony's feast on June 13th when Katherine's family visit is planned."
+    }
+  ]
+}

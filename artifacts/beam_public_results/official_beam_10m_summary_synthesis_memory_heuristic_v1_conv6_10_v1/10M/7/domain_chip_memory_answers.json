@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "Can you share the specific advice Samuel gave about savings strategies",
+      "llm_response": "Based on the provided chat, there is no information related to the specific advice Samuel gave about savings strategies.",
+      "question_id": "7:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific advice Samuel gave about savings strategies."
+    },
+    {
+      "question": "Could you share the key points from the free YouTube pottery tutorial I watched?",
+      "llm_response": "Based on the provided chat, there is no information related to the key points of the YouTube pottery tutorial you watched.",
+      "question_id": "7:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the key points of the YouTube pottery tutorial you watched."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have I ever moved my old couch to storage?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you are considering moving your old couch to storage instead of selling it, but you also mentioned that you have never moved your old couch to storage. Which statement is correct?",
+      "question_id": "7:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you are considering moving your old couch to storage instead of selling it, but you also mentioned that you have never moved your old couch to storage. Which statement is correct?"
+    },
+    {
+      "question": "Have I ever signed up for any community volunteering events before?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never signed up for any community volunteering events, but you also referred to signing up online for a food drive. Could you clarify which is correct?",
+      "question_id": "7:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never signed up for any community volunteering events, but you also referred to signing up online for a food drive. Could you clarify which is correct?"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you walk me through the order in which I brought up different aspects of my relationship and shared activities with Jenna from May 1, 2022 to August 27, 2022, in order? Mention ONLY and ONLY eight items.",
+      "llm_response": "1) Discussing pottery classes and planning to join together\n2) Jenna offering to drive you to the pottery studio and her supportive role\n3) Jenna's encouragement and morale boosts during your pottery progress\n4) Jenna photographing your pottery work and the impact on your confidence\n5) Brainstorming and planning a coastal trip together\n6) Booking accommodations and shared travel preparations\n7) Experiencing and enjoying various moments during the trip including tours, walks, and shared memories\n8) Reviewing trip photos and reflecting on nostalgia and future plans",
+      "question_id": "7:event_ordering:5",
+      "predicted_answer": "1) Discussing pottery classes and planning to join together\n2) Jenna offering to drive you to the pottery studio and her supportive role\n3) Jenna's encouragement and morale boosts during your pottery progress\n4) Jenna photographing your pottery work and the impact on your confidence\n5) Brainstorming and planning a coastal trip together\n6) Booking accommodations and shared travel preparations\n7) Experiencing and enjoying various moments during the trip including tours, walks, and shared memories\n8) Reviewing trip photos and reflecting on nostalgia and future plans"
+    },
+    {
+      "question": "Can you walk me through the order in which I brought up different aspects of my fitness and financial discussions with Jenna from May 3, 2021 to September 7, 2021, in order? Mention ONLY and ONLY ten items.",
+      "llm_response": "1) Jenna noticing my renewed focus and discussing workout ideas over coffee at home\n2) Going on a weekend walk together at Sunset Beach\n3) Planning and praising consistency over tea at home with upcoming hikes\n4) Hiking multiple distances at Reef Trail and bonding over fitness goals\n5) Running and planning runs at Coral Beach with increasing distances and goals\n6) Discussing budget and financial planning over coffee at Ocean View Lounge\n7) Supporting grocery budget caps and shopping together\n8) Celebrating savings and planning budget dates over tea and picnics\n9) Setting retirement goals and discussing investment plans over dinners and coffee\n10) Reviewing progress and insurance quotes while planning future financial steps",
+      "question_id": "7:event_ordering:6",
+      "predicted_answer": "1) Jenna noticing my renewed focus and discussing workout ideas over coffee at home\n2) Going on a weekend walk together at Sunset Beach\n3) Planning and praising consistency over tea at home with upcoming hikes\n4) Hiking multiple distances at Reef Trail and bonding over fitness goals\n5) Running and planning runs at Coral Beach with increasing distances and goals\n6) Discussing budget and financial planning over coffee at Ocean View Lounge\n7) Supporting grocery budget caps and shopping together\n8) Celebrating savings and planning budget dates over tea and picnics\n9) Setting retirement goals and discussing investment plans over dinners and coffee\n10) Reviewing progress and insurance quotes while planning future financial steps"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "What time did I say I searched for flights on Skyscanner?",
+      "llm_response": "You said you searched for flights on Skyscanner at 8 PM.",
+      "question_id": "7:information_extraction:7",
+      "predicted_answer": "You said you searched for flights on Skyscanner at 8 PM."
+    },
+    {
+      "question": "How much did I say dinner cost at the place where Jenna seemed distant?",
+      "llm_response": "You said dinner cost $40 at Sea Breeze Cafe last night.",
+      "question_id": "7:information_extraction:8",
+      "predicted_answer": "You said dinner cost $40 at Sea Breeze Cafe last night."
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "What are some good options I can use to improve my health?",
+      "llm_response": "listing app names providing cost information",
+      "question_id": "7:instruction_following:9",
+      "predicted_answer": "listing app names providing cost information"
+    },
+    {
+      "question": "What are some healthy options I can consider for my meals?",
+      "llm_response": "itemized list of costs category-by-category breakdown",
+      "question_id": "7:instruction_following:10",
+      "predicted_answer": "itemized list of costs category-by-category breakdown"
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What time do I set aside for my Saturday budget review sessions?",
+      "llm_response": "5 PM",
+      "question_id": "7:knowledge_update:11",
+      "predicted_answer": "5 PM"
+    },
+    {
+      "question": "When is the desk assembly scheduled to take place?",
+      "llm_response": "The desk assembly is scheduled for the afternoon of November 7 to accommodate a delivery delay.",
+      "question_id": "7:knowledge_update:12",
+      "predicted_answer": "The desk assembly is scheduled for the afternoon of November 7 to accommodate a delivery delay."
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How much of my $50 date budget have I spent on the movie and picnic combined, and how much do I have left?",
+      "llm_response": "You have spent $30 in total ($15 on the movie and $15 on the picnic), leaving you with $20 remaining.",
+      "question_id": "7:multi_session_reasoning:13",
+      "predicted_answer": "You have spent $30 in total ($15 on the movie and $15 on the picnic), leaving you with $20 remaining."
+    },
+    {
+      "question": "How many ideas have I shared at the philosophy club across meetings from May 1, 2022 to August 27, 2022?",
+      "llm_response": "14 ideas",
+      "question_id": "7:multi_session_reasoning:14",
+      "predicted_answer": "14 ideas"
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "What should I keep in mind when planning my workout schedule around different times of the day near Palm Street?",
+      "llm_response": "mentions quieter conditions in the morning avoids recommending evening workouts",
+      "question_id": "7:preference_following:15",
+      "predicted_answer": "mentions quieter conditions in the morning avoids recommending evening workouts"
+    },
+    {
+      "question": "I'm planning to update the lighting in my living room. What kind of bulbs would you suggest I use?",
+      "llm_response": "mentions warm or soft lighting options avoids recommending harsh fluorescent bulbs",
+      "question_id": "7:preference_following:16",
+      "predicted_answer": "mentions warm or soft lighting options avoids recommending harsh fluorescent bulbs"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you summarize how I've been managing my work-life balance and personal time from March 5, 2020 to March 30, 2021?",
+      "llm_response": "you focused on reducing work stress by using tools like the Calm app and implementing strategies such as setting boundaries and prioritizing tasks incorporated regular personal and social activities, including art nights, workouts, trivia, hiking, and quality time with Jenna and family you emphasized planning and scheduling personal time as non-negotiable, using time-blocking and effective task management to protect this time You also developed strategies to maintain this balance long-term, such as delegating tasks, reflecting regularly, and communicating openly with loved ones",
+      "question_id": "7:summarization:17",
+      "predicted_answer": "you focused on reducing work stress by using tools like the Calm app and implementing strategies such as setting boundaries and prioritizing tasks incorporated regular personal and social activities, including art nights, workouts, trivia, hiking, and quality time with Jenna and family you emphasized planning and scheduling personal time as non-negotiable, using time-blocking and effective task management to protect this time You also developed strategies to maintain this balance long-term, such as delegating tasks, reflecting regularly, and communicating openly with loved ones"
+    },
+    {
+      "question": "Can you summarize how Jenna and I have developed our fitness and financial routines together from May 3, 2021 to September 7, 2021?",
+      "llm_response": "you discussed workout ideas and established a regular schedule that included varied activities like jogging, hiking, yoga, and strength training Jenna's encouragement and participation helped maintain motivation, and you both planned hikes and runs at local spots such as Reef Trail and Coral Beach, gradually increasing distance and intensity you began with budget discussions over coffee, setting spending limits and celebrating savings milestones with budget-friendly outings like picnics You established regular financial check-ins, shared budgeting responsibilities, and set joint goals including building an emergency fund and planning for retirement you maintained open communication, involved Jenna in decision-making, and balanced celebrating progress with maintaining discipline",
+      "question_id": "7:summarization:18",
+      "predicted_answer": "you discussed workout ideas and established a regular schedule that included varied activities like jogging, hiking, yoga, and strength training Jenna's encouragement and participation helped maintain motivation, and you both planned hikes and runs at local spots such as Reef Trail and Coral Beach, gradually increasing distance and intensity you began with budget discussions over coffee, setting spending limits and celebrating savings milestones with budget-friendly outings like picnics You established regular financial check-ins, shared budgeting responsibilities, and set joint goals including building an emergency fund and planning for retirement you maintained open communication, involved Jenna in decision-making, and balanced celebrating progress with maintaining discipline"
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many months passed between my teaching feedback review and when I started reflecting on my personal relationships?",
+      "llm_response": "10 months passed between the teaching feedback review on April 1, 2020, and starting to reflect on personal relationships on February 1, 2021.",
+      "question_id": "7:temporal_reasoning:19",
+      "predicted_answer": "10 months passed between the teaching feedback review on April 1, 2020, and starting to reflect on personal relationships on February 1, 2021."
+    },
+    {
+      "question": "How many days were there between when I started exploring new educational interests and when I began planning my travel for a mental recharge?",
+      "llm_response": "There were 92 days between starting my journey to explore new educational interests on May 1, 2022, and beginning to plan my travel for mental recharge on August 1, 2022.",
+      "question_id": "7:temporal_reasoning:20",
+      "predicted_answer": "There were 92 days between starting my journey to explore new educational interests on May 1, 2022, and beginning to plan my travel for mental recharge on August 1, 2022."
+    }
+  ]
+}

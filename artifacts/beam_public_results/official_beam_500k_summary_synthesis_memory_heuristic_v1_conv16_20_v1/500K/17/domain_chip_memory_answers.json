@@ -1,0 +1,142 @@
+{
+  "abstention": [
+    {
+      "question": "What was discussed during the couples therapy session Troy and I attended on April 20?",
+      "llm_response": "Based on the provided chat, there is no information related to the specific discussions during the couples therapy session on April 20.",
+      "question_id": "17:abstention:1",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific discussions during the couples therapy session on April 20."
+    },
+    {
+      "question": "What specific coping plans did I create after identifying new triggers during therapy?",
+      "llm_response": "Based on the provided chat, there is no information related to the specific coping plans you created after identifying new triggers.",
+      "question_id": "17:abstention:2",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific coping plans you created after identifying new triggers."
+    }
+  ],
+  "contradiction_resolution": [
+    {
+      "question": "Have Troy and I ever attended couples therapy together?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never attended any couples therapy sessions with Troy, but you also mentioned attending couples therapy together that improved your communication. Could you clarify which is correct?",
+      "question_id": "17:contradiction_resolution:3",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never attended any couples therapy sessions with Troy, but you also mentioned attending couples therapy together that improved your communication. Could you clarify which is correct?"
+    },
+    {
+      "question": "Have I ever shared my childhood trauma story with Patricia?",
+      "llm_response": "I notice you've mentioned contradictory information about this. You said you have never shared your childhood trauma story with Patricia, but you also mentioned feeling relieved after sharing it with her. Which statement is correct?",
+      "question_id": "17:contradiction_resolution:4",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never shared your childhood trauma story with Patricia, but you also mentioned feeling relieved after sharing it with her. Which statement is correct?"
+    }
+  ],
+  "event_ordering": [
+    {
+      "question": "Can you list the order in which I brought up different aspects of my personal growth and relationships throughout our conversations in order (mention 5 items)?",
+      "llm_response": "1) First, you talked about starting a meditation routine and using a meditation app\n2) Then you discussed rebuilding your self-trust and how daily habits impact it\n3) Next, you brought up concerns about your relationship with Troy and couples therapy progress\n4) After that, you mentioned disclosing trauma to Jessica and Troy's support in that process\n5) Finally, you talked about Troy's ongoing support through various events and your efforts to show appreciation for him",
+      "question_id": "17:event_ordering:5",
+      "predicted_answer": "1) First, you talked about starting a meditation routine and using a meditation app\n2) Then you discussed rebuilding your self-trust and how daily habits impact it\n3) Next, you brought up concerns about your relationship with Troy and couples therapy progress\n4) After that, you mentioned disclosing trauma to Jessica and Troy's support in that process\n5) Finally, you talked about Troy's ongoing support through various events and your efforts to show appreciation for him"
+    },
+    {
+      "question": "Can you list the order in which I brought up different aspects of my self-care and anxiety management routines throughout our conversations in order (mention 11 items)?",
+      "llm_response": "1) Discussing your monthly meetings with a friend and uncertainty about sharing personal trauma\n2) Starting daily nature walks and questioning the best time for them\n3) Using a meditation app and completing initial sessions\n4) Noticing a reduction in panic attacks and seeking strategies to continue progress\n5) Adding weekly swimming sessions and exploring their impact on well-being\n6) Observing further anxiety episode reductions and asking how to maintain progress\n7) Completing a larger number of meditation sessions and looking for new mindfulness techniques\n8) Reporting additional anxiety reduction and requesting strategies to sustain it\n9) Maintaining yoga and swimming routines and wondering about combining them with emotional regulation techniques\n10) Trying to stay consistent with self-care during holidays and asking for budgeting tips\n11) Noting very low anxiety episodes and seeking ways to maintain this improvement",
+      "question_id": "17:event_ordering:6",
+      "predicted_answer": "1) Discussing your monthly meetings with a friend and uncertainty about sharing personal trauma\n2) Starting daily nature walks and questioning the best time for them\n3) Using a meditation app and completing initial sessions\n4) Noticing a reduction in panic attacks and seeking strategies to continue progress\n5) Adding weekly swimming sessions and exploring their impact on well-being\n6) Observing further anxiety episode reductions and asking how to maintain progress\n7) Completing a larger number of meditation sessions and looking for new mindfulness techniques\n8) Reporting additional anxiety reduction and requesting strategies to sustain it\n9) Maintaining yoga and swimming routines and wondering about combining them with emotional regulation techniques\n10) Trying to stay consistent with self-care during holidays and asking for budgeting tips\n11) Noting very low anxiety episodes and seeking ways to maintain this improvement"
+    }
+  ],
+  "information_extraction": [
+    {
+      "question": "When did I say I met Troy?",
+      "llm_response": "You said you met Troy on July 12, 2021.",
+      "question_id": "17:information_extraction:7",
+      "predicted_answer": "You said you met Troy on July 12, 2021."
+    },
+    {
+      "question": "How much have I budgeted each month for my sessions?",
+      "llm_response": "You have budgeted $480 monthly for 4 sessions.",
+      "question_id": "17:information_extraction:8",
+      "predicted_answer": "You have budgeted $480 monthly for 4 sessions."
+    }
+  ],
+  "instruction_following": [
+    {
+      "question": "How has my confidence in making decisions changed recently?",
+      "llm_response": "LLM response should include: percentage improvement mentioned",
+      "question_id": "17:instruction_following:9",
+      "predicted_answer": "LLM response should include: percentage improvement mentioned"
+    },
+    {
+      "question": "What are the costs related to my wellness activities?",
+      "llm_response": "LLM response should include: mention of membership time periods",
+      "question_id": "17:instruction_following:10",
+      "predicted_answer": "LLM response should include: mention of membership time periods"
+    }
+  ],
+  "knowledge_update": [
+    {
+      "question": "What is my current self-trust rating based on my latest self-assessment?",
+      "llm_response": "60%",
+      "question_id": "17:knowledge_update:11",
+      "predicted_answer": "60%"
+    },
+    {
+      "question": "What topics are covered in the leadership course I enrolled in?",
+      "llm_response": "The leadership course includes the original curriculum plus an additional module on trauma-informed leadership.",
+      "question_id": "17:knowledge_update:12",
+      "predicted_answer": "The leadership course includes the original curriculum plus an additional module on trauma-informed leadership."
+    }
+  ],
+  "multi_session_reasoning": [
+    {
+      "question": "How much total confidence boost did I report from co-leading or co-hosting activities with Patricia?",
+      "llm_response": "140%",
+      "question_id": "17:multi_session_reasoning:13",
+      "predicted_answer": "140%"
+    },
+    {
+      "question": "How many total personal writings have I created across journaling, letters to my inner child, and my trauma narrative draft?",
+      "llm_response": "Three types: daily journal entries since February 15, three personal letters, and one trauma narrative draft.",
+      "question_id": "17:multi_session_reasoning:14",
+      "predicted_answer": "Three types: daily journal entries since February 15, three personal letters, and one trauma narrative draft."
+    }
+  ],
+  "preference_following": [
+    {
+      "question": "Can you help me find a good time for my therapy sessions later this week?",
+      "llm_response": "LLM response should include: recommends Friday evening sessions",
+      "question_id": "17:preference_following:15",
+      "predicted_answer": "LLM response should include: recommends Friday evening sessions"
+    },
+    {
+      "question": "I'm trying to build a consistent mindfulness routine. How would you suggest structuring my sessions throughout the day?",
+      "llm_response": "LLM response should include: suggests morning sessions",
+      "question_id": "17:preference_following:16",
+      "predicted_answer": "LLM response should include: suggests morning sessions"
+    }
+  ],
+  "summarization": [
+    {
+      "question": "Can you give me a summary of how my relationship with Troy has developed and changed over time, including how we've handled challenges and supported each other?",
+      "llm_response": "Your relationship with Troy has evolved significantly since you met at the Reykjavik Art Museum in July 2021. Over the course of 2.5 years, you have navigated various challenges together, including concerns about the future of your relationship and efforts to deepen your emotional connection through open communication and shared experiences. You both took proactive steps like scheduling couples therapy to address issues, preparing thoughtfully for sessions, and remaining flexible about therapy approaches. Troy has been a consistent source of emotional support, especially during your healing journey, such as attending support groups and providing grounding during EMDR therapy. You have worked on rebuilding self-trust with the help of your relationships, including Troy\u2019s encouragement and feedback on your trauma narrative. Throughout, you have maintained open dialogue about your needs, fears, and aspirations, balancing personal growth with mutual support. Your relationship shows a progression from initial concerns to active collaboration and emotional intimacy, with ongoing efforts to strengthen your bond and navigate life\u2019s complexities together.",
+      "question_id": "17:summarization:17",
+      "predicted_answer": "Your relationship with Troy has evolved significantly since you met at the Reykjavik Art Museum in July 2021. Over the course of 2.5 years, you have navigated various challenges together, including concerns about the future of your relationship and efforts to deepen your emotional connection through open communication and shared experiences. You both took proactive steps like scheduling couples therapy to address issues, preparing thoughtfully for sessions, and remaining flexible about therapy approaches. Troy has been a consistent source of emotional support, especially during your healing journey, such as attending support groups and providing grounding during EMDR therapy. You have worked on rebuilding self-trust with the help of your relationships, including Troy\u2019s encouragement and feedback on your trauma narrative. Throughout, you have maintained open dialogue about your needs, fears, and aspirations, balancing personal growth with mutual support. Your relationship shows a progression from initial concerns to active collaboration and emotional intimacy, with ongoing efforts to strengthen your bond and navigate life\u2019s complexities together."
+    },
+    {
+      "question": "Can you summarize how my relationship with Patricia has developed and what activities we've done together recently?",
+      "llm_response": "You have a close friendship with Patricia, regularly meeting at Kaffi Vinyl and sharing personal experiences like childhood trauma. Together, you have attended mindfulness workshops and created a grounding toolkit, which have both improved your mutual support and coping skills. Additionally, you have co-led support groups and writing circles with Patricia, boosting your confidence and strengthening your connection.",
+      "question_id": "17:summarization:18",
+      "predicted_answer": "You have a close friendship with Patricia, regularly meeting at Kaffi Vinyl and sharing personal experiences like childhood trauma. Together, you have attended mindfulness workshops and created a grounding toolkit, which have both improved your mutual support and coping skills. Additionally, you have co-led support groups and writing circles with Patricia, boosting your confidence and strengthening your connection."
+    }
+  ],
+  "temporal_reasoning": [
+    {
+      "question": "How many days after I originally planned my first therapy session was it rescheduled to a later date?",
+      "llm_response": "The therapy session was originally planned for March 10 and was rescheduled to March 15, so it was moved 5 days later.",
+      "question_id": "17:temporal_reasoning:19",
+      "predicted_answer": "The therapy session was originally planned for March 10 and was rescheduled to March 15, so it was moved 5 days later."
+    },
+    {
+      "question": "How many weeks are there between the last Friday therapy session I scheduled through May 10 and the first EMDR session I planned in November?",
+      "llm_response": "There are about 26 weeks between the last Friday therapy session scheduled through May 10 and the first EMDR session planned for November 15.",
+      "question_id": "17:temporal_reasoning:20",
+      "predicted_answer": "There are about 26 weeks between the last Friday therapy session scheduled through May 10 and the first EMDR session planned for November 15."
+    }
+  ]
+}
