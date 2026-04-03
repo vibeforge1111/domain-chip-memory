@@ -5293,3 +5293,21 @@ def test_expand_answer_from_context_preserves_beam_temporal_surface_with_dates()
         "21 days from March 29 till April 19",
         "answer_candidate: 21 days from March 29 till April 19",
     ) == "21 days from March 29 till April 19"
+
+
+def test_expand_answer_from_context_prefers_dated_duration_candidate_over_bare_numeric_answer():
+    assert _expand_answer_from_context(
+        "How many days had I been journaling when I noted my 40% improvement in decision clarity?",
+        "58",
+        "answer_candidate: I had been journaling daily for 58 days when I noted my 40% improvement in decision clarity on May 31.",
+    ) == "I had been journaling daily for 58 days when I noted my 40% improvement in decision clarity on May 31."
+    assert _expand_answer_from_context(
+        "How many days do I have to finish reading the first four Outlander books after my freelance editing job starts?",
+        "114",
+        "answer_candidate: I have 114 days to finish reading the first four Outlander books after my freelance editing job starts on March 8 and before the June 30 deadline.",
+    ) == "I have 114 days to finish reading the first four Outlander books after my freelance editing job starts on March 8 and before the June 30 deadline."
+    assert _expand_answer_from_context(
+        "How many days are there between when I need to finalize my movie list for the family weekend and when Mason suggested adding the game night?",
+        "6",
+        "answer_candidate: 6 days from May 5 till May 11.",
+    ) == "6 days from May 5 till May 11."

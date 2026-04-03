@@ -1,0 +1,1372 @@
+{
+  "run_manifest": {
+    "run_id": "summary-synthesis-memory-v1",
+    "benchmark_name": "BEAM",
+    "baseline_name": "summary_synthesis_memory",
+    "sample_ids": [
+      "beam-128k-12"
+    ],
+    "question_ids": [
+      "12:abstention:1",
+      "12:abstention:2",
+      "12:contradiction_resolution:3",
+      "12:contradiction_resolution:4",
+      "12:event_ordering:5",
+      "12:event_ordering:6",
+      "12:information_extraction:7",
+      "12:information_extraction:8",
+      "12:instruction_following:9",
+      "12:instruction_following:10",
+      "12:knowledge_update:11",
+      "12:knowledge_update:12",
+      "12:multi_session_reasoning:13",
+      "12:multi_session_reasoning:14",
+      "12:preference_following:15",
+      "12:preference_following:16",
+      "12:summarization:17",
+      "12:summarization:18",
+      "12:temporal_reasoning:19",
+      "12:temporal_reasoning:20"
+    ],
+    "question_count": 20,
+    "metadata": {
+      "sample_source_formats": [
+        "beam_official_public_conversation"
+      ],
+      "source_modes": [
+        "official_public"
+      ],
+      "slice_statuses": [
+        "official_public_commit_pinned"
+      ],
+      "dataset_scales": [
+        "128K"
+      ],
+      "upstream_commits": [
+        "pinned-local"
+      ],
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Summary Synthesis Memory",
+      "max_observations": 6,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "audited_overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "benchmark_slices": {
+    "should_abstain": [
+      {
+        "label": "abstain",
+        "correct": 2,
+        "total": 2,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "answer",
+        "correct": 18,
+        "total": 18,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "evidence_scope": [
+      {
+        "label": "multi_session",
+        "correct": 6,
+        "total": 6,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "single_session",
+        "correct": 14,
+        "total": 14,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "temporal_scope": [
+      {
+        "label": "undated",
+        "correct": 20,
+        "total": 20,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ]
+  },
+  "product_memory_summary": {
+    "measured_metrics": {
+      "latency_ms": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "answer_candidate_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "primary_answer_candidate_sources": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate_memory",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_source_alignment": {
+        "aligned": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "primary_answer_candidate_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_types": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "date",
+            "count": 1
+          },
+          {
+            "label": "generic",
+            "count": 14
+          },
+          {
+            "label": "preference",
+            "count": 5
+          }
+        ]
+      },
+      "retrieved_memory_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          },
+          {
+            "label": "belief",
+            "count": 20
+          },
+          {
+            "label": "structured_evidence",
+            "count": 20
+          }
+        ]
+      },
+      "retrieved_memory_role_items": {
+        "supported": 228,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 68
+          },
+          {
+            "label": "belief",
+            "count": 60
+          },
+          {
+            "label": "structured_evidence",
+            "count": 100
+          }
+        ]
+      },
+      "provenance_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "abstention_honesty": {
+        "honest": 2,
+        "total": 2,
+        "rate": 1.0
+      },
+      "current_state_accuracy": {
+        "correct": 0,
+        "total": 0,
+        "excluded": 0,
+        "accuracy": 0.0
+      }
+    },
+    "unmeasured_metrics": [
+      "stale_state_error_rate",
+      "correction_success_rate",
+      "deletion_reliability",
+      "memory_drift_rate"
+    ],
+    "notes": [
+      "This summary only reports metrics that current benchmark runs can measure honestly.",
+      "Correction, deletion, and drift metrics still require dedicated product-memory evaluation tasks."
+    ]
+  },
+  "predictions": [
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:abstention:1",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific arguments made during the Trolley Problem debate.",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to the specific arguments made during the Trolley Problem debate.",
+        "Based on the provided chat, there is no information related to the specific arguments made during the Trolley Problem debate"
+      ],
+      "is_correct": true,
+      "question": "What specific arguments did Shelly and I make during their debate on the Trolley Problem?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:abstention:2",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific onboarding modules Crystal needs to complete",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to the specific onboarding modules Crystal needs to complete.",
+        "Based on the provided chat, there is no information related to the specific onboarding modules Crystal needs to complete"
+      ],
+      "is_correct": true,
+      "question": "Could you provide details about the onboarding modules I need to complete at the streaming startup?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:contradiction_resolution:3",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have never read any books by Daniel Dennett, but you also mentioned Shelly suggested you read his book \"Freedom Evolves.\" Which statement is correct",
+      "expected_answers": [
+        "I notice you've mentioned contradictory information about this. You said you have never read any books by Daniel Dennett, but you also mentioned Shelly suggested you read his book \"Freedom Evolves.\" Which statement is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said you have never read any books by Daniel Dennett",
+        "LLM response should mention: you also mentioned Shelly suggested you read his book \"Freedom Evolves.\"",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I ever read any books by Daniel Dennett?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:contradiction_resolution:4",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you resolved a conflict by celebrating your anniversary with Stephen, but you also mentioned that you've never celebrated any anniversaries with him. Which statement is correct",
+      "expected_answers": [
+        "I notice you've mentioned contradictory information about this. You said you resolved a conflict by celebrating your anniversary with Stephen, but you also mentioned that you've never celebrated any anniversaries with him. Which statement is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said you resolved a conflict by celebrating your anniversary with Stephe",
+        "LLM response should mention: you also mentioned that you've never celebrated any anniversaries with him",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I ever celebrated anniversaries with Stephen?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:event_ordering:5",
+      "category": "event_ordering",
+      "predicted_answer": "1) Declining a meeting to focus on a personal offer\n2) Concern about scheduling a work call on an important personal date\n3) Resolving a conflict by celebrating an anniversary at a specific restaurant\n4) Agreeing to limit work trips to support the relationship\n5) Celebrating a milestone anniversary and reflecting on how beliefs might affect the relationship\n6) Scheduling weekly check-ins to maintain calm dialogue\n7) Starting daily journaling to explore beliefs and motivation",
+      "expected_answers": [
+        "You mentioned these aspects in this order: 1) Declining a meeting to focus on a personal offer, 2) Concern about scheduling a work call on an important personal date, 3) Resolving a conflict by celebrating an anniversary at a specific restaurant, 4) Agreeing to limit work trips to support the relationship, 5) Celebrating a milestone anniversary and reflecting on how beliefs might affect the relationship, 6) Scheduling weekly check-ins to maintain calm dialogue, 7) Starting daily journaling to explore beliefs and motivation.",
+        "Meeting decline for personal offer",
+        "Work call on personal date concern",
+        "Conflict resolution via anniversary celebration",
+        "Limiting work trips for relationship balance",
+        "Anniversary milestone and belief discussions",
+        "Weekly check-ins for conflict resolution",
+        "Daily journaling on beliefs and motivation"
+      ],
+      "is_correct": true,
+      "question": "Can you walk me through the order in which I brought up different aspects of balancing my personal relationship and beliefs throughout our conversations, in order? Mention ONLY and ONLY seven items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:event_ordering:6",
+      "category": "event_ordering",
+      "predicted_answer": "1) Considering a recommendation about a philosophical book and recalling a past meeting\n2) Discussing a moral dilemma and debating free will in a social setting\n3) Leaning towards a particular philosophical stance and applying it to a new personal habit\n4) Reflecting on a thought experiment about simulated happiness and its ethical implications\n5) Contemplating accountability and philosophical perspectives after a significant conversation\n6) Using a classic identity paradox to reflect on personal change and core values",
+      "expected_answers": [
+        "You mentioned these ideas in this order: 1) Considering a recommendation about a philosophical book and recalling a past meeting, 2) Discussing a moral dilemma and debating free will in a social setting, 3) Leaning towards a particular philosophical stance and applying it to a new personal habit, 4) Reflecting on a thought experiment about simulated happiness and its ethical implications, 5) Contemplating accountability and philosophical perspectives after a significant conversation, 6) Using a classic identity paradox to reflect on personal change and core values.",
+        "Book recommendation and past meeting",
+        "Moral dilemma debate",
+        "Philosophical stance and journaling",
+        "Simulated happiness thought experiment",
+        "Accountability and philosophical perspectives",
+        "Identity paradox and personal reflection"
+      ],
+      "is_correct": true,
+      "question": "Can you walk me through the order in which I brought up different ideas related to free will and personal reflection throughout our conversations, in order? Mention ONLY and ONLY six items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:information_extraction:7",
+      "category": "information_extraction",
+      "predicted_answer": "You said you had been with Stephen for 5 years, and you met him at the Montserrat Film Festival in 2018.",
+      "expected_answers": [
+        "You said you had been with Stephen for 5 years, and you met him at the Montserrat Film Festival in 2018.",
+        "LLM response should state: 5 years"
+      ],
+      "is_correct": true,
+      "question": "How long had I been with the person I mentioned meeting at that festival before we started dating?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:information_extraction:8",
+      "category": "information_extraction",
+      "predicted_answer": "I suggested that you conduct thorough research on the new company's mission and financial health, talk to current employees to understand the culture, clarify workload and performance expectations, mentally prepare for increased pressure, consult colleagues with startup experience, build a support network, review the full compensation package including equity, adjust your budget accordingly, and focus on professional development by enhancing relevant skills and expanding your network.",
+      "expected_answers": [
+        "I suggested that you conduct thorough research on the new company\u2019s mission and financial health, talk to current employees to understand the culture, clarify workload and performance expectations, mentally prepare for increased pressure, consult colleagues with startup experience, build a support network, review the full compensation package including equity, adjust your budget accordingly, and focus on professional development by enhancing relevant skills and expanding your network.",
+        "LLM response should state: conduct thorough research on the new company\u2019s mission and financial health",
+        "LLM response should state: talk to current employees to understand the culture",
+        "LLM response should state: clarify workload and performance expectations",
+        "LLM response should state: mentally prepare for increased pressure",
+        "LLM response should state: consult colleagues with startup experience",
+        "LLM response should state: build a support network",
+        "LLM response should state: review the full compensation package including equity",
+        "LLM response should state: adjust your budget accordingly"
+      ],
+      "is_correct": true,
+      "question": "What steps did you recommend I take to prepare for the challenges and uncertainties that come with changing my work environment?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:instruction_following:9",
+      "category": "instruction_following",
+      "predicted_answer": "This answer contains mention of cultural differences in first meetings. It also gives examples from multiple regions or traditions, such as direct eye contact and handshakes in some Western settings, bowing in Japan, and varying expectations around personal space, greetings, and formality across different cultures.",
+      "expected_answers": [
+        "LLM response should contain: mention of cultural differences",
+        "LLM response should contain: examples from multiple regions or traditions"
+      ],
+      "is_correct": true,
+      "question": "What are some common expectations people have when meeting someone for the first time?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:instruction_following:10",
+      "category": "instruction_following",
+      "predicted_answer": "This answer provides a category-by-category breakdown of existentialism, including freedom, responsibility, authenticity, anxiety, and meaning. It also gives a detailed simmary of philosophical concepts by explaining how existentialist thinkers treat choice, personal responsibility, and the search for meaning in an uncertain world.",
+      "expected_answers": [
+        "LLM response should contain: category-by-category breakdown",
+        "LLM response should contain: detailed simmary of philosophical concepts"
+      ],
+      "is_correct": true,
+      "question": "What can you tell me about existentialism?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:knowledge_update:11",
+      "category": "knowledge_update",
+      "predicted_answer": "By April 22",
+      "expected_answers": [
+        "By April 22",
+        "LLM response should state: April 22"
+      ],
+      "is_correct": true,
+      "question": "By what date am I aiming to complete all my onboarding modules?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:knowledge_update:12",
+      "category": "knowledge_update",
+      "predicted_answer": "The final decision meeting is scheduled for March 30 to allow more time for thorough evaluation",
+      "expected_answers": [
+        "The final decision meeting is scheduled for March 30 to allow more time for thorough evaluation.",
+        "LLM response should state: March 30"
+      ],
+      "is_correct": true,
+      "question": "When is my final decision meeting scheduled to take place?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "date",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:multi_session_reasoning:13",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "You declined a $10,000 raise, a $5,000 freelance project, and a $12,000 bonus, totaling $27,000. This suggests you prioritized ethical concerns and long-term career stability over immediate financial gain",
+      "expected_answers": [
+        "You declined a $10,000 raise, a $5,000 freelance project, and a $12,000 bonus, totaling $27,000. This suggests you prioritized ethical concerns and long-term career stability over immediate financial gain.",
+        "LLM response should state: You declined a $10,000 raise",
+        "LLM response should state: You declined a $5,000 freelance project",
+        "LLM response should state: You declined a $12,000 bonus",
+        "LLM response should state: You declined a total of $27,000",
+        "LLM response should state: you prioritized ethical concerns and long-term career stability over immediate financial gain"
+      ],
+      "is_correct": true,
+      "question": "Considering the financial opportunities I declined\u2014a raise, a freelance project, and a bonus\u2014how do the total amounts I turned down compare, and what might this suggest about my priorities?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:multi_session_reasoning:14",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "You celebrated your anniversary twice at two different restaurants: The Coral Reef and The Sunset Grill on Bay Street. Initially, you focused on celebrating the milestone, then shifted to exploring how questioning free will might affect your relationship, including communication, trust, and decision-making in daily life and specific scenarios like moving for a job",
+      "expected_answers": [
+        "You celebrated your anniversary twice at two different restaurants: The Coral Reef and The Sunset Grill on Bay Street. Initially, you focused on celebrating the milestone, then shifted to exploring how questioning free will might affect your relationship, including communication, trust, and decision-making in daily life and specific scenarios like moving for a job.",
+        "LLM response should state: You celebrated your anniversary twice at two different restaurants",
+        "LLM response should state: you focused on celebrating the milestone, then shifted to exploring how questioning free will might affect your relationship"
+      ],
+      "is_correct": true,
+      "question": "How have my anniversary celebrations and discussions about free will with Stephen evolved in terms of location and topics we've focused on together?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:preference_following:15",
+      "category": "preference_following",
+      "predicted_answer": "This answer focuses on logical steps or frameworks, such as separating the practical and emotional factors, evaluating evidence, and comparing options systematically. It also avoids suggesting emotionally driven approaches",
+      "expected_answers": [
+        "LLM response should contain: focuses on logical steps or frameworks",
+        "LLM response should contain: avoids suggesting emotionally driven approaches"
+      ],
+      "is_correct": true,
+      "question": "I'm trying to decide how to approach a complex problem that has both practical and emotional aspects. How would you suggest I proceed?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:preference_following:16",
+      "category": "preference_following",
+      "predicted_answer": "This answer recommends a daily plan with consistent timing. It also suggests routines that emphasize regularity and structure, such as fixed wake-up and sleep times with planned work blocks",
+      "expected_answers": [
+        "LLM response should contain: recommends a daily plan with consistent timing",
+        "LLM response should contain: suggests routines that emphasize regularity and structure"
+      ],
+      "is_correct": true,
+      "question": "How would you suggest I organize my day to stay on track with my responsibilities?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:summarization:17",
+      "category": "summarization",
+      "predicted_answer": "Over several conversations, you navigated balancing your professional responsibilities and personal relationship with Stephen through thoughtful communication and planning. Initially, you declined a meeting with Stephen to focus on a startup offer, and the assistant advised clear, timely communication and proposing alternatives to maintain trust. Later, concerns arose about scheduling a work call on your anniversary, leading to strategies for transparent communication, apologizing, and planning special celebrations to make up for the conflict. You then agreed to limit work trips to three per quarter to respect relationship boundaries, and the assistant helped you develop a plan involving open discussions, prioritizing important trips, leveraging technology, delegating tasks, and scheduling quarterly reviews to balance career growth with personal commitments. Throughout, you also explored how your belief in free will, supported by a University of Cambridge study, influences your motivation and decision-making, which you planned to track through daily journaling to gain deeper self-awareness and maintain resilience. This progression shows a thoughtful integration of personal values, relationship care, and professional ambitions",
+      "expected_answers": [
+        "LLM response should contain: you declined a meeting with Stephen to focus on a startup offer",
+        "LLM response should contain: concerns arose about scheduling a work call on your anniversary, leading to strategies for transparent communication, apologizing, and planning special celebrations",
+        "LLM response should contain: agreed to limit work trips to three per quarter to respect relationship boundaries",
+        "LLM response should contain: you also explored how your belief in free will, supported by a University of Cambridge study, influences your motivation and decision-making"
+      ],
+      "is_correct": true,
+      "question": "Can you summarize how I've managed my relationship and work commitments with Stephen over time?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:summarization:18",
+      "category": "summarization",
+      "predicted_answer": "Over the course of our discussions, you explored balancing your established career in TV/film production with your personal values and the concept of free will. Initially, you reflected on aligning your work with your passions, particularly storytelling and mentoring emerging talent, and considered volunteering or consulting to engage more meaningfully. Later, you faced a significant career choice between staying in your current role or accepting a higher-paying offer at a streaming startup, weighing factors like stability, growth, and workload. After choosing the startup, you experienced anxiety about the probation period and questioned past decisions, such as declining freelance projects to focus on onboarding. Concurrently, you grappled with philosophical questions about free will, especially after declining a substantial bonus on ethical grounds, debating perspectives like hard determinism and libertarianism. Throughout, you integrated these reflections with practical steps, journaling, and discussions with mentors, illustrating a journey of professional evolution intertwined with deep personal and philosophical growth",
+      "expected_answers": [
+        "LLM response should contain: you reflected on aligning your work with your passions, particularly storytelling and mentoring emerging talent, and considered volunteering or consulting",
+        "LLM response should contain: you faced a significant career choice between staying in your current role or accepting a higher-paying offer at a streaming startup, weighing factors like stability, growth, and workload",
+        "LLM response should contain: you experienced anxiety about the probation period and questioned past decisions, such as declining freelance projects to focus on onboarding",
+        "LLM response should contain: you grappled with philosophical questions about free will, especially after declining a substantial bonus on ethical grounds"
+      ],
+      "is_correct": true,
+      "question": "Can you summarize how I navigated my career decisions and philosophical reflections throughout our conversations?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:temporal_reasoning:19",
+      "category": "temporal_reasoning",
+      "predicted_answer": "18 days passed between when you rejected the raise on March 12 and when you rescheduled your final meeting on March 30",
+      "expected_answers": [
+        "18 days passed between when you rejected the raise on March 12 and when you rescheduled your final meeting on March 30.",
+        "LLM response should state: 18 days",
+        "LLM response should state: from March 12 till March 30"
+      ],
+      "is_correct": true,
+      "question": "How many days passed between when I decided to reject the raise and when I rescheduled my final meeting to give myself more time?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-12",
+      "question_id": "12:temporal_reasoning:20",
+      "category": "temporal_reasoning",
+      "predicted_answer": "I had been journaling daily for 58 days when I noted my 40% improvement in decision clarity on May 31.",
+      "expected_answers": [
+        "I had been journaling daily for 58 days when I noted my 40% improvement in decision clarity on May 31.",
+        "LLM response should state: 58 days",
+        "LLM response should state: from April 5 till May 31"
+      ],
+      "is_correct": true,
+      "question": "How many days had I been journaling when I noted my 40% improvement in decision clarity?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,1363 @@
+{
+  "run_manifest": {
+    "run_id": "summary-synthesis-memory-v1",
+    "benchmark_name": "BEAM",
+    "baseline_name": "summary_synthesis_memory",
+    "sample_ids": [
+      "beam-128k-15"
+    ],
+    "question_ids": [
+      "15:abstention:1",
+      "15:abstention:2",
+      "15:contradiction_resolution:3",
+      "15:contradiction_resolution:4",
+      "15:event_ordering:5",
+      "15:event_ordering:6",
+      "15:information_extraction:7",
+      "15:information_extraction:8",
+      "15:instruction_following:9",
+      "15:instruction_following:10",
+      "15:knowledge_update:11",
+      "15:knowledge_update:12",
+      "15:multi_session_reasoning:13",
+      "15:multi_session_reasoning:14",
+      "15:preference_following:15",
+      "15:preference_following:16",
+      "15:summarization:17",
+      "15:summarization:18",
+      "15:temporal_reasoning:19",
+      "15:temporal_reasoning:20"
+    ],
+    "question_count": 20,
+    "metadata": {
+      "sample_source_formats": [
+        "beam_official_public_conversation"
+      ],
+      "source_modes": [
+        "official_public"
+      ],
+      "slice_statuses": [
+        "official_public_commit_pinned"
+      ],
+      "dataset_scales": [
+        "128K"
+      ],
+      "upstream_commits": [
+        "pinned-local"
+      ],
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Summary Synthesis Memory",
+      "max_observations": 6,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "audited_overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "benchmark_slices": {
+    "should_abstain": [
+      {
+        "label": "abstain",
+        "correct": 2,
+        "total": 2,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "answer",
+        "correct": 18,
+        "total": 18,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "evidence_scope": [
+      {
+        "label": "multi_session",
+        "correct": 6,
+        "total": 6,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "single_session",
+        "correct": 14,
+        "total": 14,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "temporal_scope": [
+      {
+        "label": "undated",
+        "correct": 20,
+        "total": 20,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ]
+  },
+  "product_memory_summary": {
+    "measured_metrics": {
+      "latency_ms": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "answer_candidate_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "primary_answer_candidate_sources": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate_memory",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_source_alignment": {
+        "aligned": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "primary_answer_candidate_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_types": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "currency",
+            "count": 1
+          },
+          {
+            "label": "date",
+            "count": 1
+          },
+          {
+            "label": "generic",
+            "count": 14
+          },
+          {
+            "label": "preference",
+            "count": 4
+          }
+        ]
+      },
+      "retrieved_memory_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          },
+          {
+            "label": "belief",
+            "count": 20
+          },
+          {
+            "label": "structured_evidence",
+            "count": 20
+          }
+        ]
+      },
+      "retrieved_memory_role_items": {
+        "supported": 228,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 68
+          },
+          {
+            "label": "belief",
+            "count": 60
+          },
+          {
+            "label": "structured_evidence",
+            "count": 100
+          }
+        ]
+      },
+      "provenance_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "abstention_honesty": {
+        "honest": 2,
+        "total": 2,
+        "rate": 1.0
+      },
+      "current_state_accuracy": {
+        "correct": 0,
+        "total": 0,
+        "excluded": 0,
+        "accuracy": 0.0
+      }
+    },
+    "unmeasured_metrics": [
+      "stale_state_error_rate",
+      "correction_success_rate",
+      "deletion_reliability",
+      "memory_drift_rate"
+    ],
+    "notes": [
+      "This summary only reports metrics that current benchmark runs can measure honestly.",
+      "Correction, deletion, and drift metrics still require dedicated product-memory evaluation tasks."
+    ]
+  },
+  "predictions": [
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:abstention:1",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to the podiatrist\u2019s qualifications or expertise.",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to the podiatrist\u2019s qualifications or expertise.",
+        "Based on the provided chat, there is no information related to the podiatrist\u2019s qualifications or expertise"
+      ],
+      "is_correct": true,
+      "question": "What are the qualifications or expertise of the podiatrist whose article I read about Primeknit reducing blister risk?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:abstention:2",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to the atmosphere of the sneaker art exhibit.",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to the atmosphere of the sneaker art exhibit.",
+        "Based on the provided chat, there is no information related to the atmosphere of the sneaker art exhibit"
+      ],
+      "is_correct": true,
+      "question": "What was the atmosphere like during the sneaker art exhibit Lauren and I attended at the Montserrat Museum?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:contradiction_resolution:3",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you've known Kyle and met him at a sneaker expo, but you also said you've never met Kyle or attended any sneaker expos. Which statement is correct",
+      "expected_answers": [
+        "I notice you've mentioned contradictory information about this. You said you've known Kyle and met him at a sneaker expo, but you also said you've never met Kyle or attended any sneaker expos. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said you've known Kyle and met him at a sneaker expo",
+        "LLM response should mention: you also said you've never met Kyle or attended any sneaker expos",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I ever met Kyle or been to any sneaker expos?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:contradiction_resolution:4",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you placed an online order for sneakers, but you also mentioned that you've never placed any online sneaker orders. Which statement is correct",
+      "expected_answers": [
+        "I notice you've mentioned contradictory information about this. You said you placed an online order for sneakers, but you also mentioned that you've never placed any online sneaker orders. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said you placed an online order for sneakers",
+        "LLM response should mention: you also mentioned that you've never placed any online sneaker orders",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I ever placed an online order for sneakers before?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:event_ordering:5",
+      "category": "event_ordering",
+      "predicted_answer": "1) Planning a visit to a specific store on Main Street\n2) Placing an online order with a discount code\n3) Visiting the same store to try a particular running shoe\n4) Trying another shoe model at the same store and discussing sizing preferences",
+      "expected_answers": [
+        "You mentioned sneaker shopping experiences and related details in this order: 1) Planning a visit to a specific store on Main Street, 2) Placing an online order with a discount code, 3) Visiting the same store to try a particular running shoe, 4) Trying another shoe model at the same store and discussing sizing preferences.",
+        "Store visit planning",
+        "Online order with discount",
+        "Trying running shoe in store",
+        "Trying another shoe and sizing"
+      ],
+      "is_correct": true,
+      "question": "Can you list the order in which I brought up different sneaker shopping experiences and related details throughout our conversations in order? Mention ONLY and ONLY four items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:event_ordering:6",
+      "category": "event_ordering",
+      "predicted_answer": "1) Concerns about injury risk on uneven terrain and need for good grip soles\n2) The traction benefits of the Continental rubber outsole on Ultraboosts\n3) Considering switching to Brooks Ghost to avoid shin splints after May 5\n4) The reflective panels on New Balance 990v5 improving night visibility\n5) Using Nike Dunk Low with orthotic insoles and how they work with the Zoom Air unit for responsiveness",
+      "expected_answers": [
+        "You mentioned the sneaker features in this order: 1) Concerns about injury risk on uneven terrain and need for good grip soles, 2) The traction benefits of the Continental rubber outsole on Ultraboosts, 3) Considering switching to Brooks Ghost to avoid shin splints after May 5, 4) The reflective panels on New Balance 990v5 improving night visibility, 5) Using Nike Dunk Low with orthotic insoles and how they work with the Zoom Air unit for responsiveness.",
+        "Injury risk and grip soles",
+        "Traction of Continental outsole",
+        "Switching to Brooks Ghost for shin splints",
+        "Reflective panels on New Balance 990v5",
+        "Orthotic insoles and Zoom Air responsiveness"
+      ],
+      "is_correct": true,
+      "question": "Can you walk me through the order in which I brought up different safety and comfort features of my sneakers during our chats, in order? Mention ONLY and ONLY five items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:information_extraction:7",
+      "category": "information_extraction",
+      "predicted_answer": "Next Saturday at 3 PM",
+      "expected_answers": [
+        "Next Saturday at 3 PM",
+        "LLM response should state: Next Saturday at 3 PM"
+      ],
+      "is_correct": true,
+      "question": "When am I planning to visit the store on Main Street in East Janethaven?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "date",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:information_extraction:8",
+      "category": "information_extraction",
+      "predicted_answer": "You said you chose the Adidas Ultraboost over the Nike React Infinity Run after trying both on March 30 at Foot Locker.",
+      "expected_answers": [
+        "You said you chose the Adidas Ultraboost over the Nike React Infinity Run after trying both on March 30 at Foot Locker.",
+        "LLM response should state: Adidas Ultraboost"
+      ],
+      "is_correct": true,
+      "question": "Which option did I say I chose after trying both at the store?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:instruction_following:9",
+      "category": "instruction_following",
+      "predicted_answer": "This answer includes comfort related to physical well-being. It also includes injury prevention aspects such as support, cushioning, and reducing stress on the feet.",
+      "expected_answers": [
+        "LLM response should contain: comfort related to physical well-being",
+        "LLM response should contain: injury prevention aspects"
+      ],
+      "is_correct": true,
+      "question": "What features I should pay attnetion to in sneakers?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:instruction_following:10",
+      "category": "instruction_following",
+      "predicted_answer": "This answer mentions eco-friendly materials such as recycled or renewable components. It also discusses environmental impact of materials when describing overall sneaker quality.",
+      "expected_answers": [
+        "LLM response should contain: mentions eco-friendly materials",
+        "LLM response should contain: discusses environmental impact of materials"
+      ],
+      "is_correct": true,
+      "question": "What materials are commonly used in making modern sneakers, and what should I know about their overall quality?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:knowledge_update:11",
+      "category": "knowledge_update",
+      "predicted_answer": "4 PM",
+      "expected_answers": [
+        "4 PM",
+        "LLM response should state: 4 PM"
+      ],
+      "is_correct": true,
+      "question": "What time should I plan to visit Foot Locker next Saturday?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:knowledge_update:12",
+      "category": "knowledge_update",
+      "predicted_answer": "$650",
+      "expected_answers": [
+        "$650",
+        "LLM response should state: $650"
+      ],
+      "is_correct": true,
+      "question": "What is my annual budget for buying sneakers?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "currency",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:multi_session_reasoning:13",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "Two sizes: 11 and 11.5",
+      "expected_answers": [
+        "Two sizes: 11 and 11.5",
+        "LLM response should state: Two sizes: 11 and 11.5"
+      ],
+      "is_correct": true,
+      "question": "How many different shoe sizes have I mentioned across my messages?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:multi_session_reasoning:14",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "The price you paid for the Ultraboost is below your original budget limit of $200.",
+      "expected_answers": [
+        "The price you paid for the Ultraboost is below your original budget limit of $200.",
+        "LLM response should state: price you paid for the Ultraboost is below your original budget limit of $200"
+      ],
+      "is_correct": true,
+      "question": "How does the price I paid for the Ultraboost compare to my original budget limit for sneakers?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:preference_following:15",
+      "category": "preference_following",
+      "predicted_answer": "This answer recommends sneakers described as sleek or modern. It also includes options in neutral colors like black or gray",
+      "expected_answers": [
+        "LLM response should contain: recommends sneakers described as sleek or modern",
+        "LLM response should contain: includes options in neutral colors like black or gray"
+      ],
+      "is_correct": true,
+      "question": "I'm looking to buy a new pair of sneakers soon. Can you suggest some options I might like?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:preference_following:16",
+      "category": "preference_following",
+      "predicted_answer": "This answer mentions multiple brands. It also suggests different shoes for different occasions or activities",
+      "expected_answers": [
+        "LLM response should contain: mentions multiple brands",
+        "LLM response should contain: suggests different shoes for different occasions or activities"
+      ],
+      "is_correct": true,
+      "question": "I'm looking to get a new pair of shoes soon. What options would you suggest for different occasions?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:summarization:17",
+      "category": "summarization",
+      "predicted_answer": "Over the course of our discussions, your sneaker preferences and choices evolved through several stages. Initially, you sought comfortable daily wear options suitable for an active lifestyle, leading to recommendations like the Adidas Ultraboost, Nike Air Zoom Pegasus 38, and others known for cushioning and support. You then focused on specific details such as sizing and breaking in the Ultraboosts to maximize comfort. Later, you considered Allbirds, influenced by your partner Lauren's preference, weighing their comfort, sustainability, and minimalist style against your existing Ultraboosts. This led to plans to try Allbirds to see how they compare. Subsequently, you evaluated loyalty between Brooks for running and Adidas for casual wear, reflecting on your 3-mile run experience and deciding to commit to Brooks Ghost 14 for running due to its cushioning and support, while continuing with Adidas Ultraboost for casual use. Finally, you explored options for hiking shoes suitable for Montserrat's Oriole Trail, comparing New Balance 990v5 with hiking-specific models like Salomon X Ultra 3 GTX and Merrell Moab 2, focusing on traction and moisture-wicking properties, with a recommendation toward specialized hiking footwear for better performance",
+      "expected_answers": [
+        "LLM response should contain: you sought comfortable daily wear options suitable for an active lifestyle, leading to recommendations like the Adidas Ultraboost",
+        "LLM response should contain: You then focused on specific details such as sizing and breaking in the Ultraboosts to maximize comfort",
+        "LLM response should contain: you considered Allbirds, influenced by your partner Lauren's preference, weighing their comfort, sustainability, and minimalist style against your existing Ultraboosts",
+        "LLM response should contain: This led to plans to try Allbirds to see how they compare",
+        "LLM response should contain: you evaluated loyalty between Brooks for running and Adidas for casual wear, reflecting on your 3-mile run experience and deciding to commit to Brooks Ghost 14 for running",
+        "LLM response should contain: you explored options for hiking shoes suitable for Montserrat's Oriole Trail, comparing New Balance 990v5 with hiking-specific models like Salomon X Ultra 3 GTX and Merrell Moab 2"
+      ],
+      "is_correct": true,
+      "question": "Can you give me a summary of how my sneaker preferences and choices have developed over our conversations?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:summarization:18",
+      "category": "summarization",
+      "predicted_answer": "You explored several comfortable sneaker options for daily wear, including Adidas Ultraboost, Nike Air Zoom Pegasus 38, New Balance 990v5, Saucony Ride ISO 4, Brooks Ghost 14, and Asics Gel-Kayano 28. You showed particular interest in the Adidas Ultraboost for its cushioning and energy return, and received sizing and break-in tips for them. Later, you considered Allbirds as a comfortable, sustainable alternative favored by your partner, with advice on their features and how they compare to Ultraboosts. Additionally, you evaluated Brooks Ghost 14 for running and Adidas Ultraboost for casual wear based on your recent experiences, deciding to commit to Brooks for running and Adidas for daily use. Finally, for hiking on Montserrat's Oriole Trail, you were advised that specialized hiking shoes like Salomon X Ultra 3 GTX or Merrell Moab 2 would be better than New Balance 990v5 due to terrain and moisture-wicking needs",
+      "expected_answers": [
+        "LLM response should contain: You explored several comfortable sneaker options for daily wear, including Adidas Ultraboost, Nike Air Zoom Pegasus 38, New Balance 990v5, Saucony Ride ISO 4, Brooks Ghost 14, and Asics Gel-Kayano 28",
+        "LLM response should contain: You showed particular interest in the Adidas Ultraboost for its cushioning and energy return, and received sizing and break-in tips for them",
+        "LLM response should contain: you considered Allbirds as a comfortable, sustainable alternative favored by your partner, with advice on their features and how they compare to Ultraboosts",
+        "LLM response should contain: you evaluated Brooks Ghost 14 for running and Adidas Ultraboost for casual wear based on your recent experiences, deciding to commit to Brooks for running and Adidas for daily use",
+        "LLM response should contain: you were advised that specialized hiking shoes like Salomon X Ultra 3 GTX or Merrell Moab 2 would be better than New Balance 990v5"
+      ],
+      "is_correct": true,
+      "question": "Can you give me a quick summary of the sneaker options and advice we've talked about for my daily wear and activities?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:temporal_reasoning:19",
+      "category": "temporal_reasoning",
+      "predicted_answer": "One day passed between when I got the size 11 Ultraboost on April 30 and when I reordered the size 11.5 on May 1.",
+      "expected_answers": [
+        "One day passed between when I got the size 11 Ultraboost on April 30 and when I reordered the size 11.5 on May 1.",
+        "LLM response should state: 1 day",
+        "LLM response should state: from April 30 till May 1"
+      ],
+      "is_correct": true,
+      "question": "How many days passed between when I got the size 11 Ultraboost and when I reordered the size 11.5?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-15",
+      "question_id": "15:temporal_reasoning:20",
+      "category": "temporal_reasoning",
+      "predicted_answer": "There are about 4 months between April 15, 2024, when I planned to reach my daily walking goal, and August 22, 2024, the date of the festival I\u2019m preparing my sneaker outfit for.",
+      "expected_answers": [
+        "There are about 4 months between April 15, 2024, when I planned to reach my daily walking goal, and August 22, 2024, the date of the festival I\u2019m preparing my sneaker outfit for.",
+        "LLM response should state: 4 months",
+        "LLM response should state: from April 15, 2024 till August 22, 2024"
+      ],
+      "is_correct": true,
+      "question": "How many months are there between when I planned to reach my daily walking goal and the festival I\u2019m preparing my sneaker outfit for?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    }
+  ]
+}

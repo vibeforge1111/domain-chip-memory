@@ -1,0 +1,1369 @@
+{
+  "run_manifest": {
+    "run_id": "summary-synthesis-memory-v1",
+    "benchmark_name": "BEAM",
+    "baseline_name": "summary_synthesis_memory",
+    "sample_ids": [
+      "beam-128k-11"
+    ],
+    "question_ids": [
+      "11:abstention:1",
+      "11:abstention:2",
+      "11:contradiction_resolution:3",
+      "11:contradiction_resolution:4",
+      "11:event_ordering:5",
+      "11:event_ordering:6",
+      "11:information_extraction:7",
+      "11:information_extraction:8",
+      "11:instruction_following:9",
+      "11:instruction_following:10",
+      "11:knowledge_update:11",
+      "11:knowledge_update:12",
+      "11:multi_session_reasoning:13",
+      "11:multi_session_reasoning:14",
+      "11:preference_following:15",
+      "11:preference_following:16",
+      "11:summarization:17",
+      "11:summarization:18",
+      "11:temporal_reasoning:19",
+      "11:temporal_reasoning:20"
+    ],
+    "question_count": 20,
+    "metadata": {
+      "sample_source_formats": [
+        "beam_official_public_conversation"
+      ],
+      "source_modes": [
+        "official_public"
+      ],
+      "slice_statuses": [
+        "official_public_commit_pinned"
+      ],
+      "dataset_scales": [
+        "128K"
+      ],
+      "upstream_commits": [
+        "pinned-local"
+      ],
+      "baseline_type": "candidate_memory_system",
+      "system_name": "Summary Synthesis Memory",
+      "max_observations": 6,
+      "max_reflections": 3,
+      "max_topic_support": 2,
+      "completion_status": "complete"
+    }
+  },
+  "overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "audited_overall": {
+    "correct": 20,
+    "total": 20,
+    "excluded": 0,
+    "accuracy": 1.0
+  },
+  "by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "audited_by_category": [
+    {
+      "category": "abstention",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "contradiction_resolution",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "event_ordering",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "information_extraction",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "instruction_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "knowledge_update",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "multi_session_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "preference_following",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "summarization",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    },
+    {
+      "category": "temporal_reasoning",
+      "correct": 2,
+      "total": 2,
+      "excluded": 0,
+      "accuracy": 1.0
+    }
+  ],
+  "known_issue_summary": {
+    "total_flagged": 0,
+    "incorrect_flagged": 0,
+    "audit_excluded_total": 0,
+    "audit_excluded_classes": [
+      "benchmark_inconsistency"
+    ],
+    "by_classification": [],
+    "questions": []
+  },
+  "benchmark_slices": {
+    "should_abstain": [
+      {
+        "label": "abstain",
+        "correct": 2,
+        "total": 2,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "answer",
+        "correct": 18,
+        "total": 18,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "evidence_scope": [
+      {
+        "label": "multi_session",
+        "correct": 6,
+        "total": 6,
+        "excluded": 0,
+        "accuracy": 1.0
+      },
+      {
+        "label": "single_session",
+        "correct": 14,
+        "total": 14,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ],
+    "temporal_scope": [
+      {
+        "label": "undated",
+        "correct": 20,
+        "total": 20,
+        "excluded": 0,
+        "accuracy": 1.0
+      }
+    ]
+  },
+  "product_memory_summary": {
+    "measured_metrics": {
+      "latency_ms": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "available": 20,
+        "missing": 0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "answer_candidate_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "primary_answer_candidate_sources": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate_memory",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_source_alignment": {
+        "aligned": 0,
+        "total": 0,
+        "rate": 0.0
+      },
+      "primary_answer_candidate_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          }
+        ]
+      },
+      "primary_answer_candidate_types": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "date",
+            "count": 3
+          },
+          {
+            "label": "generic",
+            "count": 13
+          },
+          {
+            "label": "preference",
+            "count": 4
+          }
+        ]
+      },
+      "retrieved_memory_roles": {
+        "supported": 20,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 20
+          },
+          {
+            "label": "belief",
+            "count": 20
+          },
+          {
+            "label": "structured_evidence",
+            "count": 20
+          }
+        ]
+      },
+      "retrieved_memory_role_items": {
+        "supported": 228,
+        "total": 20,
+        "rows": [
+          {
+            "label": "aggregate",
+            "count": 68
+          },
+          {
+            "label": "belief",
+            "count": 60
+          },
+          {
+            "label": "structured_evidence",
+            "count": 100
+          }
+        ]
+      },
+      "provenance_support_rate": {
+        "supported": 20,
+        "total": 20,
+        "rate": 1.0
+      },
+      "abstention_honesty": {
+        "honest": 2,
+        "total": 2,
+        "rate": 1.0
+      },
+      "current_state_accuracy": {
+        "correct": 0,
+        "total": 0,
+        "excluded": 0,
+        "accuracy": 0.0
+      }
+    },
+    "unmeasured_metrics": [
+      "stale_state_error_rate",
+      "correction_success_rate",
+      "deletion_reliability",
+      "memory_drift_rate"
+    ],
+    "notes": [
+      "This summary only reports metrics that current benchmark runs can measure honestly.",
+      "Correction, deletion, and drift metrics still require dedicated product-memory evaluation tasks."
+    ]
+  },
+  "predictions": [
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:abstention:1",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific steps taken during the bias audit initiated on April 30.",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to the specific steps taken during the bias audit initiated on April 30.",
+        "Based on the provided chat, there is no information related to the specific steps taken during the bias audit initiated on April 30"
+      ],
+      "is_correct": true,
+      "question": "What specific steps were taken during the bias audit initiated on April 30?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:abstention:2",
+      "category": "abstention",
+      "predicted_answer": "Based on the provided chat, there is no information related to the specific feedback from the two managers on April 28.",
+      "expected_answers": [
+        "Based on the provided chat, there is no information related to the specific feedback from the two managers on April 28.",
+        "Based on the provided chat, there is no information related to the specific feedback from the two managers on April 28"
+      ],
+      "is_correct": true,
+      "question": "What specific feedback did the two managers provide on April 28 that influenced continuing the AI pilot?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": true,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:contradiction_resolution:3",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said you have met Michael and collaborate with him weekly on editing timelines, but you also mentioned that you have never met or worked with him. Which statement is correct",
+      "expected_answers": [
+        "I notice you've mentioned contradictory information about this. You said you have met Michael and collaborate with him weekly on editing timelines, but you also mentioned that you have never met or worked with him. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said you have met Michael and collaborate with him weekly on editing timelines",
+        "LLM response should mention: you also mentioned that you have never met or worked with him",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I worked with Michael on editing timelines before?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:contradiction_resolution:4",
+      "category": "contradiction_resolution",
+      "predicted_answer": "I notice you've mentioned contradictory information about this. You said that two-factor authentication was implemented for platform access, but you also mentioned that you have never implemented two-factor authentication for any platform. Which statement is correct",
+      "expected_answers": [
+        "I notice you've mentioned contradictory information about this. You said that two-factor authentication was implemented for platform access, but you also mentioned that you have never implemented two-factor authentication for any platform. Could you clarify which is correct?",
+        "LLM response should state: there is contradictory information",
+        "LLM response should mention: You said that two-factor authentication was implemented for platform access",
+        "LLM response should mention: you also mentioned that you have never implemented two-factor authentication for any platform",
+        "LLM response should mention: which statement is correct?"
+      ],
+      "is_correct": true,
+      "question": "Have I ever implemented two-factor authentication for platform access?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 15,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 7,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:event_ordering:5",
+      "category": "event_ordering",
+      "predicted_answer": "1) My collaboration with Michael and concerns about AI replacing human input in editing workflows\n2) Questions about ensuring AI recognizes candidates' soft skills\n3) Interest in psychometric tests to integrate with AI\n4) Michael revealing he is developing AI fairness metrics\n5) Michael suggesting Pymetrics for soft skills assessment and its impact on candidate fit\n6) Agreement to pilot Pymetrics while monitoring bias and transparency",
+      "expected_answers": [
+        "You mentioned aspects of using AI in hiring in this order: 1) My collaboration with Michael and concerns about AI replacing human input in editing workflows, 2) Questions about ensuring AI recognizes candidates' soft skills, 3) Interest in psychometric tests to integrate with AI, 4) Michael revealing he is developing AI fairness metrics, 5) Michael suggesting Pymetrics for soft skills assessment and its impact on candidate fit, 6) Agreement to pilot Pymetrics while monitoring bias and transparency.",
+        "Collaboration and AI replacement concerns",
+        "Ensuring AI recognizes soft skills",
+        "Psychometric test integration",
+        "AI fairness metrics development",
+        "Pymetrics suggestion and results",
+        "Pilot program and bias considerations"
+      ],
+      "is_correct": true,
+      "question": "Can you walk me through the order in which I brought up different aspects of using AI in our hiring process across our conversations, in order? Mention ONLY and ONLY six items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:event_ordering:6",
+      "category": "event_ordering",
+      "predicted_answer": "1) Cost comparisons between AI hiring tools and manual hiring expenses\n2) Initial pilot results showing recruiter hour savings and pilot costs\n3) Longer-term recruitment cost savings exceeding projections\n4) Whether Jessica needs to be involved in AI tool training sessions\n5) Whether Linda should be involved in all stages of automation expansion",
+      "expected_answers": [
+        "You mentioned these topics in this order: 1) Cost comparisons between AI hiring tools and manual hiring expenses, 2) Initial pilot results showing recruiter hour savings and pilot costs, 3) Longer-term recruitment cost savings exceeding projections, 4) Whether Jessica needs to be involved in AI tool training sessions, 5) Whether Linda should be involved in all stages of automation expansion.",
+        "Cost comparisons",
+        "Pilot results",
+        "Longer-term savings",
+        "Jessica's involvement",
+        "Linda's involvement"
+      ],
+      "is_correct": true,
+      "question": "Can you walk me through the order in which I brought up different cost-saving and involvement topics related to hiring automation across our conversations in order? Mention ONLY and ONLY five items.",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:information_extraction:7",
+      "category": "information_extraction",
+      "predicted_answer": "You said you met your partner at ArtSpace Gallery on June 12, 2020.",
+      "expected_answers": [
+        "You said you met your partner at ArtSpace Gallery on June 12, 2020.",
+        "LLM response should state: ArtSpace Gallery",
+        "LLM response should state: June 12, 2020"
+      ],
+      "is_correct": true,
+      "question": "When and where did I say I met my partner?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "date",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:information_extraction:8",
+      "category": "information_extraction",
+      "predicted_answer": "I recommended starting with a pilot program to test the AI tool's effectiveness, maintaining human oversight especially in final decisions, configuring anonymization to remove personal identifiers, auditing algorithms for bias including third-party audits, regularly monitoring diversity metrics and feedback, and integrating structured interviews to assess soft skills alongside AI screening.",
+      "expected_answers": [
+        "I recommended starting with a pilot program to test the AI tool\u2019s effectiveness, maintaining human oversight especially in final decisions, configuring anonymization to remove personal identifiers, auditing algorithms for bias including third-party audits, regularly monitoring diversity metrics and feedback, and integrating structured interviews to assess soft skills alongside AI screening.",
+        "LLM response should state: I recommended starting with a pilot program to test the AI tool\u2019s effectiveness",
+        "LLM response should state: maintaining human oversight especially in final decisions",
+        "LLM response should state: configuring anonymization to remove personal identifiers",
+        "LLM response should state: auditing algorithms for bias including third-party audits",
+        "LLM response should state: regularly monitoring diversity metrics and feedback",
+        "LLM response should state: integrating structured interviews to assess soft skills alongside AI screening"
+      ],
+      "is_correct": true,
+      "question": "What approach did you recommend to balance speeding up the hiring process with ensuring fairness throughout the candidate evaluation?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:instruction_following:9",
+      "category": "instruction_following",
+      "predicted_answer": "This answer contains explanation of encryption methods such as TLS for data in transit and AES-256 for data at rest. It also contains details on how data is secured through encryption by protecting information during transmission and while stored.",
+      "expected_answers": [
+        "LLM response should contain: explanation of encryption methods",
+        "LLM response should contain: details on how data is secured through encryption"
+      ],
+      "is_correct": true,
+      "question": "What should I know about keeping my information safe when using online services?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:instruction_following:10",
+      "category": "instruction_following",
+      "predicted_answer": "This answer contains explanation of encryption methods such as TLS for transmitting data securely and AES-256 for stored data. It also contains details on how data is secured through encryption both while it travels between your device and the service and while it is stored on the provider's systems",
+      "expected_answers": [
+        "LLM response should contain: explanation of encryption methods",
+        "LLM response should contain: details on how data is secured through encryption"
+      ],
+      "is_correct": true,
+      "question": "When I\u2019m signing up for a new online account, what security measures should I look for to ensure my data stays private?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "date",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:knowledge_update:11",
+      "category": "knowledge_update",
+      "predicted_answer": "The webinar is scheduled for March 27 to accommodate additional guest speakers",
+      "expected_answers": [
+        "The webinar is scheduled for March 27 to accommodate additional guest speakers.",
+        "LLM response should state: March 27"
+      ],
+      "is_correct": true,
+      "question": "When is the webinar on AI ethics in hiring scheduled to take place?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "date",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:knowledge_update:12",
+      "category": "knowledge_update",
+      "predicted_answer": "90%",
+      "expected_answers": [
+        "90%",
+        "LLM response should state: 90%"
+      ],
+      "is_correct": true,
+      "question": "What accuracy rate does the AI screening tool achieve in its evaluations?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:multi_session_reasoning:13",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "Two vendors or tools: HireVue and Pymetrics",
+      "expected_answers": [
+        "Two vendors or tools: HireVue and Pymetrics.",
+        "LLM response should state: Two vendors",
+        "LLM response should state: HireVue and Pymetrics"
+      ],
+      "is_correct": true,
+      "question": "How many different AI vendors or tools have I mentioned using or customizing for hiring automation?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:multi_session_reasoning:14",
+      "category": "multi_session_reasoning",
+      "predicted_answer": "You should prioritize maintaining and monitoring diversity improvements by involving Wyatt early in training and pilot programs to secure buy-in and oversight, while simultaneously encouraging Natalie's foundational learning in AI and recruitment technology to build future talent, balancing immediate operational success with long-term development",
+      "expected_answers": [
+        "You should prioritize maintaining and monitoring diversity improvements by involving Wyatt early in training and pilot programs to secure buy-in and oversight, while simultaneously encouraging Natalie's foundational learning in AI and recruitment technology to build future talent, balancing immediate operational success with long-term development.",
+        "LLM response should state: prioritize maintaining and monitoring diversity improvements by involving Wyatt early in training and pilot programs",
+        "LLM response should state: encouraging Natalie's foundational learning in AI and recruitment technology to build future talent"
+      ],
+      "is_correct": true,
+      "question": "Given my current diversity stats, recent improvements, involvement plans for Wyatt, and Natalie's interest in AI hiring, how should I prioritize actions to sustain diversity gains while fostering future talent?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:preference_following:15",
+      "category": "preference_following",
+      "predicted_answer": "This answer mentions combining AI with human review. It also suggests human checks alongside automated steps so the process stays efficient while preserving fairness and final human judgment",
+      "expected_answers": [
+        "LLM response should contain: mentions combining AI with human review",
+        "LLM response should contain: suggests human checks alongside automated steps"
+      ],
+      "is_correct": true,
+      "question": "I'm thinking about how to handle the hiring process with some help from technology. How would you suggest setting that up?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:preference_following:16",
+      "category": "preference_following",
+      "predicted_answer": "This answer recommends human involvement in final interviews. It also suggests maintaining or emphasizing human interaction in later stages to support candidate engagement and fairness",
+      "expected_answers": [
+        "LLM response should contain: recommends human involvement in final interviews",
+        "LLM response should contain: suggests maintaining or emphasizing human interaction in later stages"
+      ],
+      "is_correct": true,
+      "question": "How should I structure the final stages of the interview process to ensure a smooth experience for both candidates and my team?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:summarization:17",
+      "category": "summarization",
+      "predicted_answer": "Our approach to integrating AI into the hiring process has evolved through several stages. Initially, we recognized the value of AI in improving efficiency, such as reducing resume screening time and enhancing candidate diversity, while emphasizing the importance of preserving the human touch, especially in assessing soft skills and cultural fit. We then outlined specific steps for a pilot program, including selecting positions, configuring AI tools, training the team, and monitoring outcomes. To ensure soft skills are not overlooked, we incorporated multi-stage evaluations with human-led interviews and psychometric assessments like MBTI and DISC. Addressing concerns about fairness and bias, especially raised by team members like Wyatt, led us to plan a team meeting to discuss mitigation strategies, transparency, and human oversight. Additionally, we considered leveraging Michael's expertise in AI fairness metrics and explored integrating tools like Pymetrics to improve candidate fit. Finally, we discussed potential role transitions within the team, such as Michael moving to HR tech support, reflecting the broader impact of AI adoption on team dynamics and workflows. Throughout, the process has balanced efficiency gains with ethical considerations and team collaboration",
+      "expected_answers": [
+        "LLM response should contain: we recognized the value of AI in improving efficiency, such as reducing resume screening time and enhancing candidate diversity",
+        "LLM response should contain: outlined specific steps for a pilot program, including selecting positions, configuring AI tools, training the team, and monitoring outcomes",
+        "LLM response should contain: incorporated multi-stage evaluations with human-led interviews and psychometric assessments like MBTI and DISC",
+        "LLM response should contain: Addressing concerns about fairness and bias, especially raised by team members like Wyatt, led us to plan a team meeting to discuss mitigation strategies, transparency, and human oversight",
+        "LLM response should contain: we considered leveraging Michael's expertise in AI fairness metrics and explored integrating tools like Pymetrics to improve candidate fit",
+        "LLM response should contain: we discussed potential role transitions within the team, such as Michael moving to HR tech support, reflecting the broader impact of AI adoption on team dynamics"
+      ],
+      "is_correct": true,
+      "question": "Can you give me a comprehensive summary of how we've approached integrating AI into our hiring process, including the key steps, challenges, and decisions we've discussed so far?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:summarization:18",
+      "category": "summarization",
+      "predicted_answer": "To ensure compliance with legal and policy requirements when using AI in hiring, you need to address several interconnected areas. First, understanding and adhering to Montserrat's Data Protection Act and upcoming GDPR-like standards is essential, focusing on lawful data processing, consent, transparency, data minimization, and security. Next, your hiring policy must explicitly cover AI transparency, including clear communication about AI usage, fairness audits, candidate notifications, and human oversight in final decisions. Additionally, compliance with Montserrat's Employment Act amendments requires reviewing the legislation, consulting legal experts to obtain a compliance checklist, and auditing AI tools for bias and transparency. Preparing for legal consultations involves gathering detailed examples of your current AI usage, including tools like HireVue and Pymetrics, data handling practices, and existing compliance measures such as bias audits and encryption. Finally, ongoing efforts like regular policy updates, employee training, and scheduled reviews ensure that your AI hiring process remains compliant and ethically sound over time",
+      "expected_answers": [
+        "LLM response should contain: understanding and adhering to Montserrat's Data Protection Act and upcoming GDPR-like standards is essential",
+        "LLM response should contain: your hiring policy must explicitly cover AI transparency, including clear communication about AI usage, fairness audits, candidate notifications, and human oversight in final decisions",
+        "LLM response should contain: compliance with Montserrat's Employment Act amendments requires reviewing the legislation, consulting legal experts to obtain a compliance checklist, and auditing AI tools for bias",
+        "LLM response should contain: Preparing for legal consultations involves gathering detailed examples of your current AI usage, including tools like HireVue and Pymetrics",
+        "LLM response should contain: ongoing efforts like regular policy updates, employee training, and scheduled reviews ensure that your AI hiring process remains compliant"
+      ],
+      "is_correct": true,
+      "question": "Can you give me a complete summary of how I can ensure my AI hiring process complies with all relevant legal and policy requirements we've discussed?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "multi_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:temporal_reasoning:19",
+      "category": "temporal_reasoning",
+      "predicted_answer": "There are 19 days between Carla's suggestion over lunch on March 1 and the webinar on AI ethics in hiring on March 20",
+      "expected_answers": [
+        "There are 19 days between Carla's suggestion over lunch on March 1 and the webinar on AI ethics in hiring on March 20.",
+        "LLM response should state: 19 days",
+        "LLM response should state: from March 1 till March 20"
+      ],
+      "is_correct": true,
+      "question": "How many days are there between when my friend Carla suggested using AI for hiring over lunch and my upcoming webinar on AI ethics in hiring?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "preference",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    },
+    {
+      "benchmark_name": "BEAM",
+      "baseline_name": "summary_synthesis_memory",
+      "sample_id": "beam-128k-11",
+      "question_id": "11:temporal_reasoning:20",
+      "category": "temporal_reasoning",
+      "predicted_answer": "49 days passed between the meeting with Wyatt on March 10 and the positive feedback from the managers on April 28",
+      "expected_answers": [
+        "49 days passed between the meeting with Wyatt on March 10 and the positive feedback from the managers on April 28.",
+        "LLM response should state: 49 days",
+        "LLM response should state: from March 10 till April 28"
+      ],
+      "is_correct": true,
+      "question": "How many days passed between my meeting with Wyatt expressing skepticism and the positive feedback I received from the managers?",
+      "metadata": {
+        "provider_name": "heuristic_v1",
+        "provider_type": "local_deterministic",
+        "latency_ms": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "route": "summary_synthesis_memory",
+        "should_abstain": false,
+        "evidence_scope": "single_session",
+        "temporal_scope": "undated",
+        "product_memory_task": null,
+        "memory_operation": null,
+        "memory_scope": null,
+        "expected_answer_candidate_source": null,
+        "retrieved_context_item_count": 11,
+        "retrieved_memory_roles": [
+          "aggregate",
+          "belief",
+          "structured_evidence"
+        ],
+        "retrieved_memory_role_counts": {
+          "aggregate": 3,
+          "structured_evidence": 5,
+          "belief": 3
+        },
+        "primary_retrieved_memory_role": "aggregate",
+        "answer_candidate_count": 1,
+        "primary_answer_candidate_type": "generic",
+        "primary_answer_candidate_source": "aggregate_memory",
+        "primary_answer_candidate_role": "aggregate",
+        "provenance_supported": true
+      }
+    }
+  ]
+}

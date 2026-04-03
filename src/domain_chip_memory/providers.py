@@ -758,6 +758,27 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         or bool(compound_duration_pattern.fullmatch(candidate))
         or bool(re.fullmatch(r"\d+(?:\.\d+)?", candidate))
     )
+    dated_duration_answer_candidate = _first_answer_candidate_matching(
+        lambda candidate: bool(re.search(r"\b\d+\s+(?:days?|weeks?|months?|years?)\b", candidate.lower()))
+        and (
+            bool(re.search(r"\bfrom\b.+\b(?:to|till|until)\b", candidate.lower()))
+            or bool(re.search(r"\bbetween\b.+\band\b", candidate.lower()))
+            or any(month in candidate.lower() for month in (
+                "january",
+                "february",
+                "march",
+                "april",
+                "may",
+                "june",
+                "july",
+                "august",
+                "september",
+                "october",
+                "november",
+                "december",
+            ))
+        )
+    )
     currency_answer_candidate = _first_answer_candidate_matching(
         lambda candidate: bool(currency_pattern.fullmatch(candidate))
     )
@@ -1492,6 +1513,12 @@ def _expand_answer_from_context(question: str, answer: str, context: str) -> str
         )
     ):
         return total_count_answer_candidate
+    if (
+        dated_duration_answer_candidate
+        and cleaned_lower != dated_duration_answer_candidate.lower()
+        and question_lower.startswith("how many")
+    ):
+        return dated_duration_answer_candidate
     if (
         duration_count_answer_candidate
         and cleaned_lower != duration_count_answer_candidate.lower()
