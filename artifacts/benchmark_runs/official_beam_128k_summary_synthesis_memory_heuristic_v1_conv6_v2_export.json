@@ -1,0 +1,15 @@
+{
+  "benchmark_name": "BEAM",
+  "source_mode": "official_public",
+  "result_file_name": "domain_chip_memory_answers.json",
+  "conversation_count": 1,
+  "written_files": [
+    {
+      "dataset_scale": "128K",
+      "conversation_id": "6",
+      "output_file": "C:\\Users\\USER\\Desktop\\domain-chip-memory\\artifacts\\beam_public_results\\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv6_v2\\100K\\6\\domain_chip_memory_answers.json",
+      "category_count": 10,
+      "question_count": 20
+    }
+  ]
+}

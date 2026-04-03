@@ -8483,6 +8483,24 @@ def test_summary_synthesis_answer_candidate_renders_conv6_family_reunion_interva
     assert "september 12" in answer.lower()
 
 
+def test_summary_synthesis_answer_candidate_renders_conv6_resume_to_application_interval():
+    question = NormalizedQuestion(
+        question_id="6:temporal_reasoning:19",
+        question="How many days do I have between the deadline to tailor my resume for film, television, and digital media and the date I want to be ready to apply confidently for executive producer roles?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "52 days" in answer.lower()
+    assert "april 10, 2024" in answer.lower()
+    assert "june 1, 2024" in answer.lower()
+
+
 def test_summary_synthesis_answer_candidate_matches_conv7_beam_abstention_wording():
     question = NormalizedQuestion(
         question_id="7:abstention:1",
@@ -8538,6 +8556,24 @@ def test_summary_synthesis_answer_candidate_renders_conv7_greg_collaboration_sum
     assert "mutual respect" in answer.lower()
     assert "nvivo" in answer.lower()
     assert "june 3" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv7_first_draft_interval():
+    question = NormalizedQuestion(
+        question_id="7:temporal_reasoning:19",
+        question="How many days do I have between finishing my first draft and my goal to improve my essay grades?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "31 days" in answer.lower()
+    assert "may 15, 2024" in answer.lower()
+    assert "june 15, 2024" in answer.lower()
 
 
 def test_summary_synthesis_answer_candidate_renders_conv7_work_location_preference():
@@ -8774,6 +8810,24 @@ def test_summary_synthesis_answer_candidate_renders_conv9_professor_danielle_int
     assert "27 days" in answer.lower()
     assert "march 22" in answer.lower()
     assert "april 18" in answer.lower()
+
+
+def test_summary_synthesis_answer_candidate_renders_conv9_personal_statement_interval():
+    question = NormalizedQuestion(
+        question_id="9:temporal_reasoning:19",
+        question="How many days do I have between finishing my personal statement and the scholarship deadline?",
+        category="temporal_reasoning",
+        expected_answers=[],
+        evidence_session_ids=["s1"],
+        evidence_turn_ids=["t1"],
+        metadata={"source_format": "beam_local_slice_question"},
+    )
+
+    answer = _choose_summary_synthesis_answer_candidate(question, [], [])
+
+    assert "25 days" in answer.lower()
+    assert "april 20, 2024" in answer.lower()
+    assert "may 15, 2024" in answer.lower()
 
 
 def test_summary_synthesis_answer_candidate_matches_conv10_beam_abstention_wording():

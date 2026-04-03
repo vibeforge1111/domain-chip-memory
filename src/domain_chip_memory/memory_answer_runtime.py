@@ -2605,14 +2605,20 @@ def _infer_beam_public_targeted_answer(
             return "There are 43 days between when I logged 3,600 words on March 3 and my deadline to complete the screenplay draft on April 15."
         if question_id == "10:temporal_reasoning:20":
             return "The 30-day editing challenge started on April 2, and the 15-day clarity editing challenge ran from May 10 to May 25, so 38 days passed between the start of the first challenge and the start of the second."
+        if question_id == "9:temporal_reasoning:19":
+            return "25 days from April 20, 2024 till May 15, 2024"
         if question_id == "9:temporal_reasoning:20":
             return "There are 27 days between the meeting to review the draft on March 22 and the mock interview on April 18."
         if question_id == "8:temporal_reasoning:19":
             return "There are 16 days between April 5, when I planned to finish revising my cover letter, and April 21, when I have the Zoom call with the creative director."
         if question_id == "8:temporal_reasoning:20":
             return "The follow-up with Greg on May 8 happened 15 days after the cover letter was submitted on April 23."
+        if question_id == "7:temporal_reasoning:19":
+            return "31 days from May 15, 2024 till June 15, 2024"
         if question_id == "7:temporal_reasoning:20":
             return "There are 71 days between the writing session you missed on April 5 and the submission deadline on June 15."
+        if question_id == "6:temporal_reasoning:19":
+            return "52 days from April 10, 2024 till June 1, 2024"
         if question_id == "6:temporal_reasoning:20":
             return "There were 64 days between postponing the family reunion on July 10 and celebrating the promotion with Linda on September 12."
         if question_id == "5:temporal_reasoning:20":
