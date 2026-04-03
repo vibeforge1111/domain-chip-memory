@@ -1,3 +1,4 @@
+import importlib
 import json
 import sys
 from pathlib import Path
@@ -2059,6 +2060,88 @@ def test_run_openai_compatible_upstream_evaluation_waits_for_worker_exit_before_
     assert result["evaluation_files"] == [str(evaluation_path)]
     assert process_holder["process"].terminated is False
     assert "information_extraction" in json.loads(evaluation_path.read_text(encoding="utf-8"))
+
+
+def test_run_openai_compatible_evaluation_worker_sets_request_timeout_and_retries(
+    tmp_path: Path,
+    monkeypatch,
+):
+    upstream_repo = tmp_path / "beam_repo"
+    answers_scale_dir = tmp_path / "beam_results" / "500K"
+    conversation_dir = answers_scale_dir / "1"
+    (upstream_repo / "chats" / "500K" / "1" / "probing_questions").mkdir(parents=True)
+    conversation_dir.mkdir(parents=True)
+    (upstream_repo / "chats" / "500K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps({"information_extraction": []}),
+        encoding="utf-8",
+    )
+    (conversation_dir / "custom_answers.json").write_text(
+        json.dumps({"information_extraction": []}),
+        encoding="utf-8",
+    )
+
+    class FakeQueue:
+        def __init__(self):
+            self._items = []
+
+        def put(self, item):
+            self._items.append(item)
+
+        def get(self):
+            return self._items.pop(0)
+
+    fake_queue = FakeQueue()
+    captured_chat_openai_kwargs = {}
+
+    class FakeChatOpenAI:
+        def __init__(self, **kwargs):
+            captured_chat_openai_kwargs.update(kwargs)
+
+    class FakeComputeMetricsModule:
+        SentenceTransformer = object
+
+        def initialize_models(self):
+            return None
+
+    class FakeRunEvaluationModule:
+        initialize_models = None
+
+        @staticmethod
+        def run_evaluation(**kwargs):
+            output_path = Path(kwargs["output_address"])
+            output_path.write_text(json.dumps({"information_extraction": []}), encoding="utf-8")
+
+    original_import_module = importlib.import_module
+
+    def fake_import_module(name: str):
+        if name == "src.evaluation.compute_metrics":
+            return FakeComputeMetricsModule()
+        if name == "src.evaluation.run_evaluation":
+            return FakeRunEvaluationModule()
+        return original_import_module(name)
+
+    monkeypatch.setattr(beam_official_eval, "ChatOpenAI", FakeChatOpenAI)
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    beam_official_eval._run_openai_compatible_evaluation_worker(
+        upstream_repo_dir=str(upstream_repo),
+        answers_scale_dir=str(answers_scale_dir),
+        official_scale_dir="500K",
+        conversation_ids=["1"],
+        result_file_name="custom_answers.json",
+        judge_config={
+            "provider": "minimax",
+            "model": "MiniMax-M2.7",
+            "base_url": "https://api.minimax.io/v1",
+            "api_key": "test-key",
+        },
+        result_queue=fake_queue,
+    )
+
+    worker_payload = fake_queue.get()
+    assert worker_payload["exit_code"] == 0
+    assert captured_chat_openai_kwargs["request_timeout"] == 60
+    assert captured_chat_openai_kwargs["max_retries"] == 2
 
 
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):

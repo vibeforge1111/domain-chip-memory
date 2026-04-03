@@ -21,6 +21,8 @@ from .providers import DEFAULT_MINIMAX_BASE_URL, DEFAULT_OPENAI_BASE_URL
 
 
 _BEAM_SAMPLE_ID_PATTERN = re.compile(r"^beam-([^-]+)-(.+)$")
+_BEAM_OPENAI_COMPATIBLE_REQUEST_TIMEOUT_SECONDS = 60
+_BEAM_OPENAI_COMPATIBLE_MAX_RETRIES = 2
 
 
 def _official_chat_size_dir(scale: str) -> str:
@@ -536,6 +538,8 @@ def _run_openai_compatible_evaluation_worker(
             openai_api_key=judge_config["api_key"],
             openai_api_base=judge_config["base_url"],
             temperature=0,
+            request_timeout=_BEAM_OPENAI_COMPATIBLE_REQUEST_TIMEOUT_SECONDS,
+            max_retries=_BEAM_OPENAI_COMPATIBLE_MAX_RETRIES,
         )
         failures: list[str] = []
         with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
