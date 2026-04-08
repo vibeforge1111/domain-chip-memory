@@ -2,11 +2,11 @@
 
 ## What Happened Today
 
-Today was primarily a benchmark closure and evidence-strengthening session, not a major runtime memory-architecture mutation session.
+Today was primarily a benchmark-closure and evidence-strengthening session, not a major runtime memory-architecture mutation session.
 
 The biggest concrete outcome is that the judged official-public `BEAM 1M` program is now fully closed, and the judged official-public `BEAM 10M` program moved from only `conv1-5` being closed to `conv1-9` being closed, with `conv10` already in progress.
 
-This means the memory system did not materially change its core retrieval / synthesis architecture today, but our evidence for that architecture improved a lot. The system now has much stronger long-horizon judged proof than it had at the start of the day.
+This means the memory system did not materially change its core retrieval and synthesis architecture today, but our evidence for that architecture improved a lot. The system now has much stronger long-horizon judged proof than it had at the start of the day.
 
 ## Honest Assessment Of What Improved
 
@@ -88,7 +88,7 @@ These were pushed as narrow checkpoints:
 
 All four are fully closed at `2/2` across all 10 categories in their per-conversation evaluation files.
 
-## Current `10M conv10` live state
+## Current `10M conv10` Live State
 
 `conv10` is not closed yet, but it is already underway.
 
@@ -119,11 +119,11 @@ The system looks stronger today because:
 
 So the evidence bar is moving from:
 
-- “this looks good on local tests”
+- "this looks good on local tests"
 
 toward:
 
-- “this survives official-public judged evaluation across long contexts”
+- "this survives official-public judged evaluation across long contexts"
 
 That is a real step toward calling the system concrete.
 
@@ -133,11 +133,11 @@ Even after today, these are still open:
 
 - `official-public BEAM 10M conv10`
 - `official-public BEAM 10M conv6-10` aggregate manifest
-- official `128K` cleanup / judged closure
+- official `128K` cleanup and judged closure
 - broader clean `LoCoMo`
 - canonical `GoodAI`
 - runtime metrics and real Spark shadow traces
-- Spark KB compiler v1 beyond scaffold / health-check level
+- Spark KB compiler v1 beyond scaffold and health-check level
 
 ## Spark KB / Karpathy Layer Status
 
@@ -154,10 +154,10 @@ What already exists:
 What is still missing:
 
 - true compile loop from governed memory into richer wiki pages
-- incremental source / synthesis updates
+- incremental source and synthesis updates
 - filed query outputs
-- a stronger “external brain” workflow inside the vault
-- benchmark / failure-taxonomy ingestion into the KB
+- a stronger external-brain workflow inside the vault
+- benchmark and failure-taxonomy ingestion into the KB
 
 So today did not complete the Karpathy layer. It mainly bought us the right to build that layer on a much stronger benchmark foundation.
 
@@ -167,7 +167,7 @@ So today did not complete the Karpathy layer. It mainly bought us the right to b
 2. Commit and push `Checkpoint BEAM 10M conv10 official eval`.
 3. Reconstruct and push `official_beam_10m_summary_synthesis_memory_heuristic_v1_conv6_10_v1_official_eval.json`.
 4. Update the current-status docs so the judged `10M` closure is reflected honestly.
-5. Pivot into the next highest-value implementation lane:
+5. Pivot into the next highest-value implementation lane.
 
 Preferred next lane:
 
@@ -178,6 +178,59 @@ Why:
 - the main judged BEAM proof program is effectively one conversation and one manifest away from closure
 - the repo already has the KB scaffold
 - the biggest product gap is now the visible Spark knowledge-base experience, not another round of hand-wavy benchmark claims
+
+## Tomorrow Workstreams After `10M` Closeout
+
+Tomorrow should not stop at just finishing `conv10`.
+
+Once `conv10` and the `conv6-10` manifest are closed, the next documented workstreams should be:
+
+### Workstream 1: benchmark closure hygiene
+
+- refresh the current-status docs so `1M` is shown as fully closed
+- refresh the current-status docs so `10M` is shown as fully closed if `conv10` and the tranche manifest are done
+- preserve the narrow-commit cadence
+- keep the dirty worktree isolated from the official checkpoint line
+
+### Workstream 2: Karpathy-style Spark KB compiler v1
+
+This is the first real implementation lane after benchmark closure.
+
+The next KB step should not just be "more scaffold." It should be the first real compile loop that makes Spark memory look more like the Karpathy pattern:
+
+- governed memory and approved artifacts compile into `wiki/` pages
+- benchmark outcomes and failure taxonomies become `raw/` or `sources/` material
+- important query answers get filed back into `wiki/outputs/`
+- cross-page syntheses become first-class pages, not only runtime snapshots
+- the vault becomes a real inspectable external-brain surface in Obsidian
+
+### Workstream 3: architecture-improvement loop after full benchmark readout
+
+Once the judged BEAM surface is fully closed, the next architecture pass should be benchmark-led, not intuition-led.
+
+The loop should be:
+
+1. review the weakest BEAM tranche and category outcomes honestly
+2. cluster failures by mechanism
+3. map each failure cluster to a memory-system cause
+4. define only a small number of high-confidence mutations
+5. rerun the relevant benchmark lanes after each serious mutation
+
+That is how we improve the memory architecture without drifting away from the evidence.
+
+## Explicit Architecture-Improvement Targets
+
+After full judged BEAM closure, the next architecture work should focus on the weakest measured mechanisms rather than broad rewrites.
+
+The likely targets are:
+
+- temporal and event-ordering behavior under the hardest long-context pressure
+- summarization stability across very long histories
+- preference and instruction persistence under large-context drift
+- current-state versus historical-state separation under accumulation pressure
+- query-time explanation and provenance surfaces that match the runtime truth
+
+The goal is not to replace the current architecture. The goal is to make `summary_synthesis_memory + heuristic_v1` more reliable on its weakest measured edges while preserving the lanes where it is already strong.
 
 ## Exact Resume Notes
 
