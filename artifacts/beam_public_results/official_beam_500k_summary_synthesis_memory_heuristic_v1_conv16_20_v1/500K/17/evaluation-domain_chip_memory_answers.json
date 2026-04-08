@@ -1,0 +1,348 @@
+{
+    "abstention": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response is fully compliant with the rubric criterion. The rubric states that there is no information related to the specific discussions during the couples therapy session on April 20, and the response directly echoes this by stating exactly the same thing: 'Based on the provided chat, there is no information related to the specific discussions during the couples therapy session on April 20.' The response is both on-topic (it addresses the question by clarifying the lack of available information) and accurately reflects the constraint specified in the rubric. There are no prohibited elements present, and the response correctly acknowledges the absence of information about the specific discussions."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is a negative constraint stating that there should be NO information related to specific coping plans created after identifying new triggers. The response exactly matches this criterion, asserting that there is no information about these coping plans in the provided chat. The prohibited element (information about coping plans) is absent, and the response is responsive to the question by appropriately acknowledging the absence of this information. This demonstrates complete compliance with the rubric requirement."
+                }
+            ]
+        }
+    ],
+    "contradiction_resolution": [
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states that there is contradictory information: 'I notice you've mentioned contradictory information about this.' It then identifies the specific contradiction ('You said you have never attended any couples therapy sessions with Troy, but you also mentioned attending couples therapy together...') and asks for clarification. This fully satisfies the rubric criterion requiring the LLM to state there is contradictory information."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to mention: 'you said you have never attended any couples therapy sessions with Troy'. The response directly includes this exact phrase: 'You said you have never attended any couples therapy sessions with Troy'. This is a positive requirement that is satisfied. The response is also responsive to the question/conversation context, addressing a contradiction and asking for clarification. Therefore, the response demonstrates full compliance with the specified rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention: 'you also mentioned attending couples therapy together that improved your communication'. The response exactly contains this phrase: 'but you also mentioned attending couples therapy together that improved your communication'. This is a direct match, satisfying the positive requirement. The response is also on-topic and addresses the contradictory information presented. Therefore, the response demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the LLM response to mention which statement is correct. The response acknowledges the contradiction between two statements (never attended couples therapy vs. attended couples therapy) but does not actually state which one is correct. Instead, it asks the user to clarify which is correct. The required element\u2014stating which statement is correct\u2014is absent from the response. This constitutes non-compliance with the positive requirement specified in the rubric."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state that there is contradictory information. The response explicitly states 'I notice you've mentioned contradictory information about this' and then identifies the specific contradiction (never shared vs. feeling relieved after sharing). The response satisfies the positive requirement by directly stating that contradictory information exists."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention: 'you said you have never shared your childhood trauma story with Patricia'. The response to evaluate contains this exact phrase: 'You said you have never shared your childhood trauma story with Patricia'. This is a positive requirement that has been satisfied - the required element is present in the response verbatim. Therefore, the response demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The RUBRIC CRITERION is a positive requirement: the LLM response should mention 'you also mentioned feeling relieved after sharing it with her'. The response to evaluate explicitly contains this exact phrase: 'but you also mentioned feeling relieved after sharing it with her'. This requirement is fully satisfied. The response is also on-topic and addresses the user's apparent question about contradictory information. Therefore, this demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The response does not comply with the rubric criterion. The rubric requires the LLM to mention which statement is correct. The response identifies the contradiction (that two contradictory statements were made about sharing the trauma story with Patricia) but then asks the user 'Which statement is correct?' rather than actually determining and stating which one is correct. The response fails to identify or mention which statement is correct\u2014it only acknowledges the conflict and defers the answer back to the user. This constitutes a failure to satisfy the positive requirement of the rubric."
+                }
+            ]
+        }
+    ],
+    "event_ordering": [
+        {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tau_norm": 1.0,
+            "final_score": 1.0,
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'meditation routine and app use'. The response clearly includes this element in point 1: 'you talked about starting a meditation routine and using a meditation app'. This directly satisfies the positive requirement. Both components - meditation routine AND app use - are present in the response, meeting the full criteria."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly addresses the rubric criterion. Point 2 of the response states: 'Then you discussed rebuilding your self-trust and how daily habits impact it.' This directly mentions both elements required by the criterion: (1) rebuilding self-trust, and (2) daily habits. The requirement is a positive one (should mention), and both elements are present in the response. Full compliance is achieved."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions 'concerns about your relationship with Troy and couples therapy progress' in item 3. This directly satisfies the rubric criterion requiring mention of the relationship with Troy and couples therapy. The required element is present and clearly addressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Trauma disclosure to Jessica and Troy's support'. The response explicitly includes this in point 4: 'After that, you mentioned disclosing trauma to Jessica and Troy's support in that process.' This directly satisfies the positive requirement by including the specified element about trauma disclosure to Jessica and Troy's support. The mention is clear and on-topic, demonstrating complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to mention 'Troy's ongoing support and appreciation.' Point 5 of the response explicitly states: 'you talked about Troy's ongoing support through various events and your efforts to show appreciation for him.' This directly satisfies both elements of the requirement: (1) ongoing support from Troy, and (2) appreciation shown for him. Both required components are present and accurately represented in the response."
+                }
+            ]
+        },
+        {
+            "precision": 0.9090909090909091,
+            "recall": 0.9090909090909091,
+            "f1": 0.9090909090909091,
+            "tau_norm": 0.8636363636363635,
+            "final_score": 0.7851239669421486,
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to mention 'Friend meetings and trauma'. Item 1 of the response explicitly states 'Discussing your monthly meetings with a friend and uncertainty about sharing personal trauma', which directly addresses both required elements: (1) friend meetings and (2) trauma. This satisfies the positive requirement of the rubric criterion. The response is on-topic and contains the required elements in a meaningful context."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Nature walks timing'. Item 2 of the response explicitly states 'Starting daily nature walks and questioning the best time for them', which directly addresses the timing aspect of nature walks. This satisfies the positive requirement of the rubric criterion. While the response is a list of various self-care activities, at least one item (item 2) contains the required element about nature walks timing, making the criterion fully compliant."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Meditation app sessions'. Item 3 in the response explicitly states 'Using a meditation app and completing initial sessions', which directly satisfies this requirement. The response includes the meditation app sessions element with appropriate context (completing initial sessions). The requirement is fully met with accurate and properly executed content."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Panic attack reduction'. Item 4 in the response explicitly states: 'Noticing a reduction in panic attacks and seeking strategies to continue progress'. This directly satisfies the positive requirement by clearly mentioning panic attack reduction. The response is comprehensive and on-topic, addressing the user's query about journaling entries that track mental health progress."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "Item 5 of the response explicitly mentions 'Adding weekly swimming sessions and exploring their impact on well-being', which directly satisfies the rubric criterion requiring mention of swimming sessions impact. The response fully complies with the positive requirement."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Anxiety episode reduction'. The response contains multiple items that explicitly reference this requirement: Item 4 mentions 'Noticing a reduction in panic attacks', Item 6 states 'Observing further anxiety episode reductions', Item 8 references 'Reporting additional anxiety reduction', and Item 11 mentions 'Noting very low anxiety episodes'. The required element is clearly present and demonstrated multiple times throughout the response, satisfying the positive requirement."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to mention '7) Advanced meditation sessions'. Item 7 in the response explicitly states: 'Completing a larger number of meditation sessions and looking for new mindfulness techniques'. This directly corresponds to advanced meditation sessions - completing a larger number of sessions indicates progression beyond initial meditation, and seeking new mindfulness techniques suggests advanced practice. The semantic intent of advanced meditation sessions is clearly present in the response."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention '8) Further anxiety reduction'. Looking at item 8 in the response list, it states: 'Reporting additional anxiety reduction and requesting strategies to sustain it'. This directly corresponds to the rubric requirement. 'Additional anxiety reduction' is a semantic equivalent to 'further anxiety reduction', both indicating continued progress in reducing anxiety. The required element is present and accurately conveyed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires that the response mentions '9) Yoga and swimming routines'. Item 9 in the response explicitly states 'Maintaining yoga and swimming routines and wondering about combining them with emotional regulation techniques', which directly satisfies this requirement. The positive criterion is fully met with the required element present and accurately represented."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention '10) Holiday self-care budgeting'. Item #10 in the response states: 'Trying to stay consistent with self-care during holidays and asking for budgeting tips'. This explicitly covers both elements of the criterion: (1) holiday self-care (maintaining self-care during holidays) and (2) budgeting tips. The required element is present, accurate, and properly addressed, satisfying the rubric criterion for complete compliance."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires mentioning 'Low anxiety episodes maintenance'. Item 11 in the response explicitly states: 'Noting very low anxiety episodes and seeking ways to maintain this improvement'. This directly satisfies the positive requirement by acknowledging low anxiety episodes and actively seeking strategies to maintain that improvement. The criterion is fully met."
+                }
+            ]
+        }
+    ],
+    "information_extraction": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response clearly mentions 'July 12, 2021' which is the exact date specified in the rubric criterion. The date appears verbatim in the response: 'You said you met Troy on July 12, 2021.' This satisfies the positive requirement that the LLM response should mention July 12, 2021. The response is also responsive to the question asked."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions '$480 monthly' when stating 'You have budgeted $480 monthly for 4 sessions.' This directly satisfies the positive requirement of mentioning $480 monthly. The amount and time period are both correctly specified."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions '4 sessions' which directly satisfies the rubric criterion. The phrase 'You have budgeted $480 monthly for 4 sessions' clearly includes the required element. This is a positive requirement that has been fully met with accurate content."
+                }
+            ]
+        }
+    ],
+    "instruction_following": [
+        {
+            "llm_judge_score": 0.5,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response includes a percentage improvement mentioned. Specifically, the response states: 'This represents approximately a 9% improvement.' This satisfies the positive requirement of including a percentage improvement in the response."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The evaluation inputs provided do not contain an actual LLM response to evaluate. The 'RESPONSE TO EVALUATE' field contains text that appears to be another rubric criterion ('LLM response should include: percentage improvement mentioned') rather than an actual response. Without a concrete response to assess, compliance cannot be determined. Additionally, no actual question (<question>) was provided to determine responsiveness. For a valid evaluation, both a specific question and the LLM's actual response to that question are required."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.5,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The response does not contain any actual mention of membership time periods. The text 'LLM response should include: mention of membership time periods' is merely a restatement of the rubric criterion itself, not an actual response that discusses or includes information about membership time periods. The response is essentially a meta-statement about what should be included rather than content that actually addresses membership time periods. Therefore, there is no compliance with the positive requirement of mentioning membership time periods."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires 'duration details included with expenses.' The response to evaluate states the LLM response should include 'mention of membership time periods.' These are semantically equivalent concepts - membership time periods are a specific form of duration details. The response content addresses time-based information related to expenses (membership costs), which satisfies the criterion. Since the response includes mention of time periods (duration details) in the context of expenses, it demonstrates compliance with the requirement."
+                }
+            ]
+        }
+    ],
+    "knowledge_update": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention '60%'. The response provided is exactly '60%', which directly satisfies this positive requirement. The required element is present and accurate."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions 'trauma-informed leadership' as part of an 'additional module' in the leadership course. This directly satisfies the positive rubric requirement to mention the 'trauma-informed leadership module.' The element is present, accurate, and properly referenced within the context of describing the leadership course curriculum."
+                }
+            ]
+        }
+    ],
+    "multi_session_reasoning": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to mention '140%'. The response provided is '140%', which directly and explicitly contains the required element. This satisfies the positive requirement of mentioning 140%."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'daily journal entries since February 15'. The response explicitly states 'Three types: daily journal entries since February 15, three personal letters, and one trauma narrative draft.' This directly and completely satisfies the positive requirement by including the exact phrase 'daily journal entries since February 15'. The element is present, accurate, and properly executed. Full compliance achieved."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to mention 'three personal letters'. The response explicitly states 'three personal letters' as one of the three types of documents. This is a direct match with the rubric criterion, satisfying the positive requirement. The response is also on-topic with the question about types of documents. Full compliance achieved."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'one trauma narrative draft.' The response explicitly states 'one trauma narrative draft' as one of the three types listed. This directly and completely satisfies the positive requirement. The response is also responsive to the question, which appears to be about types of materials or documents."
+                }
+            ]
+        }
+    ],
+    "preference_following": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly includes the required element of recommending Friday evening sessions. The rubric criterion specified that the response should include 'recommends Friday evening sessions,' and the response contains this exact recommendation. This constitutes complete compliance with the positive requirement."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to 'avoid suggesting only daytime or non-Friday options.' The response recommends 'Friday evening sessions,' which explicitly includes a Friday option and an evening time (not daytime-only). This combination satisfies the requirement because it does not suggest only daytime options or only non-Friday options. The response provides Friday evening as a valid recommendation, which directly complies with avoiding the prohibited scenario of only daytime or only non-Friday suggestions."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.5,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The response does not actually 'suggest morning sessions' as required. It merely states that the LLM response 'should include: suggests morning sessions' - this is a meta-statement about what should be included, not an actual suggestion of morning sessions. The required element (a suggestion of morning sessions) is absent from the response content itself."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response 'suggests morning sessions' satisfies the rubric criterion of 'avoids recommending evening sessions as primary option.' By recommending morning sessions as the primary suggestion, the response inherently avoids making evening sessions the primary option. Morning and evening are mutually exclusive as primary recommendations\u2014suggesting one means not suggesting the other. The response demonstrates full compliance by providing a positive recommendation (morning) that satisfies the negative constraint (not evening as primary)."
+                }
+            ]
+        }
+    ],
+    "summarization": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It contains the exact required statements: (1) 'Your relationship with Troy has evolved significantly since you met at the Reykjavik Art Museum in July 2021' and (2) 'Over the course of 2.5 years, you have navigated various challenges together, including concerns about the future of your relationship and efforts to deepen your emotional connection through open communication and shared experiences.' Both required elements are present verbatim, satisfying all components of the positive requirement. The response is on-topic and addresses the question appropriately."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response directly and completely satisfies the rubric criterion. It explicitly states: 'You both took proactive steps like scheduling couples therapy to address issues, preparing thoughtfully for sessions, and remaining flexible about therapy approaches.' This is a verbatim match to the required text in the rubric, containing all three specified elements: (1) scheduling couples therapy, (2) preparing thoughtfully for sessions, and (3) remaining flexible about therapy approaches. The response is on-topic with the question about the relationship evolution, and there are no negative constraints that would be violated. Full compliance is achieved."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly mentions that 'Troy has been a consistent source of emotional support, especially during your healing journey, such as attending support groups and providing grounding during EMDR therapy.' This sentence directly addresses all required elements specified in the rubric: (1) Troy as a consistent source of emotional support, (2) mention of the healing journey context, (3) attending support groups as an example, and (4) providing grounding during EMDR therapy as another example. All elements are present, accurate, and properly executed as required."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It contains the exact required statement: 'You have worked on rebuilding self-trust with the help of your relationships, including Troy's encouragement and feedback on your trauma narrative.' All required elements are present: rebuilding self-trust, with help from relationships, Troy's encouragement, and feedback on trauma narrative. The response is also on-topic, addressing the evolution of the relationship with Troy. No prohibited elements are present. Score: 1.0 (Complete Compliance)."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact wording required by the rubric criterion: 'Throughout, you have maintained open dialogue about your needs, fears, and aspirations, balancing personal growth with mutual support. Your relationship shows a progression from initial concerns to active collaboration and emotional intimacy, with ongoing efforts to strengthen your bond and navigate life's complexities together.' This text is present word-for-word in the response, satisfying the positive requirement that the response should mention this content. The response is also fully responsive to the question about the relationship with Troy, providing relevant context and details about their journey together."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states: 'You have a close friendship with Patricia, regularly meeting at Kaffi Vinyl and sharing personal experiences like childhood trauma.' This verbatim statement contains all three required elements: (1) close friendship with Patricia, (2) regular meetings at Kaffi Vinyl, and (3) sharing personal experiences like childhood trauma. The additional content about mindfulness workshops, grounding toolkit, support groups, and writing circles provides supplementary information but does not violate any constraints. All required elements are present and accurately expressed, resulting in complete compliance."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states: 'Together, you have attended mindfulness workshops and created a grounding toolkit, which have both improved your mutual support and coping skills.' This sentence directly contains all three required elements from the rubric: (1) attending mindfulness workshops together, (2) creating a grounding toolkit, and (3) these activities improving mutual support and coping skills. The response uses the exact phrasing from the rubric criterion, satisfying the requirement completely."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention: 'Additionally, you have co-led support groups and writing circles with Patricia, boosting your confidence and strengthening your connection.' The response contains this exact phrase at the end: 'Additionally, you have co-led support groups and writing circles with Patricia, boosting your confidence and strengthening your connection.' This matches the required text precisely (ignoring minor punctuation/whitespace differences as per semantic tolerance rules). The positive requirement is fully satisfied, resulting in a score of 1.0."
+                }
+            ]
+        }
+    ],
+    "temporal_reasoning": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention '5 days'. The response explicitly states 'so it was moved 5 days later' when describing the rescheduling from March 10 to March 15. This accurately reflects the 5-day difference between those dates. The required element is present, accurate, and properly contextualized within the response. Therefore, the response fully complies with the positive requirement specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state 'from March 10 till March 15'. The response mentions both dates explicitly: 'originally planned for March 10 and was rescheduled to March 15'. This conveys the same temporal information as the required phrase. According to semantic tolerance rules, paraphrases that preserve intent should be accepted. The response accurately conveys the date range from March 10 to March 15 (5 days later), satisfying the positive requirement."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention '26 weeks'. The response explicitly states 'There are about 26 weeks between the last Friday therapy session scheduled through May 10 and the first EMDR session planned for November 15.' The required element '26 weeks' is directly present in the response, and the mention is accurate (qualified with 'about'). The response is on-topic, addressing a question about the duration between therapy sessions. This satisfies the positive requirement of the rubric criterion."
+                }
+            ]
+        }
+    ]
+}
