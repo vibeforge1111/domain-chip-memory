@@ -103,6 +103,12 @@ def build_spark_kb_contract_summary() -> dict[str, Any]:
             "query": "future query outputs are saved under wiki/outputs/",
             "lint": "future health checks verify links, stale pages, and provenance gaps",
         },
+        "health_checks": [
+            "required_file_presence",
+            "markdown_frontmatter_presence",
+            "broken_wikilink_detection",
+            "orphan_page_detection",
+        ],
     }
 
 
@@ -363,6 +369,64 @@ def scaffold_spark_knowledge_base(
     }
 
 
+def build_spark_kb_health_report(output_dir: str | Path) -> dict[str, Any]:
+    output_path = Path(output_dir)
+    wiki_dir = output_path / "wiki"
+    required_files = [
+        output_path / "CLAUDE.md",
+        output_path / "raw" / "memory-snapshots" / "latest.json",
+        wiki_dir / "index.md",
+        wiki_dir / "log.md",
+        wiki_dir / "current-state" / "_index.md",
+        wiki_dir / "evidence" / "_index.md",
+        wiki_dir / "events" / "_index.md",
+        wiki_dir / "outputs" / "_index.md",
+    ]
+    missing_required_files = [
+        str(path.relative_to(output_path))
+        for path in required_files
+        if not path.exists()
+    ]
+
+    markdown_files = sorted(path for path in wiki_dir.rglob("*.md") if path.is_file())
+    pages_missing_frontmatter: list[str] = []
+    inbound_link_counts: dict[str, int] = {}
+    broken_wikilinks: list[dict[str, str]] = []
+
+    for path in markdown_files:
+        relative_path = str(path.relative_to(output_path)).replace("\\", "/")
+        inbound_link_counts.setdefault(relative_path, 0)
+        content = path.read_text(encoding="utf-8")
+        if relative_path != "wiki/log.md" and not content.startswith("---\n"):
+            pages_missing_frontmatter.append(relative_path)
+        for link in _extract_wikilinks(content):
+            target_relative = _resolve_wikilink_path(output_path, link)
+            if target_relative is None:
+                broken_wikilinks.append({"source": relative_path, "target": link})
+                continue
+            inbound_link_counts[target_relative] = inbound_link_counts.get(target_relative, 0) + 1
+
+    orphan_pages = [
+        path
+        for path, count in sorted(inbound_link_counts.items())
+        if count == 0 and not path.endswith("wiki/index.md")
+    ]
+    return {
+        "output_dir": str(output_path),
+        "valid": not missing_required_files and not pages_missing_frontmatter and not broken_wikilinks,
+        "required_file_count": len(required_files),
+        "missing_required_files": missing_required_files,
+        "markdown_page_count": len(markdown_files),
+        "pages_missing_frontmatter": pages_missing_frontmatter,
+        "broken_wikilinks": broken_wikilinks,
+        "orphan_pages": orphan_pages,
+        "trace": {
+            "operation": "spark_kb_health_check",
+            "checked_at": _utc_timestamp(),
+        },
+    }
+
+
 def _render_index_page(
     *,
     title: str,
@@ -390,6 +454,20 @@ def _render_index_page(
         lines.append("- No pages generated yet.")
     lines.append("")
     return "\n".join(lines)
+
+
+def _extract_wikilinks(text: str) -> list[str]:
+    return [match.group(1).split("|", 1)[0].strip() for match in re.finditer(r"\[\[([^\]]+)\]\]", text)]
+
+
+def _resolve_wikilink_path(output_path: Path, link: str) -> str | None:
+    normalized = link.strip().replace("\\", "/").strip("/")
+    if not normalized:
+        return None
+    target_path = output_path / "wiki" / f"{normalized}.md"
+    if target_path.exists():
+        return str(target_path.relative_to(output_path))
+    return None
 
 
 def json_dumps(payload: dict[str, Any]) -> str:

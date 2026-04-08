@@ -52,7 +52,7 @@ from .spark_shadow import (
     validate_shadow_replay_payload,
 )
 from .spark_integration import build_spark_integration_contract_summary
-from .spark_kb import build_spark_kb_contract_summary, scaffold_spark_knowledge_base
+from .spark_kb import build_spark_kb_contract_summary, build_spark_kb_health_report, scaffold_spark_knowledge_base
 from .watchtower import build_watchtower_summary
 from .contracts import NormalizedBenchmarkSample
 
@@ -620,6 +620,9 @@ def main() -> None:
     demo_spark_kb = subparsers.add_parser("demo-spark-kb", help="Export a demo Spark KB snapshot and scaffold an Obsidian-friendly vault.")
     demo_spark_kb.add_argument("output_dir")
     demo_spark_kb.add_argument("--write")
+    spark_kb_health = subparsers.add_parser("spark-kb-health-check", help="Run health checks over a scaffolded Spark KB vault.")
+    spark_kb_health.add_argument("output_dir")
+    spark_kb_health.add_argument("--write")
     run_sdk_maintenance = subparsers.add_parser("run-sdk-maintenance-report", help="Replay explicit SDK writes from JSON and emit a maintenance report.")
     run_sdk_maintenance.add_argument("data_file")
     run_sdk_maintenance.add_argument("--write")
@@ -961,6 +964,13 @@ def main() -> None:
 
     if args.command == "demo-spark-kb":
         payload = _build_demo_spark_kb_payload(args.output_dir)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "spark-kb-health-check":
+        payload = build_spark_kb_health_report(args.output_dir)
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)

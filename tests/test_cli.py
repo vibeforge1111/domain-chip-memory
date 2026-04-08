@@ -411,6 +411,47 @@ def test_demo_spark_kb_command_runs_and_scaffolds_vault(tmp_path: Path, monkeypa
     assert written["compile_result"]["event_page_count"] >= 1
 
 
+def test_spark_kb_health_check_command_runs_on_demo_vault(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    output_dir = tmp_path / "spark_kb_vault"
+    health_file = tmp_path / "artifacts" / "spark_kb_health.json"
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "demo-spark-kb",
+            str(output_dir),
+        ],
+    )
+    cli.main()
+
+    captured.clear()
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "spark-kb-health-check",
+            str(output_dir),
+            "--write",
+            str(health_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    written = json.loads(health_file.read_text(encoding="utf-8"))
+    assert payload["valid"] is True
+    assert payload["missing_required_files"] == []
+    assert payload["pages_missing_frontmatter"] == []
+    assert payload["broken_wikilinks"] == []
+    assert written["trace"]["operation"] == "spark_kb_health_check"
+
+
 def test_run_sdk_maintenance_report_cli_can_write_report(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "sdk_maintenance.json"
     output_file = tmp_path / "artifacts" / "sdk_maintenance_report.json"

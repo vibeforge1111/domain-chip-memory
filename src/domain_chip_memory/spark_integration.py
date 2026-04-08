@@ -80,6 +80,7 @@ def build_spark_integration_contract_summary() -> dict[str, Any]:
                 "entrypoints": [
                     "spark-kb-contracts",
                     "demo-spark-kb",
+                    "spark-kb-health-check",
                 ],
                 "required_outputs": [
                     "obsidian_friendly_vault_layout",
@@ -87,6 +88,7 @@ def build_spark_integration_contract_summary() -> dict[str, Any]:
                     "evidence_pages",
                     "event_pages",
                     "llm_schema_file",
+                    "health_report",
                 ],
             },
         },
