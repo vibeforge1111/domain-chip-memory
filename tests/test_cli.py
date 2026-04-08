@@ -2348,6 +2348,78 @@ def test_resume_openai_compatible_single_conversation_evaluation_normalizes_nest
     assert payload["preference_following"][0]["llm_judge_responses"][0]["score"] == 1
 
 
+def test_resume_openai_compatible_single_conversation_evaluation_coerces_null_score_response(
+    tmp_path: Path,
+):
+    probing_questions_path = tmp_path / "probing_questions.json"
+    answers_path = tmp_path / "answers.json"
+    output_path = tmp_path / "evaluation-answers.json"
+
+    probing_questions_path.write_text(
+        json.dumps(
+            {
+                "instruction_following": [
+                    {"rubric": ["mention of exact monetary figures"]},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    answers_path.write_text(
+        json.dumps(
+            {
+                "instruction_following": [
+                    {
+                        "question": "What should I consider when organizing my upcoming event?",
+                        "llm_response": "LLM response should include: mention of exact monetary figures",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class FakeResponse:
+        def __init__(self, content: str):
+            self.content = content
+
+    class FakeModel:
+        @staticmethod
+        def invoke(prompt: str):
+            assert "mention of exact monetary figures" in prompt
+            return FakeResponse('{"score": null, "reason": "judge returned null"}')
+
+    class FakeComputeMetricsModule:
+        unified_llm_judge_base_prompt = "rubric=<rubric_item>\nresponse=<llm_response>"
+
+        @staticmethod
+        def parse_json_response(*, response: str):
+            return json.loads(response)
+
+        @staticmethod
+        def repair_json(response: str):
+            return response
+
+    class FakeRunEvaluationModule:
+        @staticmethod
+        def get_rubric(**kwargs):
+            assert kwargs["key"] == "instruction_following"
+            return ["mention of exact monetary figures"]
+
+    beam_official_eval._resume_openai_compatible_single_conversation_evaluation(
+        probing_questions_address=probing_questions_path,
+        answers_file=answers_path,
+        output_file=output_path,
+        model=FakeModel(),
+        compute_metrics_module=FakeComputeMetricsModule(),
+        run_evaluation_module=FakeRunEvaluationModule(),
+    )
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["instruction_following"][0]["llm_judge_score"] == 0.0
+    assert payload["instruction_following"][0]["llm_judge_responses"][0]["score"] == 0.0
+
+
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "locomo.json"
     output_file = tmp_path / "artifacts" / "locomo_scorecard.json"

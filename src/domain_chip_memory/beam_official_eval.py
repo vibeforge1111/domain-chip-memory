@@ -619,7 +619,9 @@ def _evaluate_openai_compatible_rubric_list_category(
         except Exception:
             parsed_response = json.loads(repair_json(response_text))
         normalized_response = _normalize_openai_compatible_judge_response(parsed_response)
-        score += int(normalized_response["score"])
+        normalized_response = dict(normalized_response)
+        normalized_response["score"] = _coerce_openai_compatible_judge_score(normalized_response.get("score"))
+        score += normalized_response["score"]
         llm_judge_responses.append(normalized_response)
 
     llm_judge_score = score / len(rubric)
@@ -627,6 +629,19 @@ def _evaluate_openai_compatible_rubric_list_category(
         "llm_judge_score": llm_judge_score,
         "llm_judge_responses": llm_judge_responses,
     }
+
+
+def _coerce_openai_compatible_judge_score(raw_score: Any) -> float:
+    if raw_score is None:
+        return 0.0
+    if isinstance(raw_score, bool):
+        return float(int(raw_score))
+    if isinstance(raw_score, (int, float)):
+        return float(raw_score)
+    try:
+        return float(str(raw_score).strip())
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def _load_beam_evaluation_payload(evaluation_path: str | Path) -> dict[str, Any]:
