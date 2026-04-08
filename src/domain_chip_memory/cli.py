@@ -52,6 +52,7 @@ from .spark_shadow import (
     validate_shadow_replay_payload,
 )
 from .spark_integration import build_spark_integration_contract_summary
+from .spark_kb import build_spark_kb_contract_summary, scaffold_spark_knowledge_base
 from .watchtower import build_watchtower_summary
 from .contracts import NormalizedBenchmarkSample
 
@@ -454,6 +455,53 @@ def _build_demo_sdk_maintenance_payload() -> dict:
     }
 
 
+def _build_demo_spark_kb_payload(output_dir: str) -> dict:
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+            session_id="spark-kb-demo",
+            turn_id="spark-kb-demo:1",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="favorite_coffee",
+            value="flat white",
+            timestamp="2025-03-02T09:00:00Z",
+            session_id="spark-kb-demo",
+            turn_id="spark-kb-demo:2",
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="move",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+            session_id="spark-kb-demo",
+            turn_id="spark-kb-demo:3",
+        )
+    )
+    snapshot = sdk.export_knowledge_base_snapshot()
+    compile_result = scaffold_spark_knowledge_base(output_dir, snapshot, vault_title="Spark Demo Knowledge Base")
+    return {
+        "contract": build_spark_kb_contract_summary(),
+        "snapshot": snapshot,
+        "compile_result": compile_result,
+    }
+
+
 def _run_sdk_maintenance_checks(sdk: SparkMemorySDK, checks: dict | None) -> dict:
     payload = dict(checks or {})
     current_requests = payload.get("current_state", [])
@@ -569,6 +617,9 @@ def main() -> None:
     demo_spark_shadow.add_argument("--write")
     demo_sdk_maintenance = subparsers.add_parser("demo-sdk-maintenance", help="Run a local SDK maintenance and reconsolidation demo.")
     demo_sdk_maintenance.add_argument("--write")
+    demo_spark_kb = subparsers.add_parser("demo-spark-kb", help="Export a demo Spark KB snapshot and scaffold an Obsidian-friendly vault.")
+    demo_spark_kb.add_argument("output_dir")
+    demo_spark_kb.add_argument("--write")
     run_sdk_maintenance = subparsers.add_parser("run-sdk-maintenance-report", help="Replay explicit SDK writes from JSON and emit a maintenance report.")
     run_sdk_maintenance.add_argument("data_file")
     run_sdk_maintenance.add_argument("--write")
@@ -589,6 +640,7 @@ def main() -> None:
     run_spark_shadow_batch.add_argument("--write")
     subparsers.add_parser("spark-shadow-contracts", help="Show the Spark shadow replay and ingest contract summary.")
     subparsers.add_parser("spark-integration-contracts", help="Show the Spark integration outlook and orchestration contract summary.")
+    subparsers.add_parser("spark-kb-contracts", help="Show the Spark knowledge-base layer contract summary.")
     subparsers.add_parser("loader-contracts", help="Show benchmark file loader summary.")
     subparsers.add_parser("provider-contracts", help="Show model-provider interface summary.")
     subparsers.add_parser("runner-contracts", help="Show executable baseline runner summary.")
@@ -907,6 +959,13 @@ def main() -> None:
         _print(payload)
         return
 
+    if args.command == "demo-spark-kb":
+        payload = _build_demo_spark_kb_payload(args.output_dir)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
     if args.command == "run-sdk-maintenance-report":
         payload = _load_sdk_maintenance_payload(args.data_file)
         if args.write:
@@ -962,6 +1021,10 @@ def main() -> None:
 
     if args.command == "spark-integration-contracts":
         _print(build_spark_integration_contract_summary())
+        return
+
+    if args.command == "spark-kb-contracts":
+        _print(build_spark_kb_contract_summary())
         return
 
     if args.command == "loader-contracts":

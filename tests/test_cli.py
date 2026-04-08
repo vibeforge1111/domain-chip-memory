@@ -240,6 +240,27 @@ def test_spark_integration_contracts_command_runs(monkeypatch):
     assert "Do not persist every turn by default." in payload["system_prompt_template"]
 
 
+def test_spark_kb_contracts_command_runs(monkeypatch):
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "spark-kb-contracts",
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["layer_name"] == "SparkKnowledgeBase"
+    assert "current_state" in payload["required_exports"]
+    assert "wiki/index.md" in payload["vault_layout"]["wiki_files"]
+
+
 def test_sdk_maintenance_contracts_command_runs(monkeypatch):
     captured: dict[str, object] = {}
 
@@ -357,6 +378,37 @@ def test_demo_sdk_maintenance_command_runs_and_can_write(tmp_path: Path, monkeyp
     assert payload["after"]["current_state"]["memory_role"] == "state_deletion"
     assert payload["after"]["historical_state"]["value"] == "Dubai"
     assert written["maintenance"]["trace"]["operation"] == "reconsolidate_manual_memory"
+
+
+def test_demo_spark_kb_command_runs_and_scaffolds_vault(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    output_dir = tmp_path / "spark_kb_vault"
+    summary_file = tmp_path / "artifacts" / "spark_kb_demo.json"
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "demo-spark-kb",
+            str(output_dir),
+            "--write",
+            str(summary_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    written = json.loads(summary_file.read_text(encoding="utf-8"))
+    assert payload["snapshot"]["runtime_class"] == "SparkMemorySDK"
+    assert payload["compile_result"]["current_state_page_count"] >= 1
+    assert (output_dir / "CLAUDE.md").exists()
+    assert (output_dir / "raw" / "memory-snapshots" / "latest.json").exists()
+    assert (output_dir / "wiki" / "index.md").exists()
+    assert (output_dir / "wiki" / "current-state" / "_index.md").exists()
+    assert written["compile_result"]["event_page_count"] >= 1
 
 
 def test_run_sdk_maintenance_report_cli_can_write_report(tmp_path: Path, monkeypatch):

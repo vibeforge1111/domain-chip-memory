@@ -24,6 +24,7 @@ from .spark_shadow import (
     validate_shadow_replay_payload,
 )
 from .spark_integration import build_spark_integration_contract_summary
+from .spark_kb import build_spark_kb_contract_summary, scaffold_spark_knowledge_base
 
 __all__ = [
     "__version__",
@@ -47,5 +48,7 @@ __all__ = [
     "build_shadow_replay_contract_summary",
     "validate_shadow_replay_payload",
     "build_spark_integration_contract_summary",
+    "build_spark_kb_contract_summary",
+    "scaffold_spark_knowledge_base",
 ]
 __version__ = "0.1.0"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 import re
 from typing import Any
 
@@ -432,6 +433,37 @@ class SparkMemorySDK:
                 "status": "ok",
             },
         )
+
+    def export_knowledge_base_snapshot(self) -> JsonDict:
+        current_state_records = [
+            self._observation_record(entry, memory_role="current_state")
+            for entry in build_current_state_view(self._current_state_observations())
+        ]
+        observation_records = [
+            self._observation_record(entry, memory_role=self._observation_memory_role(entry))
+            for entry in self._observations()
+        ]
+        event_records = [self._event_record(entry) for entry in self._events()]
+        return {
+            "runtime_class": "SparkMemorySDK",
+            "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            "counts": {
+                "session_count": len(self._sessions),
+                "current_state_count": len(current_state_records),
+                "observation_count": len(observation_records),
+                "event_count": len(event_records),
+                "manual_observation_count": len(self._manual_observations),
+                "manual_event_count": len(self._manual_events),
+            },
+            "sessions": [session.to_dict() for session in self._sessions],
+            "current_state": [self._retrieved_record_dict(record) for record in current_state_records],
+            "observations": [self._retrieved_record_dict(record) for record in observation_records],
+            "events": [self._retrieved_record_dict(record) for record in event_records],
+            "trace": {
+                "operation": "export_knowledge_base_snapshot",
+                "source_of_truth": "SparkMemorySDK",
+            },
+        }
 
     def _write(self, request: MemoryWriteRequest, *, write_kind: str) -> MemoryWriteResult:
         operation = _normalize_scalar(request.operation).lower() or "auto"
@@ -950,6 +982,18 @@ class SparkMemorySDK:
             metadata=dict(entry.metadata),
         )
 
+    def _retrieved_record_dict(self, record: RetrievedMemoryRecord) -> JsonDict:
+        return {
+            "memory_role": record.memory_role,
+            "subject": record.subject,
+            "predicate": record.predicate,
+            "text": record.text,
+            "session_id": record.session_id,
+            "turn_ids": list(record.turn_ids),
+            "timestamp": record.timestamp,
+            "metadata": dict(record.metadata),
+        }
+
 
 def build_sdk_contract_summary() -> dict[str, Any]:
     return {
@@ -960,6 +1004,7 @@ def build_sdk_contract_summary() -> dict[str, Any]:
             "write_event": ["auto", "event"],
         },
         "maintenance_methods": ["reconsolidate_manual_memory"],
+        "export_methods": ["export_knowledge_base_snapshot"],
         "read_methods": [
             "get_current_state",
             "get_historical_state",
