@@ -1,0 +1,396 @@
+{
+    "abstention": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is a negative constraint stating that there is no information related to Cassandra's professional background. The response correctly states 'there is no information related to Cassandra's professional background and qualifications.' The prohibited element (information about professional background) is absent from the response, and the response is responsive to the implied question about the absence of such information in the provided chat. The minor addition of 'qualifications' is a reasonable semantic extension and does not violate the constraint."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates complete compliance with the rubric criterion. The rubric is a negative constraint stating that there should be no information related to Cassandra's qualifications in the chat. The response correctly identifies and affirms that there is no information about Cassandra's professional background and qualifications. The prohibited element (information about qualifications) is absent from the response, and the response is fully on-topic with respect to evaluating the compliance criterion."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The rubric states that there is no information in the provided chat about Stephanie's specific feedback on the cover letter critique. The response accurately states the same thing: 'Based on the provided chat, there is no information related to the specific feedback Stephanie gave on the cover letter critique.' This is a negative constraint scenario where the response correctly acknowledges the absence of prohibited content (specific feedback from Stephanie). The response is responsive to the question, addresses it appropriately, and the prohibited element (Stephanie's specific feedback) is indeed absent as confirmed by both the rubric and the response."
+                }
+            ]
+        }
+    ],
+    "contradiction_resolution": [
+        {
+            "llm_judge_score": 0.875,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states 'you've mentioned contradictory information about this' and identifies the specific contradictory statements (profile updated vs. never updated). This directly satisfies the rubric requirement that the LLM response should state there is contradictory information."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to mention: 'You said your LinkedIn profile was updated and saw an increase in views'. The response explicitly contains this exact phrase: 'You said your LinkedIn profile was updated and saw an increase in views'. This is a positive requirement that is satisfied - the required element is present in the response."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'you also mentioned that you've never updated your profile'. The response contains the phrase 'but you also mentioned that you've never updated your profile', which is a direct semantic match to the required phrase. The response acknowledges the user's contradictory statements about profile updates and seeks clarification, which demonstrates compliance with the specified requirement."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response partially complies with the rubric criterion. It acknowledges the contradictory statements and directly asks 'Which statement is correct?' - addressing the core topic of the rubric requirement. However, it does not definitively state which statement is correct; instead, it asks the user to clarify which one is accurate. This represents partial compliance (0.5) as the response mentions the question of which statement is correct but fails to provide a definitive answer to that question."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states 'I notice you've mentioned contradictory information about this' and then identifies the specific contradiction: the user claimed to have attended an interview at North Ericshire General Hospital while also claiming to have never attended any interview there. The response directly addresses the contradictory information as required by the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires that the LLM response should mention the phrase 'You said you have attended an interview at North Ericshire General Hospital'. The response to evaluate explicitly contains this exact phrase: 'You said you have attended an interview at North Ericshire General Hospital'. The requirement is a positive one (something the response should include), and that element is present in the response. Therefore, the rubric criterion is satisfied with complete compliance."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric is a positive requirement asking the LLM to mention that the user has 'never attended any interview there'. The response contains the exact phrase: 'but you also mentioned that you have never attended any interview there'. This phrase appears verbatim in the response, satisfying the required element. The response is also responsive to the context (addressing contradictory information about an interview). Therefore, this demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric specifies a positive requirement that the response should mention 'which statement is correct.' The response acknowledges the contradictory information but does not actually state which statement is correct. Instead, it asks the user to clarify which is correct. Since the response fails to determine or mention which statement is correct (only requesting clarification from the user), the required element is absent, resulting in no compliance with the rubric criterion."
+                }
+            ]
+        }
+    ],
+    "event_ordering": [
+        {
+            "precision": 0.8571428571428571,
+            "recall": 0.8571428571428571,
+            "f1": 0.8571428571428571,
+            "tau_norm": 0.5357142857142857,
+            "final_score": 0.4591836734693877,
+            "llm_judge_score": 0.9285714285714286,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the response to mention 'Career mentoring and guidance'. The response explicitly includes this in item 1: 'Concerns about career guidance and mentoring from your mom'. This directly satisfies the positive requirement. The other six items provide additional related career topics (negotiations, raises, performance reviews, etc.), but the specific mention of career mentoring and guidance is present, thus achieving complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to mention 'Job offer negotiations and contract details.' Item #2 in the response explicitly states 'Negotiations and comparisons between job offers including signing bonuses and contract details,' which directly and completely satisfies this requirement. Both required elements (job offer negotiations AND contract details) are present and accurately addressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly satisfies the rubric criterion. Point 3 directly mentions 'Preparation and strategies for salary negotiations and remote work adjustments,' which covers both required elements: (1) salary negotiation preparation and (2) remote work. Additionally, other points (2, 4, 6) further support salary negotiation themes. The criterion is fully met."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions raise and bonus negotiation strategies. Specifically, item 4 states 'Planning and tactics for requesting raises and bonuses with HR.' Additionally, item 2 discusses 'Negotiations and comparisons between job offers including signing bonuses and contract details,' and item 3 mentions 'Preparation and strategies for salary negotiations.' These elements collectively satisfy the rubric requirement of mentioning raise and bonus negotiation strategies."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response includes item 5 which explicitly mentions 'Approaches to performance reviews and managing expectations in your new role.' This directly addresses both required elements: performance review (explicitly stated) and role management (managing expectations in your new role). The rubric criterion is satisfied as the response mentions these topics."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response partially complies with the rubric criterion. Point 6 mentions 'Evaluations of the impact of salary changes on your financial situation and related considerations,' which addresses financial impact. However, 'tax considerations' are completely absent from the response. Since the rubric requires BOTH 'Financial impact AND tax considerations' (compound requirement with 'and'), and only one element is present, this constitutes partial compliance. The response covers financial aspects but fails to include the specific tax considerations component required by the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Communication and team alignment'. Item 7 in the response explicitly states 'Best practices for maintaining communication and alignment with your team and stakeholders', which directly satisfies this requirement by mentioning both communication and team alignment. This constitutes complete compliance with the specified rubric criterion."
+                }
+            ]
+        },
+        {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tau_norm": 1.0,
+            "final_score": 1.0,
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Collaboration and learning with colleague'. Item 1 in the response explicitly states 'Discussing learning and collaboration with a colleague', which directly satisfies this requirement. The required element is present and accurately addressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Job options and work-life balance'. The response explicitly includes item #2: 'Exploring job options and work-life balance considerations', which directly satisfies this requirement. The response is clearly on-topic and responsive to what appears to be a question about work-related strategies or priorities. Both required elements (job options and work-life balance) are present and properly addressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response includes item #3 which explicitly states 'Managing job applications and understanding their statuses.' This directly satisfies the rubric criterion requiring mention of 'Job application management.' The semantic meaning is preserved as managing job applications is semantically equivalent to job application management. The required element is present and accurately addressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires that the LLM response mentions 'Slack training and use'. Item 4 in the response explicitly states 'Training and leveraging Slack for team communication', which directly addresses both the training aspect and the use of Slack. This satisfies the positive requirement in the rubric. The response is also responsive to the question as it provides various work-related topics including the required Slack element."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Electronic health records and telepsychology'. Item 5 in the response explicitly states 'Improving efficiency with electronic health record systems and telepsychology', which includes both required elements. Both 'electronic health record systems' and 'telepsychology' are present and properly mentioned together, satisfying the positive requirement. This results in full compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to mention 'Notion for interview prep'. The response clearly includes item 6: 'Organizing interview preparation using Notion', which directly satisfies this positive requirement. The mention is accurate, relevant, and properly executed as specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires that the LLM response should mention 'Asana for leadership projects'. The response explicitly includes item 7: 'Managing leadership projects with Asana', which directly satisfies this requirement. The required element is present and correctly associates Asana with leadership project management. Full compliance achieved."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to mention Microsoft Teams adoption. The response includes item #8 which specifically states 'Transitioning to and balancing Microsoft Teams for team collaboration.' This directly addresses Microsoft Teams adoption, fulfilling the positive requirement. The response is responsive and contains the required element."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response includes item 9 which explicitly mentions 'Handling and confirming reservations effectively for professional meetings.' This directly satisfies the rubric requirement of mentioning 'Reservation confirmation and management' - the term 'confirming reservations' addresses the confirmation aspect, and 'handling reservations' addresses the management aspect, both in the context of professional settings. The required element is present and properly executed."
+                }
+            ]
+        }
+    ],
+    "information_extraction": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response 'On November 12, 2023.' contains the required date 'November 12, 2023' as specified by the rubric criterion. The positive requirement is satisfied with the exact date present in the response. According to the scoring scale, this constitutes Complete Compliance (1.0) as the required element is present and accurate."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state: 'My initial interaction at the conference led Sarah to suggest updating my resume by a specific deadline.' The response contains this exact statement verbatim at the beginning of the sentence. The response is responsive to the question and fully satisfies the positive requirement by including the required element. The additional context provided in the response ('which shaped how I planned meetings...') does not negate compliance; it merely extends beyond the required statement. This constitutes complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response satisfies the rubric criterion. While the exact phrase 'Sarah's suggestions shaped how I planned meetings' is not word-for-word identical, the semantic meaning is preserved. The response explicitly states that Sarah suggested updating a resume by a deadline, and this suggestion 'shaped how I planned meetings' (among other activities). Per the semantic tolerance rules, paraphrases that preserve the intended meaning are acceptable. The response properly attributes the influence on meeting planning to Sarah's suggestion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states that Sarah's suggestion 'shaped how' the speaker 'prepared materials,' directly satisfying the required element. The phrase 'shaped how I planned meetings, prepared materials' conveys that Sarah's input influenced the preparation approach. This is semantically equivalent to the rubric's required statement 'Sarah's suggestions shaped how I prepared materials.' The element is present, accurate, and properly executed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response satisfies the rubric criterion. It explicitly states that Sarah's suggestions (updating the resume by a specific deadline) 'shaped how I planned meetings, prepared materials, and structured the update process to meet that timeline.' This captures all key elements of the required statement: (1) Sarah's suggestions are referenced, (2) those suggestions shaped how the update process was structured, and (3) it was done to meet the timeline/deadline. The response provides this exact sentiment using semantically equivalent language, thus achieving full compliance."
+                }
+            ]
+        }
+    ],
+    "instruction_following": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states 'use of 24-hour clock format' which directly satisfies the positive requirement of containing the 24-hour clock format. Additionally, it includes 'no AM/PM or 12-hour format used' which satisfies the negative constraint of avoiding prohibited time formats. The response is responsive and demonstrates compliance with the rubric criterion by explicitly acknowledging both the presence of 24-hour format and the absence of 12-hour/AM-PM formats."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response satisfies the negative constraint. It explicitly states the use of 24-hour clock format and confirms 'no AM/PM or 12-hour format used.' The response does not contain any AM/PM notation or 12-hour format timestamps - it only references the compliant 24-hour format. The response is on-topic and demonstrates complete compliance with the rubric criterion requiring absence of AM/PM and 12-hour format."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.5,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly 'mentions percentage improvements' and states it 'provides numeric improvement rates,' which directly satisfies the rubric criterion. The required positive element (mentioning percentage improvements) is present in the response. The response is responsive to the question and contains the specified requirement."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The response does not actually provide numeric improvement rates. While the response text mentions 'percentage improvements' and 'numeric improvement rates,' it does not contain any actual numeric values (e.g., specific percentages like '50%', '30%', etc.). The response is merely a description of what might be included rather than the actual content with numeric data. To comply with the rubric criterion 'provides numeric improvement rates,' the response must contain actual numerical values representing improvement rates, which are absent here."
+                }
+            ]
+        }
+    ],
+    "knowledge_update": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state '18 jobs'. The response explicitly states 'You have applied to 18 job openings', which directly satisfies this positive requirement. The number 18 is correctly present in the response, making it fully compliant with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response directly states 'expanding your search radius slightly beyond 50 km', which exactly matches the rubric requirement of stating 'radius slightly beyond 50 km'. The required element is present and accurate."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response '$175' exactly matches the required criterion 'LLM response should state: $175'. The positive requirement is fully satisfied as the response explicitly states the dollar amount $175."
+                }
+            ]
+        }
+    ],
+    "multi_session_reasoning": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact required statement 'You are planning to invest more money in the CBT certification course' verbatim at the beginning of the sentence. The additional information about the costs ($1,200 vs $900) is supplementary context that does not conflict with or negate the required element. This is a positive requirement (the statement must be present), and it is fully present and accurate. Therefore, the response achieves complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states that the CBT certification course costs $1,200, which matches the required statement exactly. The response is also on-topic, as it addresses the cost of the CBT certification course. No inaccuracies or deviations from the required information are present."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state that the Advanced CBT course costs $900. The response explicitly contains: 'compared to the Advanced CBT course costing $900.' This statement directly satisfies the positive requirement. The information is accurate and present in the response."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The rubric required the LLM to 'state: highlight your 8 years of clinical experience with quantified achievements' - and this exact statement is present in the response: 'You should highlight your 8 years of clinical experience with quantified achievements'. The response is on-topic, addresses the implied career/negotiation question, and the required element is accurately and completely stated."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states 'tailor your resume using Jobscan to include senior role keywords,' which is an exact match to the rubric requirement. The positive criterion is fully satisfied as the required element is present and correctly articulated within the context of the response."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly contains the required statement 'leverage the 15% telepsychology growth by emphasizing telehealth skills' which directly matches the rubric criterion. This is a positive requirement, and the element is present verbatim in the response. The response also addresses the broader context of career advancement for a mental health professional, demonstrating relevance to the question."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states 'apply Cassandra's negotiation techniques to secure improved salary, benefits, and contract terms,' which matches the required element in the rubric exactly. The response addresses the positive requirement by including the specific technique mentioned in the criterion."
+                }
+            ]
+        }
+    ],
+    "preference_following": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to 'focus on job locations near North Ericshire'. The response explicitly states 'focuses on job locations near North Ericshire', which directly satisfies this positive requirement. The additional elements (commute time considerations, acknowledging user's need to limit commute) are supplementary content that does not conflict with the rubric. The required element is present, accurately addressing the location focus specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires that the response mentions commute time considerations. The response explicitly states it 'mentions commute time considerations' and also 'acknowledges user's need to limit commute'. This positive requirement is fully satisfied - the required element is present and properly integrated into the response. The response is on-topic (focuses on job locations near North Ericshire) and addresses the commute consideration appropriately."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to acknowledge the user's need to limit commute. The response explicitly contains the phrase 'acknowledges user's need to limit commute', which directly satisfies this requirement. This is a positive requirement that is clearly present in the response."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The response explicitly mentions 'flexible remote work options', describes 'remote and hybrid work arrangements' (which are forms of flexible remote work), and acknowledges 'variety in work setups that reduce commuting' (another aspect of flexible work). All required elements are present, accurately executed, and satisfy the positive requirement of mentioning flexible remote work options."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly 'describes remote and hybrid work arrangements' which directly matches the rubric criterion. It also mentions 'flexible remote work options' and 'acknowledges variety in work setups that reduce commuting,' which are semantically equivalent descriptions of remote and hybrid work arrangements. The positive requirement is satisfied as the response contains content about both remote work and hybrid work arrangements."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly contains the required element: it 'acknowledges variety in work setups that reduce commuting.' Additionally, the response mentions 'flexible remote work options' and 'describes remote and hybrid work arrangements,' which are variations of work setups that reduce commuting. This fully satisfies the rubric criterion."
+                }
+            ]
+        }
+    ],
+    "summarization": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to contain the specific statement about examining how the user's current salary fits within the clinical psychology field, considering factors like experience, location, and work setting. The response contains this exact phrase at the beginning: 'we examined how your current salary fits within the clinical psychology field, considering factors like experience, location, and work setting'. This is a positive requirement, and the required element is present and accurate in the response. The additional content in the response does not negate compliance - it simply extends beyond the minimum criterion. Therefore, the response fully complies with the specified rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The LLM response contains the exact required text from the rubric criterion: 'We then addressed concerns about age and its impact on job prospects, highlighting strategies to leverage your experience and adaptability.' This content appears verbatim in the response (with minor case differences, which are ignored per semantic tolerance rules). The positive requirement is fully satisfied."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the presence of a specific statement about focusing on job search tools enhancement. The response contains the exact phrase 'we focused on enhancing your job search tools, including tailored resume updates guided by professional feedback and optimizing cover letters with keyword strategies' which matches the rubric requirement verbatim. This is a positive requirement (something that should be present), and it is fully present in the response. The response is also on-topic and responsive to the question. Therefore, this demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully contains the required element specified in the rubric criterion. It includes the exact phrase 'we explored effective networking opportunities, such as attending workshops and engaging with contacts like Matthew and Sarah, to expand your professional connections'. All components are present: (1) 'we explored effective networking opportunities', (2) 'such as attending workshops', (3) 'engaging with contacts like Matthew and Sarah', and (4) 'to expand your professional connections'. The response satisfies the positive requirement with no deviations."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric is a positive requirement asking for specific content to be present in the response. The response contains all required elements: 'we discussed interview preparation, negotiation tactics, and balancing personal support systems, such as mentorship from your mom and role-play practice with Sharon'. These exact phrases appear verbatim at the end of the response, demonstrating complete compliance with the rubric criterion."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact required phrase from the rubric: 'you focused on preparing for a behavioral interview at North Ericshire General Hospital by learning the STAR method, practicing sample questions'. All three key elements are present: (1) behavioral interview at North Ericshire General Hospital, (2) learning the STAR method, and (3) practicing sample questions. The response is on-topic and fully satisfies the positive requirement specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact required element: 'you prepared for a technical interview with MedPsych Clinic by reviewing clinical psychology topics, practicing technical questions, and planning logistics for the interview day'. This matches the rubric criterion verbatim. The response is positive compliance - it includes all three specified activities (reviewing clinical psychology topics, practicing technical questions, and planning logistics for the interview day) in the context of preparing for a technical interview at MedPsych Clinic. The additional information about behavioral interviews, job negotiations, and personal considerations does not conflict with the rubric requirement, which only specifies what should be included, not what should be excluded."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact phrase required by the rubric criterion: 'Alongside interview prep, you worked on negotiating job offers, balancing salary and benefits, and strategizing how to communicate your requests professionally'. This phrase appears verbatim in the response text. The rubric criterion is a positive requirement (something that should be present), and the required element is fully present in the response, satisfying the compliance condition."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is a positive requirement asking for two specific elements to be present: (1) managing job applications systematically using tools like Trello, and (2) maximizing professional networking through the Turkish Psychological Association. The response contains exactly: 'You also managed your job applications systematically using tools like Trello and sought to maximize professional networking through the Turkish Psychological Association'. Both required elements are present and correctly stated in the response, satisfying the rubric criterion fully."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to contain: balanced intensive preparation with personal life considerations, ensuring support from partner Sharon, and maintaining well-being. The response explicitly includes all three required elements at the end: 'you balanced intensive preparation with personal life considerations, ensuring support from your partner Sharon and maintaining well-being'. This satisfies the positive requirement completely. The response is on-topic (addressing interview preparation and career management) and contains the exact content specified in the rubric."
+                }
+            ]
+        }
+    ],
+    "temporal_reasoning": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state '123 days'. The response explicitly contains the phrase 'There were 123 days between...', which directly satisfies this positive requirement. The response is also on-topic and responsive to the question about the number of days between two dates. The required element is present and correctly formatted."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It correctly states both dates: November 12, 2023 and March 15, 2024. While the phrasing differs slightly ('between...and' instead of 'from...till'), the semantic meaning is preserved - it conveys the same date range spanning from November 12, 2023 to March 15, 2024. Per the semantic tolerance rules, paraphrases that preserve intent are acceptable. The response is also responsive to the question, providing context about the 123-day period between these dates."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states '52 days' which directly satisfies the rubric criterion requiring the LLM response to state '52 days'. The number 52 is present and correctly associated with the time period between March 10 and May 1, 2024. This is a complete match, not just a semantic equivalent."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains both required dates: 'March 10' and 'May 1, 2024'. While the phrasing differs slightly from the rubric's exact wording ('from March 10, 2024 till May 1, 2024'), semantic tolerance rules accept paraphrases that preserve intent. The response accurately references the same date range (March 10 to May 1, 2024) and even calculates the duration between them as 52 days. The required element is present and accurate, satisfying the positive requirement of the rubric criterion."
+                }
+            ]
+        }
+    ]
+}
