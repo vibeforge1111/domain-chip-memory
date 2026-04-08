@@ -1,0 +1,440 @@
+{
+    "abstention": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion states that there is no information related to Ms. Elif Y\u0131lmaz's teaching style in the provided chat. The response correctly acknowledges this absence and is responsive to the implied question about teaching style. The response accurately states that there is no information related to Ms. Elif Y\u0131lmaz's teaching style (and additionally mentions qualifications). The prohibited element (information about teaching style) is absent, and the response properly addresses the topic by noting its absence. This fully complies with the negative constraint specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion states that there is no information related to Ms. Elif Y\u0131lmaz's qualifications in the provided chat. The response correctly confirms this by stating 'there is no information related to Ms. Elif Y\u0131lmaz's teaching style or qualifications.' The response is responsive to the topic and accurately reflects the absence of qualification-related information as specified by the rubric, which constitutes complete compliance."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is a negative constraint stating that there is no information related to the number of attendees at the Turkish cooking competition. The response fully complies by correctly stating that there is no information related to the number of attendees at the Turkish cooking competition. This matches the rubric exactly, the prohibited element (attendee information) is appropriately absent, and the response is responsive to what the user asked (likely inquiring about attendance numbers). The response accurately reflects the absence of this information as required."
+                }
+            ]
+        }
+    ],
+    "contradiction_resolution": [
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The LLM response explicitly states 'I notice you've mentioned contradictory information about this' which directly satisfies the requirement to state there is contradictory information. Furthermore, the response identifies and explains the specific contradiction (claiming to have completed an oral presentation on Turkish culture while also stating never having done any oral presentations), demonstrating proper execution of the requirement. The response is also responsive to the context and asks for clarification, which is appropriate given the identified contradiction."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact required phrase 'You said you completed an oral presentation on Turkish culture and scored well' as specified in the rubric criterion. The response is also on-topic and responsive to the apparent context of addressing contradictory user statements about oral presentations. The positive requirement is met by including the specified text verbatim."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention: 'you also mentioned never having done any oral presentations or spoken publicly in Turkish'. The response contains this exact phrase verbatim: 'but you also mentioned never having done any oral presentations or spoken publicly in Turkish'. The positive requirement is fully satisfied - the required element is present and accurately conveyed. The response is also responsive to the user's question about contradictory information regarding oral presentations in Turkish."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the LLM response to mention which statement is correct. However, the response does not state which statement is correct - it only points out the contradiction between the two claims (about completing an oral presentation vs. never having done oral presentations) and then asks the user to clarify which is correct. The response is essentially deferring the answer to the user rather than providing the correct statement itself. Since the required element (mentioning which statement is correct) is absent from the response, this constitutes no compliance with the rubric criterion."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The LLM explicitly states 'I notice you've mentioned contradictory information about this' and then elaborates on what the contradictory statements are (attending vs. never attending Turkish music concerts). This directly satisfies the requirement to state that there is contradictory information. The response is on-topic and addresses the question appropriately."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly contains the required phrase 'You said you have attended a Turkish music concert'. This is a direct, verbatim match of the rubric requirement. The LLM accurately referenced the user's statement about attending a Turkish music concert while also pointing out a contradiction in the user's claims. The positive requirement is fully satisfied."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly contains the required phrase: 'you also mentioned that you have never attended any Turkish music concerts or cultural workshops.' The response is on-topic (addressing contradictory information) and accurately references the user's prior statement about never attending Turkish music concerts or cultural workshops as specified in the rubric."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the LLM to mention which statement is correct. The response acknowledges the contradiction between attending Turkish music concerts and never attending them, but it does not actually identify which statement is correct. Instead, it asks the user to clarify which is correct. The LLM is deferring the determination to the user rather than providing the answer that the rubric requires. Since the response fails to mention which statement is correct (the core requirement), it does not comply with the rubric criterion."
+                }
+            ]
+        }
+    ],
+    "event_ordering": [
+        {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tau_norm": 0.9999999999999999,
+            "final_score": 0.9999999999999999,
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates complete compliance with the rubric criterion 'Initial meeting and weekly practice plan'. Point 1 explicitly addresses both required elements by mentioning 'meeting Michael' (initial meeting) and 'planning to practice Turkish weekly' (weekly practice plan). The subsequent points (2-8) expand on the ongoing practice activities, which demonstrates the plan is being executed. The response is clearly on-topic with respect to the criterion and all required elements are present and properly addressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response directly addresses the rubric criterion about 'Scheduling and session time changes.' Item 2 explicitly states 'You discussed scheduling specifics and considered changing the session times,' which is precisely the topic specified in the rubric. The response is clearly on-topic and responsive to the question about scheduling and session time changes, with the relevant content present and properly addressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the presence of 'motivation concerns and partner unavailability'. The response explicitly addresses both elements in point 3: 'You expressed concerns about maintaining motivation and coping with Michael's temporary unavailability'. This directly satisfies the positive requirement by including (1) motivation concerns and (2) partner unavailability. The response is clearly on-topic and responsive to a language learning planning question, and both required elements from the rubric are present and properly addressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response comprehensively addresses both elements of the rubric criterion. Item 4 explicitly mentions 'resuming sessions and overcoming speaking anxiety,' which directly corresponds to 'resuming sessions and speaking confidence.' The response traces a progression through language learning topics and clearly includes discussion of both resuming sessions (explicitly mentioned) and speaking confidence/anxiety (explicitly mentioned as overcoming speaking anxiety in item 4). Since both required elements are present and properly addressed, this demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires 'skill-specific practice and language events' - a positive requirement asking for these elements to be present. The response clearly demonstrates compliance: (1) Skill-specific practice is evident throughout - practicing presentations, debate practice with topic planning, cultural fluency through idioms and proverbs, and overcoming speaking anxiety. (2) Language events are explicitly mentioned as part of the learning plan ('practicing specific skills like presentations and attending language events'). Both required elements are present and properly executed in the response, satisfying the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly includes 'cultural fluency through idioms and proverbs' as point 6 in the list of topics discussed. This directly satisfies the rubric criterion requiring cultural fluency through idioms and proverbs. The response demonstrates that this specific aspect was covered during the conversation about Turkish language learning. No prohibited elements are present, and the response is fully responsive to the evaluation requirements."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion 'Debate practice and topic planning' is a positive requirement asking for these elements to be included in the response. Point 7 of the response explicitly mentions 'debate practice and topic planning' as part of the covered topics. This satisfies the rubric requirement by including the required element. The response demonstrates compliance with the criterion by covering debate practice and topic planning within the broader context of language learning activities."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires coverage of 'exam preparation, results review, and skill maintenance'. The response explicitly addresses all three elements in item #8: 'Finally, you concentrated on exam preparation, reviewing results, and maintaining skills after success.' This directly satisfies the positive requirement by including all three specified components: exam preparation (preparing for exams), results review (reviewing results), and skill maintenance (maintaining skills after success). All required elements are present and properly covered, resulting in full compliance."
+                }
+            ]
+        },
+        {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tau_norm": 1.0,
+            "final_score": 1.0,
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates complete compliance with the rubric criterion 'Poetry reading event'. Multiple items in the response directly address poetry reading events: Item 1 mentions 'Discussing attending a Turkish poetry reading event', Item 3 involves 'Omar's personal Turkish poetry collection and creative writing', Item 9 describes 'Reflecting on a Turkish language poetry reading experience', and Item 10 mentions 'Receiving a signed Turkish poetry book from Omar'. The response includes substantive references to poetry reading events that satisfy the positive requirement. The response is also responsive to what appears to be a question about topics to discuss for Turkish cultural immersion, making it on-topic."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates complete compliance with the rubric criterion 'Omar and cultural exposure through poetry.' The list contains 10 items that comprehensively address Omar's involvement in cultural exposure through poetry-related activities. Key elements include: (1) Attending Turkish poetry readings (items 1, 9), (2) Omar's personal Turkish poetry collection and creative writing (item 3), (3) Poetry reading experiences (items 2, 9), (4) Receiving a signed Turkish poetry book from Omar (item 10), and (5) Various related cultural activities like calligraphy and music that complement poetry exposure. Multiple items explicitly mention Omar's direct involvement, and the activities span attending events, personal collections, workshops, and receiving gifts. The response fully addresses the criterion of Omar and cultural exposure through poetry across diverse contexts."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates full compliance with the rubric criterion 'Poetry collection and creative writing.' Item 3 explicitly discusses 'Omar's personal Turkish poetry collection and creative writing,' which directly addresses both components of the criterion. Additionally, Item 10 mentions 'Receiving a signed Turkish poetry book from Omar,' further reinforcing the poetry collection aspect. These items are substantively present in the response and accurately reflect the required elements. The response is on-topic and contains the positive requirements specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is 'Calligraphy exhibition' which is a positive requirement. The response explicitly includes item 4: 'Reflecting on attending a Turkish calligraphy exhibition and related cultural experiences' and item 5: 'Mentioning Omar's Turkish calligraphy workshop and balancing study with social events.' Both items directly address the calligraphy exhibition criterion, demonstrating complete compliance. The response is on-topic and satisfies the rubric requirement by including multiple references to calligraphy exhibitions as requested."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion 'Calligraphy workshop and study/social balance'. Item 5 explicitly mentions 'Omar's Turkish calligraphy workshop' and discusses 'balancing study with social events', directly satisfying both parts of the criterion. Additionally, other items (8, 9) reinforce the study/social balance theme through discussions of balancing study and relaxation during holidays and prioritizing language learning goals. The response is clearly on-topic regarding Turkish cultural learning experiences and demonstrates the required elements."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion 'Folk music concert and language progress' is a positive requirement asking for discussion of both attending a Turkish folk music concert AND language progress. Item 6 in the response explicitly addresses both elements: 'Talking about attending a Turkish folk music concert and feelings about language progress.' This directly satisfies the rubric criterion by including both required components - the cultural event (folk music concert) and language learning progress. The response is on-topic and demonstrates full compliance with the specified criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates full compliance with the rubric criterion 'Film festival and real-life language practice'. Item 7 specifically addresses both elements: 'Discussing the Turkish film festival and practicing Turkish in real-life settings.' Additionally, multiple other items (1-6, 8-10) describe real-life cultural events and activities for Turkish language practice, including poetry readings, calligraphy exhibitions, folk music concerts, and cultural workshops. The response comprehensively covers the film festival element while also providing extensive examples of real-life language practice through various cultural activities and events."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires addressing 'New Year's concert and holiday study balance.' Item #8 of the response explicitly states: 'Considering attending a Turkish New Year's concert and balancing study and relaxation during holidays.' This directly satisfies both required elements: (1) the New Year's concert is mentioned, and (2) the balance between study and relaxation during holidays is addressed. The response is on-topic with respect to the question and contains the required content, resulting in complete compliance."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates full compliance with the rubric criterion 'Language poetry reading and learning priorities'. Multiple items directly address poetry reading activities: items 1, 2, 3, 9, and 10 specifically discuss attending Turkish poetry readings, exploring poetry collections, and receiving poetry books. Additionally, the response explicitly addresses learning priorities through items that discuss prioritizing language learning goals (item 9), balancing study with cultural events (items 5, 8), and reflecting on language progress. The response shows comprehensive coverage of both poetry reading (as a cultural learning activity) and explicit prioritization of language learning goals. All required elements are present, accurately executed, and the response is fully on-topic with respect to the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion 'Signed poetry book and reading tips' requires presence of both a signed poetry book and reading tips. Item 10 of the response explicitly mentions 'Receiving a signed Turkish poetry book from Omar and seeking tips to get the most out of it,' which directly addresses both required elements: (1) a signed poetry book and (2) reading tips. This satisfies the positive requirement of including both specified components. The response is on-topic with respect to cultural learning experiences and includes the exact elements mentioned in the rubric criterion."
+                }
+            ]
+        }
+    ],
+    "information_extraction": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'B2'. The response 'You said you want to reach B2 Turkish proficiency by December 1, 2024.' clearly contains the term 'B2'. This is a positive requirement, and the required element is present and correctly used in context. The response is also responsive to the question as it references the user's stated goal of reaching B2 proficiency. Full compliance achieved."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states 'December 1, 2024', which exactly matches the required date in the rubric criterion. The date is present, accurate, and properly formatted. No semantic tolerance issues exist as this is an exact match. The response demonstrates full compliance with the positive requirement to state the specific date."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'You decided to use the resource by setting clear goals'. The response contains this exact phrase verbatim at the beginning of the response: 'You decided to use the resource by setting clear goals'. The positive requirement is satisfied as the required statement is present and accurately stated. The response then elaborates on how these clear goals were implemented through creating a structured study plan with various activities. Since the required element is present and properly executed, this scores 1.0 (Complete Compliance)."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to state 'creating a structured study plan with activities like vocabulary review'. The response explicitly contains this exact phrase: 'creating a structured study plan with activities like vocabulary review, grammar practice, reading, listening, writing, and regular review'. The required element is present and accurately executed. The response not only includes the structured study plan with vocabulary review but also expands on it with additional activities (grammar practice, reading, listening, writing, and regular review), which demonstrates full compliance with the positive requirement."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'grammar practice'. The response explicitly includes 'grammar practice' as one of the activities in the structured study plan: 'activities like vocabulary review, grammar practice, reading, listening, writing, and regular review'. This satisfies the positive requirement of the rubric. The response is also responsive to the question about using resources for learning. Therefore, this is complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'reading, listening, writing'. The response explicitly includes all three terms: 'creating a structured study plan with activities like vocabulary review, grammar practice, reading, listening, writing, and regular review'. All required elements (reading, listening, writing) are present and correctly stated in the context of study activities. This constitutes full compliance with the positive requirement."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to state 'regular review to prepare for your course'. The response explicitly contains this exact phrase: 'vocabulary review, grammar practice, reading, listening, writing, and regular review to prepare for your course.' This satisfies the positive requirement of the rubric criterion. The response is also on-topic and discusses effective use of a learning resource. Therefore, this demonstrates complete compliance with the specified rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The required statement 'Whether you need additional materials depends on the type of resource you purchased and your learning goals' is present verbatim in the response. The statement appears as an exact match to the rubric requirement, satisfying the positive requirement. No negative constraints were violated, and the response addresses the question appropriately by discussing the need for additional materials based on resource type and learning goals."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly includes the exact statement required by the rubric: 'You assessed your needs, evaluated what your $25 resource covers, and considered complementary materials to fill gaps and support your learning effectively.' All three required elements are present verbatim: (1) assessed needs, (2) evaluated what the $25 resource covers, and (3) considered complementary materials to fill gaps and support learning effectively. The response fully satisfies the positive requirement of the rubric criterion."
+                }
+            ]
+        }
+    ],
+    "instruction_following": [
+        {
+            "llm_judge_score": 0.3333333333333333,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states that it contains 'mentions of exact towns, neighborhoods, or venues' and 'specific geographic references tied to the activities location names associated with cultural experiences.' This directly satisfies the positive requirement in the rubric criterion, which asks for the LLM response to contain mentions of exact towns, neighborhoods, or venues. The response meets all elements specified in the rubric by confirming the presence of geographic references tied to activities and cultural experiences."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "No actual LLM response content was provided for evaluation. The 'RESPONSE TO EVALUATE' field contains only a description of expected elements (mentions of exact towns, neighborhoods, venues, geographic references tied to activities, and location names associated with cultural experiences), but does not contain the actual response text to be scored. Without the LLM's response, compliance with the rubric criterion cannot be assessed."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The response field contains only a description/repetition of the rubric criterion itself ('mentions of exact towns, neighborhoods, or venues specific geographic references tied to the activities location names associated with cultural experiences') rather than an actual LLM response to evaluate. No substantive content was provided to assess. Without the actual question asked and the response generated by the LLM, I cannot evaluate compliance with the rubric criterion requiring location names associated with cultural experiences."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states it contains 'mention of number of practice sessions', which directly satisfies the rubric criterion. The response also indicates it includes 'quantitative session data', which goes beyond the basic requirement. Since the rubric asks for a positive requirement (mention of number of practice sessions), and this element is clearly present in the response, the criterion is fully met."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions 'quantitative session data included' and specifically references 'number of practice sessions' as the quantitative data element. This directly satisfies the rubric criterion requiring quantitative session data to be included in the response. The response acknowledges both the presence of quantitative session data and specifically identifies the type (number of practice sessions), which constitutes full compliance with the specified requirement."
+                }
+            ]
+        }
+    ],
+    "knowledge_update": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to 'state: 250 new words'. The response provided is exactly '250 new words', which directly satisfies this requirement. The response is on-topic with respect to the question (which appears to be asking for 250 new words) and explicitly states the required phrase. There is full compliance with the specified criterion."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state '78 words per minute'. The response to evaluate is exactly '78 words per minute', which directly matches the required statement. The positive requirement is fully satisfied as the response contains the exact text specified in the rubric."
+                }
+            ]
+        }
+    ],
+    "multi_session_reasoning": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response satisfies the rubric criterion. It explicitly states 'totaling eight different tools or decorations' and lists exactly eight items: noise-cancelling headphones, a timer, a whiteboard, a second monitor, Turkish cultural artifacts, a Turkish flag, a cultural calendar, and a calendar countdown. The positive requirement of stating eight different tools is present and accurate."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states 'noise-cancelling headphones' which directly satisfies the rubric requirement. The required element is present and accurate. The response is also on-topic (addressing tools/decorations added), and there are no prohibited elements to avoid."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'timer'. The response clearly contains the word 'timer' as one of the listed items: 'You have added noise-cancelling headphones, a timer, a whiteboard, a second monitor...' This is a positive requirement, and the required element 'timer' is present and accurate in the response. Full compliance achieved."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state 'second monitor'. The response explicitly includes 'a second monitor' in the list of items added ('You have added noise-cancelling headphones, a timer, a whiteboard, a second monitor, Turkish cultural artifacts...'). This is a direct match with the required element 'second monitor', satisfying the positive requirement. Therefore, the response achieves complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'Turkish cultural artifacts'. The response explicitly includes this phrase: 'Turkish cultural artifacts, a Turkish flag, a cultural calendar, and a calendar countdown'. The required element is present and correctly stated. This satisfies the positive requirement of the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state 'Turkish flag'. The response explicitly includes 'a Turkish flag' in the list of items added. This is a positive requirement that has been fully satisfied. The response clearly and directly includes the required element."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'cultural calendar'. The response explicitly contains the phrase 'a cultural calendar' in its list of items ('Turkish cultural artifacts, a Turkish flag, a cultural calendar, and a calendar countdown'). This directly satisfies the positive requirement. The response is also responsive to the question, which appears to be about listing tools or decorations. Full compliance achieved."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'calendar countdown'. The response explicitly includes 'calendar countdown' in its enumeration of items added: '...a cultural calendar, and a calendar countdown, totaling eight different tools or decorations.' This satisfies the positive requirement by directly stating the required element."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.3333333333333333,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state '40 exercises'. The response to evaluate is exactly '40 exercises', which directly matches the required element. This is a positive requirement, and the required element is present and accurate. Therefore, the response fully complies with the rubric criterion."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The response fails to comply with the rubric criterion. The rubric requires the response to state 'Elementary Turkish with 15 exercises', but the response only states '40 exercises'. Two critical elements are missing/incorrect: (1) 'Elementary Turkish' is not mentioned at all, and (2) the number of exercises is 40 instead of the required 15. Since neither the course/program name nor the correct number of exercises matches the rubric requirement, this constitutes no compliance."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the response to state 'Turkish Grammar in Practice with 25 exercises', specifically the number 25. The response instead states '40 exercises'. This is a direct mismatch with the required number of exercises specified in the rubric. The response does not contain the correct information as required by the positive requirement."
+                }
+            ]
+        }
+    ],
+    "preference_following": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly contains 'recommends live or synchronous classes', which directly satisfies the positive requirement of the rubric criterion. The recommendation for live or synchronous classes is clearly present. Additionally, the response includes a related point about avoiding pre-recorded materials, which does not conflict with the requirement. Since the required element is present and accurately stated, the response achieves full compliance."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates complete compliance with the rubric criterion. The rubric requires the response to 'avoid focusing only on pre-recorded materials' (a negative constraint). The response explicitly satisfies this by recommending 'live or synchronous classes' and stating it 'avoids focusing only on pre-recorded materials.' The prohibited behavior (focusing exclusively on pre-recorded content) is absent, and the response appropriately suggests alternatives to pre-recorded materials. Both conditions for compliance are met: the response is responsive and the negative constraint is satisfied."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly contains the phrase 'recommends immersive, real-life language activities,' which directly matches the positive requirement in the rubric. The additional content about 'extended practice periods during weekends' supplements rather than contradicts the primary requirement. The core element - recommending immersive, real-life language activities - is present and properly executed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to contain: 'focuses on extended practice periods during weekends'. The response explicitly states 'focuses on extended practice periods during weekends', which directly satisfies this positive requirement. The element is present and accurately matches the rubric specification. No partial compliance assessment is needed as the required element is fully present."
+                }
+            ]
+        }
+    ],
+    "summarization": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The exact required phrase is present: 'Initially, a structured study plan was developed, emphasizing a balanced integration of grammar and vocabulary through daily and weekly goals, supported by monthly reviews and self-assessments.' This satisfies all elements specified in the positive requirement: (1) structured study plan, (2) balanced integration of grammar and vocabulary, (3) daily and weekly goals, and (4) monthly reviews and self-assessments. The response then continues with additional details about how the plan evolved, but the core required element is present and accurate."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly contains the required element: 'plan evolved to incorporate specialized strategies for improving communication in clinical psychology contexts, including medical vocabulary, empathetic speaking, and cultural sensitivity'. This directly matches what the rubric requires - the mention of a plan that evolved to include specialized strategies for clinical psychology communication, incorporating medical vocabulary, empathetic speaking, and cultural sensitivity. All three components (medical vocabulary, empathetic speaking, and cultural sensitivity) are present in the response, satisfying the positive requirement completely."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly contains the required element: 'To accommodate a demanding clinical psychology career, time management techniques such as time blocking, integrating language practice into daily routines.' This is a direct match to the rubric criterion, including both specific time management techniques mentioned (time blocking and integrating language practice into daily routines) in the context of accommodating a demanding clinical psychology career. The element is present and properly executed, resulting in complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states: 'Financially, the user invested in courses, technology, and subscriptions, with detailed budgeting advice to optimize spending and maximize returns on investments like the Istanbul Language Academy and TurkishClass101 subscriptions.' This sentence directly contains all required elements specified in the positive requirement: (1) financial investment in courses, technology, and subscriptions, (2) detailed budgeting advice, (3) optimization of spending, (4) maximizing returns on investments, and (5) specific examples of Istanbul Language Academy and TurkishClass101 subscriptions. The response addresses the topic and includes the exact elements required by the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires that the response contain mention of the user engaging with diverse supplementary resources\u2014apps, podcasts, cultural activities, and language exchanges\u2014to enrich learning and maintain motivation. The response contains the exact phrase: 'The user also engaged with diverse supplementary resources\u2014apps, podcasts, cultural activities, and language exchanges\u2014to enrich learning and maintain motivation.' This requirement is fully satisfied with the precise language specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the presence of the element 'Midway through formal courses, progress assessments guided adjustments in focus areas.' The response explicitly contains this exact phrase: 'Midway through formal courses, progress assessments guided adjustments in focus areas.' This element is present, accurate, and properly integrated into the context of the response describing the language learning journey. Since this is a positive requirement and the element is fully present and correctly stated, the response achieves complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly contains the required element. At the end of the response, it states: 'the user's decision-making balanced financial prudence and experiential learning, such as choosing travel over additional courses, reflecting a nuanced approach to language acquisition.' This directly and specifically addresses the rubric criterion by: (1) mentioning the user's decision-making that balances financial prudence and experiential learning, (2) providing the specific example of choosing travel over additional courses, and (3) indicating this reflects a nuanced approach to language acquisition. All components of the positive requirement are present and accurately expressed."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The required phrase 'You have been working with Kristen to improve your Turkish through various activities' appears verbatim at the beginning of the response. The response then expands on this foundation by providing specific examples of the activities (listening to podcasts, attending cultural events, planning social gatherings, cooking class, New Year's Eve party). This demonstrates that the element is present, accurate, and properly executed. There are no negative constraints specified, and the response is clearly on-topic with respect to the context about Turkish language learning with Kristen."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires that the LLM response should contain 'activities such as listening to podcasts'. The response explicitly includes this phrase: 'activities such as listening to podcasts'. This positive requirement is fully satisfied, as the exact phrase (or a semantic equivalent) is present in the response. The evaluation of compound statements is not applicable here since there's only one main element to check. Score: 1.0 (Complete Compliance)."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to contain 'activities such as attending cultural events like film screenings and poetry slams'. The response explicitly includes the phrase 'activities such as attending cultural events like film screenings and poetry slams', which directly satisfies this requirement. The criterion is a positive requirement (things the response SHOULD include), and the required element is present and accurately expressed in the response. Therefore, the response demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact phrase 'planning social gatherings including a cooking class and a New Year's Eve party' which matches the rubric criterion. The required element is present and properly included in the response."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly contains the exact phrase required by the rubric criterion: 'Your interactions include strategies for balancing language learning with social life, adapting to generational communication differences, and using real-world experiences to enhance your speaking and listening skills'. Additionally, the response provides supporting examples of these strategies, including listening to podcasts, attending cultural events (film screenings, poetry slams), and planning social gatherings (cooking class, New Year's Eve party). All three required elements from the rubric criterion are present and properly demonstrated in the response, resulting in complete compliance."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The required statement 'you engage in immersive cultural experiences and structured practice to steadily advance your Turkish proficiency' appears verbatim at the end of the response. Additionally, the response provides supporting examples that demonstrate compliance: listening to podcasts (structured practice), attending cultural events like film screenings and poetry slams (immersive cultural experiences), planning social gatherings including a cooking class (immersive cultural experience), and using real-world experiences to enhance speaking and listening skills (structured practice). The positive requirement is satisfied with both the explicit statement and contextual evidence."
+                }
+            ]
+        }
+    ],
+    "temporal_reasoning": [
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states '7 days elapsed' which directly satisfies the rubric requirement of stating '7 days'. The phrase 'exactly one week after' further reinforces this, as one week equals seven days. The criterion is fully met."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response mentions February 20, 2024 explicitly and implies February 27, 2024 through the statements 'exactly one week after' and '7 days elapsed.' While both dates are effectively conveyed through calculation (one week after February 20 = February 27), the specific date range format 'from February 20, 2024 till February 27, 2024' is not explicitly stated. The rubric requires the response to 'state' this exact date range, but February 27, 2024 is only implied rather than directly stated. This constitutes partial compliance - the information is communicated but not in the required explicit format."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state '11 weeks'. The response explicitly contains this value twice: 'about 11 weeks' and 'approximately 11 weeks apart'. This satisfies the positive requirement. The response is also responsive to the question asked. Since the required element is present and accurate, the response fully complies with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response satisfies the rubric criterion. The rubric requires stating 'from March 20 till June 1'. The response explicitly states 'Your class starts on March 20, 2024, and Michael returns on June 1, 2024'. This conveys the exact same time period using equivalent phrasing (starting date and ending date). According to semantic tolerance rules, paraphrases that preserve intent should be accepted. The dates are present and accurate, making this a fully compliant response."
+                }
+            ]
+        }
+    ]
+}
