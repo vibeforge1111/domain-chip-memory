@@ -457,8 +457,30 @@ def _run_openai_compatible_upstream_evaluation(
     deadline_seconds = _BEAM_OPENAI_COMPATIBLE_BASE_DEADLINE_SECONDS * max(1, len(selected_conversation_ids))
     start_time_seconds = time.monotonic()
     logged_incremental_write_warning = False
-    while worker.is_alive():
+    worker_payload: dict[str, Any] = {}
+    while True:
+        worker_alive = worker.is_alive()
         completed_outputs = [str(path) for path in expected_outputs if path.exists()]
+        if not result_queue.empty():
+            worker_payload = result_queue.get()
+        if worker_payload and len(completed_outputs) == len(expected_outputs):
+            if worker_alive:
+                stdout_lines.append(
+                    "Worker reported completion after writing all expected evaluation files; terminating lingering worker."
+                )
+                worker.terminate()
+                worker.join(timeout=10)
+            stdout_lines.extend(worker_payload.get("stdout_tail", []))
+            stderr_lines = worker_payload.get("stderr_tail", [])
+            exit_code = int(worker_payload.get("exit_code", 0))
+            return {
+                "exit_code": exit_code,
+                "stdout_tail": stdout_lines[-20:],
+                "stderr_tail": stderr_lines[-20:],
+                "evaluation_files": completed_outputs,
+            }
+        if not worker_alive:
+            break
         if len(completed_outputs) == len(expected_outputs) and not logged_incremental_write_warning:
             logged_incremental_write_warning = True
             stdout_lines.append(
@@ -480,8 +502,7 @@ def _run_openai_compatible_upstream_evaluation(
 
     worker.join(timeout=10)
     completed_outputs = [str(path) for path in expected_outputs if path.exists()]
-    worker_payload: dict[str, Any] = {}
-    if not result_queue.empty():
+    if not worker_payload and not result_queue.empty():
         worker_payload = result_queue.get()
     stdout_lines.extend(worker_payload.get("stdout_tail", []))
     stderr_lines = worker_payload.get("stderr_tail", [])
