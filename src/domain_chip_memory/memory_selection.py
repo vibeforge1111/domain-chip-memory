@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 
 from .contracts import NormalizedQuestion
@@ -62,6 +63,64 @@ def select_evidence_entries(
     seen_surfaces: set[str] = set()
     subjects = set(question_subjects(question))
     question_lower = question.question.lower()
+
+    def _clause_tokens(text: str) -> set[str]:
+        return {
+            token
+            for token in re.findall(r"[a-z0-9]+", text.lower())
+            if len(token) >= 3
+            and token
+            not in {
+                "and",
+                "the",
+                "day",
+                "from",
+                "first",
+                "last",
+                "order",
+                "what",
+                "which",
+                "that",
+                "with",
+                "then",
+            }
+        }
+
+    clause_groups: list[str] = []
+    between_match = re.search(r"\bbetween\s+(.+?)\s+and\s+(.+?)(?:\?|$)", question_lower)
+    if between_match:
+        clause_groups.extend([between_match.group(1), between_match.group(2)])
+    order_match = re.search(r"order from first to last:\s*(.+?)(?:\?|$)", question_lower)
+    if order_match:
+        tail = order_match.group(1)
+        parts = [
+            part.strip(" ,.")
+            for part in re.split(r",\s*(?:and\s+)?", tail)
+            if part.strip(" ,.")
+        ]
+        clause_groups.extend(parts)
+
+    for clause in clause_groups:
+        tokens = _clause_tokens(clause)
+        if not tokens:
+            continue
+        best_entry: ObservationEntry | None = None
+        best_score = 0
+        for entry in ranked:
+            combined = entry_combined_text(question, entry).lower()
+            overlap = len(tokens.intersection(_clause_tokens(combined)))
+            if overlap <= 0:
+                continue
+            score = overlap * 100
+            if score > best_score:
+                best_score = score
+                best_entry = entry
+        if best_entry is not None:
+            surface = observation_evidence_text(question, best_entry).strip().lower()
+            if surface and surface not in seen_surfaces:
+                seen_surfaces.add(surface)
+                selected.append(best_entry)
+
     if len(subjects) >= 2:
         for subject in subjects:
             subject_entries = [entry for entry in ranked if entry.subject == subject]

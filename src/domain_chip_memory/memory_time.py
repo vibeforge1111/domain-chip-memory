@@ -11,9 +11,12 @@ def parse_observation_anchor(timestamp: str | None) -> datetime | None:
     if not timestamp:
         return None
     normalized = timestamp.replace("am", "AM").replace("pm", "PM")
+    normalized = re.sub(r"\s+\([A-Za-z]{3}\)\s+", " ", normalized)
     for pattern in (
         "%Y-%m-%dT%H:%M:%SZ",
         "%Y-%m-%d",
+        "%Y/%m/%d %H:%M",
+        "%Y/%m/%d",
         "%B-%d-%Y",
         "%I:%M %p on %d %B, %Y",
         "%I:%M %p on %d %B %Y",

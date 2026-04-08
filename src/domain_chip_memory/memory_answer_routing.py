@@ -74,6 +74,19 @@ def question_needs_raw_aggregate_context(question: NormalizedQuestion) -> bool:
             "which social media platform did i gain the most followers on over the past month?",
             "which grocery store did i spend the most money at in the past month?",
         }
+        or (
+            question_lower.startswith("how many ")
+            and (
+                " between " in question_lower
+                or " ago did i " in question_lower
+                or " have passed since i " in question_lower
+                or " did i spend " in question_lower
+            )
+        )
+        or "order from first to last" in question_lower
+        or "from earliest to latest" in question_lower
+        or question_lower.startswith("which event happened first")
+        or question_lower.startswith("how much earlier do i ")
     )
 
 def choose_answer_candidate(
