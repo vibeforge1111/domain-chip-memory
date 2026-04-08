@@ -25,6 +25,12 @@ It is a research and evaluation machine that answers:
 - which open-source codebases are safe to reuse or adapt
 - which mutations are worth promoting into a production memory engine
 
+Future product direction:
+
+- Spark users with memory should eventually receive both:
+  - a governed runtime memory layer
+  - a visible LLM-maintained knowledge-base workspace compiled from that memory
+
 ## Problem
 
 Most memory projects still fail in one of four ways:

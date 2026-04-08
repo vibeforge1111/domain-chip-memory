@@ -42,6 +42,13 @@ The memory SDK should own:
 - shadow replay compatibility
 - maintenance and reconsolidation hooks
 
+The Spark product should additionally expose a visible knowledge-base layer above the SDK:
+
+- user-visible compiled memory pages
+- timeline and provenance views
+- LLM-maintained summaries and syntheses
+- health checks over contradictions, staleness, and gaps
+
 This is the correct split. The SDK is not the planner. Spark is not the memory engine.
 
 ## Required surrounding systems inside Spark
@@ -78,6 +85,10 @@ Spark should not connect directly to the SDK unless it has these surrounding sys
 
 8. Artifact and trace store
    Spark must store replayable request and response traces so failures can be reproduced deterministically.
+
+9. Knowledge-base compiler and workspace
+   Spark must compile governed memory into a visible user workspace instead of leaving memory as an invisible backend only.
+   This workspace should expose profile, project, timeline, provenance, and synthesized wiki views that are downstream of the memory substrate.
 
 ## Integration vectors
 
@@ -162,6 +173,7 @@ Seamless means:
 - Spark knows which memory read path it is asking for
 - the SDK can abstain without being overridden
 - provenance survives the trip
+- the user can inspect the resulting memory as a visible knowledge base
 - shadow and maintenance systems exist around the runtime
 
 That is the difference between a demo integration and a production integration.

@@ -15,6 +15,9 @@ We now need a build path that turns the current benchmark-winning memory substra
 
 This document is the execution path for doing that without destroying the benchmark wins that made the repo valuable in the first place.
 
+The intended Spark product target is broader than an invisible memory backend.
+It is a governed runtime memory substrate plus a visible LLM-maintained knowledge-base workspace layered on top of that substrate.
+
 ## Honest current starting state
 
 What is already strong:
@@ -44,6 +47,11 @@ We will first produce:
 5. a shadow-mode Spark integration
 
 Only then do we allow production rollout decisions.
+
+When Spark memory is eventually productized, each user should get:
+
+- the runtime memory API
+- and a compiled knowledge-base workspace built from their governed memory and artifacts
 
 ## Non-negotiable regression gates
 
@@ -250,10 +258,41 @@ Exit criteria:
 - Spark can call a stable runtime surface without knowing benchmark packet internals
 - SDK contracts are narrow enough to evolve safely
 
+Additional product requirement:
+
+- the runtime surface must preserve enough structure, provenance, and lifecycle semantics to support downstream compilation into a user-visible knowledge-base workspace
+
 Benchmark policy:
 
 - benchmark reruns only when the SDK surface changes runtime behavior
 - local `ProductMemory` remains the fastest safety gate
+
+## Phase 5.5: Knowledge-Base Layer
+
+Goal:
+
+- ensure Spark memory is visible, inspectable, and compounding for the end user
+
+Required capabilities:
+
+- compile governed memory into linked user-facing pages
+- distinguish evidence, current state, events, and beliefs visibly
+- file important query outputs back into the workspace
+- run health checks for contradictions, stale summaries, gaps, and missing pages
+
+Required user surfaces:
+
+- memory home view
+- timeline view
+- provenance view
+- compiled wiki or workspace view
+- maintenance and health report view
+
+Exit criteria:
+
+- Spark memory is not only an invisible backend
+- each user with memory can inspect a visible knowledge-base workspace generated from their memory
+- the workspace remains downstream of the runtime substrate rather than becoming a second independent truth system
 
 ## Phase 6: Spark Shadow Integration
 

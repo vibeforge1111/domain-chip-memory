@@ -19,6 +19,11 @@ It should not try to prove:
 - million-agent orchestration
 - product-market fit for every memory use case
 
+Product direction to preserve:
+
+- the runtime memory substrate should eventually support a user-visible knowledge-base layer above it
+- the visible layer should be compiled from governed memory and provenance, not from an unrelated second truth store
+
 ## System shape
 
 The first full implementation should stay lightweight and have eight modules.
