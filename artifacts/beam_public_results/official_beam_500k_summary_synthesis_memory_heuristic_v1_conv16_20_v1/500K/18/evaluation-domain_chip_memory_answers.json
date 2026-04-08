@@ -1,0 +1,316 @@
+{
+    "abstention": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. This is a negative constraint requiring the absence of information about Dr. Farah's professional background and qualifications. The response correctly acknowledges that such information is not present in the provided chat. The response is responsive to the question and the prohibited element (information about Dr. Farah's professional background/qualifications) is absent. Since the response accurately states the absence of this information as required by the rubric, it achieves complete compliance."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is a negative constraint stating that there should be NO information related to contact details or affiliation of the local hiking club. The response correctly states that 'there is no information related to the contact details or affiliation of the local hiking club.' This means: (a) the response is responsive to the question/constraint, and (b) the prohibited element (contact/affiliation information) is correctly identified as absent. Both conditions for negative constraints are satisfied, resulting in full compliance."
+                }
+            ]
+        }
+    ],
+    "contradiction_resolution": [
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states that there is contradictory information. The LLM clearly says 'I notice you've mentioned contradictory information about this' and then identifies the specific contradiction: the user claimed to have started sessions with Dr. Farah but also mentioned never attending any therapy sessions with her. This directly satisfies the rubric requirement to state that there is contradictory information."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to mention that the user said they have never attended any therapy sessions with Dr. Farah. The response states: 'you also mentioned never attending any therapy sessions with her.' This is a semantically equivalent paraphrase - 'her' is a direct synonym for 'Dr. Farah' in context, and the phrase captures the exact meaning of the required statement. According to the SEMANTIC TOLERANCE RULES, paraphrases and synonyms that preserve intent should be accepted. The required element is present in meaning, thus satisfying the rubric criterion fully."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response satisfies the rubric criterion. The rubric requires the LLM to mention 'you also mentioned starting sessions with her.' The response contains the semantic equivalent: 'You said you started sessions with Dr. Farah, but you also mentioned never attending any therapy sessions with her.' This directly references the user's mention of starting sessions with the therapist (Dr. Farah), satisfying the positive requirement to mention this topic. The response is also on-topic and responsive to the question."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion requires the LLM response to 'mention which statement is correct.' The response identifies the contradiction between the user's statements about therapy sessions with Dr. Farah, but it does not actually state which statement is correct. Instead, the response asks the user to clarify which is correct, effectively deflecting the question rather than providing the answer. The required element (determining and stating which statement is correct) is absent from the response."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states 'contradictory information' in the first sentence and identifies the specific contradiction (the user claiming to have arranged full-time after-school care for Megan while also claiming to have never arranged after-school care). The response acknowledges the contradiction and requests clarification, which satisfies the requirement to state that there is contradictory information."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention the specific phrase 'you said you have never arranged after-school care for Megan or any of your children'. The response explicitly contains this exact phrase (with minor grammatical adjustment to 'you've never arranged after-school care for Megan or any of your children'), which is a direct semantic equivalent preserving the original intent. The response is also responsive to the apparent question about contradictory statements regarding after-school care arrangements. Since the required element is present and accurately quoted/referenced, this achieves full compliance."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response does mention the concept required by the rubric. The response states: 'You said you have arranged full-time after-school care for Megan' - which conveys the same meaning as 'you also mentioned arranging full-time after-school care for Megan.' The key elements are present: (1) reference to 'full-time after-school care', (2) reference to 'Megan', and (3) acknowledgment that the person mentioned/arranged this. While the phrasing differs slightly ('You said' instead of 'you also mentioned'), semantic tolerance rules accept paraphrases that preserve intent. The response is on-topic and addresses the question by pointing out the contradiction."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric criterion requires the LLM response to mention which statement is correct. However, the response only acknowledges the contradiction and asks the user to clarify, but does not actually state which of the two conflicting statements is correct. The response is on-topic and responsive to the question about contradictory information, but it fails to fulfill the specific requirement of the rubric to identify which statement is correct. Since the required element (stating which is correct) is absent, this is non-compliant with the rubric criterion."
+                }
+            ]
+        }
+    ],
+    "event_ordering": [
+        {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tau_norm": 0.9999999999999999,
+            "final_score": 0.9999999999999999,
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Coping with emotional pain after the breakup'. The response explicitly includes this as point 1: 'Coping with emotional pain after the breakup'. This is a direct match satisfying the positive requirement. The response is responsive to the topic and includes the required element."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly includes item #2: 'Reflecting on the relationship and learning from it', which directly matches the rubric criterion requiring this element to be mentioned. The criterion is a positive requirement (something that should be present), and the required element is present in the response. Therefore, this demonstrates complete compliance with the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly includes '3) Managing communication boundaries with Sarah' as item number 3 in the list. This directly satisfies the rubric criterion requiring that the LLM response mention 'Managing communication boundaries with Sarah'. The element is present and properly identified within the context of the stages/topics being discussed. Since the required mention is found verbatim in the response, this constitutes complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention '4) Addressing challenges related to custody and visitation arrangements'. The response contains exactly this element as item 4 in the numbered list: '4) Addressing challenges related to custody and visitation arrangements'. This is a direct, verbatim match with the required element, satisfying the positive requirement. Therefore, the response demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Handling mediation and legal involvement'. The response explicitly includes item 5) 'Handling mediation and legal involvement' in its enumerated list of stages. This is a direct, verbatim match to the required criterion, demonstrating complete compliance. The response is also on-topic and presents this element as part of a structured list showing progression from emotional processing to practical arrangements, making it contextually appropriate. No negative constraints are violated."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to mention '6) Navigating holiday scheduling and supervised visits'. The response contains this exact phrase as item 6 in the numbered list. The positive requirement is satisfied, as the element is present and correctly identified."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires that the LLM response mention '7) Dealing with emotional safety and boundary setting during interactions'. The response explicitly includes this exact item as number 7 in the list: '7) Dealing with emotional safety and boundary setting during interactions'. This is a direct, verbatim match to the required element. Since the rubric specifies a positive requirement (something that should be included) and this element is present and correctly stated, the response achieves full compliance."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'Processing emotional healing and mood after visits'. The response explicitly includes item 8 with the exact text: '8) Processing emotional healing and mood after visits'. This matches the rubric requirement precisely. The positive requirement is fully satisfied."
+                }
+            ]
+        },
+        {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tau_norm": 1.0,
+            "final_score": 1.0,
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions 'helping your kids process emotions after the breakup' in point 1, which directly satisfies the rubric requirement of mentioning 'Helping kids with emotions'. The required element is present and clearly addressed in the response."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to mention 'Daily routine and family visits'. In the response, point 2 explicitly states: 'you described your busy daily routine including school runs and visiting your mom'. This clearly covers both required elements - the daily routine (school runs mentioned as part of it) and family visits (visiting mom). Both components of the positive requirement are present and properly addressed in the response."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response clearly mentions support group attendance and progress in item 3: 'you mentioned attending a men's support group and ways to maintain progress.' This directly satisfies the rubric criterion which requires mentioning support group attendance and progress. Both elements are present - the support group attendance ('attending a men's support group') and progress ('ways to maintain progress') are explicitly mentioned."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention '4) Fishing trips and related planning'. Item 4 of the response explicitly states: 'various fishing trips planned with Scott along with concerns about boat rentals and scheduling'. This fully satisfies the positive requirement by including both the fishing trips AND related planning elements (boat rentals, scheduling). The criterion is completely met."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires mention of 'Book club and upcoming hike preparations'. The response includes item #5 which explicitly states: 'Finally, you discussed attending a book club meeting and preparing for an upcoming hike with Scott.' Both required elements - the book club and the upcoming hike preparations - are clearly present in the response. This constitutes full compliance with the positive requirement."
+                }
+            ]
+        }
+    ],
+    "information_extraction": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response exactly matches the rubric criterion. It contains all required elements: the reference to applying a structured and practical approach (as a Chartered Loss Adjuster) to daily routine, with specific mention of setting regular times for meals, exercise, work, and relaxation to help manage emotions. Since the response demonstrates complete compliance with the positive requirement stated in the rubric, it receives a score of 1.0."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires '7:30 AM' to be present in the response. The response '7:30 AM' contains this required element exactly, matching the criterion. The response is also fully responsive to the question (which is also '7:30 AM'). There are no negative constraints violated. This constitutes complete compliance with the rubric criterion."
+                }
+            ]
+        }
+    ],
+    "instruction_following": [
+        {
+            "llm_judge_score": 0.0,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The response does not include the actual names of social events nor the exact places where they will take place. It merely restates the rubric criterion as if it were an answer, rather than providing the specific information requested. Since the required content (event names and locations) is absent, the response fails to comply with the positive requirement."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.0,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The response fails to comply with the rubric criterion. The RESPONSE TO EVALUATE merely restates the criterion itself ('Response should include ticket prices along with details about the events.') rather than providing an actual response containing real ticket prices and event details. According to the scoring scale, for positive requirements the required element must be present and accurate. In this case, no actual ticket prices or event details are provided - only a statement that such information should be included. This constitutes a non-compliant response where the required elements are entirely absent."
+                }
+            ]
+        }
+    ],
+    "knowledge_update": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response directly states 'You have completed 5 mechanical sketches,' which exactly matches the rubric criterion. The required element (5 mechanical sketches) is present and correctly stated. There are no negative constraints specified, and the response is fully responsive to the implicit question about completion status. The response satisfies the rubric requirement completely."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the presence of '25 pre-registrations' (positive requirement). The response '25 pre-registrations' directly contains the required element. The response is on-topic with respect to the question and fully satisfies the rubric criterion by including the exact required content. There are no negative constraints specified, so only the positive requirement needed to be evaluated."
+                }
+            ]
+        }
+    ],
+    "multi_session_reasoning": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response '10 hours per week' exactly matches the rubric criterion '10 hours per week'. The required element (10 hours per week) is present and accurate in the response. This is a direct, exact match with no discrepancies in the value or unit. Full compliance is achieved."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'emotional processing after breakup'. The response explicitly includes this exact phrase as the first item in a list: 'Three types: emotional processing after breakup, setting boundaries to communicate only via email, and handling joint custody discussions.' The required element is present and clearly identified. This constitutes complete compliance with the positive requirement specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions 'setting boundaries to communicate only via email' which directly satisfies the positive requirement in the rubric. The required element is present verbatim in the response as one of three topics covered."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'handling joint custody discussions'. The response explicitly lists this as the third type: 'Three types: emotional processing after breakup, setting boundaries to communicate only via email, and handling joint custody discussions.' The required element is present and properly included in the response. The response is also responsive to the question, which asked about three types of something. This satisfies the positive requirement with complete compliance."
+                }
+            ]
+        }
+    ],
+    "preference_following": [
+        {
+            "llm_judge_score": 0.5,
+            "llm_judge_responses": [
+                {
+                    "score": 0.5,
+                    "reason": "The response restates the rubric criterion itself rather than providing an actual substantive response to a user's question. While it technically contains the required positive element (mentioning evening hours for hobby scheduling) and the negative constraint (avoiding conflicting time slots), it does not actually answer a question or provide actionable advice. The response is essentially a template or restatement of the requirement rather than a genuine attempt to address a user's inquiry about scheduling hobbies. Since the response is on-topic but lacks substantive content that answers a question, this represents partial compliance with the rubric criterion."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.0,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The response provided is simply a restatement of the rubric criterion itself, not an actual response demonstrating compliance. The response states 'Response should emphasize the benefits of a planned itinerary and solo travel structure...' but does not contain any substantive content that actually emphasizes these benefits. It merely repeats the requirement rather than demonstrating execution of it. Since the response fails to actually exhibit the required behavior (emphasizing benefits of planned itinerary, solo travel structure, personal recharging, and emotional renewal), it does not comply with the rubric criterion. Additionally, there is no evidence this response addresses any actual question asked by a user - it appears to be a meta-statement about what a response should do rather than an actual response content."
+                }
+            ]
+        }
+    ],
+    "summarization": [
+        {
+            "llm_judge_score": 0.6,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully satisfies the rubric criterion. It explicitly mentions that the user struggled with emotional pain and sought strategies to process feelings, specifically including journaling, therapy, and establishing new routines. It also states that the user set firm communication boundaries, insisted on email-only contact, and involved a mediator to handle sensitive discussions, especially regarding custody and visitation. All required elements from the positive requirement are present and accurately conveyed. There are no prohibited elements to check against. The response directly addresses the topic described in the question and covers all aspects outlined in the rubric."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response partially complies with the rubric criterion. It includes some elements: email-only contact (avoiding direct contact), therapy and journaling (support systems), and mediator involvement for custody discussions. However, it misses key specifics: it does not mention a set time period for no-contact, does not explicitly reference mindfulness techniques, does not describe seeking legal advice, does not convey a cautious approach to custody discussions, and does not explicitly focus on children's best interests. The response captures about half of the required elements but is missing several important components specified in the rubric, warranting a partial compliance score of 0.5."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response partially complies with the rubric criterion. It includes some required elements: setting firm communication boundaries (mentioned), therapy involvement (mentioned), and mediator involvement (mentioned). However, multiple critical elements are absent: supervised visits being scheduled, focusing interactions on children to avoid conflict, missed visits by Sarah, feelings of guilt, support networks, and the user's practical/emotional preparation for visits. The response only addresses the emotional pain processing and boundary-setting aspects, missing the supervised visitation context and the specific challenges mentioned in the rubric. Since roughly half the required elements are missing, this constitutes partial compliance (0.5)."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The response does not comply with the rubric criterion. The rubric specifically requires mentions of: (1) self-care routines with affirmations, physical activity, and social connections for emotional resilience, (2) holiday visits causing anxiety with planning involving therapist guidance, mindfulness, and friend support, and (3) reflection on mood improvements after visits with strategies to sustain progress. The response instead describes: struggling with emotional pain and using journaling/therapy/new routines (different from the specified self-care elements), and setting communication boundaries with email-only contact and mediators for custody/visitation (a different context and strategy). While the response addresses some emotional coping themes, it does not contain the specific elements required by the rubric regarding holiday visits, the prescribed self-care components, or the post-visit reflection process. The response is responsive to a general question about emotional well-being but fails to include the key elements specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It mentions all the required elements: (1) emotional recovery - 'struggled with emotional pain' and 'sought strategies to process feelings, including journaling, therapy'; (2) co-parenting responsibilities - 'custody and visitation'; (3) boundary enforcement - 'set firm communication boundaries, insisting on email-only contact'; (4) professional support - 'therapy'; (5) mediation - 'involving a mediator'; and (6) personal coping mechanisms - 'journaling' and 'establishing new routines'. The response demonstrates that the user navigated this multifaceted situation using these combined strategies, effectively addressing the evolving circumstances as required by the rubric."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.16666666666666666,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The response does not actually mention any of the required elements. It merely restates the rubric criterion itself ('Response should mention: attending therapy sessions with Dr. Farah focusing on rebuilding confidence, practicing cognitive behavioral techniques, and journaling exercises centered on self-compassion') without providing actual content about attending therapy sessions with Dr. Farah, rebuilding confidence, practicing cognitive behavioral techniques, or journaling exercises centered on self-compassion. The required elements are completely absent from the response content."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The response does not comply with the rubric criterion. It mentions journaling exercises but focuses on self-compassion rather than reflecting on emotional AND professional growth through journaling as specified. More critically, 'working on communication skills' is completely absent from the response. Additionally, 'incorporating self-care activities like yoga and mindfulness' is not addressed - the response mentions therapy and cognitive behavioral techniques but does not include the specific self-care activities (yoga and mindfulness) required by the rubric. Since 2 out of 3 required elements are absent and the third is only partially addressed with a different focus, the response fails to meet the rubric requirements."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response partially complies with the rubric criterion. It mentions attending therapy sessions with Dr. Farah (addressing the therapy schedule aspect) and practicing cognitive behavioral techniques plus journaling exercises (addressing skill application and personal development). However, the response does not explicitly mention 'managing your therapy schedule' - it only confirms attending sessions. Additionally, while journaling exercises centered on self-compassion are mentioned, there is no explicit mention of seeking ways to apply these learned skills in daily life. The response covers the topic area but lacks complete specificity to the rubric requirements."
+                }
+            ]
+        }
+    ],
+    "temporal_reasoning": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The rubric requires the response to state 'You maintained no contact with Sarah for 34 days.' The response explicitly states 'totaling 34 days of no contact' and provides a clear breakdown of how the 34 days were calculated (4 days from March 1 to March 5, plus the 30-day no-contact plan). The key required statement about maintaining no contact for 34 days is present and accurate. The response is on-topic and directly addresses the criterion."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state '9 days'. The response explicitly states 'There are 9 days between moving into your new apartment on May 1 and the mediation session you scheduled on May 10.' The number '9' and the phrase 'days' are both present in the response, directly satisfying the positive requirement. This is a complete match to the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response effectively states the date range from May 1 to May 10. It explicitly mentions both May 1 (moving into the apartment) and May 10 (mediation session), and calculates the duration between them. This is semantically equivalent to the required phrase 'from May 1 till May 10' - it conveys the same date range. The semantic tolerance rules accept paraphrases that preserve intent, and this response preserves the required date information while expressing it through contextual language rather than the exact wording specified."
+                }
+            ]
+        }
+    ]
+}
