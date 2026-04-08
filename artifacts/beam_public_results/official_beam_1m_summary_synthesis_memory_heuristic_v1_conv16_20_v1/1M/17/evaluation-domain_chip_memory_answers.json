@@ -1,0 +1,392 @@
+{
+    "abstention": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response successfully indicates that there is no information related to the exact duration of the 'Mindfulness for Sleep' online course, which directly satisfies the rubric criterion. The response adds an additional element ('format') which is not prohibited by the rubric and does not conflict with the requirement. The core compliance element (absence of exact duration information) is correctly addressed and accurately reflects the expected output."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response correctly addresses the rubric criterion. The rubric states there is no information related to the exact format of the 'Mindfulness for Sleep' online course, and the response accurately reflects this by stating there is no information related to the exact duration or format. The response is responsive to the topic (addressing the lack of course format information), and it correctly identifies the absence of information about the format as specified in the rubric. The additional mention of duration does not contradict the rubric but rather provides additional relevant information. The prohibited element (information about format) is absent as required, and the response is on-topic."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response directly and accurately matches the rubric criterion. The rubric is a negative constraint stating that there should be no information related to detailed maintenance instructions for the blackout blinds installed in September. The response explicitly confirms this absence. The response is both responsive to the implied question (about whether such information exists) and satisfies the negative constraint by correctly stating that the prohibited information is absent. This is an exact semantic match with the criterion."
+                }
+            ]
+        }
+    ],
+    "contradiction_resolution": [
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states 'I notice you've mentioned contradictory information about this' which directly addresses the requirement to state there is contradictory information. The response then identifies the specific contradictory elements (never attending conferences in Istanbul vs. meeting Sara at a conference there) and asks for clarification. This satisfies the positive requirement completely."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly contains the required phrase 'You said you have never attended any conferences in Istanbul' as specified in the rubric criterion. This is a positive requirement that is satisfied. The response addresses the contradiction the user mentioned and directly incorporates the required phrase when referring to the user's prior statement."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention: 'you also mentioned meeting Sara at a conference there'. The response contains the exact phrase 'but you also mentioned meeting Sara at a conference there', which satisfies the positive requirement. The required element is present and accurately executed, resulting in full compliance."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the LLM response to mention which statement is correct. The response acknowledges the contradiction between the two statements ('never attended any conferences in Istanbul' vs 'meeting Sara at a conference there') but does not actually identify which one is correct. Instead, it asks the user to clarify which is correct. The required element\u2014stating which statement is correct\u2014is absent. While the response is responsive to the general topic of the contradiction, it fails to satisfy the specific positive requirement of the rubric."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states that there is contradictory information: 'I notice you've mentioned contradictory information about this.' The response is on-topic and responsive to the user's question, addressing a conflict in their statements. It correctly identifies the contradiction (claiming never to have used sleep tracking devices while also mentioning using a Xiaomi Mi Band 6) and asks for clarification. This fully satisfies the rubric criterion of stating that there is contradictory information."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact required phrase 'You said you have never used any sleep tracking devices' as specified in the rubric criterion. The phrase appears verbatim in the response and is used appropriately to address a contradiction in the user's statements. The positive requirement is fully met."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to mention 'you also mentioned using a Xiaomi Mi Band 6 to monitor your sleep'. The response to evaluate contains this exact phrase: 'you also mentioned using a Xiaomi Mi Band 6 to monitor your sleep'. This is a direct, verbatim match of the required element. The response is also responsive to the apparent context (addressing contradictory information from the user). Therefore, the response demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The rubric requires the response to mention which statement is correct (i.e., make a determination about which claim is accurate). The response instead points out the contradiction and asks the user to clarify which statement is correct, rather than stating it. The required element of mentioning which statement is correct is absent from the response."
+                }
+            ]
+        }
+    ],
+    "event_ordering": [
+        {
+            "precision": 0.7,
+            "recall": 0.7,
+            "f1": 0.7,
+            "tau_norm": 0.7,
+            "final_score": 0.48999999999999994,
+            "llm_judge_score": 0.9,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion 'Initial data interpretation and sleep science interest' contains two positive requirements: (1) initial data interpretation and (2) sleep science interest. The response explicitly addresses both elements: Item 1 mentions 'Initial questions about interpreting data from your device' which satisfies the initial data interpretation requirement, and Item 2 mentions 'Interest in sleep science resources' which satisfies the sleep science interest requirement. Both required elements are present and properly addressed in the response, indicating full compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates complete compliance with the rubric criterion 'Firmware update impact and data trust'. Multiple topics in the response directly address both elements of the criterion: (1) Firmware updates impact is covered in topics 3 ('Concerns about firmware updates and their impact on tracking accuracy'), 9 ('Evaluation of firmware updates and their incremental improvements'), and 10 ('Final reflections on how firmware enhancements relate to sleep quality and disruption management'); (2) Data trust is addressed in topic 4 ('Analysis of device effectiveness and data trustworthiness'). The response is clearly on-topic, thoroughly covering the relationship between firmware updates and data/tracking reliability, which is the exact subject matter specified in the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates complete compliance with the rubric criterion 'Device effectiveness and accuracy comparisons.' The content directly addresses this criterion through multiple relevant points: Point 4 explicitly mentions 'Analysis of device effectiveness and data trustworthiness,' Point 5 specifically covers 'Comparisons between different tracking tools and their accuracy,' Point 6 discusses 'Transition to newer device models and their improved features,' and Point 9 addresses 'Evaluation of firmware updates and their incremental improvements' related to tracking accuracy. The response is responsive to what appears to be a question about sleep tracking device effectiveness and includes substantive content about comparing device accuracy, trustworthiness of data, and how different tools measure up against each other. All required elements of the rubric criterion are present and properly addressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates complete compliance with the rubric criterion 'New device model features and benefits'. Item 6 explicitly addresses 'Transition to newer device models and their improved features', Item 7 covers 'advanced features like nap and stress monitoring', and Items 8-10 discuss firmware updates as incremental improvements to device functionality. The response is on-topic with respect to the question about new device model features and benefits, and all relevant content aligns with the rubric requirement."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is 'Nap and stress monitoring exploration.' The response explicitly addresses this criterion in point #7: 'Exploration of advanced features like nap and stress monitoring.' This directly satisfies the positive requirement of including nap and stress monitoring exploration. The response is responsive to the topic and includes the required element as specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly includes item 8 which addresses 'Consideration of device maintenance and potential drawbacks' - this directly satisfies the positive requirement of the rubric criterion asking for content about device maintenance and drawbacks. The required element is present and properly addressed in the response."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response partially addresses the rubric criterion 'Firmware update benefits and improvements.' Items 9 and 10 directly reference firmware updates\u2014mentioning 'incremental improvements' and 'firmware enhancements relate to sleep quality and disruption management'\u2014which touches on benefits. However, the response is quite broad and scattershot, covering many unrelated topics (sleep science resources, device comparisons, advanced features). The mention of firmware is fragmented and lacks depth or specificity about actual benefits. While firmware updates are referenced multiple times (items 3, 9, and 10), the response does not comprehensively detail the benefits and improvements as a focused answer would. Therefore, this represents partial compliance (0.5) rather than complete compliance."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response is fully compliant with the rubric criterion 'Incremental firmware enhancements and sleep quality.' The response directly addresses the topic through multiple points: (3) discusses concerns about firmware updates and tracking accuracy, (9) explicitly evaluates 'firmware updates and their incremental improvements,' and (10) provides final reflections on 'how firmware enhancements relate to sleep quality and disruption management.' The content covers the relationship between firmware updates and sleep quality across multiple angles, including tracking accuracy, incremental improvements, and practical implications for sleep management. The response is responsive to the question, covers the required topic comprehensively, and demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The rubric criterion asks about 'Firmware update relation to sleep disruption.' Item 10 of the response explicitly addresses 'how firmware enhancements relate to sleep quality and disruption management,' which directly satisfies the criterion. Items 3 and 9 also mention firmware updates. However, the response is largely a broad outline of topics (device data interpretation, comparisons, advanced features, etc.) with only one point (item 10) directly addressing the specific criterion. The response is responsive to the question but only partially addresses the firmware-sleep disruption relationship with the required depth, as most of the 10 items cover tangential topics. Therefore, this constitutes partial compliance (0.5)."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response includes item 10 which directly addresses the rubric criterion: 'Final reflections on how firmware enhancements relate to sleep quality and disruption management.' This item contains: (1) final reflections, (2) firmware enhancements, and (3) sleep quality/disruption management. Additionally, items 3 and 9 provide supporting context about firmware updates. The response fully satisfies the positive requirement for 'Final reflections on firmware and sleep management' as specified in the rubric criterion."
+                }
+            ]
+        },
+        {
+            "precision": 0.5714285714285714,
+            "recall": 0.5714285714285714,
+            "f1": 0.5714285714285714,
+            "tau_norm": 0.6071428571428571,
+            "final_score": 0.346938775510204,
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion 'Concern about late-night call boundary'. The response explicitly addresses concern about late-night call boundaries through all 7 numbered points: (1) expressing concern about establishing boundaries to limit late-night calls, (2) exploring ways to enforce those boundaries, (3) considering the impact on sleep quality, (4) addressing potential boundary violations, (5) introducing related boundaries for social interactions and sleepovers, (6) seeking advice on enforcement, and (7) reflecting on long-term relationship improvements. All elements demonstrate active engagement with the topic of late-night call boundaries, showing both initial concern and ongoing consideration of how to implement and maintain such boundaries."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates compliance with the 'ensuring boundary respect' criterion. The response addresses the topic through multiple elements: it explicitly mentions exploring 'ways to ensure those boundaries were respected' (point 2), discusses handling 'potential boundary violations' (point 4), and seeks advice 'on enforcing these newer boundaries' (point 6). These elements directly relate to ensuring boundary respect - both proactively (enforcement strategies) and reactively (handling violations). The response is on-topic and provides a comprehensive reflection on boundary setting, enforcement, and the importance of respecting boundaries in relationships. The semantic content aligns well with the rubric criterion of ensuring boundary respect."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates compliance with the rubric criterion 'Boundary's effect on sleep'. Point 3 explicitly states 'You considered the impact of these boundaries on improving sleep quality', which directly addresses how boundaries affect sleep. This shows the response covers the required topic of boundaries' effect on sleep. The response is on-topic and contains the specific element required by the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates compliance with the rubric criterion of 'Handling boundary violations'. Point 4 explicitly states 'You raised questions about handling potential boundary violations,' which directly addresses the rubric requirement. Additionally, the response shows a comprehensive approach to boundary handling: it addresses establishing boundaries (point 1), ensuring they are respected (point 2), dealing with potential violations (point 4), and enforcing boundaries (point 6). The progression from initial boundary setting to handling violations and enforcing them shows proper execution of boundary violation management. The response is also on-topic and responsive to what appears to be a question about establishing and maintaining personal boundaries."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response demonstrates complete compliance with the rubric criterion 'Boundaries in social interactions.' The response is clearly on-topic and addresses the subject directly through seven numbered points that comprehensively cover various aspects of boundary-setting in social contexts. It includes: establishing boundaries (late-night calls, social interactions, sleepovers), strategies for enforcing boundaries, handling potential violations, and reflecting on long-term relationship benefits. The content addresses the positive requirement by demonstrating understanding and application of boundaries in social interactions throughout all seven listed points."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully demonstrates compliance with the 'Enforcing new boundaries' rubric criterion. The response comprehensively addresses establishing and enforcing boundaries across multiple contexts: (1) establishing initial boundaries around late-night calls, (2) exploring methods to ensure those boundaries are respected, (3) considering the positive impact of boundaries on sleep quality, (4) addressing how to handle violations, (5) introducing additional boundaries for social interactions and sleepovers, (6) seeking advice specifically on enforcement mechanisms, and (7) reflecting on long-term relational benefits. The response is clearly on-topic and demonstrates a thorough understanding of the boundary-setting process, including establishment, enforcement strategies, violation handling, and expansion to new areas\u2014all core components of the 'Enforcing new boundaries' criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly addresses the 'Long-term relationship impact' criterion. Point 7 specifically states that the user reflected on how setting boundaries 'might improve your relationships in the long run,' which directly satisfies the rubric requirement. The response demonstrates consideration of how boundary-setting decisions affect relationships over time, covering both the process of setting/enforcing boundaries and the outcome of improved long-term relationships. All seven points trace a logical progression from initial boundary-setting to reflecting on long-term benefits, fully complying with the specified criterion."
+                }
+            ]
+        }
+    ],
+    "information_extraction": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response 'I earn about 4,500 TRY monthly.' fully complies with the rubric criterion. The rubric requires the LLM response to state '4,500 TRY', and the response explicitly contains this exact statement. The number 4,500 and currency TRY are both present as required. The word 'about' slightly qualifies the amount but does not contradict or remove the required statement. This is a positive requirement, and the required element is present and accurate."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state 'Sundays'. The response clearly includes the word 'Sundays' in the phrase 'on Sundays at 7 PM.' This is a positive requirement, and the required element is present and accurate. Therefore, the response demonstrates complete compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state '7 PM'. The response 'I usually have my weekly call with Amy on Sundays at 7 PM.' contains the exact phrase '7 PM' as specified in the rubric. This is a positive requirement that has been fully satisfied - the required element is present and accurate. Therefore, this demonstrates complete compliance with the rubric criterion."
+                }
+            ]
+        }
+    ],
+    "instruction_following": [
+        {
+            "llm_judge_score": 0.0,
+            "llm_judge_responses": [
+                {
+                    "score": 0.0,
+                    "reason": "The response does not contain any actual percentage values. The text 'exact percentage values precise numerical improvement' merely references the concept of exact percentage values but does not include any specific percentages (e.g., 5%, 10%, 50%, etc.). The rubric requires the LLM response to contain exact percentage values, which are completely absent from this response."
+                },
+                {
+                    "score": 0.0,
+                    "reason": "The response does not contain any actual numerical data, percentage values, or precise improvements. The response merely repeats vague language ('exact percentage values precise numerical improvement') without providing any specific numbers or quantifiable improvements. The rubric required the presence of precise numerical improvement with exact percentage values, but the response is entirely void of such content. This constitutes non-compliance with the positive requirement."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 0.8333333333333334,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the required element 'mention of warranty period' as specified in the rubric. The text explicitly includes the phrase 'mention of warranty period' along with additional related information about coverage and how to claim warranty. This satisfies the positive requirement of including a mention of the warranty period, which is the core criterion being evaluated."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response contains elements that partially satisfy the rubric criterion. It mentions: (1) warranty period, (2) details about coverage information, and (3) how to claim warranty. However, the mentions appear to be brief/topical rather than providing substantive details about each element. The rubric requires 'details about coverage' and the response includes 'details about coverage information' which partially satisfies this, but the coverage appears thin. The response addresses the topic and includes the required elements, but the depth/information richness is limited, warranting a partial compliance score of 0.5 rather than full compliance (1.0) or no compliance (0.0)."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to contain information on how to claim warranty. The response explicitly includes 'information on how to claim warranty' as one of its elements, directly satisfying the positive requirement. Additionally, the response mentions warranty period details and coverage information, which further support warranty-related content. The required element is present and addresses the rubric criterion, resulting in complete compliance."
+                }
+            ]
+        }
+    ],
+    "knowledge_update": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state '20 active members'. The response to evaluate is exactly '20 active members', which directly matches the required element. This is a positive requirement that is fully satisfied."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to state 'March 18'. The response explicitly contains 'March 18' in the sentence 'Your polysomnography appointment is scheduled for March 18.' This satisfies the positive requirement completely. The date is correctly stated, and there are no conflicting elements in the response."
+                }
+            ]
+        }
+    ],
+    "multi_session_reasoning": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric requires the LLM response to state '8 percentage points'. The response contains the exact phrase '8 percentage points' in the sentence 'Your sleep efficiency improved by 8 percentage points from 70% to 78%.' This is a direct, accurate match to the requirement. The positive requirement is fully satisfied."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states 'from 70% to 78%' which matches the required phrasing exactly. The response addresses the question about sleep efficiency improvement and contains the exact phrase specified in the rubric. No discrepancies or omissions are present."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states: 'have synergistically improved your sleep quality by promoting deeper sleep stages' - this is a direct match to the required statement. Both key elements are present: (1) the phrase 'synergistically improved your sleep quality' and (2) 'by promoting deeper sleep stages.' The response is on-topic, addressing the user's question about sleep improvements, and the required statement appears verbatim within the response."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states 'reducing night sweats through better thermoregulation,' which directly matches the required statement in the rubric criterion. The phrase appears verbatim in the context of explaining how the combined sleep improvements (temperature control, blackout curtains, meditation, reduced blue light) synergistically addressed night sweats. This satisfies the positive requirement of stating reduced night sweats through better thermoregulation."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact phrase 'enhancing relaxation to reduce anxiety-related awakenings' as required by the rubric criterion. This required element is present, accurate, and properly contextualized within the response describing the synergistic improvements to sleep quality. The response is fully on-topic and addresses the question about sleep changes."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the response to state 'stabilized circadian rhythms'. The response explicitly contains the phrase 'stabilizing circadian rhythms', which is a semantic equivalent of 'stabilized circadian rhythms'. The response addresses the question about sleep improvements and includes the required element about circadian rhythm stabilization. The meaning is preserved even though the exact wording differs slightly (stabilizing vs stabilized). This satisfies the positive requirement of the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to state: 'This integrated approach has led to fewer night sweats, faster sleep onset, longer uninterrupted sleep, and overall improved restfulness.' The response contains this exact statement verbatim at the end. All four elements specified in the rubric (fewer night sweats, faster sleep onset, longer uninterrupted sleep, and improved restfulness) are present in the correct sequence and wording. This represents complete compliance with the positive requirement specified in the rubric."
+                }
+            ]
+        }
+    ],
+    "preference_following": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly contains 'recommends reading physical books' as its first element, which directly satisfies the positive requirement in the rubric criterion. The response is responsive (it addresses the topic of recommendations) and includes the required element. Since the rubric criterion requires the presence of reading physical books being recommended, and this element is clearly present in the response, full compliance is achieved."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response satisfies the rubric criterion. The response explicitly states it 'avoids suggesting screen-based activities' and recommends alternatives like physical books and meditation. It also 'acknowledges relaxation without screen exposure.' The prohibited element (screen-based activities) is absent, and the response is clearly responsive to the implied question about activity recommendations. This represents full compliance with the negative constraint."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions that meditation is included 'only as a secondary or optional choice,' which directly satisfies the rubric requirement. The response contains the required element (meditation) and correctly positions it as secondary/optional rather than as a primary recommendation. This fully complies with the positive requirement stated in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully satisfies the rubric criterion. It explicitly states 'acknowledges relaxation without screen exposure' which directly meets the positive requirement. Additionally, the response demonstrates this by recommending physical books (non-screen), avoiding screen-based activities, and mentioning meditation - all of which support the concept of relaxation without screen exposure. The response is on-topic with the question and contains the required element in a clear and complete manner."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly mentions maintaining a cooler temperature around 19\u00b0C, which directly satisfies the positive requirement in the rubric. Additionally, the response includes recommendations for cooling methods and temperature control, and acknowledges temperature as a factor in sleep setup. All three elements mentioned in the response align with and exceed the rubric requirement. The compliance is complete as the essential element (maintaining a cooler temperature around 19\u00b0C) is present and accurate."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly mentions 'maintaining a cooler temperature around 19\u00b0C' which is a direct temperature control recommendation, includes the phrase 'recommends cooling methods or temperature control', and acknowledges 'temperature as a factor in sleep setup'. All three components of the required positive element (cooling methods or temperature control) are present and clearly expressed in the response."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly 'acknowledges temperature as a factor in sleep setup' - this is directly stated in the response itself. Additionally, the response includes specific temperature guidance (maintaining a cooler temperature around 19\u00b0C) and recommends cooling methods or temperature control, which further demonstrates acknowledgment of temperature as a relevant factor in sleep setup. All required elements are present and properly executed."
+                }
+            ]
+        }
+    ],
+    "summarization": [
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion requires the LLM response to contain: 'you expressed concerns about Nicolas's curiosity about sleep and his post-game routines, leading to discussions about setting boundaries'. The response begins with this exact phrase verbatim, satisfying the positive requirement. The additional content about Bruce, sleep strategies, and techniques does not negate compliance but rather expands on the topic. Since the required element is present and accurately expressed, the response achieves full compliance with the rubric criterion."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. The exact required text 'For Bruce, the focus was on managing late-night gaming by establishing curfews, creating relaxing pre-bed routines, and using technology tools to limit screen time' is present in the response. All required elements (managing late-night gaming, establishing curfews, creating relaxing pre-bed routines, and using technology tools to limit screen time) are included exactly as specified in the rubric. This is a positive requirement (response should contain these elements), and all elements are present and correctly expressed."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It explicitly states that 'both cases involved implementing consistent sleep schedules, relaxation techniques, and environmental adjustments like blackout blinds and caffeine cut-offs.' This directly matches all required elements specified in the rubric: (1) consistent sleep schedules, (2) relaxation techniques, and (3) environmental adjustments including blackout blinds and caffeine cut-offs. The phrase 'both cases' confirms these strategies were applied to both Nicolas and Bruce. The response is on-topic and contains all specified positive requirements."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact required phrase 'You also explored strategies such as digital detoxes, gratitude journaling, and CBT-I techniques to further enhance sleep quality'. This is a positive requirement that the response should include this specific content, and it is present verbatim in the response. The score is 1.0 (Complete Compliance) because the rubric criterion is fully satisfied."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response fully satisfies the rubric criterion. It contains the exact required text: 'you considered purchasing blackout curtains from the SleepWell store, evaluating their cost-effectiveness and benefits such as light blocking, temperature regulation, and noise reduction'. All components of the positive requirement are present: the mention of purchasing from SleepWell store, cost-effectiveness evaluation, and the three specific benefits (light blocking, temperature regulation, and noise reduction). The response then continues with additional related content, which is acceptable as the rubric only requires these elements to be present, not exclusively present."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response contains the exact phrase from the rubric criterion: 'You also examined alternative, more affordable options like DIY solutions, window films, eye masks, and room darkening shades'. All required elements are present: (1) mentions alternative options, (2) specifies they are more affordable, and (3) lists all four specific alternatives (DIY solutions, window films, eye masks, room darkening shades). The response demonstrates complete compliance with the positive requirement in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The rubric criterion is a positive requirement asking for the presence of a specific statement about setting a deadline for acquiring and installing curtains. The response contains the exact phrase 'Setting a deadline to acquire and install the curtains helped you stay focused on improving your sleep environment promptly' which directly satisfies this requirement. The response is on-topic (discussing sleep environment improvement with curtains and deadlines) and contains the required element in the correct context, resulting in complete compliance with the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. It contains the exact required element: 'you developed a structured evening routine incorporating stretching, reading, journaling, and meditation to promote physical and mental relaxation, reduce anxiety'. All components specified in the rubric are present - the structured evening routine, the four specific activities (stretching, reading, journaling, meditation), and the stated benefits (physical and mental relaxation, anxiety reduction). This is a complete match to the positive requirement specified in the rubric."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response fully complies with the rubric criterion. All three required elements are present: (1) 'you monitored progress', (2) 'adjusted routines', and (3) 'integrated tools like diffusers and white noise machines to further optimize your sleep setting'. The exact phrasing from the rubric appears verbatim at the end of the response, demonstrating complete compliance with the positive requirement specified in the rubric."
+                }
+            ]
+        }
+    ],
+    "temporal_reasoning": [
+        {
+            "llm_judge_score": 0.75,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states '38 days' in the phrase 'I have 38 days between aligning my sleep schedule by February 1, 2024, and reaching my sleep efficiency goal by March 10, 2024.' This directly satisfies the positive requirement in the rubric criterion which asks for the response to state '38 days'. The number appears in the correct form and context."
+                },
+                {
+                    "score": 0.5,
+                    "reason": "The response mentions both dates mentioned in the rubric criterion: February 1, 2024 and March 10, 2024. However, the specific phrasing 'from February 1, 2024 till March 10, 2024' is not used verbatim. The response uses 'by February 1, 2024' and 'by March 10, 2024' in the context of sleep schedule alignment and efficiency goals, rather than explicitly stating the date range in the format required by the rubric. While the dates are present, the required statement format is not precisely followed, resulting in partial compliance."
+                }
+            ]
+        },
+        {
+            "llm_judge_score": 1.0,
+            "llm_judge_responses": [
+                {
+                    "score": 1.0,
+                    "reason": "The response explicitly states '7 days passed' which directly satisfies the rubric requirement to state '7 days'. The response correctly calculates the difference between January 15 and January 22 (7 days) and presents this information clearly. The required element is present and accurate."
+                },
+                {
+                    "score": 1.0,
+                    "reason": "The response correctly identifies and states the date range from January 15 to January 22. While it doesn't use the exact phrasing 'from January 15 till January 22,' it explicitly mentions both dates in the correct context - January 15 as when the bedtime shifting started and January 22 as when the blackout curtains were installed, with a 7-day period between them. This is semantically equivalent to the required statement per the rubric criterion."
+                }
+            ]
+        }
+    ]
+}
