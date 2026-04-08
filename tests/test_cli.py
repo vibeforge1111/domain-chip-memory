@@ -2616,6 +2616,155 @@ def test_resume_openai_compatible_single_conversation_evaluation_coerces_null_sc
     assert payload["instruction_following"][0]["llm_judge_responses"][0]["score"] == 0.0
 
 
+def test_resume_openai_compatible_single_conversation_evaluation_normalizes_list_response_for_abstention(
+    tmp_path: Path,
+):
+    probing_questions_path = tmp_path / "probing_questions.json"
+    answers_path = tmp_path / "answers.json"
+    output_path = tmp_path / "evaluation-answers.json"
+
+    probing_questions_path.write_text(
+        json.dumps(
+            {
+                "abstention": [{"rubric": ["no concrete date provided"]}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    answers_path.write_text(
+        json.dumps(
+            {
+                "abstention": [
+                    {
+                        "question": "When exactly is the event?",
+                        "llm_response": "There is no concrete date provided.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class FakeResponse:
+        def __init__(self, content: str):
+            self.content = content
+
+    class FakeModel:
+        @staticmethod
+        def invoke(prompt: str):
+            assert "no concrete date provided" in prompt
+            return FakeResponse('[{"score": 1, "reasoning": "correct abstention"}]')
+
+    class FakeComputeMetricsModule:
+        unified_llm_judge_base_prompt = "rubric=<rubric_item>\nresponse=<llm_response>"
+
+        @staticmethod
+        def parse_json_response(*, response: str):
+            return json.loads(response)
+
+        @staticmethod
+        def repair_json(response: str):
+            return response
+
+    class FakeRunEvaluationModule:
+        @staticmethod
+        def get_rubric(**kwargs):
+            assert kwargs["key"] == "abstention"
+            return ["no concrete date provided"]
+
+    beam_official_eval._resume_openai_compatible_single_conversation_evaluation(
+        probing_questions_address=probing_questions_path,
+        answers_file=answers_path,
+        output_file=output_path,
+        model=FakeModel(),
+        compute_metrics_module=FakeComputeMetricsModule(),
+        run_evaluation_module=FakeRunEvaluationModule(),
+    )
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["abstention"][0]["llm_judge_score"] == 1.0
+    assert payload["abstention"][0]["llm_judge_responses"][0]["score"] == 1
+
+
+def test_resume_openai_compatible_single_conversation_evaluation_normalizes_event_ordering_judge_response(
+    tmp_path: Path,
+):
+    probing_questions_path = tmp_path / "probing_questions.json"
+    answers_path = tmp_path / "answers.json"
+    output_path = tmp_path / "evaluation-answers.json"
+
+    probing_questions_path.write_text(
+        json.dumps(
+            {
+                "event_ordering": [{"rubric": ["Alice left home", "Alice reached the station"]}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    answers_path.write_text(
+        json.dumps(
+            {
+                "event_ordering": [
+                    {
+                        "question": "List the travel events in order.",
+                        "llm_response": "Alice left home\nAlice reached the station",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class FakeResponse:
+        def __init__(self, content: str):
+            self.content = content
+
+    class FakeModel:
+        @staticmethod
+        def invoke(prompt: str):
+            assert "Alice left home" in prompt
+            return FakeResponse('{"result": {"score": 1, "reasoning": "order is correct"}}')
+
+    class FakeComputeMetricsModule:
+        unified_llm_judge_base_prompt = "rubric=<rubric_item>\nresponse=<llm_response>"
+
+        @staticmethod
+        def parse_json_response(*, response: str):
+            return json.loads(response)
+
+        @staticmethod
+        def repair_json(response: str):
+            return response
+
+        @staticmethod
+        def event_ordering_score(*, reference_list, system_list, align_type, llm):
+            assert reference_list == ["Alice left home", "Alice reached the station"]
+            assert system_list == ["Alice left home", "Alice reached the station"]
+            assert align_type == "llm"
+            assert llm is not None
+            return {"tau_norm": 1.0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "final_score": 1.0}
+
+    class FakeRunEvaluationModule:
+        @staticmethod
+        def get_rubric(**kwargs):
+            assert kwargs["key"] == "event_ordering"
+            return ["Alice left home", "Alice reached the station"]
+
+    beam_official_eval._resume_openai_compatible_single_conversation_evaluation(
+        probing_questions_address=probing_questions_path,
+        answers_file=answers_path,
+        output_file=output_path,
+        model=FakeModel(),
+        compute_metrics_module=FakeComputeMetricsModule(),
+        run_evaluation_module=FakeRunEvaluationModule(),
+    )
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["event_ordering"][0]["tau_norm"] == 1.0
+    assert payload["event_ordering"][0]["llm_judge_score"] == 1.0
+    assert payload["event_ordering"][0]["llm_judge_responses"][0]["score"] == 1
+
+
 def test_run_locomo_cli_question_limit_can_write_scorecard(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "locomo.json"
     output_file = tmp_path / "artifacts" / "locomo_scorecard.json"

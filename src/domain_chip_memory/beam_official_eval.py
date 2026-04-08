@@ -32,6 +32,11 @@ _BEAM_OPENAI_COMPATIBLE_RUBRIC_LIST_CATEGORIES = {
     "summarization",
     "temporal_reasoning",
 }
+_BEAM_OPENAI_COMPATIBLE_SINGLE_JUDGE_CATEGORIES = {
+    "abstention",
+    "contradiction_resolution",
+    "information_extraction",
+}
 
 
 def _official_chat_size_dir(scale: str) -> str:
@@ -571,8 +576,28 @@ def _resume_openai_compatible_single_conversation_evaluation(
             )
             llm_response = str(question.get("llm_response", ""))
             probing_question = str(question.get("question", ""))
-            if category in _BEAM_OPENAI_COMPATIBLE_RUBRIC_LIST_CATEGORIES:
+            if category in _BEAM_OPENAI_COMPATIBLE_RUBRIC_LIST_CATEGORIES and _supports_openai_compatible_judge_helpers(
+                compute_metrics_module
+            ):
                 result = _evaluate_openai_compatible_rubric_list_category(
+                    rubric=rubric,
+                    llm_response=llm_response,
+                    model=model,
+                    compute_metrics_module=compute_metrics_module,
+                )
+            elif category in _BEAM_OPENAI_COMPATIBLE_SINGLE_JUDGE_CATEGORIES and _supports_openai_compatible_judge_helpers(
+                compute_metrics_module
+            ):
+                result = _evaluate_openai_compatible_single_judge_category(
+                    rubric=rubric,
+                    llm_response=llm_response,
+                    model=model,
+                    compute_metrics_module=compute_metrics_module,
+                )
+            elif category == "event_ordering" and _supports_openai_compatible_event_ordering_helper(
+                compute_metrics_module
+            ):
+                result = _evaluate_openai_compatible_event_ordering_category(
                     rubric=rubric,
                     llm_response=llm_response,
                     model=model,
@@ -589,6 +614,19 @@ def _resume_openai_compatible_single_conversation_evaluation(
 
         existing_payload[category] = category_rows
         output_file.write_text(json.dumps(existing_payload, indent=4), encoding="utf-8")
+
+
+def _supports_openai_compatible_judge_helpers(compute_metrics_module: Any) -> bool:
+    return all(
+        hasattr(compute_metrics_module, attr_name)
+        for attr_name in ("unified_llm_judge_base_prompt", "parse_json_response", "repair_json")
+    )
+
+
+def _supports_openai_compatible_event_ordering_helper(compute_metrics_module: Any) -> bool:
+    return _supports_openai_compatible_judge_helpers(compute_metrics_module) and hasattr(
+        compute_metrics_module, "event_ordering_score"
+    )
 
 
 def _normalize_openai_compatible_judge_response(payload: Any) -> dict[str, Any]:
@@ -650,6 +688,53 @@ def _evaluate_openai_compatible_rubric_list_category(
         "llm_judge_score": llm_judge_score,
         "llm_judge_responses": llm_judge_responses,
     }
+
+
+def _evaluate_openai_compatible_single_judge_category(
+    *,
+    rubric: Any,
+    llm_response: str,
+    model: Any,
+    compute_metrics_module: Any,
+) -> dict[str, Any]:
+    return _evaluate_openai_compatible_rubric_list_category(
+        rubric=rubric,
+        llm_response=llm_response,
+        model=model,
+        compute_metrics_module=compute_metrics_module,
+    )
+
+
+def _evaluate_openai_compatible_event_ordering_category(
+    *,
+    rubric: Any,
+    llm_response: str,
+    model: Any,
+    compute_metrics_module: Any,
+) -> dict[str, Any]:
+    if not isinstance(rubric, list) or not rubric:
+        raise ValueError("Expected non-empty rubric list for openai-compatible event-ordering evaluation.")
+
+    event_ordering_score = getattr(compute_metrics_module, "event_ordering_score")
+    score = event_ordering_score(
+        reference_list=rubric,
+        system_list=llm_response.split("\n"),
+        align_type="llm",
+        llm=model,
+    )
+    if not isinstance(score, dict):
+        raise TypeError("Expected event_ordering_score to return a dict payload.")
+
+    normalized_judge = _evaluate_openai_compatible_rubric_list_category(
+        rubric=rubric,
+        llm_response=llm_response,
+        model=model,
+        compute_metrics_module=compute_metrics_module,
+    )
+    result = dict(score)
+    result["llm_judge_score"] = normalized_judge["llm_judge_score"]
+    result["llm_judge_responses"] = normalized_judge["llm_judge_responses"]
+    return result
 
 
 def _coerce_openai_compatible_judge_score(raw_score: Any) -> float:
