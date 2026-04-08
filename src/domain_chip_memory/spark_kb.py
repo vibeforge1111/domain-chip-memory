@@ -81,6 +81,11 @@ def build_spark_kb_contract_summary() -> dict[str, Any]:
             "root_files": [
                 "CLAUDE.md",
                 "raw/memory-snapshots/latest.json",
+                "raw/articles/",
+                "raw/papers/",
+                "raw/repos/",
+                "raw/datasets/",
+                "raw/assets/",
             ],
             "wiki_files": [
                 "wiki/index.md",
@@ -88,6 +93,8 @@ def build_spark_kb_contract_summary() -> dict[str, Any]:
                 "wiki/current-state/_index.md",
                 "wiki/evidence/_index.md",
                 "wiki/events/_index.md",
+                "wiki/sources/_index.md",
+                "wiki/syntheses/_index.md",
                 "wiki/outputs/_index.md",
             ],
         },
@@ -95,19 +102,22 @@ def build_spark_kb_contract_summary() -> dict[str, Any]:
             "KB pages must preserve provenance, timestamps, session IDs, and turn IDs.",
             "Current-state pages are derived from the SDK current-state view, not ad hoc synthesis.",
             "Evidence and event pages remain inspectable so users can audit why a KB page exists.",
+            "The raw/ layer is the intake shelf for governed memory snapshots first, with room for future articles, papers, repos, and datasets.",
+            "The wiki/ layer is the compiled markdown surface that should feel Obsidian-friendly and LLM-maintained.",
             "The KB compiler may add links and summaries but must not invent unsupported memory facts.",
         ],
         "llm_workflow": {
-            "ingest": "raw memory snapshot JSON is written first",
-            "compile": "wiki pages are generated from the snapshot into markdown",
-            "query": "future query outputs are saved under wiki/outputs/",
-            "lint": "future health checks verify links, stale pages, and provenance gaps",
+            "ingest": "raw memory snapshot JSON is written first, alongside Karpathy-style raw source shelves for future clips and artifacts",
+            "compile": "wiki pages are generated from the snapshot into markdown indexes, source pages, and syntheses",
+            "query": "future query outputs are saved under wiki/outputs/ and filed back into the visible vault",
+            "lint": "future health checks verify links, stale pages, missing indexes, and provenance gaps",
         },
         "health_checks": [
             "required_file_presence",
             "markdown_frontmatter_presence",
             "broken_wikilink_detection",
             "orphan_page_detection",
+            "karpathy_layout_presence",
         ],
     }
 
@@ -125,15 +135,20 @@ def build_spark_kb_claude_schema(*, generated_at: str) -> str:
             "",
             "## Directories",
             "- raw/memory-snapshots/ contains append-only snapshot exports from SparkMemorySDK",
+            "- raw/articles/, raw/papers/, raw/repos/, raw/datasets/, and raw/assets/ are reserved for future Karpathy-style source ingest",
             "- wiki/current-state/ contains one page per durable current-state fact",
             "- wiki/evidence/ contains inspectable evidence pages with provenance",
             "- wiki/events/ contains inspectable event pages with provenance",
+            "- wiki/sources/ contains source-style pages describing governed snapshot inputs",
+            "- wiki/syntheses/ contains compiled overviews and future cross-source syntheses",
             "- wiki/outputs/ contains filed answers and future syntheses",
             "- wiki/index.md and wiki/log.md are AI-maintained navigation surfaces",
             "",
             "## Rules",
             "- Preserve session_id, turn_ids, timestamp, memory_role, and trace metadata",
             "- Link current-state pages back to supporting evidence pages",
+            "- Treat raw/ as the intake shelf and wiki/ as the compiled knowledge surface",
+            "- Future Obsidian clips and repo artifacts should enter raw/ before being compiled into wiki/",
             "- Never replace governed runtime memory; this is a visible compiled layer",
             f"- Initial scaffold generated at {generated_at}",
         ]
@@ -149,17 +164,33 @@ def scaffold_spark_knowledge_base(
     output_path = Path(output_dir)
     generated_at = str(snapshot.get("generated_at") or _utc_timestamp())
     raw_snapshot_dir = output_path / "raw" / "memory-snapshots"
+    raw_articles_dir = output_path / "raw" / "articles"
+    raw_papers_dir = output_path / "raw" / "papers"
+    raw_repos_dir = output_path / "raw" / "repos"
+    raw_datasets_dir = output_path / "raw" / "datasets"
+    raw_assets_dir = output_path / "raw" / "assets"
     wiki_dir = output_path / "wiki"
     current_state_dir = wiki_dir / "current-state"
     evidence_dir = wiki_dir / "evidence"
     events_dir = wiki_dir / "events"
+    sources_dir = wiki_dir / "sources"
+    syntheses_dir = wiki_dir / "syntheses"
     outputs_dir = wiki_dir / "outputs"
+    attachments_images_dir = wiki_dir / "attachments" / "images"
     for directory in (
         raw_snapshot_dir,
+        raw_articles_dir,
+        raw_papers_dir,
+        raw_repos_dir,
+        raw_datasets_dir,
+        raw_assets_dir,
         current_state_dir,
         evidence_dir,
         events_dir,
+        sources_dir,
+        syntheses_dir,
         outputs_dir,
+        attachments_images_dir,
     ):
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -173,6 +204,7 @@ def scaffold_spark_knowledge_base(
     current_state_entries = list(snapshot.get("current_state") or [])
     observation_entries = list(snapshot.get("observations") or [])
     event_entries = list(snapshot.get("events") or [])
+    snapshot_counts = dict(snapshot.get("counts") or {})
 
     evidence_links_by_turn: dict[tuple[str, str], list[str]] = {}
     evidence_pages: list[dict[str, str]] = []
@@ -232,6 +264,42 @@ def scaffold_spark_knowledge_base(
         page_path.write_text("\n".join(content), encoding="utf-8")
         event_pages.append({"title": title, "link": f"[[events/{page_path.stem}]]", "path": str(page_path)})
 
+    source_pages: list[dict[str, str]] = []
+    source_page_path = sources_dir / "spark-memory-snapshot-latest.md"
+    source_page_title = "Spark Memory Snapshot Latest"
+    source_page_content = [
+        _markdown_frontmatter(
+            title=source_page_title,
+            page_type="source",
+            summary="Source page describing the latest governed Spark memory snapshot that compiled this vault.",
+            generated_at=generated_at,
+            tags=["spark-kb", "source"],
+        ),
+        f"# {source_page_title}",
+        "",
+        "## Snapshot File",
+        "- `raw/memory-snapshots/latest.json`",
+        "",
+        "## Snapshot Counts",
+        f"- Sessions: `{snapshot_counts.get('session_count', 0)}`",
+        f"- Current-state records: `{snapshot_counts.get('current_state_count', 0)}`",
+        f"- Observation records: `{snapshot_counts.get('observation_count', 0)}`",
+        f"- Event records: `{snapshot_counts.get('event_count', 0)}`",
+        "",
+        "## Compiler Notes",
+        "- This source page is the bridge between governed Spark runtime memory and the visible wiki layer.",
+        "- Future Karpathy-style raw sources should enter `raw/` before being compiled into `wiki/`.",
+        "",
+    ]
+    source_page_path.write_text("\n".join(source_page_content), encoding="utf-8")
+    source_pages.append(
+        {
+            "title": source_page_title,
+            "link": f"[[sources/{source_page_path.stem}]]",
+            "path": str(source_page_path),
+        }
+    )
+
     current_state_pages: list[dict[str, str]] = []
     for record in current_state_entries:
         subject = str(record.get("subject") or "unknown")
@@ -270,6 +338,51 @@ def scaffold_spark_knowledge_base(
         page_path.write_text("\n".join(content), encoding="utf-8")
         current_state_pages.append({"title": title, "link": f"[[current-state/{page_path.stem}]]", "path": str(page_path)})
 
+    synthesis_pages: list[dict[str, str]] = []
+    synthesis_page_path = syntheses_dir / "runtime-memory-overview.md"
+    synthesis_page_title = "Runtime Memory Overview"
+    synthesis_page_content = [
+        _markdown_frontmatter(
+            title=synthesis_page_title,
+            page_type="synthesis",
+            summary="Compiled overview that explains how governed Spark memory is surfaced into the visible knowledge base.",
+            generated_at=generated_at,
+            tags=["spark-kb", "synthesis"],
+        ),
+        f"# {synthesis_page_title}",
+        "",
+        "## Overview",
+        "- This page is the first compiled synthesis over the current governed Spark memory snapshot.",
+        "- It is intentionally downstream of runtime memory, not a second truth store.",
+        f"- Source snapshot: [[sources/{source_page_path.stem}]]",
+        "",
+        "## Current Snapshot Shape",
+        f"- Current-state pages: `{len(current_state_pages)}`",
+        f"- Evidence pages: `{len(evidence_pages)}`",
+        f"- Event pages: `{len(event_pages)}`",
+        "",
+        "## Navigation",
+        "- [[current-state/_index]]",
+        "- [[evidence/_index]]",
+        "- [[events/_index]]",
+        "- [[outputs/_index]]",
+        "",
+        "## Current-State Highlights",
+    ]
+    if current_state_pages:
+        synthesis_page_content.extend(f"- {item['link']} - {item['title']}" for item in current_state_pages[:10])
+    else:
+        synthesis_page_content.append("- No current-state pages generated yet.")
+    synthesis_page_content.append("")
+    synthesis_page_path.write_text("\n".join(synthesis_page_content), encoding="utf-8")
+    synthesis_pages.append(
+        {
+            "title": synthesis_page_title,
+            "link": f"[[syntheses/{synthesis_page_path.stem}]]",
+            "path": str(synthesis_page_path),
+        }
+    )
+
     (current_state_dir / "_index.md").write_text(
         _render_index_page(
             title="Current State Index",
@@ -303,6 +416,28 @@ def scaffold_spark_knowledge_base(
         ),
         encoding="utf-8",
     )
+    (sources_dir / "_index.md").write_text(
+        _render_index_page(
+            title="Sources Index",
+            generated_at=generated_at,
+            summary="Source pages that describe the governed inputs used to compile this vault.",
+            section_title="Source Pages",
+            items=source_pages,
+            tag="sources",
+        ),
+        encoding="utf-8",
+    )
+    (syntheses_dir / "_index.md").write_text(
+        _render_index_page(
+            title="Syntheses Index",
+            generated_at=generated_at,
+            summary="Compiled overview pages and future cross-source syntheses.",
+            section_title="Synthesis Pages",
+            items=synthesis_pages,
+            tag="syntheses",
+        ),
+        encoding="utf-8",
+    )
     (outputs_dir / "_index.md").write_text(
         _render_index_page(
             title="Outputs Index",
@@ -327,11 +462,15 @@ def scaffold_spark_knowledge_base(
         "",
         "## Overview",
         f"- Generated at `{generated_at}`",
+        f"- Source pages: `{len(source_pages)}`",
+        f"- Synthesis pages: `{len(synthesis_pages)}`",
         f"- Current-state pages: `{len(current_state_pages)}`",
         f"- Evidence pages: `{len(evidence_pages)}`",
         f"- Event pages: `{len(event_pages)}`",
         "",
         "## Navigation",
+        "- [[sources/_index]]",
+        "- [[syntheses/_index]]",
         "- [[current-state/_index]]",
         "- [[evidence/_index]]",
         "- [[events/_index]]",
@@ -348,6 +487,8 @@ def scaffold_spark_knowledge_base(
                 f"- current-state pages: {len(current_state_pages)}",
                 f"- evidence pages: {len(evidence_pages)}",
                 f"- event pages: {len(event_pages)}",
+                f"- source pages: {len(source_pages)}",
+                f"- synthesis pages: {len(synthesis_pages)}",
                 "",
             ]
         ),
@@ -361,6 +502,8 @@ def scaffold_spark_knowledge_base(
         "current_state_page_count": len(current_state_pages),
         "evidence_page_count": len(evidence_pages),
         "event_page_count": len(event_pages),
+        "source_page_count": len(source_pages),
+        "synthesis_page_count": len(synthesis_pages),
         "files_written": sorted(
             str(path.relative_to(output_path))
             for path in output_path.rglob("*")
@@ -380,6 +523,8 @@ def build_spark_kb_health_report(output_dir: str | Path) -> dict[str, Any]:
         wiki_dir / "current-state" / "_index.md",
         wiki_dir / "evidence" / "_index.md",
         wiki_dir / "events" / "_index.md",
+        wiki_dir / "sources" / "_index.md",
+        wiki_dir / "syntheses" / "_index.md",
         wiki_dir / "outputs" / "_index.md",
     ]
     missing_required_files = [
@@ -466,7 +611,7 @@ def _resolve_wikilink_path(output_path: Path, link: str) -> str | None:
         return None
     target_path = output_path / "wiki" / f"{normalized}.md"
     if target_path.exists():
-        return str(target_path.relative_to(output_path))
+        return str(target_path.relative_to(output_path)).replace("\\", "/")
     return None
 
 

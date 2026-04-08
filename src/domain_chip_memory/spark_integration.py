@@ -84,6 +84,8 @@ def build_spark_integration_contract_summary() -> dict[str, Any]:
                 ],
                 "required_outputs": [
                     "obsidian_friendly_vault_layout",
+                    "source_pages_describing_governed_inputs",
+                    "synthesis_pages_that_compile_runtime_memory",
                     "current_state_pages_with_provenance",
                     "evidence_pages",
                     "event_pages",
@@ -96,6 +98,7 @@ def build_spark_integration_contract_summary() -> dict[str, Any]:
             "Spark owns conversation flow, policy, and final response generation.",
             "The memory SDK owns typed persistence, retrieval, provenance, and abstention for memory questions.",
             "The visible KB layer is compiled downstream from governed Spark memory, never treated as the source of truth.",
+            "The visible KB layer should follow a Karpathy-style raw-to-wiki pattern while remaining anchored to governed memory snapshots.",
             "Spark should write only role-eligible user facts and events, never every turn by default.",
             "Spark should prefer explicit structured writes when subject, predicate, and value are known.",
             "Spark should preserve SDK abstention and escalate uncertainty instead of forcing recall.",

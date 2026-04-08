@@ -259,6 +259,8 @@ def test_spark_kb_contracts_command_runs(monkeypatch):
     assert payload["layer_name"] == "SparkKnowledgeBase"
     assert "current_state" in payload["required_exports"]
     assert "wiki/index.md" in payload["vault_layout"]["wiki_files"]
+    assert "wiki/sources/_index.md" in payload["vault_layout"]["wiki_files"]
+    assert "wiki/syntheses/_index.md" in payload["vault_layout"]["wiki_files"]
 
 
 def test_sdk_maintenance_contracts_command_runs(monkeypatch):
@@ -408,6 +410,12 @@ def test_demo_spark_kb_command_runs_and_scaffolds_vault(tmp_path: Path, monkeypa
     assert (output_dir / "raw" / "memory-snapshots" / "latest.json").exists()
     assert (output_dir / "wiki" / "index.md").exists()
     assert (output_dir / "wiki" / "current-state" / "_index.md").exists()
+    assert (output_dir / "wiki" / "sources" / "_index.md").exists()
+    assert (output_dir / "wiki" / "syntheses" / "_index.md").exists()
+    assert (output_dir / "wiki" / "sources" / "spark-memory-snapshot-latest.md").exists()
+    assert (output_dir / "wiki" / "syntheses" / "runtime-memory-overview.md").exists()
+    assert written["compile_result"]["source_page_count"] >= 1
+    assert written["compile_result"]["synthesis_page_count"] >= 1
     assert written["compile_result"]["event_page_count"] >= 1
 
 
@@ -449,6 +457,8 @@ def test_spark_kb_health_check_command_runs_on_demo_vault(tmp_path: Path, monkey
     assert payload["missing_required_files"] == []
     assert payload["pages_missing_frontmatter"] == []
     assert payload["broken_wikilinks"] == []
+    assert "wiki/current-state/user-location.md" not in payload["orphan_pages"]
+    assert "wiki/sources/spark-memory-snapshot-latest.md" not in payload["orphan_pages"]
     assert written["trace"]["operation"] == "spark_kb_health_check"
 
 
