@@ -646,18 +646,16 @@ def _normalize_openai_compatible_judge_response(payload: Any) -> dict[str, Any]:
         # Some openai-compatible judges occasionally return only an explanatory
         # object without a score field. Preserve the response and let score
         # coercion degrade it to 0.0 instead of aborting the whole lane.
-        if payload:
-            normalized = dict(payload)
-            normalized["score"] = None
-            return normalized
-        raise KeyError("score")
+        normalized = dict(payload)
+        normalized["score"] = None
+        return normalized
     if isinstance(payload, list):
         for item in payload:
             try:
                 return _normalize_openai_compatible_judge_response(item)
             except (KeyError, TypeError):
                 continue
-        raise KeyError("score")
+        return {"score": None, "raw_response": payload}
     raise TypeError(f"Expected judge response object with score field, got {type(payload).__name__}")
 
 
