@@ -297,6 +297,7 @@ Current live result on 2026-04-09:
    - the payload now also includes `recommended_sequence`, so callers can consume the ordered focus -> drilldown -> next-step guidance as one deduplicated list instead of stitching those top-level fields together by hand
    - the payload now also includes `recommended_sequence_targets`, so callers can consume that same ordered path as compact machine-readable family/series/top-series references without parsing labels or shell strings
    - the payload now also includes `recommended_sequence_labels`, so callers can render that same ordered path as concise readable labels without parsing shell commands or nested command arrays
+   - the payload now also includes `recommended_sequence_commands`, so callers that want raw argv-style commands can consume the same deduplicated path without parsing shell strings or unpacking nested recommendation objects
    - the payload now also includes `recommended_sequence_shells`, so callers that only need runnable commands can consume the same ordered path as a deduplicated shell-command list without walking nested command arrays
    - the payload now includes `recommended_family`, so the active family recommendation resolves to the enriched family row instead of only exposing a command wrapper
    - the payload now includes `recommended_family_gap`, so the report can say how far ahead the current recommended family is from the next noisy candidate without recomputing margins
@@ -320,6 +321,7 @@ Current live result on 2026-04-09:
    - current live `recommended_sequence` now packages that same path directly as `[--family scorecard, --family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5, compare nearest competitor top series]`
    - current live `recommended_sequence_targets` now renders that path structurally as `[family scorecard, series scorecard / official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5, nearest competitor top series longmemeval / longmemeval_summary_synthesis_offset225_limit25]`
    - current live `recommended_sequence_labels` now renders that path readably as `[focus family scorecard, focus series scorecard / official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5, compare longmemeval rank 2 / longmemeval_summary_synthesis_offset225_limit25]`
+   - current live `recommended_sequence_commands` now exposes those same three steps as raw argv arrays in the same order
    - current live `recommended_sequence_shells` now flattens that path into three runnable commands: jump to the `scorecard` family, drill into `official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`, then compare the nearest competitor top series
    - current live `recommended_family` is `scorecard`, with `reported_file_share = 0.5167` and `dominance_label = dominant`
    - current live `recommended_family_gap` shows `scorecard` ahead of `longmemeval` by `8` noisy files and `0.1334` noisy-share points, which classifies as a `clear` lead
