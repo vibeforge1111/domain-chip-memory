@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import asdict, replace
@@ -1360,6 +1361,20 @@ def _benchmark_runs_file_family(path: Path) -> str:
     return "other"
 
 
+def _benchmark_runs_series_key(path: Path) -> str:
+    stem = path.stem
+    if stem.startswith("_debug_gpt4_"):
+        return "_debug_gpt4"
+    if stem.startswith("_debug_"):
+        return "_debug"
+    if stem.endswith("_official_eval"):
+        return stem.removesuffix("_official_eval")
+    if stem.endswith("_scorecard"):
+        stem = stem.removesuffix("_scorecard")
+    stem = re.sub(r"_v\d+$", "", stem)
+    return stem
+
+
 def _build_benchmark_runs_git_report(
     *,
     benchmark_runs_dir: str | Path,
@@ -1393,10 +1408,12 @@ def _build_benchmark_runs_git_report(
     reported_paths = noisy_paths if only_noisy else files
     family_rows: dict[str, dict] = {}
     reported_git_status_counts: dict[str, int] = {}
+    series_rows: dict[tuple[str, str], dict] = {}
     for path in reported_paths:
         display_path = _display_path(path, repo_root_path)
         git_status = git_status_by_path.get(display_path, "clean")
         family = _benchmark_runs_file_family(path)
+        series = _benchmark_runs_series_key(path)
         reported_git_status_counts[git_status] = reported_git_status_counts.get(git_status, 0) + 1
         family_row = family_rows.setdefault(
             family,
@@ -1410,8 +1427,25 @@ def _build_benchmark_runs_git_report(
         family_row["file_count"] += 1
         family_row["git_status_counts"][git_status] = family_row["git_status_counts"].get(git_status, 0) + 1
         family_row["paths"].append(display_path)
+        series_row = series_rows.setdefault(
+            (family, series),
+            {
+                "family": family,
+                "series": series,
+                "file_count": 0,
+                "git_status_counts": {},
+                "paths": [],
+            },
+        )
+        series_row["file_count"] += 1
+        series_row["git_status_counts"][git_status] = series_row["git_status_counts"].get(git_status, 0) + 1
+        series_row["paths"].append(display_path)
 
     ordered_family_rows = [family_rows[key] for key in sorted(family_rows)]
+    ordered_series_rows = [
+        series_rows[key]
+        for key in sorted(series_rows, key=lambda item: (item[0], item[1]))
+    ]
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -1423,7 +1457,9 @@ def _build_benchmark_runs_git_report(
         "reported_file_count": len(reported_paths),
         "reported_family_count": len(ordered_family_rows),
         "reported_git_status_counts": reported_git_status_counts,
+        "reported_series_count": len(ordered_series_rows),
         "families": ordered_family_rows,
+        "series": ordered_series_rows,
         "noisy_file_count": len(noisy_files),
         "noisy_files": noisy_files,
     }
