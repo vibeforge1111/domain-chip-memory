@@ -2191,6 +2191,9 @@ def _build_benchmark_runs_git_report(
                 "command_shell": recommendation.get("command_shell"),
             }
         )
+    recommended_sequence_by_phase = {
+        step["phase"]: step for step in recommended_sequence_steps
+    }
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -2213,6 +2216,7 @@ def _build_benchmark_runs_git_report(
         "recommended_sequence_commands": recommended_sequence_commands,
         "recommended_sequence_shells": recommended_sequence_shells,
         "recommended_sequence_steps": recommended_sequence_steps,
+        "recommended_sequence_by_phase": recommended_sequence_by_phase,
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,

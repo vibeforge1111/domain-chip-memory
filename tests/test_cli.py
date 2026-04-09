@@ -3358,6 +3358,11 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "command_shell": payload["recommended_next_step"]["command_shell"],
         },
     ]
+    assert payload["recommended_sequence_by_phase"] == {
+        "focus": payload["recommended_sequence_steps"][0],
+        "drilldown": payload["recommended_sequence_steps"][1],
+        "next_step": payload["recommended_sequence_steps"][2],
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4289,6 +4294,10 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             "command_shell": payload["recommended_next_step"]["command_shell"],
         },
     ]
+    assert payload["recommended_sequence_by_phase"] == {
+        "focus": payload["recommended_sequence_steps"][0],
+        "next_step": payload["recommended_sequence_steps"][1],
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4962,6 +4971,10 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
             "command_shell": payload["recommended_next_step"]["command_shell"],
         },
     ]
+    assert payload["recommended_sequence_by_phase"] == {
+        "focus": payload["recommended_sequence_steps"][0],
+        "next_step": payload["recommended_sequence_steps"][1],
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
