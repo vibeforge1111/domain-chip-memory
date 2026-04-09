@@ -18,6 +18,7 @@ from domain_chip_memory.providers import get_provider
 from domain_chip_memory.runner import build_runner_contract_summary
 from domain_chip_memory.scorecards import build_scorecard_contract_summary
 from domain_chip_memory.sample_data import demo_samples
+from domain_chip_memory.spark_kb import scaffold_spark_knowledge_base
 from domain_chip_memory.watchtower import build_watchtower_summary
 
 
@@ -497,6 +498,75 @@ def test_demo_spark_kb_can_ingest_explicit_repo_source(tmp_path: Path, monkeypat
     assert written["compile_result"]["repo_source_count"] == 1
     assert (output_dir / "raw" / "repos" / "01-NOTES.md").exists()
     assert (output_dir / "wiki" / "sources" / "repo-notes.md").exists()
+
+
+def test_spark_kb_maintenance_report_surfaces_contradictions_and_staleness(tmp_path: Path):
+    output_dir = tmp_path / "spark_kb_vault"
+    snapshot = {
+        "runtime_class": "SparkMemorySDK",
+        "generated_at": "2025-03-10T00:00:00+00:00",
+        "counts": {
+            "session_count": 1,
+            "current_state_count": 1,
+            "observation_count": 2,
+            "event_count": 0,
+        },
+        "sessions": [
+            {
+                "session_id": "session-1",
+                "timestamp": "2025-01-01T00:00:00+00:00",
+                "turns": [
+                    {"turn_id": "session-1:t1", "speaker": "user", "text": "I live in London."},
+                    {"turn_id": "session-1:t2", "speaker": "user", "text": "I live in Dubai now."},
+                ],
+            }
+        ],
+        "current_state": [
+            {
+                "memory_role": "current_state",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-1",
+                "turn_ids": ["session-1:t2"],
+                "timestamp": "2025-01-01T00:00:00+00:00",
+                "metadata": {"value": "Dubai"},
+            }
+        ],
+        "observations": [
+            {
+                "memory_role": "structured_evidence",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location London",
+                "session_id": "session-1",
+                "turn_ids": ["session-1:t1"],
+                "timestamp": "2025-01-01T00:00:00+00:00",
+                "metadata": {"value": "London", "observation_id": "obs-1"},
+            },
+            {
+                "memory_role": "structured_evidence",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-1",
+                "turn_ids": ["session-1:t2"],
+                "timestamp": "2025-01-02T00:00:00+00:00",
+                "metadata": {"value": "Dubai", "observation_id": "obs-2"},
+            },
+        ],
+        "events": [],
+        "trace": {"operation": "export_knowledge_base_snapshot"},
+    }
+
+    scaffold_spark_knowledge_base(output_dir, snapshot)
+
+    maintenance = (output_dir / "wiki" / "outputs" / "maintenance-report.md").read_text(encoding="utf-8")
+    assert "## Contradiction Candidates" in maintenance
+    assert "`user.location` has multiple observed values" in maintenance
+    assert "## Stale Current-State Candidates" in maintenance
+    assert "older than `30` days" in maintenance
+    assert "## Gap Signals" in maintenance
 
 
 def test_run_sdk_maintenance_report_cli_can_write_report(tmp_path: Path, monkeypatch):

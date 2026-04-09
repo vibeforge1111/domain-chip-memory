@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import re
 from pathlib import Path
 from typing import Any
@@ -18,6 +18,85 @@ def _slugify(value: str) -> str:
 def _yaml_scalar(value: str) -> str:
     escaped = str(value).replace('"', '\\"')
     return f'"{escaped}"'
+
+
+def _parse_timestamp(value: str | None) -> datetime | None:
+    cleaned = str(value or "").strip()
+    if not cleaned:
+        return None
+    if cleaned.endswith("Z"):
+        cleaned = cleaned[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(cleaned)
+    except ValueError:
+        return None
+
+
+def _record_value(record: dict[str, Any]) -> str:
+    metadata = record.get("metadata") or {}
+    preferred = str(metadata.get("value") or "").strip()
+    if preferred:
+        return preferred
+    return str(record.get("text") or "").strip()
+
+
+def _contradiction_candidates(observation_entries: list[dict[str, Any]]) -> list[str]:
+    grouped: dict[tuple[str, str], set[str]] = {}
+    for record in observation_entries:
+        predicate = str(record.get("predicate") or "").strip()
+        if predicate in {"", "raw_turn", "state_deletion"}:
+            continue
+        subject = str(record.get("subject") or "unknown").strip()
+        value = _record_value(record)
+        if not value:
+            continue
+        grouped.setdefault((subject, predicate), set()).add(value)
+    rows: list[str] = []
+    for (subject, predicate), values in sorted(grouped.items()):
+        if len(values) < 2:
+            continue
+        joined = "; ".join(f"`{value}`" for value in sorted(values))
+        rows.append(f"- `{subject}.{predicate}` has multiple observed values: {joined}")
+    return rows
+
+
+def _stale_current_state_candidates(
+    current_state_entries: list[dict[str, Any]],
+    *,
+    generated_at: str,
+    stale_after_days: int = 30,
+) -> list[str]:
+    generated_dt = _parse_timestamp(generated_at)
+    if generated_dt is None:
+        return []
+    cutoff = generated_dt - timedelta(days=stale_after_days)
+    rows: list[str] = []
+    for record in current_state_entries:
+        record_dt = _parse_timestamp(record.get("timestamp"))
+        if record_dt is None or record_dt > cutoff:
+            continue
+        subject = str(record.get("subject") or "unknown").strip()
+        predicate = str(record.get("predicate") or "unknown").strip()
+        rows.append(
+            f"- `{subject}.{predicate}` last changed at `{record.get('timestamp')}` and is older than `{stale_after_days}` days"
+        )
+    return rows
+
+
+def _gap_signal_rows(
+    *,
+    current_state_without_evidence: int,
+    session_entries: list[dict[str, Any]],
+    ingested_repo_sources: int,
+    filed_outputs_count: int,
+) -> list[str]:
+    rows = [
+        f"- Current-state pages without linked evidence: `{current_state_without_evidence}`",
+        f"- Sessions with no turns: `{sum(1 for session in session_entries if not list(session.get('turns') or []))}`",
+        f"- Repo-native files ingested into raw/repos: `{ingested_repo_sources}`",
+        f"- Filed output pages: `{filed_outputs_count}`",
+    ]
+    return rows
 
 
 def _markdown_frontmatter(
@@ -534,6 +613,15 @@ def scaffold_spark_knowledge_base(
     output_pages: list[dict[str, str]] = []
     maintenance_page_path = outputs_dir / "maintenance-report.md"
     maintenance_page_title = "Maintenance Report"
+    contradiction_rows = _contradiction_candidates(observation_entries)
+    stale_rows = _stale_current_state_candidates(current_state_entries, generated_at=generated_at)
+    filed_output_count = len(list(filed_outputs or []))
+    gap_rows = _gap_signal_rows(
+        current_state_without_evidence=current_state_without_evidence,
+        session_entries=session_entries,
+        ingested_repo_sources=ingested_repo_sources,
+        filed_outputs_count=filed_output_count,
+    )
     maintenance_page_content = [
         _markdown_frontmatter(
             title=maintenance_page_title,
@@ -559,16 +647,41 @@ def scaffold_spark_knowledge_base(
         f"- Event pages: `{len(event_pages)}`",
         "",
         "## Coverage Checks",
-        f"- Current-state pages without linked evidence: `{current_state_without_evidence}`",
         f"- Sessions with compiled source pages: `{len(session_entries)}`",
-        f"- Repo-native files ingested into raw/repos: `{ingested_repo_sources}`",
         "",
+        "## Contradiction Candidates",
+    ]
+    if contradiction_rows:
+        maintenance_page_content.extend(contradiction_rows)
+    else:
+        maintenance_page_content.append("- No contradiction candidates detected in this snapshot.")
+    maintenance_page_content.extend(
+        [
+            "",
+            "## Stale Current-State Candidates",
+        ]
+    )
+    if stale_rows:
+        maintenance_page_content.extend(stale_rows)
+    else:
+        maintenance_page_content.append("- No stale current-state candidates detected with the current threshold.")
+    maintenance_page_content.extend(
+        [
+            "",
+            "## Gap Signals",
+            *gap_rows,
+            "",
+        ]
+    )
+    maintenance_page_content.extend(
+        [
         "## Next Compiler Targets",
         "- Add repo-native artifact ingest into `raw/` and compile those into `wiki/sources/`.",
         "- File important answers into `wiki/outputs/` instead of leaving outputs empty.",
         "- Add contradiction, staleness, and missing-page reporting over mixed runtime and repo-native sources.",
         "",
     ]
+    )
     maintenance_page_path.write_text("\n".join(maintenance_page_content), encoding="utf-8")
     output_pages.append(
         {
