@@ -1364,19 +1364,40 @@ def _build_benchmark_runs_git_report(
     *,
     benchmark_runs_dir: str | Path,
     repo_root: str | Path,
+    only_noisy: bool = False,
 ) -> dict:
     benchmark_runs_path = Path(benchmark_runs_dir)
     repo_root_path = Path(repo_root)
     files = sorted(path for path in benchmark_runs_path.glob("*.json") if path.is_file())
     git_status_by_path = _git_status_by_path(files, repo_root=repo_root_path)
 
-    family_rows: dict[str, dict] = {}
     git_status_counts: dict[str, int] = {}
     for path in files:
         display_path = _display_path(path, repo_root_path)
         git_status = git_status_by_path.get(display_path, "clean")
-        family = _benchmark_runs_file_family(path)
         git_status_counts[git_status] = git_status_counts.get(git_status, 0) + 1
+    noisy_statuses = {"??", "A", "M", "D", "R", "C", "U"}
+    noisy_paths = [
+        path
+        for path in files
+        if git_status_by_path.get(_display_path(path, repo_root_path), "clean") in noisy_statuses
+    ]
+    noisy_files = [
+        {
+            "path": _display_path(path, repo_root_path),
+            "git_status": git_status_by_path.get(_display_path(path, repo_root_path), "clean"),
+            "family": _benchmark_runs_file_family(path),
+        }
+        for path in noisy_paths
+    ]
+    reported_paths = noisy_paths if only_noisy else files
+    family_rows: dict[str, dict] = {}
+    reported_git_status_counts: dict[str, int] = {}
+    for path in reported_paths:
+        display_path = _display_path(path, repo_root_path)
+        git_status = git_status_by_path.get(display_path, "clean")
+        family = _benchmark_runs_file_family(path)
+        reported_git_status_counts[git_status] = reported_git_status_counts.get(git_status, 0) + 1
         family_row = family_rows.setdefault(
             family,
             {
@@ -1391,23 +1412,17 @@ def _build_benchmark_runs_git_report(
         family_row["paths"].append(display_path)
 
     ordered_family_rows = [family_rows[key] for key in sorted(family_rows)]
-    noisy_statuses = {"??", "A", "M", "D", "R", "C", "U"}
-    noisy_files = [
-        {
-            "path": _display_path(path, repo_root_path),
-            "git_status": git_status_by_path.get(_display_path(path, repo_root_path), "clean"),
-            "family": _benchmark_runs_file_family(path),
-        }
-        for path in files
-        if git_status_by_path.get(_display_path(path, repo_root_path), "clean") in noisy_statuses
-    ]
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
         "repo_root": str(repo_root_path),
+        "only_noisy": only_noisy,
         "file_count": len(files),
         "family_count": len(ordered_family_rows),
         "git_status_counts": git_status_counts,
+        "reported_file_count": len(reported_paths),
+        "reported_family_count": len(ordered_family_rows),
+        "reported_git_status_counts": reported_git_status_counts,
         "families": ordered_family_rows,
         "noisy_file_count": len(noisy_files),
         "noisy_files": noisy_files,
@@ -2059,6 +2074,7 @@ def main() -> None:
     benchmark_runs_git_report = subparsers.add_parser("benchmark-runs-git-report", help="Summarize benchmark-runs JSON files by git status and file family.")
     benchmark_runs_git_report.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
     benchmark_runs_git_report.add_argument("--repo-root", default=".")
+    benchmark_runs_git_report.add_argument("--only-noisy", action="store_true")
     benchmark_runs_git_report.add_argument("--write")
     beam_judged_cleanup_report = subparsers.add_parser("beam-judged-cleanup-report", help="Summarize local judged BEAM artifact state for cleanup planning.")
     beam_judged_cleanup_report.add_argument("--artifact-prefix", default="official_beam_128k_")
@@ -2491,6 +2507,7 @@ def main() -> None:
         payload = _build_benchmark_runs_git_report(
             benchmark_runs_dir=args.benchmark_runs_dir,
             repo_root=args.repo_root,
+            only_noisy=args.only_noisy,
         )
         if args.write:
             _write_json(Path(args.write), payload)

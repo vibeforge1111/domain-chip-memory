@@ -2789,9 +2789,13 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["source_mode"] == "benchmark_runs_git_report"
+    assert payload["only_noisy"] is False
     assert payload["file_count"] == 5
     assert payload["family_count"] == 5
     assert payload["git_status_counts"] == {"??": 2, "M": 1, "clean": 2}
+    assert payload["reported_file_count"] == 5
+    assert payload["reported_family_count"] == 5
+    assert payload["reported_git_status_counts"] == {"??": 2, "M": 1, "clean": 2}
     assert payload["noisy_file_count"] == 3
     family_rows = {row["family"]: row for row in payload["families"]}
     assert family_rows["debug"]["paths"] == ["artifacts/benchmark_runs/_debug_example.json"]
@@ -2825,6 +2829,54 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "family": "scorecard",
         },
     ]
+
+
+def test_benchmark_runs_git_report_cli_only_noisy_filters_clean_families(tmp_path: Path, monkeypatch):
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "benchmark_runs_git_report.json"
+
+    debug_file = benchmark_runs_dir / "_debug_example.json"
+    scorecard_file = benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10_v1_scorecard.json"
+    official_eval_file = benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"
+    benchmark_runs_dir.mkdir(parents=True)
+    for path in [debug_file, scorecard_file, official_eval_file]:
+        path.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        cli,
+        "_git_status_by_path",
+        lambda paths, repo_root: {
+            "artifacts/benchmark_runs/_debug_example.json": "??",
+            "artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10_v1_scorecard.json": "M",
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--only-noisy",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["only_noisy"] is True
+    assert payload["file_count"] == 3
+    assert payload["git_status_counts"] == {"??": 1, "M": 1, "clean": 1}
+    assert payload["reported_file_count"] == 2
+    assert payload["reported_family_count"] == 2
+    assert payload["reported_git_status_counts"] == {"??": 1, "M": 1}
+    assert [row["family"] for row in payload["families"]] == ["debug", "scorecard"]
+    assert payload["noisy_file_count"] == 2
 
 
 def test_git_status_by_path_batches_large_path_sets(tmp_path: Path, monkeypatch):
