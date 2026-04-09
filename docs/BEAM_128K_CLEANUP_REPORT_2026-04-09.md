@@ -16,6 +16,10 @@ python -m domain_chip_memory.cli beam-judged-resume-plan --artifact-prefix offic
 python -m domain_chip_memory.cli beam-judged-resume-batch --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --script-file tmp\beam_128k_resume_batch.ps1 --write tmp\beam_128k_resume_batch.json
 ```
 
+```powershell
+python -m domain_chip_memory.cli beam-judged-resume-batch --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --execute --write tmp\beam_128k_resume_batch_execute.json
+```
+
 ## Current State
 
 - answer variant directories found: `22`
@@ -150,6 +154,12 @@ The new batch helper writes one ordered PowerShell script for the current partia
   3. `conv3_v2`
 
 That keeps the two timeout-bound resumptions ahead of the historically noisier `conv3_v2` rerun.
+
+The helper now also supports direct execution:
+
+- `--execute` runs the generated resume commands sequentially from the repo root
+- the JSON output captures per-target `return_code`, `status`, `stdout_tail`, and `stderr_tail`
+- I have not run `--execute` against the live `128K` artifacts yet, so the worktree remains free of any new judged-output churn from this helper
 
 The previously modified tracked file also appears materially incomplete relative to the current `128K` category universe:
 
