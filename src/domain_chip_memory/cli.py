@@ -1638,6 +1638,47 @@ def _build_benchmark_runs_git_report(
             "command_shell": " ".join(_shell_quote_arg(part) for part in command),
         }
 
+    family_competition = []
+    if ranked_family_command_rows:
+        leader_row = ranked_family_command_rows[0]
+        leader_share = round(leader_row["noisy_file_count"] / noisy_family_total, 4) if noisy_family_total else 0.0
+        for index, row in enumerate(ranked_family_command_rows, start=1):
+            share = round(row["noisy_file_count"] / noisy_family_total, 4) if noisy_family_total else 0.0
+            file_count_gap_from_leader = leader_row["noisy_file_count"] - row["noisy_file_count"]
+            share_gap_from_leader = round(leader_share - share, 4)
+            gap_label = "leader"
+            if index > 1:
+                gap_label = "narrow"
+                if share_gap_from_leader >= 0.25:
+                    gap_label = "wide"
+                elif share_gap_from_leader >= 0.1:
+                    gap_label = "clear"
+            top_series = all_noisy_top_series_by_family.get(row["family"])
+            competition_command = _benchmark_runs_git_report_command(
+                benchmark_runs_dir=benchmark_runs_path,
+                repo_root=repo_root_path,
+                only_noisy=True,
+                top_series_limit=top_series_limit,
+                summary_only=summary_only,
+                family_filter=row["family"],
+                series_prefix=None,
+            )
+            family_competition.append(
+                {
+                    "rank": index,
+                    "family": row["family"],
+                    "noisy_file_count": row["noisy_file_count"],
+                    "noisy_file_share": share,
+                    "noisy_file_count_gap_from_leader": file_count_gap_from_leader,
+                    "noisy_share_gap_from_leader": share_gap_from_leader,
+                    "gap_label": gap_label,
+                    "top_series_prefix": top_series["series"] if top_series is not None else None,
+                    "top_series_noisy_file_count": top_series["file_count"] if top_series is not None else None,
+                    "command": competition_command,
+                    "command_shell": " ".join(_shell_quote_arg(part) for part in competition_command),
+                }
+            )
+
     family_hotspots = []
     for row in ordered_family_rows:
         family = row["family"]
@@ -1890,6 +1931,7 @@ def _build_benchmark_runs_git_report(
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,
         "recommended_followups": recommended_followups,
+        "family_competition": family_competition,
         "family_commands": family_commands,
         "family_hotspots": family_hotspots,
         "recommended_hotspot": recommended_hotspot,
