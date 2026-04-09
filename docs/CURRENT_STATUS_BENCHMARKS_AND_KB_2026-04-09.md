@@ -186,6 +186,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - real `build-spark-kb` support for explicit filed-output JSON inputs
 - real `build-spark-kb` support for repo-source manifest JSON inputs
 - real `build-spark-kb` support for filed-output manifest JSON inputs
+- compile results now expose both `repo_source_count` and `filed_output_count`
 
 ### What is now true after BEAM closure
 
