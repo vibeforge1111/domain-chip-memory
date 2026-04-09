@@ -3379,6 +3379,24 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "first": payload["recommended_sequence_steps"][0],
         "last": payload["recommended_sequence_steps"][2],
     }
+    assert payload["recommended_sequence_transitions"] == [
+        {
+            "from_phase": "focus",
+            "to_phase": "drilldown",
+            "from_step": 1,
+            "to_step": 2,
+            "from_label": payload["recommended_sequence_steps"][0]["label"],
+            "to_label": payload["recommended_sequence_steps"][1]["label"],
+        },
+        {
+            "from_phase": "drilldown",
+            "to_phase": "next_step",
+            "from_step": 2,
+            "to_step": 3,
+            "from_label": payload["recommended_sequence_steps"][1]["label"],
+            "to_label": payload["recommended_sequence_steps"][2]["label"],
+        },
+    ]
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4329,6 +4347,16 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "first": payload["recommended_sequence_steps"][0],
         "last": payload["recommended_sequence_steps"][1],
     }
+    assert payload["recommended_sequence_transitions"] == [
+        {
+            "from_phase": "focus",
+            "to_phase": "next_step",
+            "from_step": 1,
+            "to_step": 2,
+            "from_label": payload["recommended_sequence_steps"][0]["label"],
+            "to_label": payload["recommended_sequence_steps"][1]["label"],
+        }
+    ]
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -5021,6 +5049,16 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "first": payload["recommended_sequence_steps"][0],
         "last": payload["recommended_sequence_steps"][1],
     }
+    assert payload["recommended_sequence_transitions"] == [
+        {
+            "from_phase": "focus",
+            "to_phase": "next_step",
+            "from_step": 1,
+            "to_step": 2,
+            "from_label": payload["recommended_sequence_steps"][0]["label"],
+            "to_label": payload["recommended_sequence_steps"][1]["label"],
+        }
+    ]
     assert payload["family_competition"] == [
         {
             "rank": 1,
