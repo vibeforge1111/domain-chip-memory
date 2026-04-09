@@ -1952,6 +1952,7 @@ def _build_benchmark_runs_git_report(
         recommended_drilldown = recommended_followups[-1]
     elif recommended_focus and recommended_focus.get("scope") == "series":
         recommended_drilldown = recommended_focus
+    recommended_next_step = None
     recommended_family = None
     if recommended_focus and recommended_focus.get("family"):
         recommended_family = next(
@@ -2109,6 +2110,10 @@ def _build_benchmark_runs_git_report(
                 "scope": "single_family_view",
                 "leader_hotspot": _build_noisy_family_hotspot_summary(recommended_family["family"]),
             }
+    recommended_sequence: list[dict] = []
+    for recommendation in [recommended_focus, recommended_drilldown, recommended_next_step]:
+        if recommendation is not None and recommendation not in recommended_sequence:
+            recommended_sequence.append(recommendation)
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -2124,11 +2129,8 @@ def _build_benchmark_runs_git_report(
         "current_command_shell": " ".join(_shell_quote_arg(part) for part in current_command),
         "recommended_focus": recommended_focus,
         "recommended_drilldown": recommended_drilldown,
-        "recommended_next_step": (
-            recommended_family_competition_summary["recommended_next_step"]
-            if recommended_family_competition_summary is not None
-            else None
-        ),
+        "recommended_next_step": recommended_next_step,
+        "recommended_sequence": recommended_sequence,
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,
