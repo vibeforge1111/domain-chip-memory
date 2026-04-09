@@ -1663,6 +1663,21 @@ def _build_benchmark_runs_git_report(
                 family_filter=row["family"],
                 series_prefix=None,
             )
+            top_series_command = None
+            top_series_command_shell = None
+            if top_series is not None:
+                top_series_command = _benchmark_runs_git_report_command(
+                    benchmark_runs_dir=benchmark_runs_path,
+                    repo_root=repo_root_path,
+                    only_noisy=True,
+                    top_series_limit=top_series_limit,
+                    summary_only=summary_only,
+                    family_filter=row["family"],
+                    series_prefix=top_series["series"],
+                )
+                top_series_command_shell = " ".join(
+                    _shell_quote_arg(part) for part in top_series_command
+                )
             family_competition.append(
                 {
                     "rank": index,
@@ -1674,6 +1689,8 @@ def _build_benchmark_runs_git_report(
                     "gap_label": gap_label,
                     "top_series_prefix": top_series["series"] if top_series is not None else None,
                     "top_series_noisy_file_count": top_series["file_count"] if top_series is not None else None,
+                    "top_series_command": top_series_command,
+                    "top_series_command_shell": top_series_command_shell,
                     "command": competition_command,
                     "command_shell": " ".join(_shell_quote_arg(part) for part in competition_command),
                 }
