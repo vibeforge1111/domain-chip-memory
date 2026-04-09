@@ -2124,6 +2124,11 @@ def _build_benchmark_runs_git_report(
         "current_command_shell": " ".join(_shell_quote_arg(part) for part in current_command),
         "recommended_focus": recommended_focus,
         "recommended_drilldown": recommended_drilldown,
+        "recommended_next_step": (
+            recommended_family_competition_summary["recommended_next_step"]
+            if recommended_family_competition_summary is not None
+            else None
+        ),
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,
