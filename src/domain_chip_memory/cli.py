@@ -2218,6 +2218,13 @@ def _build_benchmark_runs_git_report(
                 "to_label": next_step["label"],
             }
         )
+    recommended_sequence_transition_summary = {
+        "transition_count": len(recommended_sequence_transitions),
+        "phase_signatures": [
+            f"{transition['from_phase']}->{transition['to_phase']}"
+            for transition in recommended_sequence_transitions
+        ],
+    }
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -2245,6 +2252,7 @@ def _build_benchmark_runs_git_report(
         "recommended_sequence_summary": recommended_sequence_summary,
         "recommended_sequence_endpoints": recommended_sequence_endpoints,
         "recommended_sequence_transitions": recommended_sequence_transitions,
+        "recommended_sequence_transition_summary": recommended_sequence_transition_summary,
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,

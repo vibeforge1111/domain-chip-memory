@@ -3397,6 +3397,10 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "to_label": payload["recommended_sequence_steps"][2]["label"],
         },
     ]
+    assert payload["recommended_sequence_transition_summary"] == {
+        "transition_count": 2,
+        "phase_signatures": ["focus->drilldown", "drilldown->next_step"],
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4357,6 +4361,10 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             "to_label": payload["recommended_sequence_steps"][1]["label"],
         }
     ]
+    assert payload["recommended_sequence_transition_summary"] == {
+        "transition_count": 1,
+        "phase_signatures": ["focus->next_step"],
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -5059,6 +5067,10 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
             "to_label": payload["recommended_sequence_steps"][1]["label"],
         }
     ]
+    assert payload["recommended_sequence_transition_summary"] == {
+        "transition_count": 1,
+        "phase_signatures": ["focus->next_step"],
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
