@@ -3162,6 +3162,25 @@ def _build_benchmark_runs_git_report(
                 }
             ]
         ),
+        "absent_transition_mode_count": len(
+            {
+                mode
+                for mode in ["command", "mixed", "non_command"]
+                if mode
+                not in {
+                    (
+                        "command"
+                        if previous_step["command"] and next_step["command"]
+                        else "mixed"
+                        if bool(previous_step["command"]) != bool(next_step["command"])
+                        else "non_command"
+                    )
+                    for previous_step, next_step in zip(
+                        recommended_sequence_steps, recommended_sequence_steps[1:]
+                    )
+                }
+            }
+        ),
         "present_transition_mode_count": len(
             {
                 (
