@@ -2252,6 +2252,21 @@ def _build_benchmark_runs_git_report(
         )
     recommended_sequence_transition_summary = {
         "transition_count": len(recommended_sequence_transitions),
+        "command_transition_count": sum(
+            1
+            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+            if previous_step["command"] and next_step["command"]
+        ),
+        "mixed_transition_count": sum(
+            1
+            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+            if bool(previous_step["command"]) != bool(next_step["command"])
+        ),
+        "non_command_transition_count": sum(
+            1
+            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+            if not previous_step["command"] and not next_step["command"]
+        ),
         "phase_signatures": [
             f"{transition['from_phase']}->{transition['to_phase']}"
             for transition in recommended_sequence_transitions
