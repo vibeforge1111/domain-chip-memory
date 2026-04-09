@@ -1537,6 +1537,48 @@ def _build_benchmark_runs_git_report(
     ]
     for row in family_commands:
         row["command_shell"] = " ".join(_shell_quote_arg(part) for part in row["command"])
+    recommended_focus = None
+    if series_prefix:
+        recommended_focus = {
+            "scope": "series",
+            "status": "already_focused",
+            "family": family_filter,
+            "series_prefix": series_prefix,
+            "reported_file_count": len(reported_paths),
+        }
+    elif family_filter and top_noisy_series:
+        top_series = top_noisy_series[0]
+        recommended_command = _benchmark_runs_git_report_command(
+            benchmark_runs_dir=benchmark_runs_path,
+            repo_root=repo_root_path,
+            only_noisy=True,
+            top_series_limit=top_series_limit,
+            summary_only=summary_only,
+            family_filter=family_filter,
+            series_prefix=top_series["series"],
+        )
+        recommended_focus = {
+            "scope": "series",
+            "reason": "largest_series_in_family",
+            "family": family_filter,
+            "series_prefix": top_series["series"],
+            "noisy_file_count": top_series["file_count"],
+            "command": recommended_command,
+            "command_shell": " ".join(_shell_quote_arg(part) for part in recommended_command),
+        }
+    elif family_commands:
+        recommended_row = max(
+            family_commands,
+            key=lambda row: (row["noisy_file_count"], row["family"]),
+        )
+        recommended_focus = {
+            "scope": "family",
+            "reason": "largest_noisy_family",
+            "family": recommended_row["family"],
+            "noisy_file_count": recommended_row["noisy_file_count"],
+            "command": recommended_row["command"],
+            "command_shell": recommended_row["command_shell"],
+        }
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -1550,6 +1592,7 @@ def _build_benchmark_runs_git_report(
         "summary_only": summary_only,
         "current_command": current_command,
         "current_command_shell": " ".join(_shell_quote_arg(part) for part in current_command),
+        "recommended_focus": recommended_focus,
         "family_commands": family_commands,
         "file_count": len(files),
         "family_count": len(ordered_family_rows),

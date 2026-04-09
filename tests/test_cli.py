@@ -2821,6 +2821,31 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
     assert [row["family"] for row in payload["family_commands"]] == ["debug", "longmemeval", "scorecard"]
     assert all("--only-noisy" in row["command"] for row in payload["family_commands"])
     assert all("benchmark-runs-git-report" in row["command_shell"] for row in payload["family_commands"])
+    assert payload["recommended_focus"] == {
+        "scope": "family",
+        "reason": "largest_noisy_family",
+        "family": "scorecard",
+        "noisy_file_count": 1,
+        "command": [
+            "python",
+            "-m",
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--family",
+            "scorecard",
+            "--only-noisy",
+            "--top-series-limit",
+            "10",
+        ],
+        "command_shell": (
+            f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+            f"--repo-root {tmp_path} --family scorecard --only-noisy --top-series-limit 10"
+        ),
+    }
     family_rows = {row["family"]: row for row in payload["families"]}
     series_rows = {(row["family"], row["series"]): row for row in payload["series"]}
     assert family_rows["debug"]["paths"] == ["artifacts/benchmark_runs/_debug_example.json"]
@@ -3191,6 +3216,36 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             "git_status_counts": {"??": 2},
         }
     ]
+    assert payload["recommended_focus"] == {
+        "scope": "series",
+        "reason": "largest_series_in_family",
+        "family": "longmemeval",
+        "series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+        "noisy_file_count": 2,
+        "command": [
+            "python",
+            "-m",
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--family",
+            "longmemeval",
+            "--series-prefix",
+            "longmemeval_summary_synthesis_offset225_limit25",
+            "--only-noisy",
+            "--summary-only",
+            "--top-series-limit",
+            "10",
+        ],
+        "command_shell": (
+            f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+            f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25 "
+            f"--only-noisy --summary-only --top-series-limit 10"
+        ),
+    }
     assert [row["family"] for row in payload["family_commands"]] == ["debug", "longmemeval", "scorecard"]
     longmemeval_command = next(row for row in payload["family_commands"] if row["family"] == "longmemeval")
     assert "--family" in longmemeval_command["command"]
@@ -3277,6 +3332,13 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
     ]
     assert "--series-prefix" in payload["current_command"]
     assert "longmemeval_summary_synthesis_offset225_limit25" in payload["current_command"]
+    assert payload["recommended_focus"] == {
+        "scope": "series",
+        "status": "already_focused",
+        "family": None,
+        "series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+        "reported_file_count": 2,
+    }
     assert [row["family"] for row in payload["family_commands"]] == ["longmemeval"]
     longmemeval_command = next(row for row in payload["family_commands"] if row["family"] == "longmemeval")
     assert "--series-prefix" in longmemeval_command["command"]
