@@ -3431,6 +3431,7 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "command_transition_count": 2,
         "mixed_transition_count": 0,
         "non_command_transition_count": 0,
+        "command_transition_coverage": 1.0,
         "phase_signatures": ["focus->drilldown", "drilldown->next_step"],
     }
     assert payload["family_competition"] == [
@@ -4431,6 +4432,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "command_transition_count": 1,
         "mixed_transition_count": 0,
         "non_command_transition_count": 0,
+        "command_transition_coverage": 1.0,
         "phase_signatures": ["focus->next_step"],
     }
     assert payload["family_competition"] == [
@@ -5173,6 +5175,7 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "command_transition_count": 0,
         "mixed_transition_count": 1,
         "non_command_transition_count": 0,
+        "command_transition_coverage": 0.0,
         "phase_signatures": ["focus->next_step"],
     }
     assert payload["family_competition"] == [

@@ -2267,6 +2267,14 @@ def _build_benchmark_runs_git_report(
             for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
             if not previous_step["command"] and not next_step["command"]
         ),
+        "command_transition_coverage": round(
+            sum(
+                1
+                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                if previous_step["command"] and next_step["command"]
+            ) / len(recommended_sequence_transitions),
+            4,
+        ) if recommended_sequence_transitions else 0.0,
         "phase_signatures": [
             f"{transition['from_phase']}->{transition['to_phase']}"
             for transition in recommended_sequence_transitions
