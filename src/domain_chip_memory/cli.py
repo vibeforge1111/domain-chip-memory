@@ -1499,6 +1499,16 @@ def _build_benchmark_runs_git_report(
             dominance_label = "major"
         row["reported_file_share"] = reported_file_share
         row["dominance_label"] = dominance_label
+    ranked_family_rows = sorted(
+        ordered_family_rows,
+        key=lambda row: (-row["file_count"], row["family"]),
+    )
+    ranked_family_by_name = {
+        row["family"]: index
+        for index, row in enumerate(ranked_family_rows)
+    }
+    for row in ordered_family_rows:
+        row["family_rank"] = ranked_family_by_name[row["family"]] + 1
     ordered_series_rows = [
         series_rows[key]
         for key in sorted(series_rows, key=lambda item: (item[0], item[1]))
@@ -1554,6 +1564,16 @@ def _build_benchmark_runs_git_report(
     ]
     for row in family_commands:
         row["command_shell"] = " ".join(_shell_quote_arg(part) for part in row["command"])
+    ranked_family_command_rows = sorted(
+        family_commands,
+        key=lambda row: (row["noisy_file_count"], row["family"]),
+        reverse=True,
+    )
+    ranked_family_command_by_name = {
+        row["family"]: index
+        for index, row in enumerate(ranked_family_command_rows)
+    }
+    noisy_family_total = sum(row["noisy_file_count"] for row in ranked_family_command_rows)
     family_hotspots = []
     for row in ordered_family_rows:
         family = row["family"]
@@ -1711,6 +1731,44 @@ def _build_benchmark_runs_git_report(
         )
     elif len(ordered_family_rows) == 1:
         recommended_family = ordered_family_rows[0]
+    recommended_family_gap = None
+    if recommended_family is not None:
+        ranked_index = ranked_family_command_by_name.get(recommended_family["family"])
+        if ranked_index is not None and ranked_index + 1 < len(ranked_family_command_rows):
+            current_family_command = ranked_family_command_rows[ranked_index]
+            next_family_command = ranked_family_command_rows[ranked_index + 1]
+            current_noisy_share = (
+                round(current_family_command["noisy_file_count"] / noisy_family_total, 4)
+                if noisy_family_total
+                else 0.0
+            )
+            next_noisy_share = (
+                round(next_family_command["noisy_file_count"] / noisy_family_total, 4)
+                if noisy_family_total
+                else 0.0
+            )
+            share_gap = round(current_noisy_share - next_noisy_share, 4)
+            file_count_gap = current_family_command["noisy_file_count"] - next_family_command["noisy_file_count"]
+            lead_label = "narrow"
+            if share_gap >= 0.25:
+                lead_label = "wide"
+            elif share_gap >= 0.1:
+                lead_label = "clear"
+            recommended_family_gap = {
+                "scope": "gap_to_next_family",
+                "family": recommended_family["family"],
+                "next_family": next_family_command["family"],
+                "noisy_file_count_gap": file_count_gap,
+                "noisy_share_gap": share_gap,
+                "lead_label": lead_label,
+            }
+        else:
+            recommended_family_gap = {
+                "scope": "single_family_view",
+                "family": recommended_family["family"],
+                "reported_file_share": recommended_family["reported_file_share"],
+                "dominance_label": recommended_family["dominance_label"],
+            }
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -1727,6 +1785,7 @@ def _build_benchmark_runs_git_report(
         "recommended_focus": recommended_focus,
         "recommended_drilldown": recommended_drilldown,
         "recommended_family": recommended_family,
+        "recommended_family_gap": recommended_family_gap,
         "recommended_followups": recommended_followups,
         "family_commands": family_commands,
         "family_hotspots": family_hotspots,

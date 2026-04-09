@@ -3177,27 +3177,40 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
     assert family_rows["debug"]["git_status_counts"] == {"??": 1}
     assert family_rows["debug"]["reported_file_share"] == 0.2
     assert family_rows["debug"]["dominance_label"] == "minor"
+    assert family_rows["debug"]["family_rank"] == 1
     assert family_rows["longmemeval"]["paths"] == ["artifacts/benchmark_runs/longmemeval_offset225_limit25_source.json"]
     assert family_rows["longmemeval"]["git_status_counts"] == {"??": 1}
     assert family_rows["longmemeval"]["reported_file_share"] == 0.2
     assert family_rows["longmemeval"]["dominance_label"] == "minor"
+    assert family_rows["longmemeval"]["family_rank"] == 2
     assert family_rows["scorecard"]["paths"] == [
         "artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10_v1_scorecard.json"
     ]
     assert family_rows["scorecard"]["git_status_counts"] == {"M": 1}
     assert family_rows["scorecard"]["reported_file_share"] == 0.2
     assert family_rows["scorecard"]["dominance_label"] == "minor"
+    assert family_rows["scorecard"]["family_rank"] == 5
     assert family_rows["official_eval_manifest"]["paths"] == [
         "artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"
     ]
     assert family_rows["official_eval_manifest"]["git_status_counts"] == {"clean": 1}
     assert family_rows["official_eval_manifest"]["reported_file_share"] == 0.2
     assert family_rows["official_eval_manifest"]["dominance_label"] == "minor"
+    assert family_rows["official_eval_manifest"]["family_rank"] == 3
     assert family_rows["other"]["paths"] == ["artifacts/benchmark_runs/misc_snapshot.json"]
     assert family_rows["other"]["git_status_counts"] == {"clean": 1}
     assert family_rows["other"]["reported_file_share"] == 0.2
     assert family_rows["other"]["dominance_label"] == "minor"
+    assert family_rows["other"]["family_rank"] == 4
     assert payload["recommended_family"] == family_rows["scorecard"]
+    assert payload["recommended_family_gap"] == {
+        "scope": "gap_to_next_family",
+        "family": "scorecard",
+        "next_family": "longmemeval",
+        "noisy_file_count_gap": 0,
+        "noisy_share_gap": 0.0,
+        "lead_label": "narrow",
+    }
     assert series_rows[("debug", "_debug")]["git_status_counts"] == {"??": 1}
     assert series_rows[("longmemeval", "longmemeval_offset225_limit25_source")]["git_status_counts"] == {"??": 1}
     assert series_rows[("scorecard", "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10")]["git_status_counts"] == {"M": 1}
@@ -3544,6 +3557,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             "git_status_counts": {"??": 2},
             "reported_file_share": 1.0,
             "dominance_label": "dominant",
+            "family_rank": 1,
         }
     ]
     assert payload["top_noisy_series"] == [
@@ -3591,6 +3605,15 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "git_status_counts": {"??": 2},
         "reported_file_share": 1.0,
         "dominance_label": "dominant",
+        "family_rank": 1,
+    }
+    assert payload["recommended_family_gap"] == {
+        "scope": "gap_to_next_family",
+        "family": "longmemeval",
+        "next_family": "scorecard",
+        "noisy_file_count_gap": 1,
+        "noisy_share_gap": 0.25,
+        "lead_label": "wide",
     }
     assert payload["recommended_followups"] == [payload["recommended_focus"]]
     assert payload["recommended_hotspot"] == payload["family_hotspots"][0]
@@ -3728,6 +3751,7 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
             "git_status_counts": {"??": 2},
             "reported_file_share": 1.0,
             "dominance_label": "dominant",
+            "family_rank": 1,
         }
     ]
     assert payload["series"] == [
@@ -3760,6 +3784,13 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "family": "longmemeval",
         "file_count": 2,
         "git_status_counts": {"??": 2},
+        "reported_file_share": 1.0,
+        "dominance_label": "dominant",
+        "family_rank": 1,
+    }
+    assert payload["recommended_family_gap"] == {
+        "scope": "single_family_view",
+        "family": "longmemeval",
         "reported_file_share": 1.0,
         "dominance_label": "dominant",
     }
