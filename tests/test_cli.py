@@ -3735,6 +3735,152 @@ def test_beam_judged_promotion_batch_cli_writes_empty_script_when_no_targets(tmp
     assert script_file.read_text(encoding="utf-8") == payload["script_text"]
 
 
+def test_beam_judged_promotion_batch_cli_can_execute_targets(tmp_path: Path, monkeypatch):
+    answers_root = tmp_path / "artifacts" / "beam_public_results"
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    upstream_repo_dir = tmp_path / "beam_upstream"
+    output_file = tmp_path / "artifacts" / "beam_promotion_batch.json"
+
+    (upstream_repo_dir / "chats" / "100K" / "1" / "probing_questions").mkdir(parents=True)
+    eval_path = (
+        answers_root
+        / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9"
+        / "100K"
+        / "1"
+        / "evaluation-domain_chip_memory_answers.json"
+    )
+    answers_path = eval_path.parent / "domain_chip_memory_answers.json"
+    eval_path.parent.mkdir(parents=True)
+    eval_path.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"llm_judge_score": 1.0}],
+                "event_ordering": [{"tau_norm": 0.5}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    answers_path.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"question": "q1", "llm_response": "a1"}],
+                "event_ordering": [{"question": "q2", "llm_response": "a2"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (upstream_repo_dir / "chats" / "100K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"rubric": ["extract"]}],
+                "event_ordering": [{"rubric": ["order"]}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    benchmark_runs_dir.mkdir(parents=True)
+    manifest_path = benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "status": "completed",
+                "upstream_repo_dir": str(upstream_repo_dir),
+                "official_chat_size_dir": "100K",
+                "requested_chat_size": "128K",
+                "conversation_ids": ["1"],
+                "input_directory": str(eval_path.parent.parent),
+                "result_file_name": "domain_chip_memory_answers.json",
+                "judge_config": {
+                    "provider": "minimax",
+                    "model": "MiniMax-M2.7",
+                    "base_url": "https://api.minimax.io/v1",
+                    "api_key_env": "MINIMAX_API_KEY",
+                },
+                "evaluation_files": [str(eval_path)],
+                "aggregate_summary": {"overall_average": 0.75},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    display_eval_path = "artifacts/beam_public_results/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9/100K/1/evaluation-domain_chip_memory_answers.json"
+    display_manifest_path = "artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"
+    monkeypatch.setattr(
+        cli,
+        "_git_status_by_path",
+        lambda paths, repo_root: {
+            display_eval_path: "clean",
+            display_manifest_path: "??",
+        },
+    )
+
+    class FakeCompletedProcess:
+        def __init__(self):
+            self.returncode = 0
+            self.stdout = "staged promotion target\n"
+            self.stderr = ""
+
+    captured_commands = []
+
+    def fake_run(command, *, cwd, capture_output, text, check):
+        captured_commands.append(
+            {
+                "command": command,
+                "cwd": cwd,
+                "capture_output": capture_output,
+                "text": text,
+                "check": check,
+            }
+        )
+        return FakeCompletedProcess()
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+    monkeypatch.setenv("MINIMAX_API_KEY", "minimax-test-key")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "beam-judged-promotion-batch",
+            "--artifact-prefix",
+            "official_beam_128k_summary_synthesis_memory_heuristic_v1_",
+            "--answers-root",
+            str(answers_root),
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--execute",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["execute_requested"] is True
+    assert payload["promotion_target_count"] == 1
+    assert payload["executed_target_count"] == 1
+    assert payload["execution_status_counts"] == {"completed": 1}
+    assert payload["completed_execution_count"] == 1
+    assert payload["failed_execution_count"] == 0
+    assert payload["execution_results"][0]["status"] == "completed"
+    assert payload["execution_results"][0]["return_code"] == 0
+    assert payload["execution_results"][0]["stdout_tail"] == ["staged promotion target"]
+    assert captured_commands[0]["command"] == [
+        "git",
+        "add",
+        "--",
+        display_manifest_path,
+        display_eval_path,
+    ]
+    assert captured_commands[0]["cwd"] == str(tmp_path.resolve())
+    assert captured_commands[0]["capture_output"] is True
+    assert captured_commands[0]["text"] is True
+    assert captured_commands[0]["check"] is False
+
+
 def test_beam_judged_resume_plan_cli_emits_exact_rerun_command(tmp_path: Path, monkeypatch):
     answers_root = tmp_path / "artifacts" / "beam_public_results"
     benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
