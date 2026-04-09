@@ -2821,8 +2821,112 @@ def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path
     assert payload["scorecard_count"] == 1
     assert payload["aggregate_evaluation_summary"]["evaluation_file_count"] == 2
     assert payload["aggregate_evaluation_summary"]["overall_average"] == 0.75
+    assert payload["category_universe"] == ["event_ordering", "information_extraction"]
+    assert payload["max_category_count_seen"] == 2
     assert payload["evaluation_files"][0]["path"].endswith("conv1_v9/100K/1/evaluation-domain_chip_memory_answers.json")
     assert payload["official_eval_manifests"][0]["status"] == "completed"
+    assert payload["official_eval_manifests"][0]["diagnostic_classification"] == "completed"
+    assert payload["official_eval_manifests"][0]["promotable_candidate"] is True
+
+
+def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(tmp_path: Path, monkeypatch):
+    answers_root = tmp_path / "artifacts" / "beam_public_results"
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "beam_cleanup_report.json"
+
+    timeout_eval = (
+        answers_root
+        / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9"
+        / "100K"
+        / "1"
+        / "evaluation-domain_chip_memory_answers.json"
+    )
+    timeout_eval.parent.mkdir(parents=True)
+    timeout_eval.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"llm_judge_score": 1.0}],
+                "event_ordering": [{"tau_norm": 0.5}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    partial_eval = (
+        answers_root
+        / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2"
+        / "100K"
+        / "3"
+        / "evaluation-domain_chip_memory_answers.json"
+    )
+    partial_eval.parent.mkdir(parents=True)
+    partial_eval.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"llm_judge_score": 1.0}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    benchmark_runs_dir.mkdir(parents=True)
+    (benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json").write_text(
+        json.dumps(
+            {
+                "status": "partial",
+                "evaluation_files": [str(timeout_eval)],
+                "missing_evaluation_files": [],
+                "stderr_tail": ["Timed out waiting for MiniMax BEAM evaluation worker after 900 seconds."],
+                "aggregate_summary": {"overall_average": 0.75},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2_official_eval.json").write_text(
+        json.dumps(
+            {
+                "status": "partial",
+                "evaluation_files": [str(partial_eval)],
+                "missing_evaluation_files": [],
+                "stderr_tail": ["3: TypeError: list indices must be integers or slices, not str"],
+                "aggregate_summary": {"overall_average": 1.0},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "beam-judged-cleanup-report",
+            "--artifact-prefix",
+            "official_beam_128k_summary_synthesis_memory_heuristic_v1_",
+            "--answers-root",
+            str(answers_root),
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    manifest_rows = {Path(item["path"]).name: item for item in payload["official_eval_manifests"]}
+
+    timeout_row = manifest_rows["official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"]
+    assert timeout_row["diagnostic_classification"] == "timeout_after_complete_write"
+    assert timeout_row["missing_categories"] == []
+    assert timeout_row["promotable_candidate"] is True
+
+    partial_row = manifest_rows["official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2_official_eval.json"]
+    assert partial_row["diagnostic_classification"] == "worker_error_partial_coverage"
+    assert partial_row["missing_categories"] == ["event_ordering"]
+    assert partial_row["promotable_candidate"] is False
 
 
 def test_run_beam_official_evaluation_cli_invokes_upstream_subprocess(tmp_path: Path, monkeypatch):

@@ -550,6 +550,13 @@ def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def _load_beam_evaluation_categories(path: str | Path) -> list[str]:
+    payload = _load_json_file(path)
+    if not isinstance(payload, dict):
+        return []
+    return sorted(key for key, items in payload.items() if isinstance(items, list) and items)
+
+
 def _display_path(path: Path, root: Path) -> str:
     try:
         return str(path.relative_to(root)).replace("\\", "/")
@@ -581,6 +588,34 @@ def _git_status_by_path(paths: list[Path], *, repo_root: Path) -> dict[str, str]
         path = line[3:].strip().replace("\\", "/")
         status_by_path[path] = status
     return status_by_path
+
+
+def _classify_beam_cleanup_manifest(
+    *,
+    status: str,
+    missing_evaluation_files: list[str],
+    discovered_categories: set[str],
+    category_universe: set[str],
+    stderr_tail: list[str],
+) -> str:
+    missing_categories = category_universe - discovered_categories if category_universe else set()
+    timeout_detected = any("Timed out waiting" in line for line in stderr_tail)
+    if status == "completed":
+        return "completed"
+    if missing_evaluation_files:
+        return "missing_evaluation_files"
+    if status == "partial":
+        if timeout_detected and discovered_categories and not missing_categories:
+            return "timeout_after_complete_write"
+        if stderr_tail and missing_categories:
+            return "worker_error_partial_coverage"
+        if stderr_tail:
+            return "worker_error"
+        if missing_categories:
+            return "partial_missing_categories"
+        if discovered_categories:
+            return "partial_full_coverage"
+    return "unknown"
 
 
 def _resolve_repo_source_files(
@@ -818,8 +853,13 @@ def _build_beam_judged_cleanup_report(
     )
 
     evaluation_rows = []
+    evaluation_categories_by_path: dict[str, list[str]] = {}
+    category_universe: set[str] = set()
     for path in evaluation_files:
         summary = summarize_beam_official_evaluation(path)
+        categories = _load_beam_evaluation_categories(path)
+        evaluation_categories_by_path[str(path.resolve())] = categories
+        category_universe.update(categories)
         display_path = _display_path(path, repo_root_path)
         evaluation_rows.append(
             {
@@ -827,6 +867,7 @@ def _build_beam_judged_cleanup_report(
                 "git_status": git_status_by_path.get(display_path, "clean"),
                 "overall_average": summary["overall_average"],
                 "category_count": summary["category_count"],
+                "categories": categories,
             }
         )
 
@@ -837,6 +878,24 @@ def _build_beam_judged_cleanup_report(
             continue
         display_path = _display_path(path, repo_root_path)
         aggregate_summary = payload.get("aggregate_summary") if isinstance(payload.get("aggregate_summary"), dict) else {}
+        manifest_evaluation_files = [Path(item) for item in payload.get("evaluation_files", []) if str(item).strip()]
+        discovered_categories: set[str] = set()
+        for evaluation_file in manifest_evaluation_files:
+            resolved_key = str(evaluation_file.resolve())
+            categories = evaluation_categories_by_path.get(resolved_key)
+            if categories is None and evaluation_file.is_file():
+                categories = _load_beam_evaluation_categories(evaluation_file)
+            discovered_categories.update(categories or [])
+        missing_evaluation_files = [str(item) for item in payload.get("missing_evaluation_files", []) if str(item).strip()]
+        stderr_tail = [str(item) for item in payload.get("stderr_tail", []) if str(item).strip()]
+        missing_categories = sorted(category_universe - discovered_categories) if category_universe else []
+        diagnostic_classification = _classify_beam_cleanup_manifest(
+            status=str(payload.get("status") or ""),
+            missing_evaluation_files=missing_evaluation_files,
+            discovered_categories=discovered_categories,
+            category_universe=category_universe,
+            stderr_tail=stderr_tail,
+        )
         official_eval_rows.append(
             {
                 "path": display_path,
@@ -844,6 +903,13 @@ def _build_beam_judged_cleanup_report(
                 "status": str(payload.get("status") or ""),
                 "overall_average": aggregate_summary.get("overall_average"),
                 "evaluation_file_count": len(list(payload.get("evaluation_files") or [])),
+                "category_count": len(discovered_categories),
+                "categories": sorted(discovered_categories),
+                "missing_categories": missing_categories,
+                "missing_evaluation_file_count": len(missing_evaluation_files),
+                "diagnostic_classification": diagnostic_classification,
+                "promotable_candidate": diagnostic_classification in {"completed", "timeout_after_complete_write"},
+                "stderr_tail_last": stderr_tail[-1] if stderr_tail else "",
             }
         )
 
@@ -875,6 +941,8 @@ def _build_beam_judged_cleanup_report(
         "official_eval_manifest_count": len(official_eval_rows),
         "scorecard_count": len(scorecard_rows),
         "git_status_counts": git_status_counts,
+        "category_universe": sorted(category_universe),
+        "max_category_count_seen": max((len(categories) for categories in evaluation_categories_by_path.values()), default=0),
         "aggregate_evaluation_summary": aggregate_evaluation_summary,
         "evaluation_files": evaluation_rows,
         "official_eval_manifests": official_eval_rows,
