@@ -2771,6 +2771,55 @@ def _build_benchmark_runs_git_report(
                 ) / len(recommended_sequence_transitions),
                 4,
             ),
+            "competition_label": (
+                "contested"
+                if (
+                    (
+                        sorted(
+                            (
+                                sum(
+                                    1
+                                    for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                    if previous_step["command"] and next_step["command"]
+                                ),
+                                sum(
+                                    1
+                                    for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                    if bool(previous_step["command"]) != bool(next_step["command"])
+                                ),
+                                sum(
+                                    1
+                                    for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                    if not previous_step["command"] and not next_step["command"]
+                                ),
+                            ),
+                            reverse=True,
+                        )[0]
+                        - sorted(
+                            (
+                                sum(
+                                    1
+                                    for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                    if previous_step["command"] and next_step["command"]
+                                ),
+                                sum(
+                                    1
+                                    for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                    if bool(previous_step["command"]) != bool(next_step["command"])
+                                ),
+                                sum(
+                                    1
+                                    for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                    if not previous_step["command"] and not next_step["command"]
+                                ),
+                            ),
+                            reverse=True,
+                        )[1]
+                    )
+                    <= 1
+                )
+                else "clear"
+            ),
             "is_contested": (
                 (
                     sorted(
