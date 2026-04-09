@@ -2789,6 +2789,8 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["source_mode"] == "benchmark_runs_git_report"
+    assert payload["family_filter"] is None
+    assert payload["available_families"] == ["debug", "longmemeval", "official_eval_manifest", "other", "scorecard"]
     assert payload["only_noisy"] is False
     assert payload["top_series_limit"] == 10
     assert payload["summary_only"] is False
@@ -2917,6 +2919,7 @@ def test_benchmark_runs_git_report_cli_only_noisy_filters_clean_families(tmp_pat
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["only_noisy"] is True
+    assert payload["family_filter"] is None
     assert payload["top_series_limit"] == 10
     assert payload["summary_only"] is False
     assert payload["paths_included"] is True
@@ -3097,6 +3100,78 @@ def test_benchmark_runs_git_report_cli_summary_only_omits_paths_and_full_noisy_f
     assert all("paths" not in row for row in payload["series"])
     assert all("paths" not in row for row in payload["top_noisy_series"])
     assert [row["series"] for row in payload["top_noisy_series"]] == ["longmemeval_summary_synthesis_offset225_limit25"]
+
+
+def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, monkeypatch):
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "benchmark_runs_git_report.json"
+
+    paths = [
+        benchmark_runs_dir / "_debug_abc123.json",
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset225_limit25_v1.json",
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset225_limit25_v2.json",
+        benchmark_runs_dir / "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5_v2_scorecard.json",
+    ]
+    benchmark_runs_dir.mkdir(parents=True)
+    for path in paths:
+        path.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        cli,
+        "_git_status_by_path",
+        lambda paths, repo_root: {
+            "artifacts/benchmark_runs/_debug_abc123.json": "??",
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset225_limit25_v1.json": "??",
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset225_limit25_v2.json": "??",
+            "artifacts/benchmark_runs/official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5_v2_scorecard.json": "??",
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--only-noisy",
+            "--summary-only",
+            "--family",
+            "longmemeval",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["family_filter"] == "longmemeval"
+    assert payload["available_families"] == ["debug", "longmemeval", "scorecard"]
+    assert payload["file_count"] == 4
+    assert payload["reported_file_count"] == 2
+    assert payload["reported_family_count"] == 1
+    assert payload["reported_series_count"] == 1
+    assert payload["reported_git_status_counts"] == {"??": 2}
+    assert payload["noisy_file_count"] == 2
+    assert payload["listed_noisy_file_count"] == 0
+    assert payload["families"] == [
+        {
+            "family": "longmemeval",
+            "file_count": 2,
+            "git_status_counts": {"??": 2},
+        }
+    ]
+    assert payload["top_noisy_series"] == [
+        {
+            "family": "longmemeval",
+            "series": "longmemeval_summary_synthesis_offset225_limit25",
+            "file_count": 2,
+            "git_status_counts": {"??": 2},
+        }
+    ]
 
 
 def test_git_status_by_path_batches_large_path_sets(tmp_path: Path, monkeypatch):

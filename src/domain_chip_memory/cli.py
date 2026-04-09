@@ -1382,11 +1382,13 @@ def _build_benchmark_runs_git_report(
     only_noisy: bool = False,
     top_series_limit: int = 10,
     summary_only: bool = False,
+    family_filter: str | None = None,
 ) -> dict:
     benchmark_runs_path = Path(benchmark_runs_dir)
     repo_root_path = Path(repo_root)
     files = sorted(path for path in benchmark_runs_path.glob("*.json") if path.is_file())
     git_status_by_path = _git_status_by_path(files, repo_root=repo_root_path)
+    available_families = sorted({_benchmark_runs_file_family(path) for path in files})
 
     git_status_counts: dict[str, int] = {}
     for path in files:
@@ -1408,6 +1410,9 @@ def _build_benchmark_runs_git_report(
         for path in noisy_paths
     ]
     reported_paths = noisy_paths if only_noisy else files
+    if family_filter:
+        reported_paths = [path for path in reported_paths if _benchmark_runs_file_family(path) == family_filter]
+        noisy_files = [row for row in noisy_files if row["family"] == family_filter]
     family_rows: dict[str, dict] = {}
     reported_git_status_counts: dict[str, int] = {}
     series_rows: dict[tuple[str, str], dict] = {}
@@ -1463,6 +1468,8 @@ def _build_benchmark_runs_git_report(
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
         "repo_root": str(repo_root_path),
+        "family_filter": family_filter,
+        "available_families": available_families,
         "only_noisy": only_noisy,
         "top_series_limit": top_series_limit,
         "summary_only": summary_only,
@@ -2128,6 +2135,7 @@ def main() -> None:
     benchmark_runs_git_report = subparsers.add_parser("benchmark-runs-git-report", help="Summarize benchmark-runs JSON files by git status and file family.")
     benchmark_runs_git_report.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
     benchmark_runs_git_report.add_argument("--repo-root", default=".")
+    benchmark_runs_git_report.add_argument("--family", choices=["debug", "longmemeval", "scorecard", "official_eval_manifest", "other"])
     benchmark_runs_git_report.add_argument("--only-noisy", action="store_true")
     benchmark_runs_git_report.add_argument("--top-series-limit", type=int, default=10)
     benchmark_runs_git_report.add_argument("--summary-only", action="store_true")
@@ -2563,6 +2571,7 @@ def main() -> None:
         payload = _build_benchmark_runs_git_report(
             benchmark_runs_dir=args.benchmark_runs_dir,
             repo_root=args.repo_root,
+            family_filter=args.family,
             only_noisy=args.only_noisy,
             top_series_limit=args.top_series_limit,
             summary_only=args.summary_only,
