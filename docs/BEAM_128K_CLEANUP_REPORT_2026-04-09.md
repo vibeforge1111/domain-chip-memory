@@ -159,7 +159,13 @@ The helper now also supports direct execution:
 
 - `--execute` runs the generated resume commands sequentially from the repo root
 - the JSON output captures per-target `return_code`, `status`, `stdout_tail`, and `stderr_tail`
-- I have not run `--execute` against the live `128K` artifacts yet, so the worktree remains free of any new judged-output churn from this helper
+- `--execute` now preflights the configured judge API key env var before spawning a rerun command
+- current shell state: `MINIMAX_API_KEY` is unset
+- live runtime result from the batch builder in the current shell:
+  - `conv1_v9`: `blocked_missing_env`
+  - `conv2_v2`: `blocked_missing_env`
+  - `conv3_v2`: `blocked_missing_env`
+- that means the helper now fails cleanly instead of launching doomed `MiniMax` reruns when the judge key is absent, and the worktree remains free of any new judged-output churn from this helper
 
 The previously modified tracked file also appears materially incomplete relative to the current `128K` category universe:
 
