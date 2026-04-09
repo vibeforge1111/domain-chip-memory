@@ -1237,6 +1237,17 @@ def _build_beam_judged_cleanup_report(
     blocked_official_eval_manifest_count = sum(
         1 for row in official_eval_rows if str(row.get("cleanup_blocked_reason") or "").strip()
     )
+    promotable_untracked_official_eval_manifests = [
+        {
+            "path": str(row.get("path") or ""),
+            "git_status": str(row.get("git_status") or ""),
+            "diagnostic_classification": str(row.get("diagnostic_classification") or ""),
+            "overall_average": row.get("overall_average"),
+            "evaluation_file_count": row.get("evaluation_file_count"),
+        }
+        for row in official_eval_rows
+        if row.get("git_status") == "??" and bool(row.get("promotable_candidate"))
+    ]
 
     return {
         "benchmark_name": "BEAM",
@@ -1252,6 +1263,8 @@ def _build_beam_judged_cleanup_report(
         "runnable_official_eval_manifest_count": len(official_eval_rows) - blocked_official_eval_manifest_count,
         "blocked_official_eval_manifest_count": blocked_official_eval_manifest_count,
         "blocked_missing_env_vars": blocked_missing_env_vars,
+        "promotable_untracked_official_eval_manifest_count": len(promotable_untracked_official_eval_manifests),
+        "promotable_untracked_official_eval_manifests": promotable_untracked_official_eval_manifests,
         "scorecard_count": len(scorecard_rows),
         "git_status_counts": git_status_counts,
         "category_universe": sorted(category_universe),
