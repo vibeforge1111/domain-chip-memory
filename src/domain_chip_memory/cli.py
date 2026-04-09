@@ -1584,6 +1584,18 @@ def _build_benchmark_runs_git_report(
                 "command_shell": " ".join(_shell_quote_arg(part) for part in hotspot_command),
             }
         )
+    recommended_hotspot = None
+    if family_hotspots:
+        recommended_hotspot = max(
+            family_hotspots,
+            key=lambda row: (
+                1 if row["focus_mode"] == "series_first" else 0,
+                row["top_series_share"],
+                row["top_series_file_count"],
+                -row["series_count"],
+                row["family"],
+            ),
+        )
     series_commands = []
     for row in top_noisy_series:
         series_command = _benchmark_runs_git_report_command(
@@ -1671,6 +1683,11 @@ def _build_benchmark_runs_git_report(
                     "command_shell": " ".join(_shell_quote_arg(part) for part in series_command),
                 }
             )
+    if recommended_focus and recommended_focus.get("family"):
+        recommended_hotspot = next(
+            (row for row in family_hotspots if row["family"] == recommended_focus["family"]),
+            recommended_hotspot,
+        )
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -1688,6 +1705,7 @@ def _build_benchmark_runs_git_report(
         "recommended_followups": recommended_followups,
         "family_commands": family_commands,
         "family_hotspots": family_hotspots,
+        "recommended_hotspot": recommended_hotspot,
         "series_commands": series_commands,
         "file_count": len(files),
         "family_count": len(ordered_family_rows),

@@ -2978,6 +2978,9 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             ),
         },
     ]
+    assert payload["recommended_hotspot"] == next(
+        row for row in payload["family_hotspots"] if row["family"] == "scorecard"
+    )
     assert payload["series_commands"] == [
         {
             "family": "debug",
@@ -3568,6 +3571,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         ),
     }
     assert payload["recommended_followups"] == [payload["recommended_focus"]]
+    assert payload["recommended_hotspot"] == payload["family_hotspots"][0]
     assert payload["family_hotspots"] == [
         {
             "family": "longmemeval",
@@ -3728,6 +3732,7 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "reported_file_count": 2,
     }
     assert payload["recommended_followups"] == []
+    assert payload["recommended_hotspot"] == payload["family_hotspots"][0]
     assert payload["family_hotspots"] == [
         {
             "family": "longmemeval",
