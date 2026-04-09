@@ -8,6 +8,10 @@ This note captures the current exact-judge cleanup surface for the official-publ
 python -m domain_chip_memory.cli beam-judged-cleanup-report --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --write tmp\beam_128k_cleanup_report.json
 ```
 
+```powershell
+python -m domain_chip_memory.cli beam-judged-resume-plan --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --write tmp\beam_128k_resume_plan.json
+```
+
 ## Current State
 
 - answer variant directories found: `22`
@@ -113,6 +117,23 @@ The cleanup report now exposes ordered per-category progress and the next resume
     - question index: `1`
 
 That `conv3_v2` mismatch between persisted progress and last logged worker progress suggests the failure likely happened while processing `multi_session_reasoning`, before any rows from that category were safely written back to disk.
+
+## Exact Resume Commands
+
+The new resume-plan helper now emits exact rerun commands for the three blocked manifests:
+
+- `conv1_v9`
+  ```powershell
+  python -m domain_chip_memory.cli run-beam-official-evaluation C:\Users\USER\Desktop\domain-chip-memory\benchmark_data\official\BEAM-upstream C:\Users\USER\Desktop\domain-chip-memory\artifacts\beam_public_results\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9 --chat-size 128K --result-file-name domain_chip_memory_answers.json --start-index 0 --end-index 1 --max-workers 10 --judge-provider minimax --judge-model MiniMax-M2.7 --judge-base-url https://api.minimax.io/v1 --judge-api-key-env MINIMAX_API_KEY --write artifacts\benchmark_runs\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json
+  ```
+- `conv2_v2`
+  ```powershell
+  python -m domain_chip_memory.cli run-beam-official-evaluation C:\Users\USER\Desktop\domain-chip-memory\benchmark_data\official\BEAM-upstream C:\Users\USER\Desktop\domain-chip-memory\artifacts\beam_public_results\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv2_v2 --chat-size 128K --result-file-name domain_chip_memory_answers.json --start-index 0 --end-index 1 --max-workers 10 --judge-provider minimax --judge-model MiniMax-M2.7 --judge-base-url https://api.minimax.io/v1 --judge-api-key-env MINIMAX_API_KEY --write artifacts\benchmark_runs\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv2_v2_official_eval.json
+  ```
+- `conv3_v2`
+  ```powershell
+  python -m domain_chip_memory.cli run-beam-official-evaluation C:\Users\USER\Desktop\domain-chip-memory\benchmark_data\official\BEAM-upstream C:\Users\USER\Desktop\domain-chip-memory\artifacts\beam_public_results\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2 --chat-size 128K --result-file-name domain_chip_memory_answers.json --start-index 0 --end-index 1 --max-workers 10 --judge-provider minimax --judge-model MiniMax-M2.7 --judge-base-url https://api.minimax.io/v1 --judge-api-key-env MINIMAX_API_KEY --write artifacts\benchmark_runs\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2_official_eval.json
+  ```
 
 The previously modified tracked file also appears materially incomplete relative to the current `128K` category universe:
 
