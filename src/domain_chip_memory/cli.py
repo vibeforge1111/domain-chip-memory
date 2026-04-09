@@ -2163,7 +2163,11 @@ def _build_benchmark_runs_git_report(
             label = recommendation.get("reason") or recommendation.get("scope") or "recommendation"
         recommended_sequence_labels.append(label)
     recommended_sequence_shells: list[str] = []
+    recommended_sequence_commands: list[list[str]] = []
     for recommendation in recommended_sequence:
+        command = recommendation.get("command")
+        if command and command not in recommended_sequence_commands:
+            recommended_sequence_commands.append(command)
         command_shell = recommendation.get("command_shell")
         if command_shell and command_shell not in recommended_sequence_shells:
             recommended_sequence_shells.append(command_shell)
@@ -2186,6 +2190,7 @@ def _build_benchmark_runs_git_report(
         "recommended_sequence": recommended_sequence,
         "recommended_sequence_targets": recommended_sequence_targets,
         "recommended_sequence_labels": recommended_sequence_labels,
+        "recommended_sequence_commands": recommended_sequence_commands,
         "recommended_sequence_shells": recommended_sequence_shells,
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
