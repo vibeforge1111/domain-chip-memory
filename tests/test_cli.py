@@ -3198,6 +3198,91 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
     assert "--summary-only" in longmemeval_command["command"]
 
 
+def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, monkeypatch):
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "benchmark_runs_git_report.json"
+
+    paths = [
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset225_limit25_v1.json",
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset225_limit25_v2.json",
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset275_limit25_v1.json",
+        benchmark_runs_dir / "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5_v2_scorecard.json",
+    ]
+    benchmark_runs_dir.mkdir(parents=True)
+    for path in paths:
+        path.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        cli,
+        "_git_status_by_path",
+        lambda paths, repo_root: {
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset225_limit25_v1.json": "??",
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset225_limit25_v2.json": "??",
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset275_limit25_v1.json": "??",
+            "artifacts/benchmark_runs/official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5_v2_scorecard.json": "??",
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--only-noisy",
+            "--summary-only",
+            "--series-prefix",
+            "longmemeval_summary_synthesis_offset225_limit25",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["series_prefix"] == "longmemeval_summary_synthesis_offset225_limit25"
+    assert payload["file_count"] == 4
+    assert payload["reported_file_count"] == 2
+    assert payload["reported_family_count"] == 1
+    assert payload["reported_series_count"] == 1
+    assert payload["reported_git_status_counts"] == {"??": 2}
+    assert payload["noisy_file_count"] == 2
+    assert payload["listed_noisy_file_count"] == 0
+    assert payload["families"] == [
+        {
+            "family": "longmemeval",
+            "file_count": 2,
+            "git_status_counts": {"??": 2},
+        }
+    ]
+    assert payload["series"] == [
+        {
+            "family": "longmemeval",
+            "series": "longmemeval_summary_synthesis_offset225_limit25",
+            "file_count": 2,
+            "git_status_counts": {"??": 2},
+        }
+    ]
+    assert payload["top_noisy_series"] == [
+        {
+            "family": "longmemeval",
+            "series": "longmemeval_summary_synthesis_offset225_limit25",
+            "file_count": 2,
+            "git_status_counts": {"??": 2},
+        }
+    ]
+    assert "--series-prefix" in payload["current_command"]
+    assert "longmemeval_summary_synthesis_offset225_limit25" in payload["current_command"]
+    assert [row["family"] for row in payload["family_commands"]] == ["longmemeval"]
+    longmemeval_command = next(row for row in payload["family_commands"] if row["family"] == "longmemeval")
+    assert "--series-prefix" in longmemeval_command["command"]
+    assert "longmemeval_summary_synthesis_offset225_limit25" in longmemeval_command["command"]
+
+
 def test_git_status_by_path_batches_large_path_sets(tmp_path: Path, monkeypatch):
     paths = []
     for index in range(205):

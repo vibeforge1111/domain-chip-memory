@@ -1383,6 +1383,7 @@ def _benchmark_runs_git_report_command(
     top_series_limit: int,
     summary_only: bool,
     family_filter: str | None,
+    series_prefix: str | None,
 ) -> list[str]:
     command = [
         "python",
@@ -1396,6 +1397,8 @@ def _benchmark_runs_git_report_command(
     ]
     if family_filter:
         command.extend(["--family", family_filter])
+    if series_prefix:
+        command.extend(["--series-prefix", series_prefix])
     if only_noisy:
         command.append("--only-noisy")
     if summary_only:
@@ -1412,6 +1415,7 @@ def _build_benchmark_runs_git_report(
     top_series_limit: int = 10,
     summary_only: bool = False,
     family_filter: str | None = None,
+    series_prefix: str | None = None,
 ) -> dict:
     benchmark_runs_path = Path(benchmark_runs_dir)
     repo_root_path = Path(repo_root)
@@ -1446,6 +1450,9 @@ def _build_benchmark_runs_git_report(
     if family_filter:
         reported_paths = [path for path in reported_paths if _benchmark_runs_file_family(path) == family_filter]
         noisy_files = [row for row in noisy_files if row["family"] == family_filter]
+    if series_prefix:
+        reported_paths = [path for path in reported_paths if _benchmark_runs_series_key(path).startswith(series_prefix)]
+        noisy_files = [row for row in noisy_files if _benchmark_runs_series_key(Path(row["path"])).startswith(series_prefix)]
     family_rows: dict[str, dict] = {}
     reported_git_status_counts: dict[str, int] = {}
     series_rows: dict[tuple[str, str], dict] = {}
@@ -1492,6 +1499,12 @@ def _build_benchmark_runs_git_report(
     )
     top_noisy_series = ranked_series_rows[: max(top_series_limit, 0)]
     noisy_file_count = len(noisy_files)
+    family_command_counts = noisy_family_counts
+    if series_prefix:
+        family_command_counts = {}
+        for row in noisy_files:
+            family = row["family"]
+            family_command_counts[family] = family_command_counts.get(family, 0) + 1
     if summary_only:
         ordered_family_rows = [{k: v for k, v in row.items() if k != "paths"} for row in ordered_family_rows]
         ordered_series_rows = [{k: v for k, v in row.items() if k != "paths"} for row in ordered_series_rows]
@@ -1504,11 +1517,12 @@ def _build_benchmark_runs_git_report(
         top_series_limit=top_series_limit,
         summary_only=summary_only,
         family_filter=family_filter,
+        series_prefix=series_prefix,
     )
     family_commands = [
         {
             "family": family,
-            "noisy_file_count": noisy_family_counts[family],
+            "noisy_file_count": family_command_counts[family],
             "command": _benchmark_runs_git_report_command(
                 benchmark_runs_dir=benchmark_runs_path,
                 repo_root=repo_root_path,
@@ -1516,9 +1530,10 @@ def _build_benchmark_runs_git_report(
                 top_series_limit=top_series_limit,
                 summary_only=summary_only,
                 family_filter=family,
+                series_prefix=series_prefix,
             ),
         }
-        for family in sorted(noisy_family_counts)
+        for family in sorted(family_command_counts)
     ]
     for row in family_commands:
         row["command_shell"] = " ".join(_shell_quote_arg(part) for part in row["command"])
@@ -1527,6 +1542,7 @@ def _build_benchmark_runs_git_report(
         "benchmark_runs_dir": str(benchmark_runs_path),
         "repo_root": str(repo_root_path),
         "family_filter": family_filter,
+        "series_prefix": series_prefix,
         "available_families": available_families,
         "noisy_family_counts": noisy_family_counts,
         "only_noisy": only_noisy,
@@ -2198,6 +2214,7 @@ def main() -> None:
     benchmark_runs_git_report.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
     benchmark_runs_git_report.add_argument("--repo-root", default=".")
     benchmark_runs_git_report.add_argument("--family", choices=["debug", "longmemeval", "scorecard", "official_eval_manifest", "other"])
+    benchmark_runs_git_report.add_argument("--series-prefix")
     benchmark_runs_git_report.add_argument("--only-noisy", action="store_true")
     benchmark_runs_git_report.add_argument("--top-series-limit", type=int, default=10)
     benchmark_runs_git_report.add_argument("--summary-only", action="store_true")
@@ -2634,6 +2651,7 @@ def main() -> None:
             benchmark_runs_dir=args.benchmark_runs_dir,
             repo_root=args.repo_root,
             family_filter=args.family,
+            series_prefix=args.series_prefix,
             only_noisy=args.only_noisy,
             top_series_limit=args.top_series_limit,
             summary_only=args.summary_only,
