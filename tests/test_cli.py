@@ -2791,9 +2791,23 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
     assert payload["source_mode"] == "benchmark_runs_git_report"
     assert payload["family_filter"] is None
     assert payload["available_families"] == ["debug", "longmemeval", "official_eval_manifest", "other", "scorecard"]
+    assert payload["noisy_family_counts"] == {"debug": 1, "longmemeval": 1, "scorecard": 1}
     assert payload["only_noisy"] is False
     assert payload["top_series_limit"] == 10
     assert payload["summary_only"] is False
+    assert payload["current_command"] == [
+        "python",
+        "-m",
+        "domain_chip_memory.cli",
+        "benchmark-runs-git-report",
+        "--benchmark-runs-dir",
+        str(benchmark_runs_dir),
+        "--repo-root",
+        str(tmp_path),
+        "--top-series-limit",
+        "10",
+    ]
+    assert "benchmark-runs-git-report" in payload["current_command_shell"]
     assert payload["paths_included"] is True
     assert payload["file_count"] == 5
     assert payload["family_count"] == 5
@@ -2804,6 +2818,9 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
     assert payload["reported_series_count"] == 5
     assert payload["noisy_file_count"] == 3
     assert payload["listed_noisy_file_count"] == 3
+    assert [row["family"] for row in payload["family_commands"]] == ["debug", "longmemeval", "scorecard"]
+    assert all("--only-noisy" in row["command"] for row in payload["family_commands"])
+    assert all("benchmark-runs-git-report" in row["command_shell"] for row in payload["family_commands"])
     family_rows = {row["family"]: row for row in payload["families"]}
     series_rows = {(row["family"], row["series"]): row for row in payload["series"]}
     assert family_rows["debug"]["paths"] == ["artifacts/benchmark_runs/_debug_example.json"]
@@ -2920,6 +2937,7 @@ def test_benchmark_runs_git_report_cli_only_noisy_filters_clean_families(tmp_pat
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["only_noisy"] is True
     assert payload["family_filter"] is None
+    assert payload["noisy_family_counts"] == {"debug": 1, "scorecard": 1}
     assert payload["top_series_limit"] == 10
     assert payload["summary_only"] is False
     assert payload["paths_included"] is True
@@ -3150,6 +3168,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["family_filter"] == "longmemeval"
     assert payload["available_families"] == ["debug", "longmemeval", "scorecard"]
+    assert payload["noisy_family_counts"] == {"debug": 1, "longmemeval": 2, "scorecard": 1}
     assert payload["file_count"] == 4
     assert payload["reported_file_count"] == 2
     assert payload["reported_family_count"] == 1
@@ -3172,6 +3191,11 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             "git_status_counts": {"??": 2},
         }
     ]
+    assert [row["family"] for row in payload["family_commands"]] == ["debug", "longmemeval", "scorecard"]
+    longmemeval_command = next(row for row in payload["family_commands"] if row["family"] == "longmemeval")
+    assert "--family" in longmemeval_command["command"]
+    assert "longmemeval" in longmemeval_command["command"]
+    assert "--summary-only" in longmemeval_command["command"]
 
 
 def test_git_status_by_path_batches_large_path_sets(tmp_path: Path, monkeypatch):

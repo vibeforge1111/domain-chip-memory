@@ -1375,6 +1375,35 @@ def _benchmark_runs_series_key(path: Path) -> str:
     return stem
 
 
+def _benchmark_runs_git_report_command(
+    *,
+    benchmark_runs_dir: Path,
+    repo_root: Path,
+    only_noisy: bool,
+    top_series_limit: int,
+    summary_only: bool,
+    family_filter: str | None,
+) -> list[str]:
+    command = [
+        "python",
+        "-m",
+        "domain_chip_memory.cli",
+        "benchmark-runs-git-report",
+        "--benchmark-runs-dir",
+        str(benchmark_runs_dir),
+        "--repo-root",
+        str(repo_root),
+    ]
+    if family_filter:
+        command.extend(["--family", family_filter])
+    if only_noisy:
+        command.append("--only-noisy")
+    if summary_only:
+        command.append("--summary-only")
+    command.extend(["--top-series-limit", str(top_series_limit)])
+    return command
+
+
 def _build_benchmark_runs_git_report(
     *,
     benchmark_runs_dir: str | Path,
@@ -1409,6 +1438,10 @@ def _build_benchmark_runs_git_report(
         }
         for path in noisy_paths
     ]
+    noisy_family_counts: dict[str, int] = {}
+    for row in noisy_files:
+        family = row["family"]
+        noisy_family_counts[family] = noisy_family_counts.get(family, 0) + 1
     reported_paths = noisy_paths if only_noisy else files
     if family_filter:
         reported_paths = [path for path in reported_paths if _benchmark_runs_file_family(path) == family_filter]
@@ -1464,15 +1497,44 @@ def _build_benchmark_runs_git_report(
         ordered_series_rows = [{k: v for k, v in row.items() if k != "paths"} for row in ordered_series_rows]
         top_noisy_series = [{k: v for k, v in row.items() if k != "paths"} for row in top_noisy_series]
         noisy_files = []
+    current_command = _benchmark_runs_git_report_command(
+        benchmark_runs_dir=benchmark_runs_path,
+        repo_root=repo_root_path,
+        only_noisy=only_noisy,
+        top_series_limit=top_series_limit,
+        summary_only=summary_only,
+        family_filter=family_filter,
+    )
+    family_commands = [
+        {
+            "family": family,
+            "noisy_file_count": noisy_family_counts[family],
+            "command": _benchmark_runs_git_report_command(
+                benchmark_runs_dir=benchmark_runs_path,
+                repo_root=repo_root_path,
+                only_noisy=True,
+                top_series_limit=top_series_limit,
+                summary_only=summary_only,
+                family_filter=family,
+            ),
+        }
+        for family in sorted(noisy_family_counts)
+    ]
+    for row in family_commands:
+        row["command_shell"] = " ".join(_shell_quote_arg(part) for part in row["command"])
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
         "repo_root": str(repo_root_path),
         "family_filter": family_filter,
         "available_families": available_families,
+        "noisy_family_counts": noisy_family_counts,
         "only_noisy": only_noisy,
         "top_series_limit": top_series_limit,
         "summary_only": summary_only,
+        "current_command": current_command,
+        "current_command_shell": " ".join(_shell_quote_arg(part) for part in current_command),
+        "family_commands": family_commands,
         "file_count": len(files),
         "family_count": len(ordered_family_rows),
         "git_status_counts": git_status_counts,
