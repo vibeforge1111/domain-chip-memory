@@ -28,6 +28,10 @@ python -m domain_chip_memory.cli beam-judged-promotion-batch --artifact-prefix o
 python -m domain_chip_memory.cli beam-judged-drift-plan --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --write tmp\beam_128k_drift_plan_live.json
 ```
 
+```powershell
+python -m domain_chip_memory.cli beam-judged-drift-batch --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --script-file tmp\beam_128k_drift_batch.ps1 --write tmp\beam_128k_drift_batch.json
+```
+
 ## Current State
 
 - answer variant directories found: `22`
@@ -166,10 +170,19 @@ The new drift-plan helper turns that tracked row into exact next-step commands w
   - `git show HEAD:...`
   - `git restore --source=HEAD -- ...`
 
+The new drift-batch helper turns the same plan into one ordered PowerShell script:
+
+- `script_file`: `tmp\beam_128k_drift_batch.ps1`
+- `script_line_count`: `7`
+- generated live inspection commands:
+  - `git diff -- ...`
+  - `git show HEAD:...`
+- generated restore command remains commented out by default
+
 ## Practical Next Step
 
 The clean next move is:
 
 1. treat `conv1_v9`, `conv2_v2`, and `conv3_v2` as completed working-tree artifacts rather than blocked resume targets
 2. if promotion is desired, use `beam-judged-promotion-batch`, its generated `tmp\beam_128k_promotion_batch.ps1`, or `beam-judged-promotion-batch --execute` instead of hand-building `git add` commands
-3. use `beam-judged-drift-plan` to inspect or restore the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
+3. use `beam-judged-drift-batch` or `beam-judged-drift-plan` to inspect the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
