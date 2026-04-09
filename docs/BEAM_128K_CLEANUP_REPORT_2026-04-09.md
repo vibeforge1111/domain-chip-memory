@@ -25,6 +25,7 @@ python -m domain_chip_memory.cli beam-judged-resume-batch --artifact-prefix offi
 - runnable official-eval manifests: `3`
 - blocked official-eval manifests: `0`
 - blocked missing env vars: none
+- promotable untracked official-eval manifests: `3`
 - scorecards found: `124`
 - discovered evaluation-category universe: `10`
   - `abstention`
@@ -62,6 +63,12 @@ All three live `128K` official-eval manifests are now `completed`.
   - next pending category: none
 
 That means the earlier timeout and partial-coverage state has been cleared in the working tree artifacts.
+
+All three of those completed official-eval manifests are also currently untracked and promotable:
+
+- `conv1_v9`
+- `conv2_v2`
+- `conv3_v2`
 
 ## Resume Surface
 
@@ -106,5 +113,5 @@ That is still substantive drift, not judge-reason wording churn.
 The clean next move is:
 
 1. treat `conv1_v9`, `conv2_v2`, and `conv3_v2` as completed working-tree artifacts rather than blocked resume targets
-2. decide whether to promote, ignore, or discard those untracked completed `official_eval` artifacts
+2. decide whether to promote, ignore, or discard those three untracked completed `official_eval` artifacts
 3. separately investigate the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
