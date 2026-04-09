@@ -1796,6 +1796,32 @@ def test_checked_in_invalid_spark_kb_failure_script_runs(tmp_path: Path):
     assert (write_dir / "validation.json").exists()
 
 
+def test_checked_in_example_smoke_index_script_runs(tmp_path: Path):
+    repo_root = Path(__file__).resolve().parents[1]
+    script_path = repo_root / "docs" / "examples" / "run_smokes.py"
+    write_dir = tmp_path / "artifacts"
+
+    subprocess.run(
+        [
+            sys.executable,
+            str(script_path),
+            "--write-dir",
+            str(write_dir),
+        ],
+        check=True,
+        cwd=str(repo_root),
+    )
+
+    summary = json.loads((write_dir / "summary.json").read_text(encoding="utf-8"))
+    assert summary["all_expected_results_observed"] is True
+    assert summary["runs"]["spark_kb"]["validation_valid"] is True
+    assert summary["runs"]["spark_kb"]["health_valid"] is True
+    assert summary["runs"]["spark_kb_invalid"]["validation_valid"] is False
+    assert summary["runs"]["spark_kb_invalid"]["snapshot_valid"] is False
+    assert (write_dir / "spark_kb" / "summary.json").exists()
+    assert (write_dir / "spark_kb_invalid" / "summary.json").exists()
+
+
 def test_checked_in_sdk_maintenance_example_runs_via_cli(tmp_path: Path, monkeypatch):
     repo_root = Path(__file__).resolve().parents[1]
     single_file = repo_root / "docs" / "examples" / "sdk_maintenance" / "single_replay.json"
