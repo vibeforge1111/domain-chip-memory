@@ -46,6 +46,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [BEAM Official Reproduction Plan](BEAM_OFFICIAL_REPRODUCTION_PLAN_2026-03-29.md)
 - [BEAM Implementation Gap Map](BEAM_IMPLEMENTATION_GAP_MAP_2026-03-29.md)
 - [BEAM Official 128K Blocker](BEAM_OFFICIAL_128K_BLOCKER_2026-03-29.md)
+- [BEAM 128K Cleanup Report 2026-04-09](BEAM_128K_CLEANUP_REPORT_2026-04-09.md)
 - [BEAM Local Pilot Slice](BEAM_LOCAL_PILOT_SLICE_2026-03-25.md)
 
 ## Current Architecture Direction

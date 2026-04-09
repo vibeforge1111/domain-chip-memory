@@ -111,6 +111,7 @@ Interpretation:
 1. official judged `BEAM 128K`
    - local scorecard strength is already strong
    - alternate judged `500K`, `1M`, and `10M` closure does not replace exact `128K` judged cleanup
+   - current artifact-state cleanup snapshot is now captured in `docs/BEAM_128K_CLEANUP_REPORT_2026-04-09.md`
 2. broader clean `LoCoMo`
    - move beyond the bounded `conv-26` lane
 3. first canonical `GoodAI` run
