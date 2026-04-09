@@ -1381,6 +1381,7 @@ def _build_benchmark_runs_git_report(
     repo_root: str | Path,
     only_noisy: bool = False,
     top_series_limit: int = 10,
+    summary_only: bool = False,
 ) -> dict:
     benchmark_runs_path = Path(benchmark_runs_dir)
     repo_root_path = Path(repo_root)
@@ -1452,12 +1453,19 @@ def _build_benchmark_runs_git_report(
         key=lambda row: (-row["file_count"], row["family"], row["series"]),
     )
     top_noisy_series = ranked_series_rows[: max(top_series_limit, 0)]
+    noisy_file_count = len(noisy_files)
+    if summary_only:
+        ordered_family_rows = [{k: v for k, v in row.items() if k != "paths"} for row in ordered_family_rows]
+        ordered_series_rows = [{k: v for k, v in row.items() if k != "paths"} for row in ordered_series_rows]
+        top_noisy_series = [{k: v for k, v in row.items() if k != "paths"} for row in top_noisy_series]
+        noisy_files = []
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
         "repo_root": str(repo_root_path),
         "only_noisy": only_noisy,
         "top_series_limit": top_series_limit,
+        "summary_only": summary_only,
         "file_count": len(files),
         "family_count": len(ordered_family_rows),
         "git_status_counts": git_status_counts,
@@ -1465,10 +1473,12 @@ def _build_benchmark_runs_git_report(
         "reported_family_count": len(ordered_family_rows),
         "reported_git_status_counts": reported_git_status_counts,
         "reported_series_count": len(ordered_series_rows),
+        "paths_included": not summary_only,
         "families": ordered_family_rows,
         "series": ordered_series_rows,
         "top_noisy_series": top_noisy_series,
-        "noisy_file_count": len(noisy_files),
+        "noisy_file_count": noisy_file_count,
+        "listed_noisy_file_count": len(noisy_files),
         "noisy_files": noisy_files,
     }
 
@@ -2120,6 +2130,7 @@ def main() -> None:
     benchmark_runs_git_report.add_argument("--repo-root", default=".")
     benchmark_runs_git_report.add_argument("--only-noisy", action="store_true")
     benchmark_runs_git_report.add_argument("--top-series-limit", type=int, default=10)
+    benchmark_runs_git_report.add_argument("--summary-only", action="store_true")
     benchmark_runs_git_report.add_argument("--write")
     beam_judged_cleanup_report = subparsers.add_parser("beam-judged-cleanup-report", help="Summarize local judged BEAM artifact state for cleanup planning.")
     beam_judged_cleanup_report.add_argument("--artifact-prefix", default="official_beam_128k_")
@@ -2554,6 +2565,7 @@ def main() -> None:
             repo_root=args.repo_root,
             only_noisy=args.only_noisy,
             top_series_limit=args.top_series_limit,
+            summary_only=args.summary_only,
         )
         if args.write:
             _write_json(Path(args.write), payload)

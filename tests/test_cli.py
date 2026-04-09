@@ -2791,6 +2791,8 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
     assert payload["source_mode"] == "benchmark_runs_git_report"
     assert payload["only_noisy"] is False
     assert payload["top_series_limit"] == 10
+    assert payload["summary_only"] is False
+    assert payload["paths_included"] is True
     assert payload["file_count"] == 5
     assert payload["family_count"] == 5
     assert payload["git_status_counts"] == {"??": 2, "M": 1, "clean": 2}
@@ -2799,6 +2801,7 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
     assert payload["reported_git_status_counts"] == {"??": 2, "M": 1, "clean": 2}
     assert payload["reported_series_count"] == 5
     assert payload["noisy_file_count"] == 3
+    assert payload["listed_noisy_file_count"] == 3
     family_rows = {row["family"]: row for row in payload["families"]}
     series_rows = {(row["family"], row["series"]): row for row in payload["series"]}
     assert family_rows["debug"]["paths"] == ["artifacts/benchmark_runs/_debug_example.json"]
@@ -2915,6 +2918,8 @@ def test_benchmark_runs_git_report_cli_only_noisy_filters_clean_families(tmp_pat
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["only_noisy"] is True
     assert payload["top_series_limit"] == 10
+    assert payload["summary_only"] is False
+    assert payload["paths_included"] is True
     assert payload["file_count"] == 3
     assert payload["git_status_counts"] == {"??": 1, "M": 1, "clean": 1}
     assert payload["reported_file_count"] == 2
@@ -2924,6 +2929,7 @@ def test_benchmark_runs_git_report_cli_only_noisy_filters_clean_families(tmp_pat
     assert [row["family"] for row in payload["families"]] == ["debug", "scorecard"]
     assert [row["series"] for row in payload["top_noisy_series"]] == ["_debug", "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10"]
     assert payload["noisy_file_count"] == 2
+    assert payload["listed_noisy_file_count"] == 2
 
 
 def test_benchmark_runs_git_report_cli_groups_versions_into_series(tmp_path: Path, monkeypatch):
@@ -3035,6 +3041,61 @@ def test_benchmark_runs_git_report_cli_limits_top_series(tmp_path: Path, monkeyp
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["top_series_limit"] == 1
     assert payload["reported_series_count"] == 3
+    assert [row["series"] for row in payload["top_noisy_series"]] == ["longmemeval_summary_synthesis_offset225_limit25"]
+
+
+def test_benchmark_runs_git_report_cli_summary_only_omits_paths_and_full_noisy_file_list(tmp_path: Path, monkeypatch):
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "benchmark_runs_git_report.json"
+
+    paths = [
+        benchmark_runs_dir / "_debug_abc123.json",
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset225_limit25_v1.json",
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset225_limit25_v2.json",
+    ]
+    benchmark_runs_dir.mkdir(parents=True)
+    for path in paths:
+        path.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        cli,
+        "_git_status_by_path",
+        lambda paths, repo_root: {
+            "artifacts/benchmark_runs/_debug_abc123.json": "??",
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset225_limit25_v1.json": "??",
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset225_limit25_v2.json": "??",
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--only-noisy",
+            "--summary-only",
+            "--top-series-limit",
+            "1",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["summary_only"] is True
+    assert payload["paths_included"] is False
+    assert payload["noisy_file_count"] == 3
+    assert payload["listed_noisy_file_count"] == 0
+    assert payload["noisy_files"] == []
+    assert all("paths" not in row for row in payload["families"])
+    assert all("paths" not in row for row in payload["series"])
+    assert all("paths" not in row for row in payload["top_noisy_series"])
     assert [row["series"] for row in payload["top_noisy_series"]] == ["longmemeval_summary_synthesis_offset225_limit25"]
 
 
