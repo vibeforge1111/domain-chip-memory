@@ -2821,6 +2821,138 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
     assert [row["family"] for row in payload["family_commands"]] == ["debug", "longmemeval", "scorecard"]
     assert all("--only-noisy" in row["command"] for row in payload["family_commands"])
     assert all("benchmark-runs-git-report" in row["command_shell"] for row in payload["family_commands"])
+    assert payload["series_commands"] == [
+        {
+            "family": "debug",
+            "series_prefix": "_debug",
+            "noisy_file_count": 1,
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "debug",
+                "--series-prefix",
+                "_debug",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family debug --series-prefix _debug --only-noisy --top-series-limit 10"
+            ),
+        },
+        {
+            "family": "longmemeval",
+            "series_prefix": "longmemeval_offset225_limit25_source",
+            "noisy_file_count": 1,
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "longmemeval",
+                "--series-prefix",
+                "longmemeval_offset225_limit25_source",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_offset225_limit25_source --only-noisy --top-series-limit 10"
+            ),
+        },
+        {
+            "family": "official_eval_manifest",
+            "series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9",
+            "noisy_file_count": 1,
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "official_eval_manifest",
+                "--series-prefix",
+                "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family official_eval_manifest --series-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9 --only-noisy --top-series-limit 10"
+            ),
+        },
+        {
+            "family": "other",
+            "series_prefix": "misc_snapshot",
+            "noisy_file_count": 1,
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "other",
+                "--series-prefix",
+                "misc_snapshot",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family other --series-prefix misc_snapshot --only-noisy --top-series-limit 10"
+            ),
+        },
+        {
+            "family": "scorecard",
+            "series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+            "noisy_file_count": 1,
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "scorecard",
+                "--series-prefix",
+                "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10 --only-noisy --top-series-limit 10"
+            ),
+        },
+    ]
     assert payload["recommended_focus"] == {
         "scope": "family",
         "reason": "largest_noisy_family",
@@ -3279,6 +3411,36 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         ),
     }
     assert payload["recommended_followups"] == [payload["recommended_focus"]]
+    assert payload["series_commands"] == [
+        {
+            "family": "longmemeval",
+            "series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+            "noisy_file_count": 2,
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "longmemeval",
+                "--series-prefix",
+                "longmemeval_summary_synthesis_offset225_limit25",
+                "--only-noisy",
+                "--summary-only",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25 "
+                f"--only-noisy --summary-only --top-series-limit 10"
+            ),
+        }
+    ]
     assert [row["family"] for row in payload["family_commands"]] == ["debug", "longmemeval", "scorecard"]
     longmemeval_command = next(row for row in payload["family_commands"] if row["family"] == "longmemeval")
     assert "--family" in longmemeval_command["command"]
@@ -3373,6 +3535,36 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "reported_file_count": 2,
     }
     assert payload["recommended_followups"] == []
+    assert payload["series_commands"] == [
+        {
+            "family": "longmemeval",
+            "series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+            "noisy_file_count": 2,
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "longmemeval",
+                "--series-prefix",
+                "longmemeval_summary_synthesis_offset225_limit25",
+                "--only-noisy",
+                "--summary-only",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25 "
+                f"--only-noisy --summary-only --top-series-limit 10"
+            ),
+        }
+    ]
     assert [row["family"] for row in payload["family_commands"]] == ["longmemeval"]
     longmemeval_command = next(row for row in payload["family_commands"] if row["family"] == "longmemeval")
     assert "--series-prefix" in longmemeval_command["command"]

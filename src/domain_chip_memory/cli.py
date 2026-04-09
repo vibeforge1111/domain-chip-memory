@@ -1540,6 +1540,26 @@ def _build_benchmark_runs_git_report(
     ]
     for row in family_commands:
         row["command_shell"] = " ".join(_shell_quote_arg(part) for part in row["command"])
+    series_commands = []
+    for row in top_noisy_series:
+        series_command = _benchmark_runs_git_report_command(
+            benchmark_runs_dir=benchmark_runs_path,
+            repo_root=repo_root_path,
+            only_noisy=True,
+            top_series_limit=top_series_limit,
+            summary_only=summary_only,
+            family_filter=row["family"],
+            series_prefix=row["series"],
+        )
+        series_commands.append(
+            {
+                "family": row["family"],
+                "series_prefix": row["series"],
+                "noisy_file_count": row["file_count"],
+                "command": series_command,
+                "command_shell": " ".join(_shell_quote_arg(part) for part in series_command),
+            }
+        )
     recommended_focus = None
     recommended_followups: list[dict] = []
     if series_prefix:
@@ -1623,6 +1643,7 @@ def _build_benchmark_runs_git_report(
         "recommended_focus": recommended_focus,
         "recommended_followups": recommended_followups,
         "family_commands": family_commands,
+        "series_commands": series_commands,
         "file_count": len(files),
         "family_count": len(ordered_family_rows),
         "git_status_counts": git_status_counts,
