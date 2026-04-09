@@ -700,6 +700,111 @@ def test_build_spark_kb_command_ingests_repo_sources_from_manifest(tmp_path: Pat
     assert (output_dir / "raw" / "repos" / "02-src-snippet.py").exists()
 
 
+def test_build_spark_kb_command_ingests_filed_outputs_from_manifest(tmp_path: Path, monkeypatch):
+    output_dir = tmp_path / "compiled_vault"
+    snapshot_file = tmp_path / "snapshot.json"
+    filed_output_file = tmp_path / "answer.json"
+    filed_output_manifest_file = tmp_path / "filed-outputs.json"
+    summary_file = tmp_path / "summary.json"
+    captured: dict[str, object] = {}
+
+    filed_output_file.write_text(
+        json.dumps(
+            {
+                "slug": "manifest-answer",
+                "title": "Manifest Answer",
+                "question": "Where does the user live?",
+                "answer": "The user lives in Dubai.",
+                "sources": [{"title": "Snapshot", "link": "[[sources/runtime-memory-snapshot]]"}],
+                "generated_at": "2025-03-10T00:00:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+    filed_output_manifest_file.write_text(
+        json.dumps({"filed_output_files": [str(filed_output_file)]}),
+        encoding="utf-8",
+    )
+    snapshot_file.write_text(
+        json.dumps(
+            {
+                "runtime_class": "SparkMemorySDK",
+                "generated_at": "2025-03-10T00:00:00+00:00",
+                "counts": {
+                    "session_count": 1,
+                    "current_state_count": 1,
+                    "observation_count": 1,
+                    "event_count": 0,
+                },
+                "sessions": [
+                    {
+                        "session_id": "session-filed-manifest",
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "turns": [
+                            {
+                                "turn_id": "session-filed-manifest:t1",
+                                "speaker": "user",
+                                "text": "My preferred city is Dubai.",
+                            }
+                        ],
+                    }
+                ],
+                "current_state": [
+                    {
+                        "memory_role": "current_state",
+                        "subject": "user",
+                        "predicate": "location",
+                        "text": "user location Dubai",
+                        "session_id": "session-filed-manifest",
+                        "turn_ids": ["session-filed-manifest:t1"],
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "metadata": {"value": "Dubai", "observation_id": "obs-filed-manifest-1"},
+                    }
+                ],
+                "observations": [
+                    {
+                        "memory_role": "structured_evidence",
+                        "subject": "user",
+                        "predicate": "location",
+                        "text": "user location Dubai",
+                        "session_id": "session-filed-manifest",
+                        "turn_ids": ["session-filed-manifest:t1"],
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "metadata": {"value": "Dubai", "observation_id": "obs-filed-manifest-1"},
+                    }
+                ],
+                "events": [],
+                "trace": {"operation": "export_knowledge_base_snapshot"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-kb",
+            str(snapshot_file),
+            str(output_dir),
+            "--filed-output-manifest",
+            str(filed_output_manifest_file),
+            "--write",
+            str(summary_file),
+        ],
+    )
+
+    cli.main()
+
+    written = json.loads(summary_file.read_text(encoding="utf-8"))
+    assert written["snapshot_file"] == str(snapshot_file)
+    assert written["filed_output_manifest_file_count"] == 1
+    assert written["filed_output_file_count"] == 1
+    assert (output_dir / "wiki" / "outputs" / "query-manifest-answer.md").exists()
+
+
 def test_spark_kb_maintenance_report_surfaces_contradictions_and_staleness(tmp_path: Path):
     output_dir = tmp_path / "spark_kb_vault"
     snapshot = {

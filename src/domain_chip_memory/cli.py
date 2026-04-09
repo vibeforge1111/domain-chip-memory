@@ -529,13 +529,13 @@ def _build_demo_spark_kb_payload(output_dir: str, repo_sources: list[str] | None
     }
 
 
-def _load_repo_source_manifest(repo_source_manifest_file: str) -> list[str]:
-    manifest_path = Path(repo_source_manifest_file)
+def _load_string_list_manifest(manifest_file: str, *, key: str, label: str) -> list[str]:
+    manifest_path = Path(manifest_file)
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    repo_sources_payload = payload.get("repo_sources") if isinstance(payload, dict) else payload
-    if not isinstance(repo_sources_payload, list) or not all(isinstance(item, str) for item in repo_sources_payload):
-        raise ValueError("Repo source manifest file must contain a JSON list of strings or an object with a 'repo_sources' list.")
-    return repo_sources_payload
+    manifest_items = payload.get(key) if isinstance(payload, dict) else payload
+    if not isinstance(manifest_items, list) or not all(isinstance(item, str) for item in manifest_items):
+        raise ValueError(f"{label} must contain a JSON list of strings or an object with a '{key}' list.")
+    return manifest_items
 
 
 def _build_spark_kb_from_snapshot_file(
@@ -545,6 +545,7 @@ def _build_spark_kb_from_snapshot_file(
     repo_sources: list[str] | None = None,
     repo_source_manifest_files: list[str] | None = None,
     filed_output_files: list[str] | None = None,
+    filed_output_manifest_files: list[str] | None = None,
 ) -> dict:
     snapshot_path = Path(snapshot_file)
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
@@ -552,9 +553,24 @@ def _build_spark_kb_from_snapshot_file(
         raise ValueError("Spark KB snapshot file must contain a JSON object.")
     manifest_repo_sources: list[str] = []
     for repo_source_manifest_file in repo_source_manifest_files or []:
-        manifest_repo_sources.extend(_load_repo_source_manifest(repo_source_manifest_file))
+        manifest_repo_sources.extend(
+            _load_string_list_manifest(
+                repo_source_manifest_file,
+                key="repo_sources",
+                label="Repo source manifest file",
+            )
+        )
+    resolved_filed_output_files = list(filed_output_files or [])
+    for filed_output_manifest_file in filed_output_manifest_files or []:
+        resolved_filed_output_files.extend(
+            _load_string_list_manifest(
+                filed_output_manifest_file,
+                key="filed_output_files",
+                label="Filed output manifest file",
+            )
+        )
     filed_outputs: list[dict] = []
-    for filed_output_file in filed_output_files or []:
+    for filed_output_file in resolved_filed_output_files:
         payload = json.loads(Path(filed_output_file).read_text(encoding="utf-8"))
         if isinstance(payload, dict):
             filed_outputs.append(payload)
@@ -575,7 +591,8 @@ def _build_spark_kb_from_snapshot_file(
         "snapshot_file": str(snapshot_path),
         "snapshot": snapshot,
         "repo_source_manifest_file_count": len(list(repo_source_manifest_files or [])),
-        "filed_output_file_count": len(list(filed_output_files or [])),
+        "filed_output_manifest_file_count": len(list(filed_output_manifest_files or [])),
+        "filed_output_file_count": len(resolved_filed_output_files),
         "compile_result": compile_result,
     }
 
@@ -705,6 +722,7 @@ def main() -> None:
     build_spark_kb.add_argument("--repo-source", action="append", default=[])
     build_spark_kb.add_argument("--repo-source-manifest", action="append", default=[])
     build_spark_kb.add_argument("--filed-output-file", action="append", default=[])
+    build_spark_kb.add_argument("--filed-output-manifest", action="append", default=[])
     build_spark_kb.add_argument("--write")
     spark_kb_health = subparsers.add_parser("spark-kb-health-check", help="Run health checks over a scaffolded Spark KB vault.")
     spark_kb_health.add_argument("output_dir")
@@ -1062,6 +1080,7 @@ def main() -> None:
             repo_sources=args.repo_source,
             repo_source_manifest_files=args.repo_source_manifest,
             filed_output_files=args.filed_output_file,
+            filed_output_manifest_files=args.filed_output_manifest,
         )
         if args.write:
             _write_json(Path(args.write), payload)
