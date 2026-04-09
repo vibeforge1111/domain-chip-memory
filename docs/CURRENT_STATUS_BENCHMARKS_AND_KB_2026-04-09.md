@@ -191,6 +191,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - checked-in Spark KB example inputs now exist under `docs/examples/spark_kb/`
 - the checked-in Spark KB example bundle now has a real validate-build-health smoke test path
 - the checked-in Spark KB example bundle is now self-described in `docs/examples/spark_kb/README.md`
+- a checked-in invalid Spark KB validator fixture now exists under `docs/examples/spark_kb_invalid/`
 
 ### What is now true after BEAM closure
 
@@ -236,6 +237,7 @@ Current live result on 2026-04-09:
 - manifest entries now resolve relative to the manifest file location, not only the current shell directory
 - `docs/examples/spark_kb/` now provides a checked-in validator fixture bundle
 - `docs/examples/spark_kb/` now also supports a checked-in build plus health-check smoke flow
+- `docs/examples/spark_kb_invalid/` now provides a checked-in failing validator fixture bundle
 - `demo-spark-kb` ran successfully against a real local vault scaffold
 - `spark-kb-health-check` returned `valid: true`
 - no missing required files

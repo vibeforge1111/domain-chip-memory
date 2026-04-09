@@ -176,6 +176,7 @@ The current repo implementation now exercises this with:
 - a checked-in `docs/examples/spark_kb/` bundle for validation and smoke-test reuse
 - a checked-in end-to-end smoke path that validates, builds, and health-checks that example bundle
 - a local `docs/examples/spark_kb/README.md` that explains the bundle and commands in one place
+- a matching `docs/examples/spark_kb_invalid/` bundle for negative validator coverage
 - health checks that can now flag missing repo raw copies, stray raw repo files, and malformed filed query pages
 - compile summaries that now report repo-source and filed-output counts explicitly
 
