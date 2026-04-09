@@ -214,6 +214,12 @@ Manifest entries are resolved relative to the manifest file location.
 `build-spark-kb` compile results now expose both `repo_source_count` and `filed_output_count`.
 There is now a checked-in example bundle under `docs/examples/spark_kb/` for validator and compiler smoke checks.
 
+```powershell
+python -m domain_chip_memory.cli validate-spark-kb-inputs docs\examples\spark_kb\snapshot.json --repo-source-manifest docs\examples\spark_kb\manifests\repo_sources.json --filed-output-manifest docs\examples\spark_kb\manifests\filed_outputs.json
+python -m domain_chip_memory.cli build-spark-kb docs\examples\spark_kb\snapshot.json tmp\spark_kb_example --repo-source-manifest docs\examples\spark_kb\manifests\repo_sources.json --filed-output-manifest docs\examples\spark_kb\manifests\filed_outputs.json
+python -m domain_chip_memory.cli spark-kb-health-check tmp\spark_kb_example
+```
+
 Run a bounded real-provider smoke test once `OPENAI_API_KEY` is set:
 
 ```powershell

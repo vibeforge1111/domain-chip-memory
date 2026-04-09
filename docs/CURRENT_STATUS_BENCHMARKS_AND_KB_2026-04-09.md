@@ -189,6 +189,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - real `validate-spark-kb-inputs` preflight support for snapshot, manifest, and filed-output validation
 - compile results now expose both `repo_source_count` and `filed_output_count`
 - checked-in Spark KB example inputs now exist under `docs/examples/spark_kb/`
+- the checked-in Spark KB example bundle now has a real validate-build-health smoke test path
 
 ### What is now true after BEAM closure
 
@@ -233,6 +234,7 @@ Current live result on 2026-04-09:
 - `build-spark-kb` can now merge explicit `--filed-output-file` inputs with manifest-driven filed-output lists
 - manifest entries now resolve relative to the manifest file location, not only the current shell directory
 - `docs/examples/spark_kb/` now provides a checked-in validator fixture bundle
+- `docs/examples/spark_kb/` now also supports a checked-in build plus health-check smoke flow
 - `demo-spark-kb` ran successfully against a real local vault scaffold
 - `spark-kb-health-check` returned `valid: true`
 - no missing required files
