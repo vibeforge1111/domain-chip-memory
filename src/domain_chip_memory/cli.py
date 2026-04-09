@@ -651,6 +651,13 @@ def _display_path(path: Path, root: Path) -> str:
         return str(path)
 
 
+def _shell_quote_arg(arg: str) -> str:
+    escaped = str(arg).replace('"', '`"')
+    if any(char.isspace() for char in escaped) or not escaped:
+        return f'"{escaped}"'
+    return escaped
+
+
 def _git_status_by_path(paths: list[Path], *, repo_root: Path) -> dict[str, str]:
     if not paths:
         return {}
@@ -1101,6 +1108,113 @@ def _build_beam_judged_cleanup_report(
     }
 
 
+def _build_beam_judged_resume_plan(
+    *,
+    artifact_prefix: str,
+    answers_root: str | Path,
+    benchmark_runs_dir: str | Path,
+    evaluation_file_name: str,
+    repo_root: str | Path,
+) -> dict:
+    repo_root_path = Path(repo_root)
+    cleanup_report = _build_beam_judged_cleanup_report(
+        artifact_prefix=artifact_prefix,
+        answers_root=answers_root,
+        benchmark_runs_dir=benchmark_runs_dir,
+        evaluation_file_name=evaluation_file_name,
+        repo_root=repo_root,
+    )
+
+    resume_targets = []
+    for manifest_row in cleanup_report["official_eval_manifests"]:
+        if str(manifest_row.get("status") or "") != "partial":
+            continue
+        manifest_path = repo_root_path / Path(str(manifest_row["path"]))
+        payload = _load_json_file(manifest_path)
+        if not isinstance(payload, dict):
+            continue
+        upstream_repo_dir = str(payload.get("upstream_repo_dir") or "").strip()
+        answers_dir = str(payload.get("answers_root") or "").strip()
+        chat_size = str(payload.get("requested_chat_size") or payload.get("official_chat_size_dir") or "").strip()
+        result_file_name = str(payload.get("result_file_name") or "domain_chip_memory_answers.json").strip()
+        start_index = int(payload.get("start_index", 0) or 0)
+        end_index_raw = payload.get("end_index")
+        end_index = int(end_index_raw) if end_index_raw is not None else None
+        max_workers = int(payload.get("max_workers", 10) or 10)
+        judge_config = payload.get("judge_config") if isinstance(payload.get("judge_config"), dict) else {}
+        judge_provider = str(judge_config.get("provider") or "minimax")
+        judge_model = str(judge_config.get("model") or "").strip()
+        judge_base_url = str(judge_config.get("base_url") or "").strip()
+        judge_api_key_env = str(judge_config.get("api_key_env") or "").strip()
+        write_path = str(manifest_path)
+
+        command = [
+            "python",
+            "-m",
+            "domain_chip_memory.cli",
+            "run-beam-official-evaluation",
+            upstream_repo_dir,
+            answers_dir,
+            "--chat-size",
+            chat_size,
+            "--result-file-name",
+            result_file_name,
+            "--start-index",
+            str(start_index),
+        ]
+        if end_index is not None:
+            command.extend(["--end-index", str(end_index)])
+        command.extend(["--max-workers", str(max_workers)])
+        if judge_provider:
+            command.extend(["--judge-provider", judge_provider])
+        if judge_model:
+            command.extend(["--judge-model", judge_model])
+        if judge_base_url:
+            command.extend(["--judge-base-url", judge_base_url])
+        if judge_api_key_env:
+            command.extend(["--judge-api-key-env", judge_api_key_env])
+        command.extend(["--write", write_path])
+
+        resume_targets.append(
+            {
+                "path": manifest_row["path"],
+                "status": manifest_row["status"],
+                "diagnostic_classification": manifest_row["diagnostic_classification"],
+                "overall_average": manifest_row["overall_average"],
+                "next_pending_category": manifest_row["next_pending_category"],
+                "next_pending_question_index": manifest_row["next_pending_question_index"],
+                "last_completed_category": manifest_row["last_completed_category"],
+                "last_completed_question_index": manifest_row["last_completed_question_index"],
+                "last_logged_question_type": manifest_row["last_logged_question_type"],
+                "last_logged_question_index": manifest_row["last_logged_question_index"],
+                "missing_categories": manifest_row["missing_categories"],
+                "conversation_ids": [str(item) for item in payload.get("conversation_ids", []) if str(item).strip()],
+                "upstream_repo_dir": upstream_repo_dir,
+                "answers_dir": answers_dir,
+                "chat_size": chat_size,
+                "result_file_name": result_file_name,
+                "start_index": start_index,
+                "end_index": end_index,
+                "max_workers": max_workers,
+                "judge_provider": judge_provider,
+                "judge_model": judge_model,
+                "judge_base_url": judge_base_url,
+                "judge_api_key_env": judge_api_key_env,
+                "write_path": write_path,
+                "resume_command": command,
+                "resume_command_shell": " ".join(_shell_quote_arg(arg) for arg in command),
+            }
+        )
+
+    return {
+        "benchmark_name": "BEAM",
+        "source_mode": "official_public_evaluation_resume_plan",
+        "artifact_prefix": artifact_prefix,
+        "resume_target_count": len(resume_targets),
+        "resume_targets": resume_targets,
+    }
+
+
 def _run_sdk_maintenance_checks(sdk: SparkMemorySDK, checks: dict | None) -> dict:
     payload = dict(checks or {})
     current_requests = payload.get("current_state", [])
@@ -1235,6 +1349,13 @@ def main() -> None:
     beam_judged_cleanup_report.add_argument("--evaluation-file-name", default="evaluation-domain_chip_memory_answers.json")
     beam_judged_cleanup_report.add_argument("--repo-root", default=".")
     beam_judged_cleanup_report.add_argument("--write")
+    beam_judged_resume_plan = subparsers.add_parser("beam-judged-resume-plan", help="Build exact rerun commands for partial judged BEAM manifests.")
+    beam_judged_resume_plan.add_argument("--artifact-prefix", default="official_beam_128k_")
+    beam_judged_resume_plan.add_argument("--answers-root", default="artifacts/beam_public_results")
+    beam_judged_resume_plan.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
+    beam_judged_resume_plan.add_argument("--evaluation-file-name", default="evaluation-domain_chip_memory_answers.json")
+    beam_judged_resume_plan.add_argument("--repo-root", default=".")
+    beam_judged_resume_plan.add_argument("--write")
     validate_spark_kb_inputs = subparsers.add_parser("validate-spark-kb-inputs", help="Validate Spark KB snapshot, repo-source, and filed-output inputs without compiling a vault.")
     validate_spark_kb_inputs.add_argument("snapshot_file")
     validate_spark_kb_inputs.add_argument("--repo-source", action="append", default=[])
@@ -1852,6 +1973,19 @@ def main() -> None:
             judge_base_url=args.judge_base_url,
             judge_api_key_env=args.judge_api_key_env,
             dry_run=args.dry_run,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "beam-judged-resume-plan":
+        payload = _build_beam_judged_resume_plan(
+            artifact_prefix=args.artifact_prefix,
+            answers_root=args.answers_root,
+            benchmark_runs_dir=args.benchmark_runs_dir,
+            evaluation_file_name=args.evaluation_file_name,
+            repo_root=args.repo_root,
         )
         if args.write:
             _write_json(Path(args.write), payload)
