@@ -506,7 +506,22 @@ def test_build_spark_kb_command_compiles_from_snapshot_file(tmp_path: Path, monk
     summary_file = tmp_path / "artifacts" / "spark_kb_build.json"
     snapshot_file = tmp_path / "snapshot.json"
     repo_source = tmp_path / "README_SNIPPET.md"
+    filed_output_file = tmp_path / "filed_output.json"
     repo_source.write_text("# Repo Snippet\n\nUseful repo context.\n", encoding="utf-8")
+    filed_output_file.write_text(
+        json.dumps(
+            {
+                "title": "Location Answer",
+                "slug": "location-answer",
+                "question": "Where does the user live?",
+                "answer": "Dubai",
+                "explanation": "Resolved from current state.",
+                "memory_role": "current_state",
+                "provenance": ["`session-build` turns `session-build:t1`"],
+            }
+        ),
+        encoding="utf-8",
+    )
     snapshot_file.write_text(
         json.dumps(
             {
@@ -569,6 +584,8 @@ def test_build_spark_kb_command_compiles_from_snapshot_file(tmp_path: Path, monk
             str(output_dir),
             "--repo-source",
             str(repo_source),
+            "--filed-output-file",
+            str(filed_output_file),
             "--write",
             str(summary_file),
         ],
@@ -578,9 +595,11 @@ def test_build_spark_kb_command_compiles_from_snapshot_file(tmp_path: Path, monk
 
     written = json.loads(summary_file.read_text(encoding="utf-8"))
     assert written["snapshot_file"] == str(snapshot_file)
+    assert written["filed_output_file_count"] == 1
     assert written["compile_result"]["current_state_page_count"] >= 1
     assert (output_dir / "wiki" / "current-state" / "user-location.md").exists()
     assert (output_dir / "wiki" / "sources" / "repo-readme-snippet.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-location-answer.md").exists()
 
 
 def test_spark_kb_maintenance_report_surfaces_contradictions_and_staleness(tmp_path: Path):

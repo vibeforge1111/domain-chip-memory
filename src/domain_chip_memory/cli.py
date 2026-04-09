@@ -534,21 +534,34 @@ def _build_spark_kb_from_snapshot_file(
     output_dir: str,
     *,
     repo_sources: list[str] | None = None,
+    filed_output_files: list[str] | None = None,
 ) -> dict:
     snapshot_path = Path(snapshot_file)
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
     if not isinstance(snapshot, dict):
         raise ValueError("Spark KB snapshot file must contain a JSON object.")
+    filed_outputs: list[dict] = []
+    for filed_output_file in filed_output_files or []:
+        payload = json.loads(Path(filed_output_file).read_text(encoding="utf-8"))
+        if isinstance(payload, dict):
+            filed_outputs.append(payload)
+            continue
+        if isinstance(payload, list):
+            filed_outputs.extend(item for item in payload if isinstance(item, dict))
+            continue
+        raise ValueError("Filed output file must contain a JSON object or list of objects.")
     compile_result = scaffold_spark_knowledge_base(
         output_dir,
         snapshot,
         vault_title="Spark Knowledge Base",
         repo_sources=repo_sources,
+        filed_outputs=filed_outputs,
     )
     return {
         "contract": build_spark_kb_contract_summary(),
         "snapshot_file": str(snapshot_path),
         "snapshot": snapshot,
+        "filed_output_file_count": len(list(filed_output_files or [])),
         "compile_result": compile_result,
     }
 
@@ -676,6 +689,7 @@ def main() -> None:
     build_spark_kb.add_argument("snapshot_file")
     build_spark_kb.add_argument("output_dir")
     build_spark_kb.add_argument("--repo-source", action="append", default=[])
+    build_spark_kb.add_argument("--filed-output-file", action="append", default=[])
     build_spark_kb.add_argument("--write")
     spark_kb_health = subparsers.add_parser("spark-kb-health-check", help="Run health checks over a scaffolded Spark KB vault.")
     spark_kb_health.add_argument("output_dir")
@@ -1031,6 +1045,7 @@ def main() -> None:
             args.snapshot_file,
             args.output_dir,
             repo_sources=args.repo_source,
+            filed_output_files=args.filed_output_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)
