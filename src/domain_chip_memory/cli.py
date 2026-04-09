@@ -2210,6 +2210,8 @@ def _build_benchmark_runs_git_report(
             if any(step["command"] for step in recommended_sequence_steps)
             else "none"
         ),
+        "command_phase_order": [step["phase"] for step in recommended_sequence_steps if step["command"]],
+        "non_command_phase_order": [step["phase"] for step in recommended_sequence_steps if not step["command"]],
         "phase_order": [step["phase"] for step in recommended_sequence_steps],
         "phase_signature": "->".join(step["phase"] for step in recommended_sequence_steps),
         "entry_step": recommended_sequence_steps[0]["step"] if recommended_sequence_steps else None,
