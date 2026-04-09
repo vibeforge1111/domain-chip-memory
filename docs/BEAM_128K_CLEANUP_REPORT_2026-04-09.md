@@ -89,6 +89,31 @@ Current repo status after investigation:
 - that means the recorded `conv3_v2` `TypeError` is not obviously reproducible from today’s rubric-list normalization path
 - the remaining uncertainty is whether the historical failure came from an older evaluator revision, a non-list response shape outside the normalized path, or a different category-specific branch before the final four categories were written
 
+## Resume Targets
+
+The cleanup report now exposes ordered per-category progress and the next resume point for each partial manifest:
+
+- `conv1_v9`
+  - last completed category: `preference_following`
+  - last completed question index: `1`
+  - next pending category: `summarization`
+  - next pending question index: `0`
+- `conv2_v2`
+  - last completed category: `preference_following`
+  - last completed question index: `1`
+  - next pending category: `summarization`
+  - next pending question index: `0`
+- `conv3_v2`
+  - last completed category: `knowledge_update`
+  - last completed question index: `1`
+  - next pending category: `multi_session_reasoning`
+  - next pending question index: `0`
+  - last logged worker progress from the historical manifest:
+    - category: `multi_session_reasoning`
+    - question index: `1`
+
+That `conv3_v2` mismatch between persisted progress and last logged worker progress suggests the failure likely happened while processing `multi_session_reasoning`, before any rows from that category were safely written back to disk.
+
 The previously modified tracked file also appears materially incomplete relative to the current `128K` category universe:
 
 - `first20_v3/100K/1/evaluation-domain_chip_memory_answers.json`
