@@ -295,6 +295,7 @@ Current live result on 2026-04-09:
    - the payload now includes `recommended_focus`, so the next best follow-up command is explicit instead of inferred
    - the payload now includes `recommended_drilldown`, so the broad summary can expose the deepest recommended slice directly instead of making callers pick the last item from `recommended_followups`
    - the payload now also includes `recommended_sequence`, so callers can consume the ordered focus -> drilldown -> next-step guidance as one deduplicated list instead of stitching those top-level fields together by hand
+   - the payload now also includes `recommended_sequence_targets`, so callers can consume that same ordered path as compact machine-readable family/series/top-series references without parsing labels or shell strings
    - the payload now also includes `recommended_sequence_labels`, so callers can render that same ordered path as concise readable labels without parsing shell commands or nested command arrays
    - the payload now also includes `recommended_sequence_shells`, so callers that only need runnable commands can consume the same ordered path as a deduplicated shell-command list without walking nested command arrays
    - the payload now includes `recommended_family`, so the active family recommendation resolves to the enriched family row instead of only exposing a command wrapper
@@ -317,6 +318,7 @@ Current live result on 2026-04-09:
    - current live `recommended_focus` points to `--family scorecard`, because scorecards are the largest remaining noisy family at `31` files
    - current live `recommended_drilldown` points directly to `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live `recommended_sequence` now packages that same path directly as `[--family scorecard, --family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5, compare nearest competitor top series]`
+   - current live `recommended_sequence_targets` now renders that path structurally as `[family scorecard, series scorecard / official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5, nearest competitor top series longmemeval / longmemeval_summary_synthesis_offset225_limit25]`
    - current live `recommended_sequence_labels` now renders that path readably as `[focus family scorecard, focus series scorecard / official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5, compare longmemeval rank 2 / longmemeval_summary_synthesis_offset225_limit25]`
    - current live `recommended_sequence_shells` now flattens that path into three runnable commands: jump to the `scorecard` family, drill into `official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`, then compare the nearest competitor top series
    - current live `recommended_family` is `scorecard`, with `reported_file_share = 0.5167` and `dominance_label = dominant`
