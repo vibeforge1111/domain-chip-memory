@@ -1771,6 +1771,31 @@ def test_checked_in_spark_kb_smoke_script_runs(tmp_path: Path):
     assert (write_dir / "health.json").exists()
 
 
+def test_checked_in_invalid_spark_kb_failure_script_runs(tmp_path: Path):
+    repo_root = Path(__file__).resolve().parents[1]
+    script_path = repo_root / "docs" / "examples" / "spark_kb_invalid" / "run_validate_failure.py"
+    write_dir = tmp_path / "artifacts"
+
+    subprocess.run(
+        [
+            sys.executable,
+            str(script_path),
+            "--write-dir",
+            str(write_dir),
+        ],
+        check=True,
+        cwd=str(repo_root),
+    )
+
+    summary = json.loads((write_dir / "summary.json").read_text(encoding="utf-8"))
+    assert summary["validation_valid"] is False
+    assert summary["snapshot_valid"] is False
+    assert summary["missing_repo_source_file_count"] == 1
+    assert summary["filed_output_manifest_error_count"] == 1
+    assert summary["filed_output_file_error_count"] == 1
+    assert (write_dir / "validation.json").exists()
+
+
 def test_checked_in_sdk_maintenance_example_runs_via_cli(tmp_path: Path, monkeypatch):
     repo_root = Path(__file__).resolve().parents[1]
     single_file = repo_root / "docs" / "examples" / "sdk_maintenance" / "single_replay.json"
