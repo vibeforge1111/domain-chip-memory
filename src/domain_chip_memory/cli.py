@@ -2202,6 +2202,10 @@ def _build_benchmark_runs_git_report(
         "has_drilldown": "drilldown" in recommended_sequence_by_phase,
         "has_next_step": "next_step" in recommended_sequence_by_phase,
     }
+    recommended_sequence_endpoints = {
+        "first": recommended_sequence_steps[0] if recommended_sequence_steps else None,
+        "last": recommended_sequence_steps[-1] if recommended_sequence_steps else None,
+    }
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -2227,6 +2231,7 @@ def _build_benchmark_runs_git_report(
         "recommended_sequence_steps": recommended_sequence_steps,
         "recommended_sequence_by_phase": recommended_sequence_by_phase,
         "recommended_sequence_summary": recommended_sequence_summary,
+        "recommended_sequence_endpoints": recommended_sequence_endpoints,
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,
