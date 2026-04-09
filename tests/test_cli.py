@@ -605,16 +605,19 @@ def test_build_spark_kb_command_compiles_from_snapshot_file(tmp_path: Path, monk
 def test_build_spark_kb_command_ingests_repo_sources_from_manifest(tmp_path: Path, monkeypatch):
     output_dir = tmp_path / "compiled_vault"
     snapshot_file = tmp_path / "snapshot.json"
-    repo_source_a = tmp_path / "docs-note.md"
-    repo_source_b = tmp_path / "src-snippet.py"
-    repo_source_manifest_file = tmp_path / "repo-sources.json"
+    repo_source_a = tmp_path / "sources" / "docs-note.md"
+    repo_source_b = tmp_path / "sources" / "src-snippet.py"
+    repo_source_manifest_dir = tmp_path / "manifests"
+    repo_source_manifest_file = repo_source_manifest_dir / "repo-sources.json"
     summary_file = tmp_path / "summary.json"
     captured: dict[str, object] = {}
 
+    repo_source_a.parent.mkdir()
+    repo_source_manifest_dir.mkdir()
     repo_source_a.write_text("# Notes\n\nRepo context for KB.\n", encoding="utf-8")
     repo_source_b.write_text("print('repo source')\n", encoding="utf-8")
     repo_source_manifest_file.write_text(
-        json.dumps({"repo_sources": [str(repo_source_a), str(repo_source_b)]}),
+        json.dumps({"repo_sources": ["../sources/docs-note.md", "../sources/src-snippet.py"]}),
         encoding="utf-8",
     )
     snapshot_file.write_text(
@@ -703,11 +706,15 @@ def test_build_spark_kb_command_ingests_repo_sources_from_manifest(tmp_path: Pat
 def test_build_spark_kb_command_ingests_filed_outputs_from_manifest(tmp_path: Path, monkeypatch):
     output_dir = tmp_path / "compiled_vault"
     snapshot_file = tmp_path / "snapshot.json"
-    filed_output_file = tmp_path / "answer.json"
-    filed_output_manifest_file = tmp_path / "filed-outputs.json"
+    filed_output_dir = tmp_path / "outputs"
+    filed_output_file = filed_output_dir / "answer.json"
+    filed_output_manifest_dir = tmp_path / "manifests"
+    filed_output_manifest_file = filed_output_manifest_dir / "filed-outputs.json"
     summary_file = tmp_path / "summary.json"
     captured: dict[str, object] = {}
 
+    filed_output_dir.mkdir()
+    filed_output_manifest_dir.mkdir()
     filed_output_file.write_text(
         json.dumps(
             {
@@ -722,7 +729,7 @@ def test_build_spark_kb_command_ingests_filed_outputs_from_manifest(tmp_path: Pa
         encoding="utf-8",
     )
     filed_output_manifest_file.write_text(
-        json.dumps({"filed_output_files": [str(filed_output_file)]}),
+        json.dumps({"filed_output_files": ["../outputs/answer.json"]}),
         encoding="utf-8",
     )
     snapshot_file.write_text(

@@ -535,7 +535,13 @@ def _load_string_list_manifest(manifest_file: str, *, key: str, label: str) -> l
     manifest_items = payload.get(key) if isinstance(payload, dict) else payload
     if not isinstance(manifest_items, list) or not all(isinstance(item, str) for item in manifest_items):
         raise ValueError(f"{label} must contain a JSON list of strings or an object with a '{key}' list.")
-    return manifest_items
+    resolved_items: list[str] = []
+    for item in manifest_items:
+        item_path = Path(item)
+        if not item_path.is_absolute():
+            item_path = manifest_path.parent / item_path
+        resolved_items.append(str(item_path))
+    return resolved_items
 
 
 def _build_spark_kb_from_snapshot_file(
