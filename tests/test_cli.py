@@ -3440,6 +3440,11 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "runner_up_transition_mode": "mixed",
         "runner_up_transition_mode_count": 0,
         "transition_mode_rank_order": ["command", "mixed", "non_command"],
+        "transition_mode_rankings": [
+            {"rank": 1, "mode": "command", "count": 2, "share": 1.0},
+            {"rank": 2, "mode": "mixed", "count": 0, "share": 0.0},
+            {"rank": 3, "mode": "non_command", "count": 0, "share": 0.0},
+        ],
         "runner_up_transition_mode_share": 0.0,
         "is_contested_transition_mode": False,
         "transition_mode_competition": {
@@ -4474,6 +4479,11 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "runner_up_transition_mode": "mixed",
         "runner_up_transition_mode_count": 0,
         "transition_mode_rank_order": ["command", "mixed", "non_command"],
+        "transition_mode_rankings": [
+            {"rank": 1, "mode": "command", "count": 1, "share": 1.0},
+            {"rank": 2, "mode": "mixed", "count": 0, "share": 0.0},
+            {"rank": 3, "mode": "non_command", "count": 0, "share": 0.0},
+        ],
         "runner_up_transition_mode_share": 0.0,
         "is_contested_transition_mode": True,
         "transition_mode_competition": {
@@ -5250,6 +5260,11 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "runner_up_transition_mode": "command",
         "runner_up_transition_mode_count": 0,
         "transition_mode_rank_order": ["mixed", "command", "non_command"],
+        "transition_mode_rankings": [
+            {"rank": 1, "mode": "mixed", "count": 1, "share": 1.0},
+            {"rank": 2, "mode": "command", "count": 0, "share": 0.0},
+            {"rank": 3, "mode": "non_command", "count": 0, "share": 0.0},
+        ],
         "runner_up_transition_mode_share": 0.0,
         "is_contested_transition_mode": True,
         "transition_mode_competition": {
