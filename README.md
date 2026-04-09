@@ -208,6 +208,7 @@ python -m domain_chip_memory.cli spark-kb-health-check path\\to\\vault
 ```
 
 Manifest entries are resolved relative to the manifest file location.
+`spark-kb-health-check` now also validates repo-source pages against `raw/repos/` copies and checks that filed query pages still contain their expected sections.
 
 Run a bounded real-provider smoke test once `OPENAI_API_KEY` is set:
 

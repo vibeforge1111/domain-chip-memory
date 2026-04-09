@@ -218,7 +218,7 @@ Success means:
 
 - the vault is scaffolded
 - the source pages and synthesis pages exist
-- health checks pass cleanly
+- health checks pass cleanly, including repo-source/raw-copy parity and required filed-output sections
 
 Current live result on 2026-04-09:
 
@@ -230,6 +230,8 @@ Current live result on 2026-04-09:
 - `spark-kb-health-check` returned `valid: true`
 - no missing required files
 - no broken wikilinks
+- repo-source pages are now checked against `raw/repos/` copies, and stray raw repo files are surfaced explicitly
+- filed query pages are now checked for required `Question`, `Answer`, and `Provenance` sections
 - source, synthesis, and output surfaces now include session pages, timeline overview, repo-source ingest, maintenance report output, filed answer pages, and first contradiction/staleness signals
 - only `wiki/log.md` remains orphaned, which is acceptable for now because it is an append-only activity surface rather than a navigational page
 

@@ -172,6 +172,7 @@ The current repo implementation now exercises this with:
 - manifest-driven repo-source ingest for real `build-spark-kb` compilation flows
 - manifest-driven filed-output ingest for real `build-spark-kb` compilation flows
 - manifest entries resolving relative to the manifest file for portable KB build inputs
+- health checks that can now flag missing repo raw copies, stray raw repo files, and malformed filed query pages
 
 ## Guardrails
 
