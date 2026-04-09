@@ -81,6 +81,7 @@ The new promotion-plan helper turns that into exact staged paths without touchin
   - manifest path
   - sibling evaluation file paths
   - exact `git add -- ...` command
+- sibling evaluation file paths are normalized back to repo-relative paths even when the manifest stores absolute file locations
 - tracked modified drift files remain excluded from the promotion plan
 
 ## Resume Surface
