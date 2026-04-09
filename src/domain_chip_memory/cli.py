@@ -1688,6 +1688,11 @@ def _build_benchmark_runs_git_report(
             (row for row in family_hotspots if row["family"] == recommended_focus["family"]),
             recommended_hotspot,
         )
+    recommended_drilldown = None
+    if recommended_followups:
+        recommended_drilldown = recommended_followups[-1]
+    elif recommended_focus and recommended_focus.get("scope") == "series":
+        recommended_drilldown = recommended_focus
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -1702,6 +1707,7 @@ def _build_benchmark_runs_git_report(
         "current_command": current_command,
         "current_command_shell": " ".join(_shell_quote_arg(part) for part in current_command),
         "recommended_focus": recommended_focus,
+        "recommended_drilldown": recommended_drilldown,
         "recommended_followups": recommended_followups,
         "family_commands": family_commands,
         "family_hotspots": family_hotspots,

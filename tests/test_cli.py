@@ -3138,37 +3138,38 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             f"--repo-root {tmp_path} --family scorecard --only-noisy --top-series-limit 10"
         ),
     }
+    assert payload["recommended_drilldown"] == {
+        "scope": "series",
+        "reason": "largest_series_in_recommended_family",
+        "family": "scorecard",
+        "series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+        "noisy_file_count": 1,
+        "command": [
+            "python",
+            "-m",
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--family",
+            "scorecard",
+            "--series-prefix",
+            "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+            "--only-noisy",
+            "--top-series-limit",
+            "10",
+        ],
+        "command_shell": (
+            f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+            f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10 "
+            f"--only-noisy --top-series-limit 10"
+        ),
+    }
     assert payload["recommended_followups"] == [
         payload["recommended_focus"],
-        {
-            "scope": "series",
-            "reason": "largest_series_in_recommended_family",
-            "family": "scorecard",
-            "series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
-            "noisy_file_count": 1,
-            "command": [
-                "python",
-                "-m",
-                "domain_chip_memory.cli",
-                "benchmark-runs-git-report",
-                "--benchmark-runs-dir",
-                str(benchmark_runs_dir),
-                "--repo-root",
-                str(tmp_path),
-                "--family",
-                "scorecard",
-                "--series-prefix",
-                "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
-                "--only-noisy",
-                "--top-series-limit",
-                "10",
-            ],
-            "command_shell": (
-                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
-                f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10 "
-                f"--only-noisy --top-series-limit 10"
-            ),
-        },
+        payload["recommended_drilldown"],
     ]
     family_rows = {row["family"]: row for row in payload["families"]}
     series_rows = {(row["family"], row["series"]): row for row in payload["series"]}
@@ -3570,6 +3571,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             f"--only-noisy --summary-only --top-series-limit 10"
         ),
     }
+    assert payload["recommended_drilldown"] == payload["recommended_focus"]
     assert payload["recommended_followups"] == [payload["recommended_focus"]]
     assert payload["recommended_hotspot"] == payload["family_hotspots"][0]
     assert payload["family_hotspots"] == [
@@ -3731,6 +3733,7 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
         "reported_file_count": 2,
     }
+    assert payload["recommended_drilldown"] == payload["recommended_focus"]
     assert payload["recommended_followups"] == []
     assert payload["recommended_hotspot"] == payload["family_hotspots"][0]
     assert payload["family_hotspots"] == [
