@@ -176,6 +176,11 @@ The helper now also supports direct execution:
   - `blocked_target_count`
   - `blocked_missing_env_vars`
 - the JSON output captures per-target `return_code`, `status`, `stdout_tail`, and `stderr_tail`
+- `--execute` now also emits top-level execution counters:
+  - `execution_status_counts`
+  - `completed_execution_count`
+  - `failed_execution_count`
+  - `blocked_execution_count`
 - `--execute` now preflights the configured judge API key env var before spawning a rerun command
 - current shell state: `MINIMAX_API_KEY` is unset
 - live runtime result from the batch builder in the current shell:
