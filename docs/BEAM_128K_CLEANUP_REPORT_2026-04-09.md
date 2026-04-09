@@ -12,6 +12,10 @@ python -m domain_chip_memory.cli beam-judged-cleanup-report --artifact-prefix of
 python -m domain_chip_memory.cli beam-judged-resume-plan --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --write tmp\beam_128k_resume_plan.json
 ```
 
+```powershell
+python -m domain_chip_memory.cli beam-judged-resume-batch --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --script-file tmp\beam_128k_resume_batch.ps1 --write tmp\beam_128k_resume_batch.json
+```
+
 ## Current State
 
 - answer variant directories found: `22`
@@ -134,6 +138,18 @@ The new resume-plan helper now emits exact rerun commands for the three blocked 
   ```powershell
   python -m domain_chip_memory.cli run-beam-official-evaluation C:\Users\USER\Desktop\domain-chip-memory\benchmark_data\official\BEAM-upstream C:\Users\USER\Desktop\domain-chip-memory\artifacts\beam_public_results\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2 --chat-size 128K --result-file-name domain_chip_memory_answers.json --start-index 0 --end-index 1 --max-workers 10 --judge-provider minimax --judge-model MiniMax-M2.7 --judge-base-url https://api.minimax.io/v1 --judge-api-key-env MINIMAX_API_KEY --write artifacts\benchmark_runs\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2_official_eval.json
   ```
+
+## Batch Wrapper
+
+The new batch helper writes one ordered PowerShell script for the current partial set:
+
+- generated script path: `tmp\beam_128k_resume_batch.ps1`
+- current script order:
+  1. `conv1_v9`
+  2. `conv2_v2`
+  3. `conv3_v2`
+
+That keeps the two timeout-bound resumptions ahead of the historically noisier `conv3_v2` rerun.
 
 The previously modified tracked file also appears materially incomplete relative to the current `128K` category universe:
 
