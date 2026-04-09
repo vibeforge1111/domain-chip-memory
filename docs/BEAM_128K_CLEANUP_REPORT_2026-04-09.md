@@ -80,6 +80,12 @@ The previously modified tracked file also appears materially incomplete relative
   - git status: `modified`
   - current categories: `abstention`, `contradiction_resolution`, `event_ordering`, `information_extraction`
   - current overall average: `0.7322`
+  - `HEAD` versus working-tree category averages:
+    - `abstention`: `1.0` -> `1.0`
+    - `contradiction_resolution`: `0.75` -> `0.75`
+    - `event_ordering`: `0.8622` -> `0.1789`
+    - `information_extraction`: `1.0` -> `1.0`
+  - the tracked diff is therefore not just judge-reason wording churn; it materially changes `event_ordering`
 
 ## Local Scorecard Noise
 
@@ -110,7 +116,7 @@ The currently promoted clean tracked line is still visible beside those files:
 The next disciplined cleanup move should be:
 
 1. treat all three untracked `conv1_v9` to `conv3_v2` official-eval manifests as blocked partials, not ready-to-promote completions
-2. decide whether the modified tracked `first20_v3/100K/1/evaluation-domain_chip_memory_answers.json` is intentional, because it is currently only a `4`-category partial against the discovered `10`-category universe
+2. decide whether the modified tracked `first20_v3/100K/1/evaluation-domain_chip_memory_answers.json` is intentional, because it is currently only a `4`-category partial against the discovered `10`-category universe and its `event_ordering` average dropped from `0.8622` at `HEAD` to `0.1789` in the working tree
 3. only stage judged `128K` artifacts after there is a deliberate decision about missing `summarization` / `temporal_reasoning` coverage and the `conv3_v2` worker `TypeError`
 4. leave the untracked predecessor local scorecards alone unless there is a separate promotion or deletion decision for them
 
