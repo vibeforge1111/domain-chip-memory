@@ -3451,6 +3451,7 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "non_command": {"rank": 3, "mode": "non_command", "count": 0, "share": 0.0},
         },
         "transition_mode_ranking_signature": "command:2 > mixed:0 > non_command:0",
+        "transition_mode_share_signature": "command:1.0 > mixed:0.0 > non_command:0.0",
         "runner_up_transition_mode_share": 0.0,
         "is_contested_transition_mode": False,
         "transition_mode_competition": {
@@ -4496,6 +4497,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             "non_command": {"rank": 3, "mode": "non_command", "count": 0, "share": 0.0},
         },
         "transition_mode_ranking_signature": "command:1 > mixed:0 > non_command:0",
+        "transition_mode_share_signature": "command:1.0 > mixed:0.0 > non_command:0.0",
         "runner_up_transition_mode_share": 0.0,
         "is_contested_transition_mode": True,
         "transition_mode_competition": {
@@ -5283,6 +5285,7 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
             "non_command": {"rank": 3, "mode": "non_command", "count": 0, "share": 0.0},
         },
         "transition_mode_ranking_signature": "mixed:1 > command:0 > non_command:0",
+        "transition_mode_share_signature": "mixed:1.0 > command:0.0 > non_command:0.0",
         "runner_up_transition_mode_share": 0.0,
         "is_contested_transition_mode": True,
         "transition_mode_competition": {
