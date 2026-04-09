@@ -3388,6 +3388,10 @@ def test_beam_judged_resume_batch_cli_blocks_on_default_minimax_env(tmp_path: Pa
     assert payload["blocked_target_count"] == 1
     assert payload["blocked_missing_env_vars"] == ["MINIMAX_API_KEY"]
     assert payload["executed_target_count"] == 1
+    assert payload["execution_status_counts"] == {"blocked_missing_env": 1}
+    assert payload["completed_execution_count"] == 0
+    assert payload["failed_execution_count"] == 0
+    assert payload["blocked_execution_count"] == 1
     assert payload["execution_results"][0]["status"] == "blocked_missing_env"
     assert payload["execution_results"][0]["missing_env_var"] == "MINIMAX_API_KEY"
     assert payload["execution_results"][0]["executed_command"] == []
@@ -3624,6 +3628,10 @@ def test_beam_judged_resume_batch_cli_can_execute_targets(tmp_path: Path, monkey
     assert payload["blocked_target_count"] == 0
     assert payload["blocked_missing_env_vars"] == []
     assert payload["executed_target_count"] == 1
+    assert payload["execution_status_counts"] == {"completed": 1}
+    assert payload["completed_execution_count"] == 1
+    assert payload["failed_execution_count"] == 0
+    assert payload["blocked_execution_count"] == 0
     assert payload["execution_results"][0]["status"] == "completed"
     assert payload["execution_results"][0]["return_code"] == 0
     assert payload["execution_results"][0]["stdout_tail"] == ["Question Type: summarization", "Question Index: 0"]
@@ -3739,6 +3747,10 @@ def test_beam_judged_resume_batch_cli_blocks_execution_when_judge_env_missing(tm
     assert payload["blocked_target_count"] == 1
     assert payload["blocked_missing_env_vars"] == ["MISSING_MINIMAX_API_KEY"]
     assert payload["executed_target_count"] == 1
+    assert payload["execution_status_counts"] == {"blocked_missing_env": 1}
+    assert payload["completed_execution_count"] == 0
+    assert payload["failed_execution_count"] == 0
+    assert payload["blocked_execution_count"] == 1
     assert payload["execution_results"][0]["status"] == "blocked_missing_env"
     assert payload["execution_results"][0]["missing_env_var"] == "MISSING_MINIMAX_API_KEY"
     assert payload["execution_results"][0]["executed_command"] == []

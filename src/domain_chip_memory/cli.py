@@ -1351,6 +1351,11 @@ def _build_beam_judged_resume_batch(
                 }
             )
 
+    execution_status_counts: dict[str, int] = {}
+    for result in execution_results:
+        status = str(result.get("status") or "unknown")
+        execution_status_counts[status] = execution_status_counts.get(status, 0) + 1
+
     return {
         "benchmark_name": "BEAM",
         "source_mode": "official_public_evaluation_resume_batch",
@@ -1366,6 +1371,10 @@ def _build_beam_judged_resume_batch(
         "script_text": script_text,
         "execute_requested": execute,
         "executed_target_count": len(execution_results),
+        "execution_status_counts": execution_status_counts,
+        "completed_execution_count": execution_status_counts.get("completed", 0),
+        "failed_execution_count": execution_status_counts.get("failed", 0),
+        "blocked_execution_count": execution_status_counts.get("blocked_missing_env", 0),
         "execution_results": execution_results,
     }
 
