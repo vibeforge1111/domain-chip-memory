@@ -1945,6 +1945,7 @@ def _build_benchmark_runs_git_report(
     recommended_family_gap = None
     recommended_family_comparison = None
     recommended_family_competition_window = None
+    recommended_family_competition_summary = None
     if recommended_family is not None:
         competition_index = next(
             (index for index, row in enumerate(family_competition) if row["family"] == recommended_family["family"]),
@@ -1963,6 +1964,23 @@ def _build_benchmark_runs_git_report(
                 "current": family_competition[competition_index],
                 "previous": previous_competitor,
                 "next": next_competitor,
+            }
+            current_competitor = family_competition[competition_index]
+            recommended_family_competition_summary = {
+                "scope": "competition_summary",
+                "family": current_competitor["family"],
+                "rank": current_competitor["rank"],
+                "top_series_prefix": current_competitor["top_series_prefix"],
+                "top_series_noisy_file_count": current_competitor["top_series_noisy_file_count"],
+                "nearest_competitor": {
+                    "direction": current_competitor["nearest_competitor_direction"],
+                    "family": current_competitor["nearest_competitor_family"],
+                    "rank": current_competitor["nearest_competitor_rank"],
+                    "noisy_file_count_gap": current_competitor["nearest_competitor_noisy_file_count_gap"],
+                    "noisy_share_gap": current_competitor["nearest_competitor_noisy_share_gap"],
+                    "top_series_prefix": current_competitor["nearest_competitor_top_series_prefix"],
+                    "top_series_noisy_file_count": current_competitor["nearest_competitor_top_series_noisy_file_count"],
+                },
             }
         ranked_index = ranked_family_command_by_name.get(recommended_family["family"])
         if ranked_index is not None and ranked_index + 1 < len(ranked_family_command_rows):
@@ -2056,6 +2074,7 @@ def _build_benchmark_runs_git_report(
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,
         "recommended_family_competition_window": recommended_family_competition_window,
+        "recommended_family_competition_summary": recommended_family_competition_summary,
         "recommended_followups": recommended_followups,
         "family_competition": family_competition,
         "family_commands": family_commands,

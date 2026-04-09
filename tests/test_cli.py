@@ -3261,6 +3261,22 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "previous": None,
         "next": payload["family_competition"][1],
     }
+    assert payload["recommended_family_competition_summary"] == {
+        "scope": "competition_summary",
+        "family": "scorecard",
+        "rank": 1,
+        "top_series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+        "top_series_noisy_file_count": 1,
+        "nearest_competitor": {
+            "direction": "next",
+            "family": "longmemeval",
+            "rank": 2,
+            "noisy_file_count_gap": 0,
+            "noisy_share_gap": 0.0,
+            "top_series_prefix": "longmemeval_offset225_limit25_source",
+            "top_series_noisy_file_count": 1,
+        },
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4107,6 +4123,22 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "previous": None,
         "next": payload["family_competition"][1],
     }
+    assert payload["recommended_family_competition_summary"] == {
+        "scope": "competition_summary",
+        "family": "longmemeval",
+        "rank": 1,
+        "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+        "top_series_noisy_file_count": 2,
+        "nearest_competitor": {
+            "direction": "next",
+            "family": "scorecard",
+            "rank": 2,
+            "noisy_file_count_gap": 1,
+            "noisy_share_gap": 0.25,
+            "top_series_prefix": "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
+            "top_series_noisy_file_count": 1,
+        },
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4694,6 +4726,22 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "current": payload["family_competition"][0],
         "previous": None,
         "next": None,
+    }
+    assert payload["recommended_family_competition_summary"] == {
+        "scope": "competition_summary",
+        "family": "longmemeval",
+        "rank": 1,
+        "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+        "top_series_noisy_file_count": 2,
+        "nearest_competitor": {
+            "direction": None,
+            "family": None,
+            "rank": None,
+            "noisy_file_count_gap": None,
+            "noisy_share_gap": None,
+            "top_series_prefix": None,
+            "top_series_noisy_file_count": None,
+        },
     }
     assert payload["family_competition"] == [
         {
