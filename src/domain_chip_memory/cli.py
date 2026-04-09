@@ -1500,6 +1500,10 @@ def _build_benchmark_runs_git_report(
     top_series_by_family: dict[str, dict] = {}
     for row in ranked_series_rows:
         top_series_by_family.setdefault(row["family"], row)
+    series_count_by_family: dict[str, int] = {}
+    for row in ordered_series_rows:
+        family = row["family"]
+        series_count_by_family[family] = series_count_by_family.get(family, 0) + 1
     top_noisy_series = ranked_series_rows[: max(top_series_limit, 0)]
     noisy_file_count = len(noisy_files)
     family_command_counts = noisy_family_counts
@@ -1540,6 +1544,32 @@ def _build_benchmark_runs_git_report(
     ]
     for row in family_commands:
         row["command_shell"] = " ".join(_shell_quote_arg(part) for part in row["command"])
+    family_hotspots = []
+    for row in ordered_family_rows:
+        family = row["family"]
+        top_family_series = top_series_by_family.get(family)
+        if top_family_series is None:
+            continue
+        hotspot_command = _benchmark_runs_git_report_command(
+            benchmark_runs_dir=benchmark_runs_path,
+            repo_root=repo_root_path,
+            only_noisy=only_noisy,
+            top_series_limit=top_series_limit,
+            summary_only=summary_only,
+            family_filter=family,
+            series_prefix=top_family_series["series"],
+        )
+        family_hotspots.append(
+            {
+                "family": family,
+                "family_file_count": row["file_count"],
+                "series_count": series_count_by_family.get(family, 0),
+                "top_series_prefix": top_family_series["series"],
+                "top_series_file_count": top_family_series["file_count"],
+                "command": hotspot_command,
+                "command_shell": " ".join(_shell_quote_arg(part) for part in hotspot_command),
+            }
+        )
     series_commands = []
     for row in top_noisy_series:
         series_command = _benchmark_runs_git_report_command(
@@ -1643,6 +1673,7 @@ def _build_benchmark_runs_git_report(
         "recommended_focus": recommended_focus,
         "recommended_followups": recommended_followups,
         "family_commands": family_commands,
+        "family_hotspots": family_hotspots,
         "series_commands": series_commands,
         "file_count": len(files),
         "family_count": len(ordered_family_rows),
