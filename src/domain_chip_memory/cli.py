@@ -2199,6 +2199,8 @@ def _build_benchmark_runs_git_report(
         "step_count": len(recommended_sequence_steps),
         "phase_order": [step["phase"] for step in recommended_sequence_steps],
         "phase_signature": "->".join(step["phase"] for step in recommended_sequence_steps),
+        "entry_phase": recommended_sequence_steps[0]["phase"] if recommended_sequence_steps else None,
+        "terminal_phase": recommended_sequence_steps[-1]["phase"] if recommended_sequence_steps else None,
         "preview": recommended_sequence_preview,
         "has_drilldown": "drilldown" in recommended_sequence_by_phase,
         "has_next_step": "next_step" in recommended_sequence_by_phase,
