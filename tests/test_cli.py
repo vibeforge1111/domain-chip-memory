@@ -3302,6 +3302,21 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         payload["recommended_drilldown"],
         payload["recommended_next_step"],
     ]
+    assert payload["recommended_sequence_targets"] == [
+        {"type": "family", "family": "scorecard"},
+        {
+            "type": "series",
+            "family": "scorecard",
+            "series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+        },
+        {
+            "type": "top_series",
+            "target": "nearest_competitor_top_series",
+            "family": "longmemeval",
+            "rank": 2,
+            "series_prefix": "longmemeval_offset225_limit25_source",
+        },
+    ]
     assert payload["recommended_sequence_labels"] == [
         "focus family scorecard",
         "focus series scorecard / official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
@@ -4201,6 +4216,20 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         payload["recommended_focus"],
         payload["recommended_next_step"],
     ]
+    assert payload["recommended_sequence_targets"] == [
+        {
+            "type": "series",
+            "family": "longmemeval",
+            "series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+        },
+        {
+            "type": "top_series",
+            "target": "current_top_series",
+            "family": "longmemeval",
+            "rank": 1,
+            "series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+        },
+    ]
     assert payload["recommended_sequence_labels"] == [
         "focus series longmemeval / longmemeval_summary_synthesis_offset225_limit25",
         "inspect longmemeval rank 1 / longmemeval_summary_synthesis_offset225_limit25",
@@ -4838,6 +4867,20 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
     assert payload["recommended_sequence"] == [
         payload["recommended_focus"],
         payload["recommended_next_step"],
+    ]
+    assert payload["recommended_sequence_targets"] == [
+        {
+            "type": "series",
+            "family": None,
+            "series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+        },
+        {
+            "type": "top_series",
+            "target": "current_top_series",
+            "family": "longmemeval",
+            "rank": 1,
+            "series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+        },
     ]
     assert payload["recommended_sequence_labels"] == [
         "focus series longmemeval_summary_synthesis_offset225_limit25",

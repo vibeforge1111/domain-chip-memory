@@ -2114,6 +2114,33 @@ def _build_benchmark_runs_git_report(
     for recommendation in [recommended_focus, recommended_drilldown, recommended_next_step]:
         if recommendation is not None and recommendation not in recommended_sequence:
             recommended_sequence.append(recommendation)
+    recommended_sequence_targets: list[dict] = []
+    for recommendation in recommended_sequence:
+        if recommendation.get("target") in {"nearest_competitor_top_series", "current_top_series"}:
+            target_ref = {
+                "type": "top_series",
+                "target": recommendation.get("target"),
+                "family": recommendation.get("family"),
+                "rank": recommendation.get("rank"),
+                "series_prefix": recommendation.get("top_series_prefix"),
+            }
+        elif recommendation.get("scope") == "family":
+            target_ref = {
+                "type": "family",
+                "family": recommendation.get("family"),
+            }
+        elif recommendation.get("scope") == "series":
+            target_ref = {
+                "type": "series",
+                "family": recommendation.get("family"),
+                "series_prefix": recommendation.get("series_prefix"),
+            }
+        else:
+            target_ref = {
+                "type": recommendation.get("target") or recommendation.get("scope") or "recommendation",
+                "reason": recommendation.get("reason"),
+            }
+        recommended_sequence_targets.append(target_ref)
     recommended_sequence_labels: list[str] = []
     for recommendation in recommended_sequence:
         if recommendation.get("target") == "nearest_competitor_top_series":
@@ -2157,6 +2184,7 @@ def _build_benchmark_runs_git_report(
         "recommended_drilldown": recommended_drilldown,
         "recommended_next_step": recommended_next_step,
         "recommended_sequence": recommended_sequence,
+        "recommended_sequence_targets": recommended_sequence_targets,
         "recommended_sequence_labels": recommended_sequence_labels,
         "recommended_sequence_shells": recommended_sequence_shells,
         "recommended_family": recommended_family,
