@@ -1,0 +1,61 @@
+{
+  "runtime_class": "SparkMemorySDK",
+  "generated_at": "2025-03-10T00:00:00+00:00",
+  "counts": {
+    "session_count": 1,
+    "current_state_count": 1,
+    "observation_count": 1,
+    "event_count": 0
+  },
+  "sessions": [
+    {
+      "session_id": "session-example",
+      "timestamp": "2025-03-10T00:00:00+00:00",
+      "turns": [
+        {
+          "turn_id": "session-example:t1",
+          "speaker": "user",
+          "text": "I live in Dubai."
+        }
+      ]
+    }
+  ],
+  "current_state": [
+    {
+      "memory_role": "current_state",
+      "subject": "user",
+      "predicate": "location",
+      "text": "user location Dubai",
+      "session_id": "session-example",
+      "turn_ids": [
+        "session-example:t1"
+      ],
+      "timestamp": "2025-03-10T00:00:00+00:00",
+      "metadata": {
+        "value": "Dubai",
+        "observation_id": "obs-example-1"
+      }
+    }
+  ],
+  "observations": [
+    {
+      "memory_role": "structured_evidence",
+      "subject": "user",
+      "predicate": "location",
+      "text": "user location Dubai",
+      "session_id": "session-example",
+      "turn_ids": [
+        "session-example:t1"
+      ],
+      "timestamp": "2025-03-10T00:00:00+00:00",
+      "metadata": {
+        "value": "Dubai",
+        "observation_id": "obs-example-1"
+      }
+    }
+  ],
+  "events": [],
+  "trace": {
+    "operation": "export_knowledge_base_snapshot"
+  }
+}

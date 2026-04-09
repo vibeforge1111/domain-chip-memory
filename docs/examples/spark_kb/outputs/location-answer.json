@@ -1,0 +1,11 @@
+{
+  "slug": "example-location-answer",
+  "title": "Example Location Answer",
+  "question": "Where does the user live?",
+  "answer": "The user lives in Dubai.",
+  "explanation": "Derived from the current-state snapshot.",
+  "memory_role": "current_state",
+  "provenance": [
+    "[[sources/spark-memory-snapshot-latest]]"
+  ]
+}

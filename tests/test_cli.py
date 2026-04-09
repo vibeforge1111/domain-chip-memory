@@ -1614,6 +1614,38 @@ def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatc
     ]
 
 
+def test_checked_in_spark_kb_examples_validate_via_cli(tmp_path: Path, monkeypatch):
+    repo_root = Path(__file__).resolve().parents[1]
+    example_dir = repo_root / "docs" / "examples" / "spark_kb"
+    validation_output = tmp_path / "artifacts" / "spark_kb_validation.json"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "validate-spark-kb-inputs",
+            str(example_dir / "snapshot.json"),
+            "--repo-source-manifest",
+            str(example_dir / "manifests" / "repo_sources.json"),
+            "--filed-output-manifest",
+            str(example_dir / "manifests" / "filed_outputs.json"),
+            "--write",
+            str(validation_output),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(validation_output.read_text(encoding="utf-8"))
+    assert payload["valid"] is True
+    assert payload["snapshot_valid"] is True
+    assert payload["repo_source_file_count"] == 1
+    assert payload["filed_output_file_count"] == 1
+    assert payload["filed_output_record_count"] == 1
+    assert payload["missing_repo_source_files"] == []
+    assert payload["missing_filed_output_files"] == []
+
+
 def test_checked_in_sdk_maintenance_example_runs_via_cli(tmp_path: Path, monkeypatch):
     repo_root = Path(__file__).resolve().parents[1]
     single_file = repo_root / "docs" / "examples" / "sdk_maintenance" / "single_replay.json"
