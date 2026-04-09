@@ -183,6 +183,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - filed KB maintenance report in `wiki/outputs/maintenance-report.md`
 - filed KB answer pages in `wiki/outputs/query-*.md`
 - contradiction and stale-state signals inside the KB maintenance report
+- real `build-spark-kb` support for explicit filed-output JSON inputs
 
 ### What is now true after BEAM closure
 
@@ -207,7 +208,7 @@ The KB flow should be validated with the real CLI, not only by reading code.
 
 Minimum live checks:
 
-1. `python -m domain_chip_memory.cli build-spark-kb <snapshot_file> <output_dir>`
+1. `python -m domain_chip_memory.cli build-spark-kb <snapshot_file> <output_dir> [--repo-source ...] [--filed-output-file ...]`
 2. `python -m domain_chip_memory.cli spark-kb-health-check <output_dir>`
 3. `python -m domain_chip_memory.cli demo-spark-kb <output_dir>`
 
