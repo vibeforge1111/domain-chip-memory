@@ -3366,6 +3366,9 @@ def test_beam_judged_resume_batch_cli_blocks_on_default_minimax_env(tmp_path: Pa
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["execute_requested"] is True
+    assert payload["runnable_target_count"] == 0
+    assert payload["blocked_target_count"] == 1
+    assert payload["blocked_missing_env_vars"] == ["MINIMAX_API_KEY"]
     assert payload["executed_target_count"] == 1
     assert payload["execution_results"][0]["status"] == "blocked_missing_env"
     assert payload["execution_results"][0]["missing_env_var"] == "MINIMAX_API_KEY"
@@ -3472,6 +3475,9 @@ def test_beam_judged_resume_batch_cli_writes_powershell_script(tmp_path: Path, m
     assert payload["benchmark_name"] == "BEAM"
     assert payload["source_mode"] == "official_public_evaluation_resume_batch"
     assert payload["resume_target_count"] == 1
+    assert payload["runnable_target_count"] == 1
+    assert payload["blocked_target_count"] == 0
+    assert payload["blocked_missing_env_vars"] == []
     assert payload["script_file"] == str(script_file)
     assert payload["script_line_count"] >= 3
     assert payload["script_lines"][0] == "$ErrorActionPreference = 'Stop'"
@@ -3596,6 +3602,9 @@ def test_beam_judged_resume_batch_cli_can_execute_targets(tmp_path: Path, monkey
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["execute_requested"] is True
+    assert payload["runnable_target_count"] == 1
+    assert payload["blocked_target_count"] == 0
+    assert payload["blocked_missing_env_vars"] == []
     assert payload["executed_target_count"] == 1
     assert payload["execution_results"][0]["status"] == "completed"
     assert payload["execution_results"][0]["return_code"] == 0
@@ -3708,6 +3717,9 @@ def test_beam_judged_resume_batch_cli_blocks_execution_when_judge_env_missing(tm
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["execute_requested"] is True
+    assert payload["runnable_target_count"] == 0
+    assert payload["blocked_target_count"] == 1
+    assert payload["blocked_missing_env_vars"] == ["MISSING_MINIMAX_API_KEY"]
     assert payload["executed_target_count"] == 1
     assert payload["execution_results"][0]["status"] == "blocked_missing_env"
     assert payload["execution_results"][0]["missing_env_var"] == "MISSING_MINIMAX_API_KEY"
