@@ -16,6 +16,10 @@ python -m domain_chip_memory.cli beam-judged-resume-plan --artifact-prefix offic
 python -m domain_chip_memory.cli beam-judged-resume-batch --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --only-runnable --write tmp\beam_128k_resume_batch_only_runnable_live.json
 ```
 
+```powershell
+python -m domain_chip_memory.cli beam-judged-promotion-plan --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --write tmp\beam_128k_promotion_plan_live.json
+```
+
 ## Current State
 
 - answer variant directories found: `22`
@@ -69,6 +73,15 @@ All three of those completed official-eval manifests are also currently untracke
 - `conv1_v9`
 - `conv2_v2`
 - `conv3_v2`
+
+The new promotion-plan helper turns that into exact staged paths without touching the worktree:
+
+- `promotion_target_count`: `3`
+- each target emits:
+  - manifest path
+  - sibling evaluation file paths
+  - exact `git add -- ...` command
+- tracked modified drift files remain excluded from the promotion plan
 
 ## Resume Surface
 
