@@ -2748,6 +2748,83 @@ def test_summarize_beam_official_evaluation_files_aggregates_across_conversation
     assert payload["categories"][1]["average_score"] == 0.5
 
 
+def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path, monkeypatch):
+    answers_root = tmp_path / "beam_public_results"
+    benchmark_runs_dir = tmp_path / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "beam_cleanup_report.json"
+
+    eval_one = answers_root / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9" / "100K" / "1" / "evaluation-domain_chip_memory_answers.json"
+    eval_two = answers_root / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv2_v2" / "100K" / "2" / "evaluation-domain_chip_memory_answers.json"
+    eval_one.parent.mkdir(parents=True)
+    eval_two.parent.mkdir(parents=True)
+    eval_one.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"llm_judge_score": 1.0}],
+                "event_ordering": [{"tau_norm": 0.5}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    eval_two.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"llm_judge_score": 0.5}],
+                "event_ordering": [{"tau_norm": 1.0}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    benchmark_runs_dir.mkdir(parents=True)
+    (benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json").write_text(
+        json.dumps(
+            {
+                "status": "completed",
+                "evaluation_files": [str(eval_one)],
+                "aggregate_summary": {"overall_average": 0.75},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10_v1_scorecard.json").write_text(
+        json.dumps({"run_manifest": {"benchmark_name": "BEAM"}}),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "beam-judged-cleanup-report",
+            "--artifact-prefix",
+            "official_beam_128k_summary_synthesis_memory_heuristic_v1_",
+            "--answers-root",
+            str(answers_root),
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["benchmark_name"] == "BEAM"
+    assert payload["artifact_prefix"] == "official_beam_128k_summary_synthesis_memory_heuristic_v1_"
+    assert payload["answer_variant_count"] == 2
+    assert payload["evaluation_file_count"] == 2
+    assert payload["official_eval_manifest_count"] == 1
+    assert payload["scorecard_count"] == 1
+    assert payload["aggregate_evaluation_summary"]["evaluation_file_count"] == 2
+    assert payload["aggregate_evaluation_summary"]["overall_average"] == 0.75
+    assert payload["evaluation_files"][0]["path"].endswith("conv1_v9/100K/1/evaluation-domain_chip_memory_answers.json")
+    assert payload["official_eval_manifests"][0]["status"] == "completed"
+
+
 def test_run_beam_official_evaluation_cli_invokes_upstream_subprocess(tmp_path: Path, monkeypatch):
     upstream_repo = tmp_path / "beam_repo"
     answers_dir = tmp_path / "beam_results"

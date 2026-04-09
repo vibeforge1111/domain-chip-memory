@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from dataclasses import asdict, replace
 from pathlib import Path
@@ -41,6 +42,7 @@ from .beam_official_eval import (
     export_beam_public_answers_from_scorecard,
     run_beam_official_evaluation,
     summarize_beam_official_evaluation,
+    summarize_beam_official_evaluation_files,
 )
 from .spark_shadow import (
     SparkShadowIngestAdapter,
@@ -548,6 +550,39 @@ def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def _display_path(path: Path, root: Path) -> str:
+    try:
+        return str(path.relative_to(root)).replace("\\", "/")
+    except ValueError:
+        return str(path)
+
+
+def _git_status_by_path(paths: list[Path], *, repo_root: Path) -> dict[str, str]:
+    if not paths:
+        return {}
+    try:
+        relative_paths = [str(path.relative_to(repo_root)).replace("\\", "/") for path in paths]
+    except ValueError:
+        return {}
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "status", "--short", "--", *relative_paths],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except Exception:
+        return {}
+    status_by_path: dict[str, str] = {}
+    for line in result.stdout.splitlines():
+        if len(line) < 4:
+            continue
+        status = line[:2].strip() or "unknown"
+        path = line[3:].strip().replace("\\", "/")
+        status_by_path[path] = status
+    return status_by_path
+
+
 def _resolve_repo_source_files(
     *,
     repo_sources: list[str] | None = None,
@@ -744,6 +779,109 @@ def _build_spark_kb_from_snapshot_file(
     }
 
 
+def _build_beam_judged_cleanup_report(
+    *,
+    artifact_prefix: str,
+    answers_root: str | Path,
+    benchmark_runs_dir: str | Path,
+    evaluation_file_name: str,
+    repo_root: str | Path,
+) -> dict:
+    answers_root_path = Path(answers_root)
+    benchmark_runs_path = Path(benchmark_runs_dir)
+    repo_root_path = Path(repo_root)
+    evaluation_file_basename = (
+        evaluation_file_name
+        if evaluation_file_name.startswith("evaluation-")
+        else f"evaluation-{evaluation_file_name}"
+    )
+
+    answer_variant_dirs = sorted(
+        path for path in answers_root_path.glob(f"{artifact_prefix}*") if path.is_dir()
+    )
+    evaluation_files = sorted(
+        path
+        for answer_variant_dir in answer_variant_dirs
+        for path in answer_variant_dir.rglob(evaluation_file_basename)
+        if path.is_file()
+    )
+    official_eval_manifests = sorted(
+        path for path in benchmark_runs_path.glob(f"{artifact_prefix}*_official_eval.json") if path.is_file()
+    )
+    scorecard_files = sorted(
+        path for path in benchmark_runs_path.glob(f"{artifact_prefix}*_scorecard.json") if path.is_file()
+    )
+
+    git_status_by_path = _git_status_by_path(
+        [*evaluation_files, *official_eval_manifests, *scorecard_files],
+        repo_root=repo_root_path,
+    )
+
+    evaluation_rows = []
+    for path in evaluation_files:
+        summary = summarize_beam_official_evaluation(path)
+        display_path = _display_path(path, repo_root_path)
+        evaluation_rows.append(
+            {
+                "path": display_path,
+                "git_status": git_status_by_path.get(display_path, "clean"),
+                "overall_average": summary["overall_average"],
+                "category_count": summary["category_count"],
+            }
+        )
+
+    official_eval_rows = []
+    for path in official_eval_manifests:
+        payload = _load_json_file(path)
+        if not isinstance(payload, dict):
+            continue
+        display_path = _display_path(path, repo_root_path)
+        aggregate_summary = payload.get("aggregate_summary") if isinstance(payload.get("aggregate_summary"), dict) else {}
+        official_eval_rows.append(
+            {
+                "path": display_path,
+                "git_status": git_status_by_path.get(display_path, "clean"),
+                "status": str(payload.get("status") or ""),
+                "overall_average": aggregate_summary.get("overall_average"),
+                "evaluation_file_count": len(list(payload.get("evaluation_files") or [])),
+            }
+        )
+
+    scorecard_rows = [
+        {
+            "path": _display_path(path, repo_root_path),
+            "git_status": git_status_by_path.get(_display_path(path, repo_root_path), "clean"),
+        }
+        for path in scorecard_files
+    ]
+
+    aggregate_evaluation_summary = (
+        summarize_beam_official_evaluation_files(evaluation_files) if evaluation_files else None
+    )
+    git_status_counts: dict[str, int] = {}
+    for row in [*evaluation_rows, *official_eval_rows, *scorecard_rows]:
+        status = str(row.get("git_status") or "clean")
+        git_status_counts[status] = git_status_counts.get(status, 0) + 1
+
+    return {
+        "benchmark_name": "BEAM",
+        "source_mode": "official_public_evaluation_cleanup",
+        "artifact_prefix": artifact_prefix,
+        "answers_root": str(answers_root_path),
+        "benchmark_runs_dir": str(benchmark_runs_path),
+        "repo_root": str(repo_root_path),
+        "answer_variant_count": len(answer_variant_dirs),
+        "evaluation_file_count": len(evaluation_rows),
+        "official_eval_manifest_count": len(official_eval_rows),
+        "scorecard_count": len(scorecard_rows),
+        "git_status_counts": git_status_counts,
+        "aggregate_evaluation_summary": aggregate_evaluation_summary,
+        "evaluation_files": evaluation_rows,
+        "official_eval_manifests": official_eval_rows,
+        "scorecards": scorecard_rows,
+    }
+
+
 def _run_sdk_maintenance_checks(sdk: SparkMemorySDK, checks: dict | None) -> dict:
     payload = dict(checks or {})
     current_requests = payload.get("current_state", [])
@@ -871,6 +1009,13 @@ def main() -> None:
     build_spark_kb.add_argument("--filed-output-file", action="append", default=[])
     build_spark_kb.add_argument("--filed-output-manifest", action="append", default=[])
     build_spark_kb.add_argument("--write")
+    beam_judged_cleanup_report = subparsers.add_parser("beam-judged-cleanup-report", help="Summarize local judged BEAM artifact state for cleanup planning.")
+    beam_judged_cleanup_report.add_argument("--artifact-prefix", default="official_beam_128k_")
+    beam_judged_cleanup_report.add_argument("--answers-root", default="artifacts/beam_public_results")
+    beam_judged_cleanup_report.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
+    beam_judged_cleanup_report.add_argument("--evaluation-file-name", default="evaluation-domain_chip_memory_answers.json")
+    beam_judged_cleanup_report.add_argument("--repo-root", default=".")
+    beam_judged_cleanup_report.add_argument("--write")
     validate_spark_kb_inputs = subparsers.add_parser("validate-spark-kb-inputs", help="Validate Spark KB snapshot, repo-source, and filed-output inputs without compiling a vault.")
     validate_spark_kb_inputs.add_argument("snapshot_file")
     validate_spark_kb_inputs.add_argument("--repo-source", action="append", default=[])
@@ -1235,6 +1380,19 @@ def main() -> None:
             repo_source_manifest_files=args.repo_source_manifest,
             filed_output_files=args.filed_output_file,
             filed_output_manifest_files=args.filed_output_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "beam-judged-cleanup-report":
+        payload = _build_beam_judged_cleanup_report(
+            artifact_prefix=args.artifact_prefix,
+            answers_root=args.answers_root,
+            benchmark_runs_dir=args.benchmark_runs_dir,
+            evaluation_file_name=args.evaluation_file_name,
+            repo_root=args.repo_root,
         )
         if args.write:
             _write_json(Path(args.write), payload)
