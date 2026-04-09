@@ -195,6 +195,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - `docs/examples/README.md` now indexes the checked-in fixture bundles
 - `docs/examples/spark_kb/run_smoke.py` now runs the checked-in valid Spark KB example end-to-end
 - `docs/examples/spark_kb_invalid/run_validate_failure.py` now runs the checked-in invalid Spark KB validator flow
+- `docs/examples/run_smokes.py` now runs the checked-in valid and invalid Spark KB wrappers together
 
 ### What is now true after BEAM closure
 
@@ -243,6 +244,7 @@ Current live result on 2026-04-09:
 - `docs/examples/spark_kb/run_smoke.py` now wraps that valid example flow in one command
 - `docs/examples/spark_kb_invalid/` now provides a checked-in failing validator fixture bundle
 - `docs/examples/spark_kb_invalid/run_validate_failure.py` now wraps that failing validator flow in one command
+- `docs/examples/run_smokes.py` now acts as the top-level checked-in examples smoke runner
 - `demo-spark-kb` ran successfully against a real local vault scaffold
 - `spark-kb-health-check` returned `valid: true`
 - no missing required files

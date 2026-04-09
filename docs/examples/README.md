@@ -2,6 +2,12 @@
 
 This directory holds checked-in fixtures for CLI smoke tests and contract validation.
 
+## Top-Level Smoke Runner
+
+```powershell
+python docs\examples\run_smokes.py
+```
+
 ## Spark KB
 
 - `spark_kb/`: valid Spark KB example bundle with validate, build, and health-check smoke paths plus `run_smoke.py`

@@ -13,6 +13,7 @@ This directory is a checked-in Spark KB fixture for CLI smoke tests.
 ## Smoke Flow
 
 ```powershell
+python docs\examples\run_smokes.py
 python docs\examples\spark_kb\run_smoke.py
 python -m domain_chip_memory.cli validate-spark-kb-inputs docs\examples\spark_kb\snapshot.json --repo-source-manifest docs\examples\spark_kb\manifests\repo_sources.json --filed-output-manifest docs\examples\spark_kb\manifests\filed_outputs.json
 python -m domain_chip_memory.cli build-spark-kb docs\examples\spark_kb\snapshot.json tmp\spark_kb_example --repo-source-manifest docs\examples\spark_kb\manifests\repo_sources.json --filed-output-manifest docs\examples\spark_kb\manifests\filed_outputs.json

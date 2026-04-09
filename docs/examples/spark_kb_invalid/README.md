@@ -12,6 +12,7 @@ It is intentionally invalid:
 ## Failure Flow
 
 ```powershell
+python docs\examples\run_smokes.py
 python docs\examples\spark_kb_invalid\run_validate_failure.py
 python -m domain_chip_memory.cli validate-spark-kb-inputs docs\examples\spark_kb_invalid\snapshot.json --repo-source-manifest docs\examples\spark_kb_invalid\repo-sources.json --filed-output-file docs\examples\spark_kb_invalid\bad-output.json --filed-output-manifest docs\examples\spark_kb_invalid\filed-outputs.json
 ```
