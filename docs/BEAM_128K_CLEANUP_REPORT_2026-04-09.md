@@ -20,6 +20,10 @@ python -m domain_chip_memory.cli beam-judged-resume-batch --artifact-prefix offi
 python -m domain_chip_memory.cli beam-judged-promotion-plan --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --write tmp\beam_128k_promotion_plan_live.json
 ```
 
+```powershell
+python -m domain_chip_memory.cli beam-judged-promotion-batch --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --script-file tmp\beam_128k_promotion_batch.ps1 --write tmp\beam_128k_promotion_batch.json
+```
+
 ## Current State
 
 - answer variant directories found: `22`
@@ -84,6 +88,17 @@ The new promotion-plan helper turns that into exact staged paths without touchin
 - sibling evaluation file paths are normalized back to repo-relative paths even when the manifest stores absolute file locations
 - tracked modified drift files remain excluded from the promotion plan
 
+The new promotion-batch helper turns the same plan into one ordered PowerShell script:
+
+- `script_file`: `tmp\beam_128k_promotion_batch.ps1`
+- `script_line_count`: `8`
+- generated `git add -- ...` lines: `3`
+- generated targets:
+  - `conv1_v9`
+  - `conv2_v2`
+  - `conv3_v2`
+- tracked modified drift files remain excluded from the batch script too
+
 ## Resume Surface
 
 There are currently no partial manifests left to resume.
@@ -127,5 +142,5 @@ That is still substantive drift, not judge-reason wording churn.
 The clean next move is:
 
 1. treat `conv1_v9`, `conv2_v2`, and `conv3_v2` as completed working-tree artifacts rather than blocked resume targets
-2. decide whether to promote, ignore, or discard those three untracked completed `official_eval` artifacts
+2. if promotion is desired, use `beam-judged-promotion-batch` or its generated `tmp\beam_128k_promotion_batch.ps1` instead of hand-building `git add` commands
 3. separately investigate the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
