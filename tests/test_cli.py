@@ -1646,6 +1646,58 @@ def test_checked_in_spark_kb_examples_validate_via_cli(tmp_path: Path, monkeypat
     assert payload["missing_filed_output_files"] == []
 
 
+def test_checked_in_spark_kb_examples_build_and_health_check_via_cli(tmp_path: Path, monkeypatch):
+    repo_root = Path(__file__).resolve().parents[1]
+    example_dir = repo_root / "docs" / "examples" / "spark_kb"
+    output_dir = tmp_path / "spark_kb_vault"
+    build_output = tmp_path / "artifacts" / "spark_kb_build.json"
+    health_output = tmp_path / "artifacts" / "spark_kb_health.json"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-kb",
+            str(example_dir / "snapshot.json"),
+            str(output_dir),
+            "--repo-source-manifest",
+            str(example_dir / "manifests" / "repo_sources.json"),
+            "--filed-output-manifest",
+            str(example_dir / "manifests" / "filed_outputs.json"),
+            "--write",
+            str(build_output),
+        ],
+    )
+    cli.main()
+
+    build_payload = json.loads(build_output.read_text(encoding="utf-8"))
+    assert build_payload["compile_result"]["repo_source_count"] == 1
+    assert build_payload["compile_result"]["filed_output_count"] == 1
+    assert (output_dir / "wiki" / "sources" / "repo-repo-notes.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-example-location-answer.md").exists()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "spark-kb-health-check",
+            str(output_dir),
+            "--write",
+            str(health_output),
+        ],
+    )
+    cli.main()
+
+    health_payload = json.loads(health_output.read_text(encoding="utf-8"))
+    assert health_payload["valid"] is True
+    assert health_payload["repo_source_page_count"] == 1
+    assert health_payload["query_output_page_count"] == 1
+    assert health_payload["repo_source_pages_missing_raw_copy"] == []
+    assert health_payload["output_pages_missing_sections"] == []
+
+
 def test_checked_in_sdk_maintenance_example_runs_via_cli(tmp_path: Path, monkeypatch):
     repo_root = Path(__file__).resolve().parents[1]
     single_file = repo_root / "docs" / "examples" / "sdk_maintenance" / "single_replay.json"
