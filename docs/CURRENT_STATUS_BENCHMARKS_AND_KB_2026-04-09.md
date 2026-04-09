@@ -296,7 +296,7 @@ Current live result on 2026-04-09:
    - the payload now includes `recommended_drilldown`, so the broad summary can expose the deepest recommended slice directly instead of making callers pick the last item from `recommended_followups`
    - the payload now includes `recommended_family`, so the active family recommendation resolves to the enriched family row instead of only exposing a command wrapper
    - the payload now includes `recommended_family_gap`, so the report can say how far ahead the current recommended family is from the next noisy candidate without recomputing margins
-   - `recommended_family_gap` now also carries both the exact runner-up family command and that family's top-series drilldown, so the next comparison slice and its dominant cluster are directly copyable from the same margin block
+   - `recommended_family_gap` now also carries both the exact runner-up family command and that family's top-series drilldown, and that runner-up series is resolved from the full noisy-series universe rather than only the current filtered slice
    - the payload now includes `recommended_followups`, so the broad report can emit a two-step drilldown path instead of only the first hop
    - the payload now includes `family_hotspots`, so each noisy family carries its own dominant series and exact jump command
    - family rows now carry `reported_file_share`, `dominance_label`, and `family_rank`, so the broad summary says how much of the current noisy surface each family actually owns and where it sits in the current family ordering
@@ -310,7 +310,7 @@ Current live result on 2026-04-09:
    - current live `recommended_drilldown` points directly to `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live `recommended_family` is `scorecard`, with `reported_file_share = 0.5167` and `dominance_label = dominant`
    - current live `recommended_family_gap` shows `scorecard` ahead of `longmemeval` by `8` noisy files and `0.1334` noisy-share points, which classifies as a `clear` lead
-   - the same live `recommended_family_gap` now includes the exact runner-up jump command `--family longmemeval` and the runner-up top-series drilldown `--family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25`
+   - the same live `recommended_family_gap` now includes the exact runner-up jump command `--family longmemeval` and the runner-up top-series drilldown `--family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25`, even when the current report view is narrower than the full noisy-family competition
    - current live `recommended_hotspot` points at the `scorecard` hotspot row, which jumps directly to `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live `recommended_followups` then drills from `--family scorecard` into `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live family shares are `debug: 0.1000 / minor`, `longmemeval: 0.3833 / major`, `scorecard: 0.5167 / dominant`
