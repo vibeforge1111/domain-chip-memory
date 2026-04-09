@@ -36,12 +36,12 @@ python -m domain_chip_memory.cli beam-judged-drift-batch --artifact-prefix offic
 
 - answer variant directories found: `22`
 - judged evaluation files found: `15`
-- tracked modified evaluation drift files: `1`
+- tracked modified evaluation drift files: `0`
 - official-eval manifests found: `3`
 - runnable official-eval manifests: `3`
 - blocked official-eval manifests: `0`
 - blocked missing env vars: none
-- promotable untracked official-eval manifests: `3`
+- promotable untracked official-eval manifests: `0`
 - scorecards found: `124`
 - discovered evaluation-category universe: `10`
   - `abstention`
@@ -60,58 +60,48 @@ python -m domain_chip_memory.cli beam-judged-drift-batch --artifact-prefix offic
 All three live `128K` official-eval manifests are now `completed`.
 
 - `conv1_v9`
-  - git status: `??`
+  - git status: `clean`
   - classification: `completed`
   - overall average: `0.9517`
   - category count: `10`
   - next pending category: none
 - `conv2_v2`
-  - git status: `??`
+  - git status: `clean`
   - classification: `completed`
   - overall average: `0.9517`
   - category count: `10`
   - next pending category: none
 - `conv3_v2`
-  - git status: `??`
+  - git status: `clean`
   - classification: `completed`
   - overall average: `0.9237`
   - category count: `10`
   - next pending category: none
 
-That means the earlier timeout and partial-coverage state has been cleared in the working tree artifacts.
+That means the earlier timeout and partial-coverage state has been cleared and the three official-eval artifacts are now tracked in git.
 
-All three of those completed official-eval manifests are also currently untracked and promotable:
+The promotion helpers were used to promote the exact six intended paths:
 
-- `conv1_v9`
-- `conv2_v2`
-- `conv3_v2`
+- three manifest files
+- three sibling evaluation files
+- resulting commit: `46f48f7` `Promote completed BEAM 128K official eval artifacts`
 
-The new promotion-plan helper turns that into exact staged paths without touching the worktree:
-
-- `promotion_target_count`: `3`
-- each target emits:
-  - manifest path
-  - sibling evaluation file paths
-  - exact `git add -- ...` command
-- sibling evaluation file paths are normalized back to repo-relative paths even when the manifest stores absolute file locations
-- tracked modified drift files remain excluded from the promotion plan
-
-The new promotion-batch helper turns the same plan into one ordered PowerShell script:
+The promotion-batch helper is still useful for future artifact promotion:
 
 - `script_file`: `tmp\beam_128k_promotion_batch.ps1`
 - `script_line_count`: `8`
 - generated `git add -- ...` lines: `3`
 - generated targets:
   - `conv1_v9`
-- `conv2_v2`
-- `conv3_v2`
+  - `conv2_v2`
+  - `conv3_v2`
 - tracked modified drift files remain excluded from the batch script too
 
 It also now supports `--execute` for the same exact staged path set:
 
 - execution mode runs the generated `git add -- ...` commands sequentially from the repo root
 - execution payload reports `return_code`, `status`, `stdout_tail`, and `stderr_tail` per target
-- live `--execute` was intentionally not run yet, because that would stage the three untracked completed manifests and sibling evaluation files
+- live `--execute` completed successfully with `execution_status_counts: {"completed": 3}`
 
 ## Resume Surface
 
@@ -132,43 +122,14 @@ There are currently no partial manifests left to resume.
 
 The new `--only-runnable` flag is still useful for future partial states because it can emit only env-ready reruns, but on the live `128K` lane today it correctly collapses to an empty plan.
 
-## Remaining Cleanup Question
+## Drift Resolution
 
-The main unresolved cleanup item is no longer the three `conv*_official_eval.json` manifests. It is the tracked modified file:
+The previously tracked modified file has now been restored to `HEAD`:
 
 - `artifacts/beam_public_results/official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3/100K/1/evaluation-domain_chip_memory_answers.json`
-  - git status: `M`
-  - drift row present in `modified_evaluation_drift_files`
-  - current category count: `4`
-  - `HEAD` category count: `4`
-  - current overall average: `0.7322`
-  - `HEAD` overall average: `0.9031`
-  - overall average delta: `-0.1709`
-  - changed category count: `1`
-  - `event_ordering` average at `HEAD`: `0.8622`
-  - `event_ordering` average in working tree: `0.1789`
-  - `event_ordering` average delta: `-0.6833`
-  - changed `event_ordering` question count: `2`
-  - question `0`:
-    - `HEAD`: `0.9082`
-    - working tree: `0.1464`
-    - delta: `-0.7618`
-  - question `1`:
-    - `HEAD`: `0.8162`
-    - working tree: `0.2113`
-    - delta: `-0.6049`
-
-That is still substantive drift, not judge-reason wording churn.
-
-The new drift-plan helper turns that tracked row into exact next-step commands without executing them:
-
-- `drift_target_count`: `1`
-- target path:
-  - `artifacts/beam_public_results/official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3/100K/1/evaluation-domain_chip_memory_answers.json`
-- emitted commands:
-  - `git diff -- ...`
-  - `git show HEAD:...`
-  - `git restore --source=HEAD -- ...`
+  - current git status: `clean`
+  - current overall average: `0.9031`
+  - drift row no longer present in `modified_evaluation_drift_files`
 
 The new drift-batch helper turns the same plan into one ordered PowerShell script:
 
@@ -187,8 +148,10 @@ It now also supports `--execute` for those same safe inspection commands:
 
 ## Practical Next Step
 
-The clean next move is:
+The `BEAM 128K` exact-judge cleanup lane is now in a good stopping state:
 
-1. treat `conv1_v9`, `conv2_v2`, and `conv3_v2` as completed working-tree artifacts rather than blocked resume targets
-2. if promotion is desired, use `beam-judged-promotion-batch`, its generated `tmp\beam_128k_promotion_batch.ps1`, or `beam-judged-promotion-batch --execute` instead of hand-building `git add` commands
-3. use `beam-judged-drift-batch`, `beam-judged-drift-batch --execute`, or `beam-judged-drift-plan` to inspect the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
+1. no partial official-eval manifests remain
+2. no tracked modified evaluation drift remains
+3. the three completed `conv1_v9`, `conv2_v2`, and `conv3_v2` official-eval artifacts are committed
+
+The next clean move is to leave this lane and pivot to a different benchmark or KB task unless new `128K` artifact drift appears.
