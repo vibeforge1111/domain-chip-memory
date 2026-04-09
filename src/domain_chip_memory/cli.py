@@ -529,6 +529,30 @@ def _build_demo_spark_kb_payload(output_dir: str, repo_sources: list[str] | None
     }
 
 
+def _build_spark_kb_from_snapshot_file(
+    snapshot_file: str,
+    output_dir: str,
+    *,
+    repo_sources: list[str] | None = None,
+) -> dict:
+    snapshot_path = Path(snapshot_file)
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    if not isinstance(snapshot, dict):
+        raise ValueError("Spark KB snapshot file must contain a JSON object.")
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Knowledge Base",
+        repo_sources=repo_sources,
+    )
+    return {
+        "contract": build_spark_kb_contract_summary(),
+        "snapshot_file": str(snapshot_path),
+        "snapshot": snapshot,
+        "compile_result": compile_result,
+    }
+
+
 def _run_sdk_maintenance_checks(sdk: SparkMemorySDK, checks: dict | None) -> dict:
     payload = dict(checks or {})
     current_requests = payload.get("current_state", [])
@@ -648,6 +672,11 @@ def main() -> None:
     demo_spark_kb.add_argument("output_dir")
     demo_spark_kb.add_argument("--repo-source", action="append", default=[])
     demo_spark_kb.add_argument("--write")
+    build_spark_kb = subparsers.add_parser("build-spark-kb", help="Compile a Spark KB vault from a snapshot JSON file.")
+    build_spark_kb.add_argument("snapshot_file")
+    build_spark_kb.add_argument("output_dir")
+    build_spark_kb.add_argument("--repo-source", action="append", default=[])
+    build_spark_kb.add_argument("--write")
     spark_kb_health = subparsers.add_parser("spark-kb-health-check", help="Run health checks over a scaffolded Spark KB vault.")
     spark_kb_health.add_argument("output_dir")
     spark_kb_health.add_argument("--write")
@@ -992,6 +1021,17 @@ def main() -> None:
 
     if args.command == "demo-spark-kb":
         payload = _build_demo_spark_kb_payload(args.output_dir, repo_sources=args.repo_source)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-kb":
+        payload = _build_spark_kb_from_snapshot_file(
+            args.snapshot_file,
+            args.output_dir,
+            repo_sources=args.repo_source,
+        )
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)

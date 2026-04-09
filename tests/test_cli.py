@@ -500,6 +500,89 @@ def test_demo_spark_kb_can_ingest_explicit_repo_source(tmp_path: Path, monkeypat
     assert (output_dir / "wiki" / "sources" / "repo-notes.md").exists()
 
 
+def test_build_spark_kb_command_compiles_from_snapshot_file(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    output_dir = tmp_path / "spark_kb_vault"
+    summary_file = tmp_path / "artifacts" / "spark_kb_build.json"
+    snapshot_file = tmp_path / "snapshot.json"
+    repo_source = tmp_path / "README_SNIPPET.md"
+    repo_source.write_text("# Repo Snippet\n\nUseful repo context.\n", encoding="utf-8")
+    snapshot_file.write_text(
+        json.dumps(
+            {
+                "runtime_class": "SparkMemorySDK",
+                "generated_at": "2025-03-10T00:00:00+00:00",
+                "counts": {
+                    "session_count": 1,
+                    "current_state_count": 1,
+                    "observation_count": 1,
+                    "event_count": 0,
+                },
+                "sessions": [
+                    {
+                        "session_id": "session-build",
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "turns": [
+                            {"turn_id": "session-build:t1", "speaker": "user", "text": "I live in Dubai."}
+                        ],
+                    }
+                ],
+                "current_state": [
+                    {
+                        "memory_role": "current_state",
+                        "subject": "user",
+                        "predicate": "location",
+                        "text": "user location Dubai",
+                        "session_id": "session-build",
+                        "turn_ids": ["session-build:t1"],
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "metadata": {"value": "Dubai"},
+                    }
+                ],
+                "observations": [
+                    {
+                        "memory_role": "structured_evidence",
+                        "subject": "user",
+                        "predicate": "location",
+                        "text": "user location Dubai",
+                        "session_id": "session-build",
+                        "turn_ids": ["session-build:t1"],
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "metadata": {"value": "Dubai", "observation_id": "obs-build-1"},
+                    }
+                ],
+                "events": [],
+                "trace": {"operation": "export_knowledge_base_snapshot"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-kb",
+            str(snapshot_file),
+            str(output_dir),
+            "--repo-source",
+            str(repo_source),
+            "--write",
+            str(summary_file),
+        ],
+    )
+
+    cli.main()
+
+    written = json.loads(summary_file.read_text(encoding="utf-8"))
+    assert written["snapshot_file"] == str(snapshot_file)
+    assert written["compile_result"]["current_state_page_count"] >= 1
+    assert (output_dir / "wiki" / "current-state" / "user-location.md").exists()
+    assert (output_dir / "wiki" / "sources" / "repo-readme-snippet.md").exists()
+
+
 def test_spark_kb_maintenance_report_surfaces_contradictions_and_staleness(tmp_path: Path):
     output_dir = tmp_path / "spark_kb_vault"
     snapshot = {
