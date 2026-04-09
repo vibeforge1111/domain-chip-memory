@@ -130,6 +130,13 @@ That `conv3_v2` mismatch between persisted progress and last logged worker progr
 
 The new resume-plan helper now emits exact rerun commands for the three blocked manifests:
 
+- it now also surfaces read-only execution readiness:
+  - `resume_target_count`: `3`
+  - `runnable_target_count`: `0`
+  - `blocked_target_count`: `3`
+  - `blocked_missing_env_vars`: `MINIMAX_API_KEY`
+- MiniMax resume targets without an explicit `api_key_env` now still preflight correctly against the direct evaluator's default `MINIMAX_API_KEY` requirement
+
 - `conv1_v9`
   ```powershell
   python -m domain_chip_memory.cli run-beam-official-evaluation C:\Users\USER\Desktop\domain-chip-memory\benchmark_data\official\BEAM-upstream C:\Users\USER\Desktop\domain-chip-memory\artifacts\beam_public_results\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9 --chat-size 128K --result-file-name domain_chip_memory_answers.json --start-index 0 --end-index 1 --max-workers 10 --judge-provider minimax --judge-model MiniMax-M2.7 --judge-base-url https://api.minimax.io/v1 --judge-api-key-env MINIMAX_API_KEY --write artifacts\benchmark_runs\official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json
