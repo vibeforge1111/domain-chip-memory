@@ -2162,6 +2162,7 @@ def _build_benchmark_runs_git_report(
         else:
             label = recommendation.get("reason") or recommendation.get("scope") or "recommendation"
         recommended_sequence_labels.append(label)
+    recommended_sequence_preview = " -> ".join(recommended_sequence_labels)
     recommended_sequence_shells: list[str] = []
     recommended_sequence_commands: list[list[str]] = []
     for recommendation in recommended_sequence:
@@ -2213,6 +2214,7 @@ def _build_benchmark_runs_git_report(
         "recommended_sequence": recommended_sequence,
         "recommended_sequence_targets": recommended_sequence_targets,
         "recommended_sequence_labels": recommended_sequence_labels,
+        "recommended_sequence_preview": recommended_sequence_preview,
         "recommended_sequence_commands": recommended_sequence_commands,
         "recommended_sequence_shells": recommended_sequence_shells,
         "recommended_sequence_steps": recommended_sequence_steps,

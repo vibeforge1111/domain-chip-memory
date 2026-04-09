@@ -3322,6 +3322,11 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "focus series scorecard / official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
         "compare longmemeval rank 2 / longmemeval_offset225_limit25_source",
     ]
+    assert payload["recommended_sequence_preview"] == (
+        "focus family scorecard -> "
+        "focus series scorecard / official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10 -> "
+        "compare longmemeval rank 2 / longmemeval_offset225_limit25_source"
+    )
     assert payload["recommended_sequence_commands"] == [
         payload["recommended_focus"]["command"],
         payload["recommended_drilldown"]["command"],
@@ -4270,6 +4275,10 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "focus series longmemeval / longmemeval_summary_synthesis_offset225_limit25",
         "inspect longmemeval rank 1 / longmemeval_summary_synthesis_offset225_limit25",
     ]
+    assert payload["recommended_sequence_preview"] == (
+        "focus series longmemeval / longmemeval_summary_synthesis_offset225_limit25 -> "
+        "inspect longmemeval rank 1 / longmemeval_summary_synthesis_offset225_limit25"
+    )
     assert payload["recommended_sequence_commands"] == [
         payload["recommended_focus"]["command"],
     ]
@@ -4947,6 +4956,10 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "focus series longmemeval_summary_synthesis_offset225_limit25",
         "inspect longmemeval rank 1 / longmemeval_summary_synthesis_offset225_limit25",
     ]
+    assert payload["recommended_sequence_preview"] == (
+        "focus series longmemeval_summary_synthesis_offset225_limit25 -> "
+        "inspect longmemeval rank 1 / longmemeval_summary_synthesis_offset225_limit25"
+    )
     assert payload["recommended_sequence_commands"] == [
         payload["recommended_next_step"]["command"],
     ]
