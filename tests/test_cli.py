@@ -3141,6 +3141,86 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
     assert partial_row["promotable_candidate"] is False
 
 
+def test_beam_judged_cleanup_report_surfaces_tracked_evaluation_drift(tmp_path: Path, monkeypatch):
+    answers_root = tmp_path / "artifacts" / "beam_public_results"
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "beam_cleanup_report.json"
+
+    eval_path = (
+        answers_root
+        / "official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3"
+        / "100K"
+        / "1"
+        / "evaluation-domain_chip_memory_answers.json"
+    )
+    eval_path.parent.mkdir(parents=True)
+    eval_path.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"llm_judge_score": 1.0}],
+                "event_ordering": [{"tau_norm": 0.1789}],
+                "abstention": [{"llm_judge_score": 1.0}],
+                "contradiction_resolution": [{"llm_judge_score": 0.75}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    display_path = "artifacts/beam_public_results/official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3/100K/1/evaluation-domain_chip_memory_answers.json"
+    monkeypatch.setattr(cli, "_git_status_by_path", lambda paths, repo_root: {display_path: "M"})
+    monkeypatch.setattr(
+        cli,
+        "_load_json_from_git_revision",
+        lambda repo_root, revision, path: {
+            "information_extraction": [{"llm_judge_score": 1.0}],
+            "event_ordering": [{"tau_norm": 0.8622}],
+            "abstention": [{"llm_judge_score": 1.0}],
+            "contradiction_resolution": [{"llm_judge_score": 0.75}],
+            "summarization": [{"llm_judge_score": 0.9}],
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "beam-judged-cleanup-report",
+            "--artifact-prefix",
+            "official_beam_128k_summary_synthesis_memory_heuristic_v1_",
+            "--answers-root",
+            str(answers_root),
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["modified_evaluation_drift_count"] == 1
+    drift_row = payload["modified_evaluation_drift_files"][0]
+    assert drift_row["path"] == display_path
+    assert drift_row["git_status"] == "M"
+    assert drift_row["head_present"] is True
+    assert drift_row["current_overall_average"] == 0.7322
+    assert drift_row["head_overall_average"] == 0.9024
+    assert drift_row["overall_average_delta"] == -0.1702
+    assert drift_row["current_category_count"] == 4
+    assert drift_row["head_category_count"] == 5
+    assert drift_row["missing_from_current"] == ["summarization"]
+    assert drift_row["added_in_current"] == []
+    assert drift_row["changed_category_count"] == 2
+    changed_by_category = {row["category"]: row for row in drift_row["changed_categories"]}
+    assert changed_by_category["event_ordering"]["head_average_score"] == 0.8622
+    assert changed_by_category["event_ordering"]["current_average_score"] == 0.1789
+    assert changed_by_category["event_ordering"]["average_score_delta"] == -0.6833
+    assert changed_by_category["summarization"]["head_average_score"] == 0.9
+    assert changed_by_category["summarization"]["current_average_score"] is None
+
+
 def test_beam_judged_resume_plan_cli_emits_exact_rerun_command(tmp_path: Path, monkeypatch):
     answers_root = tmp_path / "artifacts" / "beam_public_results"
     benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"

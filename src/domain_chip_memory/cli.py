@@ -40,6 +40,7 @@ from .sdk import (
 )
 from .baselines import build_full_context_packets, build_lexical_packets
 from .beam_official_eval import (
+    _summarize_beam_evaluation_payload,
     export_beam_public_answers_from_scorecard,
     run_beam_official_evaluation,
     summarize_beam_official_evaluation,
@@ -695,6 +696,103 @@ def _git_status_by_path(paths: list[Path], *, repo_root: Path) -> dict[str, str]
     return status_by_path
 
 
+def _load_json_from_git_revision(*, repo_root: Path, revision: str, path: Path) -> dict | None:
+    try:
+        relative_path = str(path.relative_to(repo_root)).replace("\\", "/")
+    except ValueError:
+        return None
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "show", f"{revision}:{relative_path}"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _category_summary_by_name(summary: dict) -> dict[str, dict]:
+    categories = summary.get("categories", [])
+    if not isinstance(categories, list):
+        return {}
+    rows: dict[str, dict] = {}
+    for row in categories:
+        if not isinstance(row, dict):
+            continue
+        category = str(row.get("category") or "").strip()
+        if category:
+            rows[category] = row
+    return rows
+
+
+def _build_beam_modified_evaluation_drift_row(*, path: Path, repo_root: Path, git_status: str) -> dict | None:
+    current_payload = _load_json_file(path)
+    if not isinstance(current_payload, dict):
+        return None
+    head_payload = _load_json_from_git_revision(repo_root=repo_root, revision="HEAD", path=path)
+    current_summary = _summarize_beam_evaluation_payload(current_payload)
+    head_summary = _summarize_beam_evaluation_payload(head_payload) if isinstance(head_payload, dict) else None
+    current_by_category = _category_summary_by_name(current_summary)
+    head_by_category = _category_summary_by_name(head_summary or {})
+    all_categories = sorted(set(current_by_category) | set(head_by_category))
+    changed_categories = []
+    for category in all_categories:
+        current_row = current_by_category.get(category)
+        head_row = head_by_category.get(category)
+        current_average = current_row.get("average_score") if current_row else None
+        head_average = head_row.get("average_score") if head_row else None
+        current_count = current_row.get("question_count") if current_row else None
+        head_count = head_row.get("question_count") if head_row else None
+        current_metric = current_row.get("metric") if current_row else ""
+        head_metric = head_row.get("metric") if head_row else ""
+        if (
+            current_average != head_average
+            or current_count != head_count
+            or current_metric != head_metric
+        ):
+            changed_categories.append(
+                {
+                    "category": category,
+                    "head_average_score": head_average,
+                    "current_average_score": current_average,
+                    "average_score_delta": (
+                        round(float(current_average) - float(head_average), 4)
+                        if current_average is not None and head_average is not None
+                        else None
+                    ),
+                    "head_question_count": head_count,
+                    "current_question_count": current_count,
+                    "head_metric": head_metric,
+                    "current_metric": current_metric,
+                }
+            )
+    return {
+        "path": _display_path(path, repo_root),
+        "git_status": git_status,
+        "head_present": isinstance(head_payload, dict),
+        "current_overall_average": current_summary.get("overall_average"),
+        "head_overall_average": head_summary.get("overall_average") if head_summary else None,
+        "overall_average_delta": (
+            round(float(current_summary.get("overall_average", 0.0)) - float(head_summary.get("overall_average", 0.0)), 4)
+            if head_summary
+            else None
+        ),
+        "current_category_count": current_summary.get("category_count"),
+        "head_category_count": head_summary.get("category_count") if head_summary else None,
+        "current_categories": sorted(current_by_category),
+        "head_categories": sorted(head_by_category),
+        "missing_from_current": sorted(set(head_by_category) - set(current_by_category)),
+        "added_in_current": sorted(set(current_by_category) - set(head_by_category)),
+        "changed_category_count": len(changed_categories),
+        "changed_categories": changed_categories,
+    }
+
+
 def _classify_beam_cleanup_manifest(
     *,
     status: str,
@@ -978,6 +1076,20 @@ def _build_beam_judged_cleanup_report(
             }
         )
 
+    modified_evaluation_drift_rows = []
+    for path in evaluation_files:
+        display_path = _display_path(path, repo_root_path)
+        git_status = git_status_by_path.get(display_path, "clean")
+        if git_status != "M":
+            continue
+        drift_row = _build_beam_modified_evaluation_drift_row(
+            path=path,
+            repo_root=repo_root_path,
+            git_status=git_status,
+        )
+        if drift_row:
+            modified_evaluation_drift_rows.append(drift_row)
+
     official_eval_rows = []
     for path in official_eval_manifests:
         payload = _load_json_file(path)
@@ -1135,6 +1247,7 @@ def _build_beam_judged_cleanup_report(
         "repo_root": str(repo_root_path),
         "answer_variant_count": len(answer_variant_dirs),
         "evaluation_file_count": len(evaluation_rows),
+        "modified_evaluation_drift_count": len(modified_evaluation_drift_rows),
         "official_eval_manifest_count": len(official_eval_rows),
         "runnable_official_eval_manifest_count": len(official_eval_rows) - blocked_official_eval_manifest_count,
         "blocked_official_eval_manifest_count": blocked_official_eval_manifest_count,
@@ -1145,6 +1258,7 @@ def _build_beam_judged_cleanup_report(
         "max_category_count_seen": max((len(categories) for categories in evaluation_categories_by_path.values()), default=0),
         "aggregate_evaluation_summary": aggregate_evaluation_summary,
         "evaluation_files": evaluation_rows,
+        "modified_evaluation_drift_files": modified_evaluation_drift_rows,
         "official_eval_manifests": official_eval_rows,
         "scorecards": scorecard_rows,
     }
