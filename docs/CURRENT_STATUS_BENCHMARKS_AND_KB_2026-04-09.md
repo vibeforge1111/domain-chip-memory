@@ -207,8 +207,9 @@ The KB flow should be validated with the real CLI, not only by reading code.
 
 Minimum live checks:
 
-1. `python -m domain_chip_memory.cli demo-spark-kb <output_dir>`
+1. `python -m domain_chip_memory.cli build-spark-kb <snapshot_file> <output_dir>`
 2. `python -m domain_chip_memory.cli spark-kb-health-check <output_dir>`
+3. `python -m domain_chip_memory.cli demo-spark-kb <output_dir>`
 
 Success means:
 
@@ -218,6 +219,7 @@ Success means:
 
 Current live result on 2026-04-09:
 
+- `build-spark-kb` now exists as a real non-demo compiler path for snapshot JSON inputs
 - `demo-spark-kb` ran successfully against a real local vault scaffold
 - `spark-kb-health-check` returned `valid: true`
 - no missing required files
