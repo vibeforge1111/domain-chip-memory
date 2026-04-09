@@ -113,6 +113,14 @@ For each user, Spark should eventually maintain:
 
 The KB pages should be compilations from the runtime memory and approved artifacts, not independent truth sources.
 
+Current implemented surfaces in this repo now include:
+
+- governed runtime snapshot export into `raw/memory-snapshots/`
+- explicit repo-native file ingest into `raw/repos/`
+- compiled source pages for snapshot and session inputs under `wiki/sources/`
+- compiled runtime timeline synthesis under `wiki/syntheses/`
+- filed maintenance and answer pages under `wiki/outputs/`
+
 ## Required user-visible surfaces
 
 If Spark memory is enabled, the user should eventually have a visible workspace with at least:
@@ -155,6 +163,12 @@ The intended flow is:
 6. the KB compounds over time while staying traceable to runtime memory and source evidence
 
 This keeps the system additive rather than amnesic.
+
+The current repo implementation now exercises this with:
+
+- a demo filed answer page derived from `SparkMemorySDK.explain_answer(...)`
+- a maintenance report page emitted into `wiki/outputs/`
+- explicit repo-source copies and compiled source pages for selected local files
 
 ## Guardrails
 

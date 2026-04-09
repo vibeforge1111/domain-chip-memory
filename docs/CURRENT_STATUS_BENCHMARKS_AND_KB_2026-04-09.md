@@ -179,7 +179,9 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - integration contract in [spark_integration.py](../src/domain_chip_memory/spark_integration.py)
 - compiled session source pages in `wiki/sources/`
 - compiled timeline synthesis in `wiki/syntheses/timeline-overview.md`
+- explicit repo-native ingest into `raw/repos/` plus compiled repo source pages
 - filed KB maintenance report in `wiki/outputs/maintenance-report.md`
+- filed KB answer pages in `wiki/outputs/query-*.md`
 
 ### What is now true after BEAM closure
 
@@ -219,7 +221,7 @@ Current live result on 2026-04-09:
 - `spark-kb-health-check` returned `valid: true`
 - no missing required files
 - no broken wikilinks
-- source, synthesis, and output surfaces now include session pages, timeline overview, and maintenance report output
+- source, synthesis, and output surfaces now include session pages, timeline overview, repo-source ingest, maintenance report output, and filed answer pages
 - only `wiki/log.md` remains orphaned, which is acceptable for now because it is an append-only activity surface rather than a navigational page
 
 ## What is done vs remaining right now
@@ -259,9 +261,9 @@ Current live result on 2026-04-09:
 
 1. keep the current scaffold green under live CLI checks
 2. add richer compiled pages that connect runtime memory to benchmark and repo knowledge
-3. add filed query outputs under `wiki/outputs/`
+3. broaden filed query outputs beyond the current demo answer page
 4. expand the maintenance report into contradiction, staleness, and missing-page reporting
-5. add an ingest path for repo-native research and benchmark artifacts into `raw/`
+5. broaden repo-native ingest from explicit file picks into a more complete research and benchmark artifact path
 
 ### Next product tasks after that
 
