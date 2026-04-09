@@ -181,6 +181,7 @@ The current repo implementation now exercises this with:
 - a local `docs/examples/spark_kb_invalid/run_validate_failure.py` wrapper for the failing example flow
 - a `docs/examples/README.md` index for the checked-in KB, shadow, and maintenance fixtures
 - a `docs/examples/run_smokes.py` top-level runner that aggregates the valid and invalid Spark KB example flows
+- a `.github/workflows/example-smokes.yml` hook that runs the checked-in example smoke runner in CI
 - health checks that can now flag missing repo raw copies, stray raw repo files, and malformed filed query pages
 - compile summaries that now report repo-source and filed-output counts explicitly
 

@@ -218,6 +218,7 @@ There is also a checked-in invalid validator fixture under `docs/examples/spark_
 The full examples directory is indexed in `docs/examples/README.md`.
 The top-level shortcut for the checked-in example wrappers is `docs/examples/run_smokes.py`.
 The invalid bundle now has a matching `docs/examples/spark_kb_invalid/run_validate_failure.py` shortcut.
+The same checked-in example smoke path is now wired into `.github/workflows/example-smokes.yml`.
 
 ```powershell
 python docs\examples\spark_kb\run_smoke.py
