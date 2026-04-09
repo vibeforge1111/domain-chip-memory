@@ -287,6 +287,8 @@ Current live result on 2026-04-09:
 2. use `python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir artifacts/benchmark_runs --repo-root . --only-noisy` before treating residual artifact churn as a real regression signal
    - current live residual noise in `artifacts/benchmark_runs/` is `60` untracked JSON files across `3` noisy families
    - split: `6` debug files, `23` `longmemeval` files, `31` scorecards
+   - the same noisy surface collapses to `35` series instead of a flat `60`-file list
+   - largest live series: `longmemeval_summary_synthesis_offset225_limit25` (`4`), `longmemeval_summary_synthesis_offset275_limit25` (`4`), `official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5` (`4`)
 3. decide whether the next `BEAM` evidence task is exact-official judge parity or a different scale/provider validation lane
 4. choose and close the next clean `LoCoMo` lane
 5. lock the first canonical `GoodAI` run
