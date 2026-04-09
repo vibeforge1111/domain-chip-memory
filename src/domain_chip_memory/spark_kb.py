@@ -96,6 +96,7 @@ def build_spark_kb_contract_summary() -> dict[str, Any]:
                 "wiki/sources/_index.md",
                 "wiki/syntheses/_index.md",
                 "wiki/outputs/_index.md",
+                "wiki/outputs/maintenance-report.md",
             ],
         },
         "compile_rules": [
@@ -141,7 +142,7 @@ def build_spark_kb_claude_schema(*, generated_at: str) -> str:
             "- wiki/events/ contains inspectable event pages with provenance",
             "- wiki/sources/ contains source-style pages describing governed snapshot inputs",
             "- wiki/syntheses/ contains compiled overviews and future cross-source syntheses",
-            "- wiki/outputs/ contains filed answers and future syntheses",
+            "- wiki/outputs/ contains filed answers, maintenance reports, and future syntheses",
             "- wiki/index.md and wiki/log.md are AI-maintained navigation surfaces",
             "",
             "## Rules",
@@ -205,6 +206,7 @@ def scaffold_spark_knowledge_base(
     observation_entries = list(snapshot.get("observations") or [])
     event_entries = list(snapshot.get("events") or [])
     snapshot_counts = dict(snapshot.get("counts") or {})
+    session_entries = list(snapshot.get("sessions") or [])
 
     evidence_links_by_turn: dict[tuple[str, str], list[str]] = {}
     evidence_pages: list[dict[str, str]] = []
@@ -299,6 +301,49 @@ def scaffold_spark_knowledge_base(
             "path": str(source_page_path),
         }
     )
+    for session in session_entries:
+        session_id = str(session.get("session_id") or "").strip() or "unknown-session"
+        session_slug = _slugify(session_id)
+        session_page_path = sources_dir / f"session-{session_slug}.md"
+        session_timestamp = str(session.get("timestamp") or "unknown")
+        turns = list(session.get("turns") or [])
+        session_page_title = f"Session {session_id}"
+        turn_lines = []
+        for index, turn in enumerate(turns, start=1):
+            speaker = str(turn.get("speaker") or "unknown")
+            text = str(turn.get("text") or "").strip() or "(empty)"
+            turn_id = str(turn.get("turn_id") or f"{session_id}:turn:{index}")
+            turn_lines.append(f"- `{turn_id}` `{speaker}`: {text}")
+        session_page_content = [
+            _markdown_frontmatter(
+                title=session_page_title,
+                page_type="source",
+                summary=f"Governed Spark session source for {session_id}.",
+                generated_at=generated_at,
+                tags=["spark-kb", "source", "session"],
+            ),
+            f"# {session_page_title}",
+            "",
+            "## Session Metadata",
+            f"- Session id: `{session_id}`",
+            f"- Timestamp: `{session_timestamp}`",
+            f"- Turn count: `{len(turns)}`",
+            "",
+            "## Turns",
+        ]
+        if turn_lines:
+            session_page_content.extend(turn_lines)
+        else:
+            session_page_content.append("- No turns were present in this snapshot session.")
+        session_page_content.append("")
+        session_page_path.write_text("\n".join(session_page_content), encoding="utf-8")
+        source_pages.append(
+            {
+                "title": session_page_title,
+                "link": f"[[sources/{session_page_path.stem}]]",
+                "path": str(session_page_path),
+            }
+        )
 
     current_state_pages: list[dict[str, str]] = []
     for record in current_state_entries:
@@ -382,6 +427,106 @@ def scaffold_spark_knowledge_base(
             "path": str(synthesis_page_path),
         }
     )
+    timeline_page_path = syntheses_dir / "timeline-overview.md"
+    timeline_page_title = "Timeline Overview"
+    ordered_events = sorted(
+        event_entries,
+        key=lambda record: (
+            str(record.get("timestamp") or ""),
+            str(record.get("session_id") or ""),
+            str(record.get("predicate") or ""),
+        ),
+    )
+    timeline_page_content = [
+        _markdown_frontmatter(
+            title=timeline_page_title,
+            page_type="synthesis",
+            summary="Chronological synthesis over governed Spark event memory.",
+            generated_at=generated_at,
+            tags=["spark-kb", "synthesis", "timeline"],
+        ),
+        f"# {timeline_page_title}",
+        "",
+        "## Overview",
+        "- This page is the first explicit timeline surface compiled from governed event memory.",
+        f"- Event pages available: `{len(event_pages)}`",
+        "",
+        "## Chronological Events",
+    ]
+    if ordered_events:
+        for record in ordered_events:
+            event_id = str(record.get("metadata", {}).get("event_id") or "")
+            event_link = f"[[events/{_slugify(event_id or record.get('text') or 'event')}]]"
+            timestamp = str(record.get("timestamp") or "unknown")
+            subject = str(record.get("subject") or "unknown")
+            predicate = str(record.get("predicate") or "event")
+            text = str(record.get("text") or "").strip() or "No event text"
+            timeline_page_content.append(f"- `{timestamp}` {event_link} `{subject}.{predicate}`: {text}")
+    else:
+        timeline_page_content.append("- No event pages generated yet.")
+    timeline_page_content.append("")
+    timeline_page_path.write_text("\n".join(timeline_page_content), encoding="utf-8")
+    synthesis_pages.append(
+        {
+            "title": timeline_page_title,
+            "link": f"[[syntheses/{timeline_page_path.stem}]]",
+            "path": str(timeline_page_path),
+        }
+    )
+
+    current_state_without_evidence = 0
+    for record in current_state_entries:
+        provenance_links: list[str] = []
+        for turn_id in record.get("turn_ids") or []:
+            provenance_links.extend(evidence_links_by_turn.get((str(record.get("session_id") or ""), str(turn_id)), []))
+        if not provenance_links:
+            current_state_without_evidence += 1
+
+    output_pages: list[dict[str, str]] = []
+    maintenance_page_path = outputs_dir / "maintenance-report.md"
+    maintenance_page_title = "Maintenance Report"
+    maintenance_page_content = [
+        _markdown_frontmatter(
+            title=maintenance_page_title,
+            page_type="output",
+            summary="Compiler-generated maintenance report for the visible Spark KB vault.",
+            generated_at=generated_at,
+            tags=["spark-kb", "output", "maintenance"],
+        ),
+        f"# {maintenance_page_title}",
+        "",
+        "## Snapshot Summary",
+        f"- Generated at: `{generated_at}`",
+        f"- Sessions: `{snapshot_counts.get('session_count', 0)}`",
+        f"- Current-state records: `{snapshot_counts.get('current_state_count', 0)}`",
+        f"- Observation records: `{snapshot_counts.get('observation_count', 0)}`",
+        f"- Event records: `{snapshot_counts.get('event_count', 0)}`",
+        "",
+        "## Compiled Surface",
+        f"- Source pages: `{len(source_pages)}`",
+        f"- Synthesis pages: `{len(synthesis_pages)}`",
+        f"- Current-state pages: `{len(current_state_pages)}`",
+        f"- Evidence pages: `{len(evidence_pages)}`",
+        f"- Event pages: `{len(event_pages)}`",
+        "",
+        "## Coverage Checks",
+        f"- Current-state pages without linked evidence: `{current_state_without_evidence}`",
+        f"- Sessions with compiled source pages: `{len(session_entries)}`",
+        "",
+        "## Next Compiler Targets",
+        "- Add repo-native artifact ingest into `raw/` and compile those into `wiki/sources/`.",
+        "- File important answers into `wiki/outputs/` instead of leaving outputs empty.",
+        "- Add contradiction, staleness, and missing-page reporting over mixed runtime and repo-native sources.",
+        "",
+    ]
+    maintenance_page_path.write_text("\n".join(maintenance_page_content), encoding="utf-8")
+    output_pages.append(
+        {
+            "title": maintenance_page_title,
+            "link": f"[[outputs/{maintenance_page_path.stem}]]",
+            "path": str(maintenance_page_path),
+        }
+    )
 
     (current_state_dir / "_index.md").write_text(
         _render_index_page(
@@ -442,9 +587,9 @@ def scaffold_spark_knowledge_base(
         _render_index_page(
             title="Outputs Index",
             generated_at=generated_at,
-            summary="Reserved for future Spark KB answers and syntheses.",
+            summary="Filed Spark KB answers, maintenance reports, and future syntheses.",
             section_title="Output Pages",
-            items=[],
+            items=output_pages,
             tag="outputs",
         ),
         encoding="utf-8",
@@ -475,6 +620,7 @@ def scaffold_spark_knowledge_base(
         "- [[evidence/_index]]",
         "- [[events/_index]]",
         "- [[outputs/_index]]",
+        "- [[outputs/maintenance-report]]",
         "",
     ]
     (wiki_dir / "index.md").write_text("\n".join(index_content), encoding="utf-8")
@@ -489,6 +635,7 @@ def scaffold_spark_knowledge_base(
                 f"- event pages: {len(event_pages)}",
                 f"- source pages: {len(source_pages)}",
                 f"- synthesis pages: {len(synthesis_pages)}",
+                f"- output pages: {len(output_pages)}",
                 "",
             ]
         ),
@@ -504,6 +651,7 @@ def scaffold_spark_knowledge_base(
         "event_page_count": len(event_pages),
         "source_page_count": len(source_pages),
         "synthesis_page_count": len(synthesis_pages),
+        "output_page_count": len(output_pages),
         "files_written": sorted(
             str(path.relative_to(output_path))
             for path in output_path.rglob("*")
@@ -526,6 +674,7 @@ def build_spark_kb_health_report(output_dir: str | Path) -> dict[str, Any]:
         wiki_dir / "sources" / "_index.md",
         wiki_dir / "syntheses" / "_index.md",
         wiki_dir / "outputs" / "_index.md",
+        wiki_dir / "outputs" / "maintenance-report.md",
     ]
     missing_required_files = [
         str(path.relative_to(output_path))

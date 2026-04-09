@@ -412,10 +412,15 @@ def test_demo_spark_kb_command_runs_and_scaffolds_vault(tmp_path: Path, monkeypa
     assert (output_dir / "wiki" / "current-state" / "_index.md").exists()
     assert (output_dir / "wiki" / "sources" / "_index.md").exists()
     assert (output_dir / "wiki" / "syntheses" / "_index.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "_index.md").exists()
     assert (output_dir / "wiki" / "sources" / "spark-memory-snapshot-latest.md").exists()
+    assert (output_dir / "wiki" / "sources" / "session-spark-kb-demo.md").exists()
     assert (output_dir / "wiki" / "syntheses" / "runtime-memory-overview.md").exists()
+    assert (output_dir / "wiki" / "syntheses" / "timeline-overview.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "maintenance-report.md").exists()
     assert written["compile_result"]["source_page_count"] >= 1
     assert written["compile_result"]["synthesis_page_count"] >= 1
+    assert written["compile_result"]["output_page_count"] >= 1
     assert written["compile_result"]["event_page_count"] >= 1
 
 
@@ -459,6 +464,7 @@ def test_spark_kb_health_check_command_runs_on_demo_vault(tmp_path: Path, monkey
     assert payload["broken_wikilinks"] == []
     assert "wiki/current-state/user-location.md" not in payload["orphan_pages"]
     assert "wiki/sources/spark-memory-snapshot-latest.md" not in payload["orphan_pages"]
+    assert "wiki/outputs/maintenance-report.md" not in payload["orphan_pages"]
     assert written["trace"]["operation"] == "spark_kb_health_check"
 
 
