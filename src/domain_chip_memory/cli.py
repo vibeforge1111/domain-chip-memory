@@ -2294,6 +2294,16 @@ def _build_benchmark_runs_git_report(
             for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
             if previous_step["command"] and next_step["command"]
         ],
+        "transition_mode_order": [
+            (
+                "command"
+                if previous_step["command"] and next_step["command"]
+                else "mixed"
+                if bool(previous_step["command"]) != bool(next_step["command"])
+                else "non_command"
+            )
+            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+        ],
         "mixed_phase_signatures": [
             f"{previous_step['phase']}->{next_step['phase']}"
             for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
