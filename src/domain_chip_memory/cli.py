@@ -1497,6 +1497,9 @@ def _build_benchmark_runs_git_report(
         ordered_series_rows,
         key=lambda row: (-row["file_count"], row["family"], row["series"]),
     )
+    top_series_by_family: dict[str, dict] = {}
+    for row in ranked_series_rows:
+        top_series_by_family.setdefault(row["family"], row)
     top_noisy_series = ranked_series_rows[: max(top_series_limit, 0)]
     noisy_file_count = len(noisy_files)
     family_command_counts = noisy_family_counts
@@ -1538,6 +1541,7 @@ def _build_benchmark_runs_git_report(
     for row in family_commands:
         row["command_shell"] = " ".join(_shell_quote_arg(part) for part in row["command"])
     recommended_focus = None
+    recommended_followups: list[dict] = []
     if series_prefix:
         recommended_focus = {
             "scope": "series",
@@ -1566,6 +1570,7 @@ def _build_benchmark_runs_git_report(
             "command": recommended_command,
             "command_shell": " ".join(_shell_quote_arg(part) for part in recommended_command),
         }
+        recommended_followups = [recommended_focus]
     elif family_commands:
         recommended_row = max(
             family_commands,
@@ -1579,6 +1584,29 @@ def _build_benchmark_runs_git_report(
             "command": recommended_row["command"],
             "command_shell": recommended_row["command_shell"],
         }
+        recommended_followups.append(recommended_focus)
+        top_family_series = top_series_by_family.get(recommended_row["family"])
+        if top_family_series is not None:
+            series_command = _benchmark_runs_git_report_command(
+                benchmark_runs_dir=benchmark_runs_path,
+                repo_root=repo_root_path,
+                only_noisy=True,
+                top_series_limit=top_series_limit,
+                summary_only=summary_only,
+                family_filter=recommended_row["family"],
+                series_prefix=top_family_series["series"],
+            )
+            recommended_followups.append(
+                {
+                    "scope": "series",
+                    "reason": "largest_series_in_recommended_family",
+                    "family": recommended_row["family"],
+                    "series_prefix": top_family_series["series"],
+                    "noisy_file_count": top_family_series["file_count"],
+                    "command": series_command,
+                    "command_shell": " ".join(_shell_quote_arg(part) for part in series_command),
+                }
+            )
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -1593,6 +1621,7 @@ def _build_benchmark_runs_git_report(
         "current_command": current_command,
         "current_command_shell": " ".join(_shell_quote_arg(part) for part in current_command),
         "recommended_focus": recommended_focus,
+        "recommended_followups": recommended_followups,
         "family_commands": family_commands,
         "file_count": len(files),
         "family_count": len(ordered_family_rows),
