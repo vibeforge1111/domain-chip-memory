@@ -1822,6 +1822,18 @@ def test_checked_in_example_smoke_index_script_runs(tmp_path: Path):
     assert (write_dir / "spark_kb_invalid" / "summary.json").exists()
 
 
+def test_example_smoke_workflow_exists_and_runs_top_level_script():
+    repo_root = Path(__file__).resolve().parents[1]
+    workflow_path = repo_root / ".github" / "workflows" / "example-smokes.yml"
+    workflow_text = workflow_path.read_text(encoding="utf-8")
+
+    assert "name: Example Smokes" in workflow_text
+    assert "actions/setup-python@v5" in workflow_text
+    assert 'python-version: "3.13"' in workflow_text
+    assert "python -m pip install -e ." in workflow_text
+    assert "python docs/examples/run_smokes.py --write-dir tmp/example_smoke_artifacts_ci" in workflow_text
+
+
 def test_checked_in_sdk_maintenance_example_runs_via_cli(tmp_path: Path, monkeypatch):
     repo_root = Path(__file__).resolve().parents[1]
     single_file = repo_root / "docs" / "examples" / "sdk_maintenance" / "single_replay.json"
