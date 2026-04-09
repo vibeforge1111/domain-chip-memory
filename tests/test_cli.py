@@ -2751,12 +2751,19 @@ def test_summarize_beam_official_evaluation_files_aggregates_across_conversation
 def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path, monkeypatch):
     answers_root = tmp_path / "beam_public_results"
     benchmark_runs_dir = tmp_path / "benchmark_runs"
+    upstream_repo_dir = tmp_path / "beam_upstream"
     output_file = tmp_path / "artifacts" / "beam_cleanup_report.json"
 
-    eval_one = answers_root / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9" / "100K" / "1" / "evaluation-domain_chip_memory_answers.json"
-    eval_two = answers_root / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv2_v2" / "100K" / "2" / "evaluation-domain_chip_memory_answers.json"
+    conv1_dir = answers_root / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9" / "100K" / "1"
+    conv2_dir = answers_root / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv2_v2" / "100K" / "2"
+    eval_one = conv1_dir / "evaluation-domain_chip_memory_answers.json"
+    eval_two = conv2_dir / "evaluation-domain_chip_memory_answers.json"
+    answers_one = conv1_dir / "domain_chip_memory_answers.json"
+    answers_two = conv2_dir / "domain_chip_memory_answers.json"
     eval_one.parent.mkdir(parents=True)
     eval_two.parent.mkdir(parents=True)
+    (upstream_repo_dir / "chats" / "100K" / "1" / "probing_questions").mkdir(parents=True)
+    (upstream_repo_dir / "chats" / "100K" / "2" / "probing_questions").mkdir(parents=True)
     eval_one.write_text(
         json.dumps(
             {
@@ -2775,12 +2782,53 @@ def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path
         ),
         encoding="utf-8",
     )
+    answers_one.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"question": "q1", "llm_response": "a1"}],
+                "event_ordering": [{"question": "q2", "llm_response": "a2"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    answers_two.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"question": "q3", "llm_response": "a3"}],
+                "event_ordering": [{"question": "q4", "llm_response": "a4"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (upstream_repo_dir / "chats" / "100K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"rubric": ["extract"]}],
+                "event_ordering": [{"rubric": ["order"]}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (upstream_repo_dir / "chats" / "100K" / "2" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"rubric": ["extract"]}],
+                "event_ordering": [{"rubric": ["order"]}],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     benchmark_runs_dir.mkdir(parents=True)
     (benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json").write_text(
         json.dumps(
             {
                 "status": "completed",
+                "upstream_repo_dir": str(upstream_repo_dir),
+                "official_chat_size_dir": "100K",
+                "conversation_ids": ["1"],
+                "input_directory": str(conv1_dir.parent),
+                "result_file_name": "domain_chip_memory_answers.json",
                 "evaluation_files": [str(eval_one)],
                 "aggregate_summary": {"overall_average": 0.75},
             }
@@ -2825,6 +2873,8 @@ def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path
     assert payload["max_category_count_seen"] == 2
     assert payload["evaluation_files"][0]["path"].endswith("conv1_v9/100K/1/evaluation-domain_chip_memory_answers.json")
     assert payload["official_eval_manifests"][0]["status"] == "completed"
+    assert payload["official_eval_manifests"][0]["expected_categories"] == ["event_ordering", "information_extraction"]
+    assert payload["official_eval_manifests"][0]["answer_categories"] == ["event_ordering", "information_extraction"]
     assert payload["official_eval_manifests"][0]["diagnostic_classification"] == "completed"
     assert payload["official_eval_manifests"][0]["promotable_candidate"] is True
 
@@ -2832,8 +2882,11 @@ def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path
 def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(tmp_path: Path, monkeypatch):
     answers_root = tmp_path / "artifacts" / "beam_public_results"
     benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    upstream_repo_dir = tmp_path / "beam_upstream"
     output_file = tmp_path / "artifacts" / "beam_cleanup_report.json"
 
+    (upstream_repo_dir / "chats" / "100K" / "1" / "probing_questions").mkdir(parents=True)
+    (upstream_repo_dir / "chats" / "100K" / "3" / "probing_questions").mkdir(parents=True)
     timeout_eval = (
         answers_root
         / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9"
@@ -2841,12 +2894,33 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
         / "1"
         / "evaluation-domain_chip_memory_answers.json"
     )
+    timeout_answers = timeout_eval.parent / "domain_chip_memory_answers.json"
     timeout_eval.parent.mkdir(parents=True)
     timeout_eval.write_text(
         json.dumps(
             {
                 "information_extraction": [{"llm_judge_score": 1.0}],
                 "event_ordering": [{"tau_norm": 0.5}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    timeout_answers.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"question": "q1", "llm_response": "a1"}],
+                "event_ordering": [{"question": "q2", "llm_response": "a2"}],
+                "summarization": [{"question": "q3", "llm_response": "a3"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (upstream_repo_dir / "chats" / "100K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"rubric": ["extract"]}],
+                "event_ordering": [{"rubric": ["order"]}],
+                "summarization": [{"rubric": ["summary"]}],
             }
         ),
         encoding="utf-8",
@@ -2859,11 +2933,33 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
         / "3"
         / "evaluation-domain_chip_memory_answers.json"
     )
+    partial_answers = partial_eval.parent / "domain_chip_memory_answers.json"
     partial_eval.parent.mkdir(parents=True)
     partial_eval.write_text(
         json.dumps(
             {
                 "information_extraction": [{"llm_judge_score": 1.0}],
+                "event_ordering": [{"tau_norm": 0.5}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    partial_answers.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"question": "q1", "llm_response": "a1"}],
+                "event_ordering": [{"question": "q2", "llm_response": "a2"}],
+                "multi_session_reasoning": [{"question": "q3", "llm_response": "a3"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (upstream_repo_dir / "chats" / "100K" / "3" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"rubric": ["extract"]}],
+                "event_ordering": [{"rubric": ["order"]}],
+                "multi_session_reasoning": [{"rubric": ["reason"]}],
             }
         ),
         encoding="utf-8",
@@ -2874,6 +2970,11 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
         json.dumps(
             {
                 "status": "partial",
+                "upstream_repo_dir": str(upstream_repo_dir),
+                "official_chat_size_dir": "100K",
+                "conversation_ids": ["1"],
+                "input_directory": str(timeout_eval.parent.parent),
+                "result_file_name": "domain_chip_memory_answers.json",
                 "evaluation_files": [str(timeout_eval)],
                 "missing_evaluation_files": [],
                 "stderr_tail": ["Timed out waiting for MiniMax BEAM evaluation worker after 900 seconds."],
@@ -2886,6 +2987,11 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
         json.dumps(
             {
                 "status": "partial",
+                "upstream_repo_dir": str(upstream_repo_dir),
+                "official_chat_size_dir": "100K",
+                "conversation_ids": ["3"],
+                "input_directory": str(partial_eval.parent.parent),
+                "result_file_name": "domain_chip_memory_answers.json",
                 "evaluation_files": [str(partial_eval)],
                 "missing_evaluation_files": [],
                 "stderr_tail": ["3: TypeError: list indices must be integers or slices, not str"],
@@ -2919,13 +3025,18 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
     manifest_rows = {Path(item["path"]).name: item for item in payload["official_eval_manifests"]}
 
     timeout_row = manifest_rows["official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"]
-    assert timeout_row["diagnostic_classification"] == "timeout_after_complete_write"
-    assert timeout_row["missing_categories"] == []
-    assert timeout_row["promotable_candidate"] is True
+    assert timeout_row["diagnostic_classification"] == "timeout_partial_coverage"
+    assert timeout_row["expected_categories"] == ["event_ordering", "information_extraction", "summarization"]
+    assert timeout_row["answer_categories"] == ["event_ordering", "information_extraction", "summarization"]
+    assert timeout_row["missing_categories"] == ["summarization"]
+    assert timeout_row["missing_answer_categories"] == ["summarization"]
+    assert timeout_row["promotable_candidate"] is False
 
     partial_row = manifest_rows["official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2_official_eval.json"]
     assert partial_row["diagnostic_classification"] == "worker_error_partial_coverage"
-    assert partial_row["missing_categories"] == ["event_ordering"]
+    assert partial_row["expected_categories"] == ["event_ordering", "information_extraction", "multi_session_reasoning"]
+    assert partial_row["missing_categories"] == ["multi_session_reasoning"]
+    assert partial_row["missing_answer_categories"] == ["multi_session_reasoning"]
     assert partial_row["promotable_candidate"] is False
 
 

@@ -557,6 +557,49 @@ def _load_beam_evaluation_categories(path: str | Path) -> list[str]:
     return sorted(key for key, items in payload.items() if isinstance(items, list) and items)
 
 
+def _load_beam_category_keys(path: str | Path) -> list[str]:
+    payload = _load_json_file(path)
+    if not isinstance(payload, dict):
+        return []
+    return sorted(key for key, items in payload.items() if isinstance(items, list))
+
+
+def _load_beam_expected_categories_for_manifest(payload: dict[str, object]) -> list[str]:
+    upstream_repo_dir = str(payload.get("upstream_repo_dir") or "").strip()
+    official_chat_size_dir = str(payload.get("official_chat_size_dir") or "").strip()
+    conversation_ids = [str(item).strip() for item in payload.get("conversation_ids", []) if str(item).strip()]
+    if not upstream_repo_dir or not official_chat_size_dir or not conversation_ids:
+        return []
+
+    categories: set[str] = set()
+    upstream_repo_path = Path(upstream_repo_dir)
+    for conversation_id in conversation_ids:
+        probing_questions_path = (
+            upstream_repo_path / "chats" / official_chat_size_dir / conversation_id / "probing_questions" / "probing_questions.json"
+        )
+        if not probing_questions_path.is_file():
+            continue
+        categories.update(_load_beam_category_keys(probing_questions_path))
+    return sorted(categories)
+
+
+def _load_beam_answer_categories_for_manifest(payload: dict[str, object]) -> list[str]:
+    input_directory = str(payload.get("input_directory") or "").strip()
+    result_file_name = str(payload.get("result_file_name") or "").strip()
+    conversation_ids = [str(item).strip() for item in payload.get("conversation_ids", []) if str(item).strip()]
+    if not input_directory or not result_file_name or not conversation_ids:
+        return []
+
+    categories: set[str] = set()
+    input_directory_path = Path(input_directory)
+    for conversation_id in conversation_ids:
+        answer_path = input_directory_path / conversation_id / result_file_name
+        if not answer_path.is_file():
+            continue
+        categories.update(_load_beam_category_keys(answer_path))
+    return sorted(categories)
+
+
 def _display_path(path: Path, root: Path) -> str:
     try:
         return str(path.relative_to(root)).replace("\\", "/")
@@ -594,26 +637,28 @@ def _classify_beam_cleanup_manifest(
     *,
     status: str,
     missing_evaluation_files: list[str],
-    discovered_categories: set[str],
-    category_universe: set[str],
+    completed_categories: set[str],
+    expected_categories: set[str],
     stderr_tail: list[str],
 ) -> str:
-    missing_categories = category_universe - discovered_categories if category_universe else set()
+    missing_categories = expected_categories - completed_categories if expected_categories else set()
     timeout_detected = any("Timed out waiting" in line for line in stderr_tail)
     if status == "completed":
         return "completed"
     if missing_evaluation_files:
         return "missing_evaluation_files"
     if status == "partial":
-        if timeout_detected and discovered_categories and not missing_categories:
+        if timeout_detected and completed_categories and not missing_categories:
             return "timeout_after_complete_write"
+        if timeout_detected and missing_categories:
+            return "timeout_partial_coverage"
         if stderr_tail and missing_categories:
             return "worker_error_partial_coverage"
         if stderr_tail:
             return "worker_error"
         if missing_categories:
             return "partial_missing_categories"
-        if discovered_categories:
+        if completed_categories:
             return "partial_full_coverage"
     return "unknown"
 
@@ -879,21 +924,24 @@ def _build_beam_judged_cleanup_report(
         display_path = _display_path(path, repo_root_path)
         aggregate_summary = payload.get("aggregate_summary") if isinstance(payload.get("aggregate_summary"), dict) else {}
         manifest_evaluation_files = [Path(item) for item in payload.get("evaluation_files", []) if str(item).strip()]
-        discovered_categories: set[str] = set()
+        completed_categories: set[str] = set()
         for evaluation_file in manifest_evaluation_files:
             resolved_key = str(evaluation_file.resolve())
             categories = evaluation_categories_by_path.get(resolved_key)
             if categories is None and evaluation_file.is_file():
                 categories = _load_beam_evaluation_categories(evaluation_file)
-            discovered_categories.update(categories or [])
+            completed_categories.update(categories or [])
         missing_evaluation_files = [str(item) for item in payload.get("missing_evaluation_files", []) if str(item).strip()]
         stderr_tail = [str(item) for item in payload.get("stderr_tail", []) if str(item).strip()]
-        missing_categories = sorted(category_universe - discovered_categories) if category_universe else []
+        expected_categories = set(_load_beam_expected_categories_for_manifest(payload))
+        answer_categories = set(_load_beam_answer_categories_for_manifest(payload))
+        missing_expected_categories = sorted(expected_categories - completed_categories)
+        missing_answer_categories = sorted(answer_categories - completed_categories)
         diagnostic_classification = _classify_beam_cleanup_manifest(
             status=str(payload.get("status") or ""),
             missing_evaluation_files=missing_evaluation_files,
-            discovered_categories=discovered_categories,
-            category_universe=category_universe,
+            completed_categories=completed_categories,
+            expected_categories=expected_categories or answer_categories,
             stderr_tail=stderr_tail,
         )
         official_eval_rows.append(
@@ -903,9 +951,14 @@ def _build_beam_judged_cleanup_report(
                 "status": str(payload.get("status") or ""),
                 "overall_average": aggregate_summary.get("overall_average"),
                 "evaluation_file_count": len(list(payload.get("evaluation_files") or [])),
-                "category_count": len(discovered_categories),
-                "categories": sorted(discovered_categories),
-                "missing_categories": missing_categories,
+                "category_count": len(completed_categories),
+                "categories": sorted(completed_categories),
+                "expected_category_count": len(expected_categories),
+                "expected_categories": sorted(expected_categories),
+                "answer_category_count": len(answer_categories),
+                "answer_categories": sorted(answer_categories),
+                "missing_categories": missing_expected_categories,
+                "missing_answer_categories": missing_answer_categories,
                 "missing_evaluation_file_count": len(missing_evaluation_files),
                 "diagnostic_classification": diagnostic_classification,
                 "promotable_candidate": diagnostic_classification in {"completed", "timeout_after_complete_write"},
