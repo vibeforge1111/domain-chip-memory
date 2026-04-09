@@ -1157,6 +1157,7 @@ def _build_beam_judged_resume_plan(
     benchmark_runs_dir: str | Path,
     evaluation_file_name: str,
     repo_root: str | Path,
+    only_runnable: bool = False,
 ) -> dict:
     repo_root_path = Path(repo_root)
     cleanup_report = _build_beam_judged_cleanup_report(
@@ -1264,18 +1265,27 @@ def _build_beam_judged_resume_plan(
             and str(target.get("required_judge_env") or "").strip()
         }
     )
+    discovered_target_count = len(resume_targets)
     blocked_target_count = sum(
         1 for target in resume_targets if str(target.get("resume_blocked_reason") or "").strip()
+    )
+    emitted_targets = (
+        [target for target in resume_targets if not str(target.get("resume_blocked_reason") or "").strip()]
+        if only_runnable
+        else resume_targets
     )
     return {
         "benchmark_name": "BEAM",
         "source_mode": "official_public_evaluation_resume_plan",
         "artifact_prefix": artifact_prefix,
-        "resume_target_count": len(resume_targets),
-        "runnable_target_count": len(resume_targets) - blocked_target_count,
+        "only_runnable": only_runnable,
+        "discovered_target_count": discovered_target_count,
+        "resume_target_count": len(emitted_targets),
+        "filtered_out_target_count": discovered_target_count - len(emitted_targets),
+        "runnable_target_count": discovered_target_count - blocked_target_count,
         "blocked_target_count": blocked_target_count,
         "blocked_missing_env_vars": blocked_missing_env_vars,
-        "resume_targets": resume_targets,
+        "resume_targets": emitted_targets,
     }
 
 
@@ -1288,6 +1298,7 @@ def _build_beam_judged_resume_batch(
     repo_root: str | Path,
     script_file: str | None = None,
     execute: bool = False,
+    only_runnable: bool = False,
 ) -> dict:
     repo_root_path = Path(repo_root)
     resume_plan = _build_beam_judged_resume_plan(
@@ -1296,6 +1307,7 @@ def _build_beam_judged_resume_batch(
         benchmark_runs_dir=benchmark_runs_dir,
         evaluation_file_name=evaluation_file_name,
         repo_root=repo_root,
+        only_runnable=only_runnable,
     )
 
     script_lines = [
@@ -1360,7 +1372,10 @@ def _build_beam_judged_resume_batch(
         "benchmark_name": "BEAM",
         "source_mode": "official_public_evaluation_resume_batch",
         "artifact_prefix": artifact_prefix,
+        "only_runnable": bool(resume_plan.get("only_runnable")),
+        "discovered_target_count": int(resume_plan.get("discovered_target_count") or 0),
         "resume_target_count": int(resume_plan["resume_target_count"]),
+        "filtered_out_target_count": int(resume_plan.get("filtered_out_target_count") or 0),
         "runnable_target_count": int(resume_plan.get("runnable_target_count") or 0),
         "blocked_target_count": int(resume_plan.get("blocked_target_count") or 0),
         "blocked_missing_env_vars": list(resume_plan.get("blocked_missing_env_vars") or []),
@@ -1519,6 +1534,7 @@ def main() -> None:
     beam_judged_resume_plan.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
     beam_judged_resume_plan.add_argument("--evaluation-file-name", default="evaluation-domain_chip_memory_answers.json")
     beam_judged_resume_plan.add_argument("--repo-root", default=".")
+    beam_judged_resume_plan.add_argument("--only-runnable", action="store_true")
     beam_judged_resume_plan.add_argument("--write")
     beam_judged_resume_batch = subparsers.add_parser("beam-judged-resume-batch", help="Build one ordered PowerShell batch script for partial judged BEAM manifests.")
     beam_judged_resume_batch.add_argument("--artifact-prefix", default="official_beam_128k_")
@@ -1528,6 +1544,7 @@ def main() -> None:
     beam_judged_resume_batch.add_argument("--repo-root", default=".")
     beam_judged_resume_batch.add_argument("--script-file")
     beam_judged_resume_batch.add_argument("--execute", action="store_true")
+    beam_judged_resume_batch.add_argument("--only-runnable", action="store_true")
     beam_judged_resume_batch.add_argument("--write")
     validate_spark_kb_inputs = subparsers.add_parser("validate-spark-kb-inputs", help="Validate Spark KB snapshot, repo-source, and filed-output inputs without compiling a vault.")
     validate_spark_kb_inputs.add_argument("snapshot_file")
@@ -2159,6 +2176,7 @@ def main() -> None:
             benchmark_runs_dir=args.benchmark_runs_dir,
             evaluation_file_name=args.evaluation_file_name,
             repo_root=args.repo_root,
+            only_runnable=args.only_runnable,
         )
         if args.write:
             _write_json(Path(args.write), payload)
@@ -2174,6 +2192,7 @@ def main() -> None:
             repo_root=args.repo_root,
             script_file=args.script_file,
             execute=args.execute,
+            only_runnable=args.only_runnable,
         )
         if args.write:
             _write_json(Path(args.write), payload)
