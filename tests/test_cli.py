@@ -18,6 +18,7 @@ from domain_chip_memory.providers import get_provider
 from domain_chip_memory.runner import build_runner_contract_summary
 from domain_chip_memory.scorecards import build_scorecard_contract_summary
 from domain_chip_memory.sample_data import demo_samples
+from domain_chip_memory.spark_kb import build_spark_kb_health_report
 from domain_chip_memory.spark_kb import scaffold_spark_knowledge_base
 from domain_chip_memory.watchtower import build_watchtower_summary
 
@@ -464,6 +465,9 @@ def test_spark_kb_health_check_command_runs_on_demo_vault(tmp_path: Path, monkey
     assert payload["missing_required_files"] == []
     assert payload["pages_missing_frontmatter"] == []
     assert payload["broken_wikilinks"] == []
+    assert payload["repo_source_pages_missing_raw_copy"] == []
+    assert payload["raw_repo_files_without_source_pages"] == []
+    assert payload["output_pages_missing_sections"] == []
     assert "wiki/current-state/user-location.md" not in payload["orphan_pages"]
     assert "wiki/sources/spark-memory-snapshot-latest.md" not in payload["orphan_pages"]
     assert "wiki/outputs/maintenance-report.md" not in payload["orphan_pages"]
@@ -498,6 +502,176 @@ def test_demo_spark_kb_can_ingest_explicit_repo_source(tmp_path: Path, monkeypat
     assert written["compile_result"]["repo_source_count"] == 1
     assert (output_dir / "raw" / "repos" / "01-NOTES.md").exists()
     assert (output_dir / "wiki" / "sources" / "repo-notes.md").exists()
+
+
+def test_spark_kb_health_report_tracks_repo_and_output_surfaces(tmp_path: Path):
+    output_dir = tmp_path / "spark_kb_vault"
+    repo_source = tmp_path / "NOTES.md"
+    repo_source.write_text("# Notes\n\nRepo-native source for KB ingest.\n", encoding="utf-8")
+    snapshot = {
+        "runtime_class": "SparkMemorySDK",
+        "generated_at": "2025-03-10T00:00:00+00:00",
+        "counts": {
+            "session_count": 1,
+            "current_state_count": 1,
+            "observation_count": 1,
+            "event_count": 0,
+        },
+        "sessions": [
+            {
+                "session_id": "session-health",
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "turns": [
+                    {"turn_id": "session-health:t1", "speaker": "user", "text": "I live in Dubai."},
+                ],
+            }
+        ],
+        "current_state": [
+            {
+                "memory_role": "current_state",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-health",
+                "turn_ids": ["session-health:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "Dubai", "observation_id": "obs-health-1"},
+            }
+        ],
+        "observations": [
+            {
+                "memory_role": "structured_evidence",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-health",
+                "turn_ids": ["session-health:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "Dubai", "observation_id": "obs-health-1"},
+            }
+        ],
+        "events": [],
+        "trace": {"operation": "export_knowledge_base_snapshot"},
+    }
+
+    scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        repo_sources=[repo_source],
+        filed_outputs=[
+            {
+                "slug": "health-answer",
+                "title": "Health Answer",
+                "question": "Where does the user live?",
+                "answer": "The user lives in Dubai.",
+                "provenance": ["[[sources/spark-memory-snapshot-latest]]"],
+            }
+        ],
+    )
+
+    payload = build_spark_kb_health_report(output_dir)
+
+    assert payload["valid"] is True
+    assert payload["repo_source_page_count"] == 1
+    assert payload["raw_repo_file_count"] == 1
+    assert payload["query_output_page_count"] == 1
+    assert payload["repo_source_pages_missing_raw_copy"] == []
+    assert payload["raw_repo_files_without_source_pages"] == []
+    assert payload["output_pages_missing_sections"] == []
+
+
+def test_spark_kb_health_report_surfaces_repo_and_output_integrity_gaps(tmp_path: Path):
+    output_dir = tmp_path / "spark_kb_vault"
+    repo_source = tmp_path / "NOTES.md"
+    repo_source.write_text("# Notes\n\nRepo-native source for KB ingest.\n", encoding="utf-8")
+    snapshot = {
+        "runtime_class": "SparkMemorySDK",
+        "generated_at": "2025-03-10T00:00:00+00:00",
+        "counts": {
+            "session_count": 1,
+            "current_state_count": 1,
+            "observation_count": 1,
+            "event_count": 0,
+        },
+        "sessions": [
+            {
+                "session_id": "session-health-negative",
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "turns": [
+                    {"turn_id": "session-health-negative:t1", "speaker": "user", "text": "I live in Dubai."},
+                ],
+            }
+        ],
+        "current_state": [
+            {
+                "memory_role": "current_state",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-health-negative",
+                "turn_ids": ["session-health-negative:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "Dubai", "observation_id": "obs-health-negative-1"},
+            }
+        ],
+        "observations": [
+            {
+                "memory_role": "structured_evidence",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-health-negative",
+                "turn_ids": ["session-health-negative:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "Dubai", "observation_id": "obs-health-negative-1"},
+            }
+        ],
+        "events": [],
+        "trace": {"operation": "export_knowledge_base_snapshot"},
+    }
+
+    scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        repo_sources=[repo_source],
+        filed_outputs=[
+            {
+                "slug": "health-answer-negative",
+                "title": "Health Answer Negative",
+                "question": "Where does the user live?",
+                "answer": "The user lives in Dubai.",
+                "provenance": ["[[sources/spark-memory-snapshot-latest]]"],
+            }
+        ],
+    )
+
+    (output_dir / "raw" / "repos" / "01-NOTES.md").unlink()
+    (output_dir / "raw" / "repos" / "99-orphan.md").write_text("orphan raw repo file\n", encoding="utf-8")
+    query_output_path = output_dir / "wiki" / "outputs" / "query-health-answer-negative.md"
+    query_output_path.write_text(
+        query_output_path.read_text(encoding="utf-8").replace("## Answer", "## Response"),
+        encoding="utf-8",
+    )
+
+    payload = build_spark_kb_health_report(output_dir)
+
+    assert payload["valid"] is False
+    assert payload["repo_source_page_count"] == 1
+    assert payload["raw_repo_file_count"] == 1
+    assert payload["query_output_page_count"] == 1
+    assert payload["repo_source_pages_missing_raw_copy"] == [
+        {
+            "source": "wiki/sources/repo-notes.md",
+            "target": "raw/repos/01-NOTES.md",
+        }
+    ]
+    assert payload["raw_repo_files_without_source_pages"] == ["raw/repos/99-orphan.md"]
+    assert payload["output_pages_missing_sections"] == [
+        {
+            "path": "wiki/outputs/query-health-answer-negative.md",
+            "missing_sections": ["## Answer"],
+        }
+    ]
 
 
 def test_build_spark_kb_command_compiles_from_snapshot_file(tmp_path: Path, monkeypatch):

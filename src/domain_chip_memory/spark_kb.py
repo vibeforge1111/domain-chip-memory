@@ -873,6 +873,7 @@ def scaffold_spark_knowledge_base(
 def build_spark_kb_health_report(output_dir: str | Path) -> dict[str, Any]:
     output_path = Path(output_dir)
     wiki_dir = output_path / "wiki"
+    raw_repo_dir = output_path / "raw" / "repos"
     required_files = [
         output_path / "CLAUDE.md",
         output_path / "raw" / "memory-snapshots" / "latest.json",
@@ -896,11 +897,13 @@ def build_spark_kb_health_report(output_dir: str | Path) -> dict[str, Any]:
     pages_missing_frontmatter: list[str] = []
     inbound_link_counts: dict[str, int] = {}
     broken_wikilinks: list[dict[str, str]] = []
+    page_content_by_relative_path: dict[str, str] = {}
 
     for path in markdown_files:
         relative_path = str(path.relative_to(output_path)).replace("\\", "/")
         inbound_link_counts.setdefault(relative_path, 0)
         content = path.read_text(encoding="utf-8")
+        page_content_by_relative_path[relative_path] = content
         if relative_path != "wiki/log.md" and not content.startswith("---\n"):
             pages_missing_frontmatter.append(relative_path)
         for link in _extract_wikilinks(content):
@@ -910,6 +913,43 @@ def build_spark_kb_health_report(output_dir: str | Path) -> dict[str, Any]:
                 continue
             inbound_link_counts[target_relative] = inbound_link_counts.get(target_relative, 0) + 1
 
+    repo_source_pages = sorted(path for path in (wiki_dir / "sources").glob("repo-*.md") if path.is_file())
+    repo_source_pages_missing_raw_copy: list[dict[str, str]] = []
+    referenced_raw_repo_files: set[str] = set()
+    for path in repo_source_pages:
+        relative_path = str(path.relative_to(output_path)).replace("\\", "/")
+        raw_copy_path = _extract_repo_raw_copy_path(page_content_by_relative_path.get(relative_path, ""))
+        if raw_copy_path is None:
+            repo_source_pages_missing_raw_copy.append({"source": relative_path, "target": "(missing raw copy reference)"})
+            continue
+        referenced_raw_repo_files.add(raw_copy_path)
+        if not (output_path / raw_copy_path).exists():
+            repo_source_pages_missing_raw_copy.append({"source": relative_path, "target": raw_copy_path})
+
+    raw_repo_files_without_source_pages = sorted(
+        str(path.relative_to(output_path)).replace("\\", "/")
+        for path in raw_repo_dir.glob("*")
+        if path.is_file() and str(path.relative_to(output_path)).replace("\\", "/") not in referenced_raw_repo_files
+    )
+
+    query_output_pages = sorted(path for path in (wiki_dir / "outputs").glob("query-*.md") if path.is_file())
+    output_pages_missing_sections: list[dict[str, Any]] = []
+    for path in query_output_pages:
+        relative_path = str(path.relative_to(output_path)).replace("\\", "/")
+        content = page_content_by_relative_path.get(relative_path, "")
+        missing_sections = [
+            section
+            for section in ("## Question", "## Answer", "## Provenance")
+            if section not in content
+        ]
+        if missing_sections:
+            output_pages_missing_sections.append(
+                {
+                    "path": relative_path,
+                    "missing_sections": missing_sections,
+                }
+            )
+
     orphan_pages = [
         path
         for path, count in sorted(inbound_link_counts.items())
@@ -917,12 +957,25 @@ def build_spark_kb_health_report(output_dir: str | Path) -> dict[str, Any]:
     ]
     return {
         "output_dir": str(output_path),
-        "valid": not missing_required_files and not pages_missing_frontmatter and not broken_wikilinks,
+        "valid": (
+            not missing_required_files
+            and not pages_missing_frontmatter
+            and not broken_wikilinks
+            and not repo_source_pages_missing_raw_copy
+            and not raw_repo_files_without_source_pages
+            and not output_pages_missing_sections
+        ),
         "required_file_count": len(required_files),
         "missing_required_files": missing_required_files,
         "markdown_page_count": len(markdown_files),
         "pages_missing_frontmatter": pages_missing_frontmatter,
         "broken_wikilinks": broken_wikilinks,
+        "repo_source_page_count": len(repo_source_pages),
+        "raw_repo_file_count": len(list(path for path in raw_repo_dir.glob("*") if path.is_file())),
+        "repo_source_pages_missing_raw_copy": repo_source_pages_missing_raw_copy,
+        "raw_repo_files_without_source_pages": raw_repo_files_without_source_pages,
+        "query_output_page_count": len(query_output_pages),
+        "output_pages_missing_sections": output_pages_missing_sections,
         "orphan_pages": orphan_pages,
         "trace": {
             "operation": "spark_kb_health_check",
@@ -962,6 +1015,13 @@ def _render_index_page(
 
 def _extract_wikilinks(text: str) -> list[str]:
     return [match.group(1).split("|", 1)[0].strip() for match in re.finditer(r"\[\[([^\]]+)\]\]", text)]
+
+
+def _extract_repo_raw_copy_path(text: str) -> str | None:
+    match = re.search(r"`(raw/repos/[^`]+)`", text)
+    if not match:
+        return None
+    return match.group(1).replace("\\", "/").strip("/")
 
 
 def _resolve_wikilink_path(output_path: Path, link: str) -> str | None:
