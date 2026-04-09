@@ -2554,6 +2554,269 @@ def _build_benchmark_runs_git_report(
             )
             <= 1
         ) if recommended_sequence_transitions else False,
+        "transition_mode_competition": {
+            "dominant_mode": max(
+                (
+                    ("command", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if previous_step["command"] and next_step["command"]
+                    )),
+                    ("mixed", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if bool(previous_step["command"]) != bool(next_step["command"])
+                    )),
+                    ("non_command", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if not previous_step["command"] and not next_step["command"]
+                    )),
+                ),
+                key=lambda item: (item[1], {"command": 2, "mixed": 1, "non_command": 0}[item[0]]),
+            )[0],
+            "dominant_count": max(
+                (
+                    ("command", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if previous_step["command"] and next_step["command"]
+                    )),
+                    ("mixed", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if bool(previous_step["command"]) != bool(next_step["command"])
+                    )),
+                    ("non_command", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if not previous_step["command"] and not next_step["command"]
+                    )),
+                ),
+                key=lambda item: (item[1], {"command": 2, "mixed": 1, "non_command": 0}[item[0]]),
+            )[1],
+            "dominant_share": round(
+                max(
+                    (
+                        ("command", sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if previous_step["command"] and next_step["command"]
+                        )),
+                        ("mixed", sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if bool(previous_step["command"]) != bool(next_step["command"])
+                        )),
+                        ("non_command", sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if not previous_step["command"] and not next_step["command"]
+                        )),
+                    ),
+                    key=lambda item: (item[1], {"command": 2, "mixed": 1, "non_command": 0}[item[0]]),
+                )[1] / len(recommended_sequence_transitions),
+                4,
+            ),
+            "runner_up_mode": sorted(
+                (
+                    ("command", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if previous_step["command"] and next_step["command"]
+                    )),
+                    ("mixed", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if bool(previous_step["command"]) != bool(next_step["command"])
+                    )),
+                    ("non_command", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if not previous_step["command"] and not next_step["command"]
+                    )),
+                ),
+                key=lambda item: (item[1], {"command": 2, "mixed": 1, "non_command": 0}[item[0]]),
+                reverse=True,
+            )[1][0],
+            "runner_up_count": sorted(
+                (
+                    ("command", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if previous_step["command"] and next_step["command"]
+                    )),
+                    ("mixed", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if bool(previous_step["command"]) != bool(next_step["command"])
+                    )),
+                    ("non_command", sum(
+                        1
+                        for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                        if not previous_step["command"] and not next_step["command"]
+                    )),
+                ),
+                key=lambda item: (item[1], {"command": 2, "mixed": 1, "non_command": 0}[item[0]]),
+                reverse=True,
+            )[1][1],
+            "runner_up_share": round(
+                sorted(
+                    (
+                        ("command", sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if previous_step["command"] and next_step["command"]
+                        )),
+                        ("mixed", sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if bool(previous_step["command"]) != bool(next_step["command"])
+                        )),
+                        ("non_command", sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if not previous_step["command"] and not next_step["command"]
+                        )),
+                    ),
+                    key=lambda item: (item[1], {"command": 2, "mixed": 1, "non_command": 0}[item[0]]),
+                    reverse=True,
+                )[1][1] / len(recommended_sequence_transitions),
+                4,
+            ),
+            "gap": (
+                sorted(
+                    (
+                        sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if previous_step["command"] and next_step["command"]
+                        ),
+                        sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if bool(previous_step["command"]) != bool(next_step["command"])
+                        ),
+                        sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if not previous_step["command"] and not next_step["command"]
+                        ),
+                    ),
+                    reverse=True,
+                )[0]
+                - sorted(
+                    (
+                        sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if previous_step["command"] and next_step["command"]
+                        ),
+                        sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if bool(previous_step["command"]) != bool(next_step["command"])
+                        ),
+                        sum(
+                            1
+                            for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                            if not previous_step["command"] and not next_step["command"]
+                        ),
+                    ),
+                    reverse=True,
+                )[1]
+            ),
+            "gap_share": round(
+                (
+                    sorted(
+                        (
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if previous_step["command"] and next_step["command"]
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if bool(previous_step["command"]) != bool(next_step["command"])
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if not previous_step["command"] and not next_step["command"]
+                            ),
+                        ),
+                        reverse=True,
+                    )[0]
+                    - sorted(
+                        (
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if previous_step["command"] and next_step["command"]
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if bool(previous_step["command"]) != bool(next_step["command"])
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if not previous_step["command"] and not next_step["command"]
+                            ),
+                        ),
+                        reverse=True,
+                    )[1]
+                ) / len(recommended_sequence_transitions),
+                4,
+            ),
+            "is_contested": (
+                (
+                    sorted(
+                        (
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if previous_step["command"] and next_step["command"]
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if bool(previous_step["command"]) != bool(next_step["command"])
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if not previous_step["command"] and not next_step["command"]
+                            ),
+                        ),
+                        reverse=True,
+                    )[0]
+                    - sorted(
+                        (
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if previous_step["command"] and next_step["command"]
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if bool(previous_step["command"]) != bool(next_step["command"])
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if not previous_step["command"] and not next_step["command"]
+                            ),
+                        ),
+                        reverse=True,
+                    )[1]
+                )
+                <= 1
+            ),
+        } if recommended_sequence_transitions else None,
         "dominant_transition_mode_share": round(
             max(
                 (
