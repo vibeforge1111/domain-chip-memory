@@ -102,22 +102,19 @@ Completion:
 Interpretation:
 
 - the alternate judged official-public `BEAM` story is no longer partial at `500K`, `1M`, or `10M`
-- the remaining `BEAM` work is now cleanup and exact-judge closure, not more tranche chasing on this MiniMax path
+- the alternate judged official-public `BEAM` story is now also closed at `128K`
+- the remaining `BEAM` work is now exact-official judge parity, not MiniMax-path artifact cleanup
 
 ## What is still missing
 
 ### Benchmarks still to close
 
-1. official judged `BEAM 128K`
-   - local scorecard strength is already strong
-   - alternate judged `500K`, `1M`, and `10M` closure does not replace exact `128K` judged cleanup
-   - current artifact-state cleanup snapshot is now captured in `docs/BEAM_128K_CLEANUP_REPORT_2026-04-09.md`
-2. broader clean `LoCoMo`
+1. broader clean `LoCoMo`
    - move beyond the bounded `conv-26` lane
-3. first canonical `GoodAI` run
+2. first canonical `GoodAI` run
    - still not meaningfully closed
-4. exact-official upstream OpenAI judge closure
-   - the current `BEAM` judged story is strong alternate evidence
+3. exact-official upstream OpenAI judge closure
+   - the current `BEAM` judged story is now strong alternate evidence across `128K`, `500K`, `1M`, and `10M`
    - exact-judge parity is still a separate evidence class
 
 ### Product and systems work still missing
@@ -148,6 +145,7 @@ Why it is strong:
 - it closes local `ProductMemory`
 - it closes `LongMemEval_s`
 - it is strong on bounded `LoCoMo`
+- it now has alternate judged official-public `BEAM` closure at `128K`
 - it now has full alternate judged official-public `BEAM` coverage at `500K`, `1M`, and `10M`
 
 Why it is not finished:
@@ -264,6 +262,7 @@ Current live result on 2026-04-09:
 - `ProductMemory`
 - `LongMemEval_s`
 - bounded `LoCoMo` lane
+- alternate judged official-public `BEAM 128K`
 - alternate judged official-public `BEAM 500K`
 - alternate judged official-public `BEAM 1M`
 - alternate judged official-public `BEAM 10M`
@@ -273,7 +272,6 @@ Current live result on 2026-04-09:
 
 ### Remaining
 
-- official judged `BEAM 128K`
 - broader clean `LoCoMo`
 - canonical `GoodAI`
 - exact-official judge parity for `BEAM`
@@ -286,7 +284,7 @@ Current live result on 2026-04-09:
 ### Immediate benchmark tasks
 
 1. keep the closed alternate judged `BEAM` lanes as regression gates instead of reopening them casually
-2. decide whether the next `BEAM` evidence task is exact-official judge parity or official judged `128K` cleanup
+2. decide whether the next `BEAM` evidence task is exact-official judge parity or a different scale/provider validation lane
 3. choose and close the next clean `LoCoMo` lane
 4. lock the first canonical `GoodAI` run
 
