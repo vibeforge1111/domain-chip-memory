@@ -677,22 +677,25 @@ def _git_status_by_path(paths: list[Path], *, repo_root: Path) -> dict[str, str]
         relative_paths = [str(path.relative_to(repo_root)).replace("\\", "/") for path in paths]
     except ValueError:
         return {}
+    status_by_path: dict[str, str] = {}
+    batch_size = 100
     try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_root), "status", "--short", "--", *relative_paths],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        for start in range(0, len(relative_paths), batch_size):
+            batch = relative_paths[start : start + batch_size]
+            result = subprocess.run(
+                ["git", "-C", str(repo_root), "status", "--short", "--", *batch],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            for line in result.stdout.splitlines():
+                if len(line) < 4:
+                    continue
+                status = line[:2].strip() or "unknown"
+                path = line[3:].strip().replace("\\", "/")
+                status_by_path[path] = status
     except Exception:
         return {}
-    status_by_path: dict[str, str] = {}
-    for line in result.stdout.splitlines():
-        if len(line) < 4:
-            continue
-        status = line[:2].strip() or "unknown"
-        path = line[3:].strip().replace("\\", "/")
-        status_by_path[path] = status
     return status_by_path
 
 
@@ -1344,6 +1347,73 @@ def _build_beam_judged_cleanup_report(
     }
 
 
+def _benchmark_runs_file_family(path: Path) -> str:
+    name = path.name
+    if name.startswith("_debug_"):
+        return "debug"
+    if name.startswith("longmemeval_"):
+        return "longmemeval"
+    if name.endswith("_scorecard.json"):
+        return "scorecard"
+    if name.endswith("_official_eval.json"):
+        return "official_eval_manifest"
+    return "other"
+
+
+def _build_benchmark_runs_git_report(
+    *,
+    benchmark_runs_dir: str | Path,
+    repo_root: str | Path,
+) -> dict:
+    benchmark_runs_path = Path(benchmark_runs_dir)
+    repo_root_path = Path(repo_root)
+    files = sorted(path for path in benchmark_runs_path.glob("*.json") if path.is_file())
+    git_status_by_path = _git_status_by_path(files, repo_root=repo_root_path)
+
+    family_rows: dict[str, dict] = {}
+    git_status_counts: dict[str, int] = {}
+    for path in files:
+        display_path = _display_path(path, repo_root_path)
+        git_status = git_status_by_path.get(display_path, "clean")
+        family = _benchmark_runs_file_family(path)
+        git_status_counts[git_status] = git_status_counts.get(git_status, 0) + 1
+        family_row = family_rows.setdefault(
+            family,
+            {
+                "family": family,
+                "file_count": 0,
+                "git_status_counts": {},
+                "paths": [],
+            },
+        )
+        family_row["file_count"] += 1
+        family_row["git_status_counts"][git_status] = family_row["git_status_counts"].get(git_status, 0) + 1
+        family_row["paths"].append(display_path)
+
+    ordered_family_rows = [family_rows[key] for key in sorted(family_rows)]
+    noisy_statuses = {"??", "A", "M", "D", "R", "C", "U"}
+    noisy_files = [
+        {
+            "path": _display_path(path, repo_root_path),
+            "git_status": git_status_by_path.get(_display_path(path, repo_root_path), "clean"),
+            "family": _benchmark_runs_file_family(path),
+        }
+        for path in files
+        if git_status_by_path.get(_display_path(path, repo_root_path), "clean") in noisy_statuses
+    ]
+    return {
+        "source_mode": "benchmark_runs_git_report",
+        "benchmark_runs_dir": str(benchmark_runs_path),
+        "repo_root": str(repo_root_path),
+        "file_count": len(files),
+        "family_count": len(ordered_family_rows),
+        "git_status_counts": git_status_counts,
+        "families": ordered_family_rows,
+        "noisy_file_count": len(noisy_files),
+        "noisy_files": noisy_files,
+    }
+
+
 def _build_beam_judged_resume_plan(
     *,
     artifact_prefix: str,
@@ -1986,6 +2056,10 @@ def main() -> None:
     build_spark_kb.add_argument("--filed-output-file", action="append", default=[])
     build_spark_kb.add_argument("--filed-output-manifest", action="append", default=[])
     build_spark_kb.add_argument("--write")
+    benchmark_runs_git_report = subparsers.add_parser("benchmark-runs-git-report", help="Summarize benchmark-runs JSON files by git status and file family.")
+    benchmark_runs_git_report.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
+    benchmark_runs_git_report.add_argument("--repo-root", default=".")
+    benchmark_runs_git_report.add_argument("--write")
     beam_judged_cleanup_report = subparsers.add_parser("beam-judged-cleanup-report", help="Summarize local judged BEAM artifact state for cleanup planning.")
     beam_judged_cleanup_report.add_argument("--artifact-prefix", default="official_beam_128k_")
     beam_judged_cleanup_report.add_argument("--answers-root", default="artifacts/beam_public_results")
@@ -2407,6 +2481,16 @@ def main() -> None:
             repo_source_manifest_files=args.repo_source_manifest,
             filed_output_files=args.filed_output_file,
             filed_output_manifest_files=args.filed_output_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "benchmark-runs-git-report":
+        payload = _build_benchmark_runs_git_report(
+            benchmark_runs_dir=args.benchmark_runs_dir,
+            repo_root=args.repo_root,
         )
         if args.write:
             _write_json(Path(args.write), payload)

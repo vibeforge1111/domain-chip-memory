@@ -2748,6 +2748,111 @@ def test_summarize_beam_official_evaluation_files_aggregates_across_conversation
     assert payload["categories"][1]["average_score"] == 0.5
 
 
+def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(tmp_path: Path, monkeypatch):
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "benchmark_runs_git_report.json"
+
+    debug_file = benchmark_runs_dir / "_debug_example.json"
+    longmemeval_file = benchmark_runs_dir / "longmemeval_offset225_limit25_source.json"
+    scorecard_file = benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10_v1_scorecard.json"
+    official_eval_file = benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"
+    other_file = benchmark_runs_dir / "misc_snapshot.json"
+    benchmark_runs_dir.mkdir(parents=True)
+    for path in [debug_file, longmemeval_file, scorecard_file, official_eval_file, other_file]:
+        path.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        cli,
+        "_git_status_by_path",
+        lambda paths, repo_root: {
+            "artifacts/benchmark_runs/_debug_example.json": "??",
+            "artifacts/benchmark_runs/longmemeval_offset225_limit25_source.json": "??",
+            "artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10_v1_scorecard.json": "M",
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["source_mode"] == "benchmark_runs_git_report"
+    assert payload["file_count"] == 5
+    assert payload["family_count"] == 5
+    assert payload["git_status_counts"] == {"??": 2, "M": 1, "clean": 2}
+    assert payload["noisy_file_count"] == 3
+    family_rows = {row["family"]: row for row in payload["families"]}
+    assert family_rows["debug"]["paths"] == ["artifacts/benchmark_runs/_debug_example.json"]
+    assert family_rows["debug"]["git_status_counts"] == {"??": 1}
+    assert family_rows["longmemeval"]["paths"] == ["artifacts/benchmark_runs/longmemeval_offset225_limit25_source.json"]
+    assert family_rows["longmemeval"]["git_status_counts"] == {"??": 1}
+    assert family_rows["scorecard"]["paths"] == [
+        "artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10_v1_scorecard.json"
+    ]
+    assert family_rows["scorecard"]["git_status_counts"] == {"M": 1}
+    assert family_rows["official_eval_manifest"]["paths"] == [
+        "artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"
+    ]
+    assert family_rows["official_eval_manifest"]["git_status_counts"] == {"clean": 1}
+    assert family_rows["other"]["paths"] == ["artifacts/benchmark_runs/misc_snapshot.json"]
+    assert family_rows["other"]["git_status_counts"] == {"clean": 1}
+    assert payload["noisy_files"] == [
+        {
+            "path": "artifacts/benchmark_runs/_debug_example.json",
+            "git_status": "??",
+            "family": "debug",
+        },
+        {
+            "path": "artifacts/benchmark_runs/longmemeval_offset225_limit25_source.json",
+            "git_status": "??",
+            "family": "longmemeval",
+        },
+        {
+            "path": "artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10_v1_scorecard.json",
+            "git_status": "M",
+            "family": "scorecard",
+        },
+    ]
+
+
+def test_git_status_by_path_batches_large_path_sets(tmp_path: Path, monkeypatch):
+    paths = []
+    for index in range(205):
+        path = tmp_path / "artifacts" / "benchmark_runs" / f"file_{index:03d}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}", encoding="utf-8")
+        paths.append(path)
+
+    batch_lengths: list[int] = []
+
+    def fake_run(cmd, check, capture_output, text):
+        batch = cmd[6:]
+        batch_lengths.append(len(batch))
+        stdout = "\n".join(f"?? {path}" for path in batch[:1])
+        return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+
+    payload = cli._git_status_by_path(paths, repo_root=tmp_path)
+
+    assert batch_lengths == [100, 100, 5]
+    assert payload["artifacts/benchmark_runs/file_000.json"] == "??"
+    assert payload["artifacts/benchmark_runs/file_100.json"] == "??"
+    assert payload["artifacts/benchmark_runs/file_200.json"] == "??"
+
+
 def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path, monkeypatch):
     answers_root = tmp_path / "beam_public_results"
     benchmark_runs_dir = tmp_path / "benchmark_runs"
