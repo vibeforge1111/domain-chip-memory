@@ -990,6 +990,142 @@ def test_build_spark_kb_command_ingests_filed_outputs_from_manifest(tmp_path: Pa
     assert (output_dir / "wiki" / "outputs" / "query-manifest-answer.md").exists()
 
 
+def test_validate_spark_kb_inputs_command_reports_valid_bundle(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    snapshot_file = tmp_path / "snapshot.json"
+    repo_source_dir = tmp_path / "sources"
+    repo_source_dir.mkdir()
+    repo_source = repo_source_dir / "NOTES.md"
+    repo_source.write_text("# Notes\n\nRepo-native source for KB ingest.\n", encoding="utf-8")
+    repo_source_manifest_dir = tmp_path / "manifests"
+    repo_source_manifest_dir.mkdir()
+    repo_source_manifest_file = repo_source_manifest_dir / "repo-sources.json"
+    repo_source_manifest_file.write_text(json.dumps({"repo_sources": ["../sources/NOTES.md"]}), encoding="utf-8")
+    filed_output_dir = tmp_path / "outputs"
+    filed_output_dir.mkdir()
+    filed_output_file = filed_output_dir / "answer.json"
+    filed_output_file.write_text(
+        json.dumps(
+            {
+                "slug": "validation-answer",
+                "title": "Validation Answer",
+                "question": "Where does the user live?",
+                "answer": "The user lives in Dubai.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    filed_output_manifest_file = repo_source_manifest_dir / "filed-outputs.json"
+    filed_output_manifest_file.write_text(
+        json.dumps({"filed_output_files": ["../outputs/answer.json"]}),
+        encoding="utf-8",
+    )
+    summary_file = tmp_path / "artifacts" / "spark_kb_validation.json"
+    snapshot_file.write_text(
+        json.dumps(
+            {
+                "runtime_class": "SparkMemorySDK",
+                "generated_at": "2025-03-10T00:00:00+00:00",
+                "counts": {
+                    "session_count": 1,
+                    "current_state_count": 1,
+                    "observation_count": 1,
+                    "event_count": 0,
+                },
+                "sessions": [],
+                "current_state": [],
+                "observations": [],
+                "events": [],
+                "trace": {"operation": "export_knowledge_base_snapshot"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "validate-spark-kb-inputs",
+            str(snapshot_file),
+            "--repo-source-manifest",
+            str(repo_source_manifest_file),
+            "--filed-output-manifest",
+            str(filed_output_manifest_file),
+            "--write",
+            str(summary_file),
+        ],
+    )
+
+    cli.main()
+
+    written = json.loads(summary_file.read_text(encoding="utf-8"))
+    assert written["valid"] is True
+    assert written["snapshot_valid"] is True
+    assert written["repo_source_file_count"] == 1
+    assert written["filed_output_file_count"] == 1
+    assert written["filed_output_record_count"] == 1
+    assert written["missing_repo_source_files"] == []
+    assert written["missing_filed_output_files"] == []
+    assert written["repo_source_manifest_errors"] == []
+    assert written["filed_output_manifest_errors"] == []
+    assert written["filed_output_file_errors"] == []
+
+
+def test_validate_spark_kb_inputs_command_surfaces_invalid_bundle(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    snapshot_file = tmp_path / "snapshot.json"
+    snapshot_file.write_text(json.dumps(["not-an-object"]), encoding="utf-8")
+    repo_source_manifest_file = tmp_path / "repo-sources.json"
+    repo_source_manifest_file.write_text(json.dumps({"repo_sources": ["missing-note.md"]}), encoding="utf-8")
+    filed_output_file = tmp_path / "bad-output.json"
+    filed_output_file.write_text("5", encoding="utf-8")
+    filed_output_manifest_file = tmp_path / "filed-outputs.json"
+    filed_output_manifest_file.write_text(json.dumps({"wrong_key": ["missing-answer.json"]}), encoding="utf-8")
+    summary_file = tmp_path / "artifacts" / "spark_kb_validation_invalid.json"
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "validate-spark-kb-inputs",
+            str(snapshot_file),
+            "--repo-source-manifest",
+            str(repo_source_manifest_file),
+            "--filed-output-file",
+            str(filed_output_file),
+            "--filed-output-manifest",
+            str(filed_output_manifest_file),
+            "--write",
+            str(summary_file),
+        ],
+    )
+
+    cli.main()
+
+    written = json.loads(summary_file.read_text(encoding="utf-8"))
+    assert written["valid"] is False
+    assert written["snapshot_valid"] is False
+    assert written["snapshot_errors"] == ["Spark KB snapshot file must contain a JSON object."]
+    assert written["missing_repo_source_files"] == [str(tmp_path / "missing-note.md")]
+    assert written["filed_output_manifest_errors"] == [
+        {
+            "file": str(filed_output_manifest_file),
+            "error": "Filed output manifest file must contain a JSON list of strings or an object with a 'filed_output_files' list.",
+        }
+    ]
+    assert written["filed_output_file_errors"] == [
+        {
+            "file": str(filed_output_file),
+            "error": "Filed output file must contain a JSON object or list of objects.",
+        }
+    ]
+
+
 def test_spark_kb_maintenance_report_surfaces_contradictions_and_staleness(tmp_path: Path):
     output_dir = tmp_path / "spark_kb_vault"
     snapshot = {
