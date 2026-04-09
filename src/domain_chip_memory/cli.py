@@ -1771,6 +1771,12 @@ def _build_benchmark_runs_git_report(
             row["nearest_competitor_command_shell"] = (
                 nearest_row["command_shell"] if nearest_row is not None else None
             )
+            row["nearest_competitor_top_series_command"] = (
+                nearest_row["top_series_command"] if nearest_row is not None else None
+            )
+            row["nearest_competitor_top_series_command_shell"] = (
+                nearest_row["top_series_command_shell"] if nearest_row is not None else None
+            )
 
     family_hotspots = []
     for row in ordered_family_rows:

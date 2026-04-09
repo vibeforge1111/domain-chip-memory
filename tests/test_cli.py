@@ -3298,6 +3298,28 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
                 f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
                 f"--repo-root {tmp_path} --family longmemeval --only-noisy --top-series-limit 10"
             ),
+            "nearest_competitor_top_series_command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "longmemeval",
+                "--series-prefix",
+                "longmemeval_offset225_limit25_source",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "nearest_competitor_top_series_command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_offset225_limit25_source "
+                f"--only-noisy --top-series-limit 10"
+            ),
             "gap_label": "leader",
             "top_series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
             "top_series_noisy_file_count": 1,
@@ -3379,6 +3401,28 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
                 f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
                 f"--repo-root {tmp_path} --family scorecard --only-noisy --top-series-limit 10"
             ),
+            "nearest_competitor_top_series_command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "scorecard",
+                "--series-prefix",
+                "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "nearest_competitor_top_series_command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10 "
+                f"--only-noisy --top-series-limit 10"
+            ),
             "gap_label": "narrow",
             "top_series_prefix": "longmemeval_offset225_limit25_source",
             "top_series_noisy_file_count": 1,
@@ -3459,6 +3503,28 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "nearest_competitor_command_shell": (
                 f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
                 f"--repo-root {tmp_path} --family longmemeval --only-noisy --top-series-limit 10"
+            ),
+            "nearest_competitor_top_series_command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "longmemeval",
+                "--series-prefix",
+                "longmemeval_offset225_limit25_source",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "nearest_competitor_top_series_command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_offset225_limit25_source "
+                f"--only-noisy --top-series-limit 10"
             ),
             "gap_label": "narrow",
             "top_series_prefix": "_debug",
@@ -4070,6 +4136,29 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
                 f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
                 f"--repo-root {tmp_path} --family scorecard --only-noisy --summary-only --top-series-limit 10"
             ),
+            "nearest_competitor_top_series_command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "scorecard",
+                "--series-prefix",
+                "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
+                "--only-noisy",
+                "--summary-only",
+                "--top-series-limit",
+                "10",
+            ],
+            "nearest_competitor_top_series_command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5 "
+                f"--only-noisy --summary-only --top-series-limit 10"
+            ),
             "gap_label": "leader",
             "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
             "top_series_noisy_file_count": 2,
@@ -4154,6 +4243,28 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
                 f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
                 f"--repo-root {tmp_path} --family debug --only-noisy --summary-only --top-series-limit 10"
             ),
+            "nearest_competitor_top_series_command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "debug",
+                "--series-prefix",
+                "_debug",
+                "--only-noisy",
+                "--summary-only",
+                "--top-series-limit",
+                "10",
+            ],
+            "nearest_competitor_top_series_command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family debug --series-prefix _debug --only-noisy --summary-only --top-series-limit 10"
+            ),
             "gap_label": "wide",
             "top_series_prefix": "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
             "top_series_noisy_file_count": 1,
@@ -4237,6 +4348,29 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             "nearest_competitor_command_shell": (
                 f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
                 f"--repo-root {tmp_path} --family scorecard --only-noisy --summary-only --top-series-limit 10"
+            ),
+            "nearest_competitor_top_series_command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "scorecard",
+                "--series-prefix",
+                "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
+                "--only-noisy",
+                "--summary-only",
+                "--top-series-limit",
+                "10",
+            ],
+            "nearest_competitor_top_series_command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5 "
+                f"--only-noisy --summary-only --top-series-limit 10"
             ),
             "gap_label": "wide",
             "top_series_prefix": "_debug",
@@ -4563,6 +4697,8 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
             "nearest_competitor_noisy_share_gap": None,
             "nearest_competitor_command": None,
             "nearest_competitor_command_shell": None,
+            "nearest_competitor_top_series_command": None,
+            "nearest_competitor_top_series_command_shell": None,
             "gap_label": "leader",
             "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
             "top_series_noisy_file_count": 2,
