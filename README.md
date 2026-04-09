@@ -212,6 +212,7 @@ Manifest entries are resolved relative to the manifest file location.
 `validate-spark-kb-inputs` now gives a preflight report for snapshot shape, manifest resolution, missing files, and filed-output payload parsing.
 `spark-kb-health-check` now also validates repo-source pages against `raw/repos/` copies and checks that filed query pages still contain their expected sections.
 `build-spark-kb` compile results now expose both `repo_source_count` and `filed_output_count`.
+There is now a checked-in example bundle under `docs/examples/spark_kb/` for validator and compiler smoke checks.
 
 Run a bounded real-provider smoke test once `OPENAI_API_KEY` is set:
 

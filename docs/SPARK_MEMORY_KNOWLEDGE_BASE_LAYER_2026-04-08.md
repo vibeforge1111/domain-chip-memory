@@ -173,6 +173,7 @@ The current repo implementation now exercises this with:
 - manifest-driven filed-output ingest for real `build-spark-kb` compilation flows
 - manifest entries resolving relative to the manifest file for portable KB build inputs
 - a dedicated `validate-spark-kb-inputs` preflight step before vault compilation
+- a checked-in `docs/examples/spark_kb/` bundle for validation and smoke-test reuse
 - health checks that can now flag missing repo raw copies, stray raw repo files, and malformed filed query pages
 - compile summaries that now report repo-source and filed-output counts explicitly
 
