@@ -1695,6 +1695,31 @@ def _build_benchmark_runs_git_report(
                     "command_shell": " ".join(_shell_quote_arg(part) for part in competition_command),
                 }
             )
+        for index, row in enumerate(family_competition):
+            previous_row = family_competition[index - 1] if index > 0 else None
+            next_row = family_competition[index + 1] if index + 1 < len(family_competition) else None
+            row["previous_family"] = previous_row["family"] if previous_row is not None else None
+            row["previous_noisy_file_count_gap"] = (
+                previous_row["noisy_file_count"] - row["noisy_file_count"]
+                if previous_row is not None
+                else None
+            )
+            row["previous_noisy_share_gap"] = (
+                round(previous_row["noisy_file_share"] - row["noisy_file_share"], 4)
+                if previous_row is not None
+                else None
+            )
+            row["next_family"] = next_row["family"] if next_row is not None else None
+            row["next_noisy_file_count_gap"] = (
+                row["noisy_file_count"] - next_row["noisy_file_count"]
+                if next_row is not None
+                else None
+            )
+            row["next_noisy_share_gap"] = (
+                round(row["noisy_file_share"] - next_row["noisy_file_share"], 4)
+                if next_row is not None
+                else None
+            )
 
     family_hotspots = []
     for row in ordered_family_rows:
