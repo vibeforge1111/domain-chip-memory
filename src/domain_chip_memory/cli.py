@@ -3213,6 +3213,24 @@ def _build_benchmark_runs_git_report(
             == 3
             else "partial"
         ),
+        "transition_mode_coverage": round(
+            len(
+                {
+                    (
+                        "command"
+                        if previous_step["command"] and next_step["command"]
+                        else "mixed"
+                        if bool(previous_step["command"]) != bool(next_step["command"])
+                        else "non_command"
+                    )
+                    for previous_step, next_step in zip(
+                        recommended_sequence_steps, recommended_sequence_steps[1:]
+                    )
+                }
+            )
+            / 3,
+            4,
+        ),
         "present_transition_mode_count": len(
             {
                 (
