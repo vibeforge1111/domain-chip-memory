@@ -3679,6 +3679,102 @@ def test_beam_judged_drift_batch_cli_writes_empty_script_when_no_targets(tmp_pat
     assert script_file.read_text(encoding="utf-8") == payload["script_text"]
 
 
+def test_beam_judged_drift_batch_cli_can_execute_inspection_targets(tmp_path: Path, monkeypatch):
+    answers_root = tmp_path / "artifacts" / "beam_public_results"
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "beam_drift_batch.json"
+
+    eval_path = (
+        answers_root
+        / "official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3"
+        / "100K"
+        / "1"
+        / "evaluation-domain_chip_memory_answers.json"
+    )
+    eval_path.parent.mkdir(parents=True)
+    eval_path.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"llm_judge_score": 1.0}],
+                "event_ordering": [{"tau_norm": 0.1789}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    display_path = "artifacts/beam_public_results/official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3/100K/1/evaluation-domain_chip_memory_answers.json"
+    monkeypatch.setattr(cli, "_git_status_by_path", lambda paths, repo_root: {display_path: "M"})
+    monkeypatch.setattr(
+        cli,
+        "_load_json_from_git_revision",
+        lambda repo_root, revision, path: {
+            "information_extraction": [{"llm_judge_score": 1.0}],
+            "event_ordering": [{"tau_norm": 0.8622}],
+        },
+    )
+
+    class FakeCompletedProcess:
+        def __init__(self, stdout: str):
+            self.returncode = 0
+            self.stdout = stdout
+            self.stderr = ""
+
+    captured_commands = []
+
+    def fake_run(command, *, cwd, capture_output, text, check):
+        captured_commands.append(
+            {
+                "command": command,
+                "cwd": cwd,
+                "capture_output": capture_output,
+                "text": text,
+                "check": check,
+            }
+        )
+        if command[1] == "diff":
+            return FakeCompletedProcess("diff output\n")
+        return FakeCompletedProcess("head output\n")
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "beam-judged-drift-batch",
+            "--artifact-prefix",
+            "official_beam_128k_summary_synthesis_memory_heuristic_v1_",
+            "--answers-root",
+            str(answers_root),
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--execute",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["execute_requested"] is True
+    assert payload["executed_target_count"] == 1
+    assert payload["execution_status_counts"] == {"completed": 1}
+    assert payload["completed_execution_count"] == 1
+    assert payload["failed_execution_count"] == 0
+    assert payload["execution_results"][0]["status"] == "completed"
+    assert len(payload["execution_results"][0]["command_results"]) == 2
+    assert payload["execution_results"][0]["command_results"][0]["stdout_tail"] == ["diff output"]
+    assert payload["execution_results"][0]["command_results"][1]["stdout_tail"] == ["head output"]
+    assert captured_commands[0]["command"] == ["git", "diff", "--", display_path]
+    assert captured_commands[1]["command"] == ["git", "show", f"HEAD:{display_path}"]
+    assert captured_commands[0]["cwd"] == str(tmp_path.resolve())
+    assert captured_commands[0]["capture_output"] is True
+    assert captured_commands[0]["text"] is True
+    assert captured_commands[0]["check"] is False
+
+
 def test_beam_judged_promotion_plan_cli_normalizes_relative_repo_root(tmp_path: Path, monkeypatch):
     answers_root = tmp_path / "artifacts" / "beam_public_results"
     benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
