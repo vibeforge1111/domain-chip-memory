@@ -1698,27 +1698,78 @@ def _build_benchmark_runs_git_report(
         for index, row in enumerate(family_competition):
             previous_row = family_competition[index - 1] if index > 0 else None
             next_row = family_competition[index + 1] if index + 1 < len(family_competition) else None
-            row["previous_family"] = previous_row["family"] if previous_row is not None else None
-            row["previous_noisy_file_count_gap"] = (
+            previous_family = previous_row["family"] if previous_row is not None else None
+            previous_noisy_file_count_gap = (
                 previous_row["noisy_file_count"] - row["noisy_file_count"]
                 if previous_row is not None
                 else None
             )
-            row["previous_noisy_share_gap"] = (
+            previous_noisy_share_gap = (
                 round(previous_row["noisy_file_share"] - row["noisy_file_share"], 4)
                 if previous_row is not None
                 else None
             )
-            row["next_family"] = next_row["family"] if next_row is not None else None
-            row["next_noisy_file_count_gap"] = (
+            next_family = next_row["family"] if next_row is not None else None
+            next_noisy_file_count_gap = (
                 row["noisy_file_count"] - next_row["noisy_file_count"]
                 if next_row is not None
                 else None
             )
-            row["next_noisy_share_gap"] = (
+            next_noisy_share_gap = (
                 round(row["noisy_file_share"] - next_row["noisy_file_share"], 4)
                 if next_row is not None
                 else None
+            )
+            row["previous_family"] = previous_family
+            row["previous_noisy_file_count_gap"] = previous_noisy_file_count_gap
+            row["previous_noisy_share_gap"] = previous_noisy_share_gap
+            row["next_family"] = next_family
+            row["next_noisy_file_count_gap"] = next_noisy_file_count_gap
+            row["next_noisy_share_gap"] = next_noisy_share_gap
+            nearest_direction = None
+            nearest_row = None
+            if previous_row is not None and next_row is not None:
+                previous_key = (
+                    previous_noisy_share_gap if previous_noisy_share_gap is not None else float("inf"),
+                    previous_noisy_file_count_gap if previous_noisy_file_count_gap is not None else float("inf"),
+                    0,
+                )
+                next_key = (
+                    next_noisy_share_gap if next_noisy_share_gap is not None else float("inf"),
+                    next_noisy_file_count_gap if next_noisy_file_count_gap is not None else float("inf"),
+                    1,
+                )
+                if previous_key <= next_key:
+                    nearest_direction = "previous"
+                    nearest_row = previous_row
+                else:
+                    nearest_direction = "next"
+                    nearest_row = next_row
+            elif previous_row is not None:
+                nearest_direction = "previous"
+                nearest_row = previous_row
+            elif next_row is not None:
+                nearest_direction = "next"
+                nearest_row = next_row
+            row["nearest_competitor_direction"] = nearest_direction
+            row["nearest_competitor_family"] = nearest_row["family"] if nearest_row is not None else None
+            row["nearest_competitor_noisy_file_count_gap"] = (
+                previous_noisy_file_count_gap
+                if nearest_direction == "previous"
+                else next_noisy_file_count_gap
+                if nearest_direction == "next"
+                else None
+            )
+            row["nearest_competitor_noisy_share_gap"] = (
+                previous_noisy_share_gap
+                if nearest_direction == "previous"
+                else next_noisy_share_gap
+                if nearest_direction == "next"
+                else None
+            )
+            row["nearest_competitor_command"] = nearest_row["command"] if nearest_row is not None else None
+            row["nearest_competitor_command_shell"] = (
+                nearest_row["command_shell"] if nearest_row is not None else None
             )
 
     family_hotspots = []
