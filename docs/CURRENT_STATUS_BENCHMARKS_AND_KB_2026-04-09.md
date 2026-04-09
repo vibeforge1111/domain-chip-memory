@@ -190,6 +190,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - compile results now expose both `repo_source_count` and `filed_output_count`
 - checked-in Spark KB example inputs now exist under `docs/examples/spark_kb/`
 - the checked-in Spark KB example bundle now has a real validate-build-health smoke test path
+- the checked-in Spark KB example bundle is now self-described in `docs/examples/spark_kb/README.md`
 
 ### What is now true after BEAM closure
 
