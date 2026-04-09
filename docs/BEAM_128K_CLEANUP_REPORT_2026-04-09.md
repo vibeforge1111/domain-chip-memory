@@ -20,6 +20,7 @@ python -m domain_chip_memory.cli beam-judged-resume-batch --artifact-prefix offi
 
 - answer variant directories found: `22`
 - judged evaluation files found: `15`
+- tracked modified evaluation drift files: `1`
 - official-eval manifests found: `3`
 - runnable official-eval manifests: `3`
 - blocked official-eval manifests: `0`
@@ -87,10 +88,16 @@ The main unresolved cleanup item is no longer the three `conv*_official_eval.jso
 
 - `artifacts/beam_public_results/official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3/100K/1/evaluation-domain_chip_memory_answers.json`
   - git status: `M`
+  - drift row present in `modified_evaluation_drift_files`
   - current category count: `4`
+  - `HEAD` category count: `4`
   - current overall average: `0.7322`
+  - `HEAD` overall average: `0.9031`
+  - overall average delta: `-0.1709`
+  - changed category count: `1`
   - `event_ordering` average at `HEAD`: `0.8622`
   - `event_ordering` average in working tree: `0.1789`
+  - `event_ordering` average delta: `-0.6833`
 
 That is still substantive drift, not judge-reason wording churn.
 
