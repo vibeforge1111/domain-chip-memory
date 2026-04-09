@@ -294,10 +294,12 @@ Current live result on 2026-04-09:
    - add `--series-prefix <series>` when one noisy cluster still needs a tighter read; current live example: `--family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25`
    - the payload now includes `recommended_focus`, so the next best follow-up command is explicit instead of inferred
    - the payload now includes `recommended_followups`, so the broad report can emit a two-step drilldown path instead of only the first hop
+   - the payload now includes exact `series_commands` for the ranked top-series slice, so the summary view can jump straight into a concrete series command
    - the payload now includes exact `family_commands` so the next focused slice can be copied directly instead of reconstructed by hand
    - largest live series: `longmemeval_summary_synthesis_offset225_limit25` (`4`), `longmemeval_summary_synthesis_offset275_limit25` (`4`), `official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5` (`4`), `_debug` (`3`), `_debug_gpt4` (`3`)
    - current live `recommended_focus` points to `--family scorecard`, because scorecards are the largest remaining noisy family at `31` files
    - current live `recommended_followups` then drills from `--family scorecard` into `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
+   - current live `series_commands` starts with `longmemeval_summary_synthesis_offset225_limit25`, `longmemeval_summary_synthesis_offset275_limit25`, and `official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live `--family longmemeval` slice is `23` files across `10` series, with top clusters at offsets `225`, `275`, `325`, `350`, and `300`
    - current live `--family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25` slice collapses to `4` files in exactly `1` series
 3. decide whether the next `BEAM` evidence task is exact-official judge parity or a different scale/provider validation lane
