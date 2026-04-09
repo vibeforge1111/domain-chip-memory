@@ -2775,6 +2775,53 @@ def _build_benchmark_runs_git_report(
                 f"{max((('command', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if previous_step['command'] and next_step['command'])), ('mixed', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if bool(previous_step['command']) != bool(next_step['command']))), ('non_command', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if not previous_step['command'] and not next_step['command']))), key=lambda item: (item[1], {'command': 2, 'mixed': 1, 'non_command': 0}[item[0]]))[0]}"
                 f">{sorted((('command', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if previous_step['command'] and next_step['command'])), ('mixed', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if bool(previous_step['command']) != bool(next_step['command']))), ('non_command', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if not previous_step['command'] and not next_step['command']))), key=lambda item: (item[1], {'command': 2, 'mixed': 1, 'non_command': 0}[item[0]]), reverse=True)[1][0]}"
             ),
+            "gap_label": (
+                "decisive"
+                if (
+                    sorted(
+                        (
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if previous_step["command"] and next_step["command"]
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if bool(previous_step["command"]) != bool(next_step["command"])
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if not previous_step["command"] and not next_step["command"]
+                            ),
+                        ),
+                        reverse=True,
+                    )[0]
+                    - sorted(
+                        (
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if previous_step["command"] and next_step["command"]
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if bool(previous_step["command"]) != bool(next_step["command"])
+                            ),
+                            sum(
+                                1
+                                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                                if not previous_step["command"] and not next_step["command"]
+                            ),
+                        ),
+                        reverse=True,
+                    )[1]
+                )
+                > 1
+                else "narrow"
+            ),
             "competition_label": (
                 "contested"
                 if (
