@@ -140,6 +140,15 @@ The main unresolved cleanup item is no longer the three `conv*_official_eval.jso
   - `event_ordering` average at `HEAD`: `0.8622`
   - `event_ordering` average in working tree: `0.1789`
   - `event_ordering` average delta: `-0.6833`
+  - changed `event_ordering` question count: `2`
+  - question `0`:
+    - `HEAD`: `0.9082`
+    - working tree: `0.1464`
+    - delta: `-0.7618`
+  - question `1`:
+    - `HEAD`: `0.8162`
+    - working tree: `0.2113`
+    - delta: `-0.6049`
 
 That is still substantive drift, not judge-reason wording churn.
 
