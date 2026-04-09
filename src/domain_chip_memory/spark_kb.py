@@ -162,6 +162,7 @@ def scaffold_spark_knowledge_base(
     *,
     vault_title: str = "Spark Memory Knowledge Base",
     repo_sources: list[str | Path] | None = None,
+    filed_outputs: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     output_path = Path(output_dir)
     generated_at = str(snapshot.get("generated_at") or _utc_timestamp())
@@ -576,6 +577,52 @@ def scaffold_spark_knowledge_base(
             "path": str(maintenance_page_path),
         }
     )
+    for item in filed_outputs or []:
+        title = str(item.get("title") or "Filed Output").strip() or "Filed Output"
+        output_slug = _slugify(str(item.get("slug") or title))
+        output_page_path = outputs_dir / f"query-{output_slug}.md"
+        question = str(item.get("question") or "").strip()
+        answer = str(item.get("answer") or "").strip() or "No answer recorded."
+        explanation = str(item.get("explanation") or "").strip() or "No explanation recorded."
+        memory_role = str(item.get("memory_role") or "unknown")
+        provenance = list(item.get("provenance") or [])
+        output_page_content = [
+            _markdown_frontmatter(
+                title=title,
+                page_type="output",
+                summary=f"Filed KB output for {title}.",
+                generated_at=generated_at,
+                tags=["spark-kb", "output", "query"],
+            ),
+            f"# {title}",
+            "",
+            "## Question",
+            question or "No question recorded.",
+            "",
+            "## Answer",
+            answer,
+            "",
+            "## Explanation",
+            explanation,
+            "",
+            "## Runtime Metadata",
+            f"- Memory role: `{memory_role}`",
+            "",
+            "## Provenance",
+        ]
+        if provenance:
+            output_page_content.extend(f"- {entry}" for entry in provenance)
+        else:
+            output_page_content.append("- No provenance recorded.")
+        output_page_content.append("")
+        output_page_path.write_text("\n".join(output_page_content), encoding="utf-8")
+        output_pages.append(
+            {
+                "title": title,
+                "link": f"[[outputs/{output_page_path.stem}]]",
+                "path": str(output_page_path),
+            }
+        )
 
     (current_state_dir / "_index.md").write_text(
         _render_index_page(

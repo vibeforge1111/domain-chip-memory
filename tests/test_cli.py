@@ -418,6 +418,7 @@ def test_demo_spark_kb_command_runs_and_scaffolds_vault(tmp_path: Path, monkeypa
     assert (output_dir / "wiki" / "syntheses" / "runtime-memory-overview.md").exists()
     assert (output_dir / "wiki" / "syntheses" / "timeline-overview.md").exists()
     assert (output_dir / "wiki" / "outputs" / "maintenance-report.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-user-location-answer.md").exists()
     assert written["compile_result"]["source_page_count"] >= 1
     assert written["compile_result"]["synthesis_page_count"] >= 1
     assert written["compile_result"]["output_page_count"] >= 1

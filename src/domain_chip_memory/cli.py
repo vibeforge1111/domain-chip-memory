@@ -28,6 +28,7 @@ from .runner import build_runner_contract_summary, run_baseline
 from .sample_data import demo_samples, product_memory_samples
 from .scorecards import BaselinePrediction, build_scorecard, build_scorecard_contract_summary
 from .sdk import (
+    AnswerExplanationRequest,
     CurrentStateRequest,
     HistoricalStateRequest,
     MemoryWriteRequest,
@@ -493,12 +494,33 @@ def _build_demo_spark_kb_payload(output_dir: str, repo_sources: list[str] | None
             turn_id="spark-kb-demo:3",
         )
     )
+    explanation = sdk.explain_answer(
+        AnswerExplanationRequest(
+            question="Where does the user live right now?",
+            subject="user",
+            predicate="location",
+        )
+    )
     snapshot = sdk.export_knowledge_base_snapshot()
     compile_result = scaffold_spark_knowledge_base(
         output_dir,
         snapshot,
         vault_title="Spark Demo Knowledge Base",
         repo_sources=repo_sources,
+        filed_outputs=[
+            {
+                "title": "User Location Answer",
+                "slug": "user-location-answer",
+                "question": explanation.trace.get("question"),
+                "answer": explanation.answer,
+                "explanation": explanation.explanation,
+                "memory_role": explanation.memory_role,
+                "provenance": [
+                    f"`{record.session_id}` turns `{', '.join(record.turn_ids)}`"
+                    for record in explanation.provenance
+                ],
+            }
+        ],
     )
     return {
         "contract": build_spark_kb_contract_summary(),
