@@ -3267,6 +3267,10 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "rank": 1,
         "top_series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
         "top_series_noisy_file_count": 1,
+        "command": payload["family_competition"][0]["command"],
+        "command_shell": payload["family_competition"][0]["command_shell"],
+        "top_series_command": payload["family_competition"][0]["top_series_command"],
+        "top_series_command_shell": payload["family_competition"][0]["top_series_command_shell"],
         "nearest_competitor": {
             "direction": "next",
             "family": "longmemeval",
@@ -3275,6 +3279,10 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "noisy_share_gap": 0.0,
             "top_series_prefix": "longmemeval_offset225_limit25_source",
             "top_series_noisy_file_count": 1,
+            "command": payload["family_competition"][1]["command"],
+            "command_shell": payload["family_competition"][1]["command_shell"],
+            "top_series_command": payload["family_competition"][1]["top_series_command"],
+            "top_series_command_shell": payload["family_competition"][1]["top_series_command_shell"],
         },
     }
     assert payload["family_competition"] == [
@@ -4129,6 +4137,10 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "rank": 1,
         "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
         "top_series_noisy_file_count": 2,
+        "command": payload["family_competition"][0]["command"],
+        "command_shell": payload["family_competition"][0]["command_shell"],
+        "top_series_command": payload["family_competition"][0]["top_series_command"],
+        "top_series_command_shell": payload["family_competition"][0]["top_series_command_shell"],
         "nearest_competitor": {
             "direction": "next",
             "family": "scorecard",
@@ -4137,6 +4149,10 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             "noisy_share_gap": 0.25,
             "top_series_prefix": "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
             "top_series_noisy_file_count": 1,
+            "command": payload["family_competition"][1]["command"],
+            "command_shell": payload["family_competition"][1]["command_shell"],
+            "top_series_command": payload["family_competition"][1]["top_series_command"],
+            "top_series_command_shell": payload["family_competition"][1]["top_series_command_shell"],
         },
     }
     assert payload["family_competition"] == [
@@ -4733,6 +4749,10 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "rank": 1,
         "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
         "top_series_noisy_file_count": 2,
+        "command": payload["family_competition"][0]["command"],
+        "command_shell": payload["family_competition"][0]["command_shell"],
+        "top_series_command": payload["family_competition"][0]["top_series_command"],
+        "top_series_command_shell": payload["family_competition"][0]["top_series_command_shell"],
         "nearest_competitor": {
             "direction": None,
             "family": None,
@@ -4741,6 +4761,10 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
             "noisy_share_gap": None,
             "top_series_prefix": None,
             "top_series_noisy_file_count": None,
+            "command": None,
+            "command_shell": None,
+            "top_series_command": None,
+            "top_series_command_shell": None,
         },
     }
     assert payload["family_competition"] == [

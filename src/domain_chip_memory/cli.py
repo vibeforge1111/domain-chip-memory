@@ -1972,6 +1972,10 @@ def _build_benchmark_runs_git_report(
                 "rank": current_competitor["rank"],
                 "top_series_prefix": current_competitor["top_series_prefix"],
                 "top_series_noisy_file_count": current_competitor["top_series_noisy_file_count"],
+                "command": current_competitor["command"],
+                "command_shell": current_competitor["command_shell"],
+                "top_series_command": current_competitor["top_series_command"],
+                "top_series_command_shell": current_competitor["top_series_command_shell"],
                 "nearest_competitor": {
                     "direction": current_competitor["nearest_competitor_direction"],
                     "family": current_competitor["nearest_competitor_family"],
@@ -1980,6 +1984,10 @@ def _build_benchmark_runs_git_report(
                     "noisy_share_gap": current_competitor["nearest_competitor_noisy_share_gap"],
                     "top_series_prefix": current_competitor["nearest_competitor_top_series_prefix"],
                     "top_series_noisy_file_count": current_competitor["nearest_competitor_top_series_noisy_file_count"],
+                    "command": current_competitor["nearest_competitor_command"],
+                    "command_shell": current_competitor["nearest_competitor_command_shell"],
+                    "top_series_command": current_competitor["nearest_competitor_top_series_command"],
+                    "top_series_command_shell": current_competitor["nearest_competitor_top_series_command_shell"],
                 },
             }
         ranked_index = ranked_family_command_by_name.get(recommended_family["family"])
