@@ -1698,6 +1698,49 @@ def test_checked_in_spark_kb_examples_build_and_health_check_via_cli(tmp_path: P
     assert health_payload["output_pages_missing_sections"] == []
 
 
+def test_checked_in_invalid_spark_kb_examples_fail_validation_via_cli(tmp_path: Path, monkeypatch):
+    repo_root = Path(__file__).resolve().parents[1]
+    example_dir = repo_root / "docs" / "examples" / "spark_kb_invalid"
+    validation_output = tmp_path / "artifacts" / "spark_kb_invalid_validation.json"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "validate-spark-kb-inputs",
+            str(example_dir / "snapshot.json"),
+            "--repo-source-manifest",
+            str(example_dir / "repo-sources.json"),
+            "--filed-output-file",
+            str(example_dir / "bad-output.json"),
+            "--filed-output-manifest",
+            str(example_dir / "filed-outputs.json"),
+            "--write",
+            str(validation_output),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(validation_output.read_text(encoding="utf-8"))
+    assert payload["valid"] is False
+    assert payload["snapshot_valid"] is False
+    assert payload["snapshot_errors"] == ["Spark KB snapshot file must contain a JSON object."]
+    assert payload["missing_repo_source_files"] == [str(example_dir / "missing-note.md")]
+    assert payload["filed_output_manifest_errors"] == [
+        {
+            "file": str(example_dir / "filed-outputs.json"),
+            "error": "Filed output manifest file must contain a JSON list of strings or an object with a 'filed_output_files' list.",
+        }
+    ]
+    assert payload["filed_output_file_errors"] == [
+        {
+            "file": str(example_dir / "bad-output.json"),
+            "error": "Filed output file must contain a JSON object or list of objects.",
+        }
+    ]
+
+
 def test_checked_in_sdk_maintenance_example_runs_via_cli(tmp_path: Path, monkeypatch):
     repo_root = Path(__file__).resolve().parents[1]
     single_file = repo_root / "docs" / "examples" / "sdk_maintenance" / "single_replay.json"
