@@ -730,6 +730,66 @@ def _category_summary_by_name(summary: dict) -> dict[str, dict]:
     return rows
 
 
+def _beam_question_metric_name(category: str, item: dict | None) -> str:
+    if not isinstance(item, dict):
+        return ""
+    if category == "event_ordering" and "tau_norm" in item:
+        return "tau_norm"
+    if "llm_judge_score" in item:
+        return "llm_judge_score"
+    return ""
+
+
+def _beam_question_metric_value(category: str, item: dict | None) -> tuple[str, float | None]:
+    metric_name = _beam_question_metric_name(category, item)
+    if not metric_name or not isinstance(item, dict):
+        return metric_name, None
+    raw_value = item.get(metric_name)
+    if raw_value is None:
+        return metric_name, None
+    try:
+        return metric_name, float(raw_value)
+    except (TypeError, ValueError):
+        return metric_name, None
+
+
+def _build_beam_changed_question_rows(*, category: str, current_payload: dict, head_payload: dict) -> list[dict]:
+    current_items = current_payload.get(category, [])
+    head_items = head_payload.get(category, [])
+    current_list = current_items if isinstance(current_items, list) else []
+    head_list = head_items if isinstance(head_items, list) else []
+    changed_rows = []
+    for question_index in range(max(len(current_list), len(head_list))):
+        current_item = current_list[question_index] if question_index < len(current_list) and isinstance(current_list[question_index], dict) else None
+        head_item = head_list[question_index] if question_index < len(head_list) and isinstance(head_list[question_index], dict) else None
+        current_metric, current_score = _beam_question_metric_value(category, current_item)
+        head_metric, head_score = _beam_question_metric_value(category, head_item)
+        current_question = str((current_item or {}).get("question") or "")
+        head_question = str((head_item or {}).get("question") or "")
+        if (
+            current_score != head_score
+            or current_metric != head_metric
+            or current_question != head_question
+        ):
+            changed_rows.append(
+                {
+                    "question_index": question_index,
+                    "head_metric": head_metric,
+                    "current_metric": current_metric,
+                    "head_score": round(head_score, 4) if head_score is not None else None,
+                    "current_score": round(current_score, 4) if current_score is not None else None,
+                    "score_delta": (
+                        round(current_score - head_score, 4)
+                        if current_score is not None and head_score is not None
+                        else None
+                    ),
+                    "head_question": head_question,
+                    "current_question": current_question,
+                }
+            )
+    return changed_rows
+
+
 def _build_beam_modified_evaluation_drift_row(*, path: Path, repo_root: Path, git_status: str) -> dict | None:
     current_payload = _load_json_file(path)
     if not isinstance(current_payload, dict):
@@ -755,6 +815,11 @@ def _build_beam_modified_evaluation_drift_row(*, path: Path, repo_root: Path, gi
             or current_count != head_count
             or current_metric != head_metric
         ):
+            changed_questions = _build_beam_changed_question_rows(
+                category=category,
+                current_payload=current_payload,
+                head_payload=head_payload or {},
+            )
             changed_categories.append(
                 {
                     "category": category,
@@ -769,6 +834,8 @@ def _build_beam_modified_evaluation_drift_row(*, path: Path, repo_root: Path, gi
                     "current_question_count": current_count,
                     "head_metric": head_metric,
                     "current_metric": current_metric,
+                    "changed_question_count": len(changed_questions),
+                    "changed_questions": changed_questions,
                 }
             )
     return {

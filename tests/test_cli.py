@@ -3221,8 +3221,34 @@ def test_beam_judged_cleanup_report_surfaces_tracked_evaluation_drift(tmp_path: 
     assert changed_by_category["event_ordering"]["head_average_score"] == 0.8622
     assert changed_by_category["event_ordering"]["current_average_score"] == 0.1789
     assert changed_by_category["event_ordering"]["average_score_delta"] == -0.6833
+    assert changed_by_category["event_ordering"]["changed_question_count"] == 1
+    assert changed_by_category["event_ordering"]["changed_questions"] == [
+        {
+            "question_index": 0,
+            "head_metric": "tau_norm",
+            "current_metric": "tau_norm",
+            "head_score": 0.8622,
+            "current_score": 0.1789,
+            "score_delta": -0.6833,
+            "head_question": "",
+            "current_question": "",
+        }
+    ]
     assert changed_by_category["summarization"]["head_average_score"] == 0.9
     assert changed_by_category["summarization"]["current_average_score"] is None
+    assert changed_by_category["summarization"]["changed_question_count"] == 1
+    assert changed_by_category["summarization"]["changed_questions"] == [
+        {
+            "question_index": 0,
+            "head_metric": "llm_judge_score",
+            "current_metric": "",
+            "head_score": 0.9,
+            "current_score": None,
+            "score_delta": None,
+            "head_question": "",
+            "current_question": "",
+        }
+    ]
 
 
 def test_beam_judged_cleanup_report_surfaces_promotable_untracked_manifests(tmp_path: Path, monkeypatch):
