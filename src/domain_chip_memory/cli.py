@@ -1446,6 +1446,26 @@ def _build_benchmark_runs_git_report(
     for row in noisy_files:
         family = row["family"]
         noisy_family_counts[family] = noisy_family_counts.get(family, 0) + 1
+    all_noisy_series_rows: dict[tuple[str, str], dict] = {}
+    for path in noisy_paths:
+        family = _benchmark_runs_file_family(path)
+        series = _benchmark_runs_series_key(path)
+        series_row = all_noisy_series_rows.setdefault(
+            (family, series),
+            {
+                "family": family,
+                "series": series,
+                "file_count": 0,
+            },
+        )
+        series_row["file_count"] += 1
+    all_noisy_ranked_series_rows = sorted(
+        all_noisy_series_rows.values(),
+        key=lambda row: (-row["file_count"], row["family"], row["series"]),
+    )
+    all_noisy_top_series_by_family: dict[str, dict] = {}
+    for row in all_noisy_ranked_series_rows:
+        all_noisy_top_series_by_family.setdefault(row["family"], row)
     reported_paths = noisy_paths if only_noisy else files
     if family_filter:
         reported_paths = [path for path in reported_paths if _benchmark_runs_file_family(path) == family_filter]
@@ -1737,6 +1757,7 @@ def _build_benchmark_runs_git_report(
         if ranked_index is not None and ranked_index + 1 < len(ranked_family_command_rows):
             current_family_command = ranked_family_command_rows[ranked_index]
             next_family_command = ranked_family_command_rows[ranked_index + 1]
+            next_family_series = all_noisy_top_series_by_family.get(next_family_command["family"])
             current_noisy_share = (
                 round(current_family_command["noisy_file_count"] / noisy_family_total, 4)
                 if noisy_family_total
@@ -1754,6 +1775,25 @@ def _build_benchmark_runs_git_report(
                 lead_label = "wide"
             elif share_gap >= 0.1:
                 lead_label = "clear"
+            next_family_drilldown_command = None
+            next_family_drilldown_command_shell = None
+            next_family_series_prefix = None
+            next_family_series_noisy_file_count = None
+            if next_family_series is not None:
+                next_family_drilldown_command = _benchmark_runs_git_report_command(
+                    benchmark_runs_dir=benchmark_runs_path,
+                    repo_root=repo_root_path,
+                    only_noisy=True,
+                    top_series_limit=top_series_limit,
+                    summary_only=summary_only,
+                    family_filter=next_family_command["family"],
+                    series_prefix=next_family_series["series"],
+                )
+                next_family_drilldown_command_shell = " ".join(
+                    _shell_quote_arg(part) for part in next_family_drilldown_command
+                )
+                next_family_series_prefix = next_family_series["series"]
+                next_family_series_noisy_file_count = next_family_series["file_count"]
             recommended_family_gap = {
                 "scope": "gap_to_next_family",
                 "family": recommended_family["family"],
@@ -1764,6 +1804,10 @@ def _build_benchmark_runs_git_report(
                 "lead_label": lead_label,
                 "next_family_command": next_family_command["command"],
                 "next_family_command_shell": next_family_command["command_shell"],
+                "next_family_series_prefix": next_family_series_prefix,
+                "next_family_series_noisy_file_count": next_family_series_noisy_file_count,
+                "next_family_drilldown_command": next_family_drilldown_command,
+                "next_family_drilldown_command_shell": next_family_drilldown_command_shell,
             }
         else:
             recommended_family_gap = {

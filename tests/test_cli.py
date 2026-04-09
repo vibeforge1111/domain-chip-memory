@@ -3230,6 +3230,29 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
             f"--repo-root {tmp_path} --family longmemeval --only-noisy --top-series-limit 10"
         ),
+        "next_family_series_prefix": "longmemeval_offset225_limit25_source",
+        "next_family_series_noisy_file_count": 1,
+        "next_family_drilldown_command": [
+            "python",
+            "-m",
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--family",
+            "longmemeval",
+            "--series-prefix",
+            "longmemeval_offset225_limit25_source",
+            "--only-noisy",
+            "--top-series-limit",
+            "10",
+        ],
+        "next_family_drilldown_command_shell": (
+            f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+            f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_offset225_limit25_source --only-noisy --top-series-limit 10"
+        ),
     }
     assert series_rows[("debug", "_debug")]["git_status_counts"] == {"??": 1}
     assert series_rows[("longmemeval", "longmemeval_offset225_limit25_source")]["git_status_counts"] == {"??": 1}
@@ -3654,6 +3677,31 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "next_family_command_shell": (
             f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
             f"--repo-root {tmp_path} --family scorecard --only-noisy --summary-only --top-series-limit 10"
+        ),
+        "next_family_series_prefix": "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
+        "next_family_series_noisy_file_count": 1,
+        "next_family_drilldown_command": [
+            "python",
+            "-m",
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--family",
+            "scorecard",
+            "--series-prefix",
+            "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
+            "--only-noisy",
+            "--summary-only",
+            "--top-series-limit",
+            "10",
+        ],
+        "next_family_drilldown_command_shell": (
+            f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+            f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5 "
+            f"--only-noisy --summary-only --top-series-limit 10"
         ),
     }
     assert payload["recommended_followups"] == [payload["recommended_focus"]]
