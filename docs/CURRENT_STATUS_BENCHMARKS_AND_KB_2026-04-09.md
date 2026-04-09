@@ -292,8 +292,10 @@ Current live result on 2026-04-09:
    - `summary_only` now keeps the counts and ranked series while omitting the giant `paths` arrays and full `noisy_files` dump
    - add `--family longmemeval` or `--family scorecard` when the full noisy surface is still too mixed to reason about cleanly
    - add `--series-prefix <series>` when one noisy cluster still needs a tighter read; current live example: `--family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25`
+   - the payload now includes `recommended_focus`, so the next best follow-up command is explicit instead of inferred
    - the payload now includes exact `family_commands` so the next focused slice can be copied directly instead of reconstructed by hand
    - largest live series: `longmemeval_summary_synthesis_offset225_limit25` (`4`), `longmemeval_summary_synthesis_offset275_limit25` (`4`), `official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5` (`4`), `_debug` (`3`), `_debug_gpt4` (`3`)
+   - current live `recommended_focus` points to `--family scorecard`, because scorecards are the largest remaining noisy family at `31` files
    - current live `--family longmemeval` slice is `23` files across `10` series, with top clusters at offsets `225`, `275`, `325`, `350`, and `300`
    - current live `--family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25` slice collapses to `4` files in exactly `1` series
 3. decide whether the next `BEAM` evidence task is exact-official judge parity or a different scale/provider validation lane
