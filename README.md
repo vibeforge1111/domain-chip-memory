@@ -215,6 +215,7 @@ Manifest entries are resolved relative to the manifest file location.
 There is now a checked-in example bundle under `docs/examples/spark_kb/` for validator and compiler smoke checks.
 That bundle is described in `docs/examples/spark_kb/README.md`.
 There is also a checked-in invalid validator fixture under `docs/examples/spark_kb_invalid/`.
+The full examples directory is indexed in `docs/examples/README.md`.
 
 ```powershell
 python -m domain_chip_memory.cli validate-spark-kb-inputs docs\examples\spark_kb\snapshot.json --repo-source-manifest docs\examples\spark_kb\manifests\repo_sources.json --filed-output-manifest docs\examples\spark_kb\manifests\filed_outputs.json

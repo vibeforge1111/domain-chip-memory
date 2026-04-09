@@ -192,6 +192,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - the checked-in Spark KB example bundle now has a real validate-build-health smoke test path
 - the checked-in Spark KB example bundle is now self-described in `docs/examples/spark_kb/README.md`
 - a checked-in invalid Spark KB validator fixture now exists under `docs/examples/spark_kb_invalid/`
+- `docs/examples/README.md` now indexes the checked-in fixture bundles
 
 ### What is now true after BEAM closure
 
