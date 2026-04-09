@@ -165,6 +165,10 @@ That keeps the two timeout-bound resumptions ahead of the historically noisier `
 The helper now also supports direct execution:
 
 - `--execute` runs the generated resume commands sequentially from the repo root
+- the batch JSON now mirrors the resume-plan readiness summary too:
+  - `runnable_target_count`
+  - `blocked_target_count`
+  - `blocked_missing_env_vars`
 - the JSON output captures per-target `return_code`, `status`, `stdout_tail`, and `stderr_tail`
 - `--execute` now preflights the configured judge API key env var before spawning a rerun command
 - current shell state: `MINIMAX_API_KEY` is unset
