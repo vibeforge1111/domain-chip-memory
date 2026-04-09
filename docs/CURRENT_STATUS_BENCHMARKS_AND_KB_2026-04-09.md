@@ -225,6 +225,7 @@ Current live result on 2026-04-09:
 - `build-spark-kb` now exists as a real non-demo compiler path for snapshot JSON inputs
 - `build-spark-kb` can now merge explicit `--repo-source` files with manifest-driven repo-source lists
 - `build-spark-kb` can now merge explicit `--filed-output-file` inputs with manifest-driven filed-output lists
+- manifest entries now resolve relative to the manifest file location, not only the current shell directory
 - `demo-spark-kb` ran successfully against a real local vault scaffold
 - `spark-kb-health-check` returned `valid: true`
 - no missing required files

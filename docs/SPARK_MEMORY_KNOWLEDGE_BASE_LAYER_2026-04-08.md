@@ -171,6 +171,7 @@ The current repo implementation now exercises this with:
 - explicit repo-source copies and compiled source pages for selected local files
 - manifest-driven repo-source ingest for real `build-spark-kb` compilation flows
 - manifest-driven filed-output ingest for real `build-spark-kb` compilation flows
+- manifest entries resolving relative to the manifest file for portable KB build inputs
 
 ## Guardrails
 

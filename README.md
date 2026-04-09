@@ -207,6 +207,8 @@ python -m domain_chip_memory.cli demo-spark-kb path\\to\\demo_vault
 python -m domain_chip_memory.cli spark-kb-health-check path\\to\\vault
 ```
 
+Manifest entries are resolved relative to the manifest file location.
+
 Run a bounded real-provider smoke test once `OPENAI_API_KEY` is set:
 
 ```powershell
