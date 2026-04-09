@@ -293,6 +293,7 @@ Current live result on 2026-04-09:
    - add `--family longmemeval` or `--family scorecard` when the full noisy surface is still too mixed to reason about cleanly
    - add `--series-prefix <series>` when one noisy cluster still needs a tighter read; current live example: `--family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25`
    - the payload now includes `recommended_focus`, so the next best follow-up command is explicit instead of inferred
+   - the payload now includes `recommended_drilldown`, so the broad summary can expose the deepest recommended slice directly instead of making callers pick the last item from `recommended_followups`
    - the payload now includes `recommended_followups`, so the broad report can emit a two-step drilldown path instead of only the first hop
    - the payload now includes `family_hotspots`, so each noisy family carries its own dominant series and exact jump command
    - `family_hotspots` now also carries concentration signals via `top_series_share` and `average_series_size`
@@ -302,6 +303,7 @@ Current live result on 2026-04-09:
    - the payload now includes exact `family_commands` so the next focused slice can be copied directly instead of reconstructed by hand
    - largest live series: `longmemeval_summary_synthesis_offset225_limit25` (`4`), `longmemeval_summary_synthesis_offset275_limit25` (`4`), `official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5` (`4`), `_debug` (`3`), `_debug_gpt4` (`3`)
    - current live `recommended_focus` points to `--family scorecard`, because scorecards are the largest remaining noisy family at `31` files
+   - current live `recommended_drilldown` points directly to `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live `recommended_hotspot` points at the `scorecard` hotspot row, which jumps directly to `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live `recommended_followups` then drills from `--family scorecard` into `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live `family_hotspots` are `debug -> _debug` (`3` across `2` series), `longmemeval -> longmemeval_summary_synthesis_offset225_limit25` (`4` across `10` series), and `scorecard -> official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5` (`4` across `23` series)
