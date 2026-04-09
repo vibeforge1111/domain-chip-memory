@@ -3267,6 +3267,7 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "rank": 1,
         "top_series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
         "top_series_noisy_file_count": 1,
+        "competition_position_label": "contested_leader",
         "command": payload["family_competition"][0]["command"],
         "command_shell": payload["family_competition"][0]["command_shell"],
         "top_series_command": payload["family_competition"][0]["top_series_command"],
@@ -3347,6 +3348,7 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
                 f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_offset225_limit25_source "
                 f"--only-noisy --top-series-limit 10"
             ),
+            "competition_position_label": "contested_leader",
             "gap_label": "leader",
             "top_series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
             "top_series_noisy_file_count": 1,
@@ -3453,6 +3455,7 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
                 f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10 "
                 f"--only-noisy --top-series-limit 10"
             ),
+            "competition_position_label": "neck_and_neck",
             "gap_label": "narrow",
             "top_series_prefix": "longmemeval_offset225_limit25_source",
             "top_series_noisy_file_count": 1,
@@ -3559,6 +3562,7 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
                 f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_offset225_limit25_source "
                 f"--only-noisy --top-series-limit 10"
             ),
+            "competition_position_label": "neck_and_neck",
             "gap_label": "narrow",
             "top_series_prefix": "_debug",
             "top_series_noisy_file_count": 1,
@@ -4137,6 +4141,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "rank": 1,
         "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
         "top_series_noisy_file_count": 2,
+        "competition_position_label": "dominant_leader",
         "command": payload["family_competition"][0]["command"],
         "command_shell": payload["family_competition"][0]["command_shell"],
         "top_series_command": payload["family_competition"][0]["top_series_command"],
@@ -4219,6 +4224,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
                 f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5 "
                 f"--only-noisy --summary-only --top-series-limit 10"
             ),
+            "competition_position_label": "dominant_leader",
             "gap_label": "leader",
             "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
             "top_series_noisy_file_count": 2,
@@ -4328,6 +4334,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
                 f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
                 f"--repo-root {tmp_path} --family debug --series-prefix _debug --only-noisy --summary-only --top-series-limit 10"
             ),
+            "competition_position_label": "neck_and_neck",
             "gap_label": "wide",
             "top_series_prefix": "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
             "top_series_noisy_file_count": 1,
@@ -4438,6 +4445,7 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
                 f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5 "
                 f"--only-noisy --summary-only --top-series-limit 10"
             ),
+            "competition_position_label": "neck_and_neck",
             "gap_label": "wide",
             "top_series_prefix": "_debug",
             "top_series_noisy_file_count": 1,
@@ -4749,6 +4757,7 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "rank": 1,
         "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
         "top_series_noisy_file_count": 2,
+        "competition_position_label": "solo",
         "command": payload["family_competition"][0]["command"],
         "command_shell": payload["family_competition"][0]["command_shell"],
         "top_series_command": payload["family_competition"][0]["top_series_command"],
@@ -4792,6 +4801,7 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
             "nearest_competitor_command_shell": None,
             "nearest_competitor_top_series_command": None,
             "nearest_competitor_top_series_command_shell": None,
+            "competition_position_label": "solo",
             "gap_label": "leader",
             "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
             "top_series_noisy_file_count": 2,

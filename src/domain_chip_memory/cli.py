@@ -1784,6 +1784,24 @@ def _build_benchmark_runs_git_report(
             row["nearest_competitor_top_series_command_shell"] = (
                 nearest_row["top_series_command_shell"] if nearest_row is not None else None
             )
+            nearest_gap = row["nearest_competitor_noisy_share_gap"]
+            competition_position_label = "solo"
+            if nearest_gap is not None:
+                if row["rank"] == 1:
+                    if nearest_gap <= 0.05:
+                        competition_position_label = "contested_leader"
+                    elif nearest_gap <= 0.15:
+                        competition_position_label = "clear_leader"
+                    else:
+                        competition_position_label = "dominant_leader"
+                else:
+                    if nearest_gap <= 0.05:
+                        competition_position_label = "neck_and_neck"
+                    elif nearest_gap <= 0.15:
+                        competition_position_label = "close_chase"
+                    else:
+                        competition_position_label = "separated"
+            row["competition_position_label"] = competition_position_label
 
     family_hotspots = []
     for row in ordered_family_rows:
@@ -1972,6 +1990,7 @@ def _build_benchmark_runs_git_report(
                 "rank": current_competitor["rank"],
                 "top_series_prefix": current_competitor["top_series_prefix"],
                 "top_series_noisy_file_count": current_competitor["top_series_noisy_file_count"],
+                "competition_position_label": current_competitor["competition_position_label"],
                 "command": current_competitor["command"],
                 "command_shell": current_competitor["command_shell"],
                 "top_series_command": current_competitor["top_series_command"],
