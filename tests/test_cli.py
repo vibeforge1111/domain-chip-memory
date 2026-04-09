@@ -3368,6 +3368,13 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "drilldown": payload["recommended_sequence_steps"][1],
         "next_step": payload["recommended_sequence_steps"][2],
     }
+    assert payload["recommended_sequence_summary"] == {
+        "step_count": 3,
+        "phase_order": ["focus", "drilldown", "next_step"],
+        "preview": payload["recommended_sequence_preview"],
+        "has_drilldown": True,
+        "has_next_step": True,
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4307,6 +4314,13 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "focus": payload["recommended_sequence_steps"][0],
         "next_step": payload["recommended_sequence_steps"][1],
     }
+    assert payload["recommended_sequence_summary"] == {
+        "step_count": 2,
+        "phase_order": ["focus", "next_step"],
+        "preview": payload["recommended_sequence_preview"],
+        "has_drilldown": False,
+        "has_next_step": True,
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4987,6 +5001,13 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
     assert payload["recommended_sequence_by_phase"] == {
         "focus": payload["recommended_sequence_steps"][0],
         "next_step": payload["recommended_sequence_steps"][1],
+    }
+    assert payload["recommended_sequence_summary"] == {
+        "step_count": 2,
+        "phase_order": ["focus", "next_step"],
+        "preview": payload["recommended_sequence_preview"],
+        "has_drilldown": False,
+        "has_next_step": True,
     }
     assert payload["family_competition"] == [
         {
