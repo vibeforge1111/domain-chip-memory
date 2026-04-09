@@ -659,6 +659,16 @@ def _shell_quote_arg(arg: str) -> str:
     return escaped
 
 
+def _required_beam_judge_env(*, judge_provider: str, judge_api_key_env: str) -> str:
+    normalized_provider = str(judge_provider or "").strip().lower()
+    explicit_env = str(judge_api_key_env or "").strip()
+    if explicit_env:
+        return explicit_env
+    if normalized_provider == "minimax":
+        return "MINIMAX_API_KEY"
+    return ""
+
+
 def _git_status_by_path(paths: list[Path], *, repo_root: Path) -> dict[str, str]:
     if not paths:
         return {}
@@ -1147,6 +1157,11 @@ def _build_beam_judged_resume_plan(
         judge_model = str(judge_config.get("model") or "").strip()
         judge_base_url = str(judge_config.get("base_url") or "").strip()
         judge_api_key_env = str(judge_config.get("api_key_env") or "").strip()
+        required_judge_env = _required_beam_judge_env(
+            judge_provider=judge_provider,
+            judge_api_key_env=judge_api_key_env,
+        )
+        judge_env_ready = not required_judge_env or bool(os.environ.get(required_judge_env))
         write_path = str(manifest_path)
 
         command = [
@@ -1201,17 +1216,34 @@ def _build_beam_judged_resume_plan(
                 "judge_model": judge_model,
                 "judge_base_url": judge_base_url,
                 "judge_api_key_env": judge_api_key_env,
+                "required_judge_env": required_judge_env,
+                "judge_env_ready": judge_env_ready,
+                "resume_blocked_reason": "" if judge_env_ready else "missing_judge_env",
                 "write_path": write_path,
                 "resume_command": command,
                 "resume_command_shell": " ".join(_shell_quote_arg(arg) for arg in command),
             }
         )
 
+    blocked_missing_env_vars = sorted(
+        {
+            str(target.get("required_judge_env") or "").strip()
+            for target in resume_targets
+            if str(target.get("resume_blocked_reason") or "") == "missing_judge_env"
+            and str(target.get("required_judge_env") or "").strip()
+        }
+    )
+    blocked_target_count = sum(
+        1 for target in resume_targets if str(target.get("resume_blocked_reason") or "").strip()
+    )
     return {
         "benchmark_name": "BEAM",
         "source_mode": "official_public_evaluation_resume_plan",
         "artifact_prefix": artifact_prefix,
         "resume_target_count": len(resume_targets),
+        "runnable_target_count": len(resume_targets) - blocked_target_count,
+        "blocked_target_count": blocked_target_count,
+        "blocked_missing_env_vars": blocked_missing_env_vars,
         "resume_targets": resume_targets,
     }
 
@@ -1254,7 +1286,7 @@ def _build_beam_judged_resume_batch(
     execution_results = []
     if execute:
         for target in resume_plan["resume_targets"]:
-            required_env = str(target.get("judge_api_key_env") or "").strip()
+            required_env = str(target.get("required_judge_env") or "").strip()
             if required_env and not os.environ.get(required_env):
                 execution_results.append(
                     {
