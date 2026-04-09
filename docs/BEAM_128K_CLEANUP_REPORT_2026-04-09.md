@@ -24,6 +24,10 @@ python -m domain_chip_memory.cli beam-judged-promotion-plan --artifact-prefix of
 python -m domain_chip_memory.cli beam-judged-promotion-batch --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --script-file tmp\beam_128k_promotion_batch.ps1 --write tmp\beam_128k_promotion_batch.json
 ```
 
+```powershell
+python -m domain_chip_memory.cli beam-judged-drift-plan --artifact-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_ --write tmp\beam_128k_drift_plan_live.json
+```
+
 ## Current State
 
 - answer variant directories found: `22`
@@ -152,10 +156,20 @@ The main unresolved cleanup item is no longer the three `conv*_official_eval.jso
 
 That is still substantive drift, not judge-reason wording churn.
 
+The new drift-plan helper turns that tracked row into exact next-step commands without executing them:
+
+- `drift_target_count`: `1`
+- target path:
+  - `artifacts/beam_public_results/official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3/100K/1/evaluation-domain_chip_memory_answers.json`
+- emitted commands:
+  - `git diff -- ...`
+  - `git show HEAD:...`
+  - `git restore --source=HEAD -- ...`
+
 ## Practical Next Step
 
 The clean next move is:
 
 1. treat `conv1_v9`, `conv2_v2`, and `conv3_v2` as completed working-tree artifacts rather than blocked resume targets
 2. if promotion is desired, use `beam-judged-promotion-batch`, its generated `tmp\beam_128k_promotion_batch.ps1`, or `beam-judged-promotion-batch --execute` instead of hand-building `git add` commands
-3. separately investigate the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
+3. use `beam-judged-drift-plan` to inspect or restore the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
