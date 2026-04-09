@@ -1489,6 +1489,16 @@ def _build_benchmark_runs_git_report(
         series_row["paths"].append(display_path)
 
     ordered_family_rows = [family_rows[key] for key in sorted(family_rows)]
+    reported_file_total = len(reported_paths)
+    for row in ordered_family_rows:
+        reported_file_share = round(row["file_count"] / reported_file_total, 4) if reported_file_total else 0.0
+        dominance_label = "minor"
+        if reported_file_share >= 0.5:
+            dominance_label = "dominant"
+        elif reported_file_share >= 0.25:
+            dominance_label = "major"
+        row["reported_file_share"] = reported_file_share
+        row["dominance_label"] = dominance_label
     ordered_series_rows = [
         series_rows[key]
         for key in sorted(series_rows, key=lambda item: (item[0], item[1]))
@@ -1693,6 +1703,14 @@ def _build_benchmark_runs_git_report(
         recommended_drilldown = recommended_followups[-1]
     elif recommended_focus and recommended_focus.get("scope") == "series":
         recommended_drilldown = recommended_focus
+    recommended_family = None
+    if recommended_focus and recommended_focus.get("family"):
+        recommended_family = next(
+            (row for row in ordered_family_rows if row["family"] == recommended_focus["family"]),
+            None,
+        )
+    elif len(ordered_family_rows) == 1:
+        recommended_family = ordered_family_rows[0]
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -1708,6 +1726,7 @@ def _build_benchmark_runs_git_report(
         "current_command_shell": " ".join(_shell_quote_arg(part) for part in current_command),
         "recommended_focus": recommended_focus,
         "recommended_drilldown": recommended_drilldown,
+        "recommended_family": recommended_family,
         "recommended_followups": recommended_followups,
         "family_commands": family_commands,
         "family_hotspots": family_hotspots,
