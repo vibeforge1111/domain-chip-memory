@@ -2875,6 +2875,29 @@ def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path
     assert payload["official_eval_manifests"][0]["status"] == "completed"
     assert payload["official_eval_manifests"][0]["expected_categories"] == ["event_ordering", "information_extraction"]
     assert payload["official_eval_manifests"][0]["answer_categories"] == ["event_ordering", "information_extraction"]
+    assert payload["official_eval_manifests"][0]["completed_category_order"] == ["information_extraction", "event_ordering"]
+    assert payload["official_eval_manifests"][0]["expected_category_order"] == ["information_extraction", "event_ordering"]
+    assert payload["official_eval_manifests"][0]["answer_category_order"] == ["information_extraction", "event_ordering"]
+    assert payload["official_eval_manifests"][0]["category_progress"] == [
+        {
+            "category": "information_extraction",
+            "expected_question_count": 1,
+            "answer_question_count": 1,
+            "completed_question_count": 1,
+            "status": "completed",
+        },
+        {
+            "category": "event_ordering",
+            "expected_question_count": 1,
+            "answer_question_count": 1,
+            "completed_question_count": 1,
+            "status": "completed",
+        },
+    ]
+    assert payload["official_eval_manifests"][0]["last_completed_category"] == "event_ordering"
+    assert payload["official_eval_manifests"][0]["last_completed_question_index"] == 0
+    assert payload["official_eval_manifests"][0]["next_pending_category"] == ""
+    assert payload["official_eval_manifests"][0]["next_pending_question_index"] is None
     assert payload["official_eval_manifests"][0]["diagnostic_classification"] == "completed"
     assert payload["official_eval_manifests"][0]["promotable_candidate"] is True
 
@@ -2977,6 +3000,7 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
                 "result_file_name": "domain_chip_memory_answers.json",
                 "evaluation_files": [str(timeout_eval)],
                 "missing_evaluation_files": [],
+                "stdout_tail": ["Question Type: event_ordering", "Question Index: 0"],
                 "stderr_tail": ["Timed out waiting for MiniMax BEAM evaluation worker after 900 seconds."],
                 "aggregate_summary": {"overall_average": 0.75},
             }
@@ -2994,6 +3018,7 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
                 "result_file_name": "domain_chip_memory_answers.json",
                 "evaluation_files": [str(partial_eval)],
                 "missing_evaluation_files": [],
+                "stdout_tail": ["Question Type: multi_session_reasoning", "Question Index: 0"],
                 "stderr_tail": ["3: TypeError: list indices must be integers or slices, not str"],
                 "aggregate_summary": {"overall_average": 1.0},
             }
@@ -3030,6 +3055,35 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
     assert timeout_row["answer_categories"] == ["event_ordering", "information_extraction", "summarization"]
     assert timeout_row["missing_categories"] == ["summarization"]
     assert timeout_row["missing_answer_categories"] == ["summarization"]
+    assert timeout_row["category_progress"] == [
+        {
+            "category": "information_extraction",
+            "expected_question_count": 1,
+            "answer_question_count": 1,
+            "completed_question_count": 1,
+            "status": "completed",
+        },
+        {
+            "category": "event_ordering",
+            "expected_question_count": 1,
+            "answer_question_count": 1,
+            "completed_question_count": 1,
+            "status": "completed",
+        },
+        {
+            "category": "summarization",
+            "expected_question_count": 1,
+            "answer_question_count": 1,
+            "completed_question_count": 0,
+            "status": "pending",
+        },
+    ]
+    assert timeout_row["last_completed_category"] == "event_ordering"
+    assert timeout_row["last_completed_question_index"] == 0
+    assert timeout_row["next_pending_category"] == "summarization"
+    assert timeout_row["next_pending_question_index"] == 0
+    assert timeout_row["last_logged_question_type"] == "event_ordering"
+    assert timeout_row["last_logged_question_index"] == 0
     assert timeout_row["promotable_candidate"] is False
 
     partial_row = manifest_rows["official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2_official_eval.json"]
@@ -3037,6 +3091,35 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
     assert partial_row["expected_categories"] == ["event_ordering", "information_extraction", "multi_session_reasoning"]
     assert partial_row["missing_categories"] == ["multi_session_reasoning"]
     assert partial_row["missing_answer_categories"] == ["multi_session_reasoning"]
+    assert partial_row["category_progress"] == [
+        {
+            "category": "information_extraction",
+            "expected_question_count": 1,
+            "answer_question_count": 1,
+            "completed_question_count": 1,
+            "status": "completed",
+        },
+        {
+            "category": "event_ordering",
+            "expected_question_count": 1,
+            "answer_question_count": 1,
+            "completed_question_count": 1,
+            "status": "completed",
+        },
+        {
+            "category": "multi_session_reasoning",
+            "expected_question_count": 1,
+            "answer_question_count": 1,
+            "completed_question_count": 0,
+            "status": "pending",
+        },
+    ]
+    assert partial_row["last_completed_category"] == "event_ordering"
+    assert partial_row["last_completed_question_index"] == 0
+    assert partial_row["next_pending_category"] == "multi_session_reasoning"
+    assert partial_row["next_pending_question_index"] == 0
+    assert partial_row["last_logged_question_type"] == "multi_session_reasoning"
+    assert partial_row["last_logged_question_index"] == 0
     assert partial_row["promotable_candidate"] is False
 
 

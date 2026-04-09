@@ -550,28 +550,37 @@ def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def _load_beam_evaluation_categories(path: str | Path) -> list[str]:
+def _load_beam_category_counts(path: str | Path) -> dict[str, int]:
     payload = _load_json_file(path)
     if not isinstance(payload, dict):
-        return []
-    return sorted(key for key, items in payload.items() if isinstance(items, list) and items)
+        return {}
+    return {str(key): len(items) for key, items in payload.items() if isinstance(items, list)}
+
+
+def _load_beam_evaluation_categories(path: str | Path) -> list[str]:
+    return sorted(key for key, count in _load_beam_category_counts(path).items() if count > 0)
 
 
 def _load_beam_category_keys(path: str | Path) -> list[str]:
+    return sorted(_load_beam_category_counts(path))
+
+
+def _load_beam_category_order(path: str | Path) -> list[str]:
     payload = _load_json_file(path)
     if not isinstance(payload, dict):
         return []
-    return sorted(key for key, items in payload.items() if isinstance(items, list))
+    return [str(key) for key, items in payload.items() if isinstance(items, list)]
 
 
-def _load_beam_expected_categories_for_manifest(payload: dict[str, object]) -> list[str]:
+def _load_beam_expected_category_order_and_counts_for_manifest(payload: dict[str, object]) -> tuple[list[str], dict[str, int]]:
     upstream_repo_dir = str(payload.get("upstream_repo_dir") or "").strip()
     official_chat_size_dir = str(payload.get("official_chat_size_dir") or "").strip()
     conversation_ids = [str(item).strip() for item in payload.get("conversation_ids", []) if str(item).strip()]
     if not upstream_repo_dir or not official_chat_size_dir or not conversation_ids:
-        return []
+        return [], {}
 
-    categories: set[str] = set()
+    ordered_categories: list[str] = []
+    category_counts: dict[str, int] = {}
     upstream_repo_path = Path(upstream_repo_dir)
     for conversation_id in conversation_ids:
         probing_questions_path = (
@@ -579,25 +588,60 @@ def _load_beam_expected_categories_for_manifest(payload: dict[str, object]) -> l
         )
         if not probing_questions_path.is_file():
             continue
-        categories.update(_load_beam_category_keys(probing_questions_path))
-    return sorted(categories)
+        payload_counts = _load_beam_category_counts(probing_questions_path)
+        payload_order = _load_beam_category_order(probing_questions_path)
+        for category in payload_order:
+            if category not in category_counts:
+                ordered_categories.append(category)
+                category_counts[category] = int(payload_counts.get(category, 0))
+    return ordered_categories, category_counts
 
 
-def _load_beam_answer_categories_for_manifest(payload: dict[str, object]) -> list[str]:
+def _load_beam_expected_categories_for_manifest(payload: dict[str, object]) -> list[str]:
+    ordered_categories, _ = _load_beam_expected_category_order_and_counts_for_manifest(payload)
+    return sorted(ordered_categories)
+
+
+def _load_beam_answer_category_order_and_counts_for_manifest(payload: dict[str, object]) -> tuple[list[str], dict[str, int]]:
     input_directory = str(payload.get("input_directory") or "").strip()
     result_file_name = str(payload.get("result_file_name") or "").strip()
     conversation_ids = [str(item).strip() for item in payload.get("conversation_ids", []) if str(item).strip()]
     if not input_directory or not result_file_name or not conversation_ids:
-        return []
+        return [], {}
 
-    categories: set[str] = set()
+    ordered_categories: list[str] = []
+    category_counts: dict[str, int] = {}
     input_directory_path = Path(input_directory)
     for conversation_id in conversation_ids:
         answer_path = input_directory_path / conversation_id / result_file_name
         if not answer_path.is_file():
             continue
-        categories.update(_load_beam_category_keys(answer_path))
-    return sorted(categories)
+        payload_counts = _load_beam_category_counts(answer_path)
+        payload_order = _load_beam_category_order(answer_path)
+        for category in payload_order:
+            if category not in category_counts:
+                ordered_categories.append(category)
+                category_counts[category] = int(payload_counts.get(category, 0))
+    return ordered_categories, category_counts
+
+
+def _load_beam_answer_categories_for_manifest(payload: dict[str, object]) -> list[str]:
+    ordered_categories, _ = _load_beam_answer_category_order_and_counts_for_manifest(payload)
+    return sorted(ordered_categories)
+
+
+def _parse_manifest_stdout_progress(stdout_tail: list[str]) -> tuple[str, int | None]:
+    last_category = ""
+    last_index: int | None = None
+    for line in stdout_tail:
+        if line.startswith("Question Type: "):
+            last_category = line.removeprefix("Question Type: ").strip()
+        elif line.startswith("Question Index: "):
+            try:
+                last_index = int(line.removeprefix("Question Index: ").strip())
+            except ValueError:
+                continue
+    return last_category, last_index
 
 
 def _display_path(path: Path, root: Path) -> str:
@@ -925,16 +969,27 @@ def _build_beam_judged_cleanup_report(
         aggregate_summary = payload.get("aggregate_summary") if isinstance(payload.get("aggregate_summary"), dict) else {}
         manifest_evaluation_files = [Path(item) for item in payload.get("evaluation_files", []) if str(item).strip()]
         completed_categories: set[str] = set()
+        completed_category_counts: dict[str, int] = {}
+        completed_category_order: list[str] = []
         for evaluation_file in manifest_evaluation_files:
             resolved_key = str(evaluation_file.resolve())
             categories = evaluation_categories_by_path.get(resolved_key)
             if categories is None and evaluation_file.is_file():
                 categories = _load_beam_evaluation_categories(evaluation_file)
+            category_counts = _load_beam_category_counts(evaluation_file) if evaluation_file.is_file() else {}
+            category_order = _load_beam_category_order(evaluation_file) if evaluation_file.is_file() else []
             completed_categories.update(categories or [])
+            for category in category_order:
+                if category not in completed_category_counts:
+                    completed_category_order.append(category)
+                    completed_category_counts[category] = int(category_counts.get(category, 0))
         missing_evaluation_files = [str(item) for item in payload.get("missing_evaluation_files", []) if str(item).strip()]
         stderr_tail = [str(item) for item in payload.get("stderr_tail", []) if str(item).strip()]
-        expected_categories = set(_load_beam_expected_categories_for_manifest(payload))
-        answer_categories = set(_load_beam_answer_categories_for_manifest(payload))
+        stdout_tail = [str(item) for item in payload.get("stdout_tail", []) if str(item).strip()]
+        expected_category_order, expected_category_counts = _load_beam_expected_category_order_and_counts_for_manifest(payload)
+        answer_category_order, answer_category_counts = _load_beam_answer_category_order_and_counts_for_manifest(payload)
+        expected_categories = set(expected_category_order)
+        answer_categories = set(answer_category_order)
         missing_expected_categories = sorted(expected_categories - completed_categories)
         missing_answer_categories = sorted(answer_categories - completed_categories)
         diagnostic_classification = _classify_beam_cleanup_manifest(
@@ -944,6 +999,38 @@ def _build_beam_judged_cleanup_report(
             expected_categories=expected_categories or answer_categories,
             stderr_tail=stderr_tail,
         )
+        progress_order = expected_category_order or answer_category_order or completed_category_order
+        category_progress = []
+        next_pending_category = ""
+        next_pending_question_index: int | None = None
+        last_completed_category = ""
+        last_completed_question_index: int | None = None
+        for category in progress_order:
+            expected_count = int(expected_category_counts.get(category, 0))
+            answer_count = int(answer_category_counts.get(category, 0))
+            completed_count = int(completed_category_counts.get(category, 0))
+            target_count = max(expected_count, answer_count)
+            status_label = "pending"
+            if completed_count and completed_count >= target_count:
+                status_label = "completed"
+            elif completed_count:
+                status_label = "partial"
+            category_progress.append(
+                {
+                    "category": category,
+                    "expected_question_count": expected_count,
+                    "answer_question_count": answer_count,
+                    "completed_question_count": completed_count,
+                    "status": status_label,
+                }
+            )
+            if completed_count:
+                last_completed_category = category
+                last_completed_question_index = max(completed_count - 1, 0)
+            if not next_pending_category and completed_count < target_count:
+                next_pending_category = category
+                next_pending_question_index = completed_count
+        last_logged_question_type, last_logged_question_index = _parse_manifest_stdout_progress(stdout_tail)
         official_eval_rows.append(
             {
                 "path": display_path,
@@ -953,15 +1040,26 @@ def _build_beam_judged_cleanup_report(
                 "evaluation_file_count": len(list(payload.get("evaluation_files") or [])),
                 "category_count": len(completed_categories),
                 "categories": sorted(completed_categories),
+                "completed_category_order": completed_category_order,
                 "expected_category_count": len(expected_categories),
                 "expected_categories": sorted(expected_categories),
+                "expected_category_order": expected_category_order,
                 "answer_category_count": len(answer_categories),
                 "answer_categories": sorted(answer_categories),
+                "answer_category_order": answer_category_order,
                 "missing_categories": missing_expected_categories,
                 "missing_answer_categories": missing_answer_categories,
                 "missing_evaluation_file_count": len(missing_evaluation_files),
                 "diagnostic_classification": diagnostic_classification,
                 "promotable_candidate": diagnostic_classification in {"completed", "timeout_after_complete_write"},
+                "category_progress": category_progress,
+                "last_completed_category": last_completed_category,
+                "last_completed_question_index": last_completed_question_index,
+                "next_pending_category": next_pending_category,
+                "next_pending_question_index": next_pending_question_index,
+                "last_logged_question_type": last_logged_question_type,
+                "last_logged_question_index": last_logged_question_index,
+                "stdout_tail_last": stdout_tail[-1] if stdout_tail else "",
                 "stderr_tail_last": stderr_tail[-1] if stderr_tail else "",
             }
         )
