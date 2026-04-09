@@ -2114,6 +2114,11 @@ def _build_benchmark_runs_git_report(
     for recommendation in [recommended_focus, recommended_drilldown, recommended_next_step]:
         if recommendation is not None and recommendation not in recommended_sequence:
             recommended_sequence.append(recommendation)
+    recommended_sequence_shells: list[str] = []
+    for recommendation in recommended_sequence:
+        command_shell = recommendation.get("command_shell")
+        if command_shell and command_shell not in recommended_sequence_shells:
+            recommended_sequence_shells.append(command_shell)
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -2131,6 +2136,7 @@ def _build_benchmark_runs_git_report(
         "recommended_drilldown": recommended_drilldown,
         "recommended_next_step": recommended_next_step,
         "recommended_sequence": recommended_sequence,
+        "recommended_sequence_shells": recommended_sequence_shells,
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,
