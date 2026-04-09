@@ -468,6 +468,36 @@ def test_spark_kb_health_check_command_runs_on_demo_vault(tmp_path: Path, monkey
     assert written["trace"]["operation"] == "spark_kb_health_check"
 
 
+def test_demo_spark_kb_can_ingest_explicit_repo_source(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    output_dir = tmp_path / "spark_kb_vault"
+    summary_file = tmp_path / "artifacts" / "spark_kb_demo.json"
+    repo_source = tmp_path / "NOTES.md"
+    repo_source.write_text("# Notes\n\nRepo-native source for KB ingest.\n", encoding="utf-8")
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "demo-spark-kb",
+            str(output_dir),
+            "--repo-source",
+            str(repo_source),
+            "--write",
+            str(summary_file),
+        ],
+    )
+
+    cli.main()
+
+    written = json.loads(summary_file.read_text(encoding="utf-8"))
+    assert written["compile_result"]["repo_source_count"] == 1
+    assert (output_dir / "raw" / "repos" / "01-NOTES.md").exists()
+    assert (output_dir / "wiki" / "sources" / "repo-notes.md").exists()
+
+
 def test_run_sdk_maintenance_report_cli_can_write_report(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "sdk_maintenance.json"
     output_file = tmp_path / "artifacts" / "sdk_maintenance_report.json"

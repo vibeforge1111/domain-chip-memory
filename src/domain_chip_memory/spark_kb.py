@@ -161,6 +161,7 @@ def scaffold_spark_knowledge_base(
     snapshot: dict[str, Any],
     *,
     vault_title: str = "Spark Memory Knowledge Base",
+    repo_sources: list[str | Path] | None = None,
 ) -> dict[str, Any]:
     output_path = Path(output_dir)
     generated_at = str(snapshot.get("generated_at") or _utc_timestamp())
@@ -344,6 +345,53 @@ def scaffold_spark_knowledge_base(
                 "path": str(session_page_path),
             }
         )
+    ingested_repo_sources = 0
+    for source in repo_sources or []:
+        source_path = Path(source)
+        if not source_path.exists() or not source_path.is_file():
+            continue
+        ingested_repo_sources += 1
+        raw_file_name = f"{ingested_repo_sources:02d}-{source_path.name}"
+        raw_repo_path = raw_repos_dir / raw_file_name
+        raw_text = source_path.read_text(encoding="utf-8", errors="replace")
+        raw_repo_path.write_text(raw_text, encoding="utf-8")
+
+        source_slug = _slugify(source_path.stem)
+        repo_source_page_path = sources_dir / f"repo-{source_slug}.md"
+        relative_source = source_path.as_posix()
+        excerpt_lines = [line.rstrip() for line in raw_text.splitlines()[:12]]
+        if not excerpt_lines:
+            excerpt_lines = ["(empty file)"]
+        repo_source_page_title = f"Repo Source {source_path.name}"
+        repo_source_page_content = [
+            _markdown_frontmatter(
+                title=repo_source_page_title,
+                page_type="source",
+                summary=f"Repo-native source ingested from {source_path.name}.",
+                generated_at=generated_at,
+                tags=["spark-kb", "source", "repo"],
+            ),
+            f"# {repo_source_page_title}",
+            "",
+            "## Source Metadata",
+            f"- Original path: `{relative_source}`",
+            f"- Raw copy: `raw/repos/{raw_file_name}`",
+            f"- Size: `{len(raw_text)}` characters",
+            "",
+            "## Excerpt",
+            "```text",
+            *excerpt_lines,
+            "```",
+            "",
+        ]
+        repo_source_page_path.write_text("\n".join(repo_source_page_content), encoding="utf-8")
+        source_pages.append(
+            {
+                "title": repo_source_page_title,
+                "link": f"[[sources/{repo_source_page_path.stem}]]",
+                "path": str(repo_source_page_path),
+            }
+        )
 
     current_state_pages: list[dict[str, str]] = []
     for record in current_state_entries:
@@ -512,6 +560,7 @@ def scaffold_spark_knowledge_base(
         "## Coverage Checks",
         f"- Current-state pages without linked evidence: `{current_state_without_evidence}`",
         f"- Sessions with compiled source pages: `{len(session_entries)}`",
+        f"- Repo-native files ingested into raw/repos: `{ingested_repo_sources}`",
         "",
         "## Next Compiler Targets",
         "- Add repo-native artifact ingest into `raw/` and compile those into `wiki/sources/`.",
@@ -652,6 +701,7 @@ def scaffold_spark_knowledge_base(
         "source_page_count": len(source_pages),
         "synthesis_page_count": len(synthesis_pages),
         "output_page_count": len(output_pages),
+        "repo_source_count": ingested_repo_sources,
         "files_written": sorted(
             str(path.relative_to(output_path))
             for path in output_path.rglob("*")

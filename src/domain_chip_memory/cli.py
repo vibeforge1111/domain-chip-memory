@@ -455,7 +455,7 @@ def _build_demo_sdk_maintenance_payload() -> dict:
     }
 
 
-def _build_demo_spark_kb_payload(output_dir: str) -> dict:
+def _build_demo_spark_kb_payload(output_dir: str, repo_sources: list[str] | None = None) -> dict:
     sdk = SparkMemorySDK()
     sdk.write_observation(
         MemoryWriteRequest(
@@ -494,7 +494,12 @@ def _build_demo_spark_kb_payload(output_dir: str) -> dict:
         )
     )
     snapshot = sdk.export_knowledge_base_snapshot()
-    compile_result = scaffold_spark_knowledge_base(output_dir, snapshot, vault_title="Spark Demo Knowledge Base")
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Demo Knowledge Base",
+        repo_sources=repo_sources,
+    )
     return {
         "contract": build_spark_kb_contract_summary(),
         "snapshot": snapshot,
@@ -619,6 +624,7 @@ def main() -> None:
     demo_sdk_maintenance.add_argument("--write")
     demo_spark_kb = subparsers.add_parser("demo-spark-kb", help="Export a demo Spark KB snapshot and scaffold an Obsidian-friendly vault.")
     demo_spark_kb.add_argument("output_dir")
+    demo_spark_kb.add_argument("--repo-source", action="append", default=[])
     demo_spark_kb.add_argument("--write")
     spark_kb_health = subparsers.add_parser("spark-kb-health-check", help="Run health checks over a scaffolded Spark KB vault.")
     spark_kb_health.add_argument("output_dir")
@@ -963,7 +969,7 @@ def main() -> None:
         return
 
     if args.command == "demo-spark-kb":
-        payload = _build_demo_spark_kb_payload(args.output_dir)
+        payload = _build_demo_spark_kb_payload(args.output_dir, repo_sources=args.repo_source)
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
