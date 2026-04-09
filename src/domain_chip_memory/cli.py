@@ -1988,6 +1988,9 @@ def _build_benchmark_runs_git_report(
                 "reason": "inspect_current_top_series",
                 "target": "current_top_series",
                 "family": current_competitor["family"],
+                "rank": current_competitor["rank"],
+                "top_series_prefix": current_competitor["top_series_prefix"],
+                "top_series_noisy_file_count": current_competitor["top_series_noisy_file_count"],
                 "command": current_competitor["top_series_command"],
                 "command_shell": current_competitor["top_series_command_shell"],
             }
@@ -2001,6 +2004,9 @@ def _build_benchmark_runs_git_report(
                         "reason": "compare_nearest_competitor_top_series",
                         "target": "nearest_competitor_top_series",
                         "family": current_competitor["nearest_competitor_family"],
+                        "rank": current_competitor["nearest_competitor_rank"],
+                        "top_series_prefix": current_competitor["nearest_competitor_top_series_prefix"],
+                        "top_series_noisy_file_count": current_competitor["nearest_competitor_top_series_noisy_file_count"],
                         "command": current_competitor["nearest_competitor_top_series_command"],
                         "command_shell": current_competitor["nearest_competitor_top_series_command_shell"],
                     }
