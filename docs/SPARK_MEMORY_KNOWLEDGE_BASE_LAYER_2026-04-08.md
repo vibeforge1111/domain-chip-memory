@@ -170,6 +170,7 @@ The current repo implementation now exercises this with:
 - a maintenance report page emitted into `wiki/outputs/`
 - explicit repo-source copies and compiled source pages for selected local files
 - manifest-driven repo-source ingest for real `build-spark-kb` compilation flows
+- manifest-driven filed-output ingest for real `build-spark-kb` compilation flows
 
 ## Guardrails
 

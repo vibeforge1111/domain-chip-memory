@@ -185,6 +185,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - contradiction and stale-state signals inside the KB maintenance report
 - real `build-spark-kb` support for explicit filed-output JSON inputs
 - real `build-spark-kb` support for repo-source manifest JSON inputs
+- real `build-spark-kb` support for filed-output manifest JSON inputs
 
 ### What is now true after BEAM closure
 
@@ -209,7 +210,7 @@ The KB flow should be validated with the real CLI, not only by reading code.
 
 Minimum live checks:
 
-1. `python -m domain_chip_memory.cli build-spark-kb <snapshot_file> <output_dir> [--repo-source ...] [--repo-source-manifest ...] [--filed-output-file ...]`
+1. `python -m domain_chip_memory.cli build-spark-kb <snapshot_file> <output_dir> [--repo-source ...] [--repo-source-manifest ...] [--filed-output-file ...] [--filed-output-manifest ...]`
 2. `python -m domain_chip_memory.cli spark-kb-health-check <output_dir>`
 3. `python -m domain_chip_memory.cli demo-spark-kb <output_dir>`
 
@@ -223,6 +224,7 @@ Current live result on 2026-04-09:
 
 - `build-spark-kb` now exists as a real non-demo compiler path for snapshot JSON inputs
 - `build-spark-kb` can now merge explicit `--repo-source` files with manifest-driven repo-source lists
+- `build-spark-kb` can now merge explicit `--filed-output-file` inputs with manifest-driven filed-output lists
 - `demo-spark-kb` ran successfully against a real local vault scaffold
 - `spark-kb-health-check` returned `valid: true`
 - no missing required files

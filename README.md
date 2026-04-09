@@ -202,7 +202,7 @@ python -m domain_chip_memory.cli memory-system-contracts
 Build a real Spark KB vault from a snapshot file or scaffold the demo vault:
 
 ```powershell
-python -m domain_chip_memory.cli build-spark-kb path\\to\\snapshot.json path\\to\\vault --repo-source path\\to\\README.md --repo-source-manifest path\\to\\repo_sources.json --filed-output-file path\\to\\answer.json
+python -m domain_chip_memory.cli build-spark-kb path\\to\\snapshot.json path\\to\\vault --repo-source path\\to\\README.md --repo-source-manifest path\\to\\repo_sources.json --filed-output-file path\\to\\answer.json --filed-output-manifest path\\to\\filed_outputs.json
 python -m domain_chip_memory.cli demo-spark-kb path\\to\\demo_vault
 python -m domain_chip_memory.cli spark-kb-health-check path\\to\\vault
 ```
