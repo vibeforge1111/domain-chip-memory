@@ -80,6 +80,15 @@ The new cleanup report now compares each manifest against its own upstream `prob
   - discovered evaluation categories: `6`
   - missing categories: `multi_session_reasoning`, `preference_following`, `summarization`, `temporal_reasoning`
 
+Current repo status after investigation:
+
+- the resumable openai-compatible evaluator now has explicit regression coverage for list-shaped judge responses in:
+  - `multi_session_reasoning`
+  - `summarization`
+  - `temporal_reasoning`
+- that means the recorded `conv3_v2` `TypeError` is not obviously reproducible from today’s rubric-list normalization path
+- the remaining uncertainty is whether the historical failure came from an older evaluator revision, a non-list response shape outside the normalized path, or a different category-specific branch before the final four categories were written
+
 The previously modified tracked file also appears materially incomplete relative to the current `128K` category universe:
 
 - `first20_v3/100K/1/evaluation-domain_chip_memory_answers.json`
