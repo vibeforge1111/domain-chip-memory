@@ -1008,6 +1008,16 @@ def _build_beam_judged_cleanup_report(
         answer_category_order, answer_category_counts = _load_beam_answer_category_order_and_counts_for_manifest(payload)
         expected_categories = set(expected_category_order)
         answer_categories = set(answer_category_order)
+        judge_config = payload.get("judge_config") if isinstance(payload.get("judge_config"), dict) else {}
+        judge_provider = str(judge_config.get("provider") or "minimax")
+        judge_model = str(judge_config.get("model") or "").strip()
+        judge_base_url = str(judge_config.get("base_url") or "").strip()
+        judge_api_key_env = str(judge_config.get("api_key_env") or "").strip()
+        required_judge_env = _required_beam_judge_env(
+            judge_provider=judge_provider,
+            judge_api_key_env=judge_api_key_env,
+        )
+        judge_env_ready = not required_judge_env or bool(os.environ.get(required_judge_env))
         missing_expected_categories = sorted(expected_categories - completed_categories)
         missing_answer_categories = sorted(answer_categories - completed_categories)
         diagnostic_classification = _classify_beam_cleanup_manifest(
@@ -1070,6 +1080,13 @@ def _build_beam_judged_cleanup_report(
                 "missing_evaluation_file_count": len(missing_evaluation_files),
                 "diagnostic_classification": diagnostic_classification,
                 "promotable_candidate": diagnostic_classification in {"completed", "timeout_after_complete_write"},
+                "judge_provider": judge_provider,
+                "judge_model": judge_model,
+                "judge_base_url": judge_base_url,
+                "judge_api_key_env": judge_api_key_env,
+                "required_judge_env": required_judge_env,
+                "judge_env_ready": judge_env_ready,
+                "cleanup_blocked_reason": "" if judge_env_ready else "missing_judge_env",
                 "category_progress": category_progress,
                 "last_completed_category": last_completed_category,
                 "last_completed_question_index": last_completed_question_index,
@@ -1097,6 +1114,17 @@ def _build_beam_judged_cleanup_report(
     for row in [*evaluation_rows, *official_eval_rows, *scorecard_rows]:
         status = str(row.get("git_status") or "clean")
         git_status_counts[status] = git_status_counts.get(status, 0) + 1
+    blocked_missing_env_vars = sorted(
+        {
+            str(row.get("required_judge_env") or "").strip()
+            for row in official_eval_rows
+            if str(row.get("cleanup_blocked_reason") or "") == "missing_judge_env"
+            and str(row.get("required_judge_env") or "").strip()
+        }
+    )
+    blocked_official_eval_manifest_count = sum(
+        1 for row in official_eval_rows if str(row.get("cleanup_blocked_reason") or "").strip()
+    )
 
     return {
         "benchmark_name": "BEAM",
@@ -1108,6 +1136,9 @@ def _build_beam_judged_cleanup_report(
         "answer_variant_count": len(answer_variant_dirs),
         "evaluation_file_count": len(evaluation_rows),
         "official_eval_manifest_count": len(official_eval_rows),
+        "runnable_official_eval_manifest_count": len(official_eval_rows) - blocked_official_eval_manifest_count,
+        "blocked_official_eval_manifest_count": blocked_official_eval_manifest_count,
+        "blocked_missing_env_vars": blocked_missing_env_vars,
         "scorecard_count": len(scorecard_rows),
         "git_status_counts": git_status_counts,
         "category_universe": sorted(category_universe),

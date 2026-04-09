@@ -2829,6 +2829,7 @@ def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path
                 "conversation_ids": ["1"],
                 "input_directory": str(conv1_dir.parent),
                 "result_file_name": "domain_chip_memory_answers.json",
+                "judge_config": {"provider": "official_openai"},
                 "evaluation_files": [str(eval_one)],
                 "aggregate_summary": {"overall_average": 0.75},
             }
@@ -2866,6 +2867,9 @@ def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path
     assert payload["answer_variant_count"] == 2
     assert payload["evaluation_file_count"] == 2
     assert payload["official_eval_manifest_count"] == 1
+    assert payload["runnable_official_eval_manifest_count"] == 1
+    assert payload["blocked_official_eval_manifest_count"] == 0
+    assert payload["blocked_missing_env_vars"] == []
     assert payload["scorecard_count"] == 1
     assert payload["aggregate_evaluation_summary"]["evaluation_file_count"] == 2
     assert payload["aggregate_evaluation_summary"]["overall_average"] == 0.75
@@ -2900,6 +2904,10 @@ def test_beam_judged_cleanup_report_cli_summarizes_artifact_state(tmp_path: Path
     assert payload["official_eval_manifests"][0]["next_pending_question_index"] is None
     assert payload["official_eval_manifests"][0]["diagnostic_classification"] == "completed"
     assert payload["official_eval_manifests"][0]["promotable_candidate"] is True
+    assert payload["official_eval_manifests"][0]["judge_provider"] == "official_openai"
+    assert payload["official_eval_manifests"][0]["required_judge_env"] == ""
+    assert payload["official_eval_manifests"][0]["judge_env_ready"] is True
+    assert payload["official_eval_manifests"][0]["cleanup_blocked_reason"] == ""
 
 
 def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(tmp_path: Path, monkeypatch):
@@ -3026,6 +3034,7 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
         encoding="utf-8",
     )
 
+    monkeypatch.setenv("MINIMAX_API_KEY", "")
     monkeypatch.setattr(
         sys,
         "argv",
@@ -3048,9 +3057,15 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     manifest_rows = {Path(item["path"]).name: item for item in payload["official_eval_manifests"]}
+    assert payload["runnable_official_eval_manifest_count"] == 0
+    assert payload["blocked_official_eval_manifest_count"] == 2
+    assert payload["blocked_missing_env_vars"] == ["MINIMAX_API_KEY"]
 
     timeout_row = manifest_rows["official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"]
     assert timeout_row["diagnostic_classification"] == "timeout_partial_coverage"
+    assert timeout_row["required_judge_env"] == "MINIMAX_API_KEY"
+    assert timeout_row["judge_env_ready"] is False
+    assert timeout_row["cleanup_blocked_reason"] == "missing_judge_env"
     assert timeout_row["expected_categories"] == ["event_ordering", "information_extraction", "summarization"]
     assert timeout_row["answer_categories"] == ["event_ordering", "information_extraction", "summarization"]
     assert timeout_row["missing_categories"] == ["summarization"]
@@ -3088,6 +3103,9 @@ def test_beam_judged_cleanup_report_distinguishes_timeout_from_partial_coverage(
 
     partial_row = manifest_rows["official_beam_128k_summary_synthesis_memory_heuristic_v1_conv3_v2_official_eval.json"]
     assert partial_row["diagnostic_classification"] == "worker_error_partial_coverage"
+    assert partial_row["required_judge_env"] == "MINIMAX_API_KEY"
+    assert partial_row["judge_env_ready"] is False
+    assert partial_row["cleanup_blocked_reason"] == "missing_judge_env"
     assert partial_row["expected_categories"] == ["event_ordering", "information_extraction", "multi_session_reasoning"]
     assert partial_row["missing_categories"] == ["multi_session_reasoning"]
     assert partial_row["missing_answer_categories"] == ["multi_session_reasoning"]
