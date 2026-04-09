@@ -95,9 +95,15 @@ The new promotion-batch helper turns the same plan into one ordered PowerShell s
 - generated `git add -- ...` lines: `3`
 - generated targets:
   - `conv1_v9`
-  - `conv2_v2`
-  - `conv3_v2`
+- `conv2_v2`
+- `conv3_v2`
 - tracked modified drift files remain excluded from the batch script too
+
+It also now supports `--execute` for the same exact staged path set:
+
+- execution mode runs the generated `git add -- ...` commands sequentially from the repo root
+- execution payload reports `return_code`, `status`, `stdout_tail`, and `stderr_tail` per target
+- live `--execute` was intentionally not run yet, because that would stage the three untracked completed manifests and sibling evaluation files
 
 ## Resume Surface
 
@@ -142,5 +148,5 @@ That is still substantive drift, not judge-reason wording churn.
 The clean next move is:
 
 1. treat `conv1_v9`, `conv2_v2`, and `conv3_v2` as completed working-tree artifacts rather than blocked resume targets
-2. if promotion is desired, use `beam-judged-promotion-batch` or its generated `tmp\beam_128k_promotion_batch.ps1` instead of hand-building `git add` commands
+2. if promotion is desired, use `beam-judged-promotion-batch`, its generated `tmp\beam_128k_promotion_batch.ps1`, or `beam-judged-promotion-batch --execute` instead of hand-building `git add` commands
 3. separately investigate the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
