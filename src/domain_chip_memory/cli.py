@@ -2203,6 +2203,13 @@ def _build_benchmark_runs_git_report(
             sum(1 for step in recommended_sequence_steps if step["command"]) / len(recommended_sequence_steps),
             4,
         ) if recommended_sequence_steps else 0.0,
+        "command_coverage_label": (
+            "full"
+            if recommended_sequence_steps and all(step["command"] for step in recommended_sequence_steps)
+            else "partial"
+            if any(step["command"] for step in recommended_sequence_steps)
+            else "none"
+        ),
         "phase_order": [step["phase"] for step in recommended_sequence_steps],
         "phase_signature": "->".join(step["phase"] for step in recommended_sequence_steps),
         "entry_step": recommended_sequence_steps[0]["step"] if recommended_sequence_steps else None,
