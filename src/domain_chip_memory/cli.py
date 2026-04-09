@@ -1530,6 +1530,7 @@ def _build_beam_judged_promotion_plan(
     repo_root: str | Path,
 ) -> dict:
     repo_root_path = Path(repo_root)
+    repo_root_resolved = repo_root_path.resolve()
     cleanup_report = _build_beam_judged_cleanup_report(
         artifact_prefix=artifact_prefix,
         answers_root=answers_root,
@@ -1544,7 +1545,7 @@ def _build_beam_judged_promotion_plan(
         if not isinstance(payload, dict):
             continue
         evaluation_files = [
-            _display_path(Path(item), repo_root_path)
+            _display_path(Path(item), repo_root_resolved)
             for item in payload.get("evaluation_files", [])
             if str(item).strip()
         ]
