@@ -1,5 +1,6 @@
 import importlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -1739,6 +1740,35 @@ def test_checked_in_invalid_spark_kb_examples_fail_validation_via_cli(tmp_path: 
             "error": "Filed output file must contain a JSON object or list of objects.",
         }
     ]
+
+
+def test_checked_in_spark_kb_smoke_script_runs(tmp_path: Path):
+    repo_root = Path(__file__).resolve().parents[1]
+    script_path = repo_root / "docs" / "examples" / "spark_kb" / "run_smoke.py"
+    output_dir = tmp_path / "spark_kb_vault"
+    write_dir = tmp_path / "artifacts"
+
+    subprocess.run(
+        [
+            sys.executable,
+            str(script_path),
+            "--output-dir",
+            str(output_dir),
+            "--write-dir",
+            str(write_dir),
+        ],
+        check=True,
+        cwd=str(repo_root),
+    )
+
+    summary = json.loads((write_dir / "summary.json").read_text(encoding="utf-8"))
+    assert summary["validation_valid"] is True
+    assert summary["build_repo_source_count"] == 1
+    assert summary["build_filed_output_count"] == 1
+    assert summary["health_valid"] is True
+    assert (write_dir / "validation.json").exists()
+    assert (write_dir / "build.json").exists()
+    assert (write_dir / "health.json").exists()
 
 
 def test_checked_in_sdk_maintenance_example_runs_via_cli(tmp_path: Path, monkeypatch):
