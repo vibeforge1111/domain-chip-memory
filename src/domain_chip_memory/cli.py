@@ -1753,6 +1753,7 @@ def _build_benchmark_runs_git_report(
                 nearest_row = next_row
             row["nearest_competitor_direction"] = nearest_direction
             row["nearest_competitor_family"] = nearest_row["family"] if nearest_row is not None else None
+            row["nearest_competitor_rank"] = nearest_row["rank"] if nearest_row is not None else None
             row["nearest_competitor_noisy_file_count_gap"] = (
                 previous_noisy_file_count_gap
                 if nearest_direction == "previous"
@@ -1766,6 +1767,12 @@ def _build_benchmark_runs_git_report(
                 else next_noisy_share_gap
                 if nearest_direction == "next"
                 else None
+            )
+            row["nearest_competitor_top_series_prefix"] = (
+                nearest_row["top_series_prefix"] if nearest_row is not None else None
+            )
+            row["nearest_competitor_top_series_noisy_file_count"] = (
+                nearest_row["top_series_noisy_file_count"] if nearest_row is not None else None
             )
             row["nearest_competitor_command"] = nearest_row["command"] if nearest_row is not None else None
             row["nearest_competitor_command_shell"] = (
