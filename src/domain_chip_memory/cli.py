@@ -2275,6 +2275,23 @@ def _build_benchmark_runs_git_report(
             ) / len(recommended_sequence_transitions),
             4,
         ) if recommended_sequence_transitions else 0.0,
+        "transition_mode_counts": {
+            "command": sum(
+                1
+                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                if previous_step["command"] and next_step["command"]
+            ),
+            "mixed": sum(
+                1
+                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                if bool(previous_step["command"]) != bool(next_step["command"])
+            ),
+            "non_command": sum(
+                1
+                for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:])
+                if not previous_step["command"] and not next_step["command"]
+            ),
+        },
         "command_transition_coverage_label": (
             "full"
             if recommended_sequence_transitions
