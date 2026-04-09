@@ -2173,9 +2173,18 @@ def _build_benchmark_runs_git_report(
             recommended_sequence_shells.append(command_shell)
     recommended_sequence_steps: list[dict] = []
     for index, recommendation in enumerate(recommended_sequence, start=1):
+        if recommendation == recommended_focus:
+            phase = "focus"
+        elif recommendation == recommended_drilldown:
+            phase = "drilldown"
+        elif recommendation == recommended_next_step:
+            phase = "next_step"
+        else:
+            phase = "sequence"
         recommended_sequence_steps.append(
             {
                 "step": index,
+                "phase": phase,
                 "label": recommended_sequence_labels[index - 1],
                 "target": recommended_sequence_targets[index - 1],
                 "command": recommendation.get("command"),
