@@ -2771,6 +2771,10 @@ def _build_benchmark_runs_git_report(
                 ) / len(recommended_sequence_transitions),
                 4,
             ),
+            "competition_signature": (
+                f"{max((('command', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if previous_step['command'] and next_step['command'])), ('mixed', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if bool(previous_step['command']) != bool(next_step['command']))), ('non_command', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if not previous_step['command'] and not next_step['command']))), key=lambda item: (item[1], {'command': 2, 'mixed': 1, 'non_command': 0}[item[0]]))[0]}"
+                f">{sorted((('command', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if previous_step['command'] and next_step['command'])), ('mixed', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if bool(previous_step['command']) != bool(next_step['command']))), ('non_command', sum(1 for previous_step, next_step in zip(recommended_sequence_steps, recommended_sequence_steps[1:]) if not previous_step['command'] and not next_step['command']))), key=lambda item: (item[1], {'command': 2, 'mixed': 1, 'non_command': 0}[item[0]]), reverse=True)[1][0]}"
+            ),
             "competition_label": (
                 "contested"
                 if (
