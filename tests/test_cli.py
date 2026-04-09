@@ -3332,6 +3332,29 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         payload["recommended_drilldown"]["command_shell"],
         payload["recommended_next_step"]["command_shell"],
     ]
+    assert payload["recommended_sequence_steps"] == [
+        {
+            "step": 1,
+            "label": payload["recommended_sequence_labels"][0],
+            "target": payload["recommended_sequence_targets"][0],
+            "command": payload["recommended_focus"]["command"],
+            "command_shell": payload["recommended_focus"]["command_shell"],
+        },
+        {
+            "step": 2,
+            "label": payload["recommended_sequence_labels"][1],
+            "target": payload["recommended_sequence_targets"][1],
+            "command": payload["recommended_drilldown"]["command"],
+            "command_shell": payload["recommended_drilldown"]["command_shell"],
+        },
+        {
+            "step": 3,
+            "label": payload["recommended_sequence_labels"][2],
+            "target": payload["recommended_sequence_targets"][2],
+            "command": payload["recommended_next_step"]["command"],
+            "command_shell": payload["recommended_next_step"]["command_shell"],
+        },
+    ]
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4245,6 +4268,22 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
     assert payload["recommended_sequence_shells"] == [
         payload["recommended_focus"]["command_shell"],
     ]
+    assert payload["recommended_sequence_steps"] == [
+        {
+            "step": 1,
+            "label": payload["recommended_sequence_labels"][0],
+            "target": payload["recommended_sequence_targets"][0],
+            "command": payload["recommended_focus"]["command"],
+            "command_shell": payload["recommended_focus"]["command_shell"],
+        },
+        {
+            "step": 2,
+            "label": payload["recommended_sequence_labels"][1],
+            "target": payload["recommended_sequence_targets"][1],
+            "command": payload["recommended_next_step"]["command"],
+            "command_shell": payload["recommended_next_step"]["command_shell"],
+        },
+    ]
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4899,6 +4938,22 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
     ]
     assert payload["recommended_sequence_shells"] == [
         payload["recommended_next_step"]["command_shell"],
+    ]
+    assert payload["recommended_sequence_steps"] == [
+        {
+            "step": 1,
+            "label": payload["recommended_sequence_labels"][0],
+            "target": payload["recommended_sequence_targets"][0],
+            "command": payload["recommended_focus"].get("command"),
+            "command_shell": payload["recommended_focus"].get("command_shell"),
+        },
+        {
+            "step": 2,
+            "label": payload["recommended_sequence_labels"][1],
+            "target": payload["recommended_sequence_targets"][1],
+            "command": payload["recommended_next_step"]["command"],
+            "command_shell": payload["recommended_next_step"]["command_shell"],
+        },
     ]
     assert payload["family_competition"] == [
         {

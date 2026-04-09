@@ -2171,6 +2171,17 @@ def _build_benchmark_runs_git_report(
         command_shell = recommendation.get("command_shell")
         if command_shell and command_shell not in recommended_sequence_shells:
             recommended_sequence_shells.append(command_shell)
+    recommended_sequence_steps: list[dict] = []
+    for index, recommendation in enumerate(recommended_sequence, start=1):
+        recommended_sequence_steps.append(
+            {
+                "step": index,
+                "label": recommended_sequence_labels[index - 1],
+                "target": recommended_sequence_targets[index - 1],
+                "command": recommendation.get("command"),
+                "command_shell": recommendation.get("command_shell"),
+            }
+        )
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
@@ -2192,6 +2203,7 @@ def _build_benchmark_runs_git_report(
         "recommended_sequence_labels": recommended_sequence_labels,
         "recommended_sequence_commands": recommended_sequence_commands,
         "recommended_sequence_shells": recommended_sequence_shells,
+        "recommended_sequence_steps": recommended_sequence_steps,
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,
