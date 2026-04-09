@@ -2114,6 +2114,27 @@ def _build_benchmark_runs_git_report(
     for recommendation in [recommended_focus, recommended_drilldown, recommended_next_step]:
         if recommendation is not None and recommendation not in recommended_sequence:
             recommended_sequence.append(recommendation)
+    recommended_sequence_labels: list[str] = []
+    for recommendation in recommended_sequence:
+        if recommendation.get("target") == "nearest_competitor_top_series":
+            label = (
+                f"compare {recommendation.get('family')} rank {recommendation.get('rank')} "
+                f"/ {recommendation.get('top_series_prefix')}"
+            )
+        elif recommendation.get("target") == "current_top_series":
+            label = (
+                f"inspect {recommendation.get('family')} rank {recommendation.get('rank')} "
+                f"/ {recommendation.get('top_series_prefix')}"
+            )
+        elif recommendation.get("scope") == "family":
+            label = f"focus family {recommendation.get('family')}"
+        elif recommendation.get("scope") == "series" and recommendation.get("family"):
+            label = f"focus series {recommendation.get('family')} / {recommendation.get('series_prefix')}"
+        elif recommendation.get("scope") == "series":
+            label = f"focus series {recommendation.get('series_prefix')}"
+        else:
+            label = recommendation.get("reason") or recommendation.get("scope") or "recommendation"
+        recommended_sequence_labels.append(label)
     recommended_sequence_shells: list[str] = []
     for recommendation in recommended_sequence:
         command_shell = recommendation.get("command_shell")
@@ -2136,6 +2157,7 @@ def _build_benchmark_runs_git_report(
         "recommended_drilldown": recommended_drilldown,
         "recommended_next_step": recommended_next_step,
         "recommended_sequence": recommended_sequence,
+        "recommended_sequence_labels": recommended_sequence_labels,
         "recommended_sequence_shells": recommended_sequence_shells,
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
