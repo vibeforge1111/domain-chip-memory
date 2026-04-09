@@ -3260,6 +3260,113 @@ def test_beam_judged_resume_plan_cli_emits_exact_rerun_command(tmp_path: Path, m
     assert "run-beam-official-evaluation" in target["resume_command_shell"]
 
 
+def test_beam_judged_resume_batch_cli_writes_powershell_script(tmp_path: Path, monkeypatch):
+    answers_root = tmp_path / "artifacts" / "beam_public_results"
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    upstream_repo_dir = tmp_path / "beam_upstream"
+    output_file = tmp_path / "artifacts" / "beam_resume_batch.json"
+    script_file = tmp_path / "artifacts" / "beam_resume_batch.ps1"
+
+    (upstream_repo_dir / "chats" / "100K" / "1" / "probing_questions").mkdir(parents=True)
+    conv1_dir = answers_root / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9" / "100K" / "1"
+    eval_path = conv1_dir / "evaluation-domain_chip_memory_answers.json"
+    answers_path = conv1_dir / "domain_chip_memory_answers.json"
+    conv1_dir.mkdir(parents=True)
+    eval_path.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"llm_judge_score": 1.0}],
+                "event_ordering": [{"tau_norm": 0.5}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    answers_path.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"question": "q1", "llm_response": "a1"}],
+                "event_ordering": [{"question": "q2", "llm_response": "a2"}],
+                "summarization": [{"question": "q3", "llm_response": "a3"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (upstream_repo_dir / "chats" / "100K" / "1" / "probing_questions" / "probing_questions.json").write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"rubric": ["extract"]}],
+                "event_ordering": [{"rubric": ["order"]}],
+                "summarization": [{"rubric": ["summary"]}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    benchmark_runs_dir.mkdir(parents=True)
+    manifest_path = benchmark_runs_dir / "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "status": "partial",
+                "upstream_repo_dir": str(upstream_repo_dir),
+                "answers_root": str(conv1_dir.parent.parent),
+                "official_chat_size_dir": "100K",
+                "requested_chat_size": "128K",
+                "conversation_ids": ["1"],
+                "input_directory": str(conv1_dir.parent),
+                "result_file_name": "domain_chip_memory_answers.json",
+                "start_index": 0,
+                "end_index": 1,
+                "max_workers": 10,
+                "judge_config": {
+                    "provider": "minimax",
+                    "model": "MiniMax-M2.7",
+                    "base_url": "https://api.minimax.io/v1",
+                    "api_key_env": "MINIMAX_API_KEY",
+                },
+                "evaluation_files": [str(eval_path)],
+                "missing_evaluation_files": [],
+                "stderr_tail": ["Timed out waiting for MiniMax BEAM evaluation worker after 900 seconds."],
+                "aggregate_summary": {"overall_average": 0.75},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "beam-judged-resume-batch",
+            "--artifact-prefix",
+            "official_beam_128k_summary_synthesis_memory_heuristic_v1_",
+            "--answers-root",
+            str(answers_root),
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--script-file",
+            str(script_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["benchmark_name"] == "BEAM"
+    assert payload["source_mode"] == "official_public_evaluation_resume_batch"
+    assert payload["resume_target_count"] == 1
+    assert payload["script_file"] == str(script_file)
+    assert payload["script_line_count"] >= 3
+    assert payload["script_lines"][0] == "$ErrorActionPreference = 'Stop'"
+    assert "conv1_v9_official_eval.json" in payload["script_lines"][2]
+    assert "run-beam-official-evaluation" in payload["script_text"]
+    assert script_file.read_text(encoding="utf-8") == payload["script_text"]
+
+
 def test_run_beam_official_evaluation_cli_invokes_upstream_subprocess(tmp_path: Path, monkeypatch):
     upstream_repo = tmp_path / "beam_repo"
     answers_dir = tmp_path / "beam_results"
