@@ -2790,6 +2790,7 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["source_mode"] == "benchmark_runs_git_report"
     assert payload["only_noisy"] is False
+    assert payload["top_series_limit"] == 10
     assert payload["file_count"] == 5
     assert payload["family_count"] == 5
     assert payload["git_status_counts"] == {"??": 2, "M": 1, "clean": 2}
@@ -2818,6 +2819,43 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
     assert series_rows[("longmemeval", "longmemeval_offset225_limit25_source")]["git_status_counts"] == {"??": 1}
     assert series_rows[("scorecard", "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10")]["git_status_counts"] == {"M": 1}
     assert series_rows[("official_eval_manifest", "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9")]["git_status_counts"] == {"clean": 1}
+    assert payload["top_noisy_series"] == [
+        {
+            "family": "debug",
+            "series": "_debug",
+            "file_count": 1,
+            "git_status_counts": {"??": 1},
+            "paths": ["artifacts/benchmark_runs/_debug_example.json"],
+        },
+        {
+            "family": "longmemeval",
+            "series": "longmemeval_offset225_limit25_source",
+            "file_count": 1,
+            "git_status_counts": {"??": 1},
+            "paths": ["artifacts/benchmark_runs/longmemeval_offset225_limit25_source.json"],
+        },
+        {
+            "family": "official_eval_manifest",
+            "series": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9",
+            "file_count": 1,
+            "git_status_counts": {"clean": 1},
+            "paths": ["artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9_official_eval.json"],
+        },
+        {
+            "family": "other",
+            "series": "misc_snapshot",
+            "file_count": 1,
+            "git_status_counts": {"clean": 1},
+            "paths": ["artifacts/benchmark_runs/misc_snapshot.json"],
+        },
+        {
+            "family": "scorecard",
+            "series": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+            "file_count": 1,
+            "git_status_counts": {"M": 1},
+            "paths": ["artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10_v1_scorecard.json"],
+        },
+    ]
     assert payload["noisy_files"] == [
         {
             "path": "artifacts/benchmark_runs/_debug_example.json",
@@ -2876,6 +2914,7 @@ def test_benchmark_runs_git_report_cli_only_noisy_filters_clean_families(tmp_pat
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["only_noisy"] is True
+    assert payload["top_series_limit"] == 10
     assert payload["file_count"] == 3
     assert payload["git_status_counts"] == {"??": 1, "M": 1, "clean": 1}
     assert payload["reported_file_count"] == 2
@@ -2883,6 +2922,7 @@ def test_benchmark_runs_git_report_cli_only_noisy_filters_clean_families(tmp_pat
     assert payload["reported_git_status_counts"] == {"??": 1, "M": 1}
     assert payload["reported_series_count"] == 2
     assert [row["family"] for row in payload["families"]] == ["debug", "scorecard"]
+    assert [row["series"] for row in payload["top_noisy_series"]] == ["_debug", "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10"]
     assert payload["noisy_file_count"] == 2
 
 
@@ -2942,6 +2982,60 @@ def test_benchmark_runs_git_report_cli_groups_versions_into_series(tmp_path: Pat
     assert series_rows[("debug", "_debug_gpt4")]["file_count"] == 2
     assert series_rows[("longmemeval", "longmemeval_summary_synthesis_offset225_limit25")]["file_count"] == 2
     assert series_rows[("scorecard", "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5")]["file_count"] == 2
+
+
+def test_benchmark_runs_git_report_cli_limits_top_series(tmp_path: Path, monkeypatch):
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "benchmark_runs_git_report.json"
+
+    paths = [
+        benchmark_runs_dir / "_debug_abc123.json",
+        benchmark_runs_dir / "_debug_gpt4_def456.json",
+        benchmark_runs_dir / "_debug_gpt4_ghi789.json",
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset225_limit25_v1.json",
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset225_limit25_v2.json",
+        benchmark_runs_dir / "longmemeval_summary_synthesis_offset225_limit25_v3.json",
+    ]
+    benchmark_runs_dir.mkdir(parents=True)
+    for path in paths:
+        path.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        cli,
+        "_git_status_by_path",
+        lambda paths, repo_root: {
+            "artifacts/benchmark_runs/_debug_abc123.json": "??",
+            "artifacts/benchmark_runs/_debug_gpt4_def456.json": "??",
+            "artifacts/benchmark_runs/_debug_gpt4_ghi789.json": "??",
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset225_limit25_v1.json": "??",
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset225_limit25_v2.json": "??",
+            "artifacts/benchmark_runs/longmemeval_summary_synthesis_offset225_limit25_v3.json": "??",
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--only-noisy",
+            "--top-series-limit",
+            "1",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["top_series_limit"] == 1
+    assert payload["reported_series_count"] == 3
+    assert [row["series"] for row in payload["top_noisy_series"]] == ["longmemeval_summary_synthesis_offset225_limit25"]
 
 
 def test_git_status_by_path_batches_large_path_sets(tmp_path: Path, monkeypatch):

@@ -1380,6 +1380,7 @@ def _build_benchmark_runs_git_report(
     benchmark_runs_dir: str | Path,
     repo_root: str | Path,
     only_noisy: bool = False,
+    top_series_limit: int = 10,
 ) -> dict:
     benchmark_runs_path = Path(benchmark_runs_dir)
     repo_root_path = Path(repo_root)
@@ -1446,11 +1447,17 @@ def _build_benchmark_runs_git_report(
         series_rows[key]
         for key in sorted(series_rows, key=lambda item: (item[0], item[1]))
     ]
+    ranked_series_rows = sorted(
+        ordered_series_rows,
+        key=lambda row: (-row["file_count"], row["family"], row["series"]),
+    )
+    top_noisy_series = ranked_series_rows[: max(top_series_limit, 0)]
     return {
         "source_mode": "benchmark_runs_git_report",
         "benchmark_runs_dir": str(benchmark_runs_path),
         "repo_root": str(repo_root_path),
         "only_noisy": only_noisy,
+        "top_series_limit": top_series_limit,
         "file_count": len(files),
         "family_count": len(ordered_family_rows),
         "git_status_counts": git_status_counts,
@@ -1460,6 +1467,7 @@ def _build_benchmark_runs_git_report(
         "reported_series_count": len(ordered_series_rows),
         "families": ordered_family_rows,
         "series": ordered_series_rows,
+        "top_noisy_series": top_noisy_series,
         "noisy_file_count": len(noisy_files),
         "noisy_files": noisy_files,
     }
@@ -2111,6 +2119,7 @@ def main() -> None:
     benchmark_runs_git_report.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
     benchmark_runs_git_report.add_argument("--repo-root", default=".")
     benchmark_runs_git_report.add_argument("--only-noisy", action="store_true")
+    benchmark_runs_git_report.add_argument("--top-series-limit", type=int, default=10)
     benchmark_runs_git_report.add_argument("--write")
     beam_judged_cleanup_report = subparsers.add_parser("beam-judged-cleanup-report", help="Summarize local judged BEAM artifact state for cleanup planning.")
     beam_judged_cleanup_report.add_argument("--artifact-prefix", default="official_beam_128k_")
@@ -2544,6 +2553,7 @@ def main() -> None:
             benchmark_runs_dir=args.benchmark_runs_dir,
             repo_root=args.repo_root,
             only_noisy=args.only_noisy,
+            top_series_limit=args.top_series_limit,
         )
         if args.write:
             _write_json(Path(args.write), payload)
