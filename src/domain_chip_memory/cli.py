@@ -1838,7 +1838,26 @@ def _build_benchmark_runs_git_report(
         recommended_family = ordered_family_rows[0]
     recommended_family_gap = None
     recommended_family_comparison = None
+    recommended_family_competition_window = None
     if recommended_family is not None:
+        competition_index = next(
+            (index for index, row in enumerate(family_competition) if row["family"] == recommended_family["family"]),
+            None,
+        )
+        if competition_index is not None:
+            previous_competitor = family_competition[competition_index - 1] if competition_index > 0 else None
+            next_competitor = (
+                family_competition[competition_index + 1]
+                if competition_index + 1 < len(family_competition)
+                else None
+            )
+            recommended_family_competition_window = {
+                "scope": "competition_window",
+                "family": recommended_family["family"],
+                "current": family_competition[competition_index],
+                "previous": previous_competitor,
+                "next": next_competitor,
+            }
         ranked_index = ranked_family_command_by_name.get(recommended_family["family"])
         if ranked_index is not None and ranked_index + 1 < len(ranked_family_command_rows):
             current_family_command = ranked_family_command_rows[ranked_index]
@@ -1930,6 +1949,7 @@ def _build_benchmark_runs_git_report(
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
         "recommended_family_comparison": recommended_family_comparison,
+        "recommended_family_competition_window": recommended_family_competition_window,
         "recommended_followups": recommended_followups,
         "family_competition": family_competition,
         "family_commands": family_commands,

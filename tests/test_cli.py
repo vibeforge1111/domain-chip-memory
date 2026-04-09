@@ -3254,6 +3254,13 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_offset225_limit25_source --only-noisy --top-series-limit 10"
         ),
     }
+    assert payload["recommended_family_competition_window"] == {
+        "scope": "competition_window",
+        "family": "scorecard",
+        "current": payload["family_competition"][0],
+        "previous": None,
+        "next": payload["family_competition"][1],
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -3866,6 +3873,13 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             f"--only-noisy --summary-only --top-series-limit 10"
         ),
     }
+    assert payload["recommended_family_competition_window"] == {
+        "scope": "competition_window",
+        "family": "longmemeval",
+        "current": payload["family_competition"][0],
+        "previous": None,
+        "next": payload["family_competition"][1],
+    }
     assert payload["family_competition"] == [
         {
             "rank": 1,
@@ -4211,6 +4225,13 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "family": "longmemeval",
         "reported_file_share": 1.0,
         "dominance_label": "dominant",
+    }
+    assert payload["recommended_family_competition_window"] == {
+        "scope": "competition_window",
+        "family": "longmemeval",
+        "current": payload["family_competition"][0],
+        "previous": None,
+        "next": None,
     }
     assert payload["family_competition"] == [
         {
