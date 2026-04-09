@@ -1639,6 +1639,52 @@ def _build_beam_judged_promotion_plan(
     }
 
 
+def _build_beam_judged_drift_plan(
+    *,
+    artifact_prefix: str,
+    answers_root: str | Path,
+    benchmark_runs_dir: str | Path,
+    evaluation_file_name: str,
+    repo_root: str | Path,
+) -> dict:
+    cleanup_report = _build_beam_judged_cleanup_report(
+        artifact_prefix=artifact_prefix,
+        answers_root=answers_root,
+        benchmark_runs_dir=benchmark_runs_dir,
+        evaluation_file_name=evaluation_file_name,
+        repo_root=repo_root,
+    )
+    drift_targets = []
+    for drift_row in cleanup_report.get("modified_evaluation_drift_files", []):
+        path = str(drift_row.get("path") or "").strip()
+        if not path:
+            continue
+        drift_targets.append(
+            {
+                "path": path,
+                "git_status": str(drift_row.get("git_status") or ""),
+                "current_overall_average": drift_row.get("current_overall_average"),
+                "head_overall_average": drift_row.get("head_overall_average"),
+                "overall_average_delta": drift_row.get("overall_average_delta"),
+                "changed_category_count": drift_row.get("changed_category_count"),
+                "changed_categories": list(drift_row.get("changed_categories") or []),
+                "git_diff_command": ["git", "diff", "--", path],
+                "git_diff_command_shell": "git diff -- " + _shell_quote_arg(path),
+                "git_show_head_command": ["git", "show", f"HEAD:{path.replace('\\', '/')}"],
+                "git_show_head_command_shell": "git show " + _shell_quote_arg(f"HEAD:{path.replace('\\', '/')}"),
+                "git_restore_command": ["git", "restore", "--source=HEAD", "--", path],
+                "git_restore_command_shell": "git restore --source=HEAD -- " + _shell_quote_arg(path),
+            }
+        )
+    return {
+        "benchmark_name": "BEAM",
+        "source_mode": "official_public_evaluation_drift_plan",
+        "artifact_prefix": artifact_prefix,
+        "drift_target_count": len(drift_targets),
+        "drift_targets": drift_targets,
+    }
+
+
 def _build_beam_judged_promotion_batch(
     *,
     artifact_prefix: str,
@@ -1881,6 +1927,13 @@ def main() -> None:
     beam_judged_promotion_plan.add_argument("--evaluation-file-name", default="evaluation-domain_chip_memory_answers.json")
     beam_judged_promotion_plan.add_argument("--repo-root", default=".")
     beam_judged_promotion_plan.add_argument("--write")
+    beam_judged_drift_plan = subparsers.add_parser("beam-judged-drift-plan", help="Build exact inspection and restore commands for tracked judged BEAM evaluation drift.")
+    beam_judged_drift_plan.add_argument("--artifact-prefix", default="official_beam_128k_")
+    beam_judged_drift_plan.add_argument("--answers-root", default="artifacts/beam_public_results")
+    beam_judged_drift_plan.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
+    beam_judged_drift_plan.add_argument("--evaluation-file-name", default="evaluation-domain_chip_memory_answers.json")
+    beam_judged_drift_plan.add_argument("--repo-root", default=".")
+    beam_judged_drift_plan.add_argument("--write")
     beam_judged_promotion_batch = subparsers.add_parser("beam-judged-promotion-batch", help="Build one ordered PowerShell batch script for promotable untracked judged BEAM manifests.")
     beam_judged_promotion_batch.add_argument("--artifact-prefix", default="official_beam_128k_")
     beam_judged_promotion_batch.add_argument("--answers-root", default="artifacts/beam_public_results")
@@ -2545,6 +2598,19 @@ def main() -> None:
 
     if args.command == "beam-judged-promotion-plan":
         payload = _build_beam_judged_promotion_plan(
+            artifact_prefix=args.artifact_prefix,
+            answers_root=args.answers_root,
+            benchmark_runs_dir=args.benchmark_runs_dir,
+            evaluation_file_name=args.evaluation_file_name,
+            repo_root=args.repo_root,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "beam-judged-drift-plan":
+        payload = _build_beam_judged_drift_plan(
             artifact_prefix=args.artifact_prefix,
             answers_root=args.answers_root,
             benchmark_runs_dir=args.benchmark_runs_dir,

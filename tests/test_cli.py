@@ -3506,6 +3506,73 @@ def test_beam_judged_promotion_plan_cli_emits_git_add_commands(tmp_path: Path, m
     assert "git add --" in target["git_add_command_shell"]
 
 
+def test_beam_judged_drift_plan_cli_emits_inspection_and_restore_commands(tmp_path: Path, monkeypatch):
+    answers_root = tmp_path / "artifacts" / "beam_public_results"
+    benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
+    output_file = tmp_path / "artifacts" / "beam_drift_plan.json"
+
+    eval_path = (
+        answers_root
+        / "official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3"
+        / "100K"
+        / "1"
+        / "evaluation-domain_chip_memory_answers.json"
+    )
+    eval_path.parent.mkdir(parents=True)
+    eval_path.write_text(
+        json.dumps(
+            {
+                "information_extraction": [{"llm_judge_score": 1.0}],
+                "event_ordering": [{"tau_norm": 0.1789}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    display_path = "artifacts/beam_public_results/official_beam_128k_summary_synthesis_memory_heuristic_v1_first20_v3/100K/1/evaluation-domain_chip_memory_answers.json"
+    monkeypatch.setattr(cli, "_git_status_by_path", lambda paths, repo_root: {display_path: "M"})
+    monkeypatch.setattr(
+        cli,
+        "_load_json_from_git_revision",
+        lambda repo_root, revision, path: {
+            "information_extraction": [{"llm_judge_score": 1.0}],
+            "event_ordering": [{"tau_norm": 0.8622}],
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "beam-judged-drift-plan",
+            "--artifact-prefix",
+            "official_beam_128k_summary_synthesis_memory_heuristic_v1_",
+            "--answers-root",
+            str(answers_root),
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["benchmark_name"] == "BEAM"
+    assert payload["source_mode"] == "official_public_evaluation_drift_plan"
+    assert payload["drift_target_count"] == 1
+    target = payload["drift_targets"][0]
+    assert target["path"] == display_path
+    assert target["git_diff_command"] == ["git", "diff", "--", display_path]
+    assert target["git_show_head_command"] == ["git", "show", f"HEAD:{display_path}"]
+    assert target["git_restore_command"] == ["git", "restore", "--source=HEAD", "--", display_path]
+    assert "git diff --" in target["git_diff_command_shell"]
+    assert "git show" in target["git_show_head_command_shell"]
+    assert "git restore --source=HEAD --" in target["git_restore_command_shell"]
+
+
 def test_beam_judged_promotion_plan_cli_normalizes_relative_repo_root(tmp_path: Path, monkeypatch):
     answers_root = tmp_path / "artifacts" / "beam_public_results"
     benchmark_runs_dir = tmp_path / "artifacts" / "benchmark_runs"
