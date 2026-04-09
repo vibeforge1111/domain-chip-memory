@@ -178,6 +178,7 @@ The current repo implementation now exercises this with:
 - a local `docs/examples/spark_kb/README.md` that explains the bundle and commands in one place
 - a local `docs/examples/spark_kb/run_smoke.py` wrapper for the valid example flow
 - a matching `docs/examples/spark_kb_invalid/` bundle for negative validator coverage
+- a local `docs/examples/spark_kb_invalid/run_validate_failure.py` wrapper for the failing example flow
 - a `docs/examples/README.md` index for the checked-in KB, shadow, and maintenance fixtures
 - health checks that can now flag missing repo raw copies, stray raw repo files, and malformed filed query pages
 - compile summaries that now report repo-source and filed-output counts explicitly

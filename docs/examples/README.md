@@ -5,7 +5,7 @@ This directory holds checked-in fixtures for CLI smoke tests and contract valida
 ## Spark KB
 
 - `spark_kb/`: valid Spark KB example bundle with validate, build, and health-check smoke paths plus `run_smoke.py`
-- `spark_kb_invalid/`: intentionally invalid Spark KB bundle for validator failure coverage
+- `spark_kb_invalid/`: intentionally invalid Spark KB bundle for validator failure coverage plus `run_validate_failure.py`
 
 ## Spark Shadow
 

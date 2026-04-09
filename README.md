@@ -216,6 +216,7 @@ There is now a checked-in example bundle under `docs/examples/spark_kb/` for val
 That bundle is described in `docs/examples/spark_kb/README.md`.
 There is also a checked-in invalid validator fixture under `docs/examples/spark_kb_invalid/`.
 The full examples directory is indexed in `docs/examples/README.md`.
+The invalid bundle now has a matching `docs/examples/spark_kb_invalid/run_validate_failure.py` shortcut.
 
 ```powershell
 python docs\examples\spark_kb\run_smoke.py
