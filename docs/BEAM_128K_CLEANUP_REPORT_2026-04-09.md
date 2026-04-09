@@ -56,22 +56,28 @@ These three untracked exact-judge manifests currently read as `partial`, but eac
 
 ## Coverage Diagnosis
 
-The new cleanup report now distinguishes timeout-only surfaces from genuine partial coverage by comparing each manifest against the discovered `128K` category universe.
+The new cleanup report now compares each manifest against its own upstream `probing_questions.json` and sibling `domain_chip_memory_answers.json`, so the missing-category diagnosis is per-conversation rather than inferred from a global heuristic.
 
 - `conv1_v9`
-  - current classification: `worker_error_partial_coverage`
+  - current classification: `timeout_partial_coverage`
   - stderr tail ends with timeout after `900` seconds
-  - discovered categories: `8`
+  - expected categories from upstream probing questions: `10`
+  - answer categories present in `domain_chip_memory_answers.json`: `10`
+  - discovered evaluation categories: `8`
   - missing categories: `summarization`, `temporal_reasoning`
 - `conv2_v2`
-  - current classification: `worker_error_partial_coverage`
+  - current classification: `timeout_partial_coverage`
   - stderr tail ends with timeout after `900` seconds
-  - discovered categories: `8`
+  - expected categories from upstream probing questions: `10`
+  - answer categories present in `domain_chip_memory_answers.json`: `10`
+  - discovered evaluation categories: `8`
   - missing categories: `summarization`, `temporal_reasoning`
 - `conv3_v2`
   - current classification: `worker_error_partial_coverage`
   - stderr tail ends with `TypeError: list indices must be integers or slices, not str`
-  - discovered categories: `6`
+  - expected categories from upstream probing questions: `10`
+  - answer categories present in `domain_chip_memory_answers.json`: `10`
+  - discovered evaluation categories: `6`
   - missing categories: `multi_session_reasoning`, `preference_following`, `summarization`, `temporal_reasoning`
 
 The previously modified tracked file also appears materially incomplete relative to the current `128K` category universe:
@@ -116,6 +122,8 @@ The currently promoted clean tracked line is still visible beside those files:
 The next disciplined cleanup move should be:
 
 1. treat all three untracked `conv1_v9` to `conv3_v2` official-eval manifests as blocked partials, not ready-to-promote completions
+   - `conv1_v9` and `conv2_v2` are timeout-bound partials still missing `summarization` and `temporal_reasoning`
+   - `conv3_v2` is a real worker-error partial with a `TypeError` before the last four categories complete
 2. decide whether the modified tracked `first20_v3/100K/1/evaluation-domain_chip_memory_answers.json` is intentional, because it is currently only a `4`-category partial against the discovered `10`-category universe and its `event_ordering` average dropped from `0.8622` at `HEAD` to `0.1789` in the working tree
 3. only stage judged `128K` artifacts after there is a deliberate decision about missing `summarization` / `temporal_reasoning` coverage and the `conv3_v2` worker `TypeError`
 4. leave the untracked predecessor local scorecards alone unless there is a separate promotion or deletion decision for them
