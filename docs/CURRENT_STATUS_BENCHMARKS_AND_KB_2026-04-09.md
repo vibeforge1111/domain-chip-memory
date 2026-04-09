@@ -182,6 +182,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - explicit repo-native ingest into `raw/repos/` plus compiled repo source pages
 - filed KB maintenance report in `wiki/outputs/maintenance-report.md`
 - filed KB answer pages in `wiki/outputs/query-*.md`
+- contradiction and stale-state signals inside the KB maintenance report
 
 ### What is now true after BEAM closure
 
@@ -195,8 +196,8 @@ The system is still not fully Karpathy-complete because it does not yet have:
 
 - incremental ingest of external articles, repos, papers, and datasets into `raw/`
 - cross-source concept/entity pages beyond runtime memory pages
-- filed query answers generated against the wiki itself
-- automated contradiction and gap-filling passes over mixed runtime-plus-research sources
+- broad filed query answers generated against the wiki itself
+- automated contradiction and gap-filling passes over mixed runtime-plus-research sources beyond the first maintenance heuristics
 - Obsidian-native dashboards or Dataview views
 - scheduled compilation or maintenance loops
 
@@ -221,7 +222,7 @@ Current live result on 2026-04-09:
 - `spark-kb-health-check` returned `valid: true`
 - no missing required files
 - no broken wikilinks
-- source, synthesis, and output surfaces now include session pages, timeline overview, repo-source ingest, maintenance report output, and filed answer pages
+- source, synthesis, and output surfaces now include session pages, timeline overview, repo-source ingest, maintenance report output, filed answer pages, and first contradiction/staleness signals
 - only `wiki/log.md` remains orphaned, which is acceptable for now because it is an append-only activity surface rather than a navigational page
 
 ## What is done vs remaining right now
@@ -262,7 +263,7 @@ Current live result on 2026-04-09:
 1. keep the current scaffold green under live CLI checks
 2. add richer compiled pages that connect runtime memory to benchmark and repo knowledge
 3. broaden filed query outputs beyond the current demo answer page
-4. expand the maintenance report into contradiction, staleness, and missing-page reporting
+4. deepen the maintenance report beyond the first contradiction/staleness heuristics into richer gap and contradiction analysis
 5. broaden repo-native ingest from explicit file picks into a more complete research and benchmark artifact path
 
 ### Next product tasks after that
