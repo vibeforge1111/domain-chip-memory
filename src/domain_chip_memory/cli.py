@@ -1984,6 +1984,26 @@ def _build_benchmark_runs_git_report(
                 "next": next_competitor,
             }
             current_competitor = family_competition[competition_index]
+            recommended_next_step = {
+                "reason": "inspect_current_top_series",
+                "target": "current_top_series",
+                "family": current_competitor["family"],
+                "command": current_competitor["top_series_command"],
+                "command_shell": current_competitor["top_series_command_shell"],
+            }
+            if current_competitor["nearest_competitor_family"] is not None:
+                if current_competitor["competition_position_label"] in {
+                    "contested_leader",
+                    "neck_and_neck",
+                    "close_chase",
+                }:
+                    recommended_next_step = {
+                        "reason": "compare_nearest_competitor_top_series",
+                        "target": "nearest_competitor_top_series",
+                        "family": current_competitor["nearest_competitor_family"],
+                        "command": current_competitor["nearest_competitor_top_series_command"],
+                        "command_shell": current_competitor["nearest_competitor_top_series_command_shell"],
+                    }
             recommended_family_competition_summary = {
                 "scope": "competition_summary",
                 "family": current_competitor["family"],
@@ -1995,6 +2015,7 @@ def _build_benchmark_runs_git_report(
                 "command_shell": current_competitor["command_shell"],
                 "top_series_command": current_competitor["top_series_command"],
                 "top_series_command_shell": current_competitor["top_series_command_shell"],
+                "recommended_next_step": recommended_next_step,
                 "nearest_competitor": {
                     "direction": current_competitor["nearest_competitor_direction"],
                     "family": current_competitor["nearest_competitor_family"],

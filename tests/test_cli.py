@@ -3272,6 +3272,13 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "command_shell": payload["family_competition"][0]["command_shell"],
         "top_series_command": payload["family_competition"][0]["top_series_command"],
         "top_series_command_shell": payload["family_competition"][0]["top_series_command_shell"],
+        "recommended_next_step": {
+            "reason": "compare_nearest_competitor_top_series",
+            "target": "nearest_competitor_top_series",
+            "family": "longmemeval",
+            "command": payload["family_competition"][0]["nearest_competitor_top_series_command"],
+            "command_shell": payload["family_competition"][0]["nearest_competitor_top_series_command_shell"],
+        },
         "nearest_competitor": {
             "direction": "next",
             "family": "longmemeval",
@@ -4146,6 +4153,13 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "command_shell": payload["family_competition"][0]["command_shell"],
         "top_series_command": payload["family_competition"][0]["top_series_command"],
         "top_series_command_shell": payload["family_competition"][0]["top_series_command_shell"],
+        "recommended_next_step": {
+            "reason": "inspect_current_top_series",
+            "target": "current_top_series",
+            "family": "longmemeval",
+            "command": payload["family_competition"][0]["top_series_command"],
+            "command_shell": payload["family_competition"][0]["top_series_command_shell"],
+        },
         "nearest_competitor": {
             "direction": "next",
             "family": "scorecard",
@@ -4762,6 +4776,13 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "command_shell": payload["family_competition"][0]["command_shell"],
         "top_series_command": payload["family_competition"][0]["top_series_command"],
         "top_series_command_shell": payload["family_competition"][0]["top_series_command_shell"],
+        "recommended_next_step": {
+            "reason": "inspect_current_top_series",
+            "target": "current_top_series",
+            "family": "longmemeval",
+            "command": payload["family_competition"][0]["top_series_command"],
+            "command_shell": payload["family_competition"][0]["top_series_command_shell"],
+        },
         "nearest_competitor": {
             "direction": None,
             "family": None,
