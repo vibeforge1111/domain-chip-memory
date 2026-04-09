@@ -529,17 +529,30 @@ def _build_demo_spark_kb_payload(output_dir: str, repo_sources: list[str] | None
     }
 
 
+def _load_repo_source_manifest(repo_source_manifest_file: str) -> list[str]:
+    manifest_path = Path(repo_source_manifest_file)
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    repo_sources_payload = payload.get("repo_sources") if isinstance(payload, dict) else payload
+    if not isinstance(repo_sources_payload, list) or not all(isinstance(item, str) for item in repo_sources_payload):
+        raise ValueError("Repo source manifest file must contain a JSON list of strings or an object with a 'repo_sources' list.")
+    return repo_sources_payload
+
+
 def _build_spark_kb_from_snapshot_file(
     snapshot_file: str,
     output_dir: str,
     *,
     repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
     filed_output_files: list[str] | None = None,
 ) -> dict:
     snapshot_path = Path(snapshot_file)
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
     if not isinstance(snapshot, dict):
         raise ValueError("Spark KB snapshot file must contain a JSON object.")
+    manifest_repo_sources: list[str] = []
+    for repo_source_manifest_file in repo_source_manifest_files or []:
+        manifest_repo_sources.extend(_load_repo_source_manifest(repo_source_manifest_file))
     filed_outputs: list[dict] = []
     for filed_output_file in filed_output_files or []:
         payload = json.loads(Path(filed_output_file).read_text(encoding="utf-8"))
@@ -554,13 +567,14 @@ def _build_spark_kb_from_snapshot_file(
         output_dir,
         snapshot,
         vault_title="Spark Knowledge Base",
-        repo_sources=repo_sources,
+        repo_sources=[*(repo_sources or []), *manifest_repo_sources],
         filed_outputs=filed_outputs,
     )
     return {
         "contract": build_spark_kb_contract_summary(),
         "snapshot_file": str(snapshot_path),
         "snapshot": snapshot,
+        "repo_source_manifest_file_count": len(list(repo_source_manifest_files or [])),
         "filed_output_file_count": len(list(filed_output_files or [])),
         "compile_result": compile_result,
     }
@@ -689,6 +703,7 @@ def main() -> None:
     build_spark_kb.add_argument("snapshot_file")
     build_spark_kb.add_argument("output_dir")
     build_spark_kb.add_argument("--repo-source", action="append", default=[])
+    build_spark_kb.add_argument("--repo-source-manifest", action="append", default=[])
     build_spark_kb.add_argument("--filed-output-file", action="append", default=[])
     build_spark_kb.add_argument("--write")
     spark_kb_health = subparsers.add_parser("spark-kb-health-check", help="Run health checks over a scaffolded Spark KB vault.")
@@ -1045,6 +1060,7 @@ def main() -> None:
             args.snapshot_file,
             args.output_dir,
             repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
             filed_output_files=args.filed_output_file,
         )
         if args.write:

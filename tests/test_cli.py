@@ -602,6 +602,104 @@ def test_build_spark_kb_command_compiles_from_snapshot_file(tmp_path: Path, monk
     assert (output_dir / "wiki" / "outputs" / "query-location-answer.md").exists()
 
 
+def test_build_spark_kb_command_ingests_repo_sources_from_manifest(tmp_path: Path, monkeypatch):
+    output_dir = tmp_path / "compiled_vault"
+    snapshot_file = tmp_path / "snapshot.json"
+    repo_source_a = tmp_path / "docs-note.md"
+    repo_source_b = tmp_path / "src-snippet.py"
+    repo_source_manifest_file = tmp_path / "repo-sources.json"
+    summary_file = tmp_path / "summary.json"
+    captured: dict[str, object] = {}
+
+    repo_source_a.write_text("# Notes\n\nRepo context for KB.\n", encoding="utf-8")
+    repo_source_b.write_text("print('repo source')\n", encoding="utf-8")
+    repo_source_manifest_file.write_text(
+        json.dumps({"repo_sources": [str(repo_source_a), str(repo_source_b)]}),
+        encoding="utf-8",
+    )
+    snapshot_file.write_text(
+        json.dumps(
+            {
+                "runtime_class": "SparkMemorySDK",
+                "generated_at": "2025-03-10T00:00:00+00:00",
+                "counts": {
+                    "session_count": 1,
+                    "current_state_count": 1,
+                    "observation_count": 1,
+                    "event_count": 0,
+                },
+                "sessions": [
+                    {
+                        "session_id": "session-manifest",
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "turns": [
+                            {
+                                "turn_id": "session-manifest:t1",
+                                "speaker": "user",
+                                "text": "Remember my preferred city is Dubai.",
+                            }
+                        ],
+                    }
+                ],
+                "current_state": [
+                    {
+                        "memory_role": "current_state",
+                        "subject": "user",
+                        "predicate": "location",
+                        "text": "user location Dubai",
+                        "session_id": "session-manifest",
+                        "turn_ids": ["session-manifest:t1"],
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "metadata": {"value": "Dubai", "observation_id": "obs-manifest-1"},
+                    }
+                ],
+                "observations": [
+                    {
+                        "memory_role": "structured_evidence",
+                        "subject": "user",
+                        "predicate": "location",
+                        "text": "user location Dubai",
+                        "session_id": "session-manifest",
+                        "turn_ids": ["session-manifest:t1"],
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "metadata": {"value": "Dubai", "observation_id": "obs-manifest-1"},
+                    }
+                ],
+                "events": [],
+                "trace": {"operation": "export_knowledge_base_snapshot"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-kb",
+            str(snapshot_file),
+            str(output_dir),
+            "--repo-source-manifest",
+            str(repo_source_manifest_file),
+            "--write",
+            str(summary_file),
+        ],
+    )
+
+    cli.main()
+
+    written = json.loads(summary_file.read_text(encoding="utf-8"))
+    assert written["snapshot_file"] == str(snapshot_file)
+    assert written["repo_source_manifest_file_count"] == 1
+    assert written["compile_result"]["repo_source_count"] == 2
+    assert (output_dir / "wiki" / "sources" / "repo-docs-note.md").exists()
+    assert (output_dir / "wiki" / "sources" / "repo-src-snippet.md").exists()
+    assert (output_dir / "raw" / "repos" / "01-docs-note.md").exists()
+    assert (output_dir / "raw" / "repos" / "02-src-snippet.py").exists()
+
+
 def test_spark_kb_maintenance_report_surfaces_contradictions_and_staleness(tmp_path: Path):
     output_dir = tmp_path / "spark_kb_vault"
     snapshot = {
