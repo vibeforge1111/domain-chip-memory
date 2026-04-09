@@ -297,10 +297,12 @@ Current live result on 2026-04-09:
    - the payload now includes `family_hotspots`, so each noisy family carries its own dominant series and exact jump command
    - `family_hotspots` now also carries concentration signals via `top_series_share` and `average_series_size`
    - `family_hotspots` now also carries `concentration_label` and `focus_mode`, so the report says whether to jump directly to the top series or stay at the family slice first
+   - the payload now also includes `recommended_hotspot`, so the report can point at the hotspot row that best matches the current recommended focus instead of making callers recompute that mapping
    - the payload now includes exact `series_commands` for the ranked top-series slice, so the summary view can jump straight into a concrete series command
    - the payload now includes exact `family_commands` so the next focused slice can be copied directly instead of reconstructed by hand
    - largest live series: `longmemeval_summary_synthesis_offset225_limit25` (`4`), `longmemeval_summary_synthesis_offset275_limit25` (`4`), `official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5` (`4`), `_debug` (`3`), `_debug_gpt4` (`3`)
    - current live `recommended_focus` points to `--family scorecard`, because scorecards are the largest remaining noisy family at `31` files
+   - current live `recommended_hotspot` points at the `scorecard` hotspot row, which jumps directly to `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live `recommended_followups` then drills from `--family scorecard` into `--family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5`
    - current live `family_hotspots` are `debug -> _debug` (`3` across `2` series), `longmemeval -> longmemeval_summary_synthesis_offset225_limit25` (`4` across `10` series), and `scorecard -> official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5` (`4` across `23` series)
    - current live hotspot concentration is `debug: 0.5000 share / 3.0000 avg series size`, `longmemeval: 0.1739 / 2.3000`, `scorecard: 0.1290 / 1.3478`
