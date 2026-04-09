@@ -2197,6 +2197,8 @@ def _build_benchmark_runs_git_report(
     }
     recommended_sequence_summary = {
         "step_count": len(recommended_sequence_steps),
+        "command_step_count": sum(1 for step in recommended_sequence_steps if step["command"]),
+        "non_command_step_count": sum(1 for step in recommended_sequence_steps if not step["command"]),
         "phase_order": [step["phase"] for step in recommended_sequence_steps],
         "phase_signature": "->".join(step["phase"] for step in recommended_sequence_steps),
         "entry_step": recommended_sequence_steps[0]["step"] if recommended_sequence_steps else None,
