@@ -101,6 +101,12 @@ Current repo status after investigation:
 - that means the recorded `conv3_v2` `TypeError` is not obviously reproducible from today’s rubric-list normalization path
 - the remaining uncertainty is whether the historical failure came from an older evaluator revision, a non-list response shape outside the normalized path, or a different category-specific branch before the final four categories were written
 
+- the main cleanup report is now env-aware too:
+  - `runnable_official_eval_manifest_count`: `0`
+  - `blocked_official_eval_manifest_count`: `3`
+  - `blocked_missing_env_vars`: `MINIMAX_API_KEY`
+- each official-eval manifest row now exposes `required_judge_env`, `judge_env_ready`, and `cleanup_blocked_reason`
+
 ## Resume Targets
 
 The cleanup report now exposes ordered per-category progress and the next resume point for each partial manifest:
