@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from dataclasses import asdict, replace
@@ -1253,6 +1254,20 @@ def _build_beam_judged_resume_batch(
     execution_results = []
     if execute:
         for target in resume_plan["resume_targets"]:
+            required_env = str(target.get("judge_api_key_env") or "").strip()
+            if required_env and not os.environ.get(required_env):
+                execution_results.append(
+                    {
+                        "path": target["path"],
+                        "return_code": None,
+                        "status": "blocked_missing_env",
+                        "missing_env_var": required_env,
+                        "executed_command": [],
+                        "stdout_tail": [],
+                        "stderr_tail": [f"Missing required environment variable: {required_env}"],
+                    }
+                )
+                continue
             command = list(target["resume_command"])
             executed_command = [sys.executable if command and command[0] == "python" else command[0], *command[1:]]
             result = subprocess.run(
