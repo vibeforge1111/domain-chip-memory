@@ -169,6 +169,7 @@ The current repo implementation now exercises this with:
 - a demo filed answer page derived from `SparkMemorySDK.explain_answer(...)`
 - a maintenance report page emitted into `wiki/outputs/`
 - explicit repo-source copies and compiled source pages for selected local files
+- manifest-driven repo-source ingest for real `build-spark-kb` compilation flows
 
 ## Guardrails
 
