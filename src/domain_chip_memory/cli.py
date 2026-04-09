@@ -1223,7 +1223,9 @@ def _build_beam_judged_resume_batch(
     evaluation_file_name: str,
     repo_root: str | Path,
     script_file: str | None = None,
+    execute: bool = False,
 ) -> dict:
+    repo_root_path = Path(repo_root)
     resume_plan = _build_beam_judged_resume_plan(
         artifact_prefix=artifact_prefix,
         answers_root=answers_root,
@@ -1248,6 +1250,29 @@ def _build_beam_judged_resume_batch(
         script_path.parent.mkdir(parents=True, exist_ok=True)
         script_path.write_text(script_text, encoding="utf-8")
 
+    execution_results = []
+    if execute:
+        for target in resume_plan["resume_targets"]:
+            command = list(target["resume_command"])
+            executed_command = [sys.executable if command and command[0] == "python" else command[0], *command[1:]]
+            result = subprocess.run(
+                executed_command,
+                cwd=str(repo_root_path.resolve()),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            execution_results.append(
+                {
+                    "path": target["path"],
+                    "return_code": int(result.returncode),
+                    "status": "completed" if result.returncode == 0 else "failed",
+                    "executed_command": executed_command,
+                    "stdout_tail": result.stdout.splitlines()[-20:],
+                    "stderr_tail": result.stderr.splitlines()[-20:],
+                }
+            )
+
     return {
         "benchmark_name": "BEAM",
         "source_mode": "official_public_evaluation_resume_batch",
@@ -1258,6 +1283,9 @@ def _build_beam_judged_resume_batch(
         "script_line_count": len(script_lines),
         "script_lines": script_lines,
         "script_text": script_text,
+        "execute_requested": execute,
+        "executed_target_count": len(execution_results),
+        "execution_results": execution_results,
     }
 
 
@@ -1409,6 +1437,7 @@ def main() -> None:
     beam_judged_resume_batch.add_argument("--evaluation-file-name", default="evaluation-domain_chip_memory_answers.json")
     beam_judged_resume_batch.add_argument("--repo-root", default=".")
     beam_judged_resume_batch.add_argument("--script-file")
+    beam_judged_resume_batch.add_argument("--execute", action="store_true")
     beam_judged_resume_batch.add_argument("--write")
     validate_spark_kb_inputs = subparsers.add_parser("validate-spark-kb-inputs", help="Validate Spark KB snapshot, repo-source, and filed-output inputs without compiling a vault.")
     validate_spark_kb_inputs.add_argument("snapshot_file")
@@ -2054,6 +2083,7 @@ def main() -> None:
             evaluation_file_name=args.evaluation_file_name,
             repo_root=args.repo_root,
             script_file=args.script_file,
+            execute=args.execute,
         )
         if args.write:
             _write_json(Path(args.write), payload)
