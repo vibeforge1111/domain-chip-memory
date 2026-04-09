@@ -2828,6 +2828,8 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "series_count": 1,
             "top_series_prefix": "_debug",
             "top_series_file_count": 1,
+            "top_series_share": 1.0,
+            "average_series_size": 1.0,
             "command": [
                 "python",
                 "-m",
@@ -2855,6 +2857,8 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "series_count": 1,
             "top_series_prefix": "longmemeval_offset225_limit25_source",
             "top_series_file_count": 1,
+            "top_series_share": 1.0,
+            "average_series_size": 1.0,
             "command": [
                 "python",
                 "-m",
@@ -2882,6 +2886,8 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "series_count": 1,
             "top_series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv1_v9",
             "top_series_file_count": 1,
+            "top_series_share": 1.0,
+            "average_series_size": 1.0,
             "command": [
                 "python",
                 "-m",
@@ -2909,6 +2915,8 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "series_count": 1,
             "top_series_prefix": "misc_snapshot",
             "top_series_file_count": 1,
+            "top_series_share": 1.0,
+            "average_series_size": 1.0,
             "command": [
                 "python",
                 "-m",
@@ -2936,6 +2944,8 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             "series_count": 1,
             "top_series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
             "top_series_file_count": 1,
+            "top_series_share": 1.0,
+            "average_series_size": 1.0,
             "command": [
                 "python",
                 "-m",
@@ -3555,6 +3565,8 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             "series_count": 1,
             "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
             "top_series_file_count": 2,
+            "top_series_share": 1.0,
+            "average_series_size": 2.0,
             "command": [
                 "python",
                 "-m",
@@ -3711,6 +3723,8 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
             "series_count": 1,
             "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
             "top_series_file_count": 2,
+            "top_series_share": 1.0,
+            "average_series_size": 2.0,
             "command": [
                 "python",
                 "-m",

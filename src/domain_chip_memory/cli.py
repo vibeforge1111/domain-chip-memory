@@ -1566,6 +1566,8 @@ def _build_benchmark_runs_git_report(
                 "series_count": series_count_by_family.get(family, 0),
                 "top_series_prefix": top_family_series["series"],
                 "top_series_file_count": top_family_series["file_count"],
+                "top_series_share": round(top_family_series["file_count"] / row["file_count"], 4) if row["file_count"] else 0.0,
+                "average_series_size": round(row["file_count"] / series_count_by_family.get(family, 1), 4) if series_count_by_family.get(family, 0) else 0.0,
                 "command": hotspot_command,
                 "command_shell": " ".join(_shell_quote_arg(part) for part in hotspot_command),
             }
