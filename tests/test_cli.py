@@ -3254,6 +3254,76 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
             f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_offset225_limit25_source --only-noisy --top-series-limit 10"
         ),
     }
+    assert payload["recommended_family_comparison"] == {
+        "scope": "leader_vs_runner_up",
+        "leader_hotspot": {
+            "family": "scorecard",
+            "family_noisy_file_count": 1,
+            "series_count": 1,
+            "top_series_prefix": "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+            "top_series_noisy_file_count": 1,
+            "top_series_share": 1.0,
+            "average_series_size": 1.0,
+            "concentration_label": "concentrated",
+            "focus_mode": "series_first",
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "scorecard",
+                "--series-prefix",
+                "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10 "
+                f"--only-noisy --top-series-limit 10"
+            ),
+        },
+        "runner_up_hotspot": {
+            "family": "longmemeval",
+            "family_noisy_file_count": 1,
+            "series_count": 1,
+            "top_series_prefix": "longmemeval_offset225_limit25_source",
+            "top_series_noisy_file_count": 1,
+            "top_series_share": 1.0,
+            "average_series_size": 1.0,
+            "concentration_label": "concentrated",
+            "focus_mode": "series_first",
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "longmemeval",
+                "--series-prefix",
+                "longmemeval_offset225_limit25_source",
+                "--only-noisy",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_offset225_limit25_source "
+                f"--only-noisy --top-series-limit 10"
+            ),
+        },
+        "gap": payload["recommended_family_gap"],
+    }
     assert series_rows[("debug", "_debug")]["git_status_counts"] == {"??": 1}
     assert series_rows[("longmemeval", "longmemeval_offset225_limit25_source")]["git_status_counts"] == {"??": 1}
     assert series_rows[("scorecard", "official_beam_128k_summary_synthesis_memory_heuristic_v1_conv10")]["git_status_counts"] == {"M": 1}
@@ -3704,6 +3774,78 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
             f"--only-noisy --summary-only --top-series-limit 10"
         ),
     }
+    assert payload["recommended_family_comparison"] == {
+        "scope": "leader_vs_runner_up",
+        "leader_hotspot": {
+            "family": "longmemeval",
+            "family_noisy_file_count": 2,
+            "series_count": 1,
+            "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+            "top_series_noisy_file_count": 2,
+            "top_series_share": 1.0,
+            "average_series_size": 2.0,
+            "concentration_label": "concentrated",
+            "focus_mode": "series_first",
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "longmemeval",
+                "--series-prefix",
+                "longmemeval_summary_synthesis_offset225_limit25",
+                "--only-noisy",
+                "--summary-only",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25 "
+                f"--only-noisy --summary-only --top-series-limit 10"
+            ),
+        },
+        "runner_up_hotspot": {
+            "family": "scorecard",
+            "family_noisy_file_count": 1,
+            "series_count": 1,
+            "top_series_prefix": "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
+            "top_series_noisy_file_count": 1,
+            "top_series_share": 1.0,
+            "average_series_size": 1.0,
+            "concentration_label": "concentrated",
+            "focus_mode": "series_first",
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "scorecard",
+                "--series-prefix",
+                "official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5",
+                "--only-noisy",
+                "--summary-only",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family scorecard --series-prefix official_beam_500k_summary_synthesis_memory_heuristic_v1_conv1_5 "
+                f"--only-noisy --summary-only --top-series-limit 10"
+            ),
+        },
+        "gap": payload["recommended_family_gap"],
+    }
     assert payload["recommended_followups"] == [payload["recommended_focus"]]
     assert payload["recommended_hotspot"] == payload["family_hotspots"][0]
     assert payload["family_hotspots"] == [
@@ -3882,6 +4024,43 @@ def test_benchmark_runs_git_report_cli_filters_to_series_prefix(tmp_path: Path, 
         "family": "longmemeval",
         "reported_file_share": 1.0,
         "dominance_label": "dominant",
+    }
+    assert payload["recommended_family_comparison"] == {
+        "scope": "single_family_view",
+        "leader_hotspot": {
+            "family": "longmemeval",
+            "family_noisy_file_count": 3,
+            "series_count": 2,
+            "top_series_prefix": "longmemeval_summary_synthesis_offset225_limit25",
+            "top_series_noisy_file_count": 2,
+            "top_series_share": 0.6667,
+            "average_series_size": 1.5,
+            "concentration_label": "concentrated",
+            "focus_mode": "series_first",
+            "command": [
+                "python",
+                "-m",
+                "domain_chip_memory.cli",
+                "benchmark-runs-git-report",
+                "--benchmark-runs-dir",
+                str(benchmark_runs_dir),
+                "--repo-root",
+                str(tmp_path),
+                "--family",
+                "longmemeval",
+                "--series-prefix",
+                "longmemeval_summary_synthesis_offset225_limit25",
+                "--only-noisy",
+                "--summary-only",
+                "--top-series-limit",
+                "10",
+            ],
+            "command_shell": (
+                f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+                f"--repo-root {tmp_path} --family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25 "
+                f"--only-noisy --summary-only --top-series-limit 10"
+            ),
+        },
     }
     assert payload["recommended_followups"] == []
     assert payload["recommended_hotspot"] == payload["family_hotspots"][0]

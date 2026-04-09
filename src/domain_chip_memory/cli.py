@@ -1466,6 +1466,10 @@ def _build_benchmark_runs_git_report(
     all_noisy_top_series_by_family: dict[str, dict] = {}
     for row in all_noisy_ranked_series_rows:
         all_noisy_top_series_by_family.setdefault(row["family"], row)
+    all_noisy_series_count_by_family: dict[str, int] = {}
+    for row in all_noisy_ranked_series_rows:
+        family = row["family"]
+        all_noisy_series_count_by_family[family] = all_noisy_series_count_by_family.get(family, 0) + 1
     reported_paths = noisy_paths if only_noisy else files
     if family_filter:
         reported_paths = [path for path in reported_paths if _benchmark_runs_file_family(path) == family_filter]
@@ -1594,6 +1598,46 @@ def _build_benchmark_runs_git_report(
         for index, row in enumerate(ranked_family_command_rows)
     }
     noisy_family_total = sum(row["noisy_file_count"] for row in ranked_family_command_rows)
+
+    def _build_noisy_family_hotspot_summary(family: str) -> dict | None:
+        top_series = all_noisy_top_series_by_family.get(family)
+        family_noisy_file_count = noisy_family_counts.get(family, 0)
+        if top_series is None or family_noisy_file_count <= 0:
+            return None
+        series_count = all_noisy_series_count_by_family.get(family, 0)
+        top_series_share = round(top_series["file_count"] / family_noisy_file_count, 4)
+        average_series_size = round(family_noisy_file_count / series_count, 4) if series_count else 0.0
+        concentration_label = "diffuse"
+        if top_series_share >= 0.4:
+            concentration_label = "concentrated"
+        elif top_series_share >= 0.2:
+            concentration_label = "mixed"
+        focus_mode = "family_first"
+        if top_series_share >= 0.3 or series_count <= 3:
+            focus_mode = "series_first"
+        command = _benchmark_runs_git_report_command(
+            benchmark_runs_dir=benchmark_runs_path,
+            repo_root=repo_root_path,
+            only_noisy=True,
+            top_series_limit=top_series_limit,
+            summary_only=summary_only,
+            family_filter=family,
+            series_prefix=top_series["series"],
+        )
+        return {
+            "family": family,
+            "family_noisy_file_count": family_noisy_file_count,
+            "series_count": series_count,
+            "top_series_prefix": top_series["series"],
+            "top_series_noisy_file_count": top_series["file_count"],
+            "top_series_share": top_series_share,
+            "average_series_size": average_series_size,
+            "concentration_label": concentration_label,
+            "focus_mode": focus_mode,
+            "command": command,
+            "command_shell": " ".join(_shell_quote_arg(part) for part in command),
+        }
+
     family_hotspots = []
     for row in ordered_family_rows:
         family = row["family"]
@@ -1752,6 +1796,7 @@ def _build_benchmark_runs_git_report(
     elif len(ordered_family_rows) == 1:
         recommended_family = ordered_family_rows[0]
     recommended_family_gap = None
+    recommended_family_comparison = None
     if recommended_family is not None:
         ranked_index = ranked_family_command_by_name.get(recommended_family["family"])
         if ranked_index is not None and ranked_index + 1 < len(ranked_family_command_rows):
@@ -1809,12 +1854,22 @@ def _build_benchmark_runs_git_report(
                 "next_family_drilldown_command": next_family_drilldown_command,
                 "next_family_drilldown_command_shell": next_family_drilldown_command_shell,
             }
+            recommended_family_comparison = {
+                "scope": "leader_vs_runner_up",
+                "leader_hotspot": _build_noisy_family_hotspot_summary(recommended_family["family"]),
+                "runner_up_hotspot": _build_noisy_family_hotspot_summary(next_family_command["family"]),
+                "gap": recommended_family_gap,
+            }
         else:
             recommended_family_gap = {
                 "scope": "single_family_view",
                 "family": recommended_family["family"],
                 "reported_file_share": recommended_family["reported_file_share"],
                 "dominance_label": recommended_family["dominance_label"],
+            }
+            recommended_family_comparison = {
+                "scope": "single_family_view",
+                "leader_hotspot": _build_noisy_family_hotspot_summary(recommended_family["family"]),
             }
     return {
         "source_mode": "benchmark_runs_git_report",
@@ -1833,6 +1888,7 @@ def _build_benchmark_runs_git_report(
         "recommended_drilldown": recommended_drilldown,
         "recommended_family": recommended_family,
         "recommended_family_gap": recommended_family_gap,
+        "recommended_family_comparison": recommended_family_comparison,
         "recommended_followups": recommended_followups,
         "family_commands": family_commands,
         "family_hotspots": family_hotspots,
