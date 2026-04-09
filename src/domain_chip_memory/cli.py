@@ -1758,9 +1758,12 @@ def _build_benchmark_runs_git_report(
                 "scope": "gap_to_next_family",
                 "family": recommended_family["family"],
                 "next_family": next_family_command["family"],
+                "next_family_noisy_file_count": next_family_command["noisy_file_count"],
                 "noisy_file_count_gap": file_count_gap,
                 "noisy_share_gap": share_gap,
                 "lead_label": lead_label,
+                "next_family_command": next_family_command["command"],
+                "next_family_command_shell": next_family_command["command_shell"],
             }
         else:
             recommended_family_gap = {

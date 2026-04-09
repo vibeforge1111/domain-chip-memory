@@ -3207,9 +3207,29 @@ def test_benchmark_runs_git_report_cli_groups_file_families_and_noisy_statuses(t
         "scope": "gap_to_next_family",
         "family": "scorecard",
         "next_family": "longmemeval",
+        "next_family_noisy_file_count": 1,
         "noisy_file_count_gap": 0,
         "noisy_share_gap": 0.0,
         "lead_label": "narrow",
+        "next_family_command": [
+            "python",
+            "-m",
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--family",
+            "longmemeval",
+            "--only-noisy",
+            "--top-series-limit",
+            "10",
+        ],
+        "next_family_command_shell": (
+            f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+            f"--repo-root {tmp_path} --family longmemeval --only-noisy --top-series-limit 10"
+        ),
     }
     assert series_rows[("debug", "_debug")]["git_status_counts"] == {"??": 1}
     assert series_rows[("longmemeval", "longmemeval_offset225_limit25_source")]["git_status_counts"] == {"??": 1}
@@ -3611,9 +3631,30 @@ def test_benchmark_runs_git_report_cli_filters_to_one_family(tmp_path: Path, mon
         "scope": "gap_to_next_family",
         "family": "longmemeval",
         "next_family": "scorecard",
+        "next_family_noisy_file_count": 1,
         "noisy_file_count_gap": 1,
         "noisy_share_gap": 0.25,
         "lead_label": "wide",
+        "next_family_command": [
+            "python",
+            "-m",
+            "domain_chip_memory.cli",
+            "benchmark-runs-git-report",
+            "--benchmark-runs-dir",
+            str(benchmark_runs_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--family",
+            "scorecard",
+            "--only-noisy",
+            "--summary-only",
+            "--top-series-limit",
+            "10",
+        ],
+        "next_family_command_shell": (
+            f"python -m domain_chip_memory.cli benchmark-runs-git-report --benchmark-runs-dir {benchmark_runs_dir} "
+            f"--repo-root {tmp_path} --family scorecard --only-noisy --summary-only --top-series-limit 10"
+        ),
     }
     assert payload["recommended_followups"] == [payload["recommended_focus"]]
     assert payload["recommended_hotspot"] == payload["family_hotspots"][0]
