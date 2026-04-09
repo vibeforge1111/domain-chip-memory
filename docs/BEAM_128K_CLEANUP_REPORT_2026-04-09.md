@@ -179,10 +179,16 @@ The new drift-batch helper turns the same plan into one ordered PowerShell scrip
   - `git show HEAD:...`
 - generated restore command remains commented out by default
 
+It now also supports `--execute` for those same safe inspection commands:
+
+- execution mode runs `git diff -- ...` and `git show HEAD:...` sequentially from the repo root
+- restore is still not auto-executed
+- live `--execute` completed successfully for the single tracked drift target with `execution_status_counts: {"completed": 1}`
+
 ## Practical Next Step
 
 The clean next move is:
 
 1. treat `conv1_v9`, `conv2_v2`, and `conv3_v2` as completed working-tree artifacts rather than blocked resume targets
 2. if promotion is desired, use `beam-judged-promotion-batch`, its generated `tmp\beam_128k_promotion_batch.ps1`, or `beam-judged-promotion-batch --execute` instead of hand-building `git add` commands
-3. use `beam-judged-drift-batch` or `beam-judged-drift-plan` to inspect the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
+3. use `beam-judged-drift-batch`, `beam-judged-drift-batch --execute`, or `beam-judged-drift-plan` to inspect the tracked `first20_v3/100K/1` drift before staging any `128K` evaluation file changes
