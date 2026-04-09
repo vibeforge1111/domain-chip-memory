@@ -500,6 +500,7 @@ def test_demo_spark_kb_can_ingest_explicit_repo_source(tmp_path: Path, monkeypat
 
     written = json.loads(summary_file.read_text(encoding="utf-8"))
     assert written["compile_result"]["repo_source_count"] == 1
+    assert written["compile_result"]["filed_output_count"] == 1
     assert (output_dir / "raw" / "repos" / "01-NOTES.md").exists()
     assert (output_dir / "wiki" / "sources" / "repo-notes.md").exists()
 
@@ -771,6 +772,7 @@ def test_build_spark_kb_command_compiles_from_snapshot_file(tmp_path: Path, monk
     assert written["snapshot_file"] == str(snapshot_file)
     assert written["filed_output_file_count"] == 1
     assert written["compile_result"]["current_state_page_count"] >= 1
+    assert written["compile_result"]["filed_output_count"] == 1
     assert (output_dir / "wiki" / "current-state" / "user-location.md").exists()
     assert (output_dir / "wiki" / "sources" / "repo-readme-snippet.md").exists()
     assert (output_dir / "wiki" / "outputs" / "query-location-answer.md").exists()
@@ -871,6 +873,7 @@ def test_build_spark_kb_command_ingests_repo_sources_from_manifest(tmp_path: Pat
     assert written["snapshot_file"] == str(snapshot_file)
     assert written["repo_source_manifest_file_count"] == 1
     assert written["compile_result"]["repo_source_count"] == 2
+    assert written["compile_result"]["filed_output_count"] == 0
     assert (output_dir / "wiki" / "sources" / "repo-docs-note.md").exists()
     assert (output_dir / "wiki" / "sources" / "repo-src-snippet.md").exists()
     assert (output_dir / "raw" / "repos" / "01-docs-note.md").exists()
@@ -983,6 +986,7 @@ def test_build_spark_kb_command_ingests_filed_outputs_from_manifest(tmp_path: Pa
     assert written["snapshot_file"] == str(snapshot_file)
     assert written["filed_output_manifest_file_count"] == 1
     assert written["filed_output_file_count"] == 1
+    assert written["compile_result"]["filed_output_count"] == 1
     assert (output_dir / "wiki" / "outputs" / "query-manifest-answer.md").exists()
 
 

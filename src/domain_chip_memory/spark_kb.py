@@ -862,6 +862,7 @@ def scaffold_spark_knowledge_base(
         "synthesis_page_count": len(synthesis_pages),
         "output_page_count": len(output_pages),
         "repo_source_count": ingested_repo_sources,
+        "filed_output_count": filed_output_count,
         "files_written": sorted(
             str(path.relative_to(output_path))
             for path in output_path.rglob("*")
