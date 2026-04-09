@@ -304,6 +304,7 @@ Current live result on 2026-04-09:
    - the payload now also includes `recommended_sequence_by_phase`, so callers can jump straight to the `focus`, `drilldown`, or `next_step` row without scanning the numbered sequence
    - the payload now also includes `recommended_sequence_summary`, so callers can read the sequence length, phase order, joined preview, and drilldown/next-step presence flags from one compact object
    - the payload now also includes `recommended_sequence_endpoints`, so callers that only care about the entry hop and terminal action can read the first and last sequence rows directly
+   - the payload now also includes `recommended_sequence_transitions`, so callers can read the ordered edges between the sequence phases without diffing adjacent step rows themselves
    - the payload now includes `recommended_family`, so the active family recommendation resolves to the enriched family row instead of only exposing a command wrapper
    - the payload now includes `recommended_family_gap`, so the report can say how far ahead the current recommended family is from the next noisy candidate without recomputing margins
    - `recommended_family_gap` now also carries both the exact runner-up family command and that family's top-series drilldown, and that runner-up series is resolved from the full noisy-series universe rather than only the current filtered slice
@@ -333,6 +334,7 @@ Current live result on 2026-04-09:
    - current live `recommended_sequence_by_phase` now exposes that same structure as a direct phase-indexed map, so `focus`, `drilldown`, and `next_step` can be read without iterating the steps array
    - current live `recommended_sequence_summary` now compresses that same path to `step_count = 3`, phase order `[focus, drilldown, next_step]`, the joined preview string, and flags showing that both a drilldown hop and a next-step comparison are present
    - current live `recommended_sequence_endpoints` now exposes the first `focus` row and the last `next_step` row directly, so the starting hop and terminal comparison can be read without scanning the full ordered path
+   - current live `recommended_sequence_transitions` now renders the same path as ordered edges `focus -> drilldown` and `drilldown -> next_step`
    - current live `recommended_family` is `scorecard`, with `reported_file_share = 0.5167` and `dominance_label = dominant`
    - current live `recommended_family_gap` shows `scorecard` ahead of `longmemeval` by `8` noisy files and `0.1334` noisy-share points, which classifies as a `clear` lead
    - the same live `recommended_family_gap` now includes the exact runner-up jump command `--family longmemeval` and the runner-up top-series drilldown `--family longmemeval --series-prefix longmemeval_summary_synthesis_offset225_limit25`, even when the current report view is narrower than the full noisy-family competition
