@@ -186,6 +186,7 @@ The repo now has a real Spark KB scaffold that matches the shape of the Karpathy
 - real `build-spark-kb` support for explicit filed-output JSON inputs
 - real `build-spark-kb` support for repo-source manifest JSON inputs
 - real `build-spark-kb` support for filed-output manifest JSON inputs
+- real `validate-spark-kb-inputs` preflight support for snapshot, manifest, and filed-output validation
 - compile results now expose both `repo_source_count` and `filed_output_count`
 
 ### What is now true after BEAM closure
@@ -211,19 +212,22 @@ The KB flow should be validated with the real CLI, not only by reading code.
 
 Minimum live checks:
 
-1. `python -m domain_chip_memory.cli build-spark-kb <snapshot_file> <output_dir> [--repo-source ...] [--repo-source-manifest ...] [--filed-output-file ...] [--filed-output-manifest ...]`
-2. `python -m domain_chip_memory.cli spark-kb-health-check <output_dir>`
-3. `python -m domain_chip_memory.cli demo-spark-kb <output_dir>`
+1. `python -m domain_chip_memory.cli validate-spark-kb-inputs <snapshot_file> [--repo-source ...] [--repo-source-manifest ...] [--filed-output-file ...] [--filed-output-manifest ...]`
+2. `python -m domain_chip_memory.cli build-spark-kb <snapshot_file> <output_dir> [--repo-source ...] [--repo-source-manifest ...] [--filed-output-file ...] [--filed-output-manifest ...]`
+3. `python -m domain_chip_memory.cli spark-kb-health-check <output_dir>`
+4. `python -m domain_chip_memory.cli demo-spark-kb <output_dir>`
 
 Success means:
 
 - the vault is scaffolded
 - the source pages and synthesis pages exist
+- input manifests and filed-output payloads validate cleanly before compile
 - health checks pass cleanly, including repo-source/raw-copy parity and required filed-output sections
 
 Current live result on 2026-04-09:
 
 - `build-spark-kb` now exists as a real non-demo compiler path for snapshot JSON inputs
+- `validate-spark-kb-inputs` now exists as a real preflight for snapshot, manifest, and filed-output bundles
 - `build-spark-kb` can now merge explicit `--repo-source` files with manifest-driven repo-source lists
 - `build-spark-kb` can now merge explicit `--filed-output-file` inputs with manifest-driven filed-output lists
 - manifest entries now resolve relative to the manifest file location, not only the current shell directory

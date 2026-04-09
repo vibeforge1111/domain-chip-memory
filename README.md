@@ -202,12 +202,14 @@ python -m domain_chip_memory.cli memory-system-contracts
 Build a real Spark KB vault from a snapshot file or scaffold the demo vault:
 
 ```powershell
+python -m domain_chip_memory.cli validate-spark-kb-inputs path\\to\\snapshot.json --repo-source-manifest path\\to\\repo_sources.json --filed-output-manifest path\\to\\filed_outputs.json
 python -m domain_chip_memory.cli build-spark-kb path\\to\\snapshot.json path\\to\\vault --repo-source path\\to\\README.md --repo-source-manifest path\\to\\repo_sources.json --filed-output-file path\\to\\answer.json --filed-output-manifest path\\to\\filed_outputs.json
 python -m domain_chip_memory.cli demo-spark-kb path\\to\\demo_vault
 python -m domain_chip_memory.cli spark-kb-health-check path\\to\\vault
 ```
 
 Manifest entries are resolved relative to the manifest file location.
+`validate-spark-kb-inputs` now gives a preflight report for snapshot shape, manifest resolution, missing files, and filed-output payload parsing.
 `spark-kb-health-check` now also validates repo-source pages against `raw/repos/` copies and checks that filed query pages still contain their expected sections.
 `build-spark-kb` compile results now expose both `repo_source_count` and `filed_output_count`.
 
