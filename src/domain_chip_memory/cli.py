@@ -1521,6 +1521,56 @@ def _build_beam_judged_resume_batch(
     }
 
 
+def _build_beam_judged_promotion_plan(
+    *,
+    artifact_prefix: str,
+    answers_root: str | Path,
+    benchmark_runs_dir: str | Path,
+    evaluation_file_name: str,
+    repo_root: str | Path,
+) -> dict:
+    repo_root_path = Path(repo_root)
+    cleanup_report = _build_beam_judged_cleanup_report(
+        artifact_prefix=artifact_prefix,
+        answers_root=answers_root,
+        benchmark_runs_dir=benchmark_runs_dir,
+        evaluation_file_name=evaluation_file_name,
+        repo_root=repo_root,
+    )
+    promotion_targets = []
+    for manifest_row in cleanup_report["promotable_untracked_official_eval_manifests"]:
+        manifest_path = repo_root_path / Path(str(manifest_row["path"]))
+        payload = _load_json_file(manifest_path)
+        if not isinstance(payload, dict):
+            continue
+        evaluation_files = [
+            _display_path(Path(item), repo_root_path)
+            for item in payload.get("evaluation_files", [])
+            if str(item).strip()
+        ]
+        git_add_paths = [str(manifest_row["path"]), *evaluation_files]
+        promotion_targets.append(
+            {
+                "manifest_path": str(manifest_row["path"]),
+                "diagnostic_classification": str(manifest_row.get("diagnostic_classification") or ""),
+                "overall_average": manifest_row.get("overall_average"),
+                "evaluation_files": evaluation_files,
+                "git_add_paths": git_add_paths,
+                "git_add_command": ["git", "add", "--", *git_add_paths],
+                "git_add_command_shell": "git add -- " + " ".join(_shell_quote_arg(path) for path in git_add_paths),
+            }
+        )
+    return {
+        "benchmark_name": "BEAM",
+        "source_mode": "official_public_evaluation_promotion_plan",
+        "artifact_prefix": artifact_prefix,
+        "promotion_target_count": len(promotion_targets),
+        "promotion_targets": promotion_targets,
+        "excluded_modified_evaluation_drift_count": int(cleanup_report.get("modified_evaluation_drift_count") or 0),
+        "excluded_modified_evaluation_drift_files": list(cleanup_report.get("modified_evaluation_drift_files") or []),
+    }
+
+
 def _run_sdk_maintenance_checks(sdk: SparkMemorySDK, checks: dict | None) -> dict:
     payload = dict(checks or {})
     current_requests = payload.get("current_state", [])
@@ -1673,6 +1723,13 @@ def main() -> None:
     beam_judged_resume_batch.add_argument("--execute", action="store_true")
     beam_judged_resume_batch.add_argument("--only-runnable", action="store_true")
     beam_judged_resume_batch.add_argument("--write")
+    beam_judged_promotion_plan = subparsers.add_parser("beam-judged-promotion-plan", help="Build exact git add commands for promotable untracked judged BEAM manifests.")
+    beam_judged_promotion_plan.add_argument("--artifact-prefix", default="official_beam_128k_")
+    beam_judged_promotion_plan.add_argument("--answers-root", default="artifacts/beam_public_results")
+    beam_judged_promotion_plan.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
+    beam_judged_promotion_plan.add_argument("--evaluation-file-name", default="evaluation-domain_chip_memory_answers.json")
+    beam_judged_promotion_plan.add_argument("--repo-root", default=".")
+    beam_judged_promotion_plan.add_argument("--write")
     validate_spark_kb_inputs = subparsers.add_parser("validate-spark-kb-inputs", help="Validate Spark KB snapshot, repo-source, and filed-output inputs without compiling a vault.")
     validate_spark_kb_inputs.add_argument("snapshot_file")
     validate_spark_kb_inputs.add_argument("--repo-source", action="append", default=[])
@@ -2320,6 +2377,19 @@ def main() -> None:
             script_file=args.script_file,
             execute=args.execute,
             only_runnable=args.only_runnable,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "beam-judged-promotion-plan":
+        payload = _build_beam_judged_promotion_plan(
+            artifact_prefix=args.artifact_prefix,
+            answers_root=args.answers_root,
+            benchmark_runs_dir=args.benchmark_runs_dir,
+            evaluation_file_name=args.evaluation_file_name,
+            repo_root=args.repo_root,
         )
         if args.write:
             _write_json(Path(args.write), payload)
