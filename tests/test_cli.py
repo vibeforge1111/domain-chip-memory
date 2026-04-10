@@ -1,5 +1,6 @@
 import importlib
 import json
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -582,6 +583,66 @@ def test_spark_kb_health_report_tracks_repo_and_output_surfaces(tmp_path: Path):
     assert payload["output_pages_missing_sections"] == []
 
 
+def test_spark_kb_scaffold_truncates_overlong_evidence_slugs(tmp_path: Path):
+    output_dir = tmp_path / "spark_kb_vault"
+    long_text = (
+        "Spark is going to be an important part of this. I will first launch you and then we will launch "
+        "you, the Sparks Warm, Spark Builder, everything that is related to what we've been building over "
+        "here. I'm the founder of all these systems and then hopefully we will start to revive all the other things."
+    )
+    snapshot = {
+        "runtime_class": "SparkMemorySDK",
+        "generated_at": "2025-03-10T00:00:00+00:00",
+        "counts": {
+            "session_count": 1,
+            "current_state_count": 1,
+            "observation_count": 1,
+            "event_count": 0,
+        },
+        "sessions": [
+            {
+                "session_id": "session-long-slug",
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "turns": [
+                    {"turn_id": "session-long-slug:t1", "speaker": "user", "text": long_text},
+                ],
+            }
+        ],
+        "current_state": [
+            {
+                "memory_role": "current_state",
+                "subject": "user",
+                "predicate": "spark_role",
+                "text": long_text,
+                "session_id": "session-long-slug",
+                "turn_ids": ["session-long-slug:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "important part of the rebuild", "observation_id": long_text},
+            }
+        ],
+        "observations": [
+            {
+                "memory_role": "structured_evidence",
+                "subject": "user",
+                "predicate": "spark_role",
+                "text": long_text,
+                "session_id": "session-long-slug",
+                "turn_ids": ["session-long-slug:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "important part of the rebuild", "observation_id": long_text},
+            }
+        ],
+        "events": [],
+        "trace": {"operation": "export_knowledge_base_snapshot"},
+    }
+
+    result = scaffold_spark_knowledge_base(output_dir, snapshot)
+    evidence_files = [Path(path).name for path in result["files_written"] if path.startswith("wiki\\evidence\\")]
+
+    assert any(name.endswith(".md") and len(Path(name).stem) <= 80 for name in evidence_files)
+    assert (output_dir / "wiki" / "evidence" / "_index.md").exists()
+
+
 def test_spark_kb_health_report_surfaces_repo_and_output_integrity_gaps(tmp_path: Path):
     output_dir = tmp_path / "spark_kb_vault"
     repo_source = tmp_path / "NOTES.md"
@@ -879,6 +940,188 @@ def test_build_spark_kb_command_ingests_repo_sources_from_manifest(tmp_path: Pat
     assert (output_dir / "wiki" / "sources" / "repo-src-snippet.md").exists()
     assert (output_dir / "raw" / "repos" / "01-docs-note.md").exists()
     assert (output_dir / "raw" / "repos" / "02-src-snippet.py").exists()
+
+
+def test_build_spark_kb_from_shadow_replay_cli_compiles_kb_from_spark_flow(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "spark_shadow.json"
+    output_dir = tmp_path / "spark_shadow_kb"
+    output_file = tmp_path / "artifacts" / "spark_shadow_kb.json"
+    repo_source = tmp_path / "SPARK_NOTES.md"
+    repo_source.write_text("# Spark Notes\n\nShadow replay companion notes.\n", encoding="utf-8")
+    data_file.write_text(
+        json.dumps(
+            {
+                "writable_roles": ["user"],
+                "conversations": [
+                    {
+                        "conversation_id": "shadow-kb-1",
+                        "turns": [
+                            {
+                                "message_id": "m1",
+                                "role": "user",
+                                "content": "I live in Dubai.",
+                                "timestamp": "2025-03-01T09:00:00Z",
+                            },
+                            {
+                                "message_id": "m2",
+                                "role": "user",
+                                "content": "My favorite coffee is flat white.",
+                                "timestamp": "2025-03-02T09:00:00Z",
+                            },
+                        ],
+                        "probes": [
+                            {
+                                "probe_id": "p1",
+                                "probe_type": "current_state",
+                                "subject": "user",
+                                "predicate": "location",
+                                "expected_value": "Dubai",
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-kb-from-shadow-replay",
+            str(data_file),
+            str(output_dir),
+            "--repo-source",
+            str(repo_source),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["source_file"] == str(data_file)
+    assert payload["shadow_report"]["run_count"] == 1
+    assert payload["snapshot"]["runtime_class"] == "SparkMemorySDK"
+    assert payload["compile_result"]["repo_source_count"] == 1
+    assert payload["compile_result"]["filed_output_count"] == 3
+    assert payload["health_report"]["valid"] is True
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-conversation-shadow-kb-1.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
+    assert (output_dir / "wiki" / "sources" / "repo-spark-notes.md").exists()
+
+
+def test_build_spark_kb_from_shadow_replay_batch_cli_compiles_one_vault_for_directory(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "shadow_batch"
+    output_dir = tmp_path / "spark_shadow_batch_kb"
+    output_file = tmp_path / "artifacts" / "spark_shadow_batch_kb.json"
+    repo_source = tmp_path / "SPARK_BATCH_NOTES.md"
+    data_dir.mkdir()
+    repo_source.write_text("# Spark Batch Notes\n\nBatch replay companion notes.\n", encoding="utf-8")
+    (data_dir / "slice_a.json").write_text(
+        json.dumps(
+            {
+                "conversations": [
+                    {
+                        "conversation_id": "shadow-batch-a",
+                        "turns": [
+                            {
+                                "message_id": "m1",
+                                "role": "user",
+                                "content": "I live in Dubai.",
+                                "timestamp": "2025-03-01T09:00:00Z",
+                            }
+                        ],
+                        "probes": [
+                            {
+                                "probe_id": "p1",
+                                "probe_type": "current_state",
+                                "subject": "user",
+                                "predicate": "location",
+                                "expected_value": "Dubai",
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "slice_b.json").write_text(
+        json.dumps(
+            {
+                "conversations": [
+                    {
+                        "conversation_id": "shadow-batch-b",
+                        "turns": [
+                            {
+                                "message_id": "m1",
+                                "role": "user",
+                                "content": "My favorite coffee is flat white.",
+                                "timestamp": "2025-03-02T09:00:00Z",
+                                "metadata": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "favorite_coffee",
+                                    "value": "flat white",
+                                },
+                            }
+                        ],
+                        "probes": [
+                            {
+                                "probe_id": "p2",
+                                "probe_type": "evidence",
+                                "subject": "user",
+                                "predicate": "favorite_coffee",
+                                "expected_value": "flat white",
+                                "min_results": 1,
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-kb-from-shadow-replay-batch",
+            str(data_dir),
+            str(output_dir),
+            "--repo-source",
+            str(repo_source),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["source_dir"] == str(data_dir)
+    assert payload["source_files"] == [
+        str(data_dir / "slice_a.json"),
+        str(data_dir / "slice_b.json"),
+    ]
+    assert payload["shadow_report"]["run_count"] == 2
+    assert payload["snapshot"]["runtime_class"] == "SparkMemorySDK"
+    assert payload["compile_result"]["repo_source_count"] == 1
+    assert payload["compile_result"]["filed_output_count"] == 3
+    assert payload["health_report"]["valid"] is True
+    assert (output_dir / "wiki" / "current-state" / "user-location.md").exists()
+    assert (output_dir / "wiki" / "current-state" / "user-favorite-coffee.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-conversation-shadow-batch-a.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-conversation-shadow-batch-b.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
 
 
 def test_build_spark_kb_command_ingests_filed_outputs_from_manifest(tmp_path: Path, monkeypatch):
@@ -1406,6 +1649,1499 @@ def test_run_spark_shadow_report_cli_can_write_report(tmp_path: Path, monkeypatc
         },
     ]
     assert payload["report"]["conversation_rows"][0]["conversation_id"] == "shadow-1"
+
+
+def test_normalize_spark_builder_export_cli_can_write_normalized_shadow_payload(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "builder_export.json"
+    output_file = tmp_path / "artifacts" / "builder_export_normalized.json"
+    data_file.write_text(
+        json.dumps(
+            {
+                "writableRoles": ["user"],
+                "threads": [
+                    {
+                        "threadId": "builder-thread-1",
+                        "sessionId": "builder-session-1",
+                        "messages": [
+                            {
+                                "id": "m1",
+                                "speaker": "user",
+                                "text": "I live in Dubai.",
+                                "createdAt": "2025-03-01T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "location",
+                                    "value": "Dubai",
+                                },
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "normalize-spark-builder-export",
+            str(data_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["validation"]["valid"] is True
+    assert payload["normalized"]["writable_roles"] == ["user"]
+    assert payload["normalized"]["conversations"][0]["conversation_id"] == "builder-thread-1"
+    assert payload["normalized"]["conversations"][0]["turns"][0]["message_id"] == "m1"
+
+
+def test_normalize_spark_builder_export_batch_cli_can_write_normalized_payloads(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "builder_exports"
+    output_file = tmp_path / "artifacts" / "builder_export_batch_normalized.json"
+    data_dir.mkdir()
+
+    (data_dir / "thread_a.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-a",
+                        "messages": [
+                            {
+                                "id": "a1",
+                                "speaker": "user",
+                                "text": "I live in Dubai.",
+                                "createdAt": "2025-03-01T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "location",
+                                    "value": "Dubai",
+                                },
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "thread_b.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-b",
+                        "messages": [
+                            {
+                                "id": "b1",
+                                "speaker": "user",
+                                "text": "Hello there.",
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "normalize-spark-builder-export-batch",
+            str(data_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["valid"] is True
+    assert payload["file_count"] == 2
+    assert payload["source_normalizations"][0]["normalized"]["conversations"][0]["conversation_id"] == "builder-thread-a"
+    assert payload["source_normalizations"][1]["normalized"]["conversations"][0]["conversation_id"] == "builder-thread-b"
+
+
+def test_run_spark_shadow_report_from_builder_export_cli_can_write_report(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "builder_export.json"
+    output_file = tmp_path / "artifacts" / "builder_shadow_report.json"
+    data_file.write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-1",
+                        "messages": [
+                            {
+                                "id": "m1",
+                                "speaker": "user",
+                                "text": "I live in Dubai.",
+                                "createdAt": "2025-03-01T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "location",
+                                    "value": "Dubai",
+                                },
+                            },
+                            {
+                                "id": "m2",
+                                "speaker": "user",
+                                "text": "Hello there.",
+                                "createdAt": "2025-03-01T09:01:00Z",
+                            },
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-shadow-report-from-builder-export",
+            str(data_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["report"]["run_count"] == 1
+    assert payload["report"]["summary"]["accepted_writes"] == 1
+    assert payload["report"]["summary"]["rejected_writes"] == 1
+    assert payload["report"]["summary"]["unsupported_reasons"] == [
+        {"reason": "no_structured_memory_extracted", "count": 1}
+    ]
+
+
+def test_run_spark_shadow_report_from_builder_export_treats_bridge_reference_turns_as_non_friction(
+    tmp_path: Path,
+    monkeypatch,
+):
+    data_file = tmp_path / "builder_bridge_export.json"
+    output_file = tmp_path / "artifacts" / "builder_bridge_shadow_report.json"
+    data_file.write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-bridge",
+                        "messages": [
+                            {
+                                "id": "m1",
+                                "speaker": "user",
+                                "text": "My startup is Seedify.",
+                                "createdAt": "2026-04-10T11:45:08Z",
+                                "meta": {
+                                    "source_event_type": "memory_write_requested",
+                                    "operation": "update",
+                                    "subject": "human:telegram:test",
+                                    "predicate": "profile.startup_name",
+                                    "value": "Seedify",
+                                    "memory_role": "current_state",
+                                },
+                            },
+                            {
+                                "id": "m2",
+                                "speaker": "assistant",
+                                "text": "I'll remember you created Seedify.",
+                                "createdAt": "2026-04-10T11:45:08Z",
+                                "meta": {
+                                    "source_event_type": "tool_result_received",
+                                },
+                            },
+                            {
+                                "id": "m3",
+                                "speaker": "user",
+                                "text": "What is my startup?",
+                                "createdAt": "2026-04-10T11:45:09Z",
+                                "meta": {
+                                    "source_event_type": "plugin_or_chip_influence_recorded",
+                                },
+                            },
+                            {
+                                "id": "m4",
+                                "speaker": "assistant",
+                                "text": "You created Seedify.",
+                                "createdAt": "2026-04-10T11:45:09Z",
+                                "meta": {
+                                    "source_event_type": "tool_result_received",
+                                },
+                            },
+                        ],
+                        "probes": [
+                            {
+                                "id": "p1",
+                                "type": "current_state",
+                                "subject": "human:telegram:test",
+                                "predicate": "profile.startup_name",
+                                "expectedValue": "Seedify",
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-shadow-report-from-builder-export",
+            str(data_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["report"]["run_count"] == 1
+    assert payload["report"]["summary"]["accepted_writes"] == 1
+    assert payload["report"]["summary"]["rejected_writes"] == 0
+    assert payload["report"]["summary"]["skipped_turns"] == 0
+    assert payload["report"]["summary"]["reference_turns"] == 3
+    assert payload["report"]["summary"]["unsupported_reasons"] == []
+
+
+def test_build_spark_shadow_failure_taxonomy_from_builder_export_cli_can_write_taxonomy(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "builder_export.json"
+    output_file = tmp_path / "artifacts" / "builder_shadow_taxonomy.json"
+    data_file.write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-1",
+                        "messages": [
+                            {
+                                "id": "m1",
+                                "speaker": "user",
+                                "text": "I live in Dubai.",
+                                "createdAt": "2025-03-01T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "location",
+                                    "value": "Dubai",
+                                },
+                            },
+                            {
+                                "id": "m2",
+                                "speaker": "user",
+                                "text": "Hello there.",
+                                "createdAt": "2025-03-01T09:01:00Z",
+                            },
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-shadow-failure-taxonomy-from-builder-export",
+            str(data_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["source_mode"] == "builder_export"
+    assert payload["summary"]["dominant_unsupported_reason"] == "no_structured_memory_extracted"
+    assert "structured_extraction_gap" in payload["summary"]["issue_labels"]
+    assert "probe_coverage_gap" in payload["summary"]["issue_labels"]
+    assert payload["conversation_hotspots"][0]["conversation_id"] == "builder-thread-1"
+    assert payload["recommended_next_actions"][0]["label"] == "improve_structured_write_extraction"
+
+
+def test_build_spark_kb_from_builder_export_cli_compiles_kb_from_builder_aliases(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "builder_export.json"
+    output_dir = tmp_path / "spark_builder_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_kb.json"
+    data_file.write_text(
+        json.dumps(
+            {
+                "writableRoles": ["user"],
+                "threads": [
+                    {
+                        "threadId": "builder-thread-1",
+                        "sessionId": "builder-session-1",
+                        "messages": [
+                            {
+                                "id": "m1",
+                                "speaker": "user",
+                                "text": "I live in Dubai.",
+                                "createdAt": "2025-03-01T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "location",
+                                    "value": "Dubai",
+                                },
+                            },
+                            {
+                                "id": "m2",
+                                "speaker": "user",
+                                "text": "My favorite coffee is flat white.",
+                                "createdAt": "2025-03-02T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "favorite_coffee",
+                                    "value": "flat white",
+                                },
+                            },
+                        ],
+                        "probes": [
+                            {
+                                "id": "p1",
+                                "type": "current_state",
+                                "subject": "user",
+                                "predicate": "location",
+                                "expectedValue": "Dubai",
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-kb-from-builder-export",
+            str(data_file),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["shadow_report"]["run_count"] == 1
+    assert payload["snapshot"]["runtime_class"] == "SparkMemorySDK"
+    assert payload["compile_result"]["filed_output_count"] == 3
+    assert payload["health_report"]["valid"] is True
+    assert (output_dir / "wiki" / "current-state" / "user-location.md").exists()
+    assert (output_dir / "wiki" / "current-state" / "user-favorite-coffee.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
+
+
+def test_run_spark_shadow_report_from_builder_export_batch_cli_can_write_aggregate_report(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "builder_exports"
+    output_file = tmp_path / "artifacts" / "builder_shadow_batch_report.json"
+    data_dir.mkdir()
+
+    (data_dir / "thread_a.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-a",
+                        "messages": [
+                            {
+                                "id": "a1",
+                                "speaker": "user",
+                                "text": "I live in Dubai.",
+                                "createdAt": "2025-03-01T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "location",
+                                    "value": "Dubai",
+                                },
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "thread_b.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-b",
+                        "messages": [
+                            {
+                                "id": "b1",
+                                "speaker": "user",
+                                "text": "Hello there.",
+                                "createdAt": "2025-03-02T09:00:00Z",
+                            },
+                            {
+                                "id": "b2",
+                                "speaker": "user",
+                                "text": "My favorite coffee is flat white.",
+                                "createdAt": "2025-03-02T09:02:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "favorite_coffee",
+                                    "value": "flat white",
+                                },
+                            },
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-shadow-report-from-builder-export-batch",
+            str(data_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["contract"]["layer_name"] == "SparkBuilderShadowAdapter"
+    assert payload["report"]["run_count"] == 2
+    assert payload["report"]["summary"]["accepted_writes"] == 2
+    assert payload["report"]["summary"]["rejected_writes"] == 1
+    assert payload["source_files"] == [
+        str(data_dir / "thread_a.json"),
+        str(data_dir / "thread_b.json"),
+    ]
+    assert payload["source_reports"][1]["summary"]["unsupported_reasons"] == [
+        {"reason": "no_structured_memory_extracted", "count": 1}
+    ]
+
+
+def test_build_spark_shadow_failure_taxonomy_from_builder_export_batch_cli_can_write_aggregate_taxonomy(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "builder_exports"
+    output_file = tmp_path / "artifacts" / "builder_shadow_batch_taxonomy.json"
+    data_dir.mkdir()
+
+    (data_dir / "thread_a.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-a",
+                        "messages": [
+                            {
+                                "id": "a1",
+                                "speaker": "user",
+                                "text": "I live in Dubai.",
+                                "createdAt": "2025-03-01T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "location",
+                                    "value": "Dubai",
+                                },
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "thread_b.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-b",
+                        "messages": [
+                            {
+                                "id": "b1",
+                                "speaker": "assistant",
+                                "text": "Noted.",
+                                "createdAt": "2025-03-02T09:00:00Z",
+                            },
+                            {
+                                "id": "b2",
+                                "speaker": "user",
+                                "text": "Hello there.",
+                                "createdAt": "2025-03-02T09:01:00Z",
+                            },
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-shadow-failure-taxonomy-from-builder-export-batch",
+            str(data_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["source_mode"] == "builder_export_batch"
+    assert payload["summary"]["run_count"] == 2
+    assert payload["summary"]["dominant_unsupported_reason"] == "no_structured_memory_extracted"
+    assert "role_scope_gap" in payload["summary"]["issue_labels"]
+    assert "structured_extraction_gap" in payload["summary"]["issue_labels"]
+    assert payload["source_hotspots"][0]["file"] == str(data_dir / "thread_b.json")
+    assert payload["source_hotspots"][0]["friction_count"] == 2
+    assert any(row["label"] == "confirm_writable_role_policy" for row in payload["recommended_next_actions"])
+    assert any(row["label"] == "add_shadow_probes" for row in payload["recommended_next_actions"])
+
+
+def test_build_spark_kb_from_builder_export_batch_cli_compiles_one_vault_for_directory(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "builder_exports"
+    output_dir = tmp_path / "spark_builder_batch_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_batch_kb.json"
+    data_dir.mkdir()
+
+    (data_dir / "thread_a.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-a",
+                        "sessionId": "builder-session-a",
+                        "messages": [
+                            {
+                                "id": "a1",
+                                "speaker": "user",
+                                "text": "I live in Dubai.",
+                                "createdAt": "2025-03-01T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "location",
+                                    "value": "Dubai",
+                                },
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "thread_b.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-b",
+                        "sessionId": "builder-session-b",
+                        "messages": [
+                            {
+                                "id": "b1",
+                                "speaker": "user",
+                                "text": "Hello there.",
+                                "createdAt": "2025-03-02T09:00:00Z",
+                            },
+                            {
+                                "id": "b2",
+                                "speaker": "assistant",
+                                "text": "Noted.",
+                                "createdAt": "2025-03-02T09:01:00Z",
+                            },
+                            {
+                                "id": "b3",
+                                "speaker": "user",
+                                "text": "My favorite coffee is flat white.",
+                                "createdAt": "2025-03-02T09:02:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "favorite_coffee",
+                                    "value": "flat white",
+                                },
+                            },
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-kb-from-builder-export-batch",
+            str(data_dir),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["contract"]["layer_name"] == "SparkBuilderShadowAdapter"
+    assert payload["shadow_report"]["run_count"] == 2
+    assert payload["shadow_report"]["summary"]["accepted_writes"] == 2
+    assert payload["shadow_report"]["summary"]["rejected_writes"] == 1
+    assert payload["shadow_report"]["summary"]["skipped_turns"] == 1
+    assert payload["compile_result"]["filed_output_count"] == 3
+    assert payload["health_report"]["valid"] is True
+    assert payload["source_reports"][0]["summary"]["accepted_writes"] == 1
+    assert payload["source_reports"][1]["summary"]["unsupported_reasons"] == [
+        {"reason": "no_structured_memory_extracted", "count": 1}
+    ]
+    assert (output_dir / "wiki" / "current-state" / "user-location.md").exists()
+    assert (output_dir / "wiki" / "current-state" / "user-favorite-coffee.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
+
+
+def test_run_spark_builder_intake_batch_cli_runs_full_builder_flow(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "builder_exports"
+    output_dir = tmp_path / "spark_builder_intake_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_intake.json"
+    data_dir.mkdir()
+
+    (data_dir / "thread_a.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-a",
+                        "messages": [
+                            {
+                                "id": "a1",
+                                "speaker": "user",
+                                "text": "I live in Dubai.",
+                                "createdAt": "2025-03-01T09:00:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "location",
+                                    "value": "Dubai",
+                                },
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "thread_b.json").write_text(
+        json.dumps(
+            {
+                "threads": [
+                    {
+                        "threadId": "builder-thread-b",
+                        "messages": [
+                            {
+                                "id": "b1",
+                                "speaker": "assistant",
+                                "text": "Noted.",
+                                "createdAt": "2025-03-02T09:00:00Z",
+                            },
+                            {
+                                "id": "b2",
+                                "speaker": "user",
+                                "text": "Hello there.",
+                                "createdAt": "2025-03-02T09:01:00Z",
+                            },
+                            {
+                                "id": "b3",
+                                "speaker": "user",
+                                "text": "My favorite coffee is flat white.",
+                                "createdAt": "2025-03-02T09:02:00Z",
+                                "meta": {
+                                    "operation": "create",
+                                    "subject": "user",
+                                    "predicate": "favorite_coffee",
+                                    "value": "flat white",
+                                },
+                            },
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-intake-batch",
+            str(data_dir),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["summary"]["file_count"] == 2
+    assert payload["summary"]["valid_builder_exports"] is True
+    assert payload["summary"]["accepted_writes"] == 2
+    assert payload["summary"]["rejected_writes"] == 1
+    assert payload["summary"]["skipped_turns"] == 1
+    assert payload["summary"]["dominant_unsupported_reason"] == "no_structured_memory_extracted"
+    assert "role_scope_gap" in payload["summary"]["issue_labels"]
+    assert "structured_extraction_gap" in payload["summary"]["issue_labels"]
+    assert payload["summary"]["kb_valid"] is True
+    assert payload["summary"]["kb_filed_output_count"] == 4
+    assert payload["kb"]["health_report"]["valid"] is True
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
+
+
+def test_normalize_spark_telegram_export_cli_can_write_normalized_shadow_payload(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "telegram_export.json"
+    output_file = tmp_path / "artifacts" / "telegram_normalized.json"
+    data_file.write_text(
+        json.dumps(
+            {
+                "result": [
+                    {
+                        "update_id": 101,
+                        "message": {
+                            "message_id": 11,
+                            "date": "2025-03-01T09:00:00Z",
+                            "chat": {"id": -1001, "title": "Spark Lab", "type": "supergroup"},
+                            "from": {"id": 501, "is_bot": False, "username": "alice", "first_name": "Alice"},
+                            "text": "I live in Dubai.",
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "normalize-spark-telegram-export",
+            str(data_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["contract"]["layer_name"] == "SparkTelegramShadowAdapter"
+    assert payload["validation"]["valid"] is True
+    assert payload["normalized"]["conversations"][0]["conversation_id"] == "telegram-chat--1001"
+    assert payload["normalized"]["conversations"][0]["turns"][0]["role"] == "user"
+
+
+def test_run_spark_telegram_intake_batch_cli_runs_full_telegram_flow(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "telegram_exports"
+    output_dir = tmp_path / "spark_telegram_intake_kb"
+    output_file = tmp_path / "artifacts" / "spark_telegram_intake.json"
+    data_dir.mkdir()
+
+    (data_dir / "chat_a.json").write_text(
+        json.dumps(
+            {
+                "result": [
+                    {
+                        "update_id": 201,
+                        "message": {
+                            "message_id": 21,
+                            "date": "2025-03-01T09:00:00Z",
+                            "chat": {"id": -1001, "title": "Spark Lab", "type": "supergroup"},
+                            "from": {"id": 501, "is_bot": False, "username": "alice", "first_name": "Alice"},
+                            "text": "I live in Dubai.",
+                        },
+                    },
+                    {
+                        "update_id": 202,
+                        "message": {
+                            "message_id": 22,
+                            "date": "2025-03-01T09:01:00Z",
+                            "chat": {"id": -1001, "title": "Spark Lab", "type": "supergroup"},
+                            "from": {"id": 900, "is_bot": True, "username": "spark_bot", "first_name": "Spark"},
+                            "text": "Noted.",
+                        },
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "chat_b.json").write_text(
+        json.dumps(
+            {
+                "result": [
+                    {
+                        "update_id": 301,
+                        "message": {
+                            "message_id": 31,
+                            "date": "2025-03-02T09:00:00Z",
+                            "chat": {"id": -1002, "title": "Spark Notes", "type": "private"},
+                            "from": {"id": 777, "is_bot": False, "username": "bob", "first_name": "Bob"},
+                            "text": "Hello there.",
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-telegram-intake-batch",
+            str(data_dir),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["contract"]["layer_name"] == "SparkTelegramShadowAdapter"
+    assert payload["summary"]["file_count"] == 2
+    assert payload["summary"]["valid_telegram_exports"] is True
+    assert payload["summary"]["run_count"] == 2
+    assert payload["summary"]["accepted_writes"] == 1
+    assert payload["summary"]["rejected_writes"] == 1
+    assert payload["summary"]["skipped_turns"] == 1
+    assert "structured_extraction_gap" in payload["summary"]["issue_labels"]
+    assert "probe_coverage_gap" in payload["summary"]["issue_labels"]
+    assert payload["summary"]["kb_valid"] is True
+    assert payload["summary"]["kb_filed_output_count"] == 4
+    assert payload["kb"]["health_report"]["valid"] is True
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
+
+
+def test_run_spark_builder_telegram_intake_cli_scans_builder_tmp_updates(tmp_path: Path, monkeypatch):
+    builder_dir = tmp_path / "spark-intelligence-builder"
+    output_dir = tmp_path / "spark_builder_telegram_intake_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_telegram_intake.json"
+    builder_dir.mkdir()
+
+    (builder_dir / ".tmp-telegram-allowed.json").write_text(
+        json.dumps(
+            {
+                "update_id": 1001,
+                "message": {
+                    "message_id": 7,
+                    "date": "2025-03-01T09:00:00Z",
+                    "from": {"id": 12345, "username": "allowed_user"},
+                    "chat": {"id": 12345, "type": "private"},
+                    "text": "I live in Dubai.",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (builder_dir / ".tmp-telegram-vibeship.json").write_text(
+        json.dumps(
+            {
+                "update_id": 4002,
+                "message": {
+                    "message_id": 4002,
+                    "date": "2025-03-02T09:00:00Z",
+                    "chat": {"id": 12345, "type": "private"},
+                    "from": {"id": 12345, "is_bot": False, "first_name": "Test"},
+                    "text": "Hello there.",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-telegram-intake",
+            str(builder_dir),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["builder_source_dir"] == str(builder_dir)
+    assert payload["summary"]["builder_artifact_glob"] == ".tmp-telegram-*.json"
+    assert payload["summary"]["file_count"] == 2
+    assert payload["summary"]["valid_telegram_exports"] is True
+    assert payload["summary"]["accepted_writes"] == 1
+    assert payload["summary"]["rejected_writes"] == 1
+    assert payload["summary"]["skipped_turns"] == 0
+    assert payload["kb"]["health_report"]["valid"] is True
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
+
+
+def test_run_spark_builder_state_telegram_intake_cli_reads_builder_state_db(tmp_path: Path, monkeypatch):
+    builder_home = tmp_path / "builder-home"
+    output_dir = tmp_path / "spark_builder_state_telegram_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_telegram.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-1",
+                    "intent_committed",
+                    "event",
+                    "telegram",
+                    "telegram_runtime",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    None,
+                    None,
+                    "telegram",
+                    "chat-12345",
+                    "12345",
+                    None,
+                    None,
+                    "runtime",
+                    "info",
+                    "committed",
+                    "Captured inbound Telegram message",
+                    None,
+                    None,
+                    json.dumps({"chat_id": "12345", "telegram_user_id": "12345", "update_id": 9001, "message_text": "I live in Dubai."}),
+                    "2026-04-09 20:19:27",
+                ),
+                (
+                    "evt-2",
+                    "delivery_succeeded",
+                    "event",
+                    "telegram",
+                    "telegram_runtime",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    None,
+                    None,
+                    "telegram",
+                    "chat-12345",
+                    "12345",
+                    None,
+                    None,
+                    "runtime",
+                    "info",
+                    "delivered",
+                    "Delivered Telegram reply",
+                    None,
+                    None,
+                    json.dumps({"chat_id": "12345", "telegram_user_id": "12345", "update_id": 9001, "delivered_text": "Got it."}),
+                    "2026-04-09 20:19:50",
+                ),
+                (
+                    "evt-3",
+                    "intent_committed",
+                    "event",
+                    "telegram",
+                    "telegram_runtime",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    None,
+                    None,
+                    "telegram",
+                    "chat-12345",
+                    "12345",
+                    None,
+                    None,
+                    "runtime",
+                    "info",
+                    "committed",
+                    "Captured inbound Telegram message",
+                    None,
+                    None,
+                    json.dumps({"chat_id": "12345", "telegram_user_id": "12345", "update_id": 9002, "message_text": "Hello there."}),
+                    "2026-04-09 20:20:27",
+                ),
+                (
+                    "evt-4",
+                    "intent_committed",
+                    "event",
+                    "telegram",
+                    "telegram_runtime",
+                    "run-3",
+                    None,
+                    "corr-3",
+                    None,
+                    None,
+                    "telegram",
+                    "chat-99999",
+                    "99999",
+                    None,
+                    None,
+                    "runtime",
+                    "info",
+                    "committed",
+                    "Captured unrelated inbound Telegram message",
+                    None,
+                    None,
+                    json.dumps({"chat_id": "99999", "telegram_user_id": "99999", "update_id": 9010, "message_text": "I like pizza."}),
+                    "2026-04-09 20:21:27",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--chat-id",
+            "12345",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["builder_home"] == str(builder_home)
+    assert payload["state_db"] == str(state_db)
+    assert payload["contract"]["layer_name"] == "SparkBuilderTelegramStateDBAdapter"
+    assert payload["normalization"]["selected_chat_id"] == "12345"
+    assert "12345" in payload["normalization"]["available_chat_ids"]
+    assert "99999" in payload["normalization"]["available_chat_ids"]
+    assert payload["normalization"]["validation"]["valid"] is True
+    assert payload["summary"]["conversation_count"] == 1
+    assert payload["summary"]["selected_chat_id"] == "12345"
+    assert payload["summary"]["accepted_writes"] == 1
+    assert payload["summary"]["rejected_writes"] == 1
+    assert payload["summary"]["skipped_turns"] == 1
+    assert payload["summary"]["rejected_user_turn_count"] == 1
+    assert payload["turn_audit"]["summary"]["rejected_user_turn_count"] == 1
+    assert payload["summary"]["kb_valid"] is True
+    assert payload["compile_result"]["filed_output_count"] == 4
+    assert payload["health_report"]["valid"] is True
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-turn-audit.md").exists()
+
+
+def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder_state_db(tmp_path: Path, monkeypatch):
+    builder_home = tmp_path / "builder-home-bridge"
+    output_dir = tmp_path / "spark_builder_state_bridge_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_bridge.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-write-1",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.startup_name",
+                                    "value": "Seedify",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "My startup is Seedify.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-10 11:41:53",
+                ),
+                (
+                    "evt-write-1-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-10 11:41:53",
+                ),
+                (
+                    "evt-write-1-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge acknowledged a profile fact update directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_profile_fact_update",
+                            "routing_decision": "memory_profile_fact_observation",
+                            "predicate": "profile.startup_name",
+                            "value": "Seedify",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-10 11:41:54",
+                ),
+                (
+                    "evt-query-1",
+                    "plugin_or_chip_influence_recorded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Personality influence was recorded before bridge execution.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "detected_profile_fact_query": {
+                                "fact_name": "profile_startup_name",
+                                "label": "startup",
+                                "predicate": "profile.startup_name",
+                            }
+                        }
+                    ),
+                    "2026-04-10 11:45:09",
+                ),
+                (
+                    "evt-query-1-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge answered a single-fact profile query directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_profile_fact",
+                            "routing_decision": "memory_profile_fact_query",
+                            "predicate": "profile.startup_name",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-10 11:45:09",
+                ),
+                (
+                    "evt-other-chat",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-3",
+                    None,
+                    "corr-3",
+                    "req-3",
+                    "trace-3",
+                    "telegram",
+                    "session:telegram:dm:99999",
+                    "human:telegram:99999",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:99999",
+                                    "predicate": "profile.city",
+                                    "value": "Dubai",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "I live in Dubai.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-10 11:46:00",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--chat-id",
+            "12345",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    turns = payload["normalization"]["normalized"]["conversations"][0]["turns"]
+    assert payload["builder_home"] == str(builder_home)
+    assert payload["state_db"] == str(state_db)
+    assert payload["normalization"]["selected_chat_id"] == "12345"
+    assert "12345" in payload["normalization"]["available_chat_ids"]
+    assert "99999" in payload["normalization"]["available_chat_ids"]
+    assert payload["normalization"]["validation"]["valid"] is True
+    assert [turn["content"] for turn in turns] == [
+        "My startup is Seedify.",
+        "I'll remember you created Seedify.",
+        "What is my startup?",
+        "Your startup is Seedify.",
+    ]
+    assert payload["summary"]["conversation_count"] == 1
+    assert payload["summary"]["selected_chat_id"] == "12345"
+    assert payload["summary"]["accepted_writes"] == 1
+    assert payload["summary"]["rejected_writes"] == 0
+    assert payload["summary"]["skipped_turns"] == 0
+    assert payload["summary"]["reference_turns"] == 3
+    assert payload["summary"]["reference_turn_count"] == 3
+    assert payload["turn_audit"]["summary"]["rejected_user_turn_count"] == 0
+    assert payload["turn_audit"]["summary"]["reference_turn_count"] == 3
+    assert payload["summary"]["kb_valid"] is True
+    assert payload["compile_result"]["filed_output_count"] == 4
+    assert payload["health_report"]["valid"] is True
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
+    assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-turn-audit.md").exists()
 
 
 def test_run_spark_shadow_report_batch_cli_can_aggregate_directory(tmp_path: Path, monkeypatch):

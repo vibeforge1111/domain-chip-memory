@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import re
+import sqlite3
 import subprocess
 import sys
 from dataclasses import asdict, replace
@@ -52,9 +53,13 @@ from .spark_shadow import (
     SparkShadowIngestRequest,
     SparkShadowProbe,
     SparkShadowTurn,
+    build_builder_shadow_adapter_contract_summary,
     build_shadow_ingest_contract_summary,
     build_shadow_report,
     build_shadow_replay_contract_summary,
+    normalize_builder_shadow_export_payload,
+    normalize_telegram_bot_export_payload,
+    build_telegram_shadow_adapter_contract_summary,
     validate_shadow_replay_payload,
 )
 from .spark_integration import build_spark_integration_contract_summary
@@ -269,19 +274,24 @@ def _build_demo_shadow_report_payload() -> dict:
     }
 
 
-def _load_shadow_evaluations(data_file: str) -> list:
-    payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
+def _execute_shadow_replay_payload(
+    payload: object,
+    *,
+    adapter: SparkShadowIngestAdapter | None = None,
+) -> tuple[list, SparkShadowIngestAdapter]:
     if not isinstance(payload, dict):
         raise ValueError("Shadow replay file must contain a JSON object.")
     raw_conversations = payload.get("conversations", [])
     if not isinstance(raw_conversations, list):
         raise ValueError("Shadow replay file must contain a conversations list.")
 
-    writable_roles = payload.get("writable_roles")
-    if isinstance(writable_roles, list):
-        adapter = SparkShadowIngestAdapter(writable_roles=tuple(str(role) for role in writable_roles))
-    else:
-        adapter = SparkShadowIngestAdapter()
+    active_adapter = adapter
+    if active_adapter is None:
+        writable_roles = payload.get("writable_roles")
+        if isinstance(writable_roles, list):
+            active_adapter = SparkShadowIngestAdapter(writable_roles=tuple(str(role) for role in writable_roles))
+        else:
+            active_adapter = SparkShadowIngestAdapter()
 
     evaluations = []
     for index, item in enumerate(raw_conversations):
@@ -315,7 +325,7 @@ def _load_shadow_evaluations(data_file: str) -> list:
             for probe in item.get("probes", [])
             if isinstance(probe, dict)
         ]
-        ingest_result = adapter.ingest_conversation(
+        ingest_result = active_adapter.ingest_conversation(
             SparkShadowIngestRequest(
                 conversation_id=conversation_id,
                 session_id=str(item.get("session_id")) if item.get("session_id") is not None else None,
@@ -323,8 +333,18 @@ def _load_shadow_evaluations(data_file: str) -> list:
                 metadata=dict(item.get("metadata", {})),
             )
         )
-        evaluations.append(adapter.evaluate_ingest(ingest_result, probes=probes))
+        evaluations.append(active_adapter.evaluate_ingest(ingest_result, probes=probes))
 
+    return evaluations, active_adapter
+
+
+def _execute_shadow_replay(data_file: str) -> tuple[list, SparkShadowIngestAdapter]:
+    payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
+    return _execute_shadow_replay_payload(payload)
+
+
+def _load_shadow_evaluations(data_file: str) -> list:
+    evaluations, _ = _execute_shadow_replay(data_file)
     return evaluations
 
 
@@ -340,11 +360,1662 @@ def _load_shadow_report_payload(data_file: str) -> dict:
     return _build_shadow_report_payload_from_evaluations(_load_shadow_evaluations(data_file))
 
 
+def _build_shadow_report_filed_outputs(shadow_payload: dict) -> list[dict]:
+    report = dict(shadow_payload.get("report", {}))
+    summary = dict(report.get("summary", {}))
+    conversation_rows = list(report.get("conversation_rows", []))
+    probe_rows = list(summary.get("probe_rows", []))
+    unsupported_reasons = list(summary.get("unsupported_reasons", []))
+
+    probe_lines = [
+        (
+            f"`{row.get('probe_type', 'unknown')}` "
+            f"hits `{row.get('hits', 0)}/{row.get('total', 0)}` "
+            f"(match `{row.get('expected_matches', 0)}/{row.get('expected_total', 0)}`)"
+        )
+        for row in probe_rows
+    ]
+    unsupported_lines = [
+        f"`{row.get('reason', 'unknown')}` x{row.get('count', 0)}"
+        for row in unsupported_reasons
+    ]
+    conversation_lines = [
+        (
+            f"`{row.get('conversation_id', 'unknown')}` accepted `{row.get('accepted_writes', 0)}`, "
+            f"rejected `{row.get('rejected_writes', 0)}`, skipped `{row.get('skipped_turns', 0)}`, "
+            f"reference `{row.get('reference_turns', 0)}`"
+        )
+        for row in conversation_rows
+    ]
+
+    filed_outputs: list[dict] = [
+        {
+            "title": "Spark Shadow Run Summary",
+            "slug": "spark-shadow-run-summary",
+            "question": "What happened in the current Spark shadow replay run?",
+            "answer": (
+                f"Processed {report.get('run_count', 0)} conversation runs with "
+                f"{summary.get('accepted_writes', 0)} accepted writes, "
+                f"{summary.get('rejected_writes', 0)} rejected writes, and "
+                f"{summary.get('skipped_turns', 0)} skipped turns, plus "
+                f"{summary.get('reference_turns', 0)} reference turns."
+            ),
+            "explanation": (
+                "This filed output summarizes the governed Spark shadow replay so the KB can expose "
+                "write acceptance, rejection, and probe coverage alongside the runtime snapshot."
+            ),
+            "memory_role": "shadow_report",
+            "provenance": [
+                *conversation_lines,
+                *([f"Probe coverage: {line}" for line in probe_lines] or ["Probe coverage: none recorded."]),
+                *([f"Unsupported reasons: {line}" for line in unsupported_lines] or ["Unsupported reasons: none recorded."]),
+            ],
+        }
+    ]
+
+    for row in conversation_rows:
+        conversation_id = str(row.get("conversation_id") or "unknown").strip() or "unknown"
+        filed_outputs.append(
+            {
+                "title": f"Spark Shadow Conversation {conversation_id}",
+                "slug": f"spark-shadow-conversation-{conversation_id}",
+                "question": f"How did Spark shadow conversation {conversation_id} perform?",
+                "answer": (
+                    f"Conversation {conversation_id} produced {row.get('accepted_writes', 0)} accepted writes, "
+                    f"{row.get('rejected_writes', 0)} rejected writes, {row.get('skipped_turns', 0)} skipped turns, "
+                    f"and {row.get('reference_turns', 0)} reference turns."
+                ),
+                "explanation": (
+                    "This filed output preserves one Spark-facing conversation summary inside the KB so replay results "
+                    "and governed memory pages can be inspected together."
+                ),
+                "memory_role": "shadow_report",
+                "provenance": [
+                    f"`{conversation_id}`",
+                    f"Accepted writes: `{row.get('accepted_writes', 0)}`",
+                    f"Rejected writes: `{row.get('rejected_writes', 0)}`",
+                    f"Skipped turns: `{row.get('skipped_turns', 0)}`",
+                    f"Reference turns: `{row.get('reference_turns', 0)}`",
+                ],
+            }
+        )
+    return filed_outputs
+
+
+def _build_shadow_failure_taxonomy_filed_outputs(shadow_payload: dict) -> list[dict]:
+    taxonomy = _build_shadow_failure_taxonomy_payload(
+        shadow_payload,
+        source_mode="compiled_shadow_report",
+    )
+    summary = dict(taxonomy.get("summary", {}))
+    issue_buckets = list(taxonomy.get("issue_buckets", []))
+    conversation_hotspots = list(taxonomy.get("conversation_hotspots", []))
+    recommended_next_actions = list(taxonomy.get("recommended_next_actions", []))
+
+    issue_lines = [
+        f"`{row.get('label', 'unknown')}` x{row.get('count', 0)} ({row.get('severity', 'unknown')})"
+        for row in issue_buckets
+    ]
+    hotspot_lines = [
+        (
+            f"`{row.get('conversation_id', 'unknown')}` friction `{row.get('friction_count', 0)}` "
+            f"(rejected `{row.get('rejected_writes', 0)}`, skipped `{row.get('skipped_turns', 0)}`)"
+        )
+        for row in conversation_hotspots[:3]
+    ]
+    next_action_lines = [
+        f"`{row.get('label', 'unknown')}`: {row.get('rationale', '')}"
+        for row in recommended_next_actions
+    ]
+    return [
+        {
+            "title": "Spark Shadow Failure Taxonomy",
+            "slug": "spark-shadow-failure-taxonomy",
+            "question": "What are the main Spark shadow replay failure modes right now?",
+            "answer": (
+                f"The current replay batch has {summary.get('rejected_writes', 0)} rejected writes and "
+                f"{summary.get('skipped_turns', 0)} skipped turns, led by "
+                f"`{summary.get('dominant_unsupported_reason') or 'no dominant unsupported reason'}`."
+            ),
+            "explanation": (
+                "This filed output turns the replay diagnostics into a compact operator-facing failure dossier "
+                "inside the KB so the visible vault carries both the memory state and the current integration gaps."
+            ),
+            "memory_role": "shadow_report",
+            "provenance": [
+                *([f"Issue bucket: {line}" for line in issue_lines] or ["Issue bucket: none recorded."]),
+                *([f"Conversation hotspot: {line}" for line in hotspot_lines] or ["Conversation hotspot: none recorded."]),
+                *([f"Next action: {line}" for line in next_action_lines] or ["Next action: none recorded."]),
+            ],
+        }
+    ]
+
+
+def _build_shadow_turn_audit_payload(shadow_payload: dict, *, top_n: int = 20) -> dict:
+    evaluations = list(shadow_payload.get("evaluations", []))
+    turn_rows: list[dict] = []
+    for evaluation in evaluations:
+        if not isinstance(evaluation, dict):
+            continue
+        conversation_id = str(evaluation.get("conversation_id") or "unknown")
+        session_id = str(evaluation.get("session_id") or conversation_id)
+        trace_payload = evaluation.get("trace", {})
+        if not isinstance(trace_payload, dict):
+            continue
+        raw_turn_traces = trace_payload.get("turn_traces", [])
+        if not isinstance(raw_turn_traces, list):
+            continue
+        for item in raw_turn_traces:
+            if not isinstance(item, dict):
+                continue
+            trace = item.get("trace", {})
+            trace = trace if isinstance(trace, dict) else {}
+            write_trace = trace.get("write_trace", {})
+            write_trace = write_trace if isinstance(write_trace, dict) else {}
+            turn_rows.append(
+                {
+                    "conversation_id": conversation_id,
+                    "session_id": session_id,
+                    "message_id": str(item.get("message_id") or ""),
+                    "turn_id": str(item.get("turn_id") or ""),
+                    "role": str(item.get("role") or ""),
+                    "action": str(item.get("action") or ""),
+                    "accepted": bool(item.get("accepted", False)),
+                    "unsupported_reason": (
+                        str(item.get("unsupported_reason"))
+                        if item.get("unsupported_reason") is not None
+                        else None
+                    ),
+                    "content": str(trace.get("content") or ""),
+                    "timestamp": str(trace.get("timestamp") or ""),
+                    "write_kind": str(write_trace.get("write_kind") or ""),
+                    "write_operation": str(write_trace.get("write_operation") or ""),
+                    "persisted": bool(write_trace.get("persisted", False)),
+                }
+            )
+
+    rejected_user_turns = [
+        row for row in turn_rows if row["role"] == "user" and row["action"] == "rejected_write"
+    ]
+    skipped_turns = [row for row in turn_rows if row["action"] == "skipped_role"]
+    reference_turns = [row for row in turn_rows if row["action"] == "reference_turn"]
+    accepted_user_turns = [row for row in turn_rows if row["role"] == "user" and row["accepted"]]
+
+    def _rank_key(row: dict) -> tuple[str, str, str]:
+        return (
+            str(row.get("unsupported_reason") or ""),
+            str(row.get("conversation_id") or ""),
+            str(row.get("message_id") or ""),
+        )
+
+    rejected_user_turns = sorted(rejected_user_turns, key=_rank_key)
+    skipped_turns = sorted(skipped_turns, key=_rank_key)
+    reference_turns = sorted(reference_turns, key=_rank_key)
+    accepted_user_turns = sorted(accepted_user_turns, key=_rank_key)
+
+    return {
+        "summary": {
+            "turn_count": len(turn_rows),
+            "accepted_user_turn_count": len(accepted_user_turns),
+            "rejected_user_turn_count": len(rejected_user_turns),
+            "skipped_turn_count": len(skipped_turns),
+            "reference_turn_count": len(reference_turns),
+        },
+        "top_rejected_user_turns": rejected_user_turns[:top_n],
+        "top_skipped_turns": skipped_turns[:top_n],
+        "top_reference_turns": reference_turns[:top_n],
+        "top_accepted_user_turns": accepted_user_turns[:top_n],
+        "trace": {
+            "operation": "build_shadow_turn_audit",
+            "top_n": top_n,
+        },
+    }
+
+
+def _build_shadow_turn_audit_filed_outputs(shadow_payload: dict, *, top_n: int = 10) -> list[dict]:
+    audit = _build_shadow_turn_audit_payload(shadow_payload, top_n=top_n)
+    rejected_turns = list(audit.get("top_rejected_user_turns", []))
+    skipped_turns = list(audit.get("top_skipped_turns", []))
+    reference_turns = list(audit.get("top_reference_turns", []))
+    accepted_turns = list(audit.get("top_accepted_user_turns", []))
+    summary = dict(audit.get("summary", {}))
+
+    rejected_lines = [
+        (
+            f"`{row.get('conversation_id', 'unknown')}` `{row.get('message_id', 'unknown')}` "
+            f"reason `{row.get('unsupported_reason') or 'unknown'}`: {row.get('content', '')}"
+        )
+        for row in rejected_turns
+    ]
+    skipped_lines = [
+        (
+            f"`{row.get('conversation_id', 'unknown')}` `{row.get('message_id', 'unknown')}` "
+            f"role `{row.get('role', 'unknown')}` skipped: {row.get('content', '')}"
+        )
+        for row in skipped_turns
+    ]
+    reference_lines = [
+        (
+            f"`{row.get('conversation_id', 'unknown')}` `{row.get('message_id', 'unknown')}` "
+            f"role `{row.get('role', 'unknown')}` reference: {row.get('content', '')}"
+        )
+        for row in reference_turns
+    ]
+    accepted_lines = [
+        (
+            f"`{row.get('conversation_id', 'unknown')}` `{row.get('message_id', 'unknown')}` "
+            f"accepted `{row.get('write_kind', 'unknown')}`: {row.get('content', '')}"
+        )
+        for row in accepted_turns
+    ]
+    return [
+        {
+            "title": "Spark Shadow Turn Audit",
+            "slug": "spark-shadow-turn-audit",
+            "question": "Which Spark shadow turns are being accepted, rejected, or skipped right now?",
+            "answer": (
+                f"The current replay includes {summary.get('rejected_user_turn_count', 0)} rejected user turns, "
+                f"{summary.get('skipped_turn_count', 0)} skipped turns, and "
+                f"{summary.get('reference_turn_count', 0)} reference turns, plus "
+                f"{summary.get('accepted_user_turn_count', 0)} accepted user turns."
+            ),
+            "explanation": (
+                "This filed output lists concrete turn-level examples so operators can inspect which Telegram or Spark "
+                "messages are failing structured memory extraction instead of reasoning only from aggregate counts."
+            ),
+            "memory_role": "shadow_report",
+            "provenance": [
+                *([f"Rejected turn: {line}" for line in rejected_lines] or ["Rejected turn: none recorded."]),
+                *([f"Skipped turn: {line}" for line in skipped_lines] or ["Skipped turn: none recorded."]),
+                *([f"Reference turn: {line}" for line in reference_lines] or ["Reference turn: none recorded."]),
+                *([f"Accepted turn: {line}" for line in accepted_lines] or ["Accepted turn: none recorded."]),
+            ],
+        }
+    ]
+
+
+def _build_shadow_failure_taxonomy_payload(
+    shadow_payload: dict,
+    *,
+    source_mode: str,
+    source_file: str | None = None,
+    source_dir: str | None = None,
+    source_files: list[str] | None = None,
+    source_reports: list[dict] | None = None,
+    contract: dict | None = None,
+) -> dict:
+    report = dict(shadow_payload.get("report", {}))
+    summary = dict(report.get("summary", {}))
+    conversation_rows = list(report.get("conversation_rows", []))
+    probe_rows = list(summary.get("probe_rows", []))
+    unsupported_reasons = list(summary.get("unsupported_reasons", []))
+    source_reports = list(source_reports or [])
+    source_files = list(source_files or [])
+
+    accepted_writes = int(summary.get("accepted_writes", 0) or 0)
+    rejected_writes = int(summary.get("rejected_writes", 0) or 0)
+    skipped_turns = int(summary.get("skipped_turns", 0) or 0)
+    reference_turns = int(summary.get("reference_turns", 0) or 0)
+    total_turns = int(summary.get("total_turns", accepted_writes + rejected_writes + skipped_turns + reference_turns) or 0)
+    unsupported_total = sum(int(row.get("count", 0) or 0) for row in unsupported_reasons)
+    dominant_unsupported_row = max(
+        unsupported_reasons,
+        key=lambda row: (int(row.get("count", 0) or 0), str(row.get("reason", "") or "")),
+        default=None,
+    )
+
+    conversation_hotspots = sorted(
+        [
+            {
+                **dict(row),
+                "friction_count": int(row.get("rejected_writes", 0) or 0) + int(row.get("skipped_turns", 0) or 0),
+                "friction_rate": round(
+                    (
+                        int(row.get("rejected_writes", 0) or 0) + int(row.get("skipped_turns", 0) or 0)
+                    )
+                    / max(
+                        1,
+                        int(row.get("accepted_writes", 0) or 0)
+                        + int(row.get("rejected_writes", 0) or 0)
+                        + int(row.get("skipped_turns", 0) or 0),
+                    ),
+                    4,
+                ),
+            }
+            for row in conversation_rows
+        ],
+        key=lambda row: (
+            int(row.get("friction_count", 0) or 0),
+            int(row.get("rejected_writes", 0) or 0),
+            int(row.get("skipped_turns", 0) or 0),
+            str(row.get("conversation_id", "") or ""),
+        ),
+        reverse=True,
+    )
+
+    source_hotspots = sorted(
+        [
+            {
+                **dict(row),
+                "friction_count": int(row.get("summary", {}).get("rejected_writes", 0) or 0)
+                + int(row.get("summary", {}).get("skipped_turns", 0) or 0),
+                "accepted_writes": int(row.get("summary", {}).get("accepted_writes", 0) or 0),
+                "rejected_writes": int(row.get("summary", {}).get("rejected_writes", 0) or 0),
+                "skipped_turns": int(row.get("summary", {}).get("skipped_turns", 0) or 0),
+                "reference_turns": int(row.get("summary", {}).get("reference_turns", 0) or 0),
+            }
+            for row in source_reports
+        ],
+        key=lambda row: (
+            int(row.get("friction_count", 0) or 0),
+            int(row.get("rejected_writes", 0) or 0),
+            int(row.get("skipped_turns", 0) or 0),
+            str(row.get("file", "") or ""),
+        ),
+        reverse=True,
+    )
+
+    issue_buckets: list[dict] = []
+    if rejected_writes:
+        issue_buckets.append(
+            {
+                "label": "write_rejection",
+                "count": rejected_writes,
+                "severity": "high",
+                "summary": f"{rejected_writes} turns were rejected by governed memory writes.",
+            }
+        )
+    if skipped_turns:
+        issue_buckets.append(
+            {
+                "label": "role_scope_gap",
+                "count": skipped_turns,
+                "severity": "medium",
+                "summary": f"{skipped_turns} turns were skipped by writable-role policy.",
+            }
+        )
+    if unsupported_total:
+        issue_buckets.append(
+            {
+                "label": "structured_extraction_gap",
+                "count": unsupported_total,
+                "severity": "high",
+                "summary": (
+                    f"{unsupported_total} turns were rejected for unsupported reasons, led by "
+                    f"`{dominant_unsupported_row.get('reason', 'unknown')}`."
+                ),
+            }
+        )
+    if not probe_rows:
+        issue_buckets.append(
+            {
+                "label": "probe_coverage_gap",
+                "count": report.get("run_count", 0),
+                "severity": "medium",
+                "summary": "No shadow probes were present, so retrieval quality is not being measured yet.",
+            }
+        )
+    elif any(float(row.get("hit_rate", 0.0) or 0.0) < 1.0 for row in probe_rows):
+        issue_buckets.append(
+            {
+                "label": "probe_quality_gap",
+                "count": sum(1 for row in probe_rows if float(row.get("hit_rate", 0.0) or 0.0) < 1.0),
+                "severity": "high",
+                "summary": "At least one probe type is missing expected hits on the current replay batch.",
+            }
+        )
+
+    recommended_next_actions: list[dict] = []
+    if dominant_unsupported_row is not None:
+        reason = str(dominant_unsupported_row.get("reason", "") or "")
+        if reason == "no_structured_memory_extracted":
+            recommended_next_actions.append(
+                {
+                    "label": "improve_structured_write_extraction",
+                    "priority": 1,
+                    "rationale": (
+                        "The dominant rejection mode is missing structured memory extraction. Spark Builder exports "
+                        "should emit clearer subject, predicate, value, or write-intent metadata for memory-worthy turns."
+                    ),
+                }
+            )
+        else:
+            recommended_next_actions.append(
+                {
+                    "label": "investigate_dominant_unsupported_reason",
+                    "priority": 1,
+                    "rationale": f"The dominant unsupported reason is `{reason}` and should be mapped to a concrete Spark-side fix.",
+                }
+            )
+    if skipped_turns:
+        recommended_next_actions.append(
+            {
+                "label": "confirm_writable_role_policy",
+                "priority": 2,
+                "rationale": (
+                    "Skipped turns are currently being filtered by writable-role policy. Confirm that this is intended "
+                    "and that noisy assistant-only turns are not masking real user-memory opportunities."
+                ),
+            }
+        )
+    if not probe_rows:
+        recommended_next_actions.append(
+            {
+                "label": "add_shadow_probes",
+                "priority": 3,
+                "rationale": (
+                    "No probes were exported, so the replay only measures write acceptance. Add current_state, evidence, "
+                    "or historical_state probes to measure retrieval quality."
+                ),
+            }
+        )
+    top_source_hotspot = source_hotspots[0] if source_hotspots else None
+    if top_source_hotspot and int(top_source_hotspot.get("friction_count", 0) or 0) > 0:
+        recommended_next_actions.append(
+            {
+                "label": "inspect_hottest_source_file",
+                "priority": 4,
+                "rationale": (
+                    f"The hottest file is `{top_source_hotspot.get('file')}` with "
+                    f"{top_source_hotspot.get('friction_count', 0)} rejected-or-skipped turns."
+                ),
+            }
+        )
+
+    issue_labels = [str(bucket["label"]) for bucket in issue_buckets]
+    return {
+        "contract": dict(contract or {}),
+        "source_mode": source_mode,
+        "source_file": source_file,
+        "source_dir": source_dir,
+        "source_files": source_files,
+        "summary": {
+            "run_count": int(report.get("run_count", 0) or 0),
+            "accepted_writes": accepted_writes,
+            "rejected_writes": rejected_writes,
+            "skipped_turns": skipped_turns,
+            "reference_turns": reference_turns,
+            "total_turns": total_turns,
+            "accepted_rate": float(summary.get("accepted_rate", 0.0) or 0.0),
+            "rejected_rate": float(summary.get("rejected_rate", 0.0) or 0.0),
+            "skipped_rate": float(summary.get("skipped_rate", 0.0) or 0.0),
+            "reference_rate": float(summary.get("reference_rate", 0.0) or 0.0),
+            "unsupported_reason_count": unsupported_total,
+            "unsupported_reason_types": len(unsupported_reasons),
+            "dominant_unsupported_reason": (
+                str(dominant_unsupported_row.get("reason")) if dominant_unsupported_row else None
+            ),
+            "dominant_unsupported_reason_count": (
+                int(dominant_unsupported_row.get("count", 0) or 0) if dominant_unsupported_row else 0
+            ),
+            "has_probe_coverage": bool(probe_rows),
+            "issue_labels": issue_labels,
+        },
+        "issue_buckets": issue_buckets,
+        "unsupported_reasons": unsupported_reasons,
+        "probe_rows": probe_rows,
+        "conversation_hotspots": conversation_hotspots,
+        "source_hotspots": source_hotspots,
+        "recommended_next_actions": recommended_next_actions,
+        "trace": {
+            "operation": "build_shadow_failure_taxonomy",
+            "source_mode": source_mode,
+        },
+    }
+
+
+def _build_spark_kb_from_shadow_replay(
+    data_file: str,
+    output_dir: str,
+    *,
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    evaluations, adapter = _execute_shadow_replay(data_file)
+    shadow_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    resolved_repo_sources = _resolve_repo_source_files(
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Shadow Knowledge Base",
+        repo_sources=resolved_repo_sources,
+        filed_outputs=_build_shadow_report_filed_outputs(shadow_payload)
+        + _build_shadow_failure_taxonomy_filed_outputs(shadow_payload),
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+    return {
+        "source_file": str(Path(data_file)),
+        "contract": build_spark_integration_contract_summary(),
+        "shadow_report": shadow_payload["report"],
+        "snapshot": snapshot,
+        "repo_source_manifest_file_count": len(list(repo_source_manifest_files or [])),
+        "compile_result": compile_result,
+        "health_report": health_report,
+    }
+
+
+def _build_spark_kb_from_shadow_replay_batch(
+    data_dir: str,
+    output_dir: str,
+    *,
+    glob_pattern: str = "*.json",
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    root = Path(data_dir)
+    files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
+    if not files:
+        raise ValueError(f"No shadow replay files matched '{glob_pattern}' in {root}.")
+
+    adapter: SparkShadowIngestAdapter | None = None
+    all_evaluations = []
+    source_reports = []
+    for path in files:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        evaluations, adapter = _execute_shadow_replay_payload(payload, adapter=adapter)
+        source_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+        source_reports.append(
+            {
+                "file": str(path),
+                "run_count": source_payload["report"]["run_count"],
+                "summary": source_payload["report"]["summary"],
+            }
+        )
+        all_evaluations.extend(evaluations)
+
+    shadow_payload = _build_shadow_report_payload_from_evaluations(all_evaluations)
+    if adapter is None:
+        raise ValueError(f"No shadow replay files matched '{glob_pattern}' in {root}.")
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    resolved_repo_sources = _resolve_repo_source_files(
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Shadow Batch Knowledge Base",
+        repo_sources=resolved_repo_sources,
+        filed_outputs=_build_shadow_report_filed_outputs(shadow_payload)
+        + _build_shadow_failure_taxonomy_filed_outputs(shadow_payload),
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+    return {
+        "source_dir": str(root),
+        "source_files": [str(path) for path in files],
+        "source_reports": source_reports,
+        "contract": build_spark_integration_contract_summary(),
+        "shadow_report": shadow_payload["report"],
+        "snapshot": snapshot,
+        "repo_source_manifest_file_count": len(list(repo_source_manifest_files or [])),
+        "compile_result": compile_result,
+        "health_report": health_report,
+    }
+
+
 def _validate_shadow_replay_payload(data_file: str) -> dict:
     payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
     summary = validate_shadow_replay_payload(payload)
     summary["file"] = str(Path(data_file))
     return summary
+
+
+def _normalize_builder_shadow_export(data_file: str) -> dict:
+    source_path = Path(data_file)
+    payload = json.loads(source_path.read_text(encoding="utf-8"))
+    normalized_payload = normalize_builder_shadow_export_payload(payload)
+    validation = validate_shadow_replay_payload(normalized_payload)
+    return {
+        "file": str(source_path),
+        "contract": build_builder_shadow_adapter_contract_summary(),
+        "normalized": normalized_payload,
+        "validation": validation,
+    }
+
+
+def _normalize_builder_shadow_export_batch(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
+    root = Path(data_dir)
+    files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
+    if not files:
+        raise ValueError(f"No builder export files matched '{glob_pattern}' in {root}.")
+
+    source_normalizations = [_normalize_builder_shadow_export(str(path)) for path in files]
+    invalid_files = [item["file"] for item in source_normalizations if not item["validation"]["valid"]]
+    total_errors = sum(len(item["validation"]["errors"]) for item in source_normalizations)
+    total_warnings = sum(len(item["validation"]["warnings"]) for item in source_normalizations)
+    return {
+        "contract": build_builder_shadow_adapter_contract_summary(),
+        "source_dir": str(root),
+        "source_files": [str(path) for path in files],
+        "file_count": len(source_normalizations),
+        "valid": not invalid_files,
+        "valid_file_count": len(source_normalizations) - len(invalid_files),
+        "invalid_file_count": len(invalid_files),
+        "invalid_files": invalid_files,
+        "total_errors": total_errors,
+        "total_warnings": total_warnings,
+        "source_normalizations": source_normalizations,
+    }
+
+
+def _normalize_telegram_shadow_export(data_file: str) -> dict:
+    source_path = Path(data_file)
+    payload = json.loads(source_path.read_text(encoding="utf-8"))
+    normalized_payload = normalize_telegram_bot_export_payload(payload)
+    validation = validate_shadow_replay_payload(normalized_payload)
+    return {
+        "file": str(source_path),
+        "contract": build_telegram_shadow_adapter_contract_summary(),
+        "normalized": normalized_payload,
+        "validation": validation,
+    }
+
+
+def _normalize_telegram_shadow_export_batch(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
+    root = Path(data_dir)
+    files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
+    if not files:
+        raise ValueError(f"No Telegram export files matched '{glob_pattern}' in {root}.")
+
+    source_normalizations = [_normalize_telegram_shadow_export(str(path)) for path in files]
+    invalid_files = [item["file"] for item in source_normalizations if not item["validation"]["valid"]]
+    total_errors = sum(len(item["validation"]["errors"]) for item in source_normalizations)
+    total_warnings = sum(len(item["validation"]["warnings"]) for item in source_normalizations)
+    return {
+        "contract": build_telegram_shadow_adapter_contract_summary(),
+        "source_dir": str(root),
+        "source_files": [str(path) for path in files],
+        "file_count": len(source_normalizations),
+        "valid": not invalid_files,
+        "valid_file_count": len(source_normalizations) - len(invalid_files),
+        "invalid_file_count": len(invalid_files),
+        "invalid_files": invalid_files,
+        "total_errors": total_errors,
+        "total_warnings": total_warnings,
+        "source_normalizations": source_normalizations,
+    }
+
+
+def _load_shadow_report_payload_from_builder_export(data_file: str) -> dict:
+    normalized = _normalize_builder_shadow_export(data_file)["normalized"]
+    evaluations, _ = _execute_shadow_replay_payload(normalized)
+    return _build_shadow_report_payload_from_evaluations(evaluations)
+
+
+def _load_shadow_report_payload_from_telegram_export(data_file: str) -> dict:
+    normalized = _normalize_telegram_shadow_export(data_file)["normalized"]
+    evaluations, _ = _execute_shadow_replay_payload(normalized)
+    return _build_shadow_report_payload_from_evaluations(evaluations)
+
+
+def _load_shadow_report_payload_from_builder_export_batch(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
+    root = Path(data_dir)
+    files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
+    if not files:
+        raise ValueError(f"No builder export files matched '{glob_pattern}' in {root}.")
+
+    adapter: SparkShadowIngestAdapter | None = None
+    all_evaluations = []
+    source_reports = []
+    for path in files:
+        normalized = _normalize_builder_shadow_export(str(path))["normalized"]
+        evaluations, adapter = _execute_shadow_replay_payload(normalized, adapter=adapter)
+        source_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+        source_reports.append(
+            {
+                "file": str(path),
+                "run_count": source_payload["report"]["run_count"],
+                "summary": source_payload["report"]["summary"],
+            }
+        )
+        all_evaluations.extend(evaluations)
+
+    payload = _build_shadow_report_payload_from_evaluations(all_evaluations)
+    payload["contract"] = build_builder_shadow_adapter_contract_summary()
+    payload["source_dir"] = str(root)
+    payload["source_files"] = [str(path) for path in files]
+    payload["source_reports"] = source_reports
+    return payload
+
+
+def _load_shadow_report_payload_from_telegram_export_batch(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
+    root = Path(data_dir)
+    files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
+    if not files:
+        raise ValueError(f"No Telegram export files matched '{glob_pattern}' in {root}.")
+
+    adapter: SparkShadowIngestAdapter | None = None
+    all_evaluations = []
+    source_reports = []
+    for path in files:
+        normalized = _normalize_telegram_shadow_export(str(path))["normalized"]
+        evaluations, adapter = _execute_shadow_replay_payload(normalized, adapter=adapter)
+        source_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+        source_reports.append(
+            {
+                "file": str(path),
+                "run_count": source_payload["report"]["run_count"],
+                "summary": source_payload["report"]["summary"],
+            }
+        )
+        all_evaluations.extend(evaluations)
+
+    payload = _build_shadow_report_payload_from_evaluations(all_evaluations)
+    payload["contract"] = build_telegram_shadow_adapter_contract_summary()
+    payload["source_dir"] = str(root)
+    payload["source_files"] = [str(path) for path in files]
+    payload["source_reports"] = source_reports
+    return payload
+
+
+def _build_shadow_failure_taxonomy_from_builder_export(data_file: str) -> dict:
+    payload = _load_shadow_report_payload_from_builder_export(data_file)
+    return _build_shadow_failure_taxonomy_payload(
+        payload,
+        source_mode="builder_export",
+        source_file=str(Path(data_file)),
+        contract=build_builder_shadow_adapter_contract_summary(),
+    )
+
+
+def _build_shadow_failure_taxonomy_from_builder_export_batch(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
+    payload = _load_shadow_report_payload_from_builder_export_batch(data_dir, glob_pattern=glob_pattern)
+    return _build_shadow_failure_taxonomy_payload(
+        payload,
+        source_mode="builder_export_batch",
+        source_dir=str(Path(data_dir)),
+        source_files=list(payload.get("source_files", [])),
+        source_reports=list(payload.get("source_reports", [])),
+        contract=build_builder_shadow_adapter_contract_summary(),
+    )
+
+
+def _build_shadow_failure_taxonomy_from_telegram_export(data_file: str) -> dict:
+    payload = _load_shadow_report_payload_from_telegram_export(data_file)
+    return _build_shadow_failure_taxonomy_payload(
+        payload,
+        source_mode="telegram_export",
+        source_file=str(Path(data_file)),
+        contract=build_telegram_shadow_adapter_contract_summary(),
+    )
+
+
+def _build_shadow_failure_taxonomy_from_telegram_export_batch(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
+    payload = _load_shadow_report_payload_from_telegram_export_batch(data_dir, glob_pattern=glob_pattern)
+    return _build_shadow_failure_taxonomy_payload(
+        payload,
+        source_mode="telegram_export_batch",
+        source_dir=str(Path(data_dir)),
+        source_files=list(payload.get("source_files", [])),
+        source_reports=list(payload.get("source_reports", [])),
+        contract=build_telegram_shadow_adapter_contract_summary(),
+    )
+
+
+def _build_spark_kb_from_builder_export(
+    data_file: str,
+    output_dir: str,
+    *,
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    normalized = _normalize_builder_shadow_export(data_file)["normalized"]
+    evaluations, adapter = _execute_shadow_replay_payload(normalized)
+    shadow_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    resolved_repo_sources = _resolve_repo_source_files(
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Builder Knowledge Base",
+        repo_sources=resolved_repo_sources,
+        filed_outputs=_build_shadow_report_filed_outputs(shadow_payload)
+        + _build_shadow_failure_taxonomy_filed_outputs(shadow_payload),
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+    return {
+        "source_file": str(Path(data_file)),
+        "contract": build_builder_shadow_adapter_contract_summary(),
+        "normalized_shadow_replay": normalized,
+        "shadow_report": shadow_payload["report"],
+        "snapshot": snapshot,
+        "repo_source_manifest_file_count": len(list(repo_source_manifest_files or [])),
+        "compile_result": compile_result,
+        "health_report": health_report,
+    }
+
+
+def _build_spark_kb_from_telegram_export(
+    data_file: str,
+    output_dir: str,
+    *,
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    normalized = _normalize_telegram_shadow_export(data_file)["normalized"]
+    evaluations, adapter = _execute_shadow_replay_payload(normalized)
+    shadow_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    resolved_repo_sources = _resolve_repo_source_files(
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Telegram Knowledge Base",
+        repo_sources=resolved_repo_sources,
+        filed_outputs=_build_shadow_report_filed_outputs(shadow_payload)
+        + _build_shadow_failure_taxonomy_filed_outputs(shadow_payload),
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+    return {
+        "source_file": str(Path(data_file)),
+        "contract": build_telegram_shadow_adapter_contract_summary(),
+        "normalized_shadow_replay": normalized,
+        "shadow_report": shadow_payload["report"],
+        "snapshot": snapshot,
+        "repo_source_manifest_file_count": len(list(repo_source_manifest_files or [])),
+        "compile_result": compile_result,
+        "health_report": health_report,
+    }
+
+
+def _build_spark_kb_from_builder_export_batch(
+    data_dir: str,
+    output_dir: str,
+    *,
+    glob_pattern: str = "*.json",
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    root = Path(data_dir)
+    files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
+    if not files:
+        raise ValueError(f"No builder export files matched '{glob_pattern}' in {root}.")
+
+    adapter: SparkShadowIngestAdapter | None = None
+    all_evaluations = []
+    source_reports = []
+    for path in files:
+        normalized = _normalize_builder_shadow_export(str(path))["normalized"]
+        evaluations, adapter = _execute_shadow_replay_payload(normalized, adapter=adapter)
+        source_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+        source_reports.append(
+            {
+                "file": str(path),
+                "run_count": source_payload["report"]["run_count"],
+                "summary": source_payload["report"]["summary"],
+            }
+        )
+        all_evaluations.extend(evaluations)
+
+    if adapter is None:
+        raise ValueError(f"No builder export files matched '{glob_pattern}' in {root}.")
+
+    shadow_payload = _build_shadow_report_payload_from_evaluations(all_evaluations)
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    resolved_repo_sources = _resolve_repo_source_files(
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Builder Batch Knowledge Base",
+        repo_sources=resolved_repo_sources,
+        filed_outputs=_build_shadow_report_filed_outputs(shadow_payload)
+        + _build_shadow_failure_taxonomy_filed_outputs(shadow_payload),
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+    return {
+        "source_dir": str(root),
+        "source_files": [str(path) for path in files],
+        "source_reports": source_reports,
+        "contract": build_builder_shadow_adapter_contract_summary(),
+        "shadow_report": shadow_payload["report"],
+        "snapshot": snapshot,
+        "repo_source_manifest_file_count": len(list(repo_source_manifest_files or [])),
+        "compile_result": compile_result,
+        "health_report": health_report,
+    }
+
+
+def _build_spark_kb_from_telegram_export_batch(
+    data_dir: str,
+    output_dir: str,
+    *,
+    glob_pattern: str = "*.json",
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    root = Path(data_dir)
+    files = sorted(path for path in root.glob(glob_pattern) if path.is_file())
+    if not files:
+        raise ValueError(f"No Telegram export files matched '{glob_pattern}' in {root}.")
+
+    adapter: SparkShadowIngestAdapter | None = None
+    all_evaluations = []
+    source_reports = []
+    for path in files:
+        normalized = _normalize_telegram_shadow_export(str(path))["normalized"]
+        evaluations, adapter = _execute_shadow_replay_payload(normalized, adapter=adapter)
+        source_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+        source_reports.append(
+            {
+                "file": str(path),
+                "run_count": source_payload["report"]["run_count"],
+                "summary": source_payload["report"]["summary"],
+            }
+        )
+        all_evaluations.extend(evaluations)
+
+    if adapter is None:
+        raise ValueError(f"No Telegram export files matched '{glob_pattern}' in {root}.")
+
+    shadow_payload = _build_shadow_report_payload_from_evaluations(all_evaluations)
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    resolved_repo_sources = _resolve_repo_source_files(
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Telegram Batch Knowledge Base",
+        repo_sources=resolved_repo_sources,
+        filed_outputs=_build_shadow_report_filed_outputs(shadow_payload)
+        + _build_shadow_failure_taxonomy_filed_outputs(shadow_payload),
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+    return {
+        "source_dir": str(root),
+        "source_files": [str(path) for path in files],
+        "source_reports": source_reports,
+        "contract": build_telegram_shadow_adapter_contract_summary(),
+        "shadow_report": shadow_payload["report"],
+        "snapshot": snapshot,
+        "repo_source_manifest_file_count": len(list(repo_source_manifest_files or [])),
+        "compile_result": compile_result,
+        "health_report": health_report,
+    }
+
+
+def _run_spark_builder_intake_batch(
+    data_dir: str,
+    output_dir: str,
+    *,
+    glob_pattern: str = "*.json",
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    normalization = _normalize_builder_shadow_export_batch(data_dir, glob_pattern=glob_pattern)
+    shadow_report = _load_shadow_report_payload_from_builder_export_batch(data_dir, glob_pattern=glob_pattern)
+    failure_taxonomy = _build_shadow_failure_taxonomy_from_builder_export_batch(data_dir, glob_pattern=glob_pattern)
+    kb = _build_spark_kb_from_builder_export_batch(
+        data_dir,
+        output_dir,
+        glob_pattern=glob_pattern,
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    return {
+        "source_dir": str(Path(data_dir)),
+        "output_dir": str(Path(output_dir)),
+        "source_files": list(normalization.get("source_files", [])),
+        "contract": build_builder_shadow_adapter_contract_summary(),
+        "normalization": normalization,
+        "shadow_report": shadow_report["report"],
+        "failure_taxonomy": failure_taxonomy,
+        "kb": kb,
+        "summary": {
+            "file_count": int(normalization.get("file_count", 0) or 0),
+            "valid_builder_exports": bool(normalization.get("valid", False)),
+            "run_count": int(shadow_report.get("report", {}).get("run_count", 0) or 0),
+            "accepted_writes": int(shadow_report.get("report", {}).get("summary", {}).get("accepted_writes", 0) or 0),
+            "rejected_writes": int(shadow_report.get("report", {}).get("summary", {}).get("rejected_writes", 0) or 0),
+            "skipped_turns": int(shadow_report.get("report", {}).get("summary", {}).get("skipped_turns", 0) or 0),
+            "reference_turns": int(shadow_report.get("report", {}).get("summary", {}).get("reference_turns", 0) or 0),
+            "dominant_unsupported_reason": failure_taxonomy.get("summary", {}).get("dominant_unsupported_reason"),
+            "issue_labels": list(failure_taxonomy.get("summary", {}).get("issue_labels", [])),
+            "kb_valid": bool(kb.get("health_report", {}).get("valid", False)),
+            "kb_filed_output_count": int(kb.get("compile_result", {}).get("filed_output_count", 0) or 0),
+        },
+        "trace": {
+            "operation": "run_spark_builder_intake_batch",
+            "glob": glob_pattern,
+        },
+    }
+
+
+def _run_spark_telegram_intake_batch(
+    data_dir: str,
+    output_dir: str,
+    *,
+    glob_pattern: str = "*.json",
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    normalization = _normalize_telegram_shadow_export_batch(data_dir, glob_pattern=glob_pattern)
+    shadow_report = _load_shadow_report_payload_from_telegram_export_batch(data_dir, glob_pattern=glob_pattern)
+    failure_taxonomy = _build_shadow_failure_taxonomy_from_telegram_export_batch(data_dir, glob_pattern=glob_pattern)
+    kb = _build_spark_kb_from_telegram_export_batch(
+        data_dir,
+        output_dir,
+        glob_pattern=glob_pattern,
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    return {
+        "source_dir": str(Path(data_dir)),
+        "output_dir": str(Path(output_dir)),
+        "source_files": list(normalization.get("source_files", [])),
+        "contract": build_telegram_shadow_adapter_contract_summary(),
+        "normalization": normalization,
+        "shadow_report": shadow_report["report"],
+        "failure_taxonomy": failure_taxonomy,
+        "kb": kb,
+        "summary": {
+            "file_count": int(normalization.get("file_count", 0) or 0),
+            "valid_telegram_exports": bool(normalization.get("valid", False)),
+            "run_count": int(shadow_report.get("report", {}).get("run_count", 0) or 0),
+            "accepted_writes": int(shadow_report.get("report", {}).get("summary", {}).get("accepted_writes", 0) or 0),
+            "rejected_writes": int(shadow_report.get("report", {}).get("summary", {}).get("rejected_writes", 0) or 0),
+            "skipped_turns": int(shadow_report.get("report", {}).get("summary", {}).get("skipped_turns", 0) or 0),
+            "reference_turns": int(shadow_report.get("report", {}).get("summary", {}).get("reference_turns", 0) or 0),
+            "dominant_unsupported_reason": failure_taxonomy.get("summary", {}).get("dominant_unsupported_reason"),
+            "issue_labels": list(failure_taxonomy.get("summary", {}).get("issue_labels", [])),
+            "kb_valid": bool(kb.get("health_report", {}).get("valid", False)),
+            "kb_filed_output_count": int(kb.get("compile_result", {}).get("filed_output_count", 0) or 0),
+        },
+        "trace": {
+            "operation": "run_spark_telegram_intake_batch",
+            "glob": glob_pattern,
+        },
+    }
+
+
+def _run_spark_builder_telegram_intake(
+    builder_dir: str,
+    output_dir: str,
+    *,
+    glob_pattern: str = ".tmp-telegram-*.json",
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    payload = _run_spark_telegram_intake_batch(
+        builder_dir,
+        output_dir,
+        glob_pattern=glob_pattern,
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    payload["builder_source_dir"] = str(Path(builder_dir))
+    payload["summary"]["builder_artifact_glob"] = glob_pattern
+    payload["trace"] = {
+        "operation": "run_spark_builder_telegram_intake",
+        "glob": glob_pattern,
+    }
+    return payload
+
+
+def _normalize_builder_telegram_state_db(
+    builder_home: str,
+    *,
+    limit: int = 25,
+    chat_id: str | None = None,
+) -> dict:
+    root = Path(builder_home)
+    state_db_path = root if root.is_file() else root / "state.db"
+    if not state_db_path.exists():
+        raise ValueError(f"Builder state DB not found at {state_db_path}.")
+    selected_chat_id = str(chat_id) if chat_id is not None else None
+
+    def _format_builder_timestamp(value: object) -> str | None:
+        text = str(value or "").strip()
+        if not text:
+            return None
+        if text.endswith("Z") and "T" in text:
+            return text
+        if "T" in text:
+            return f"{text}Z"
+        return f"{text.replace(' ', 'T')}Z"
+
+    def _load_facts(raw: object) -> dict:
+        if isinstance(raw, dict):
+            return raw
+        text = str(raw or "").strip()
+        if not text:
+            return {}
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError:
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
+    def _builder_chat_id(*, facts: dict, session_id: object, human_id: object) -> str:
+        direct = (
+            facts.get("chat_id")
+            or facts.get("telegram_chat_id")
+            or facts.get("telegram_user_id")
+            or facts.get("user_id")
+        )
+        if direct not in (None, ""):
+            return str(direct)
+        session_text = str(session_id or "").strip()
+        if session_text.startswith("session:telegram:"):
+            return session_text.rsplit(":", 1)[-1]
+        human_text = str(human_id or "").strip()
+        if human_text.startswith("human:telegram:"):
+            return human_text.rsplit(":", 1)[-1]
+        return "unknown"
+
+    def _query_message(payload: dict) -> str | None:
+        if not isinstance(payload, dict):
+            return None
+        fact_name = str(payload.get("fact_name") or "").strip()
+        label = str(payload.get("label") or "").strip()
+        canonical = {
+            "profile_preferred_name": "What is my name?",
+            "profile_startup_name": "What is my startup?",
+            "profile_hack_actor": "Who hacked us?",
+            "profile_current_mission": "What is my mission right now?",
+            "profile_founder_of": "What company did I found?",
+            "profile_occupation": "What do I do?",
+            "profile_spark_role": "What role will Spark play in this?",
+            "profile_identity_summary": "Who am I?",
+            "profile_home_country": "What country do I live in?",
+            "profile_timezone": "What is my timezone?",
+            "profile_city": "Where do I live?",
+        }
+        if fact_name:
+            return canonical.get(fact_name, f"What is my {label or fact_name}?")
+        if label:
+            return f"What is my {label}?"
+        return None
+
+    def _query_predicate(payload: dict) -> str | None:
+        predicate = str(payload.get("predicate") or "").strip()
+        if predicate:
+            return predicate
+        fact_name = str(payload.get("fact_name") or "").strip()
+        mapping = {
+            "profile_preferred_name": "profile.preferred_name",
+            "profile_startup_name": "profile.startup_name",
+            "profile_hack_actor": "profile.hack_actor",
+            "profile_current_mission": "profile.current_mission",
+            "profile_founder_of": "profile.founder_of",
+            "profile_occupation": "profile.occupation",
+            "profile_spark_role": "profile.spark_role",
+            "profile_home_country": "profile.home_country",
+            "profile_timezone": "profile.timezone",
+            "profile_city": "profile.city",
+        }
+        return mapping.get(fact_name)
+
+    def _query_answer(*, predicate: str | None, value: str | None) -> str | None:
+        clean_value = str(value or "").strip()
+        if not clean_value:
+            return None
+        mapping = {
+            "profile.preferred_name": lambda text: f"Your name is {text}.",
+            "profile.startup_name": lambda text: f"Your startup is {text}.",
+            "profile.hack_actor": lambda text: f"You were hacked by {text}.",
+            "profile.current_mission": lambda text: f"Right now you're trying to {text}.",
+            "profile.founder_of": lambda text: f"You founded {text}.",
+            "profile.occupation": lambda text: f"You're {text}.",
+            "profile.spark_role": lambda text: (
+                text if text.endswith(".") else f"{text[:1].upper()}{text[1:]}."
+            ),
+            "profile.home_country": lambda text: f"Your country is {text}.",
+            "profile.timezone": lambda text: f"Your timezone is {text}.",
+            "profile.city": lambda text: f"You live in {text}.",
+        }
+        renderer = mapping.get(str(predicate or "").strip())
+        if renderer is not None:
+            return renderer(clean_value)
+        return clean_value if clean_value.endswith(".") else f"{clean_value}."
+
+    def _identity_answer(known_values: dict[str, str]) -> str | None:
+        ordered_predicates = [
+            "profile.preferred_name",
+            "profile.occupation",
+            "profile.city",
+            "profile.home_country",
+            "profile.timezone",
+            "profile.startup_name",
+            "profile.founder_of",
+            "profile.spark_role",
+            "profile.current_mission",
+            "profile.hack_actor",
+        ]
+        parts = [
+            _query_answer(predicate=predicate, value=known_values.get(predicate))
+            for predicate in ordered_predicates
+        ]
+        rendered = [part for part in parts if part]
+        if not rendered:
+            return None
+        return " ".join(rendered)
+
+    def _update_answer(predicate: str | None, value: str | None) -> str | None:
+        clean_value = str(value or "").strip()
+        if not clean_value:
+            return None
+        mapping = {
+            "profile.preferred_name": lambda text: f"I'll remember your name is {text}.",
+            "profile.startup_name": lambda text: f"I'll remember you created {text}.",
+            "profile.hack_actor": lambda text: f"I'll remember the hack actor was {text}.",
+            "profile.current_mission": lambda text: (
+                f"I'll remember your current mission is to {text}."
+            ),
+            "profile.founder_of": lambda text: f"I'll remember you founded {text}.",
+            "profile.occupation": lambda text: f"I'll remember you're {text}.",
+            "profile.spark_role": lambda text: f"I'll remember Spark will be {text}.",
+            "profile.home_country": lambda text: f"I'll remember your country is {text}.",
+            "profile.timezone": lambda text: f"I'll remember your timezone is {text}.",
+            "profile.city": lambda text: f"I'll remember you live in {text}.",
+        }
+        renderer = mapping.get(str(predicate or "").strip())
+        if renderer is not None:
+            return renderer(clean_value)
+        return f"I'll remember {clean_value}."
+
+    def _turn_sort_key(item: dict) -> tuple[str, str]:
+        return (str(item.get("timestamp") or ""), str(item.get("message_id") or ""))
+
+    raw_event_limit = max(limit * 8, 200)
+    connection = sqlite3.connect(state_db_path)
+    connection.row_factory = sqlite3.Row
+    try:
+        rows = connection.execute(
+            """
+            SELECT *
+            FROM (
+                SELECT
+                    rowid AS row_order,
+                    event_id,
+                    event_type,
+                    created_at,
+                    request_id,
+                    trace_ref,
+                    channel_id,
+                    session_id,
+                    human_id,
+                    component,
+                    summary,
+                    facts_json
+                FROM builder_events
+                WHERE event_type IN (
+                    'intent_committed',
+                    'delivery_succeeded',
+                    'memory_write_requested',
+                    'memory_write_succeeded',
+                    'plugin_or_chip_influence_recorded',
+                    'tool_result_received'
+                )
+                ORDER BY created_at DESC, event_id DESC
+                LIMIT ?
+            )
+            ORDER BY created_at ASC, row_order ASC
+            LIMIT ?
+            """,
+            (raw_event_limit, raw_event_limit),
+        ).fetchall()
+    finally:
+        connection.close()
+
+    if not rows:
+        raise ValueError(f"No supported Builder Telegram state-db events found in {state_db_path}.")
+
+    available_chat_ids_set: set[str] = set()
+    conversations_by_key: dict[str, dict[str, object]] = {}
+
+    def _conversation_for(chat_value: str, session_value: str | None, human_value: str | None) -> dict[str, object]:
+        conversation_key = str(session_value or f"telegram-chat-{chat_value}")
+        conversation = conversations_by_key.setdefault(
+            conversation_key,
+            {
+                "conversation_id": conversation_key,
+                "session_id": session_value or conversation_key,
+                "metadata": {
+                    "source": "spark_builder_state_db",
+                    "chat_id": chat_value,
+                    "human_id": human_value,
+                    "builder_home": str(root),
+                    "state_db": str(state_db_path),
+                },
+                "turns": [],
+                "probes": [],
+            },
+        )
+        return conversation
+
+    legacy_groups: dict[str, dict[str, object]] = {}
+    bridge_groups: dict[tuple[str, str], list[sqlite3.Row]] = {}
+    for row in rows:
+        facts = _load_facts(row["facts_json"])
+        row_chat_id = _builder_chat_id(
+            facts=facts,
+            session_id=row["session_id"],
+            human_id=row["human_id"],
+        )
+        available_chat_ids_set.add(row_chat_id)
+        event_type = str(row["event_type"] or "")
+        if event_type in {"intent_committed", "delivery_succeeded"}:
+            update_id = str(facts.get("update_id") or facts.get("message_id") or row["event_id"] or row["created_at"] or "unknown")
+            entry = legacy_groups.setdefault(
+                update_id,
+                {
+                    "chat_id": row_chat_id,
+                    "session_id": str(row["session_id"] or "") or None,
+                    "human_id": str(row["human_id"] or "") or None,
+                    "user_turn": None,
+                    "assistant_turn": None,
+                },
+            )
+            timestamp = _format_builder_timestamp(row["created_at"])
+            if event_type == "intent_committed":
+                message_text = str(facts.get("message_text") or facts.get("text") or row["summary"] or "").strip()
+                if message_text:
+                    entry["user_turn"] = {
+                        "message_id": f"builder-user-{update_id}",
+                        "role": "user",
+                        "content": message_text,
+                        "timestamp": timestamp,
+                        "metadata": {
+                            "chat_id": row_chat_id,
+                            "update_id": update_id,
+                            "source_event_type": "intent_committed",
+                        },
+                    }
+            elif event_type == "delivery_succeeded":
+                delivered_text = str(
+                    facts.get("delivered_text")
+                    or facts.get("reply_text")
+                    or facts.get("message_text")
+                    or row["summary"]
+                    or ""
+                ).strip()
+                if delivered_text:
+                    entry["assistant_turn"] = {
+                        "message_id": f"builder-assistant-{update_id}",
+                        "role": "assistant",
+                        "content": delivered_text,
+                        "timestamp": timestamp,
+                        "metadata": {
+                            "chat_id": row_chat_id,
+                            "update_id": update_id,
+                            "source_event_type": "delivery_succeeded",
+                        },
+                    }
+            continue
+
+        session_value = str(row["session_id"] or "")
+        request_value = str(row["request_id"] or row["trace_ref"] or row["event_id"] or "")
+        if session_value and request_value:
+            bridge_groups.setdefault((session_value, request_value), []).append(row)
+
+    for entry in legacy_groups.values():
+        chat_value = str(entry["chat_id"] or "unknown")
+        if selected_chat_id is not None and chat_value != selected_chat_id:
+            continue
+        conversation = _conversation_for(
+            chat_value,
+            entry.get("session_id"),
+            entry.get("human_id"),
+        )
+        user_turn = entry.get("user_turn")
+        assistant_turn = entry.get("assistant_turn")
+        if isinstance(user_turn, dict):
+            conversation["turns"].append(user_turn)
+        if isinstance(assistant_turn, dict):
+            conversation["turns"].append(assistant_turn)
+
+    session_values: dict[str, dict[str, str]] = {}
+    for _, group in sorted(
+        bridge_groups.items(),
+        key=lambda item: (
+            str(item[1][0]["created_at"] or ""),
+            int(item[1][0]["row_order"] or 0),
+            str(item[0][0]),
+            str(item[0][1]),
+        ),
+    ):
+        normalized_group = [dict(row) for row in group]
+        first_row = normalized_group[0]
+        first_facts = _load_facts(first_row.get("facts_json"))
+        session_value = str(first_row.get("session_id") or "") or None
+        human_value = str(first_row.get("human_id") or "") or None
+        chat_value = _builder_chat_id(
+            facts=first_facts,
+            session_id=first_row.get("session_id"),
+            human_id=first_row.get("human_id"),
+        )
+        if selected_chat_id is not None and chat_value != selected_chat_id:
+            continue
+        conversation = _conversation_for(chat_value, session_value, human_value)
+        known_values = session_values.setdefault(str(session_value or chat_value), {})
+
+        memory_write_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_requested"), None)
+        memory_write_result_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_succeeded"), None)
+        influence_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "plugin_or_chip_influence_recorded"), None)
+        tool_result_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "tool_result_received"), None)
+
+        if memory_write_row is not None:
+            write_facts = _load_facts(memory_write_row.get("facts_json"))
+            observations = write_facts.get("observations")
+            if isinstance(observations, list):
+                for item in observations:
+                    if not isinstance(item, dict):
+                        continue
+                    text = str(item.get("text") or "").strip()
+                    predicate = str(item.get("predicate") or "").strip()
+                    value = str(item.get("value") or "").strip()
+                    if not text:
+                        continue
+                    conversation["turns"].append(
+                        {
+                            "message_id": str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                            "role": "user",
+                            "content": text,
+                            "timestamp": _format_builder_timestamp(memory_write_row.get("created_at")),
+                            "metadata": {
+                                "chat_id": chat_value,
+                                "channel_kind": "telegram",
+                                "component": str(memory_write_row.get("component") or ""),
+                                "request_id": str(memory_write_row.get("request_id") or ""),
+                                "trace_ref": str(memory_write_row.get("trace_ref") or ""),
+                                "source_event_id": str(memory_write_row.get("event_id") or ""),
+                                "source_event_type": "memory_write_requested",
+                                "memory_kind": "observation",
+                                "subject": str(item.get("subject") or human_value or ""),
+                                "predicate": predicate,
+                                "value": value,
+                                "operation": str(item.get("operation") or write_facts.get("operation") or ""),
+                                "memory_role": str(item.get("memory_role") or write_facts.get("memory_role") or ""),
+                            },
+                        }
+                    )
+                    result_facts = _load_facts(memory_write_result_row.get("facts_json")) if memory_write_result_row is not None else {}
+                    if int(result_facts.get("accepted_count", 0) or 0) > 0 and predicate and value:
+                        known_values[predicate] = value
+
+        if influence_row is not None and memory_write_row is None:
+            influence_facts = _load_facts(influence_row.get("facts_json"))
+            query_payload = influence_facts.get("detected_profile_fact_query")
+            query_text = _query_message(query_payload if isinstance(query_payload, dict) else {})
+            if query_text:
+                conversation["turns"].append(
+                    {
+                        "message_id": str(influence_row.get("request_id") or influence_row.get("event_id") or ""),
+                        "role": "user",
+                        "content": query_text,
+                        "timestamp": _format_builder_timestamp(influence_row.get("created_at")),
+                        "metadata": {
+                            "chat_id": chat_value,
+                            "channel_kind": "telegram",
+                            "component": str(influence_row.get("component") or ""),
+                            "request_id": str(influence_row.get("request_id") or ""),
+                            "trace_ref": str(influence_row.get("trace_ref") or ""),
+                            "source_event_id": str(influence_row.get("event_id") or ""),
+                            "source_event_type": "plugin_or_chip_influence_recorded",
+                        },
+                    }
+                )
+
+        if tool_result_row is not None:
+            tool_facts = _load_facts(tool_result_row.get("facts_json"))
+            bridge_mode = str(tool_facts.get("bridge_mode") or "").strip()
+            routing_decision = str(tool_facts.get("routing_decision") or "").strip()
+            response_text = None
+            predicate = str(tool_facts.get("predicate") or "").strip() or None
+            value = str(tool_facts.get("value") or "").strip() or None
+            if bridge_mode == "memory_profile_fact_update" or routing_decision == "memory_profile_fact_observation":
+                response_text = _update_answer(predicate, value) or str(tool_result_row.get("summary") or "").strip()
+            elif bridge_mode == "memory_profile_fact" or routing_decision == "memory_profile_fact_query":
+                query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
+                query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
+                response_text = _query_answer(predicate=query_predicate, value=known_values.get(str(query_predicate or "")) or value)
+                if response_text is None:
+                    response_text = str(tool_result_row.get("summary") or "").strip()
+            elif bridge_mode == "memory_profile_identity" or routing_decision == "memory_profile_identity_summary":
+                response_text = _identity_answer(known_values) or str(tool_result_row.get("summary") or "").strip()
+            if response_text:
+                conversation["turns"].append(
+                    {
+                        "message_id": str(tool_result_row.get("request_id") or tool_result_row.get("event_id") or ""),
+                        "role": "assistant",
+                        "content": response_text,
+                        "timestamp": _format_builder_timestamp(tool_result_row.get("created_at")),
+                        "metadata": {
+                            "chat_id": chat_value,
+                            "channel_kind": "telegram",
+                            "component": str(tool_result_row.get("component") or ""),
+                            "request_id": str(tool_result_row.get("request_id") or ""),
+                            "trace_ref": str(tool_result_row.get("trace_ref") or ""),
+                            "source_event_id": str(tool_result_row.get("event_id") or ""),
+                            "source_event_type": "tool_result_received",
+                            "keepability": tool_facts.get("keepability"),
+                            "promotion_disposition": tool_facts.get("promotion_disposition"),
+                        },
+                    }
+                )
+
+    available_chat_ids = sorted(available_chat_ids_set)
+    for conversation in conversations_by_key.values():
+        conversation["turns"].sort(key=_turn_sort_key)
+
+    normalized_payload = {
+        "source": "spark_builder_state_db",
+        "writable_roles": ["user"],
+        "conversations": [
+            conversation
+            for conversation in conversations_by_key.values()
+            if list(conversation.get("turns", []))
+        ],
+    }
+    validation = validate_shadow_replay_payload(normalized_payload)
+    contract = {
+        "layer_name": "SparkBuilderTelegramStateDBAdapter",
+        "description": "Reads Spark Intelligence Builder Telegram state.db events and normalizes both legacy telegram_runtime rows and bridge-native memory_orchestrator plus researcher_bridge rows into the Spark shadow replay schema.",
+        "source_component": "telegram_runtime|memory_orchestrator|researcher_bridge",
+        "source_table": "builder_events",
+        "event_types": [
+            "intent_committed",
+            "delivery_succeeded",
+            "memory_write_requested",
+            "memory_write_succeeded",
+            "plugin_or_chip_influence_recorded",
+            "tool_result_received",
+        ],
+        "writable_roles": ["user"],
+    }
+    return {
+        "builder_home": str(root),
+        "state_db": str(state_db_path),
+        "selected_chat_id": selected_chat_id,
+        "available_chat_ids": available_chat_ids,
+        "contract": contract,
+        "normalized": normalized_payload,
+        "validation": validation,
+        "conversation_count": len(normalized_payload.get("conversations", [])),
+        "event_count": len(rows),
+    }
+
+
+def _run_spark_builder_state_telegram_intake(
+    builder_home: str,
+    output_dir: str,
+    *,
+    limit: int = 25,
+    chat_id: str | None = None,
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+) -> dict:
+    normalization = _normalize_builder_telegram_state_db(builder_home, limit=limit, chat_id=chat_id)
+    normalized = normalization["normalized"]
+    evaluations, adapter = _execute_shadow_replay_payload(normalized)
+    shadow_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+    failure_taxonomy = _build_shadow_failure_taxonomy_payload(
+        shadow_payload,
+        source_mode="builder_state_telegram",
+        source_dir=str(Path(builder_home)),
+        source_files=[str(normalization["state_db"])],
+        contract=normalization["contract"],
+    )
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    resolved_repo_sources = _resolve_repo_source_files(
+        repo_sources=repo_sources,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Builder Telegram State Knowledge Base",
+        repo_sources=resolved_repo_sources,
+        filed_outputs=_build_shadow_report_filed_outputs(shadow_payload)
+        + _build_shadow_failure_taxonomy_filed_outputs(shadow_payload)
+        + _build_shadow_turn_audit_filed_outputs(shadow_payload),
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+    turn_audit = _build_shadow_turn_audit_payload(shadow_payload)
+    return {
+        "builder_home": str(Path(builder_home)),
+        "state_db": str(normalization["state_db"]),
+        "contract": normalization["contract"],
+        "normalization": normalization,
+        "shadow_report": shadow_payload["report"],
+        "failure_taxonomy": failure_taxonomy,
+        "turn_audit": turn_audit,
+        "snapshot": snapshot,
+        "compile_result": compile_result,
+        "health_report": health_report,
+        "summary": {
+            "conversation_count": int(normalization.get("conversation_count", 0) or 0),
+            "selected_chat_id": normalization.get("selected_chat_id"),
+            "accepted_writes": int(shadow_payload.get("report", {}).get("summary", {}).get("accepted_writes", 0) or 0),
+            "rejected_writes": int(shadow_payload.get("report", {}).get("summary", {}).get("rejected_writes", 0) or 0),
+            "skipped_turns": int(shadow_payload.get("report", {}).get("summary", {}).get("skipped_turns", 0) or 0),
+            "reference_turns": int(shadow_payload.get("report", {}).get("summary", {}).get("reference_turns", 0) or 0),
+            "rejected_user_turn_count": int(turn_audit.get("summary", {}).get("rejected_user_turn_count", 0) or 0),
+            "reference_turn_count": int(turn_audit.get("summary", {}).get("reference_turn_count", 0) or 0),
+            "kb_valid": bool(health_report.get("valid", False)),
+            "kb_filed_output_count": int(compile_result.get("filed_output_count", 0) or 0),
+        },
+        "trace": {
+            "operation": "run_spark_builder_state_telegram_intake",
+            "limit": limit,
+            "chat_id": chat_id,
+        },
+    }
 
 
 def _validate_shadow_replay_batch_payload(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
@@ -4614,6 +6285,25 @@ def main() -> None:
     build_spark_kb.add_argument("--filed-output-file", action="append", default=[])
     build_spark_kb.add_argument("--filed-output-manifest", action="append", default=[])
     build_spark_kb.add_argument("--write")
+    build_spark_kb_from_shadow = subparsers.add_parser(
+        "build-spark-kb-from-shadow-replay",
+        help="Replay Spark shadow traffic, export governed memory, and compile a Spark KB vault from that run.",
+    )
+    build_spark_kb_from_shadow.add_argument("data_file")
+    build_spark_kb_from_shadow.add_argument("output_dir")
+    build_spark_kb_from_shadow.add_argument("--repo-source", action="append", default=[])
+    build_spark_kb_from_shadow.add_argument("--repo-source-manifest", action="append", default=[])
+    build_spark_kb_from_shadow.add_argument("--write")
+    build_spark_kb_from_shadow_batch = subparsers.add_parser(
+        "build-spark-kb-from-shadow-replay-batch",
+        help="Replay a directory of Spark shadow traffic, export governed memory, and compile one Spark KB vault from the batch.",
+    )
+    build_spark_kb_from_shadow_batch.add_argument("data_dir")
+    build_spark_kb_from_shadow_batch.add_argument("output_dir")
+    build_spark_kb_from_shadow_batch.add_argument("--glob", default="*.json")
+    build_spark_kb_from_shadow_batch.add_argument("--repo-source", action="append", default=[])
+    build_spark_kb_from_shadow_batch.add_argument("--repo-source-manifest", action="append", default=[])
+    build_spark_kb_from_shadow_batch.add_argument("--write")
     benchmark_runs_git_report = subparsers.add_parser("benchmark-runs-git-report", help="Summarize benchmark-runs JSON files by git status and file family.")
     benchmark_runs_git_report.add_argument("--benchmark-runs-dir", default="artifacts/benchmark_runs")
     benchmark_runs_git_report.add_argument("--repo-root", default=".")
@@ -4700,6 +6390,163 @@ def main() -> None:
     validate_spark_shadow = subparsers.add_parser("validate-spark-shadow-replay", help="Validate a Builder-style shadow replay JSON file without running replay.")
     validate_spark_shadow.add_argument("data_file")
     validate_spark_shadow.add_argument("--write")
+    normalize_builder_shadow = subparsers.add_parser(
+        "normalize-spark-builder-export",
+        help="Normalize a Spark Builder conversation export into the shadow replay schema.",
+    )
+    normalize_builder_shadow.add_argument("data_file")
+    normalize_builder_shadow.add_argument("--write")
+    normalize_builder_shadow_batch = subparsers.add_parser(
+        "normalize-spark-builder-export-batch",
+        help="Normalize a directory of Spark Builder conversation exports into the shadow replay schema.",
+    )
+    normalize_builder_shadow_batch.add_argument("data_dir")
+    normalize_builder_shadow_batch.add_argument("--glob", default="*.json")
+    normalize_builder_shadow_batch.add_argument("--write")
+    normalize_telegram_shadow = subparsers.add_parser(
+        "normalize-spark-telegram-export",
+        help="Normalize a Telegram bot export into the Spark shadow replay schema.",
+    )
+    normalize_telegram_shadow.add_argument("data_file")
+    normalize_telegram_shadow.add_argument("--write")
+    normalize_telegram_shadow_batch = subparsers.add_parser(
+        "normalize-spark-telegram-export-batch",
+        help="Normalize a directory of Telegram bot exports into the Spark shadow replay schema.",
+    )
+    normalize_telegram_shadow_batch.add_argument("data_dir")
+    normalize_telegram_shadow_batch.add_argument("--glob", default="*.json")
+    normalize_telegram_shadow_batch.add_argument("--write")
+    run_builder_shadow = subparsers.add_parser(
+        "run-spark-shadow-report-from-builder-export",
+        help="Normalize a Spark Builder export and emit a shadow report without compiling a KB vault.",
+    )
+    run_builder_shadow.add_argument("data_file")
+    run_builder_shadow.add_argument("--write")
+    run_builder_shadow_batch = subparsers.add_parser(
+        "run-spark-shadow-report-from-builder-export-batch",
+        help="Normalize a directory of Spark Builder exports and emit one aggregate shadow report without compiling a KB vault.",
+    )
+    run_builder_shadow_batch.add_argument("data_dir")
+    run_builder_shadow_batch.add_argument("--glob", default="*.json")
+    run_builder_shadow_batch.add_argument("--write")
+    run_telegram_shadow = subparsers.add_parser(
+        "run-spark-shadow-report-from-telegram-export",
+        help="Normalize a Telegram bot export and emit a shadow report without compiling a KB vault.",
+    )
+    run_telegram_shadow.add_argument("data_file")
+    run_telegram_shadow.add_argument("--write")
+    run_telegram_shadow_batch = subparsers.add_parser(
+        "run-spark-shadow-report-from-telegram-export-batch",
+        help="Normalize a directory of Telegram bot exports and emit one aggregate shadow report without compiling a KB vault.",
+    )
+    run_telegram_shadow_batch.add_argument("data_dir")
+    run_telegram_shadow_batch.add_argument("--glob", default="*.json")
+    run_telegram_shadow_batch.add_argument("--write")
+    taxonomy_builder_shadow = subparsers.add_parser(
+        "build-spark-shadow-failure-taxonomy-from-builder-export",
+        help="Normalize a Spark Builder export, replay it, and emit a compact failure taxonomy without compiling a KB vault.",
+    )
+    taxonomy_builder_shadow.add_argument("data_file")
+    taxonomy_builder_shadow.add_argument("--write")
+    taxonomy_builder_shadow_batch = subparsers.add_parser(
+        "build-spark-shadow-failure-taxonomy-from-builder-export-batch",
+        help="Normalize a directory of Spark Builder exports, replay them, and emit one aggregate failure taxonomy without compiling a KB vault.",
+    )
+    taxonomy_builder_shadow_batch.add_argument("data_dir")
+    taxonomy_builder_shadow_batch.add_argument("--glob", default="*.json")
+    taxonomy_builder_shadow_batch.add_argument("--write")
+    taxonomy_telegram_shadow = subparsers.add_parser(
+        "build-spark-shadow-failure-taxonomy-from-telegram-export",
+        help="Normalize a Telegram bot export, replay it, and emit a compact failure taxonomy without compiling a KB vault.",
+    )
+    taxonomy_telegram_shadow.add_argument("data_file")
+    taxonomy_telegram_shadow.add_argument("--write")
+    taxonomy_telegram_shadow_batch = subparsers.add_parser(
+        "build-spark-shadow-failure-taxonomy-from-telegram-export-batch",
+        help="Normalize a directory of Telegram bot exports, replay them, and emit one aggregate failure taxonomy without compiling a KB vault.",
+    )
+    taxonomy_telegram_shadow_batch.add_argument("data_dir")
+    taxonomy_telegram_shadow_batch.add_argument("--glob", default="*.json")
+    taxonomy_telegram_shadow_batch.add_argument("--write")
+    build_spark_kb_from_builder = subparsers.add_parser(
+        "build-spark-kb-from-builder-export",
+        help="Normalize a Spark Builder export, replay it through governed memory, and compile a Spark KB vault.",
+    )
+    build_spark_kb_from_builder.add_argument("data_file")
+    build_spark_kb_from_builder.add_argument("output_dir")
+    build_spark_kb_from_builder.add_argument("--repo-source", action="append", default=[])
+    build_spark_kb_from_builder.add_argument("--repo-source-manifest", action="append", default=[])
+    build_spark_kb_from_builder.add_argument("--write")
+    build_spark_kb_from_builder_batch = subparsers.add_parser(
+        "build-spark-kb-from-builder-export-batch",
+        help="Normalize a directory of Spark Builder exports, replay them through one governed memory runtime, and compile one Spark KB vault.",
+    )
+    build_spark_kb_from_builder_batch.add_argument("data_dir")
+    build_spark_kb_from_builder_batch.add_argument("output_dir")
+    build_spark_kb_from_builder_batch.add_argument("--glob", default="*.json")
+    build_spark_kb_from_builder_batch.add_argument("--repo-source", action="append", default=[])
+    build_spark_kb_from_builder_batch.add_argument("--repo-source-manifest", action="append", default=[])
+    build_spark_kb_from_builder_batch.add_argument("--write")
+    build_spark_kb_from_telegram = subparsers.add_parser(
+        "build-spark-kb-from-telegram-export",
+        help="Normalize a Telegram bot export, replay it through governed memory, and compile a Spark KB vault.",
+    )
+    build_spark_kb_from_telegram.add_argument("data_file")
+    build_spark_kb_from_telegram.add_argument("output_dir")
+    build_spark_kb_from_telegram.add_argument("--repo-source", action="append", default=[])
+    build_spark_kb_from_telegram.add_argument("--repo-source-manifest", action="append", default=[])
+    build_spark_kb_from_telegram.add_argument("--write")
+    build_spark_kb_from_telegram_batch = subparsers.add_parser(
+        "build-spark-kb-from-telegram-export-batch",
+        help="Normalize a directory of Telegram bot exports, replay them through one governed memory runtime, and compile one Spark KB vault.",
+    )
+    build_spark_kb_from_telegram_batch.add_argument("data_dir")
+    build_spark_kb_from_telegram_batch.add_argument("output_dir")
+    build_spark_kb_from_telegram_batch.add_argument("--glob", default="*.json")
+    build_spark_kb_from_telegram_batch.add_argument("--repo-source", action="append", default=[])
+    build_spark_kb_from_telegram_batch.add_argument("--repo-source-manifest", action="append", default=[])
+    build_spark_kb_from_telegram_batch.add_argument("--write")
+    run_spark_builder_intake_batch = subparsers.add_parser(
+        "run-spark-builder-intake-batch",
+        help="Normalize a directory of Spark Builder exports, build the aggregate shadow report, build the failure taxonomy, and compile one Spark KB vault in one run.",
+    )
+    run_spark_builder_intake_batch.add_argument("data_dir")
+    run_spark_builder_intake_batch.add_argument("output_dir")
+    run_spark_builder_intake_batch.add_argument("--glob", default="*.json")
+    run_spark_builder_intake_batch.add_argument("--repo-source", action="append", default=[])
+    run_spark_builder_intake_batch.add_argument("--repo-source-manifest", action="append", default=[])
+    run_spark_builder_intake_batch.add_argument("--write")
+    run_spark_telegram_intake_batch = subparsers.add_parser(
+        "run-spark-telegram-intake-batch",
+        help="Normalize a directory of Telegram bot exports, build the aggregate shadow report, build the failure taxonomy, and compile one Spark KB vault in one run.",
+    )
+    run_spark_telegram_intake_batch.add_argument("data_dir")
+    run_spark_telegram_intake_batch.add_argument("output_dir")
+    run_spark_telegram_intake_batch.add_argument("--glob", default="*.json")
+    run_spark_telegram_intake_batch.add_argument("--repo-source", action="append", default=[])
+    run_spark_telegram_intake_batch.add_argument("--repo-source-manifest", action="append", default=[])
+    run_spark_telegram_intake_batch.add_argument("--write")
+    run_spark_builder_telegram_intake = subparsers.add_parser(
+        "run-spark-builder-telegram-intake",
+        help="Scan a Spark Intelligence Builder directory for Telegram runtime artifacts, then build the aggregate shadow report, failure taxonomy, and Spark KB vault in one run.",
+    )
+    run_spark_builder_telegram_intake.add_argument("builder_dir")
+    run_spark_builder_telegram_intake.add_argument("output_dir")
+    run_spark_builder_telegram_intake.add_argument("--glob", default=".tmp-telegram-*.json")
+    run_spark_builder_telegram_intake.add_argument("--repo-source", action="append", default=[])
+    run_spark_builder_telegram_intake.add_argument("--repo-source-manifest", action="append", default=[])
+    run_spark_builder_telegram_intake.add_argument("--write")
+    run_spark_builder_state_telegram_intake = subparsers.add_parser(
+        "run-spark-builder-state-telegram-intake",
+        help="Read Spark Intelligence Builder telegram_runtime events from state.db, replay them through governed memory, and compile one Spark KB vault in one run.",
+    )
+    run_spark_builder_state_telegram_intake.add_argument("builder_home")
+    run_spark_builder_state_telegram_intake.add_argument("output_dir")
+    run_spark_builder_state_telegram_intake.add_argument("--limit", type=int, default=25)
+    run_spark_builder_state_telegram_intake.add_argument("--chat-id")
+    run_spark_builder_state_telegram_intake.add_argument("--repo-source", action="append", default=[])
+    run_spark_builder_state_telegram_intake.add_argument("--repo-source-manifest", action="append", default=[])
+    run_spark_builder_state_telegram_intake.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -5050,6 +6897,31 @@ def main() -> None:
         _print(payload)
         return
 
+    if args.command == "build-spark-kb-from-shadow-replay":
+        payload = _build_spark_kb_from_shadow_replay(
+            args.data_file,
+            args.output_dir,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-kb-from-shadow-replay-batch":
+        payload = _build_spark_kb_from_shadow_replay_batch(
+            args.data_dir,
+            args.output_dir,
+            glob_pattern=args.glob,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
     if args.command == "benchmark-runs-git-report":
         payload = _build_benchmark_runs_git_report(
             benchmark_runs_dir=args.benchmark_runs_dir,
@@ -5128,6 +7000,193 @@ def main() -> None:
         _print(payload)
         return
 
+    if args.command == "normalize-spark-builder-export":
+        payload = _normalize_builder_shadow_export(args.data_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "normalize-spark-builder-export-batch":
+        payload = _normalize_builder_shadow_export_batch(args.data_dir, glob_pattern=args.glob)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "normalize-spark-telegram-export":
+        payload = _normalize_telegram_shadow_export(args.data_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "normalize-spark-telegram-export-batch":
+        payload = _normalize_telegram_shadow_export_batch(args.data_dir, glob_pattern=args.glob)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-shadow-report-from-builder-export":
+        payload = _load_shadow_report_payload_from_builder_export(args.data_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-shadow-report-from-builder-export-batch":
+        payload = _load_shadow_report_payload_from_builder_export_batch(args.data_dir, glob_pattern=args.glob)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-shadow-report-from-telegram-export":
+        payload = _load_shadow_report_payload_from_telegram_export(args.data_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-shadow-report-from-telegram-export-batch":
+        payload = _load_shadow_report_payload_from_telegram_export_batch(args.data_dir, glob_pattern=args.glob)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-shadow-failure-taxonomy-from-builder-export":
+        payload = _build_shadow_failure_taxonomy_from_builder_export(args.data_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-shadow-failure-taxonomy-from-builder-export-batch":
+        payload = _build_shadow_failure_taxonomy_from_builder_export_batch(args.data_dir, glob_pattern=args.glob)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-shadow-failure-taxonomy-from-telegram-export":
+        payload = _build_shadow_failure_taxonomy_from_telegram_export(args.data_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-shadow-failure-taxonomy-from-telegram-export-batch":
+        payload = _build_shadow_failure_taxonomy_from_telegram_export_batch(args.data_dir, glob_pattern=args.glob)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-kb-from-builder-export":
+        payload = _build_spark_kb_from_builder_export(
+            args.data_file,
+            args.output_dir,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-kb-from-telegram-export":
+        payload = _build_spark_kb_from_telegram_export(
+            args.data_file,
+            args.output_dir,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-kb-from-builder-export-batch":
+        payload = _build_spark_kb_from_builder_export_batch(
+            args.data_dir,
+            args.output_dir,
+            glob_pattern=args.glob,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-kb-from-telegram-export-batch":
+        payload = _build_spark_kb_from_telegram_export_batch(
+            args.data_dir,
+            args.output_dir,
+            glob_pattern=args.glob,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-builder-intake-batch":
+        payload = _run_spark_builder_intake_batch(
+            args.data_dir,
+            args.output_dir,
+            glob_pattern=args.glob,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-telegram-intake-batch":
+        payload = _run_spark_telegram_intake_batch(
+            args.data_dir,
+            args.output_dir,
+            glob_pattern=args.glob,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-builder-telegram-intake":
+        payload = _run_spark_builder_telegram_intake(
+            args.builder_dir,
+            args.output_dir,
+            glob_pattern=args.glob,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-builder-state-telegram-intake":
+        payload = _run_spark_builder_state_telegram_intake(
+            args.builder_home,
+            args.output_dir,
+            limit=args.limit,
+            chat_id=args.chat_id,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
     if args.command == "validate-spark-shadow-replay-batch":
         payload = _validate_shadow_replay_batch_payload(args.data_dir, glob_pattern=args.glob)
         if args.write:
@@ -5147,6 +7206,8 @@ def main() -> None:
             {
                 "ingest": build_shadow_ingest_contract_summary(),
                 "replay": build_shadow_replay_contract_summary(),
+                "builder_adapter": build_builder_shadow_adapter_contract_summary(),
+                "telegram_adapter": build_telegram_shadow_adapter_contract_summary(),
             }
         )
         return

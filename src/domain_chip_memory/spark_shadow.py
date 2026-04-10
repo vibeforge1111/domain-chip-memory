@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from .contracts import JsonDict
@@ -53,6 +53,7 @@ class SparkShadowIngestResult:
     accepted_writes: int
     rejected_writes: int
     skipped_turns: int
+    reference_turns: int
     turn_traces: list[SparkShadowTurnTrace]
     trace: JsonDict = field(default_factory=dict)
 
@@ -113,11 +114,35 @@ class SparkShadowIngestAdapter:
         accepted_writes = 0
         rejected_writes = 0
         skipped_turns = 0
+        reference_turns = 0
         turn_traces: list[SparkShadowTurnTrace] = []
 
         for index, turn in enumerate(request.turns):
             normalized_role = str(turn.role or "").strip().lower()
             turn_id = f"{session_id}:shadow:{index + 1}"
+            if self._is_reference_turn(turn, normalized_role):
+                reference_turns += 1
+                turn_traces.append(
+                    SparkShadowTurnTrace(
+                        message_id=turn.message_id,
+                        role=normalized_role,
+                        action="reference_turn",
+                        session_id=session_id,
+                        turn_id=turn_id,
+                        accepted=False,
+                        trace={
+                            "operation": "shadow_ingest_turn",
+                            "status": "reference_turn",
+                            "conversation_id": request.conversation_id,
+                            "message_id": turn.message_id,
+                            "role": normalized_role,
+                            "content": turn.content,
+                            "timestamp": turn.timestamp,
+                            "source_event_type": str(turn.metadata.get("source_event_type") or ""),
+                        },
+                    )
+                )
+                continue
             if normalized_role not in self.writable_roles:
                 skipped_turns += 1
                 turn_traces.append(
@@ -176,6 +201,7 @@ class SparkShadowIngestAdapter:
             accepted_writes=accepted_writes,
             rejected_writes=rejected_writes,
             skipped_turns=skipped_turns,
+            reference_turns=reference_turns,
             turn_traces=turn_traces,
             trace={
                 "operation": "ingest_conversation",
@@ -185,6 +211,7 @@ class SparkShadowIngestAdapter:
                 "accepted_writes": accepted_writes,
                 "rejected_writes": rejected_writes,
                 "skipped_turns": skipped_turns,
+                "reference_turns": reference_turns,
             },
         )
 
@@ -211,15 +238,22 @@ class SparkShadowIngestAdapter:
         historical_hits = sum(
             1 for result in probe_results if result.probe_type == "historical_state" and result.hit
         )
-        total_turns = ingest_result.accepted_writes + ingest_result.rejected_writes + ingest_result.skipped_turns
+        total_turns = (
+            ingest_result.accepted_writes
+            + ingest_result.rejected_writes
+            + ingest_result.skipped_turns
+            + ingest_result.reference_turns
+        )
 
         summary = {
             "accepted_writes": ingest_result.accepted_writes,
             "rejected_writes": ingest_result.rejected_writes,
             "skipped_turns": ingest_result.skipped_turns,
+            "reference_turns": ingest_result.reference_turns,
             "accepted_rate": round(ingest_result.accepted_writes / total_turns, 4) if total_turns else 0.0,
             "rejected_rate": round(ingest_result.rejected_writes / total_turns, 4) if total_turns else 0.0,
             "skipped_rate": round(ingest_result.skipped_turns / total_turns, 4) if total_turns else 0.0,
+            "reference_rate": round(ingest_result.reference_turns / total_turns, 4) if total_turns else 0.0,
             "unsupported_reasons": [
                 {"reason": reason, "count": unsupported_reason_counts[reason]}
                 for reason in sorted(unsupported_reason_counts)
@@ -247,6 +281,7 @@ class SparkShadowIngestAdapter:
                 "accepted_writes": ingest_result.accepted_writes,
                 "rejected_writes": ingest_result.rejected_writes,
                 "skipped_turns": ingest_result.skipped_turns,
+                "reference_turns": ingest_result.reference_turns,
             },
             probe_results=probe_results,
             summary=summary,
@@ -255,6 +290,7 @@ class SparkShadowIngestAdapter:
                 "conversation_id": ingest_result.conversation_id,
                 "session_id": ingest_result.session_id,
                 "probe_count": len(probes),
+                "turn_traces": [asdict(turn_trace) for turn_trace in ingest_result.turn_traces],
             },
         )
 
@@ -278,9 +314,19 @@ class SparkShadowIngestAdapter:
                 "status": action,
                 "message_id": turn.message_id,
                 "role": normalized_role,
+                "content": turn.content,
+                "timestamp": turn.timestamp,
                 "write_trace": dict(write_result.trace),
             },
         )
+
+    def _is_reference_turn(self, turn: SparkShadowTurn, normalized_role: str) -> bool:
+        source_event_type = str(turn.metadata.get("source_event_type") or "").strip().lower()
+        if normalized_role == "user" and source_event_type == "plugin_or_chip_influence_recorded":
+            return True
+        if normalized_role not in self.writable_roles and source_event_type == "tool_result_received":
+            return True
+        return False
 
     def _evaluate_probe(self, probe: SparkShadowProbe) -> SparkShadowProbeResult:
         if probe.probe_type == "current_state":
@@ -376,12 +422,14 @@ def build_shadow_report(evaluations: list[SparkShadowEvaluationResult]) -> Spark
     accepted_writes = 0
     rejected_writes = 0
     skipped_turns = 0
+    reference_turns = 0
 
     for evaluation in evaluations:
         summary = dict(evaluation.summary)
         accepted_writes += int(summary.get("accepted_writes", 0) or 0)
         rejected_writes += int(summary.get("rejected_writes", 0) or 0)
         skipped_turns += int(summary.get("skipped_turns", 0) or 0)
+        reference_turns += int(summary.get("reference_turns", 0) or 0)
         for row in summary.get("unsupported_reasons", []):
             reason = str(row.get("reason", "") or "").strip()
             count = int(row.get("count", 0) or 0)
@@ -406,11 +454,12 @@ def build_shadow_report(evaluations: list[SparkShadowEvaluationResult]) -> Spark
                 "accepted_writes": int(summary.get("accepted_writes", 0) or 0),
                 "rejected_writes": int(summary.get("rejected_writes", 0) or 0),
                 "skipped_turns": int(summary.get("skipped_turns", 0) or 0),
+                "reference_turns": int(summary.get("reference_turns", 0) or 0),
                 "probe_count": len(evaluation.probe_results),
             }
         )
 
-    total_turns = accepted_writes + rejected_writes + skipped_turns
+    total_turns = accepted_writes + rejected_writes + skipped_turns + reference_turns
     probe_rows: list[JsonDict] = []
     for probe_type in sorted(probe_total_by_type):
         expected_total = expected_total_by_type[probe_type]
@@ -434,10 +483,12 @@ def build_shadow_report(evaluations: list[SparkShadowEvaluationResult]) -> Spark
         "accepted_writes": accepted_writes,
         "rejected_writes": rejected_writes,
         "skipped_turns": skipped_turns,
+        "reference_turns": reference_turns,
         "total_turns": total_turns,
         "accepted_rate": round(accepted_writes / total_turns, 4) if total_turns else 0.0,
         "rejected_rate": round(rejected_writes / total_turns, 4) if total_turns else 0.0,
         "skipped_rate": round(skipped_turns / total_turns, 4) if total_turns else 0.0,
+        "reference_rate": round(reference_turns / total_turns, 4) if total_turns else 0.0,
         "unsupported_reasons": [
             {"reason": reason, "count": unsupported_reason_counts[reason]}
             for reason in sorted(unsupported_reason_counts)
@@ -473,10 +524,334 @@ def build_shadow_ingest_contract_summary() -> dict[str, Any]:
         "behavior": [
             "accept Builder-style conversation turns",
             "write only configured roles into SparkMemorySDK",
-            "report accepted, rejected, and skipped turns with replayable traces",
+            "report accepted, rejected, skipped, and reference turns with replayable traces",
             "evaluate post-ingest current-state, historical-state, and evidence probes",
             "aggregate multiple shadow evaluations into a Spark-facing quality report",
         ],
+    }
+
+
+def _first_present_string(mapping: dict[str, Any], keys: tuple[str, ...]) -> str | None:
+    for key in keys:
+        value = mapping.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return None
+
+
+def _first_present_object(mapping: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
+    for key in keys:
+        value = mapping.get(key)
+        if isinstance(value, dict):
+            return dict(value)
+    return {}
+
+
+def _first_present_list(mapping: dict[str, Any], keys: tuple[str, ...]) -> list[Any]:
+    for key in keys:
+        value = mapping.get(key)
+        if isinstance(value, list):
+            return value
+    return []
+
+
+def normalize_builder_shadow_export_payload(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ValueError("Builder export file must contain a JSON object.")
+
+    raw_conversations = _first_present_list(payload, ("conversations", "threads", "chats"))
+    if not raw_conversations:
+        raise ValueError("Builder export file must contain conversations, threads, or chats.")
+
+    normalized_conversations: list[dict[str, Any]] = []
+    for index, raw_conversation in enumerate(raw_conversations):
+        if not isinstance(raw_conversation, dict):
+            raise ValueError(f"Builder conversation at index {index} must be an object.")
+
+        conversation_id = _first_present_string(
+            raw_conversation,
+            ("conversation_id", "conversationId", "thread_id", "threadId", "chat_id", "chatId", "id"),
+        )
+        if not conversation_id:
+            raise ValueError(f"Builder conversation at index {index} must include a conversation id.")
+
+        session_id = _first_present_string(raw_conversation, ("session_id", "sessionId"))
+        turns_payload = _first_present_list(raw_conversation, ("turns", "messages"))
+        probes_payload = _first_present_list(raw_conversation, ("probes",))
+        metadata = _first_present_object(raw_conversation, ("metadata", "meta"))
+
+        normalized_turns: list[dict[str, Any]] = []
+        for turn_index, raw_turn in enumerate(turns_payload):
+            if not isinstance(raw_turn, dict):
+                raise ValueError(
+                    f"Builder turn {turn_index} in conversation '{conversation_id}' must be an object."
+                )
+            message_id = _first_present_string(raw_turn, ("message_id", "messageId", "id"))
+            role = _first_present_string(raw_turn, ("role", "speaker", "author_role", "authorRole"))
+            content = _first_present_string(raw_turn, ("content", "text", "message", "body"))
+            if not message_id:
+                raise ValueError(
+                    f"Builder turn {turn_index} in conversation '{conversation_id}' must include message id."
+                )
+            if not role:
+                raise ValueError(
+                    f"Builder turn {turn_index} in conversation '{conversation_id}' must include role."
+                )
+            if not content:
+                raise ValueError(
+                    f"Builder turn {turn_index} in conversation '{conversation_id}' must include content."
+                )
+            timestamp = _first_present_string(raw_turn, ("timestamp", "created_at", "createdAt"))
+            turn_metadata = _first_present_object(raw_turn, ("metadata", "meta"))
+            normalized_turns.append(
+                {
+                    "message_id": message_id,
+                    "role": role,
+                    "content": content,
+                    **({"timestamp": timestamp} if timestamp else {}),
+                    **({"metadata": turn_metadata} if turn_metadata else {}),
+                }
+            )
+
+        normalized_probes: list[dict[str, Any]] = []
+        for probe_index, raw_probe in enumerate(probes_payload):
+            if not isinstance(raw_probe, dict):
+                raise ValueError(
+                    f"Builder probe {probe_index} in conversation '{conversation_id}' must be an object."
+                )
+            probe_id = _first_present_string(raw_probe, ("probe_id", "probeId", "id"))
+            probe_type = _first_present_string(raw_probe, ("probe_type", "probeType", "type"))
+            if not probe_id or not probe_type:
+                raise ValueError(
+                    f"Builder probe {probe_index} in conversation '{conversation_id}' must include probe id and probe type."
+                )
+            normalized_probe = {
+                "probe_id": probe_id,
+                "probe_type": probe_type,
+            }
+            for source_key, target_key in (
+                (("subject",), "subject"),
+                (("predicate",), "predicate"),
+                (("query",), "query"),
+                (("as_of", "asOf"), "as_of"),
+                (("expected_value", "expectedValue"), "expected_value"),
+            ):
+                value = _first_present_string(raw_probe, source_key)
+                if value:
+                    normalized_probe[target_key] = value
+            min_results = raw_probe.get("min_results", raw_probe.get("minResults"))
+            if min_results is not None:
+                normalized_probe["min_results"] = int(min_results)
+            normalized_probes.append(normalized_probe)
+
+        normalized_conversation = {
+            "conversation_id": conversation_id,
+            "turns": normalized_turns,
+        }
+        if session_id:
+            normalized_conversation["session_id"] = session_id
+        if metadata:
+            normalized_conversation["metadata"] = metadata
+        if normalized_probes:
+            normalized_conversation["probes"] = normalized_probes
+        normalized_conversations.append(normalized_conversation)
+
+    normalized_payload = {"conversations": normalized_conversations}
+    writable_roles = payload.get("writable_roles", payload.get("writableRoles"))
+    if isinstance(writable_roles, list):
+        normalized_payload["writable_roles"] = [str(item) for item in writable_roles]
+    return normalized_payload
+
+
+def _telegram_message_text(message: dict[str, Any]) -> str | None:
+    for key in ("text", "caption"):
+        value = message.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return None
+
+
+def _telegram_message_timestamp(message: dict[str, Any]) -> str | None:
+    date_value = message.get("date")
+    if isinstance(date_value, int):
+        from datetime import datetime, timezone
+
+        return datetime.fromtimestamp(date_value, tz=timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    if date_value is None:
+        return None
+    text = str(date_value).strip()
+    return text or None
+
+
+def normalize_telegram_bot_export_payload(payload: Any) -> dict[str, Any]:
+    updates: list[Any]
+    if isinstance(payload, list):
+        updates = payload
+    elif isinstance(payload, dict):
+        raw_updates = _first_present_list(payload, ("result", "updates", "items", "messages"))
+        if raw_updates:
+            updates = raw_updates
+        elif any(key in payload for key in ("message", "edited_message", "channel_post", "edited_channel_post", "callback_query")):
+            updates = [payload]
+        else:
+            raise ValueError("Telegram export file must contain a list of updates, a result/updates array, or a Telegram update object.")
+    else:
+        raise ValueError("Telegram export file must contain a JSON object or list.")
+
+    grouped: dict[str, dict[str, Any]] = {}
+    for index, raw_update in enumerate(updates):
+        if not isinstance(raw_update, dict):
+            raise ValueError(f"Telegram update at index {index} must be an object.")
+
+        update_id = _first_present_string(raw_update, ("update_id", "updateId", "id")) or f"update-{index + 1}"
+        callback_query = raw_update.get("callback_query")
+        message: dict[str, Any] | None = None
+        sender: dict[str, Any] = {}
+        text: str | None = None
+        if isinstance(callback_query, dict):
+            callback_message = callback_query.get("message")
+            if isinstance(callback_message, dict):
+                message = callback_message
+            sender = callback_query.get("from") if isinstance(callback_query.get("from"), dict) else {}
+            text = _first_present_string(callback_query, ("data",))
+            if not text and isinstance(message, dict):
+                text = _telegram_message_text(message)
+        else:
+            for key in ("message", "edited_message", "channel_post", "edited_channel_post"):
+                candidate = raw_update.get(key)
+                if isinstance(candidate, dict):
+                    message = candidate
+                    break
+            if isinstance(message, dict):
+                sender = message.get("from") if isinstance(message.get("from"), dict) else {}
+                text = _telegram_message_text(message)
+
+        if not isinstance(message, dict):
+            continue
+
+        chat = message.get("chat") if isinstance(message.get("chat"), dict) else {}
+        chat_id = _first_present_string(chat, ("id",))
+        if not chat_id:
+            chat_id = f"telegram-update-{update_id}"
+        thread_id = _first_present_string(message, ("message_thread_id", "messageThreadId"))
+        conversation_id = f"telegram-chat-{chat_id}"
+        if thread_id:
+            conversation_id = f"{conversation_id}-thread-{thread_id}"
+        session_id = conversation_id
+        if conversation_id not in grouped:
+            conversation_metadata: dict[str, Any] = {
+                "source": "telegram",
+                "telegram_chat_id": chat_id,
+            }
+            chat_title = _first_present_string(chat, ("title", "username", "first_name"))
+            chat_type = _first_present_string(chat, ("type",))
+            if chat_title:
+                conversation_metadata["telegram_chat_label"] = chat_title
+            if chat_type:
+                conversation_metadata["telegram_chat_type"] = chat_type
+            grouped[conversation_id] = {
+                "conversation_id": conversation_id,
+                "session_id": session_id,
+                "metadata": conversation_metadata,
+                "turns": [],
+            }
+
+        message_id = _first_present_string(message, ("message_id", "messageId", "id")) or update_id
+        role = "assistant" if str(sender.get("is_bot", False)).lower() == "true" or sender.get("is_bot") is True else "user"
+        if not text:
+            continue
+        turn_metadata: dict[str, Any] = {
+            "source": "telegram",
+            "telegram_update_id": update_id,
+            "telegram_chat_id": chat_id,
+            "telegram_message_id": message_id,
+        }
+        sender_id = _first_present_string(sender, ("id",))
+        sender_username = _first_present_string(sender, ("username",))
+        sender_name = _first_present_string(sender, ("first_name",))
+        if sender_id:
+            turn_metadata["telegram_sender_id"] = sender_id
+        if sender_username:
+            turn_metadata["telegram_sender_username"] = sender_username
+        if sender_name:
+            turn_metadata["telegram_sender_name"] = sender_name
+        if thread_id:
+            turn_metadata["telegram_thread_id"] = thread_id
+        grouped[conversation_id]["turns"].append(
+            {
+                "message_id": str(message_id),
+                "role": role,
+                "content": text,
+                **({"timestamp": _telegram_message_timestamp(message)} if _telegram_message_timestamp(message) else {}),
+                "metadata": turn_metadata,
+            }
+        )
+
+    normalized_conversations = [conversation for conversation in grouped.values() if conversation.get("turns")]
+    if not normalized_conversations:
+        raise ValueError("Telegram export file did not contain any text-bearing messages.")
+    return {
+        "writable_roles": ["user"],
+        "conversations": normalized_conversations,
+    }
+
+
+def build_builder_shadow_adapter_contract_summary() -> dict[str, Any]:
+    return {
+        "layer_name": "SparkBuilderShadowAdapter",
+        "input_root_aliases": ["conversations", "threads", "chats"],
+        "conversation_id_aliases": [
+            "conversation_id",
+            "conversationId",
+            "thread_id",
+            "threadId",
+            "chat_id",
+            "chatId",
+            "id",
+        ],
+        "turn_collection_aliases": ["turns", "messages"],
+        "turn_field_aliases": {
+            "message_id": ["message_id", "messageId", "id"],
+            "role": ["role", "speaker", "author_role", "authorRole"],
+            "content": ["content", "text", "message", "body"],
+            "timestamp": ["timestamp", "created_at", "createdAt"],
+            "metadata": ["metadata", "meta"],
+        },
+        "probe_field_aliases": {
+            "probe_id": ["probe_id", "probeId", "id"],
+            "probe_type": ["probe_type", "probeType", "type"],
+            "as_of": ["as_of", "asOf"],
+            "expected_value": ["expected_value", "expectedValue"],
+            "min_results": ["min_results", "minResults"],
+        },
+        "output_shape": "Spark shadow replay JSON compatible with validate-spark-shadow-replay and run-spark-shadow-report",
+    }
+
+
+def build_telegram_shadow_adapter_contract_summary() -> dict[str, Any]:
+    return {
+        "layer_name": "SparkTelegramShadowAdapter",
+        "input_root_aliases": ["result", "updates", "items", "messages"],
+        "supported_update_keys": [
+            "message",
+            "edited_message",
+            "channel_post",
+            "edited_channel_post",
+            "callback_query",
+        ],
+        "message_text_fields": ["text", "caption", "callback_query.data"],
+        "grouping": "messages are grouped by chat.id and optional message_thread_id",
+        "role_mapping": {
+            "telegram from.is_bot = true": "assistant",
+            "telegram from.is_bot = false": "user",
+        },
+        "output_shape": "Spark shadow replay JSON compatible with validate-spark-shadow-replay and run-spark-shadow-report",
     }
 
 

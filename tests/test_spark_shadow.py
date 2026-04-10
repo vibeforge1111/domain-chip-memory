@@ -8,6 +8,8 @@ from domain_chip_memory import (
     build_shadow_replay_contract_summary,
     build_shadow_report,
     build_shadow_ingest_contract_summary,
+    normalize_builder_shadow_export_payload,
+    normalize_telegram_bot_export_payload,
     validate_shadow_replay_payload,
 )
 
@@ -100,6 +102,145 @@ def test_validate_shadow_replay_payload_reports_bad_shape():
     assert any("min_results" in error for error in payload["errors"])
 
 
+def test_normalize_builder_shadow_export_payload_accepts_common_builder_aliases():
+    payload = normalize_builder_shadow_export_payload(
+        {
+            "writableRoles": ["user"],
+            "threads": [
+                {
+                    "threadId": "builder-thread-1",
+                    "sessionId": "builder-session-1",
+                    "meta": {"source": "builder"},
+                    "messages": [
+                        {
+                            "id": "m1",
+                            "speaker": "user",
+                            "text": "I live in Dubai.",
+                            "createdAt": "2025-03-01T09:00:00Z",
+                            "meta": {"memory_kind": "current_state"},
+                        }
+                    ],
+                    "probes": [
+                        {
+                            "id": "p1",
+                            "type": "current_state",
+                            "subject": "user",
+                            "predicate": "location",
+                            "expectedValue": "Dubai",
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert payload == {
+        "writable_roles": ["user"],
+        "conversations": [
+            {
+                "conversation_id": "builder-thread-1",
+                "session_id": "builder-session-1",
+                "metadata": {"source": "builder"},
+                "turns": [
+                    {
+                        "message_id": "m1",
+                        "role": "user",
+                        "content": "I live in Dubai.",
+                        "timestamp": "2025-03-01T09:00:00Z",
+                        "metadata": {"memory_kind": "current_state"},
+                    }
+                ],
+                "probes": [
+                    {
+                        "probe_id": "p1",
+                        "probe_type": "current_state",
+                        "subject": "user",
+                        "predicate": "location",
+                        "expected_value": "Dubai",
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def test_normalize_telegram_bot_export_payload_accepts_bot_api_updates():
+    payload = normalize_telegram_bot_export_payload(
+        {
+            "result": [
+                {
+                    "update_id": 101,
+                    "message": {
+                        "message_id": 11,
+                        "date": 1740829200,
+                        "chat": {"id": -1001, "title": "Spark Lab", "type": "supergroup"},
+                        "from": {"id": 501, "is_bot": False, "username": "alice", "first_name": "Alice"},
+                        "text": "I live in Dubai.",
+                    },
+                },
+                {
+                    "update_id": 102,
+                    "message": {
+                        "message_id": 12,
+                        "date": 1740829260,
+                        "chat": {"id": -1001, "title": "Spark Lab", "type": "supergroup"},
+                        "from": {"id": 900, "is_bot": True, "username": "spark_bot", "first_name": "Spark"},
+                        "text": "Noted.",
+                    },
+                },
+            ]
+        }
+    )
+
+    assert payload == {
+        "writable_roles": ["user"],
+        "conversations": [
+            {
+                "conversation_id": "telegram-chat--1001",
+                "session_id": "telegram-chat--1001",
+                "metadata": {
+                    "source": "telegram",
+                    "telegram_chat_id": "-1001",
+                    "telegram_chat_label": "Spark Lab",
+                    "telegram_chat_type": "supergroup",
+                },
+                "turns": [
+                    {
+                        "message_id": "11",
+                        "role": "user",
+                        "content": "I live in Dubai.",
+                        "timestamp": "2025-03-01T11:40:00Z",
+                        "metadata": {
+                            "source": "telegram",
+                            "telegram_update_id": "101",
+                            "telegram_chat_id": "-1001",
+                            "telegram_message_id": "11",
+                            "telegram_sender_id": "501",
+                            "telegram_sender_username": "alice",
+                            "telegram_sender_name": "Alice",
+                        },
+                    },
+                    {
+                        "message_id": "12",
+                        "role": "assistant",
+                        "content": "Noted.",
+                        "timestamp": "2025-03-01T11:41:00Z",
+                        "metadata": {
+                            "source": "telegram",
+                            "telegram_update_id": "102",
+                            "telegram_chat_id": "-1001",
+                            "telegram_message_id": "12",
+                            "telegram_sender_id": "900",
+                            "telegram_sender_username": "spark_bot",
+                            "telegram_sender_name": "Spark",
+                        },
+                    },
+                ],
+            }
+        ],
+    }
+
+
 def test_shadow_ingest_writes_user_turns_and_skips_assistant_turns():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)
@@ -135,6 +276,7 @@ def test_shadow_ingest_writes_user_turns_and_skips_assistant_turns():
     assert result.accepted_writes == 2
     assert result.rejected_writes == 0
     assert result.skipped_turns == 1
+    assert result.reference_turns == 0
     assert current_state.found is True
     assert current_state.value == "Dubai"
     assert result.turn_traces[1].action == "skipped_role"
@@ -168,10 +310,68 @@ def test_shadow_ingest_counts_rejected_unsupported_writes():
 
     assert result.accepted_writes == 1
     assert result.rejected_writes == 1
+    assert result.reference_turns == 0
     assert result.turn_traces[0].action == "rejected_write"
     assert result.turn_traces[0].unsupported_reason == "no_structured_memory_extracted"
     assert current_state.found is True
     assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_accepts_founder_startup_and_hack_facts():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-founder-conv",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I am an entrepreneur.",
+                    timestamp="2025-01-01T09:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="My startup is Seedify.",
+                    timestamp="2025-01-01T09:01:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m3",
+                    role="user",
+                    content="We were hacked by North Korea.",
+                    timestamp="2025-01-01T09:02:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m4",
+                    role="user",
+                    content="I am trying to survive the hack and revive the companies.",
+                    timestamp="2025-01-01T09:03:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m5",
+                    role="user",
+                    content="I am the founder of Spark Swarm.",
+                    timestamp="2025-01-01T09:04:00Z",
+                ),
+            ],
+        )
+    )
+
+    startup = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="startup_name"))
+    attacker = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="hack_actor"))
+    founder = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="founder_of"))
+
+    assert result.accepted_writes == 5
+    assert result.rejected_writes == 0
+    assert result.reference_turns == 0
+    assert startup.found is True
+    assert startup.value == "Seedify"
+    assert attacker.found is True
+    assert attacker.value == "North Korea"
+    assert founder.found is True
+    assert founder.value == "Spark Swarm"
 
 
 def test_shadow_ingest_can_route_turn_to_event_write():
@@ -194,6 +394,7 @@ def test_shadow_ingest_can_route_turn_to_event_write():
     )
 
     assert result.accepted_writes == 1
+    assert result.reference_turns == 0
     assert result.turn_traces[0].accepted is True
     assert result.turn_traces[0].trace["write_trace"]["operation"] == "write_memory"
 
@@ -227,8 +428,61 @@ def test_shadow_ingest_uses_explicit_structured_metadata_when_present():
     current_state = sdk.get_current_state(CurrentStateRequest(subject="human:human:test", predicate="profile.city"))
 
     assert result.accepted_writes == 1
+    assert result.reference_turns == 0
     assert current_state.found is True
     assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_treats_bridge_queries_and_bridge_replies_as_reference_turns():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="bridge-conv-1",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="My startup is Seedify.",
+                    timestamp="2026-04-10T11:45:08Z",
+                    metadata={
+                        "source_event_type": "memory_write_requested",
+                        "subject": "human:telegram:test",
+                        "predicate": "profile.startup_name",
+                        "value": "Seedify",
+                        "operation": "update",
+                        "memory_role": "current_state",
+                    },
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="assistant",
+                    content="I'll remember you created Seedify.",
+                    timestamp="2026-04-10T11:45:08Z",
+                    metadata={"source_event_type": "tool_result_received"},
+                ),
+                SparkShadowTurn(
+                    message_id="m3",
+                    role="user",
+                    content="What is my startup?",
+                    timestamp="2026-04-10T11:45:09Z",
+                    metadata={"source_event_type": "plugin_or_chip_influence_recorded"},
+                ),
+            ],
+        )
+    )
+
+    startup = sdk.get_current_state(CurrentStateRequest(subject="human:telegram:test", predicate="profile.startup_name"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 0
+    assert result.reference_turns == 2
+    assert startup.found is True
+    assert startup.value == "Seedify"
+    assert result.turn_traces[1].action == "reference_turn"
+    assert result.turn_traces[2].action == "reference_turn"
 
 
 def test_shadow_ingest_evaluation_summarizes_write_and_readback_quality():
@@ -284,6 +538,7 @@ def test_shadow_ingest_evaluation_summarizes_write_and_readback_quality():
     assert evaluation.summary["accepted_writes"] == 1
     assert evaluation.summary["rejected_writes"] == 1
     assert evaluation.summary["skipped_turns"] == 1
+    assert evaluation.summary["reference_turns"] == 0
     assert evaluation.summary["accepted_rate"] == 0.3333
     assert evaluation.summary["rejected_rate"] == 0.3333
     assert evaluation.summary["skipped_rate"] == 0.3333
@@ -429,6 +684,7 @@ def test_shadow_report_aggregates_multiple_evaluations():
     assert report.summary["accepted_writes"] == 2
     assert report.summary["rejected_writes"] == 1
     assert report.summary["skipped_turns"] == 1
+    assert report.summary["reference_turns"] == 0
     assert report.summary["total_turns"] == 4
     assert report.summary["accepted_rate"] == 0.5
     assert report.summary["rejected_rate"] == 0.25
@@ -476,6 +732,7 @@ def test_shadow_report_aggregates_multiple_evaluations():
             "accepted_writes": 1,
             "rejected_writes": 1,
             "skipped_turns": 0,
+            "reference_turns": 0,
             "probe_count": 1,
         },
         {
@@ -484,6 +741,7 @@ def test_shadow_report_aggregates_multiple_evaluations():
             "accepted_writes": 1,
             "rejected_writes": 0,
             "skipped_turns": 1,
+            "reference_turns": 0,
             "probe_count": 2,
         },
     ]
