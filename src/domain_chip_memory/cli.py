@@ -1576,13 +1576,65 @@ def _normalize_builder_telegram_state_db(
             return f"Spark will be an {normalized}"
         return f"Spark will be {normalized}"
 
+    def _record_sort_key(timestamp: str | None, message_id: str | None) -> tuple[str, str]:
+        return (str(timestamp or ""), str(message_id or ""))
+
+    def _remember_known_value(
+        store: dict[str, dict[str, str]],
+        *,
+        predicate: str,
+        value: str,
+        timestamp: str | None,
+        message_id: str | None,
+    ) -> None:
+        if not predicate or not value:
+            return
+        store[predicate] = {
+            "value": value,
+            "timestamp": str(timestamp or ""),
+            "message_id": str(message_id or ""),
+        }
+
+    def _known_value(store: dict[str, dict[str, str]], predicate: str | None) -> str | None:
+        entry = store.get(str(predicate or "").strip())
+        if not isinstance(entry, dict):
+            return None
+        value = str(entry.get("value") or "").strip()
+        return value or None
+
+    def _effective_query_value(store: dict[str, dict[str, str]], predicate: str | None, fallback: str | None = None) -> str | None:
+        normalized = str(predicate or "").strip()
+        if normalized == "profile.startup_name":
+            candidates: list[tuple[tuple[str, str], str]] = []
+            for related_predicate in ("profile.startup_name", "profile.founder_of"):
+                entry = store.get(related_predicate)
+                if not isinstance(entry, dict):
+                    continue
+                value = str(entry.get("value") or "").strip()
+                if not value:
+                    continue
+                candidates.append(
+                    (
+                        _record_sort_key(entry.get("timestamp"), entry.get("message_id")),
+                        value,
+                    )
+                )
+            if candidates:
+                candidates.sort()
+                return candidates[-1][1]
+        direct = _known_value(store, normalized)
+        if direct:
+            return direct
+        clean_fallback = str(fallback or "").strip()
+        return clean_fallback or None
+
     def _query_answer(*, predicate: str | None, value: str | None) -> str | None:
         clean_value = str(value or "").strip()
         if not clean_value:
             return None
         mapping = {
             "profile.preferred_name": lambda text: f"Your name is {text}.",
-            "profile.startup_name": lambda text: f"Your startup is {text}.",
+            "profile.startup_name": lambda text: f"You created {text}.",
             "profile.hack_actor": lambda text: f"You were hacked by {text}.",
             "profile.current_mission": lambda text: f"Right now you're trying to {text}.",
             "profile.founder_of": lambda text: f"You founded {text}.",
@@ -1597,7 +1649,7 @@ def _normalize_builder_telegram_state_db(
             return renderer(clean_value)
         return clean_value if clean_value.endswith(".") else f"{clean_value}."
 
-    def _identity_answer(known_values: dict[str, str]) -> str | None:
+    def _identity_answer(known_values: dict[str, dict[str, str]]) -> str | None:
         ordered_predicates = [
             "profile.preferred_name",
             "profile.occupation",
@@ -1611,7 +1663,7 @@ def _normalize_builder_telegram_state_db(
             "profile.hack_actor",
         ]
         parts = [
-            _query_answer(predicate=predicate, value=known_values.get(predicate))
+            _query_answer(predicate=predicate, value=_known_value(known_values, predicate))
             for predicate in ordered_predicates
         ]
         rendered = [part for part in parts if part]
@@ -1793,7 +1845,7 @@ def _normalize_builder_telegram_state_db(
         if isinstance(assistant_turn, dict):
             conversation["turns"].append(assistant_turn)
 
-    session_values: dict[str, dict[str, str]] = {}
+    session_values: dict[str, dict[str, dict[str, str]]] = {}
     for _, group in sorted(
         bridge_groups.items(),
         key=lambda item: (
@@ -1860,7 +1912,13 @@ def _normalize_builder_telegram_state_db(
                     )
                     result_facts = _load_facts(memory_write_result_row.get("facts_json")) if memory_write_result_row is not None else {}
                     if int(result_facts.get("accepted_count", 0) or 0) > 0 and predicate and value:
-                        known_values[predicate] = value
+                        _remember_known_value(
+                            known_values,
+                            predicate=predicate,
+                            value=value,
+                            timestamp=_format_builder_timestamp(memory_write_row.get("created_at")),
+                            message_id=str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                        )
 
         if influence_row is not None and memory_write_row is None:
             influence_facts = _load_facts(influence_row.get("facts_json"))
@@ -1897,7 +1955,10 @@ def _normalize_builder_telegram_state_db(
             elif bridge_mode == "memory_profile_fact" or routing_decision == "memory_profile_fact_query":
                 query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
                 query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
-                response_text = _query_answer(predicate=query_predicate, value=known_values.get(str(query_predicate or "")) or value)
+                response_text = _query_answer(
+                    predicate=query_predicate,
+                    value=_effective_query_value(known_values, query_predicate, value),
+                )
                 if response_text is None:
                     response_text = str(tool_result_row.get("summary") or "").strip()
             elif bridge_mode == "memory_profile_identity" or routing_decision == "memory_profile_identity_summary":

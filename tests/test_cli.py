@@ -3125,7 +3125,7 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
         "My startup is Seedify.",
         "I'll remember you created Seedify.",
         "What is my startup?",
-        "Your startup is Seedify.",
+        "You created Seedify.",
     ]
     assert payload["summary"]["conversation_count"] == 1
     assert payload["summary"]["selected_chat_id"] == "12345"
@@ -3142,6 +3142,355 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-turn-audit.md").exists()
+
+
+def test_run_spark_builder_state_telegram_intake_cli_prefers_newer_founder_fact_for_startup_query(tmp_path: Path, monkeypatch):
+    builder_home = tmp_path / "builder-home-founder-startup-alias"
+    output_dir = tmp_path / "spark_builder_state_founder_startup_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_founder_startup.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-startup-write",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.startup_name",
+                                    "value": "Seedify",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "My startup is Seedify.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-10 11:41:54",
+                ),
+                (
+                    "evt-startup-write-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0, "skipped_count": 0}),
+                    "2026-04-10 11:41:54",
+                ),
+                (
+                    "evt-startup-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge acknowledged a profile fact update directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_profile_fact_update",
+                            "routing_decision": "memory_profile_fact_observation",
+                            "predicate": "profile.startup_name",
+                            "value": "Seedify",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-10 11:41:54",
+                ),
+                (
+                    "evt-founder-write",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.founder_of",
+                                    "value": "Atlas Labs",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "I founded Atlas Labs.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-10 12:32:20",
+                ),
+                (
+                    "evt-founder-write-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0, "skipped_count": 0}),
+                    "2026-04-10 12:32:20",
+                ),
+                (
+                    "evt-founder-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge acknowledged a profile fact update directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_profile_fact_update",
+                            "routing_decision": "memory_profile_fact_observation",
+                            "predicate": "profile.founder_of",
+                            "value": "Atlas Labs",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-10 12:32:20",
+                ),
+                (
+                    "evt-query-1",
+                    "plugin_or_chip_influence_recorded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-3",
+                    None,
+                    "corr-3",
+                    "req-3",
+                    "trace-3",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Personality influence was recorded before bridge execution.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "detected_profile_fact_query": {
+                                "fact_name": "profile_startup_name",
+                                "label": "startup",
+                                "predicate": "profile.startup_name",
+                            }
+                        }
+                    ),
+                    "2026-04-10 12:32:21",
+                ),
+                (
+                    "evt-query-1-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-3",
+                    None,
+                    "corr-3",
+                    "req-3",
+                    "trace-3",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge answered a single-fact profile query directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_profile_fact",
+                            "routing_decision": "memory_profile_fact_query",
+                            "predicate": "profile.startup_name",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-10 12:32:21",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--chat-id",
+            "12345",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    turns = payload["normalization"]["normalized"]["conversations"][0]["turns"]
+    assert [turn["content"] for turn in turns] == [
+        "My startup is Seedify.",
+        "I'll remember you created Seedify.",
+        "I founded Atlas Labs.",
+        "I'll remember you founded Atlas Labs.",
+        "What is my startup?",
+        "You created Atlas Labs.",
+    ]
+    assert payload["summary"]["accepted_writes"] == 2
+    assert payload["summary"]["rejected_writes"] == 0
+    assert payload["summary"]["skipped_turns"] == 0
+    assert payload["summary"]["kb_valid"] is True
 
 
 def test_run_spark_builder_state_telegram_intake_cli_renders_bridge_native_spark_role_with_article(tmp_path: Path, monkeypatch):
