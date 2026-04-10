@@ -656,7 +656,8 @@ def _question_focus_tokens(question: NormalizedQuestion) -> set[str]:
 
 
 def _claim_is_negated(text: str) -> bool:
-    normalized = f" {re.sub(r'\\s+', ' ', text.lower()).strip()} "
+    normalized_text = re.sub(r"\s+", " ", text.lower()).strip()
+    normalized = f" {normalized_text} "
     return any(pattern in normalized for pattern in _NEGATION_PATTERNS)
 
 
@@ -714,7 +715,8 @@ def _claim_fragment_alignment_score(
     *,
     prefer_negated: bool | None = None,
 ) -> float:
-    normalized = f" {re.sub(r'\\s+', ' ', fragment.lower()).strip()} "
+    normalized_fragment = re.sub(r"\s+", " ", fragment.lower()).strip()
+    normalized = f" {normalized_fragment} "
     focus_tokens = _question_focus_tokens(question)
     overlap = len(focus_tokens.intersection(set(_tokenize(normalized))))
     score = 8.0 * float(overlap)

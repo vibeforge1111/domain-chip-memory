@@ -3115,6 +3115,7 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     turns = payload["normalization"]["normalized"]["conversations"][0]["turns"]
+    probes = payload["normalization"]["normalized"]["conversations"][0]["probes"]
     assert payload["builder_home"] == str(builder_home)
     assert payload["state_db"] == str(state_db)
     assert payload["normalization"]["selected_chat_id"] == "12345"
@@ -3127,6 +3128,14 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
         "What is my startup?",
         "You created Seedify.",
     ]
+    assert len(probes) == 4
+    assert [probe["probe_type"] for probe in probes] == [
+        "current_state",
+        "evidence",
+        "current_state",
+        "evidence",
+    ]
+    assert all(probe["predicate"] == "profile.startup_name" for probe in probes)
     assert payload["summary"]["conversation_count"] == 1
     assert payload["summary"]["selected_chat_id"] == "12345"
     assert payload["summary"]["accepted_writes"] == 1
@@ -3134,6 +3143,10 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
     assert payload["summary"]["skipped_turns"] == 0
     assert payload["summary"]["reference_turns"] == 3
     assert payload["summary"]["reference_turn_count"] == 3
+    assert payload["shadow_report"]["summary"]["current_state_hit_rate"]["total"] == 2
+    assert payload["shadow_report"]["summary"]["current_state_hit_rate"]["hits"] == 2
+    assert payload["shadow_report"]["summary"]["evidence_hit_rate"]["total"] == 2
+    assert payload["shadow_report"]["summary"]["evidence_hit_rate"]["hits"] == 2
     assert payload["turn_audit"]["summary"]["rejected_user_turn_count"] == 0
     assert payload["turn_audit"]["summary"]["reference_turn_count"] == 3
     assert payload["summary"]["kb_valid"] is True
@@ -3142,6 +3155,226 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-turn-audit.md").exists()
+
+
+def test_run_spark_builder_state_telegram_intake_cli_replays_explanation_queries_with_probes(tmp_path: Path, monkeypatch):
+    builder_home = tmp_path / "builder-home-explanation"
+    output_dir = tmp_path / "spark_builder_state_explanation_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_explanation.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-city-write",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.city",
+                                    "value": "Dubai",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "I live in Dubai.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-10 11:41:53",
+                ),
+                (
+                    "evt-city-write-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-10 11:41:53",
+                ),
+                (
+                    "evt-explanation-query",
+                    "plugin_or_chip_influence_recorded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Personality influence was recorded before bridge execution.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "detected_profile_fact_query": {
+                                "fact_name": "profile_city",
+                                "label": "city",
+                                "predicate": "profile.city",
+                            }
+                        }
+                    ),
+                    "2026-04-10 11:45:09",
+                ),
+                (
+                    "evt-explanation-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge answered a profile fact explanation query directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_profile_fact_explanation",
+                            "routing_decision": "memory_profile_fact_explanation",
+                            "predicate": "profile.city",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-10 11:45:10",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--chat-id",
+            "12345",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    conversation = payload["normalization"]["normalized"]["conversations"][0]
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "I live in Dubai.",
+        "How do you know where I live?",
+        'Because I have a saved memory record from when you said: "I live in Dubai." You live in Dubai.',
+    ]
+    assert [probe["probe_type"] for probe in conversation["probes"]] == [
+        "current_state",
+        "evidence",
+        "current_state",
+        "evidence",
+    ]
+    assert payload["shadow_report"]["summary"]["current_state_hit_rate"]["total"] == 2
+    assert payload["shadow_report"]["summary"]["evidence_hit_rate"]["total"] == 2
+    assert payload["failure_taxonomy"]["summary"]["has_probe_coverage"] is True
+    assert "probe_coverage_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
 
 
 def test_run_spark_builder_state_telegram_intake_cli_prefers_newer_founder_fact_for_startup_query(tmp_path: Path, monkeypatch):

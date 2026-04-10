@@ -114,13 +114,15 @@ def _entry_claim_text(entry: ObservationEntry) -> str:
 
 
 def _claim_is_negated(text: str) -> bool:
-    normalized = f" {re.sub(r'\\s+', ' ', text.lower()).strip()} "
+    normalized_text = re.sub(r"\s+", " ", text.lower()).strip()
+    normalized = f" {normalized_text} "
     return any(pattern in normalized for pattern in _NEGATION_PATTERNS)
 
 
 def _contradiction_entry_score(question: NormalizedQuestion, entry: ObservationEntry) -> float:
     claim_text = _entry_claim_text(entry)
-    normalized = f" {re.sub(r'\\s+', ' ', claim_text.lower()).strip()} "
+    normalized_claim = re.sub(r"\s+", " ", claim_text.lower()).strip()
+    normalized = f" {normalized_claim} "
     focus_overlap = len(_question_focus_tokens(question).intersection(set(_tokenize(normalized))))
     score = 8.0 * float(focus_overlap)
     score += 4.0 * float(sum(1 for pattern in _CONTRADICTION_ASSERTIVE_PATTERNS if pattern in normalized))

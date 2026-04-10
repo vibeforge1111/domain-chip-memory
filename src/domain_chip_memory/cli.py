@@ -1541,6 +1541,27 @@ def _normalize_builder_telegram_state_db(
             return f"What is my {label}?"
         return None
 
+    def _explanation_question(*, predicate: str | None, label: str | None = None) -> str | None:
+        normalized_predicate = str(predicate or "").strip()
+        mapping = {
+            "profile.preferred_name": "How do you know my name?",
+            "profile.startup_name": "How do you know my startup?",
+            "profile.hack_actor": "How do you know who hacked us?",
+            "profile.current_mission": "How do you know what I'm trying to do now?",
+            "profile.founder_of": "How do you know what company I founded?",
+            "profile.occupation": "How do you know what I do?",
+            "profile.spark_role": "How do you know Spark's role?",
+            "profile.home_country": "How do you know my country?",
+            "profile.timezone": "How do you know my timezone?",
+            "profile.city": "How do you know where I live?",
+        }
+        if normalized_predicate:
+            return mapping.get(normalized_predicate)
+        clean_label = str(label or "").strip()
+        if clean_label:
+            return f"How do you know my {clean_label}?"
+        return None
+
     def _query_predicate(payload: dict) -> str | None:
         predicate = str(payload.get("predicate") or "").strip()
         if predicate:
@@ -1586,6 +1607,7 @@ def _normalize_builder_telegram_state_db(
         value: str,
         timestamp: str | None,
         message_id: str | None,
+        evidence_text: str | None = None,
     ) -> None:
         if not predicate or not value:
             return
@@ -1593,19 +1615,13 @@ def _normalize_builder_telegram_state_db(
             "value": value,
             "timestamp": str(timestamp or ""),
             "message_id": str(message_id or ""),
+            "evidence_text": str(evidence_text or ""),
         }
 
-    def _known_value(store: dict[str, dict[str, str]], predicate: str | None) -> str | None:
-        entry = store.get(str(predicate or "").strip())
-        if not isinstance(entry, dict):
-            return None
-        value = str(entry.get("value") or "").strip()
-        return value or None
-
-    def _effective_query_value(store: dict[str, dict[str, str]], predicate: str | None, fallback: str | None = None) -> str | None:
+    def _effective_query_entry(store: dict[str, dict[str, str]], predicate: str | None) -> dict[str, str] | None:
         normalized = str(predicate or "").strip()
         if normalized == "profile.startup_name":
-            candidates: list[tuple[tuple[str, str], str]] = []
+            candidates: list[tuple[tuple[str, str], dict[str, str]]] = []
             for related_predicate in ("profile.startup_name", "profile.founder_of"):
                 entry = store.get(related_predicate)
                 if not isinstance(entry, dict):
@@ -1616,17 +1632,119 @@ def _normalize_builder_telegram_state_db(
                 candidates.append(
                     (
                         _record_sort_key(entry.get("timestamp"), entry.get("message_id")),
-                        value,
+                        entry,
                     )
                 )
             if candidates:
-                candidates.sort()
+                candidates.sort(key=lambda item: item[0])
                 return candidates[-1][1]
-        direct = _known_value(store, normalized)
+        entry = store.get(normalized)
+        return entry if isinstance(entry, dict) else None
+
+    def _known_value(store: dict[str, dict[str, str]], predicate: str | None) -> str | None:
+        entry = store.get(str(predicate or "").strip())
+        if not isinstance(entry, dict):
+            return None
+        value = str(entry.get("value") or "").strip()
+        return value or None
+
+    def _probe_key(value: str | None) -> str:
+        text = str(value or "").strip().lower()
+        if not text:
+            return "unknown"
+        return "".join(character if character.isalnum() else "-" for character in text).strip("-") or "unknown"
+
+    def _append_probe(conversation: dict[str, object], probe: dict[str, object]) -> None:
+        probe_id = str(probe.get("probe_id") or "").strip()
+        probe_type = str(probe.get("probe_type") or "").strip()
+        if not probe_id or not probe_type:
+            return
+        for existing in conversation.get("probes", []):
+            if isinstance(existing, dict) and str(existing.get("probe_id") or "") == probe_id:
+                return
+        cast_probes = conversation.setdefault("probes", [])
+        if isinstance(cast_probes, list):
+            cast_probes.append(probe)
+
+    def _append_lookup_probes(
+        conversation: dict[str, object],
+        *,
+        base_probe_id: str,
+        subject: str | None,
+        predicate: str | None,
+        expected_value: str | None,
+        include_current_state: bool = True,
+        include_evidence: bool = True,
+    ) -> None:
+        clean_subject = str(subject or "").strip()
+        clean_predicate = str(predicate or "").strip()
+        clean_value = str(expected_value or "").strip()
+        if not clean_subject or not clean_predicate or not clean_value:
+            return
+        if include_current_state:
+            _append_probe(
+                conversation,
+                {
+                    "probe_id": f"{base_probe_id}:current",
+                    "probe_type": "current_state",
+                    "subject": clean_subject,
+                    "predicate": clean_predicate,
+                    "expected_value": clean_value,
+                },
+            )
+        if include_evidence:
+            _append_probe(
+                conversation,
+                {
+                    "probe_id": f"{base_probe_id}:evidence",
+                    "probe_type": "evidence",
+                    "subject": clean_subject,
+                    "predicate": clean_predicate,
+                    "expected_value": clean_value,
+                    "min_results": 1,
+                },
+            )
+
+    def _append_historical_probe(
+        conversation: dict[str, object],
+        *,
+        base_probe_id: str,
+        subject: str | None,
+        predicate: str | None,
+        expected_value: str | None,
+        as_of: str | None,
+        distinct_value_count: int,
+    ) -> None:
+        clean_subject = str(subject or "").strip()
+        clean_predicate = str(predicate or "").strip()
+        clean_value = str(expected_value or "").strip()
+        clean_as_of = str(as_of or "").strip()
+        if distinct_value_count < 2 or not clean_subject or not clean_predicate or not clean_value or not clean_as_of:
+            return
+        _append_probe(
+            conversation,
+            {
+                "probe_id": f"{base_probe_id}:historical",
+                "probe_type": "historical_state",
+                "subject": clean_subject,
+                "predicate": clean_predicate,
+                "as_of": clean_as_of,
+                "expected_value": clean_value,
+            },
+        )
+
+    def _effective_query_value(store: dict[str, dict[str, str]], predicate: str | None, fallback: str | None = None) -> str | None:
+        entry = _effective_query_entry(store, predicate)
+        direct = str((entry or {}).get("value") or "").strip()
         if direct:
             return direct
         clean_fallback = str(fallback or "").strip()
         return clean_fallback or None
+
+    def _effective_query_evidence_text(store: dict[str, dict[str, str]], predicate: str | None) -> str | None:
+        entry = _effective_query_entry(store, predicate)
+        evidence_text = str((entry or {}).get("evidence_text") or "").strip()
+        return evidence_text or None
 
     def _query_answer(*, predicate: str | None, value: str | None) -> str | None:
         clean_value = str(value or "").strip()
@@ -1671,6 +1789,20 @@ def _normalize_builder_telegram_state_db(
             return None
         return " ".join(rendered)
 
+    def _explanation_answer(
+        *,
+        predicate: str | None,
+        value: str | None,
+        evidence_text: str | None,
+    ) -> str | None:
+        fact_answer = _query_answer(predicate=predicate, value=value)
+        if not fact_answer:
+            return None
+        clean_evidence = str(evidence_text or "").strip()
+        if clean_evidence:
+            return f'Because I have a saved memory record from when you said: "{clean_evidence}" {fact_answer}'
+        return f"Because I have a saved memory record for this fact. {fact_answer}"
+
     def _update_answer(predicate: str | None, value: str | None) -> str | None:
         clean_value = str(value or "").strip()
         if not clean_value:
@@ -1693,6 +1825,23 @@ def _normalize_builder_telegram_state_db(
         if renderer is not None:
             return renderer(clean_value)
         return f"I'll remember {clean_value}."
+
+    def _known_identity_records(
+        store: dict[str, dict[str, str]],
+        *,
+        predicate_prefix: str = "profile.",
+    ) -> list[tuple[str, str]]:
+        records: list[tuple[str, str]] = []
+        for predicate, entry in store.items():
+            clean_predicate = str(predicate or "").strip()
+            if not clean_predicate.startswith(predicate_prefix):
+                continue
+            value = str((entry or {}).get("value") or "").strip()
+            if not value:
+                continue
+            records.append((clean_predicate, value))
+        records.sort(key=lambda item: item[0])
+        return records
 
     def _turn_sort_key(item: dict) -> tuple[str, str]:
         return (str(item.get("timestamp") or ""), str(item.get("message_id") or ""))
@@ -1846,6 +1995,7 @@ def _normalize_builder_telegram_state_db(
             conversation["turns"].append(assistant_turn)
 
     session_values: dict[str, dict[str, dict[str, str]]] = {}
+    session_histories: dict[str, dict[str, list[dict[str, str]]]] = {}
     for _, group in sorted(
         bridge_groups.items(),
         key=lambda item: (
@@ -1869,6 +2019,7 @@ def _normalize_builder_telegram_state_db(
             continue
         conversation = _conversation_for(chat_value, session_value, human_value)
         known_values = session_values.setdefault(str(session_value or chat_value), {})
+        known_histories = session_histories.setdefault(str(session_value or chat_value), {})
 
         memory_write_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_requested"), None)
         memory_write_result_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_succeeded"), None)
@@ -1912,18 +2063,65 @@ def _normalize_builder_telegram_state_db(
                     )
                     result_facts = _load_facts(memory_write_result_row.get("facts_json")) if memory_write_result_row is not None else {}
                     if int(result_facts.get("accepted_count", 0) or 0) > 0 and predicate and value:
+                        history = known_histories.setdefault(predicate, [])
+                        history.append(
+                            {
+                                "value": value,
+                                "timestamp": str(_format_builder_timestamp(memory_write_row.get("created_at")) or ""),
+                                "message_id": str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                            }
+                        )
                         _remember_known_value(
                             known_values,
                             predicate=predicate,
                             value=value,
                             timestamp=_format_builder_timestamp(memory_write_row.get("created_at")),
                             message_id=str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                            evidence_text=text,
+                        )
+                        distinct_value_count = len(
+                            {
+                                str(item.get("value") or "").strip()
+                                for item in history
+                                if str(item.get("value") or "").strip()
+                            }
+                        )
+                        base_probe_id = (
+                            f"{conversation['session_id']}:write:{str(memory_write_row.get('request_id') or memory_write_row.get('event_id') or '')}:{_probe_key(predicate)}"
+                        )
+                        _append_lookup_probes(
+                            conversation,
+                            base_probe_id=base_probe_id,
+                            subject=str(item.get("subject") or human_value or ""),
+                            predicate=predicate,
+                            expected_value=value,
+                        )
+                        _append_historical_probe(
+                            conversation,
+                            base_probe_id=base_probe_id,
+                            subject=str(item.get("subject") or human_value or ""),
+                            predicate=predicate,
+                            expected_value=value,
+                            as_of=_format_builder_timestamp(memory_write_row.get("created_at")),
+                            distinct_value_count=distinct_value_count,
                         )
 
         if influence_row is not None and memory_write_row is None:
             influence_facts = _load_facts(influence_row.get("facts_json"))
             query_payload = influence_facts.get("detected_profile_fact_query")
-            query_text = _query_message(query_payload if isinstance(query_payload, dict) else {})
+            query_payload_dict = query_payload if isinstance(query_payload, dict) else {}
+            bridge_mode_hint = ""
+            routing_decision_hint = ""
+            if tool_result_row is not None:
+                tool_facts_hint = _load_facts(tool_result_row.get("facts_json"))
+                bridge_mode_hint = str(tool_facts_hint.get("bridge_mode") or "").strip()
+                routing_decision_hint = str(tool_facts_hint.get("routing_decision") or "").strip()
+            query_text = _query_message(query_payload_dict)
+            if bridge_mode_hint == "memory_profile_fact_explanation" or routing_decision_hint == "memory_profile_fact_explanation":
+                query_text = _explanation_question(
+                    predicate=_query_predicate(query_payload_dict),
+                    label=str(query_payload_dict.get("label") or "").strip() or None,
+                ) or query_text
             if query_text:
                 conversation["turns"].append(
                     {
@@ -1955,14 +2153,56 @@ def _normalize_builder_telegram_state_db(
             elif bridge_mode == "memory_profile_fact" or routing_decision == "memory_profile_fact_query":
                 query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
                 query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
+                expected_value = _effective_query_value(known_values, query_predicate, value)
                 response_text = _query_answer(
                     predicate=query_predicate,
-                    value=_effective_query_value(known_values, query_predicate, value),
+                    value=expected_value,
+                )
+                _append_lookup_probes(
+                    conversation,
+                    base_probe_id=(
+                        f"{conversation['session_id']}:query:{str(tool_result_row.get('request_id') or tool_result_row.get('event_id') or '')}:{_probe_key(query_predicate)}"
+                    ),
+                    subject=str(human_value or ""),
+                    predicate=query_predicate,
+                    expected_value=expected_value,
                 )
                 if response_text is None:
                     response_text = str(tool_result_row.get("summary") or "").strip()
+            elif bridge_mode == "memory_profile_fact_explanation" or routing_decision == "memory_profile_fact_explanation":
+                query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
+                query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
+                expected_value = _effective_query_value(known_values, query_predicate, value)
+                _append_lookup_probes(
+                    conversation,
+                    base_probe_id=(
+                        f"{conversation['session_id']}:explanation:{str(tool_result_row.get('request_id') or tool_result_row.get('event_id') or '')}:{_probe_key(query_predicate)}"
+                    ),
+                    subject=str(human_value or ""),
+                    predicate=query_predicate,
+                    expected_value=expected_value,
+                )
+                response_text = _explanation_answer(
+                    predicate=query_predicate,
+                    value=expected_value,
+                    evidence_text=_effective_query_evidence_text(known_values, query_predicate),
+                ) or str(tool_result_row.get("summary") or "").strip()
             elif bridge_mode == "memory_profile_identity" or routing_decision == "memory_profile_identity_summary":
                 response_text = _identity_answer(known_values) or str(tool_result_row.get("summary") or "").strip()
+                prefix = str(tool_facts.get("predicate_prefix") or "profile.").strip() or "profile."
+                for probe_index, (identity_predicate, identity_value) in enumerate(
+                    _known_identity_records(known_values, predicate_prefix=prefix),
+                    start=1,
+                ):
+                    _append_lookup_probes(
+                        conversation,
+                        base_probe_id=(
+                            f"{conversation['session_id']}:identity:{str(tool_result_row.get('request_id') or tool_result_row.get('event_id') or '')}:{probe_index}:{_probe_key(identity_predicate)}"
+                        ),
+                        subject=str(human_value or ""),
+                        predicate=identity_predicate,
+                        expected_value=identity_value,
+                    )
             if response_text:
                 conversation["turns"].append(
                     {
@@ -6033,6 +6273,7 @@ def _build_beam_judged_drift_plan(
         path = str(drift_row.get("path") or "").strip()
         if not path:
             continue
+        git_head_path = path.replace("\\", "/")
         drift_targets.append(
             {
                 "path": path,
@@ -6044,8 +6285,8 @@ def _build_beam_judged_drift_plan(
                 "changed_categories": list(drift_row.get("changed_categories") or []),
                 "git_diff_command": ["git", "diff", "--", path],
                 "git_diff_command_shell": "git diff -- " + _shell_quote_arg(path),
-                "git_show_head_command": ["git", "show", f"HEAD:{path.replace('\\', '/')}"],
-                "git_show_head_command_shell": "git show " + _shell_quote_arg(f"HEAD:{path.replace('\\', '/')}"),
+                "git_show_head_command": ["git", "show", f"HEAD:{git_head_path}"],
+                "git_show_head_command_shell": "git show " + _shell_quote_arg(f"HEAD:{git_head_path}"),
                 "git_restore_command": ["git", "restore", "--source=HEAD", "--", path],
                 "git_restore_command_shell": "git restore --source=HEAD -- " + _shell_quote_arg(path),
             }
