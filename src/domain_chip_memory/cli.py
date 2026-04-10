@@ -1560,6 +1560,22 @@ def _normalize_builder_telegram_state_db(
         }
         return mapping.get(fact_name)
 
+    def _with_indefinite_article(text: str) -> str:
+        normalized = " ".join(str(text or "").strip().split())
+        if not normalized:
+            return ""
+        lowered = normalized.lower()
+        if lowered.startswith("a ") or lowered.startswith("an "):
+            return normalized
+        article = "an" if normalized[:1].lower() in {"a", "e", "i", "o", "u"} else "a"
+        return f"{article} {normalized}"
+
+    def _spark_role_sentence(text: str) -> str:
+        normalized = " ".join(str(text or "").strip().split())
+        if normalized.lower().startswith("important part"):
+            return f"Spark will be an {normalized}"
+        return f"Spark will be {normalized}"
+
     def _query_answer(*, predicate: str | None, value: str | None) -> str | None:
         clean_value = str(value or "").strip()
         if not clean_value:
@@ -1570,10 +1586,8 @@ def _normalize_builder_telegram_state_db(
             "profile.hack_actor": lambda text: f"You were hacked by {text}.",
             "profile.current_mission": lambda text: f"Right now you're trying to {text}.",
             "profile.founder_of": lambda text: f"You founded {text}.",
-            "profile.occupation": lambda text: f"You're {text}.",
-            "profile.spark_role": lambda text: (
-                text if text.endswith(".") else f"{text[:1].upper()}{text[1:]}."
-            ),
+            "profile.occupation": lambda text: f"You're {_with_indefinite_article(text)}.",
+            "profile.spark_role": lambda text: f"{_spark_role_sentence(text)}.",
             "profile.home_country": lambda text: f"Your country is {text}.",
             "profile.timezone": lambda text: f"Your timezone is {text}.",
             "profile.city": lambda text: f"You live in {text}.",
@@ -1617,8 +1631,8 @@ def _normalize_builder_telegram_state_db(
                 f"I'll remember your current mission is to {text}."
             ),
             "profile.founder_of": lambda text: f"I'll remember you founded {text}.",
-            "profile.occupation": lambda text: f"I'll remember you're {text}.",
-            "profile.spark_role": lambda text: f"I'll remember Spark will be {text}.",
+            "profile.occupation": lambda text: f"I'll remember you're {_with_indefinite_article(text)}.",
+            "profile.spark_role": lambda text: f"I'll remember {_spark_role_sentence(text)}.",
             "profile.home_country": lambda text: f"I'll remember your country is {text}.",
             "profile.timezone": lambda text: f"I'll remember your timezone is {text}.",
             "profile.city": lambda text: f"I'll remember you live in {text}.",
