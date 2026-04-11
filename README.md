@@ -35,16 +35,16 @@ Current cross-repo runtime decision as of 2026-04-11:
 - active runtime architecture: `summary_synthesis_memory + heuristic_v1`
 - active Builder challenger: `dual_store_event_calendar_hybrid + heuristic_v1`
 - latest head-to-head offline `ProductMemory` comparison: tied at `1156/1266`
-- latest clean live Builder full validation root: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-020542`
+- latest clean live Builder full validation root: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-021554`
 - latest clean live Builder full-run pointer: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\latest-full-run.json`
 - chip-side baseline freshness: `clean`
-- chip baseline commit from Builder run: `370c994a037a063ae4e47fef8e1dad73d15ecfd3`
-- current chip commit: `370c994a037a063ae4e47fef8e1dad73d15ecfd3`
+- chip baseline commit from Builder run: `4b6a8ad30fe92767ff6b13c5b242046f1c87a73c`
+- current chip commit: `4b6a8ad30fe92767ff6b13c5b242046f1c87a73c`
 - latest clean live Builder soak: `14/14, 0 failed`
 - latest live whole-suite aggregate: `92/92` for `summary_synthesis_memory` vs `89/92` for `dual_store_event_calendar_hybrid`
 - latest live selector-pack aggregate: `64/64` for `summary_synthesis_memory` vs `61/64` for `dual_store_event_calendar_hybrid`
 - latest clean live Builder regression: `34/34` with KB coverage `38/38` current-state and `38/38` evidence hits
-- latest clean live Builder timings: benchmark `12.615s`, regression `24.977s`, soak `342.464s`, total `380.236s`
+- latest clean live Builder timings: benchmark `14.326s`, regression `24.020s`, soak `340.759s`, total `379.336s`
 - Builder runtime is therefore pinned to `summary_synthesis_memory`
 <!-- AUTO_BUILDER_BASELINE_README_END -->
 

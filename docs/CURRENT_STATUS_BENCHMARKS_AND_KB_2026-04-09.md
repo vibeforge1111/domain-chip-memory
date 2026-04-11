@@ -9,11 +9,11 @@ This 2026-04-09 checkpoint is still useful for the broader benchmark map, but th
 
 <!-- AUTO_BUILDER_BASELINE_CURRENT_STATUS_START -->
 - the latest head-to-head offline `ProductMemory` comparison between `summary_synthesis_memory` and `dual_store_event_calendar_hybrid` is tied at `1156/1266`
-- the latest clean live Builder full validation root is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-020542`
+- the latest clean live Builder full validation root is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-021554`
 - the latest clean live Builder full-run pointer is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\latest-full-run.json`
 - the chip-side freshness against that Builder baseline is `clean`
 - the latest clean live Builder soak is `14/14`, `0` failed and still favors `summary_synthesis_memory`
-- the latest clean live Builder timings are benchmark `12.615s`, regression `24.977s`, soak `342.464s`, total `380.236s`
+- the latest clean live Builder timings are benchmark `14.326s`, regression `24.020s`, soak `340.759s`, total `379.336s`
 - Builder therefore repinned the runtime selector to `summary_synthesis_memory`
 <!-- AUTO_BUILDER_BASELINE_CURRENT_STATUS_END -->
 
