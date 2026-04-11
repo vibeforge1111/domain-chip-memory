@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from domain_chip_memory.contracts import NormalizedQuestion
 from domain_chip_memory.memory_answer_runtime import (
+    _choose_answer_candidate,
     _detect_profile_memory_query,
     _infer_profile_memory_answer,
 )
@@ -158,3 +159,90 @@ def test_infer_profile_memory_answer_prefers_startup_fact_for_startup_explanatio
         'Because I have a saved memory record from when you said: "My startup is Seedify." '
         "Your startup is Seedify."
     )
+
+
+def test_choose_answer_candidate_prefers_context_entries_for_history_queries():
+    answer = _choose_answer_candidate(
+        _question("Where did I live before?"),
+        evidence_entries=[],
+        belief_entries=[],
+        context_entries=[
+            _entry(
+                observation_id="o1",
+                predicate="city",
+                value="Dubai",
+                timestamp="2026-04-10T00:00:00Z",
+            ),
+            _entry(
+                observation_id="o2",
+                predicate="city",
+                value="Abu Dhabi",
+                timestamp="2026-04-10T01:00:00Z",
+            ),
+        ],
+        aggregate_entries=[
+            _entry(
+                observation_id="o3",
+                predicate="city",
+                value="Abu Dhabi",
+                timestamp="2026-04-10T01:00:00Z",
+            ),
+        ],
+    )
+
+    assert answer == "Before Abu Dhabi, you lived in Dubai."
+
+
+def test_choose_answer_candidate_prefers_context_entries_for_fact_explanations():
+    answer = _choose_answer_candidate(
+        _question("How do you know what I'm trying to do now?"),
+        evidence_entries=[],
+        belief_entries=[],
+        context_entries=[
+            _entry(
+                observation_id="o1",
+                predicate="current_mission",
+                value="survive the hack and revive the companies",
+                text="survive the hack and revive the companies",
+                source_text="I am trying to survive the hack and revive the companies.",
+                timestamp="2026-04-10T00:00:00Z",
+            ),
+        ],
+        aggregate_entries=[
+            _entry(
+                observation_id="o2",
+                predicate="current_mission",
+                value="survive the hack and revive the companies",
+                text="survive the hack and revive the companies",
+                source_text="survive the hack and revive the companies",
+                timestamp="2026-04-10T00:00:00Z",
+            ),
+        ],
+    )
+
+    assert answer == (
+        'Because I have a saved memory record from when you said: "I am trying to survive the hack and revive the companies." '
+        "Your current mission is to survive the hack and revive the companies."
+    )
+
+
+def test_infer_profile_memory_answer_treats_location_entries_as_city_history():
+    answer = _infer_profile_memory_answer(
+        _question("Where did I live before?"),
+        [
+            _entry(
+                observation_id="o1",
+                predicate="location",
+                value="Dubai",
+                timestamp="2026-04-10T00:00:00Z",
+            ),
+            _entry(
+                observation_id="o2",
+                predicate="location",
+                value="Abu Dhabi",
+                timestamp="2026-04-10T01:00:00Z",
+            ),
+        ],
+    )
+
+    assert answer == "Before Abu Dhabi, you lived in Dubai."

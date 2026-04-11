@@ -5036,7 +5036,7 @@ def _profile_memory_timeline_values(
     candidate_entries: list[ObservationEntry],
     predicate: str | None,
 ) -> list[str]:
-    normalized_predicate = str(predicate or "").strip().removeprefix("profile.")
+    normalized_predicate = _normalize_profile_memory_predicate(predicate)
     if not normalized_predicate:
         return []
     ordered_entries = sorted(
@@ -5049,7 +5049,7 @@ def _profile_memory_timeline_values(
     values: list[str] = []
     last_value = ""
     for entry in ordered_entries:
-        entry_predicate = str(entry.predicate or "").strip().removeprefix("profile.")
+        entry_predicate = _normalize_profile_memory_predicate(getattr(entry, "predicate", ""))
         if entry_predicate != normalized_predicate:
             continue
         value = str(entry.metadata.get("value") or "").strip()
@@ -5160,6 +5160,19 @@ def _build_profile_fact_explanation_answer(
     return f"Because I have a saved memory record for that. {concise_answer}"
 
 
+def _profile_memory_candidate_entries(
+    *,
+    question: NormalizedQuestion,
+    evidence_entries: list[ObservationEntry],
+    context_entries: list[ObservationEntry] | None,
+    aggregate_entries: list[ObservationEntry] | None,
+) -> list[ObservationEntry]:
+    query_kind, _ = _detect_profile_memory_query(question)
+    if query_kind in {"fact_history", "event_history", "fact_explanation"}:
+        return list(context_entries or evidence_entries or aggregate_entries or [])
+    return list(aggregate_entries or context_entries or evidence_entries)
+
+
 def _choose_answer_candidate(
     question: NormalizedQuestion,
     evidence_entries: list[ObservationEntry],
@@ -5172,7 +5185,12 @@ def _choose_answer_candidate(
         return abstention_answer
     profile_memory_answer = _infer_profile_memory_answer(
         question,
-        list(aggregate_entries or context_entries or evidence_entries),
+        _profile_memory_candidate_entries(
+            question=question,
+            evidence_entries=evidence_entries,
+            context_entries=context_entries,
+            aggregate_entries=aggregate_entries,
+        ),
     )
     if profile_memory_answer:
         return profile_memory_answer
