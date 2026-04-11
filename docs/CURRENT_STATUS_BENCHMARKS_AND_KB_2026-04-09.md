@@ -3,6 +3,16 @@
 Date: 2026-04-09
 Status: active current-state checkpoint
 
+## 2026-04-11 Runtime Alignment Note
+
+This 2026-04-09 checkpoint is still useful for the broader benchmark map, but the active cross-repo runtime decision has moved forward:
+
+- the latest head-to-head offline `ProductMemory` comparison between `summary_synthesis_memory` and `dual_store_event_calendar_hybrid` is tied at `1156/1266`
+- the latest clean timeout-hardened live Builder soak is `14/14`, `0` failed and still favors `summary_synthesis_memory`
+- Builder therefore repinned the runtime selector to `summary_synthesis_memory`
+
+For the current source-of-truth program connecting this repo to Builder live validation, use [NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md](./NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md).
+
 ## Purpose
 
 This document is the shortest honest answer to five questions:
@@ -12,6 +22,8 @@ This document is the shortest honest answer to five questions:
 3. what is still incomplete
 4. how aligned the current Spark KB layer is with the Karpathy LLM knowledge-base pattern
 5. what should happen next
+
+For the more comprehensive 2026-04-10 handoff that connects Spark intake, KB buildup, benchmark closure, and the next few days of work into one ordered program, see [NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md](./NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md).
 
 ## What the checkpoint commits mean
 
@@ -235,9 +247,32 @@ Success means:
 Current live result on 2026-04-09:
 
 - `build-spark-kb` now exists as a real non-demo compiler path for snapshot JSON inputs
+- `build-spark-kb-from-shadow-replay` now exists as a first bridge from Spark-style shadow traffic into governed memory snapshot export plus visible KB compilation
+- `normalize-spark-builder-export` and `run-spark-builder-intake-batch` now exist as the Builder-export bridge into that same governed memory plus visible KB path
+- `normalize-spark-telegram-export` and `run-spark-telegram-intake-batch` now exist as the Telegram-bot bridge into that same governed memory plus visible KB path
+- `run-spark-builder-telegram-intake` now exists as the direct Builder-home bridge for `.tmp-telegram-*.json` runtime artifacts, so live Telegram testing can flow into the same report, taxonomy, and KB surfaces without manual file curation
+- `run-spark-builder-state-telegram-intake` now exists as the direct Builder `state.db` bridge for `telegram_runtime` events, so live Telegram conversations can be reconstructed from Builder's persisted runtime trace instead of only temp JSON artifacts
+- `build-spark-kb-from-shadow-replay-batch` now exists as the first batch bridge from Spark shadow slices into one governed memory snapshot plus one compiled KB vault
+- `normalize-spark-builder-export` now exists as an explicit Builder-export adapter that maps common Builder aliases such as `threads`, `messages`, `threadId`, `speaker`, and `text` into the shadow replay contract
+- `normalize-spark-builder-export-batch` now exists as the first batch Builder-export normalization path, so a directory of Builder exports can be normalized and validated together before replay or KB compile
+- `run-spark-shadow-report-from-builder-export` now exists as a direct Builder-export inspection path, so one Builder export can be normalized and replayed into an aggregate shadow report without compiling a KB vault
+- `run-spark-shadow-report-from-builder-export-batch` now exists as the first batch Builder-export inspection path, so a directory of Builder exports can produce one aggregate shadow report before KB compile
+- `build-spark-shadow-failure-taxonomy-from-builder-export` now exists as a compact Builder-export failure diagnosis path, so one Builder export can be replayed into issue buckets, dominant unsupported reasons, and next-action guidance without compiling a KB vault
+- `build-spark-shadow-failure-taxonomy-from-builder-export-batch` now exists as the first batch Builder-export failure-taxonomy path, so a directory of Builder exports can produce one compact Spark-facing failure dossier before KB compile
+- `build-spark-kb-from-builder-export` now exists as the first Builder-export-to-KB bridge, so Builder conversation exports can be normalized, replayed through governed memory, and compiled into a visible KB without hand-editing them into replay JSON first
+- `build-spark-kb-from-builder-export-batch` now exists as the first batch Builder-export-to-KB bridge, so a directory of Builder conversation exports can accumulate into one governed memory snapshot, one aggregate shadow report, and one compiled KB vault
+- `run-spark-builder-intake-batch` now exists as the top-level Builder batch entrypoint, so normalization, aggregate replay report, failure taxonomy, and KB compile can all run in one command against a real Spark export directory
 - `validate-spark-kb-inputs` now exists as a real preflight for snapshot, manifest, and filed-output bundles
 - `build-spark-kb` can now merge explicit `--repo-source` files with manifest-driven repo-source lists
 - `build-spark-kb` can now merge explicit `--filed-output-file` inputs with manifest-driven filed-output lists
+- the shadow-to-KB bridge now files replay summary pages into `wiki/outputs/`, so Spark shadow evidence and the compiled memory vault can be inspected together instead of as separate tools
+- the batch shadow-to-KB bridge now lets a directory of Spark replay slices accumulate into one inspectable KB surface instead of leaving each replay file isolated
+- the batch Builder-export-to-KB bridge now gives Spark Intelligence Builder the same batchable product-shaped path without requiring an intermediate hand-normalized replay directory
+- the Builder-export inspection commands now let Spark-side operators inspect accepted writes, rejected writes, skipped turns, and unsupported reasons before they decide to compile a KB vault
+- the Builder-export failure-taxonomy commands now turn those same batch diagnostics into compact issue labels, hotspots, and next-action recommendations instead of requiring manual interpretation of the aggregate report
+- the Spark shadow and Builder-export KB compile paths now file that same failure taxonomy into `wiki/outputs/`, so the visible vault carries the compact integration dossier alongside the replay summaries and conversation pages
+- the new top-level Builder intake command now packages the full Spark-facing workflow into one structured payload instead of requiring operators to stitch together four separate JSON outputs by hand
+- the new Builder `state.db` Telegram intake command now reads the actual `telegram_runtime` event stream, which is a stronger live-chat bridge than `.tmp-telegram-*.json` because it includes both committed inbound user text and delivered outbound replies
 - manifest entries now resolve relative to the manifest file location, not only the current shell directory
 - `docs/examples/spark_kb/` now provides a checked-in validator fixture bundle
 - `docs/examples/spark_kb/` now also supports a checked-in build plus health-check smoke flow
@@ -363,7 +398,7 @@ Current live result on 2026-04-09:
 ### Immediate KB tasks
 
 1. keep the current scaffold green under live CLI checks
-2. add richer compiled pages that connect runtime memory to benchmark and repo knowledge
+2. feed real Spark shadow batches through the new batch bridge so the KB starts reflecting product-shaped replay traces instead of only synthetic single-file demos
 3. broaden filed query outputs beyond the current demo answer page
 4. deepen the maintenance report beyond the first contradiction/staleness heuristics into richer gap and contradiction analysis
 5. broaden repo-native ingest from explicit file picks into a more complete research and benchmark artifact path
