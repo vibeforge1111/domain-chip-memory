@@ -301,6 +301,178 @@ def test_profile_identity_summary_baselines_keep_multi_fact_profile_answers():
         assert "survive the hack and revive the companies" in prediction
 
 
+def test_extract_memory_atoms_captures_profile_identity_fields_for_telegram_replay():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-profile-identity-fields",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2026-04-10T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "My name is Sarah."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2026-04-10T09:01:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "My timezone is Asia/Dubai."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2026-04-10T09:02:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "My country is UAE."}],
+                },
+                {
+                    "session_id": "s4",
+                    "timestamp": "2026-04-10T09:03:00Z",
+                    "turns": [{"turn_id": "s4t1", "speaker": "user", "text": "I live in Abu Dhabi now."}],
+                },
+            ],
+            "questions": [],
+        }
+    )
+
+    pairs = {(atom.predicate, atom.value) for atom in extract_memory_atoms(sample)}
+
+    assert ("preferred_name", "Sarah") in pairs
+    assert ("timezone", "Asia/Dubai") in pairs
+    assert ("home_country", "UAE") in pairs
+    assert ("location", "Abu Dhabi") in pairs
+
+
+def test_profile_identity_baselines_handle_recency_pressure_queries():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-profile-recency-pressure",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2026-04-10T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "My name is Sarah."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2026-04-10T09:01:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I am an entrepreneur."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2026-04-10T09:02:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "My startup is Seedify."}],
+                },
+                {
+                    "session_id": "s4",
+                    "timestamp": "2026-04-10T09:03:00Z",
+                    "turns": [{"turn_id": "s4t1", "speaker": "user", "text": "I am the founder of Spark Swarm."}],
+                },
+                {
+                    "session_id": "s5",
+                    "timestamp": "2026-04-10T09:04:00Z",
+                    "turns": [{"turn_id": "s5t1", "speaker": "user", "text": "My timezone is Asia/Dubai."}],
+                },
+                {
+                    "session_id": "s6",
+                    "timestamp": "2026-04-10T09:05:00Z",
+                    "turns": [{"turn_id": "s6t1", "speaker": "user", "text": "I live in Dubai."}],
+                },
+                {
+                    "session_id": "s7",
+                    "timestamp": "2026-04-10T09:06:00Z",
+                    "turns": [{"turn_id": "s7t1", "speaker": "user", "text": "I live in Abu Dhabi now."}],
+                },
+                {
+                    "session_id": "s8",
+                    "timestamp": "2026-04-10T09:07:00Z",
+                    "turns": [{"turn_id": "s8t1", "speaker": "user", "text": "My country is UAE."}],
+                },
+                {
+                    "session_id": "s9",
+                    "timestamp": "2026-04-10T09:08:00Z",
+                    "turns": [{"turn_id": "s9t1", "speaker": "user", "text": "I moved to Canada."}],
+                },
+                {
+                    "session_id": "s10",
+                    "timestamp": "2026-04-10T09:09:00Z",
+                    "turns": [
+                        {
+                            "turn_id": "s10t1",
+                            "speaker": "user",
+                            "text": "I am trying to survive the hack and revive the companies.",
+                        }
+                    ],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "Where do I live now?",
+                    "answer": "Abu Dhabi",
+                    "category": "identity_synthesis",
+                    "evidence_session_ids": ["s7"],
+                    "evidence_turn_ids": ["s7t1"],
+                    "metadata": {"product_memory_task": "identity_synthesis"},
+                },
+                {
+                    "question_id": "q2",
+                    "question": "What is my name?",
+                    "answer": "Sarah",
+                    "category": "identity_synthesis",
+                    "evidence_session_ids": ["s1"],
+                    "evidence_turn_ids": ["s1t1"],
+                    "metadata": {"product_memory_task": "identity_synthesis"},
+                },
+                {
+                    "question_id": "q3",
+                    "question": "What timezone do you have for me?",
+                    "answer": "Asia/Dubai",
+                    "category": "identity_synthesis",
+                    "evidence_session_ids": ["s5"],
+                    "evidence_turn_ids": ["s5t1"],
+                    "metadata": {"product_memory_task": "identity_synthesis"},
+                },
+                {
+                    "question_id": "q4",
+                    "question": "What am I trying to do now?",
+                    "answer": "revive the companies",
+                    "category": "identity_synthesis",
+                    "evidence_session_ids": ["s10"],
+                    "evidence_turn_ids": ["s10t1"],
+                    "metadata": {"product_memory_task": "identity_synthesis"},
+                },
+                {
+                    "question_id": "q5",
+                    "question": "Summarize my profile in one sentence.",
+                    "answer": "entrepreneur; Spark Swarm; Asia/Dubai",
+                    "category": "identity_synthesis",
+                    "evidence_session_ids": ["s2", "s4", "s5"],
+                    "evidence_turn_ids": ["s2t1", "s4t1", "s5t1"],
+                    "metadata": {"product_memory_task": "identity_synthesis"},
+                },
+            ],
+        }
+    )
+
+    for baseline_name in ("summary_synthesis_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+        prediction_by_question = {item["question_id"]: item["predicted_answer"] for item in scorecard["predictions"]}
+        assert "Abu Dhabi" in prediction_by_question["q1"]
+        assert "Sarah" in prediction_by_question["q2"]
+        assert "Asia/Dubai" in prediction_by_question["q3"]
+        assert "revive the companies" in prediction_by_question["q4"]
+        assert "entrepreneur" in prediction_by_question["q5"]
+        assert "Spark Swarm" in prediction_by_question["q5"]
+        assert "Asia/Dubai" in prediction_by_question["q5"]
+
+
 def test_temporal_atom_router_prefers_latest_fact():
     samples = demo_samples()
     scorecard = run_baseline(

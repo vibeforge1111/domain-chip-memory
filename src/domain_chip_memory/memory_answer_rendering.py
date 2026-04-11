@@ -29,6 +29,26 @@ _PROFILE_IDENTITY_PREDICATE_ALIASES = {
     "hack_actor": "hack_actor",
 }
 
+_PROFILE_COUNTRY_VALUES = {
+    "australia",
+    "brazil",
+    "canada",
+    "china",
+    "france",
+    "germany",
+    "india",
+    "italy",
+    "japan",
+    "mexico",
+    "spain",
+    "uae",
+    "uk",
+    "united arab emirates",
+    "united kingdom",
+    "united states",
+    "usa",
+}
+
 
 def _ensure_sentence(text: str) -> str:
     normalized = " ".join(str(text or "").strip().split())
@@ -64,6 +84,14 @@ def _normalize_profile_identity_predicate(predicate: str) -> str | None:
     return _PROFILE_IDENTITY_PREDICATE_ALIASES.get(normalized)
 
 
+def _normalize_profile_identity_value(predicate: str, value: str) -> tuple[str, str]:
+    normalized_value = " ".join(str(value or "").strip().split())
+    normalized_value = normalized_value.removesuffix(" now").removesuffix(" again").strip()
+    if predicate == "city" and normalized_value.lower() in _PROFILE_COUNTRY_VALUES:
+        return "home_country", normalized_value
+    return predicate, normalized_value
+
+
 def extract_profile_identity_values(entries: list[ObservationEntry]) -> dict[str, str]:
     value_by_predicate: dict[str, str] = {}
     ordered_entries = sorted(
@@ -79,6 +107,7 @@ def extract_profile_identity_values(entries: list[ObservationEntry]) -> dict[str
             continue
         value = str(entry.metadata.get("value") or "").strip()
         if value:
+            predicate, value = _normalize_profile_identity_value(predicate, value)
             value_by_predicate[predicate] = value
     return value_by_predicate
 

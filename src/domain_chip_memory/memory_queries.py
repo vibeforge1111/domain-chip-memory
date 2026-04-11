@@ -3,6 +3,53 @@ from __future__ import annotations
 from .contracts import NormalizedQuestion
 
 
+def _is_profile_memory_query(question: NormalizedQuestion) -> bool:
+    question_lower = question.question.lower()
+    return any(
+        phrase in question_lower
+        for phrase in (
+            "who am i",
+            "what do you know about me",
+            "what do you remember about me",
+            "summarize my profile",
+            "summarise my profile",
+            "profile summary",
+            "what is my name",
+            "what's my name",
+            "what do i do",
+            "what am i",
+            "what is my occupation",
+            "what's my occupation",
+            "what startup do you have for me",
+            "what is my startup",
+            "what's my startup",
+            "what startup did i create",
+            "what company did i found",
+            "what company have i founded",
+            "what have i founded",
+            "which company did i found",
+            "what timezone do you have for me",
+            "what is my timezone",
+            "what's my timezone",
+            "what country do you have for me",
+            "what country do you have saved for me",
+            "what country do i live in",
+            "what am i trying to do now",
+            "what is my mission right now",
+            "what's my mission right now",
+            "who hacked us",
+            "who hacked me",
+            "what role will spark play in this",
+            "what role will spark play",
+            "where do i live now",
+            "where do i live",
+            "what city do i live in",
+            "which city do i live in",
+            "what city do you have for me",
+        )
+    )
+
+
 def _question_subject(question: NormalizedQuestion) -> str:
     question_lower = question.question.lower()
     for metadata_key in ("speaker_a", "speaker_b"):
@@ -39,8 +86,76 @@ def _question_subjects(question: NormalizedQuestion) -> list[str]:
 def _question_predicates(question: NormalizedQuestion) -> list[str]:
     question_lower = question.question.lower()
     predicates: list[str] = []
+    if any(phrase in question_lower for phrase in ("what is my name", "what's my name")):
+        predicates.append("preferred_name")
+    if any(
+        phrase in question_lower
+        for phrase in ("what do i do", "what am i", "what is my occupation", "what's my occupation")
+    ):
+        predicates.append("occupation")
+    if any(
+        phrase in question_lower
+        for phrase in ("what startup do you have for me", "what is my startup", "what's my startup", "what startup did i create")
+    ):
+        predicates.append("startup_name")
+    if any(
+        phrase in question_lower
+        for phrase in ("what company did i found", "what company have i founded", "what have i founded", "which company did i found")
+    ):
+        predicates.append("founder_of")
+    if any(phrase in question_lower for phrase in ("what timezone do you have for me", "what is my timezone", "what's my timezone")):
+        predicates.append("timezone")
+    if any(
+        phrase in question_lower
+        for phrase in ("what country do you have for me", "what country do you have saved for me", "what country do i live in")
+    ):
+        predicates.append("home_country")
+        predicates.append("location")
+    if any(phrase in question_lower for phrase in ("what am i trying to do now", "what is my mission right now", "what's my mission right now")):
+        predicates.append("current_mission")
+    if any(phrase in question_lower for phrase in ("who hacked us", "who hacked me")):
+        predicates.append("hack_actor")
+    if any(phrase in question_lower for phrase in ("what role will spark play in this", "what role will spark play")):
+        predicates.append("spark_role")
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "who am i",
+            "what do you know about me",
+            "what do you remember about me",
+            "summarize my profile",
+            "summarise my profile",
+            "profile summary",
+        )
+    ):
+        predicates.extend(
+            [
+                "preferred_name",
+                "occupation",
+                "city",
+                "home_country",
+                "timezone",
+                "startup_name",
+                "founder_of",
+                "current_mission",
+                "spark_role",
+                "hack_actor",
+                "location",
+            ]
+        )
     if "live" in question_lower or "living" in question_lower or "moved" in question_lower:
         predicates.append("location")
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "where do i live now",
+            "where do i live",
+            "what city do i live in",
+            "which city do i live in",
+            "what city do you have for me",
+        )
+    ):
+        predicates.append("city")
     if "favourite colour" in question_lower or "favorite colour" in question_lower:
         predicates.append("favorite_color")
     if "favorite color" in question_lower or "favourite color" in question_lower:

@@ -4869,7 +4869,12 @@ def _detect_profile_memory_query(question: NormalizedQuestion) -> tuple[str | No
         return "single_fact", "preferred_name"
     if any(
         phrase in question_lower
-        for phrase in ("what do i do", "what am i", "what is my occupation", "what's my occupation")
+        for phrase in ("what am i trying to do now", "what is my mission right now", "what's my mission right now")
+    ):
+        return "single_fact", "current_mission"
+    if any(
+        phrase in question_lower
+        for phrase in ("what do i do", "what is my occupation", "what's my occupation")
     ):
         return "single_fact", "occupation"
     if any(
@@ -4891,11 +4896,6 @@ def _detect_profile_memory_query(question: NormalizedQuestion) -> tuple[str | No
         )
     ):
         return "single_fact", "founder_of"
-    if any(
-        phrase in question_lower
-        for phrase in ("what am i trying to do now", "what is my mission right now", "what's my mission right now")
-    ):
-        return "single_fact", "current_mission"
     if any(phrase in question_lower for phrase in ("what timezone do you have for me", "what is my timezone", "what's my timezone")):
         return "single_fact", "timezone"
     if any(

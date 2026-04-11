@@ -4,6 +4,7 @@ import re
 from collections.abc import Callable
 
 from .contracts import NormalizedQuestion
+from .memory_queries import _is_profile_memory_query
 from .memory_relative_state_queries import extract_relative_state_anchor
 from .memory_relative_state_queries import normalize_relative_state_anchor_phrase
 from .memory_relative_state_queries import specialize_clause_carry_first_last_anchor_phrase
@@ -83,6 +84,8 @@ def should_use_current_state_exact_value(
 ) -> bool:
     question_lower = question.question.lower()
     if not is_current_state_question(question):
+        return False
+    if _is_profile_memory_query(question):
         return False
     if is_dated_state_question(question) or is_relative_state_question(question):
         return False

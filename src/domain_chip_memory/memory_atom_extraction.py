@@ -62,6 +62,11 @@ _FALLBACK_ACTION_PATTERNS = (
 )
 
 
+def _normalize_profile_location_value(value: str) -> str:
+    normalized = _normalize_value(value)
+    return re.sub(r"\s+(?:now|again)$", "", normalized, flags=re.IGNORECASE).strip()
+
+
 def _compact_fallback_source_text(text: str) -> str:
     source_text = re.sub(r"```.*?```", " ", text, flags=re.DOTALL)
     source_text = re.sub(r"\s+", " ", source_text).strip()
@@ -588,11 +593,45 @@ def _extract_atoms_from_turn(
         )
 
     patterns = [
-        (r"\b(?:i|we)\s+moved back to\s+([A-Za-z0-9 _-]+)", "location"),
-        (r"\b(?:i|we)\s+moved to\s+([A-Za-z0-9 _-]+)", "location"),
-        (r"\b(?:i|we)\s+lived in\s+([A-Za-z0-9 _-]+)", "location"),
-        (r"\b(?:i|we)\s+live in\s+([A-Za-z0-9 _-]+)", "location"),
-        (r"\b([A-Z][A-Za-z0-9_-]+)\s+(?:moved to|lives in|live in)\s+([A-Za-z0-9 _-]+)", "location_named"),
+        (
+            r"\bmy name is\s+([A-Z][A-Za-z0-9'._-]*(?:\s+[A-Z][A-Za-z0-9'._-]*)*)",
+            "preferred_name",
+        ),
+        (r"\b(?:i am|i'm)\s+an\s+(entrepreneur)(?:[.!?,]|$)", "occupation"),
+        (
+            r"\b(?:i created a startup called|my startup is)\s+([A-Z][A-Za-z0-9'&._-]*(?:\s+[A-Z][A-Za-z0-9'&._-]*)*)",
+            "startup_name",
+        ),
+        (
+            r"\b(?:i am|i'm)\s+the founder of\s+([A-Z][A-Za-z0-9'&._-]*(?:\s+[A-Z][A-Za-z0-9'&._-]*)*)",
+            "founder_of",
+        ),
+        (r"\bwe were hacked by\s+([A-Za-z][A-Za-z0-9 ._-]+?)(?:[.!?,]|$)", "hack_actor"),
+        (
+            r"\bi am trying to\s+(survive the hack and revive the companies)(?:[.!?,]|$)",
+            "current_mission",
+        ),
+        (
+            r"\bi am\s+(rebuilding after the hack|reviving the companies)(?:[.!?,]|$)",
+            "current_mission",
+        ),
+        (
+            r"\bspark\s+(?:is going to be|will be)\s+an important part of this(?: rebuild)?(?:[.!?,]|$)",
+            "spark_role",
+        ),
+        (
+            r"\bmy timezone is\s+([A-Za-z][A-Za-z0-9_+-]*(?:/[A-Za-z0-9_+-]+)+)",
+            "timezone",
+        ),
+        (
+            r"\bmy country is\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})",
+            "home_country",
+        ),
+        (r"\b(?:i|we)\s+moved back to\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)", "location"),
+        (r"\b(?:i|we)\s+moved to\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)", "location"),
+        (r"\b(?:i|we)\s+lived in\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)", "location"),
+        (r"\b(?:i|we)\s+live in\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)", "location"),
+        (r"\b([A-Z][A-Za-z0-9_-]+)\s+(?:moved to|lives in|live in)\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)", "location_named"),
         (r"\b(?:i now prefer|i prefer|i like)\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)", "preference"),
         (r"\bi switched back to\s+([A-Za-z0-9 _-]+?)(?:\s+again)?(?:[.!?,]|$)", "preference"),
         (r"\b([A-Z][A-Za-z0-9_-]+)\s+(?:now prefers|prefers|likes)\s+([A-Za-z0-9 _-]+)", "preference_named"),
@@ -705,6 +744,42 @@ def _extract_atoms_from_turn(
             atom_subject = subject
             atom_predicate = "relationship_status"
             value = "Single"
+        elif predicate == "occupation":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(match.group(1))
+        elif predicate == "preferred_name":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(match.group(1))
+        elif predicate == "startup_name":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(match.group(1))
+        elif predicate == "founder_of":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(match.group(1))
+        elif predicate == "hack_actor":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(match.group(1))
+        elif predicate == "current_mission":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(match.group(1))
+        elif predicate == "spark_role":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = "important part of the rebuild"
+        elif predicate == "timezone":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(match.group(1))
+        elif predicate == "home_country":
+            atom_subject = subject
+            atom_predicate = predicate
+            value = _normalize_value(match.group(1))
         elif predicate == "career_path":
             atom_subject = subject
             atom_predicate = predicate
@@ -769,6 +844,8 @@ def _extract_atoms_from_turn(
             atom_subject = subject
             atom_predicate = predicate
             value = _normalize_value(match.group(1))
+            if atom_predicate == "location":
+                value = _normalize_profile_location_value(value)
             if atom_predicate == "research_topic":
                 value = _normalize_value(re.split(r"[-\u2013\u2014\ufffd]", value, maxsplit=1)[0])
             if atom_predicate == "book_read":
@@ -826,6 +903,15 @@ def _extract_atoms_from_turn(
             "poetry_reading_topic",
             "poster_text",
             "drawing_symbolism",
+            "preferred_name",
+            "occupation",
+            "timezone",
+            "home_country",
+            "startup_name",
+            "founder_of",
+            "hack_actor",
+            "current_mission",
+            "spark_role",
             "shared_life_journey",
             "son_accident_reaction",
             "family_importance",
