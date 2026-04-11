@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import os
 import re
 from typing import Any
 
@@ -21,6 +22,22 @@ def _timestamp_key(timestamp: str | None) -> str:
 
 def _normalize_scalar(value: str | None) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
+
+
+DEFAULT_RUNTIME_MEMORY_ARCHITECTURE = "summary_synthesis_memory"
+DEFAULT_RUNTIME_MEMORY_PROVIDER = "heuristic_v1"
+
+
+def _runtime_memory_architecture() -> str:
+    return _normalize_scalar(
+        os.environ.get("SPARK_MEMORY_RUNTIME_ARCHITECTURE") or DEFAULT_RUNTIME_MEMORY_ARCHITECTURE
+    )
+
+
+def _runtime_memory_provider() -> str:
+    return _normalize_scalar(
+        os.environ.get("SPARK_MEMORY_RUNTIME_PROVIDER") or DEFAULT_RUNTIME_MEMORY_PROVIDER
+    )
 
 
 @dataclass(frozen=True)
@@ -998,6 +1015,8 @@ class SparkMemorySDK:
 def build_sdk_contract_summary() -> dict[str, Any]:
     return {
         "runtime_class": "SparkMemorySDK",
+        "runtime_memory_architecture": _runtime_memory_architecture(),
+        "runtime_memory_provider": _runtime_memory_provider(),
         "write_methods": ["write_observation", "write_event"],
         "write_operations": {
             "write_observation": ["auto", "create", "update", "delete"],
