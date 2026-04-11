@@ -11,11 +11,11 @@ Current honest state:
 
 <!-- AUTO_BUILDER_BASELINE_NEXT_PHASE_START -->
 - the latest offline `ProductMemory` comparison between `summary_synthesis_memory` and `dual_store_event_calendar_hybrid` is tied at `1156/1266`
-- the latest clean live Builder full validation root is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-010753`
+- the latest clean live Builder full validation root is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-012118`
 - the latest clean live Builder full-run pointer is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\latest-full-run.json`
 - the latest clean live Builder soak is fully green at `14/14`, `0` failed
 - that live Builder soak still favors `summary_synthesis_memory` at `92/92` overall and `64/64` on selector packs
-- the latest clean live Builder timings are benchmark `15.041s`, regression `26.173s`, soak `345.112s`, total `386.583s`
+- the latest clean live Builder timings are benchmark `16.570s`, regression `28.206s`, soak `355.454s`, total `400.446s`
 - because the offline side is now a tie instead of a loss, Builder has repinned the runtime selector to `summary_synthesis_memory`
 <!-- AUTO_BUILDER_BASELINE_NEXT_PHASE_END -->
 
