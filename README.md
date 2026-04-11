@@ -37,13 +37,15 @@ Current cross-repo runtime decision as of 2026-04-11:
 - latest head-to-head offline `ProductMemory` comparison: tied at `1156/1266`
 - latest clean live Builder full validation root: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-012118`
 - latest clean live Builder full-run pointer: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\latest-full-run.json`
-- latest clean live Builder soak: `14/14, `0` failed`
+- latest clean live Builder soak: `14/14, 0 failed`
 - latest live whole-suite aggregate: `92/92` for `summary_synthesis_memory` vs `89/92` for `dual_store_event_calendar_hybrid`
 - latest live selector-pack aggregate: `64/64` for `summary_synthesis_memory` vs `61/64` for `dual_store_event_calendar_hybrid`
 - latest clean live Builder regression: `34/34` with KB coverage `38/38` current-state and `38/38` evidence hits
 - latest clean live Builder timings: benchmark `16.570s`, regression `28.206s`, soak `355.454s`, total `400.446s`
 - Builder runtime is therefore pinned to `summary_synthesis_memory`
 <!-- AUTO_BUILDER_BASELINE_README_END -->
+
+That cross-repo runtime block is refreshed from Builder's `latest-full-run.json` via `scripts/render_builder_baseline_docs.py`. Builder's full validation wrapper now invokes that sync automatically when both repos are present side by side.
 
 Current most complete measured path as of 2026-04-03:
 

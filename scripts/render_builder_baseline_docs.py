@@ -59,7 +59,7 @@ def _build_common_lines(pointer_path: Path, run_summary: dict[str, Any], regress
     dsech_selector = selector_rows.get("dual_store_event_calendar_hybrid", {})
     output_root = str(run_summary["output_root"])
     builder_pointer = str(pointer_path)
-    live_soak = f"{soak_summary.get('completed_runs', 'unknown')}/{soak_summary.get('requested_runs', 'unknown')}, `{soak_summary.get('failed_runs', 'unknown')}` failed"
+    live_soak = f"{soak_summary.get('completed_runs', 'unknown')}/{soak_summary.get('requested_runs', 'unknown')}, {soak_summary.get('failed_runs', 'unknown')} failed"
     return [
         "- active runtime architecture: `summary_synthesis_memory + heuristic_v1`",
         "- active Builder challenger: `dual_store_event_calendar_hybrid + heuristic_v1`",
