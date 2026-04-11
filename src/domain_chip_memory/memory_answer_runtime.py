@@ -4853,6 +4853,26 @@ def _infer_summary_synthesis_answer(
 
 def _detect_profile_memory_query(question: NormalizedQuestion) -> tuple[str | None, str | None]:
     question_lower = question.question.lower()
+    if question_lower.startswith("how do you know") or question_lower.startswith("why do you think"):
+        if "my startup" in question_lower:
+            return "fact_explanation", "startup_name"
+        if "where i live" in question_lower or "my city" in question_lower:
+            return "fact_explanation", "city"
+        if "my country" in question_lower:
+            return "fact_explanation", "home_country"
+        if "my timezone" in question_lower:
+            return "fact_explanation", "timezone"
+        if any(
+            phrase in question_lower
+            for phrase in (
+                "what i'm trying to do now",
+                "what i am trying to do now",
+                "my mission right now",
+                "what i'm doing now",
+                "what i am doing now",
+            )
+        ):
+            return "fact_explanation", "current_mission"
     if any(
         phrase in question_lower
         for phrase in (
@@ -4973,6 +4993,19 @@ def _infer_profile_memory_answer(
         return ""
     if query_kind == "identity_summary":
         return _build_profile_identity_summary_answer(candidate_entries)
+    if query_kind == "fact_explanation":
+        value_by_predicate = _extract_profile_identity_values(candidate_entries)
+        if predicate is None:
+            return ""
+        value = str(value_by_predicate.get(predicate) or "").strip()
+        if not value:
+            return ""
+        evidence_text = _profile_memory_explanation_evidence_text(candidate_entries, predicate)
+        return _build_profile_fact_explanation_answer(
+            predicate=predicate,
+            value=value,
+            evidence_text=evidence_text,
+        )
     if query_kind == "fact_history":
         values = _profile_memory_timeline_values(candidate_entries, predicate)
         if len(values) < 2:
@@ -5063,6 +5096,68 @@ def _build_profile_fact_event_history_answer(
     if len(values) == 1:
         return f"I only have one saved {label} event: {values[0]}."
     return f"I have {len(values)} saved {label} events: {' then '.join(values)}."
+
+
+def _normalize_profile_memory_predicate(predicate: str | None) -> str:
+    normalized = str(predicate or "").strip()
+    aliases = {
+        "profile.city": "city",
+        "city": "city",
+        "location": "city",
+        "profile.home_country": "home_country",
+        "home_country": "home_country",
+        "country": "home_country",
+        "profile.timezone": "timezone",
+        "timezone": "timezone",
+        "profile.startup_name": "startup_name",
+        "startup_name": "startup_name",
+        "profile.current_mission": "current_mission",
+        "current_mission": "current_mission",
+    }
+    return aliases.get(normalized, normalized)
+
+
+def _profile_memory_explanation_evidence_text(
+    candidate_entries: list[ObservationEntry],
+    predicate: str,
+) -> str:
+    normalized_predicate = _normalize_profile_memory_predicate(predicate)
+    ordered_entries = sorted(
+        candidate_entries,
+        key=lambda entry: (
+            getattr(entry, "timestamp", "") or "",
+            getattr(entry, "observation_id", "") or getattr(entry, "event_id", ""),
+        ),
+        reverse=True,
+    )
+    for entry in ordered_entries:
+        entry_predicate = _normalize_profile_memory_predicate(getattr(entry, "predicate", ""))
+        if entry_predicate != normalized_predicate:
+            continue
+        metadata = getattr(entry, "metadata", {}) or {}
+        source_text = str(metadata.get("source_text") or "").strip()
+        if source_text:
+            return source_text
+        text = str(getattr(entry, "text", "") or "").strip()
+        if text:
+            return text
+        value = str(metadata.get("value") or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _build_profile_fact_explanation_answer(
+    *,
+    predicate: str,
+    value: str,
+    evidence_text: str,
+) -> str:
+    concise_answer = _build_profile_fact_answer(predicate, value)
+    clean_evidence = " ".join(str(evidence_text or "").strip().split())
+    if clean_evidence:
+        return f'Because I have a saved memory record from when you said: "{clean_evidence}" {concise_answer}'
+    return f"Because I have a saved memory record for that. {concise_answer}"
 
 
 def _choose_answer_candidate(
