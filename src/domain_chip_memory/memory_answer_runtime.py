@@ -3,7 +3,12 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from .memory_answer_rendering import answer_candidate_surface_text as _answer_candidate_surface_text
+from .memory_answer_rendering import (
+    answer_candidate_surface_text as _answer_candidate_surface_text,
+    build_profile_fact_answer as _build_profile_fact_answer,
+    build_profile_identity_summary_answer as _build_profile_identity_summary_answer,
+    extract_profile_identity_values as _extract_profile_identity_values,
+)
 from .contracts import NormalizedQuestion
 from .memory_aggregate_answers import infer_aggregate_answer as _infer_aggregate_answer_impl
 from .memory_answer_routing import choose_answer_candidate as _choose_answer_candidate_impl
@@ -4846,6 +4851,90 @@ def _infer_summary_synthesis_answer(
     return "You worked through " + ", ".join(phrases[:-1]) + f", and {phrases[-1]}."
 
 
+def _detect_profile_memory_query(question: NormalizedQuestion) -> tuple[str | None, str | None]:
+    question_lower = question.question.lower()
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "who am i",
+            "what do you know about me",
+            "what do you remember about me",
+            "summarize my profile",
+            "summarise my profile",
+            "profile summary",
+        )
+    ):
+        return "identity_summary", None
+    if any(phrase in question_lower for phrase in ("what is my name", "what's my name")):
+        return "single_fact", "preferred_name"
+    if any(
+        phrase in question_lower
+        for phrase in ("what do i do", "what am i", "what is my occupation", "what's my occupation")
+    ):
+        return "single_fact", "occupation"
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "what startup do you have for me",
+            "what is my startup",
+            "what's my startup",
+        )
+    ):
+        return "single_fact", "startup_name"
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "what company did i found",
+            "what company have i founded",
+            "what have i founded",
+            "which company did i found",
+        )
+    ):
+        return "single_fact", "founder_of"
+    if any(
+        phrase in question_lower
+        for phrase in ("what am i trying to do now", "what is my mission right now", "what's my mission right now")
+    ):
+        return "single_fact", "current_mission"
+    if any(phrase in question_lower for phrase in ("what timezone do you have for me", "what is my timezone", "what's my timezone")):
+        return "single_fact", "timezone"
+    if any(
+        phrase in question_lower
+        for phrase in ("what country do you have for me", "what country do you have saved for me", "what country do i live in")
+    ):
+        return "single_fact", "home_country"
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "where do i live now",
+            "where do i live",
+            "what city do i live in",
+            "which city do i live in",
+            "what city do you have for me",
+        )
+    ):
+        return "single_fact", "city"
+    return None, None
+
+
+def _infer_profile_memory_answer(
+    question: NormalizedQuestion,
+    candidate_entries: list[ObservationEntry],
+) -> str:
+    query_kind, predicate = _detect_profile_memory_query(question)
+    if query_kind is None:
+        return ""
+    if query_kind == "identity_summary":
+        return _build_profile_identity_summary_answer(candidate_entries)
+    value_by_predicate = _extract_profile_identity_values(candidate_entries)
+    if predicate is None:
+        return ""
+    value = str(value_by_predicate.get(predicate) or "").strip()
+    if not value:
+        return ""
+    return _build_profile_fact_answer(predicate, value)
+
+
 def _choose_answer_candidate(
     question: NormalizedQuestion,
     evidence_entries: list[ObservationEntry],
@@ -4856,6 +4945,12 @@ def _choose_answer_candidate(
     abstention_answer = _abstention_answer(question)
     if abstention_answer:
         return abstention_answer
+    profile_memory_answer = _infer_profile_memory_answer(
+        question,
+        list(aggregate_entries or context_entries or evidence_entries),
+    )
+    if profile_memory_answer:
+        return profile_memory_answer
     return _choose_answer_candidate_support_impl(
         question,
         evidence_entries,
@@ -4896,6 +4991,9 @@ def _choose_stateful_answer_candidate(
     for entry in candidate_entries:
         if entry not in aggregate_candidate_entries:
             aggregate_candidate_entries.append(entry)
+    profile_memory_answer = _infer_profile_memory_answer(question, aggregate_candidate_entries)
+    if profile_memory_answer:
+        return profile_memory_answer
     targeted_answer = _infer_beam_public_targeted_answer(question, aggregate_candidate_entries)
     if targeted_answer:
         return _finalize_beam_targeted_answer(question, targeted_answer)
@@ -4996,6 +5094,9 @@ def _choose_summary_synthesis_answer_candidate(
     for entry in candidate_entries:
         if entry not in aggregate_candidate_entries:
             aggregate_candidate_entries.append(entry)
+    profile_memory_answer = _infer_profile_memory_answer(question, aggregate_candidate_entries)
+    if profile_memory_answer:
+        return profile_memory_answer
     targeted_answer = _infer_beam_public_targeted_answer(question, aggregate_candidate_entries)
     if targeted_answer:
         return _finalize_beam_targeted_answer(question, targeted_answer)
@@ -5038,6 +5139,9 @@ def _choose_contradiction_aware_summary_synthesis_answer_candidate(
     for entry in candidate_entries:
         if entry not in aggregate_candidate_entries:
             aggregate_candidate_entries.append(entry)
+    profile_memory_answer = _infer_profile_memory_answer(question, aggregate_candidate_entries)
+    if profile_memory_answer:
+        return profile_memory_answer
     targeted_answer = _infer_beam_public_targeted_answer(question, aggregate_candidate_entries)
     if targeted_answer:
         return _finalize_beam_targeted_answer(question, targeted_answer)

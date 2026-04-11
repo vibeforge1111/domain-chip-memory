@@ -11,6 +11,7 @@ from domain_chip_memory.memory_answer_runtime import (
     _question_aligned_claim_summary,
     _choose_summary_synthesis_answer_candidate,
 )
+from domain_chip_memory.memory_answer_rendering import build_profile_identity_summary_answer
 from domain_chip_memory.memory_extraction import ObservationEntry
 from domain_chip_memory.loaders import load_locomo_json, load_longmemeval_json
 from domain_chip_memory.memory_systems import (
@@ -125,6 +126,179 @@ def test_extract_memory_atoms_captures_predicate_level_current_state_deletion():
     assert len(deletion_atoms) == 1
     assert deletion_atoms[0].metadata["target_predicate"] == "favorite_color"
     assert deletion_atoms[0].metadata["deleted_value"] == ""
+
+
+def test_extract_memory_atoms_captures_founder_startup_hack_and_rebuild_facts():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-founder-startup-hack-facts",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2025-01-05T09:00:00Z",
+                    "turns": [
+                        {"turn_id": "s1t1", "speaker": "user", "text": "I am an entrepreneur."},
+                        {"turn_id": "s1t2", "speaker": "user", "text": "My startup is Seedify."},
+                        {"turn_id": "s1t3", "speaker": "user", "text": "We were hacked by North Korea."},
+                        {
+                            "turn_id": "s1t4",
+                            "speaker": "user",
+                            "text": "I am trying to survive the hack and revive the companies.",
+                        },
+                        {"turn_id": "s1t5", "speaker": "user", "text": "I am the founder of Spark Swarm."},
+                        {"turn_id": "s1t6", "speaker": "user", "text": "Spark will be an important part of this rebuild."},
+                    ],
+                }
+            ],
+            "questions": [],
+        }
+    )
+
+    pairs = {(atom.predicate, atom.value) for atom in extract_memory_atoms(sample)}
+
+    assert ("occupation", "entrepreneur") in pairs
+    assert ("startup_name", "Seedify") in pairs
+    assert ("hack_actor", "North Korea") in pairs
+    assert ("current_mission", "survive the hack and revive the companies") in pairs
+    assert ("founder_of", "Spark Swarm") in pairs
+    assert ("spark_role", "important part of the rebuild") in pairs
+
+
+def test_build_profile_identity_summary_answer_compacts_profile_facts():
+    answer = build_profile_identity_summary_answer(
+        [
+            ObservationEntry(
+                observation_id="obs-1",
+                subject="user",
+                predicate="occupation",
+                text="I am an entrepreneur.",
+                session_id="s1",
+                turn_ids=["t1"],
+                timestamp="2026-04-10T09:00:00Z",
+                metadata={"value": "entrepreneur"},
+            ),
+            ObservationEntry(
+                observation_id="obs-2",
+                subject="user",
+                predicate="founder_of",
+                text="I am the founder of Spark Swarm.",
+                session_id="s2",
+                turn_ids=["t2"],
+                timestamp="2026-04-10T09:01:00Z",
+                metadata={"value": "Spark Swarm"},
+            ),
+            ObservationEntry(
+                observation_id="obs-3",
+                subject="user",
+                predicate="timezone",
+                text="My timezone is Asia/Dubai.",
+                session_id="s3",
+                turn_ids=["t3"],
+                timestamp="2026-04-10T09:02:00Z",
+                metadata={"value": "Asia/Dubai"},
+            ),
+            ObservationEntry(
+                observation_id="obs-4",
+                subject="user",
+                predicate="home_country",
+                text="My country is Canada.",
+                session_id="s4",
+                turn_ids=["t4"],
+                timestamp="2026-04-10T09:03:00Z",
+                metadata={"value": "Canada"},
+            ),
+        ]
+    )
+
+    assert "entrepreneur" in answer
+    assert "Spark Swarm" in answer
+    assert "Canada" in answer
+    assert "Asia/Dubai" in answer
+
+
+def test_profile_identity_summary_baselines_keep_multi_fact_profile_answers():
+    from domain_chip_memory.adapters import BEAMAdapter
+
+    sample = BEAMAdapter.normalize_instance(
+        {
+            "sample_id": "beam-profile-identity-summary",
+            "sessions": [
+                {
+                    "session_id": "s1",
+                    "timestamp": "2026-04-10T09:00:00Z",
+                    "turns": [{"turn_id": "s1t1", "speaker": "user", "text": "My name is Sarah."}],
+                },
+                {
+                    "session_id": "s2",
+                    "timestamp": "2026-04-10T09:01:00Z",
+                    "turns": [{"turn_id": "s2t1", "speaker": "user", "text": "I am an entrepreneur."}],
+                },
+                {
+                    "session_id": "s3",
+                    "timestamp": "2026-04-10T09:02:00Z",
+                    "turns": [{"turn_id": "s3t1", "speaker": "user", "text": "My startup is Seedify."}],
+                },
+                {
+                    "session_id": "s4",
+                    "timestamp": "2026-04-10T09:03:00Z",
+                    "turns": [{"turn_id": "s4t1", "speaker": "user", "text": "I am the founder of Spark Swarm."}],
+                },
+                {
+                    "session_id": "s5",
+                    "timestamp": "2026-04-10T09:04:00Z",
+                    "turns": [{"turn_id": "s5t1", "speaker": "user", "text": "My timezone is Asia/Dubai."}],
+                },
+                {
+                    "session_id": "s6",
+                    "timestamp": "2026-04-10T09:05:00Z",
+                    "turns": [{"turn_id": "s6t1", "speaker": "user", "text": "I moved to Abu Dhabi."}],
+                },
+                {
+                    "session_id": "s7",
+                    "timestamp": "2026-04-10T09:06:00Z",
+                    "turns": [{"turn_id": "s7t1", "speaker": "user", "text": "My country is Canada."}],
+                },
+                {
+                    "session_id": "s8",
+                    "timestamp": "2026-04-10T09:07:00Z",
+                    "turns": [
+                        {
+                            "turn_id": "s8t1",
+                            "speaker": "user",
+                            "text": "I am trying to survive the hack and revive the companies.",
+                        }
+                    ],
+                },
+            ],
+            "questions": [
+                {
+                    "question_id": "q1",
+                    "question": "Give me a full profile summary with my latest location too.",
+                    "answer": "entrepreneur; Spark Swarm; Canada",
+                    "category": "identity_synthesis",
+                    "evidence_session_ids": ["s2", "s4", "s7"],
+                    "evidence_turn_ids": ["s2t1", "s4t1", "s7t1"],
+                    "metadata": {"product_memory_task": "identity_synthesis"},
+                }
+            ],
+        }
+    )
+
+    for baseline_name in ("summary_synthesis_memory", "dual_store_event_calendar_hybrid"):
+        scorecard = run_baseline(
+            [sample],
+            baseline_name=baseline_name,
+            provider=get_provider("heuristic_v1"),
+            top_k_sessions=2,
+            fallback_sessions=1,
+        )
+        prediction = scorecard["predictions"][0]["predicted_answer"]
+        assert "entrepreneur" in prediction
+        assert "Spark Swarm" in prediction
+        assert "Abu Dhabi" in prediction
+        assert "survive the hack and revive the companies" in prediction
 
 
 def test_temporal_atom_router_prefers_latest_fact():
