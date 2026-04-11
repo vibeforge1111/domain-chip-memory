@@ -75,6 +75,10 @@ def test_detect_profile_memory_query_maps_mission_explanation_to_fact_explanatio
     )
 
 
+def test_detect_profile_memory_query_does_not_hijack_anchored_history_prompt():
+    assert _detect_profile_memory_query(_question("Where did I live before that move?")) == (None, None)
+
+
 def test_infer_profile_memory_answer_returns_previous_city_for_history_prompt():
     answer = _infer_profile_memory_answer(
         _question("Where did I live before?"),

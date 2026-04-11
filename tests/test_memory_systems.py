@@ -1484,7 +1484,7 @@ def test_dual_store_product_memory_prefers_current_state_source_over_event_calen
 def test_product_memory_preserves_historical_evidence_after_delete_and_update():
     historical_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-correction-2"]
 
-    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+    for baseline_name in ("summary_synthesis_memory", "observational_temporal_memory", "dual_store_event_calendar_hybrid"):
         scorecard = run_baseline(
             historical_sample,
             baseline_name=baseline_name,
@@ -1520,7 +1520,7 @@ def test_product_memory_preserves_historical_evidence_after_delete_and_update():
 def test_product_memory_preserves_non_location_historical_evidence_after_correction():
     historical_sample = [sample for sample in product_memory_samples() if sample.sample_id == "product-memory-correction-3"]
 
-    for baseline_name in ("observational_temporal_memory", "dual_store_event_calendar_hybrid"):
+    for baseline_name in ("summary_synthesis_memory", "observational_temporal_memory", "dual_store_event_calendar_hybrid"):
         scorecard = run_baseline(
             historical_sample,
             baseline_name=baseline_name,

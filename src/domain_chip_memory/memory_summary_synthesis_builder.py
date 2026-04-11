@@ -82,7 +82,6 @@ _CONTRADICTION_HELP_PATTERNS = (
     "tutorials",
 )
 
-
 def _compact_source_text(entry: ObservationEntry) -> str:
     source_text = str(entry.metadata.get("source_text", "")).strip() or entry.text.strip()
     source_text = re.sub(r"```.*?```", "", source_text, flags=re.DOTALL).strip()
@@ -486,6 +485,8 @@ def build_summary_synthesis_memory_packets(
                     source = "referential_ambiguity"
                 elif ambiguous_relative_state and answer_text.lower() == "unknown":
                     source = "temporal_ambiguity"
+                elif (is_dated_state_question(question) or is_relative_state_question(question)) and evidence_entries:
+                    source = "evidence_memory"
                 elif synthesis_entries:
                     source = "aggregate_memory"
                 elif evidence_entries:

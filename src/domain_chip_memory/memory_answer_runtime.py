@@ -4853,6 +4853,7 @@ def _infer_summary_synthesis_answer(
 
 def _detect_profile_memory_query(question: NormalizedQuestion) -> tuple[str | None, str | None]:
     question_lower = question.question.lower()
+    question_surface = question_lower.strip().rstrip(".!?")
     if question_lower.startswith("how do you know") or question_lower.startswith("why do you think"):
         if "my startup" in question_lower:
             return "fact_explanation", "startup_name"
@@ -4885,48 +4886,36 @@ def _detect_profile_memory_query(question: NormalizedQuestion) -> tuple[str | No
         )
     ):
         return "identity_summary", None
-    if any(
-        phrase in question_lower
-        for phrase in (
-            "where did i live before",
-            "where was i living before",
-            "what city did i live in before",
-            "which city did i live in before",
-            "what was my previous city",
-            "what city was i in before",
-            "what city did you have for me before",
-        )
-    ):
+    if question_surface in {
+        "where did i live before",
+        "where was i living before",
+        "what city did i live in before",
+        "which city did i live in before",
+        "what was my previous city",
+        "what city was i in before",
+        "what city did you have for me before",
+    }:
         return "fact_history", "city"
-    if any(
-        phrase in question_lower
-        for phrase in (
-            "what country did i live in before",
-            "which country did i live in before",
-            "what was my previous country",
-            "what country did you have for me before",
-        )
-    ):
+    if question_surface in {
+        "what country did i live in before",
+        "which country did i live in before",
+        "what was my previous country",
+        "what country did you have for me before",
+    }:
         return "fact_history", "home_country"
-    if any(
-        phrase in question_lower
-        for phrase in (
-            "what memory events do you have about where i live",
-            "what memory events do you have about my city",
-            "what memory events do you have about my location",
-            "show my city history",
-            "show my location history",
-        )
-    ):
+    if question_surface in {
+        "what memory events do you have about where i live",
+        "what memory events do you have about my city",
+        "what memory events do you have about my location",
+        "show my city history",
+        "show my location history",
+    }:
         return "event_history", "city"
-    if any(
-        phrase in question_lower
-        for phrase in (
-            "what memory events do you have about my country",
-            "show my country history",
-            "what country history do you have for me",
-        )
-    ):
+    if question_surface in {
+        "what memory events do you have about my country",
+        "show my country history",
+        "what country history do you have for me",
+    }:
         return "event_history", "home_country"
     if any(phrase in question_lower for phrase in ("what is my name", "what's my name")):
         return "single_fact", "preferred_name"
