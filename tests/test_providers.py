@@ -434,6 +434,46 @@ def test_expand_answer_recovers_previous_location_before_moving_back_to_city():
     assert rescued == "Abu Dhabi"
 
 
+def test_expand_answer_recovers_previous_city_for_exact_before_question_with_countries_in_context():
+    context = "\n".join(
+        [
+            "observation: I live in Dubai",
+            "observation: I live in UAE",
+            "observation: I live in Abu Dhabi",
+            "observation: I live in Canada",
+            "answer_candidate: I do live in Canada",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "Where did I live before?",
+        "I do live in Canada",
+        context,
+    )
+
+    assert rescued == "Dubai"
+
+
+def test_expand_answer_recovers_city_event_history_without_country_noise():
+    context = "\n".join(
+        [
+            "observation: I live in Dubai",
+            "observation: I live in UAE",
+            "observation: I live in Abu Dhabi",
+            "observation: I live in Canada",
+            "answer_candidate: I do live in Canada",
+        ]
+    )
+
+    rescued = providers._expand_answer_from_context(
+        "What memory events do you have about where I live?",
+        "I do live in Canada",
+        context,
+    )
+
+    assert rescued == "Dubai then Abu Dhabi"
+
+
 def test_expand_answer_recovers_next_location_after_city():
     context = "\n".join(
         [

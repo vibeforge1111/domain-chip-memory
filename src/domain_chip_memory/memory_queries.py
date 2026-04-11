@@ -23,7 +23,6 @@ def _is_profile_memory_query(question: NormalizedQuestion) -> bool:
             "what startup do you have for me",
             "what is my startup",
             "what's my startup",
-            "what startup did i create",
             "what company did i found",
             "what company have i founded",
             "what have i founded",
@@ -46,6 +45,23 @@ def _is_profile_memory_query(question: NormalizedQuestion) -> bool:
             "what city do i live in",
             "which city do i live in",
             "what city do you have for me",
+            "where did i live before",
+            "where was i living before",
+            "what city did i live in before",
+            "which city did i live in before",
+            "what was my previous city",
+            "what city was i in before",
+            "what city did you have for me before",
+            "what was my previous country",
+            "what country did you have for me before",
+            "what memory events do you have about where i live",
+            "what memory events do you have about my city",
+            "what memory events do you have about my location",
+            "show my city history",
+            "show my location history",
+            "what memory events do you have about my country",
+            "show my country history",
+            "what country history do you have for me",
         )
     )
 
@@ -95,12 +111,18 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("occupation")
     if any(
         phrase in question_lower
-        for phrase in ("what startup do you have for me", "what is my startup", "what's my startup", "what startup did i create")
+        for phrase in ("what startup do you have for me", "what is my startup", "what's my startup")
     ):
         predicates.append("startup_name")
     if any(
         phrase in question_lower
-        for phrase in ("what company did i found", "what company have i founded", "what have i founded", "which company did i found")
+        for phrase in (
+            "what startup did i create",
+            "what company did i found",
+            "what company have i founded",
+            "what have i founded",
+            "which company did i found",
+        )
     ):
         predicates.append("founder_of")
     if any(phrase in question_lower for phrase in ("what timezone do you have for me", "what is my timezone", "what's my timezone")):
@@ -156,6 +178,39 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         )
     ):
         predicates.append("city")
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "where did i live before",
+            "where was i living before",
+            "what city did i live in before",
+            "which city did i live in before",
+            "what was my previous city",
+            "what city was i in before",
+            "what city did you have for me before",
+            "what memory events do you have about where i live",
+            "what memory events do you have about my city",
+            "what memory events do you have about my location",
+            "show my city history",
+            "show my location history",
+        )
+    ):
+        predicates.append("city")
+        predicates.append("location")
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "what country did i live in before",
+            "which country did i live in before",
+            "what was my previous country",
+            "what country did you have for me before",
+            "what memory events do you have about my country",
+            "show my country history",
+            "what country history do you have for me",
+        )
+    ):
+        predicates.append("home_country")
+        predicates.append("location")
     if "favourite colour" in question_lower or "favorite colour" in question_lower:
         predicates.append("favorite_color")
     if "favorite color" in question_lower or "favourite color" in question_lower:

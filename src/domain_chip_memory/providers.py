@@ -36,6 +36,27 @@ from .runs import BaselinePromptPacket
 
 DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
 DEFAULT_MINIMAX_BASE_URL = "https://api.minimax.io/v1"
+_PROFILE_COUNTRY_VALUES = {
+    "uae",
+    "united arab emirates",
+    "canada",
+    "united states",
+    "usa",
+    "united kingdom",
+    "uk",
+    "australia",
+    "brazil",
+    "china",
+    "france",
+    "germany",
+    "india",
+    "italy",
+    "japan",
+    "mexico",
+    "spain",
+}
+
+
 @dataclass(frozen=True)
 class ProviderResponse:
     answer: str
@@ -155,6 +176,27 @@ def _question_aware_rescue(question: str, answer: str, context: str) -> str | No
                 return ordered_labels[anchor_index - 1]
 
     location_rows = _ordered_location_rows_impl(context_lines)
+    city_rows = [
+        row
+        for row in location_rows
+        if str(row[1]).strip().lower() not in _PROFILE_COUNTRY_VALUES
+    ]
+
+    if question_lower == "where did i live before?" and city_rows:
+        distinct_cities: list[str] = []
+        for _, location, _ in city_rows:
+            if not distinct_cities or distinct_cities[-1].lower() != location.lower():
+                distinct_cities.append(location)
+        if len(distinct_cities) >= 2:
+            return distinct_cities[-2]
+
+    if question_lower.startswith("what memory events do you have about where i live") and city_rows:
+        distinct_cities: list[str] = []
+        for _, location, _ in city_rows:
+            if not distinct_cities or distinct_cities[-1].lower() != location.lower():
+                distinct_cities.append(location)
+        if len(distinct_cities) >= 2:
+            return " then ".join(distinct_cities[-2:])
 
     if question_lower.startswith("where did i live before "):
         target_match = re.search(r"where did i live before\s+(.+?)\??$", question_lower)

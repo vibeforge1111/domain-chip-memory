@@ -4865,6 +4865,49 @@ def _detect_profile_memory_query(question: NormalizedQuestion) -> tuple[str | No
         )
     ):
         return "identity_summary", None
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "where did i live before",
+            "where was i living before",
+            "what city did i live in before",
+            "which city did i live in before",
+            "what was my previous city",
+            "what city was i in before",
+            "what city did you have for me before",
+        )
+    ):
+        return "fact_history", "city"
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "what country did i live in before",
+            "which country did i live in before",
+            "what was my previous country",
+            "what country did you have for me before",
+        )
+    ):
+        return "fact_history", "home_country"
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "what memory events do you have about where i live",
+            "what memory events do you have about my city",
+            "what memory events do you have about my location",
+            "show my city history",
+            "show my location history",
+        )
+    ):
+        return "event_history", "city"
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "what memory events do you have about my country",
+            "show my country history",
+            "what country history do you have for me",
+        )
+    ):
+        return "event_history", "home_country"
     if any(phrase in question_lower for phrase in ("what is my name", "what's my name")):
         return "single_fact", "preferred_name"
     if any(
@@ -4883,12 +4926,7 @@ def _detect_profile_memory_query(question: NormalizedQuestion) -> tuple[str | No
             "what startup do you have for me",
             "what is my startup",
             "what's my startup",
-        )
-    ):
-        return "single_fact", "startup_name"
-    if any(
-        phrase in question_lower
-        for phrase in (
+            "what startup did i create",
             "what company did i found",
             "what company have i founded",
             "what have i founded",
@@ -4896,6 +4934,15 @@ def _detect_profile_memory_query(question: NormalizedQuestion) -> tuple[str | No
         )
     ):
         return "single_fact", "founder_of"
+    if any(
+        phrase in question_lower
+        for phrase in (
+            "what startup do you have for me",
+            "what is my startup",
+            "what's my startup",
+        )
+    ):
+        return "single_fact", "startup_name"
     if any(phrase in question_lower for phrase in ("what timezone do you have for me", "what is my timezone", "what's my timezone")):
         return "single_fact", "timezone"
     if any(
@@ -4926,6 +4973,23 @@ def _infer_profile_memory_answer(
         return ""
     if query_kind == "identity_summary":
         return _build_profile_identity_summary_answer(candidate_entries)
+    if query_kind == "fact_history":
+        values = _profile_memory_timeline_values(candidate_entries, predicate)
+        if len(values) < 2:
+            return ""
+        return _build_profile_fact_history_answer(
+            predicate=predicate,
+            previous_value=values[-2],
+            current_value=values[-1],
+        )
+    if query_kind == "event_history":
+        values = _profile_memory_timeline_values(candidate_entries, predicate)
+        if len(values) < 2:
+            return ""
+        return _build_profile_fact_event_history_answer(
+            predicate=predicate,
+            values=values,
+        )
     value_by_predicate = _extract_profile_identity_values(candidate_entries)
     if predicate is None:
         return ""
@@ -4933,6 +4997,72 @@ def _infer_profile_memory_answer(
     if not value:
         return ""
     return _build_profile_fact_answer(predicate, value)
+
+
+def _profile_memory_timeline_values(
+    candidate_entries: list[ObservationEntry],
+    predicate: str | None,
+) -> list[str]:
+    normalized_predicate = str(predicate or "").strip().removeprefix("profile.")
+    if not normalized_predicate:
+        return []
+    ordered_entries = sorted(
+        candidate_entries,
+        key=lambda entry: (
+            getattr(entry, "timestamp", "") or "",
+            getattr(entry, "observation_id", "") or getattr(entry, "event_id", ""),
+        ),
+    )
+    values: list[str] = []
+    last_value = ""
+    for entry in ordered_entries:
+        entry_predicate = str(entry.predicate or "").strip().removeprefix("profile.")
+        if entry_predicate != normalized_predicate:
+            continue
+        value = str(entry.metadata.get("value") or "").strip()
+        if not value or value == last_value:
+            continue
+        values.append(value)
+        last_value = value
+    return values
+
+
+def _build_profile_fact_history_answer(
+    *,
+    predicate: str | None,
+    previous_value: str,
+    current_value: str,
+) -> str:
+    normalized_predicate = str(predicate or "").strip().removeprefix("profile.")
+    if normalized_predicate == "city":
+        return f"Before {current_value}, you lived in {previous_value}."
+    if normalized_predicate == "home_country":
+        return f"Before {current_value}, your country was {previous_value}."
+    if normalized_predicate == "timezone":
+        return f"Before {current_value}, your timezone was {previous_value}."
+    if normalized_predicate == "startup_name":
+        return f"Before {current_value}, your startup was {previous_value}."
+    if normalized_predicate == "founder_of":
+        return f"Before {current_value}, you founded {previous_value}."
+    return f"Before {current_value}, your saved value was {previous_value}."
+
+
+def _build_profile_fact_event_history_answer(
+    *,
+    predicate: str | None,
+    values: list[str],
+) -> str:
+    normalized_predicate = str(predicate or "").strip().removeprefix("profile.")
+    label = {
+        "city": "city",
+        "home_country": "country",
+        "timezone": "timezone",
+        "startup_name": "startup",
+        "founder_of": "company you founded",
+    }.get(normalized_predicate, "fact")
+    if len(values) == 1:
+        return f"I only have one saved {label} event: {values[0]}."
+    return f"I have {len(values)} saved {label} events: {' then '.join(values)}."
 
 
 def _choose_answer_candidate(
