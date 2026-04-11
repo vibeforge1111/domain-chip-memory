@@ -10,8 +10,10 @@ The chip-side benchmark story and the Builder-side live story are now aligned en
 Current honest state:
 
 - the latest offline `ProductMemory` comparison between `summary_synthesis_memory` and `dual_store_event_calendar_hybrid` is tied at `1156/1266`
-- the latest clean timeout-hardened live Builder soak is fully green at `14/14`, `0` failed
+- the latest clean live Builder full validation root is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-010753`
+- the latest clean live Builder soak is fully green at `14/14`, `0` failed
 - that live Builder soak still favors `summary_synthesis_memory` at `92/92` overall and `64/64` on selector packs
+- the latest clean live Builder timings are benchmark `15.041s`, regression `26.173s`, soak `345.112s`, total `386.583s`
 - because the offline side is now a tie instead of a loss, Builder has repinned the runtime selector to `summary_synthesis_memory`
 
 Important boundary:
