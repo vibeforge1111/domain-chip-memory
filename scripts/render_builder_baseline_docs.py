@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +37,19 @@ def _fmt_seconds(value: Any) -> str:
     return f"{float(value):0.3f}s"
 
 
+def _git_revision(repo_root: Path) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+    return result.stdout.strip() or None
+
+
 def _row_by_name(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {str(row["baseline_name"]): row for row in rows}
 
@@ -60,12 +74,21 @@ def _build_common_lines(pointer_path: Path, run_summary: dict[str, Any], regress
     output_root = str(run_summary["output_root"])
     builder_pointer = str(pointer_path)
     live_soak = f"{soak_summary.get('completed_runs', 'unknown')}/{soak_summary.get('requested_runs', 'unknown')}, {soak_summary.get('failed_runs', 'unknown')} failed"
+    baseline_chip_commit = run_summary.get("domain_chip_repo_commit")
+    current_chip_commit = _git_revision(ROOT)
+    if baseline_chip_commit and current_chip_commit:
+        freshness = "clean" if str(baseline_chip_commit) == str(current_chip_commit) else "warning"
+    else:
+        freshness = "unknown"
     return [
         "- active runtime architecture: `summary_synthesis_memory + heuristic_v1`",
         "- active Builder challenger: `dual_store_event_calendar_hybrid + heuristic_v1`",
         "- latest head-to-head offline `ProductMemory` comparison: tied at `1156/1266`",
         f"- latest clean live Builder full validation root: `{output_root}`",
         f"- latest clean live Builder full-run pointer: `{builder_pointer}`",
+        f"- chip-side baseline freshness: `{freshness}`",
+        f"- chip baseline commit from Builder run: `{baseline_chip_commit or 'unknown'}`",
+        f"- current chip commit: `{current_chip_commit or 'unknown'}`",
         f"- latest clean live Builder soak: `{live_soak}`",
         f"- latest live whole-suite aggregate: `{ssm_aggregate.get('matched', 'unknown')}/{ssm_aggregate.get('total', 'unknown')}` for `summary_synthesis_memory` vs `{dsech_aggregate.get('matched', 'unknown')}/{dsech_aggregate.get('total', 'unknown')}` for `dual_store_event_calendar_hybrid`",
         f"- latest live selector-pack aggregate: `{ssm_selector.get('matched', 'unknown')}/{ssm_selector.get('total', 'unknown')}` for `summary_synthesis_memory` vs `{dsech_selector.get('matched', 'unknown')}/{dsech_selector.get('total', 'unknown')}` for `dual_store_event_calendar_hybrid`",
@@ -93,6 +116,7 @@ def render_docs(*, builder_latest_run: Path) -> None:
         "- the latest offline `ProductMemory` comparison between `summary_synthesis_memory` and `dual_store_event_calendar_hybrid` is tied at `1156/1266`",
         f"- the latest clean live Builder full validation root is `{run_summary['output_root']}`",
         f"- the latest clean live Builder full-run pointer is `{builder_latest_run}`",
+        f"- the chip-side freshness against that Builder baseline is `{common_lines[5].split('`')[1]}`",
         f"- the latest clean live Builder soak is fully green at `{soak['summary'].get('completed_runs', 'unknown')}/{soak['summary'].get('requested_runs', 'unknown')}`, `{soak['summary'].get('failed_runs', 'unknown')}` failed",
         f"- that live Builder soak still favors `summary_synthesis_memory` at `{_row_by_name(list(soak.get('aggregate_results') or [])).get('summary_synthesis_memory', {}).get('matched', 'unknown')}/{_row_by_name(list(soak.get('aggregate_results') or [])).get('summary_synthesis_memory', {}).get('total', 'unknown')}` overall and `{_row_by_name(list(soak.get('selection_aggregate_results') or [])).get('summary_synthesis_memory', {}).get('matched', 'unknown')}/{_row_by_name(list(soak.get('selection_aggregate_results') or [])).get('summary_synthesis_memory', {}).get('total', 'unknown')}` on selector packs",
         f"- the latest clean live Builder timings are benchmark `{_fmt_seconds(run_summary.get('benchmark_duration_seconds'))}`, regression `{_fmt_seconds(run_summary.get('regression_duration_seconds'))}`, soak `{_fmt_seconds(run_summary.get('soak_duration_seconds'))}`, total `{_fmt_seconds(run_summary.get('total_duration_seconds'))}`",
@@ -111,6 +135,7 @@ def render_docs(*, builder_latest_run: Path) -> None:
         "- the latest head-to-head offline `ProductMemory` comparison between `summary_synthesis_memory` and `dual_store_event_calendar_hybrid` is tied at `1156/1266`",
         f"- the latest clean live Builder full validation root is `{run_summary['output_root']}`",
         f"- the latest clean live Builder full-run pointer is `{builder_latest_run}`",
+        f"- the chip-side freshness against that Builder baseline is `{common_lines[5].split('`')[1]}`",
         f"- the latest clean live Builder soak is `{soak['summary'].get('completed_runs', 'unknown')}/{soak['summary'].get('requested_runs', 'unknown')}`, `{soak['summary'].get('failed_runs', 'unknown')}` failed and still favors `summary_synthesis_memory`",
         f"- the latest clean live Builder timings are benchmark `{_fmt_seconds(run_summary.get('benchmark_duration_seconds'))}`, regression `{_fmt_seconds(run_summary.get('regression_duration_seconds'))}`, soak `{_fmt_seconds(run_summary.get('soak_duration_seconds'))}`, total `{_fmt_seconds(run_summary.get('total_duration_seconds'))}`",
         "- Builder therefore repinned the runtime selector to `summary_synthesis_memory`",

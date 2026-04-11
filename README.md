@@ -37,6 +37,9 @@ Current cross-repo runtime decision as of 2026-04-11:
 - latest head-to-head offline `ProductMemory` comparison: tied at `1156/1266`
 - latest clean live Builder full validation root: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-012118`
 - latest clean live Builder full-run pointer: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\latest-full-run.json`
+- chip-side baseline freshness: `warning`
+- chip baseline commit from Builder run: `75d0b3ee4b848112703ef5918c0e81546352d33b`
+- current chip commit: `e2ed712a2cfaf2d54a4d810070b02a2715846a34`
 - latest clean live Builder soak: `14/14, 0 failed`
 - latest live whole-suite aggregate: `92/92` for `summary_synthesis_memory` vs `89/92` for `dual_store_event_calendar_hybrid`
 - latest live selector-pack aggregate: `64/64` for `summary_synthesis_memory` vs `61/64` for `dual_store_event_calendar_hybrid`
