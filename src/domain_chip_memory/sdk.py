@@ -24,7 +24,7 @@ def _normalize_scalar(value: str | None) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
 
 
-DEFAULT_RUNTIME_MEMORY_ARCHITECTURE = "summary_synthesis_memory"
+DEFAULT_RUNTIME_MEMORY_ARCHITECTURE = "dual_store_event_calendar_hybrid"
 DEFAULT_RUNTIME_MEMORY_PROVIDER = "heuristic_v1"
 
 
