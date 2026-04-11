@@ -41,13 +41,6 @@ from .sdk import (
     build_sdk_maintenance_replay_contract_summary,
 )
 from .baselines import build_full_context_packets, build_lexical_packets
-from .beam_official_eval import (
-    _summarize_beam_evaluation_payload,
-    export_beam_public_answers_from_scorecard,
-    run_beam_official_evaluation,
-    summarize_beam_official_evaluation,
-    summarize_beam_official_evaluation_files,
-)
 from .spark_shadow import (
     SparkShadowIngestAdapter,
     SparkShadowIngestRequest,
@@ -75,6 +68,24 @@ def _write_json(path: Path, payload: dict) -> None:
 
 def _print(payload: dict | list[dict]) -> None:
     print(json.dumps(payload, indent=2))
+
+
+def _load_beam_official_eval_exports() -> dict[str, object]:
+    from .beam_official_eval import (
+        _summarize_beam_evaluation_payload,
+        export_beam_public_answers_from_scorecard,
+        run_beam_official_evaluation,
+        summarize_beam_official_evaluation,
+        summarize_beam_official_evaluation_files,
+    )
+
+    return {
+        "_summarize_beam_evaluation_payload": _summarize_beam_evaluation_payload,
+        "export_beam_public_answers_from_scorecard": export_beam_public_answers_from_scorecard,
+        "run_beam_official_evaluation": run_beam_official_evaluation,
+        "summarize_beam_official_evaluation": summarize_beam_official_evaluation,
+        "summarize_beam_official_evaluation_files": summarize_beam_official_evaluation_files,
+    }
 
 
 def _limit_questions(
@@ -2781,12 +2792,13 @@ def _build_beam_changed_question_rows(*, category: str, current_payload: dict, h
 
 
 def _build_beam_modified_evaluation_drift_row(*, path: Path, repo_root: Path, git_status: str) -> dict | None:
+    summarize_payload = _load_beam_official_eval_exports()["_summarize_beam_evaluation_payload"]
     current_payload = _load_json_file(path)
     if not isinstance(current_payload, dict):
         return None
     head_payload = _load_json_from_git_revision(repo_root=repo_root, revision="HEAD", path=path)
-    current_summary = _summarize_beam_evaluation_payload(current_payload)
-    head_summary = _summarize_beam_evaluation_payload(head_payload) if isinstance(head_payload, dict) else None
+    current_summary = summarize_payload(current_payload)
+    head_summary = summarize_payload(head_payload) if isinstance(head_payload, dict) else None
     current_by_category = _category_summary_by_name(current_summary)
     head_by_category = _category_summary_by_name(head_summary or {})
     all_categories = sorted(set(current_by_category) | set(head_by_category))
@@ -3084,6 +3096,9 @@ def _build_beam_judged_cleanup_report(
     evaluation_file_name: str,
     repo_root: str | Path,
 ) -> dict:
+    beam_eval = _load_beam_official_eval_exports()
+    summarize_evaluation = beam_eval["summarize_beam_official_evaluation"]
+    summarize_evaluation_files = beam_eval["summarize_beam_official_evaluation_files"]
     answers_root_path = Path(answers_root)
     benchmark_runs_path = Path(benchmark_runs_dir)
     repo_root_path = Path(repo_root)
@@ -3118,7 +3133,7 @@ def _build_beam_judged_cleanup_report(
     evaluation_categories_by_path: dict[str, list[str]] = {}
     category_universe: set[str] = set()
     for path in evaluation_files:
-        summary = summarize_beam_official_evaluation(path)
+        summary = summarize_evaluation(path)
         categories = _load_beam_evaluation_categories(path)
         evaluation_categories_by_path[str(path.resolve())] = categories
         category_universe.update(categories)
@@ -3276,9 +3291,7 @@ def _build_beam_judged_cleanup_report(
         for path in scorecard_files
     ]
 
-    aggregate_evaluation_summary = (
-        summarize_beam_official_evaluation_files(evaluation_files) if evaluation_files else None
-    )
+    aggregate_evaluation_summary = summarize_evaluation_files(evaluation_files) if evaluation_files else None
     git_status_counts: dict[str, int] = {}
     for row in [*evaluation_rows, *official_eval_rows, *scorecard_rows]:
         status = str(row.get("git_status") or "clean")
@@ -7657,7 +7670,8 @@ def main() -> None:
         return
 
     if args.command == "export-beam-public-answers":
-        payload = export_beam_public_answers_from_scorecard(
+        export_answers = _load_beam_official_eval_exports()["export_beam_public_answers_from_scorecard"]
+        payload = export_answers(
             args.scorecard_file,
             args.output_dir,
             result_file_name=args.result_file_name,
@@ -7668,14 +7682,16 @@ def main() -> None:
         return
 
     if args.command == "summarize-beam-evaluation":
-        payload = summarize_beam_official_evaluation(args.evaluation_file)
+        summarize_evaluation = _load_beam_official_eval_exports()["summarize_beam_official_evaluation"]
+        payload = summarize_evaluation(args.evaluation_file)
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
         return
 
     if args.command == "run-beam-official-evaluation":
-        payload = run_beam_official_evaluation(
+        run_evaluation = _load_beam_official_eval_exports()["run_beam_official_evaluation"]
+        payload = run_evaluation(
             args.upstream_repo_dir,
             args.answers_dir,
             chat_size=args.chat_size,
