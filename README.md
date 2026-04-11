@@ -31,15 +31,19 @@ Current status: `exploratory`
 
 Current cross-repo runtime decision as of 2026-04-11:
 
+<!-- AUTO_BUILDER_BASELINE_README_START -->
 - active runtime architecture: `summary_synthesis_memory + heuristic_v1`
 - active Builder challenger: `dual_store_event_calendar_hybrid + heuristic_v1`
 - latest head-to-head offline `ProductMemory` comparison: tied at `1156/1266`
 - latest clean live Builder full validation root: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-010753`
-- latest clean live Builder soak: `14/14`, `0` failed
+- latest clean live Builder full-run pointer: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\latest-full-run.json`
+- latest clean live Builder soak: `14/14, `0` failed`
 - latest live whole-suite aggregate: `92/92` for `summary_synthesis_memory` vs `89/92` for `dual_store_event_calendar_hybrid`
 - latest live selector-pack aggregate: `64/64` for `summary_synthesis_memory` vs `61/64` for `dual_store_event_calendar_hybrid`
+- latest clean live Builder regression: `34/34` with KB coverage `38/38` current-state and `38/38` evidence hits
 - latest clean live Builder timings: benchmark `15.041s`, regression `26.173s`, soak `345.112s`, total `386.583s`
 - Builder runtime is therefore pinned to `summary_synthesis_memory`
+<!-- AUTO_BUILDER_BASELINE_README_END -->
 
 Current most complete measured path as of 2026-04-03:
 

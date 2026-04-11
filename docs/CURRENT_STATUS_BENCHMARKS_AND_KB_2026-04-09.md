@@ -7,11 +7,14 @@ Status: active current-state checkpoint
 
 This 2026-04-09 checkpoint is still useful for the broader benchmark map, but the active cross-repo runtime decision has moved forward:
 
+<!-- AUTO_BUILDER_BASELINE_CURRENT_STATUS_START -->
 - the latest head-to-head offline `ProductMemory` comparison between `summary_synthesis_memory` and `dual_store_event_calendar_hybrid` is tied at `1156/1266`
 - the latest clean live Builder full validation root is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-010753`
+- the latest clean live Builder full-run pointer is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\latest-full-run.json`
 - the latest clean live Builder soak is `14/14`, `0` failed and still favors `summary_synthesis_memory`
 - the latest clean live Builder timings are benchmark `15.041s`, regression `26.173s`, soak `345.112s`, total `386.583s`
 - Builder therefore repinned the runtime selector to `summary_synthesis_memory`
+<!-- AUTO_BUILDER_BASELINE_CURRENT_STATUS_END -->
 
 For the current source-of-truth program connecting this repo to Builder live validation, use [NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md](./NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md).
 
