@@ -29,6 +29,16 @@ This chip exists to govern that work honestly.
 
 Current status: `exploratory`
 
+Current cross-repo runtime decision as of 2026-04-11:
+
+- active runtime architecture: `summary_synthesis_memory + heuristic_v1`
+- active Builder challenger: `dual_store_event_calendar_hybrid + heuristic_v1`
+- latest head-to-head offline `ProductMemory` comparison: tied at `1156/1266`
+- latest clean timeout-hardened live Builder soak: `14/14`, `0` failed
+- latest live whole-suite aggregate: `92/92` for `summary_synthesis_memory` vs `89/92` for `dual_store_event_calendar_hybrid`
+- latest live selector-pack aggregate: `64/64` for `summary_synthesis_memory` vs `61/64` for `dual_store_event_calendar_hybrid`
+- Builder runtime is therefore pinned to `summary_synthesis_memory`
+
 Current most complete measured path as of 2026-04-03:
 
 - `summary_synthesis_memory + heuristic_v1`
@@ -122,6 +132,8 @@ Start here instead of scanning the repo manually:
 
 Most important current execution docs:
 
+- current Spark/Builder handoff: `docs/NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md`
+- current benchmark + KB checkpoint: `docs/CURRENT_STATUS_BENCHMARKS_AND_KB_2026-04-09.md`
 - honest current-state assessment: `docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md`
 - implementation plan: `docs/IMPLEMENTATION_PLAN.md`
 - current test and validation plan: `docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md`
