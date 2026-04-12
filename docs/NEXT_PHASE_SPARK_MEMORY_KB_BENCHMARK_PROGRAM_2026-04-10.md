@@ -209,6 +209,42 @@ Interpretation:
 - once the same predicates are backed by replayed write evidence inside those target conversations, all seven queries become answerable and KB-supported
 - the remaining work is no longer to prove the memory or KB layer can answer these predicates; it is to decide which production lanes should actually receive that source evidence and under what product rules
 
+## 2026-04-12 Compact Slice Transition Ledger
+
+The before-versus-after comparison is now explicit too.
+
+Command:
+
+- `python -m domain_chip_memory.cli compare-spark-memory-kb-ablation tmp\spark_memory_kb_ablation_sourcing_slice_limit100_v1.json tmp\spark_memory_kb_ablation_source_backed_slice_limit100_v2.json --write tmp\spark_memory_kb_ablation_compare_source_backed_limit100_v1.json`
+
+Transition result:
+
+- shared queries: `26`
+- unchanged non-missing queries: `19`
+- unresolved-missing to resolved-missing transitions: `7`
+- before-only queries: `0`
+- after-only queries: `0`
+- still unresolved after sourcing: `0`
+
+Resolved transitions by predicate:
+
+- `profile.hack_actor`: `2`
+- `profile.spark_role`: `2`
+- `profile.timezone`: `2`
+- `profile.home_country`: `1`
+
+Resolved transitions by scenario:
+
+- `regression`: `4`
+- `boundary_abstention_cleanroom`: `2`
+- `quality_lane_gauntlet`: `1`
+
+Interpretation:
+
+- the transition ledger removes the last ambiguity from the compact proof
+- every previously unresolved compact-slice miss transitioned cleanly once replay source evidence was injected
+- there is no residual unresolved query left on the source-backed compact slice
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

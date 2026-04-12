@@ -3320,6 +3320,121 @@ def _build_spark_memory_kb_source_backed_slice(
     }
 
 
+def _spark_memory_kb_query_key(row: dict) -> str:
+    return "||".join(
+        [
+            str(row.get("conversation_id") or "").strip(),
+            str(row.get("request_id") or "").strip(),
+            str(row.get("predicate") or "").strip(),
+            str(row.get("question") or "").strip(),
+        ]
+    )
+
+
+def _spark_memory_kb_missing_query_status(row: dict) -> str:
+    if not isinstance(row, dict) or row.get("value_found") is not False:
+        return "not_missing_fact_query"
+    memory_only = row.get("memory_only")
+    memory_plus_kb = row.get("memory_plus_kb")
+    memory_only_found = bool(isinstance(memory_only, dict) and memory_only.get("found"))
+    memory_plus_kb_found = bool(isinstance(memory_plus_kb, dict) and memory_plus_kb.get("found"))
+    if memory_only_found or memory_plus_kb_found:
+        return "resolved_missing_fact_query"
+    return "unresolved_missing_fact_query"
+
+
+def _compare_spark_memory_kb_ablation(before_file: str, after_file: str) -> dict:
+    before_payload = _load_json_file(before_file)
+    after_payload = _load_json_file(after_file)
+    if not isinstance(before_payload, dict) or not isinstance(after_payload, dict):
+        raise ValueError("Spark ablation comparison requires two JSON objects.")
+
+    before_rows = before_payload.get("comparisons")
+    after_rows = after_payload.get("comparisons")
+    if not isinstance(before_rows, list) or not isinstance(after_rows, list):
+        raise ValueError("Spark ablation comparison requires comparisons lists in both payloads.")
+
+    before_map = {
+        _spark_memory_kb_query_key(row): row
+        for row in before_rows
+        if isinstance(row, dict) and _spark_memory_kb_query_key(row)
+    }
+    after_map = {
+        _spark_memory_kb_query_key(row): row
+        for row in after_rows
+        if isinstance(row, dict) and _spark_memory_kb_query_key(row)
+    }
+    shared_keys = sorted(set(before_map) & set(after_map))
+
+    transition_counts: dict[str, int] = {}
+    resolved_missing_by_predicate: dict[str, int] = {}
+    resolved_missing_by_scenario: dict[str, int] = {}
+    resolved_missing_by_action_bucket: dict[str, int] = {}
+    resolved_queries: list[dict[str, str | None]] = []
+    still_unresolved_by_predicate: dict[str, int] = {}
+
+    for key in shared_keys:
+        before_row = before_map[key]
+        after_row = after_map[key]
+        before_status = _spark_memory_kb_missing_query_status(before_row)
+        after_status = _spark_memory_kb_missing_query_status(after_row)
+        transition_key = f"{before_status}->{after_status}"
+        transition_counts[transition_key] = transition_counts.get(transition_key, 0) + 1
+
+        if before_status == "unresolved_missing_fact_query" and after_status == "resolved_missing_fact_query":
+            predicate = str(after_row.get("predicate") or "").strip()
+            scenario_bucket = str(after_row.get("scenario_bucket") or "").strip()
+            action_bucket = str(after_row.get("action_bucket") or "").strip()
+            if predicate:
+                resolved_missing_by_predicate[predicate] = resolved_missing_by_predicate.get(predicate, 0) + 1
+            if scenario_bucket:
+                resolved_missing_by_scenario[scenario_bucket] = resolved_missing_by_scenario.get(scenario_bucket, 0) + 1
+            if action_bucket:
+                resolved_missing_by_action_bucket[action_bucket] = (
+                    resolved_missing_by_action_bucket.get(action_bucket, 0) + 1
+                )
+            if len(resolved_queries) < 10:
+                resolved_queries.append(
+                    {
+                        "conversation_id": str(after_row.get("conversation_id") or "") or None,
+                        "question": str(after_row.get("question") or "") or None,
+                        "predicate": predicate or None,
+                        "scenario_bucket": scenario_bucket or None,
+                        "action_bucket": action_bucket or None,
+                        "answer": str(dict(after_row.get("memory_only") or {}).get("answer") or "") or None,
+                    }
+                )
+        if after_status == "unresolved_missing_fact_query":
+            predicate = str(after_row.get("predicate") or "").strip()
+            if predicate:
+                still_unresolved_by_predicate[predicate] = still_unresolved_by_predicate.get(predicate, 0) + 1
+
+    before_only_keys = sorted(set(before_map) - set(after_map))
+    after_only_keys = sorted(set(after_map) - set(before_map))
+
+    return {
+        "before_file": str(Path(before_file)),
+        "after_file": str(Path(after_file)),
+        "summary": {
+            "shared_query_count": len(shared_keys),
+            "before_only_query_count": len(before_only_keys),
+            "after_only_query_count": len(after_only_keys),
+            "transition_counts": dict(sorted(transition_counts.items())),
+            "resolved_missing_query_count": sum(resolved_missing_by_predicate.values()),
+            "resolved_missing_by_predicate": dict(sorted(resolved_missing_by_predicate.items())),
+            "resolved_missing_by_scenario": dict(sorted(resolved_missing_by_scenario.items())),
+            "resolved_missing_by_action_bucket": dict(sorted(resolved_missing_by_action_bucket.items())),
+            "still_unresolved_by_predicate": dict(sorted(still_unresolved_by_predicate.items())),
+        },
+        "resolved_queries": resolved_queries,
+        "before_only_query_keys": before_only_keys,
+        "after_only_query_keys": after_only_keys,
+        "trace": {
+            "operation": "compare_spark_memory_kb_ablation",
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -7672,6 +7787,13 @@ def main() -> None:
     build_spark_memory_kb_source_backed_slice.add_argument("sourcing_slice_file")
     build_spark_memory_kb_source_backed_slice.add_argument("output_dir")
     build_spark_memory_kb_source_backed_slice.add_argument("--write")
+    compare_spark_memory_kb_ablation = subparsers.add_parser(
+        "compare-spark-memory-kb-ablation",
+        help="Compare two Spark memory-vs-KB ablation artifacts and summarize query transitions.",
+    )
+    compare_spark_memory_kb_ablation.add_argument("before_file")
+    compare_spark_memory_kb_ablation.add_argument("after_file")
+    compare_spark_memory_kb_ablation.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -8337,6 +8459,16 @@ def main() -> None:
         payload = _build_spark_memory_kb_source_backed_slice(
             args.sourcing_slice_file,
             args.output_dir,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "compare-spark-memory-kb-ablation":
+        payload = _compare_spark_memory_kb_ablation(
+            args.before_file,
+            args.after_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)

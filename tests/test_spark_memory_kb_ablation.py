@@ -773,3 +773,89 @@ def test_build_spark_memory_kb_source_backed_slice_injects_writes_and_clears_mis
     assert ablation["summary"]["memory_only_answered"] == 2
     assert ablation["summary"]["memory_plus_kb_answered"] == 2
     assert ablation["summary"]["kb_supported_query_count"] == 2
+
+
+def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
+    before_payload = {
+        "comparisons": [
+            {
+                "conversation_id": "missing-timezone",
+                "request_id": "req-1",
+                "predicate": "profile.timezone",
+                "question": "What is my timezone?",
+                "scenario_bucket": "boundary_abstention_cleanroom",
+                "action_bucket": "expected_cleanroom_boundary",
+                "value_found": False,
+                "memory_only": {"found": False, "answer": None},
+                "memory_plus_kb": {"found": False},
+            },
+            {
+                "conversation_id": "answered-name",
+                "request_id": "req-2",
+                "predicate": "profile.preferred_name",
+                "question": "What is my name?",
+                "scenario_bucket": "regression",
+                "action_bucket": "regression_candidate",
+                "value_found": True,
+                "memory_only": {"found": True, "answer": "Sarah"},
+                "memory_plus_kb": {"found": True},
+            },
+        ]
+    }
+    after_payload = {
+        "comparisons": [
+            {
+                "conversation_id": "missing-timezone",
+                "request_id": "req-1",
+                "predicate": "profile.timezone",
+                "question": "What is my timezone?",
+                "scenario_bucket": "boundary_abstention_cleanroom",
+                "action_bucket": "expected_cleanroom_boundary",
+                "value_found": False,
+                "memory_only": {"found": True, "answer": "Asia/Dubai"},
+                "memory_plus_kb": {"found": True},
+            },
+            {
+                "conversation_id": "answered-name",
+                "request_id": "req-2",
+                "predicate": "profile.preferred_name",
+                "question": "What is my name?",
+                "scenario_bucket": "regression",
+                "action_bucket": "regression_candidate",
+                "value_found": True,
+                "memory_only": {"found": True, "answer": "Sarah"},
+                "memory_plus_kb": {"found": True},
+            },
+        ]
+    }
+    before_file = tmp_path / "before.json"
+    after_file = tmp_path / "after.json"
+    before_file.write_text(json.dumps(before_payload), encoding="utf-8")
+    after_file.write_text(json.dumps(after_payload), encoding="utf-8")
+
+    payload = cli._compare_spark_memory_kb_ablation(str(before_file), str(after_file))
+
+    assert payload["summary"] == {
+        "shared_query_count": 2,
+        "before_only_query_count": 0,
+        "after_only_query_count": 0,
+        "transition_counts": {
+            "not_missing_fact_query->not_missing_fact_query": 1,
+            "unresolved_missing_fact_query->resolved_missing_fact_query": 1,
+        },
+        "resolved_missing_query_count": 1,
+        "resolved_missing_by_predicate": {"profile.timezone": 1},
+        "resolved_missing_by_scenario": {"boundary_abstention_cleanroom": 1},
+        "resolved_missing_by_action_bucket": {"expected_cleanroom_boundary": 1},
+        "still_unresolved_by_predicate": {},
+    }
+    assert payload["resolved_queries"] == [
+        {
+            "conversation_id": "missing-timezone",
+            "question": "What is my timezone?",
+            "predicate": "profile.timezone",
+            "scenario_bucket": "boundary_abstention_cleanroom",
+            "action_bucket": "expected_cleanroom_boundary",
+            "answer": "Asia/Dubai",
+        }
+    ]
