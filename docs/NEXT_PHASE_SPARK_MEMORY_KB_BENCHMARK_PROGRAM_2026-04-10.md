@@ -468,6 +468,34 @@ Artifact interpretation:
 - the policy manifest, shadow replay summary, governed snapshot, and compiled KB are now emitted together
 - upstream integration no longer has to infer which cloned writes were suppressed; the artifact carries the exact skip counts and reasons alongside the compiled output
 
+## 2026-04-12 Refresh Manifest
+
+The repo now has a compact upstream refresh manifest on top of that governed artifact.
+
+Command:
+
+- `python -m domain_chip_memory.cli build-spark-memory-kb-refresh-manifest tmp\spark_memory_kb_policy_aligned_slice_payload_limit100_v1.json --write tmp\spark_memory_kb_refresh_manifest_limit100_v1.json`
+
+Refresh-manifest summary:
+
+- governed KB dir: `tmp\spark_memory_kb_policy_aligned_slice_limit100_v1`
+- governed snapshot file: `tmp\spark_memory_kb_policy_aligned_slice_limit100_v1\raw\memory-snapshots\latest.json`
+- health valid: `true`
+- replayed conversations: `8`
+- accepted writes: `16`
+- skipped turns: `3`
+- policy-skipped turns: `3`
+- decision counts: `allow 4`, `block 2`, `defer 1`
+- target conversations covered: `7`
+- source conversations covered: `1`
+- source messages referenced: `4`
+
+Refresh-manifest interpretation:
+
+- this is the smallest current handoff surface for an upstream refresher
+- it points directly at the governed KB and governed snapshot instead of requiring the caller to parse a larger benchmark artifact
+- it keeps the policy envelope explicit through compact `policy_targets_by_decision` rows, so upstream code can both locate the compiled output and verify which promotions were allowed, blocked, or deferred
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

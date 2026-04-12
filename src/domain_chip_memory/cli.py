@@ -3901,6 +3901,86 @@ def _build_spark_memory_kb_policy_aligned_slice(
     }
 
 
+def _build_spark_memory_kb_refresh_manifest(policy_aligned_slice_file: str) -> dict:
+    payload = _load_json_file(policy_aligned_slice_file)
+    if not isinstance(payload, dict):
+        raise ValueError("Policy-aligned slice payload must be a JSON object.")
+
+    summary = payload.get("summary")
+    compile_result = payload.get("compile_result")
+    health_report = payload.get("health_report")
+    promotion_policy_rows = payload.get("promotion_policy_rows")
+    if not isinstance(summary, dict) or not isinstance(compile_result, dict) or not isinstance(health_report, dict):
+        raise ValueError("Policy-aligned slice payload must contain summary, compile_result, and health_report objects.")
+    if not isinstance(promotion_policy_rows, list):
+        raise ValueError("Policy-aligned slice payload must contain promotion_policy_rows.")
+
+    decision_counts: dict[str, int] = {}
+    target_conversation_ids: set[str] = set()
+    source_conversation_ids: set[str] = set()
+    source_message_ids: set[str] = set()
+    policy_targets_by_decision: dict[str, list[dict[str, str | None]]] = {}
+    for row in promotion_policy_rows:
+        if not isinstance(row, dict):
+            continue
+        decision = str(row.get("policy_decision") or "").strip().lower() or "unknown"
+        decision_counts[decision] = decision_counts.get(decision, 0) + 1
+        target_conversation_id = str(row.get("target_conversation_id") or "").strip()
+        source_conversation_id = str(row.get("source_conversation_id") or "").strip()
+        source_message_id = str(row.get("source_message_id") or "").strip()
+        predicate = str(row.get("predicate") or "").strip() or None
+        if target_conversation_id:
+            target_conversation_ids.add(target_conversation_id)
+        if source_conversation_id:
+            source_conversation_ids.add(source_conversation_id)
+        if source_message_id:
+            source_message_ids.add(source_message_id)
+        examples = policy_targets_by_decision.setdefault(decision, [])
+        if len(examples) < 4:
+            examples.append(
+                {
+                    "target_conversation_id": target_conversation_id or None,
+                    "predicate": predicate,
+                    "source_conversation_id": source_conversation_id or None,
+                    "source_message_id": source_message_id or None,
+                    "value": str(row.get("value") or "").strip() or None,
+                }
+            )
+
+    return {
+        "input_policy_aligned_slice_file": str(Path(policy_aligned_slice_file)),
+        "summary": {
+            "kb_output_dir": str(compile_result.get("output_dir") or ""),
+            "snapshot_file": str(compile_result.get("snapshot_file") or ""),
+            "health_valid": bool(health_report.get("valid")),
+            "conversation_count": int(summary.get("conversation_count", 0) or 0),
+            "accepted_writes": int(summary.get("accepted_writes", 0) or 0),
+            "skipped_turns": int(summary.get("skipped_turns", 0) or 0),
+            "policy_skipped_turn_count": int(summary.get("policy_skipped_turn_count", 0) or 0),
+            "policy_skipped_by_reason": dict(sorted(dict(summary.get("policy_skipped_by_reason", {})).items())),
+            "decision_counts": dict(sorted(decision_counts.items())),
+            "target_conversation_count": len(target_conversation_ids),
+            "source_conversation_count": len(source_conversation_ids),
+            "source_message_count": len(source_message_ids),
+            "current_state_page_count": int(compile_result.get("current_state_page_count", 0) or 0),
+            "evidence_page_count": int(compile_result.get("evidence_page_count", 0) or 0),
+        },
+        "kb": {
+            "output_dir": str(compile_result.get("output_dir") or ""),
+            "snapshot_file": str(compile_result.get("snapshot_file") or ""),
+            "current_state_page_count": int(compile_result.get("current_state_page_count", 0) or 0),
+            "evidence_page_count": int(compile_result.get("evidence_page_count", 0) or 0),
+            "health_report": health_report,
+        },
+        "policy_targets_by_decision": {
+            decision: examples for decision, examples in sorted(policy_targets_by_decision.items())
+        },
+        "trace": {
+            "operation": "build_spark_memory_kb_refresh_manifest",
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -8315,6 +8395,12 @@ def main() -> None:
     build_spark_memory_kb_policy_aligned_slice.add_argument("promotion_policy_file")
     build_spark_memory_kb_policy_aligned_slice.add_argument("output_dir")
     build_spark_memory_kb_policy_aligned_slice.add_argument("--write")
+    build_spark_memory_kb_refresh_manifest = subparsers.add_parser(
+        "build-spark-memory-kb-refresh-manifest",
+        help="Build a compact upstream refresh manifest from a policy-aligned Spark KB slice payload.",
+    )
+    build_spark_memory_kb_refresh_manifest.add_argument("policy_aligned_slice_file")
+    build_spark_memory_kb_refresh_manifest.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -9044,6 +9130,15 @@ def main() -> None:
             args.source_backed_slice_file,
             args.promotion_policy_file,
             args.output_dir,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-memory-kb-refresh-manifest":
+        payload = _build_spark_memory_kb_refresh_manifest(
+            args.policy_aligned_slice_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)

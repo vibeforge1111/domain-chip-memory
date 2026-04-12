@@ -1300,6 +1300,76 @@ def test_build_spark_memory_kb_policy_aligned_slice_compiles_governed_snapshot(t
     assert allowed_support["value"] == "Asia/Dubai"
 
 
+def test_build_spark_memory_kb_refresh_manifest_summarizes_governed_artifact(tmp_path: Path):
+    payload = {
+        "summary": {
+            "conversation_count": 8,
+            "accepted_writes": 16,
+            "skipped_turns": 3,
+            "policy_skipped_turn_count": 3,
+            "policy_skipped_by_reason": {"block": 2, "defer": 1},
+        },
+        "compile_result": {
+            "output_dir": "tmp/policy-aligned-kb",
+            "snapshot_file": "tmp/policy-aligned-kb/raw/memory-snapshots/latest.json",
+            "current_state_page_count": 16,
+            "evidence_page_count": 16,
+        },
+        "health_report": {
+            "valid": True,
+        },
+        "promotion_policy_rows": [
+            {
+                "policy_decision": "allow",
+                "target_conversation_id": "target-1",
+                "predicate": "profile.hack_actor",
+                "source_conversation_id": "source-1",
+                "source_message_id": "msg-1",
+                "value": "North Korea",
+            },
+            {
+                "policy_decision": "allow",
+                "target_conversation_id": "target-2",
+                "predicate": "profile.spark_role",
+                "source_conversation_id": "source-1",
+                "source_message_id": "msg-2",
+                "value": "important part of the rebuild",
+            },
+            {
+                "policy_decision": "defer",
+                "target_conversation_id": "target-3",
+                "predicate": "profile.timezone",
+                "source_conversation_id": "source-1",
+                "source_message_id": "msg-3",
+                "value": "Asia/Dubai",
+            },
+            {
+                "policy_decision": "block",
+                "target_conversation_id": "target-4",
+                "predicate": "profile.home_country",
+                "source_conversation_id": "source-2",
+                "source_message_id": "msg-4",
+                "value": "Canada",
+            },
+        ],
+    }
+    payload_file = tmp_path / "policy-aligned-slice.json"
+    payload_file.write_text(json.dumps(payload), encoding="utf-8")
+
+    manifest = cli._build_spark_memory_kb_refresh_manifest(str(payload_file))
+
+    assert manifest["summary"]["kb_output_dir"] == "tmp/policy-aligned-kb"
+    assert manifest["summary"]["snapshot_file"] == "tmp/policy-aligned-kb/raw/memory-snapshots/latest.json"
+    assert manifest["summary"]["health_valid"] is True
+    assert manifest["summary"]["policy_skipped_by_reason"] == {"block": 2, "defer": 1}
+    assert manifest["summary"]["decision_counts"] == {"allow": 2, "block": 1, "defer": 1}
+    assert manifest["summary"]["target_conversation_count"] == 4
+    assert manifest["summary"]["source_conversation_count"] == 2
+    assert manifest["summary"]["source_message_count"] == 4
+    assert manifest["policy_targets_by_decision"]["allow"][0]["target_conversation_id"] == "target-1"
+    assert manifest["policy_targets_by_decision"]["block"][0]["predicate"] == "profile.home_country"
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [
