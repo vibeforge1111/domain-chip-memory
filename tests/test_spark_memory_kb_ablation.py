@@ -2094,6 +2094,94 @@ def test_assert_spark_memory_kb_active_release_ready_exits_on_failure(tmp_path: 
         raise AssertionError("Expected SystemExit for non-ready active release gate.")
 
 
+def test_resolve_spark_memory_kb_governed_release_reads_top_level_manifest(tmp_path: Path, monkeypatch):
+    publish_root = tmp_path / "published"
+    publish_root.mkdir(parents=True, exist_ok=True)
+    active_refresh_file = publish_root / "active-refresh.json"
+    active_release_summary_file = publish_root / "active-release-summary.json"
+    active_release_gate_file = publish_root / "active-release-gate.json"
+    governed_release_file = publish_root / "governed-release.json"
+    active_refresh_file.write_text("{}", encoding="utf-8")
+    active_release_summary_file.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "policy_honored": True,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    active_release_gate_file.write_text("{}", encoding="utf-8")
+    governed_release_file.write_text(
+        json.dumps(
+            {
+                "publish_root_dir": str(publish_root),
+                "active_refresh_file": str(active_refresh_file),
+                "active_release_summary_file": str(active_release_summary_file),
+                "active_release_gate_file": str(active_release_gate_file),
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        cli,
+        "_resolve_spark_memory_kb_active_refresh",
+        lambda active_refresh: {
+            "summary": {
+                "kb_output_dir": "tmp/release",
+                "snapshot_file": "tmp/release/raw/memory-snapshots/latest.json",
+                "health_valid": True,
+            }
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_check_spark_memory_kb_active_release_summary",
+        lambda active_release_summary: {
+            "summary": {
+                "ready": True,
+                "failure_reason_count": 0,
+                "failure_reasons": [],
+            }
+        },
+    )
+
+    payload = cli._resolve_spark_memory_kb_governed_release(str(governed_release_file))
+
+    assert payload["summary"]["publish_root_dir"] == str(publish_root)
+    assert payload["summary"]["release_output_dir"] == "tmp/release"
+    assert payload["summary"]["health_valid"] is True
+    assert payload["summary"]["policy_honored"] is True
+    assert payload["summary"]["ready"] is True
+
+
+def test_assert_spark_memory_kb_governed_release_ready_exits_on_failure(tmp_path: Path, monkeypatch):
+    governed_release_file = tmp_path / "governed-release.json"
+    governed_release_file.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(
+        cli,
+        "_resolve_spark_memory_kb_governed_release",
+        lambda governed_release: {
+            "summary": {
+                "ready": False,
+            },
+            "active_release_gate": {
+                "summary": {
+                    "failure_reasons": ["regression_candidate_missing"],
+                }
+            },
+        },
+    )
+
+    try:
+        cli._assert_spark_memory_kb_governed_release_ready(str(governed_release_file))
+    except SystemExit as exc:
+        assert "regression_candidate_missing" in str(exc)
+    else:
+        raise AssertionError("Expected SystemExit for non-ready governed release gate.")
+
+
 def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(tmp_path: Path, monkeypatch):
     refresh_manifest_file = tmp_path / "refresh-manifest.json"
     policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"

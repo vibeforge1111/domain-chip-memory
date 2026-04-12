@@ -4474,6 +4474,87 @@ def _assert_spark_memory_kb_active_release_ready(active_release_summary_file: st
     return payload
 
 
+def _resolve_spark_memory_kb_governed_release(governed_release_file: str) -> dict:
+    payload = _load_json_file(governed_release_file)
+    if not isinstance(payload, dict):
+        raise ValueError("Governed release payload must be a JSON object.")
+
+    publish_root_dir = str(payload.get("publish_root_dir") or "").strip()
+    active_refresh_file = str(payload.get("active_refresh_file") or "").strip()
+    active_release_summary_file = str(payload.get("active_release_summary_file") or "").strip()
+    active_release_gate_file = str(payload.get("active_release_gate_file") or "").strip()
+    if not publish_root_dir or not active_refresh_file or not active_release_summary_file or not active_release_gate_file:
+        raise ValueError(
+            "Governed release payload must contain publish_root_dir, active_refresh_file, "
+            "active_release_summary_file, and active_release_gate_file."
+        )
+
+    publish_root_path = Path(publish_root_dir)
+    active_refresh_path = Path(active_refresh_file)
+    active_release_summary_path = Path(active_release_summary_file)
+    active_release_gate_path = Path(active_release_gate_file)
+    if not publish_root_path.is_dir():
+        raise ValueError(f"Governed release publish_root_dir does not exist: {publish_root_path}")
+    if not active_refresh_path.is_file():
+        raise ValueError(f"Governed release active_refresh_file does not exist: {active_refresh_path}")
+    if not active_release_summary_path.is_file():
+        raise ValueError(f"Governed release active_release_summary_file does not exist: {active_release_summary_path}")
+    if not active_release_gate_path.is_file():
+        raise ValueError(f"Governed release active_release_gate_file does not exist: {active_release_gate_path}")
+
+    active_refresh_resolution = _resolve_spark_memory_kb_active_refresh(str(active_refresh_path))
+    active_release_gate = _check_spark_memory_kb_active_release_summary(str(active_release_summary_path))
+    active_release_summary_payload = _load_json_file(str(active_release_summary_path))
+    if not isinstance(active_release_summary_payload, dict):
+        raise ValueError("Active release summary payload must be a JSON object.")
+
+    active_refresh_summary = active_refresh_resolution.get("summary")
+    active_release_summary = active_release_summary_payload.get("summary")
+    gate_summary = active_release_gate.get("summary")
+    if not isinstance(active_refresh_summary, dict):
+        raise ValueError("Active refresh resolution must contain a summary object.")
+    if not isinstance(active_release_summary, dict):
+        raise ValueError("Active release summary payload must contain a summary object.")
+    if not isinstance(gate_summary, dict):
+        raise ValueError("Active release gate payload must contain a summary object.")
+
+    return {
+        "input_governed_release_file": str(Path(governed_release_file)),
+        "summary": {
+            "publish_root_dir": str(publish_root_path),
+            "active_refresh_file": str(active_refresh_path),
+            "active_release_summary_file": str(active_release_summary_path),
+            "active_release_gate_file": str(active_release_gate_path),
+            "release_output_dir": str(active_refresh_summary.get("kb_output_dir") or ""),
+            "snapshot_file": str(active_refresh_summary.get("snapshot_file") or ""),
+            "health_valid": bool(active_refresh_summary.get("health_valid")),
+            "policy_honored": bool(active_release_summary.get("policy_honored")),
+            "ready": bool(gate_summary.get("ready")),
+            "failure_reason_count": int(gate_summary.get("failure_reason_count", 0) or 0),
+        },
+        "active_refresh_resolution": active_refresh_resolution,
+        "active_release_summary": active_release_summary_payload,
+        "active_release_gate": active_release_gate,
+        "trace": {
+            "operation": "resolve_spark_memory_kb_governed_release",
+        },
+    }
+
+
+def _assert_spark_memory_kb_governed_release_ready(governed_release_file: str) -> dict:
+    payload = _resolve_spark_memory_kb_governed_release(governed_release_file)
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Governed release resolution payload must contain a summary object.")
+    if not bool(summary.get("ready")):
+        gate_payload = payload.get("active_release_gate")
+        gate_summary = dict(gate_payload.get("summary", {})) if isinstance(gate_payload, dict) else {}
+        failure_reasons = [str(item).strip() for item in gate_summary.get("failure_reasons", []) if str(item).strip()]
+        reason_text = ", ".join(failure_reasons) if failure_reasons else "unknown_failure"
+        raise SystemExit(f"Spark governed release gate failed: {reason_text}")
+    return payload
+
+
 def _ship_spark_memory_kb_governed_release(
     refresh_manifest_file: str,
     policy_aligned_slice_file: str,
@@ -9119,6 +9200,18 @@ def main() -> None:
     )
     assert_spark_memory_kb_active_release_ready.add_argument("active_release_summary_file")
     assert_spark_memory_kb_active_release_ready.add_argument("--write")
+    resolve_spark_memory_kb_governed_release = subparsers.add_parser(
+        "resolve-spark-memory-kb-governed-release",
+        help="Resolve a governed Spark KB release manifest into validated active paths and gate state.",
+    )
+    resolve_spark_memory_kb_governed_release.add_argument("governed_release_file")
+    resolve_spark_memory_kb_governed_release.add_argument("--write")
+    assert_spark_memory_kb_governed_release_ready = subparsers.add_parser(
+        "assert-spark-memory-kb-governed-release-ready",
+        help="Exit non-zero when a governed Spark KB release manifest does not resolve to a ready release.",
+    )
+    assert_spark_memory_kb_governed_release_ready.add_argument("governed_release_file")
+    assert_spark_memory_kb_governed_release_ready.add_argument("--write")
     ship_spark_memory_kb_governed_release = subparsers.add_parser(
         "ship-spark-memory-kb-governed-release",
         help="Publish, summarize, and assert one governed Spark KB release from a refresh manifest in one step.",
@@ -9964,6 +10057,24 @@ def main() -> None:
     if args.command == "assert-spark-memory-kb-active-release-ready":
         payload = _assert_spark_memory_kb_active_release_ready(
             args.active_release_summary_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "resolve-spark-memory-kb-governed-release":
+        payload = _resolve_spark_memory_kb_governed_release(
+            args.governed_release_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "assert-spark-memory-kb-governed-release-ready":
+        payload = _assert_spark_memory_kb_governed_release_ready(
+            args.governed_release_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)

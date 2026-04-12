@@ -766,6 +766,33 @@ Ship interpretation:
 - the ship root now also keeps a stable top-level `governed-release.json`, so downstream automation does not need the optional external `--write` payload just to discover the shipped artifact set
 - this is the closest repo-local artifact yet to what an actual Builder-side release job would need to call
 
+## 2026-04-12 Governed Release Resolution
+
+The top-level governed release manifest is now consumable directly too.
+
+Commands:
+
+- `python -m domain_chip_memory.cli resolve-spark-memory-kb-governed-release tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release.json --write tmp\spark_memory_kb_governed_release_resolution_limit100_v1.json`
+- `python -m domain_chip_memory.cli assert-spark-memory-kb-governed-release-ready tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release.json --write tmp\spark_memory_kb_governed_release_assert_limit100_v1.json`
+
+Resolution result:
+
+- ready: `true`
+- publish root dir: `tmp\spark_memory_kb_governed_ship_limit100_v1`
+- active refresh file: `tmp\spark_memory_kb_governed_ship_limit100_v1\active-refresh.json`
+- active release summary file: `tmp\spark_memory_kb_governed_ship_limit100_v1\active-release-summary.json`
+- active release gate file: `tmp\spark_memory_kb_governed_ship_limit100_v1\active-release-gate.json`
+- release output dir: `tmp\spark_memory_kb_governed_ship_limit100_v1\releases\spark-kb-8dea2cb4d9dd`
+- snapshot file: `tmp\spark_memory_kb_governed_ship_limit100_v1\releases\spark-kb-8dea2cb4d9dd\raw\memory-snapshots\latest.json`
+- health valid: `true`
+- policy honored: `true`
+- failure reason count: `0`
+
+Resolution interpretation:
+
+- downstream automation can now start from the single top-level `governed-release.json` file instead of discovering the inner active files itself
+- the governed ship artifact is now self-describing enough to support both path resolution and shell-friendly readiness assertion from one entrypoint
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
