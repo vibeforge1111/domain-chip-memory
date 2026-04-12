@@ -4129,6 +4129,44 @@ def _resolve_spark_memory_kb_active_refresh(active_refresh_file: str) -> dict:
     }
 
 
+def _read_spark_memory_kb_active_refresh_support(
+    active_refresh_file: str,
+    *,
+    subject: str,
+    predicate: str,
+) -> dict:
+    resolution = _resolve_spark_memory_kb_active_refresh(active_refresh_file)
+    summary = resolution.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Active refresh resolution must contain a summary object.")
+    kb_output_dir = str(summary.get("kb_output_dir") or "").strip()
+    if not kb_output_dir:
+        raise ValueError("Active refresh resolution must contain summary.kb_output_dir.")
+
+    kb_support = _load_kb_current_state_support(
+        kb_output_dir,
+        subject=subject,
+        predicate=predicate,
+    )
+    return {
+        "input_active_refresh_file": str(Path(active_refresh_file)),
+        "subject": subject,
+        "predicate": predicate,
+        "resolution": resolution,
+        "kb_support": kb_support,
+        "summary": {
+            "kb_output_dir": kb_output_dir,
+            "found": bool(kb_support.get("supporting_evidence_count", 0) or kb_support.get("value")),
+            "value": kb_support.get("value"),
+            "supporting_evidence_count": int(kb_support.get("supporting_evidence_count", 0) or 0),
+            "page_path": kb_support.get("page_path"),
+        },
+        "trace": {
+            "operation": "read_spark_memory_kb_active_refresh_support",
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -8569,6 +8607,14 @@ def main() -> None:
     )
     resolve_spark_memory_kb_active_refresh.add_argument("active_refresh_file")
     resolve_spark_memory_kb_active_refresh.add_argument("--write")
+    read_spark_memory_kb_active_refresh_support = subparsers.add_parser(
+        "read-spark-memory-kb-active-refresh-support",
+        help="Read current-state KB support for one subject/predicate pair from an active governed Spark KB refresh.",
+    )
+    read_spark_memory_kb_active_refresh_support.add_argument("active_refresh_file")
+    read_spark_memory_kb_active_refresh_support.add_argument("subject")
+    read_spark_memory_kb_active_refresh_support.add_argument("predicate")
+    read_spark_memory_kb_active_refresh_support.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -9336,6 +9382,17 @@ def main() -> None:
     if args.command == "resolve-spark-memory-kb-active-refresh":
         payload = _resolve_spark_memory_kb_active_refresh(
             args.active_refresh_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "read-spark-memory-kb-active-refresh-support":
+        payload = _read_spark_memory_kb_active_refresh_support(
+            args.active_refresh_file,
+            subject=args.subject,
+            predicate=args.predicate,
         )
         if args.write:
             _write_json(Path(args.write), payload)

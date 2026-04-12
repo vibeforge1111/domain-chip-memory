@@ -570,6 +570,32 @@ Resolution interpretation:
 - one command now resolves the active governed KB and validates that the released directory still exists and still passes the KB health check
 - this is the narrowest current consumer surface in the repo for live governed KB lookup
 
+## 2026-04-12 Active Refresh Reads
+
+The repo now has a direct KB lookup path on top of the active refresh too.
+
+Commands:
+
+- `python -m domain_chip_memory.cli read-spark-memory-kb-active-refresh-support tmp\spark_memory_kb_refresh_publish_limit100_v1\active-refresh.json human:telegram:spark-memory-regression-user-2c339238-hack_actor_query_missing profile.hack_actor --write tmp\spark_memory_kb_active_support_hack_actor_limit100_v1.json`
+- `python -m domain_chip_memory.cli read-spark-memory-kb-active-refresh-support tmp\spark_memory_kb_refresh_publish_limit100_v1\active-refresh.json human:telegram:spark-memory-soak-user-ed0c3cbc-boundary_abstention-0005-timezone_query_missing_cleanroom profile.timezone --write tmp\spark_memory_kb_active_support_cleanroom_timezone_limit100_v1.json`
+
+Read summaries:
+
+- allowed regression lane:
+  - found: `true`
+  - value: `North Korea`
+  - supporting evidence count: `1`
+- blocked cleanroom lane:
+  - found: `false`
+  - value: `null`
+  - supporting evidence count: `0`
+
+Read interpretation:
+
+- this is now the first direct repo-local read surface that behaves like a Builder-side governed KB consumer instead of a benchmark-only artifact generator
+- the same published active refresh can now serve both a positive allowed lookup and a clean abstention on a blocked lane
+- that makes the policy effect visible at the final lookup boundary, not just during replay and compile steps
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
