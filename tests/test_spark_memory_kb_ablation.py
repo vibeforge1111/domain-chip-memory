@@ -169,10 +169,10 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
                 "writable_roles": ["user"],
                 "conversations": [
                     {
-                        "conversation_id": "session:telegram:dm:missing",
-                        "session_id": "session:telegram:dm:missing",
+                        "conversation_id": "session:telegram:dm:spark-memory-regression-user-2c339238-hack_actor_query_missing",
+                        "session_id": "session:telegram:dm:spark-memory-regression-user-2c339238-hack_actor_query_missing",
                         "metadata": {
-                            "human_id": "human:telegram:missing",
+                            "human_id": "human:telegram:missing-regression",
                         },
                         "turns": [
                             {
@@ -205,7 +205,45 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
                             },
                         ],
                         "probes": [],
-                    }
+                    },
+                    {
+                        "conversation_id": "session:telegram:dm:spark-memory-soak-user-ed0c3cbc-boundary_abstention-0005-timezone_query_missing_cleanroom",
+                        "session_id": "session:telegram:dm:spark-memory-soak-user-ed0c3cbc-boundary_abstention-0005-timezone_query_missing_cleanroom",
+                        "metadata": {
+                            "human_id": "human:telegram:missing-cleanroom",
+                        },
+                        "turns": [
+                            {
+                                "message_id": "req-query-cleanroom",
+                                "role": "user",
+                                "content": "What is my timezone?",
+                                "timestamp": "2026-04-12T00:02:00Z",
+                                "metadata": {
+                                    "request_id": "req-query-cleanroom",
+                                    "source_event_type": "plugin_or_chip_influence_recorded",
+                                    "predicate": "profile.timezone",
+                                    "label": "timezone",
+                                    "query_kind": "single_fact",
+                                },
+                            },
+                            {
+                                "message_id": "req-query-cleanroom",
+                                "role": "assistant",
+                                "content": "Researcher bridge answered a single-fact profile query directly from memory.",
+                                "timestamp": "2026-04-12T00:02:01Z",
+                                "metadata": {
+                                    "request_id": "req-query-cleanroom",
+                                    "source_event_type": "tool_result_received",
+                                    "bridge_mode": "memory_profile_fact",
+                                    "routing_decision": "memory_profile_fact_query",
+                                    "predicate": "profile.timezone",
+                                    "value_found": False,
+                                    "evidence_summary": "status=memory_profile_fact predicate=profile.timezone value_found=no",
+                                },
+                            },
+                        ],
+                        "probes": [],
+                    },
                 ],
             }
         },
@@ -230,24 +268,47 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
     cli.main()
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
-    assert payload["summary"]["query_count"] == 1
+    assert payload["summary"]["query_count"] == 2
     assert payload["summary"]["memory_only_answered"] == 0
     assert payload["summary"]["memory_plus_kb_answered"] == 0
-    assert payload["summary"]["missing_fact_query_count"] == 1
-    assert payload["summary"]["missing_fact_predicates"] == {"profile.hack_actor": 1}
+    assert payload["summary"]["missing_fact_query_count"] == 2
+    assert payload["summary"]["missing_fact_predicates"] == {
+        "profile.hack_actor": 1,
+        "profile.timezone": 1,
+    }
+    assert payload["summary"]["missing_fact_scenarios"] == {
+        "boundary_abstention_cleanroom": 1,
+        "regression": 1,
+    }
+    assert payload["summary"]["missing_fact_predicates_by_scenario"] == {
+        "boundary_abstention_cleanroom": {"profile.timezone": 1},
+        "regression": {"profile.hack_actor": 1},
+    }
     assert payload["summary"]["missing_fact_examples_by_predicate"] == {
         "profile.hack_actor": [
             {
-                "conversation_id": "session:telegram:dm:missing",
+                "conversation_id": "session:telegram:dm:spark-memory-regression-user-2c339238-hack_actor_query_missing",
                 "question": "Who hacked us?",
                 "label": "hack actor",
                 "evidence_summary": "status=memory_profile_fact predicate=profile.hack_actor value_found=no",
             }
+        ],
+        "profile.timezone": [
+            {
+                "conversation_id": "session:telegram:dm:spark-memory-soak-user-ed0c3cbc-boundary_abstention-0005-timezone_query_missing_cleanroom",
+                "question": "What is my timezone?",
+                "label": "timezone",
+                "evidence_summary": "status=memory_profile_fact predicate=profile.timezone value_found=no",
+            }
         ]
     }
-    assert payload["summary"]["classification_counts"] == {"missing_fact_query": 1}
-    comparison = payload["comparisons"][0]
-    assert comparison["value_found"] is False
-    assert comparison["memory_only"]["answer"] is None
-    assert comparison["memory_plus_kb"]["kb_page_exists"] is False
-    assert comparison["classification"] == "missing_fact_query"
+    assert payload["summary"]["classification_counts"] == {"missing_fact_query": 2}
+    regression_comparison = payload["comparisons"][0]
+    assert regression_comparison["scenario_bucket"] == "regression"
+    assert regression_comparison["value_found"] is False
+    assert regression_comparison["memory_only"]["answer"] is None
+    assert regression_comparison["memory_plus_kb"]["kb_page_exists"] is False
+    assert regression_comparison["classification"] == "missing_fact_query"
+    cleanroom_comparison = payload["comparisons"][1]
+    assert cleanroom_comparison["scenario_bucket"] == "boundary_abstention_cleanroom"
+    assert cleanroom_comparison["classification"] == "missing_fact_query"

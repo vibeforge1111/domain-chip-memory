@@ -61,6 +61,7 @@ The first combined-system comparison now exists on a narrow Spark-shaped replay 
 Command:
 
 - `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v1.json`
+- latest scenario-aware rerun: `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v5.json`
 
 Slice definition:
 
@@ -86,8 +87,16 @@ Current result:
   - `profile.hack_actor`: `4`
   - `profile.timezone`: `2`
   - `profile.home_country`: `1`
-- average `memory only` latency: `0.198 ms`
-- average `memory + KB` latency: `0.424 ms`
+- missing-fact scenarios:
+  - `regression`: `4`
+  - `boundary_abstention_cleanroom`: `4`
+  - `quality_lane_gauntlet`: `3`
+- missing-fact predicates by scenario:
+  - `regression`: `profile.spark_role` `2`, `profile.hack_actor` `2`
+  - `boundary_abstention_cleanroom`: one each of `profile.spark_role`, `profile.hack_actor`, `profile.timezone`, `profile.home_country`
+  - `quality_lane_gauntlet`: one each of `profile.spark_role`, `profile.hack_actor`, `profile.timezone`
+- average `memory only` latency: `0.208 ms`
+- average `memory + KB` latency: `0.465 ms`
 
 Interpretation:
 
@@ -101,6 +110,10 @@ Interpretation:
   - Spark role and hack actor are the main uncovered fields
   - timezone and home country are secondary uncovered fields on this slice
 - the ablation summary now also carries compact example conversations and questions for each missing predicate, so the operator does not need to scan the full comparisons list to see representative misses
+- the ablation summary now also exposes which lane each miss came from:
+  - regression misses are concentrated in `profile.spark_role` and `profile.hack_actor`
+  - the cleanroom boundary lane is carrying the only `profile.home_country` miss and one of each other missing predicate
+  - the gauntlet lane is missing Spark role, hack actor, and timezone, but not home country on this slice
 
 So the honest claim after this first A/B is:
 

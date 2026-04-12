@@ -2677,6 +2677,23 @@ def _classify_spark_memory_kb_comparison(
     return "unclassified_query_gap"
 
 
+def _spark_conversation_scenario_bucket(conversation_id: str) -> str:
+    normalized = conversation_id.lower()
+    if "boundary_abstention" in normalized:
+        return "boundary_abstention_cleanroom" if "cleanroom" in normalized else "boundary_abstention"
+    if "quality_lane_gauntlet" in normalized:
+        return "quality_lane_gauntlet"
+    if "loaded_context_abstention" in normalized:
+        return "loaded_context_abstention"
+    if "temporal_conflict_gauntlet" in normalized:
+        return "temporal_conflict_gauntlet"
+    if "identity_under_recency_pressure" in normalized:
+        return "identity_under_recency_pressure"
+    if "regression-user" in normalized:
+        return "regression"
+    return "other"
+
+
 def _run_spark_memory_kb_ablation(
     data_file: str,
     *,
@@ -2710,10 +2727,13 @@ def _run_spark_memory_kb_ablation(
     classification_counts: dict[str, int] = {}
     missing_fact_predicates: dict[str, int] = {}
     missing_fact_examples_by_predicate: dict[str, list[dict[str, str | None]]] = {}
+    missing_fact_scenarios: dict[str, int] = {}
+    missing_fact_predicates_by_scenario: dict[str, dict[str, int]] = {}
     total_memory_only_latency_ms = 0.0
     total_memory_plus_kb_latency_ms = 0.0
 
     for case in query_cases:
+        scenario_bucket = _spark_conversation_scenario_bucket(str(case["conversation_id"]))
         memory_start = perf_counter()
         memory_only = adapter.sdk.explain_answer(
             AnswerExplanationRequest(
@@ -2751,6 +2771,9 @@ def _run_spark_memory_kb_ablation(
             missing_fact_query_count += 1
             predicate_key = str(case["predicate"])
             missing_fact_predicates[predicate_key] = missing_fact_predicates.get(predicate_key, 0) + 1
+            missing_fact_scenarios[scenario_bucket] = missing_fact_scenarios.get(scenario_bucket, 0) + 1
+            scenario_predicates = missing_fact_predicates_by_scenario.setdefault(scenario_bucket, {})
+            scenario_predicates[predicate_key] = scenario_predicates.get(predicate_key, 0) + 1
             examples = missing_fact_examples_by_predicate.setdefault(predicate_key, [])
             if len(examples) < 2:
                 examples.append(
@@ -2782,6 +2805,7 @@ def _run_spark_memory_kb_ablation(
                 "subject": case["subject"],
                 "predicate": case["predicate"],
                 "label": case["label"],
+                "scenario_bucket": scenario_bucket,
                 "query_kind": case["query_kind"],
                 "bridge_mode": case["bridge_mode"],
                 "routing_decision": case["routing_decision"],
@@ -2828,6 +2852,11 @@ def _run_spark_memory_kb_ablation(
             "kb_supported_query_count": kb_supported_query_count,
             "missing_fact_query_count": missing_fact_query_count,
             "missing_fact_predicates": dict(sorted(missing_fact_predicates.items())),
+            "missing_fact_scenarios": dict(sorted(missing_fact_scenarios.items())),
+            "missing_fact_predicates_by_scenario": {
+                scenario: dict(sorted(predicate_counts.items()))
+                for scenario, predicate_counts in sorted(missing_fact_predicates_by_scenario.items())
+            },
             "missing_fact_examples_by_predicate": {
                 predicate: examples
                 for predicate, examples in sorted(missing_fact_examples_by_predicate.items())
