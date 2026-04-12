@@ -4075,7 +4075,20 @@ def _publish_spark_memory_kb_refresh_manifest(
     release_name = f"spark-kb-{release_hash}"
 
     publish_root_path = Path(publish_root_dir)
+    releases_root_path = publish_root_path / "releases"
     release_output_dir = publish_root_path / "releases" / release_name
+    if release_output_dir.exists():
+        release_output_dir_resolved = release_output_dir.resolve()
+        releases_root_resolved = releases_root_path.resolve(strict=False)
+        if release_output_dir_resolved == releases_root_resolved:
+            raise ValueError(f"Refusing to replace publish releases root: {release_output_dir}")
+        try:
+            release_output_dir_resolved.relative_to(releases_root_resolved)
+        except ValueError as exc:
+            raise ValueError(
+                f"Refusing to replace release output_dir outside publish releases root: {release_output_dir}"
+            ) from exc
+        shutil.rmtree(release_output_dir_resolved)
     materialized_payload = _materialize_spark_memory_kb_refresh_manifest(
         refresh_manifest_file,
         str(release_output_dir),
@@ -4479,16 +4492,16 @@ def _ship_spark_memory_kb_governed_release(
         active_refresh_file,
         policy_aligned_slice_file,
     )
-    active_release_summary_path = Path(publish_root_dir) / "active-release-summary.json"
+    publish_root_path = Path(publish_root_dir)
+    active_release_summary_path = publish_root_path / "active-release-summary.json"
     _write_json(active_release_summary_path, active_release_summary)
     active_release_gate = _assert_spark_memory_kb_active_release_ready(str(active_release_summary_path))
-    active_release_gate_path = Path(publish_root_dir) / "active-release-gate.json"
+    active_release_gate_path = publish_root_path / "active-release-gate.json"
     _write_json(active_release_gate_path, active_release_gate)
-
-    return {
+    governed_release_payload = {
         "input_refresh_manifest_file": str(Path(refresh_manifest_file)),
         "input_policy_aligned_slice_file": str(Path(policy_aligned_slice_file)),
-        "publish_root_dir": str(Path(publish_root_dir)),
+        "publish_root_dir": str(publish_root_path),
         "active_refresh_file": str(Path(active_refresh_file)),
         "active_release_summary_file": str(active_release_summary_path),
         "active_release_gate_file": str(active_release_gate_path),
@@ -4506,6 +4519,10 @@ def _ship_spark_memory_kb_governed_release(
             "operation": "ship_spark_memory_kb_governed_release",
         },
     }
+    governed_release_file = publish_root_path / "governed-release.json"
+    governed_release_payload["governed_release_file"] = str(governed_release_file)
+    _write_json(governed_release_file, governed_release_payload)
+    return governed_release_payload
 
 
 def _verify_spark_memory_kb_active_refresh_policy(

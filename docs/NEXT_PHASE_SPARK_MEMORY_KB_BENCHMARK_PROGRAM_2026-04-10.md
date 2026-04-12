@@ -756,11 +756,14 @@ Ship result:
 - active refresh file: `tmp\spark_memory_kb_governed_ship_limit100_v1\active-refresh.json`
 - active release summary file: `tmp\spark_memory_kb_governed_ship_limit100_v1\active-release-summary.json`
 - active release gate file: `tmp\spark_memory_kb_governed_ship_limit100_v1\active-release-gate.json`
+- governed release file: `tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release.json`
 
 Ship interpretation:
 
 - this is now the shortest end-to-end governed release path in the repo
 - one command publishes the governed KB, writes the active pointer, builds the release summary, and emits the machine-friendly release gate
+- rerunning the ship command against the same publish root now safely replaces the hashed release directory instead of failing on the existing stable slug
+- the ship root now also keeps a stable top-level `governed-release.json`, so downstream automation does not need the optional external `--write` payload just to discover the shipped artifact set
 - this is the closest repo-local artifact yet to what an actual Builder-side release job would need to call
 
 So the honest claim after this first A/B is:

@@ -1479,6 +1479,53 @@ def test_publish_spark_memory_kb_refresh_manifest_writes_active_refresh_file(tmp
     assert active_payload["summary"]["decision_counts"] == {"allow": 4, "block": 2, "defer": 1}
 
 
+def test_publish_spark_memory_kb_refresh_manifest_replaces_existing_release_dir(tmp_path: Path):
+    source_kb_dir = tmp_path / "policy-aligned-kb"
+    source_snapshot_file = source_kb_dir / "raw" / "memory-snapshots" / "latest.json"
+    source_index_file = source_kb_dir / "wiki" / "index.md"
+    source_snapshot_file.parent.mkdir(parents=True)
+    source_index_file.parent.mkdir(parents=True)
+    (source_kb_dir / "CLAUDE.md").write_text("# KB\n", encoding="utf-8")
+    source_snapshot_file.write_text('{"current_state":[],"evidence":[],"events":[],"trace":{}}', encoding="utf-8")
+    source_index_file.write_text("# Index\n", encoding="utf-8")
+
+    manifest_file = tmp_path / "refresh-manifest.json"
+    manifest_file.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "kb_output_dir": str(source_kb_dir),
+                    "snapshot_file": str(source_snapshot_file),
+                },
+                "kb": {
+                    "output_dir": str(source_kb_dir),
+                    "snapshot_file": str(source_snapshot_file),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    publish_root = tmp_path / "published"
+
+    first_payload = cli._publish_spark_memory_kb_refresh_manifest(
+        str(manifest_file),
+        str(publish_root),
+    )
+    release_dir = Path(first_payload["release_output_dir"])
+    stale_file = release_dir / "stale.txt"
+    stale_file.write_text("stale", encoding="utf-8")
+
+    second_payload = cli._publish_spark_memory_kb_refresh_manifest(
+        str(manifest_file),
+        str(publish_root),
+    )
+
+    assert second_payload["release_output_dir"] == str(release_dir)
+    assert not stale_file.exists()
+    assert (release_dir / "CLAUDE.md").exists()
+    assert (publish_root / "active-refresh.json").exists()
+
+
 def test_resolve_spark_memory_kb_active_refresh_reads_published_release(tmp_path: Path):
     kb_dir = tmp_path / "published" / "releases" / "spark-kb-test"
     snapshot_file = kb_dir / "raw" / "memory-snapshots" / "latest.json"
@@ -2095,6 +2142,7 @@ def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(t
     assert Path(payload["active_refresh_file"]).exists()
     assert Path(payload["active_release_summary_file"]).exists()
     assert Path(payload["active_release_gate_file"]).exists()
+    assert Path(payload["governed_release_file"]).exists()
     assert payload["summary"]["ready"] is True
 
 
