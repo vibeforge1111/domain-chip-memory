@@ -3435,6 +3435,103 @@ def _compare_spark_memory_kb_ablation(before_file: str, after_file: str) -> dict
     }
 
 
+def _build_spark_memory_kb_policy_verdict(compare_file: str) -> dict:
+    payload = _load_json_file(compare_file)
+    if not isinstance(payload, dict):
+        raise ValueError("Spark ablation comparison payload must be a JSON object.")
+    summary = payload.get("summary")
+    resolved_queries = payload.get("resolved_queries")
+    if not isinstance(summary, dict) or not isinstance(resolved_queries, list):
+        raise ValueError("Spark ablation comparison payload must contain summary and resolved_queries.")
+
+    bucket_counts = summary.get("resolved_missing_by_action_bucket")
+    if not isinstance(bucket_counts, dict):
+        raise ValueError("Spark ablation comparison summary must contain resolved_missing_by_action_bucket.")
+
+    verdicts: list[dict[str, object]] = []
+    ordered_buckets = [
+        "expected_cleanroom_boundary",
+        "regression_candidate",
+        "gauntlet_candidate",
+    ]
+    bucket_to_verdict = {
+        "expected_cleanroom_boundary": {
+            "verdict": "retain_boundary_by_default",
+            "recommendation": (
+                "Keep these lanes abstention-boundary in production unless a product requirement explicitly authorizes "
+                "promotion of cleanroom-style facts into the target conversation."
+            ),
+        },
+        "regression_candidate": {
+            "verdict": "promotable_if_source_path_is_legitimate",
+            "recommendation": (
+                "These resolved once source evidence was present. Treat them as promotable sourcing candidates and "
+                "audit the real upstream path that should write the fact into the target conversation."
+            ),
+        },
+        "gauntlet_candidate": {
+            "verdict": "expand_coverage_if_product_wants_recall",
+            "recommendation": (
+                "These resolved with source backing, so the memory/KB layer is capable. Decide whether the gauntlet "
+                "lane should gain the same source coverage or intentionally remain sparse."
+            ),
+        },
+    }
+
+    for action_bucket in ordered_buckets:
+        count = int(bucket_counts.get(action_bucket, 0) or 0)
+        if count <= 0:
+            continue
+        examples = []
+        for row in resolved_queries:
+            if not isinstance(row, dict):
+                continue
+            if str(row.get("action_bucket") or "").strip() != action_bucket:
+                continue
+            if len(examples) >= 3:
+                break
+            examples.append(
+                {
+                    "conversation_id": str(row.get("conversation_id") or "") or None,
+                    "predicate": str(row.get("predicate") or "") or None,
+                    "question": str(row.get("question") or "") or None,
+                    "answer": str(row.get("answer") or "") or None,
+                }
+            )
+        policy = bucket_to_verdict.get(
+            action_bucket,
+            {
+                "verdict": "needs_manual_review",
+                "recommendation": "Review this action bucket manually before changing production promotion rules.",
+            },
+        )
+        verdicts.append(
+            {
+                "action_bucket": action_bucket,
+                "resolved_count": count,
+                "verdict": policy["verdict"],
+                "recommendation": policy["recommendation"],
+                "examples": examples,
+            }
+        )
+
+    return {
+        "input_compare_file": str(Path(compare_file)),
+        "summary": {
+            "resolved_missing_query_count": int(summary.get("resolved_missing_query_count", 0) or 0),
+            "still_unresolved_query_count": sum(
+                int(value or 0)
+                for value in dict(summary.get("still_unresolved_by_predicate") or {}).values()
+            ),
+            "action_bucket_count": len(verdicts),
+        },
+        "policy_verdicts": verdicts,
+        "trace": {
+            "operation": "build_spark_memory_kb_policy_verdict",
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -7794,6 +7891,12 @@ def main() -> None:
     compare_spark_memory_kb_ablation.add_argument("before_file")
     compare_spark_memory_kb_ablation.add_argument("after_file")
     compare_spark_memory_kb_ablation.add_argument("--write")
+    build_spark_memory_kb_policy_verdict = subparsers.add_parser(
+        "build-spark-memory-kb-policy-verdict",
+        help="Turn a Spark source-backed transition ledger into action-bucket policy recommendations.",
+    )
+    build_spark_memory_kb_policy_verdict.add_argument("compare_file")
+    build_spark_memory_kb_policy_verdict.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -8469,6 +8572,15 @@ def main() -> None:
         payload = _compare_spark_memory_kb_ablation(
             args.before_file,
             args.after_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-memory-kb-policy-verdict":
+        payload = _build_spark_memory_kb_policy_verdict(
+            args.compare_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)

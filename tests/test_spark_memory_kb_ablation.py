@@ -859,3 +859,103 @@ def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_pa
             "answer": "Asia/Dubai",
         }
     ]
+
+
+def test_build_spark_memory_kb_policy_verdict_labels_action_buckets(tmp_path: Path):
+    compare_payload = {
+        "summary": {
+            "resolved_missing_query_count": 3,
+            "resolved_missing_by_action_bucket": {
+                "expected_cleanroom_boundary": 1,
+                "gauntlet_candidate": 1,
+                "regression_candidate": 1,
+            },
+            "still_unresolved_by_predicate": {},
+        },
+        "resolved_queries": [
+            {
+                "conversation_id": "cleanroom-timezone",
+                "question": "What is my timezone?",
+                "predicate": "profile.timezone",
+                "action_bucket": "expected_cleanroom_boundary",
+                "answer": "Asia/Dubai",
+            },
+            {
+                "conversation_id": "regression-hack-actor",
+                "question": "Who hacked us?",
+                "predicate": "profile.hack_actor",
+                "action_bucket": "regression_candidate",
+                "answer": "North Korea",
+            },
+            {
+                "conversation_id": "gauntlet-timezone",
+                "question": "What is my timezone?",
+                "predicate": "profile.timezone",
+                "action_bucket": "gauntlet_candidate",
+                "answer": "Asia/Dubai",
+            },
+        ],
+    }
+    compare_file = tmp_path / "compare.json"
+    compare_file.write_text(json.dumps(compare_payload), encoding="utf-8")
+
+    payload = cli._build_spark_memory_kb_policy_verdict(str(compare_file))
+
+    assert payload["summary"] == {
+        "resolved_missing_query_count": 3,
+        "still_unresolved_query_count": 0,
+        "action_bucket_count": 3,
+    }
+    assert payload["policy_verdicts"] == [
+        {
+            "action_bucket": "expected_cleanroom_boundary",
+            "resolved_count": 1,
+            "verdict": "retain_boundary_by_default",
+            "recommendation": (
+                "Keep these lanes abstention-boundary in production unless a product requirement explicitly authorizes "
+                "promotion of cleanroom-style facts into the target conversation."
+            ),
+            "examples": [
+                {
+                    "conversation_id": "cleanroom-timezone",
+                    "predicate": "profile.timezone",
+                    "question": "What is my timezone?",
+                    "answer": "Asia/Dubai",
+                }
+            ],
+        },
+        {
+            "action_bucket": "regression_candidate",
+            "resolved_count": 1,
+            "verdict": "promotable_if_source_path_is_legitimate",
+            "recommendation": (
+                "These resolved once source evidence was present. Treat them as promotable sourcing candidates and "
+                "audit the real upstream path that should write the fact into the target conversation."
+            ),
+            "examples": [
+                {
+                    "conversation_id": "regression-hack-actor",
+                    "predicate": "profile.hack_actor",
+                    "question": "Who hacked us?",
+                    "answer": "North Korea",
+                }
+            ],
+        },
+        {
+            "action_bucket": "gauntlet_candidate",
+            "resolved_count": 1,
+            "verdict": "expand_coverage_if_product_wants_recall",
+            "recommendation": (
+                "These resolved with source backing, so the memory/KB layer is capable. Decide whether the gauntlet "
+                "lane should gain the same source coverage or intentionally remain sparse."
+            ),
+            "examples": [
+                {
+                    "conversation_id": "gauntlet-timezone",
+                    "predicate": "profile.timezone",
+                    "question": "What is my timezone?",
+                    "answer": "Asia/Dubai",
+                }
+            ],
+        },
+    ]

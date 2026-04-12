@@ -245,6 +245,37 @@ Interpretation:
 - every previously unresolved compact-slice miss transitioned cleanly once replay source evidence was injected
 - there is no residual unresolved query left on the source-backed compact slice
 
+## 2026-04-12 Policy Verdict
+
+The transition ledger now has an operator-facing policy verdict too.
+
+Command:
+
+- `python -m domain_chip_memory.cli build-spark-memory-kb-policy-verdict tmp\spark_memory_kb_ablation_compare_source_backed_limit100_v1.json --write tmp\spark_memory_kb_policy_verdict_limit100_v1.json`
+
+Verdict summary:
+
+- resolved missing queries: `7`
+- still unresolved queries: `0`
+- action buckets with explicit recommendations: `3`
+
+Bucket recommendations:
+
+- `expected_cleanroom_boundary` resolved: `2`
+  - verdict: retain boundary by default
+  - implication: the cleanroom boundary misses are resolvable technically, but should not automatically become production promotion lanes
+- `regression_candidate` resolved: `4`
+  - verdict: promotable if the source path is legitimate
+  - implication: hack-actor and Spark-role regression misses now look like upstream sourcing-policy candidates, not memory/KB capability problems
+- `gauntlet_candidate` resolved: `1`
+  - verdict: expand coverage only if the product wants that recall behavior
+  - implication: the gauntlet timezone miss is optional product scope, not a correctness blocker
+
+Practical next step:
+
+- if the goal is product behavior, stop building benchmark plumbing here
+- the next implementation question is which regression-candidate source paths should be allowed to write into the target conversation in production, while keeping the cleanroom boundary lane intentionally abstention-safe
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
