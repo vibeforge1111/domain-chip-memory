@@ -411,3 +411,188 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
         "observation_count": 1,
     }
     assert answered_comparison["classification"] == "answered_without_kb_support"
+
+
+def test_build_spark_memory_kb_sourcing_slice_selects_missing_and_source_backed_examples(
+    tmp_path: Path, monkeypatch
+):
+    intake_payload = {
+        "normalization": {
+            "normalized": {
+                "source": "spark_builder_state_db",
+                "writable_roles": ["user"],
+                "conversations": [
+                    {
+                        "conversation_id": "missing-hack-actor",
+                        "session_id": "missing-hack-actor",
+                        "metadata": {"human_id": "human:telegram:missing-hack-actor"},
+                        "turns": [],
+                        "probes": [],
+                    },
+                    {
+                        "conversation_id": "answered-hack-actor",
+                        "session_id": "answered-hack-actor",
+                        "metadata": {"human_id": "human:telegram:answered-hack-actor"},
+                        "turns": [],
+                        "probes": [],
+                    },
+                    {
+                        "conversation_id": "missing-timezone",
+                        "session_id": "missing-timezone",
+                        "metadata": {"human_id": "human:telegram:missing-timezone"},
+                        "turns": [],
+                        "probes": [],
+                    },
+                    {
+                        "conversation_id": "answered-timezone",
+                        "session_id": "answered-timezone",
+                        "metadata": {"human_id": "human:telegram:answered-timezone"},
+                        "turns": [],
+                        "probes": [],
+                    },
+                ],
+            }
+        },
+        "compile_result": {"output_dir": str(tmp_path / "kb")},
+    }
+    intake_file = tmp_path / "intake.json"
+    intake_file.write_text(json.dumps(intake_payload), encoding="utf-8")
+
+    ablation_payload = {
+        "input_file": str(intake_file),
+        "summary": {
+            "missing_fact_predicates": {
+                "profile.hack_actor": 1,
+                "profile.timezone": 1,
+            },
+            "missing_fact_examples_by_predicate": {
+                "profile.hack_actor": [
+                    {
+                        "conversation_id": "missing-hack-actor",
+                        "question": "Who hacked us?",
+                        "label": "hack actor",
+                        "evidence_summary": "status=memory_profile_fact predicate=profile.hack_actor value_found=no",
+                    }
+                ],
+                "profile.timezone": [
+                    {
+                        "conversation_id": "missing-timezone",
+                        "question": "What is my timezone?",
+                        "label": "timezone",
+                        "evidence_summary": "status=memory_profile_fact predicate=profile.timezone value_found=no",
+                    }
+                ],
+            },
+            "source_backed_answered_counts_by_missing_predicate": {
+                "profile.hack_actor": 1,
+                "profile.timezone": 1,
+            },
+            "source_backed_examples_by_missing_predicate": {
+                "profile.hack_actor": [
+                    {
+                        "conversation_id": "answered-hack-actor",
+                        "question": "Who hacked us?",
+                        "answer": "North Korea",
+                        "scenario_bucket": "regression",
+                    }
+                ],
+                "profile.timezone": [
+                    {
+                        "conversation_id": "answered-timezone",
+                        "question": "What is my timezone?",
+                        "answer": "Asia/Dubai",
+                        "scenario_bucket": "regression",
+                    }
+                ],
+            },
+        },
+    }
+    ablation_file = tmp_path / "ablation.json"
+    output_file = tmp_path / "sourcing-slice.json"
+    ablation_file.write_text(json.dumps(ablation_payload), encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-memory-kb-sourcing-slice",
+            str(ablation_file),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["summary"] == {
+        "predicate_count": 2,
+        "selected_conversation_count": 4,
+        "missing_from_source_count": 0,
+        "selected_conversation_ids": [
+            "missing-hack-actor",
+            "answered-hack-actor",
+            "missing-timezone",
+            "answered-timezone",
+        ],
+        "missing_predicates": [
+            "profile.hack_actor",
+            "profile.timezone",
+        ],
+    }
+    assert payload["predicate_targets"] == [
+        {
+            "predicate": "profile.hack_actor",
+            "missing_query_count": 1,
+            "source_backed_answered_count": 1,
+            "missing_examples": [
+                {
+                    "conversation_id": "missing-hack-actor",
+                    "question": "Who hacked us?",
+                    "label": "hack actor",
+                    "evidence_summary": "status=memory_profile_fact predicate=profile.hack_actor value_found=no",
+                }
+            ],
+            "source_backed_examples": [
+                {
+                    "conversation_id": "answered-hack-actor",
+                    "question": "Who hacked us?",
+                    "answer": "North Korea",
+                    "scenario_bucket": "regression",
+                }
+            ],
+        },
+        {
+            "predicate": "profile.timezone",
+            "missing_query_count": 1,
+            "source_backed_answered_count": 1,
+            "missing_examples": [
+                {
+                    "conversation_id": "missing-timezone",
+                    "question": "What is my timezone?",
+                    "label": "timezone",
+                    "evidence_summary": "status=memory_profile_fact predicate=profile.timezone value_found=no",
+                }
+            ],
+            "source_backed_examples": [
+                {
+                    "conversation_id": "answered-timezone",
+                    "question": "What is my timezone?",
+                    "answer": "Asia/Dubai",
+                    "scenario_bucket": "regression",
+                }
+            ],
+        },
+    ]
+    selected_ids = [
+        item["conversation_id"]
+        for item in payload["normalization"]["normalized"]["conversations"]
+    ]
+    assert selected_ids == [
+        "missing-hack-actor",
+        "answered-hack-actor",
+        "missing-timezone",
+        "answered-timezone",
+    ]
+    assert payload["compile_result"] == {"output_dir": str(tmp_path / "kb")}

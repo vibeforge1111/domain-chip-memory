@@ -2970,6 +2970,109 @@ def _run_spark_memory_kb_ablation(
     }
 
 
+def _build_spark_memory_kb_sourcing_slice(
+    ablation_file: str,
+    *,
+    data_file: str | None = None,
+    exemplars_per_predicate: int = 1,
+) -> dict:
+    ablation_payload = _load_json_file(ablation_file)
+    if not isinstance(ablation_payload, dict):
+        raise ValueError("Spark ablation payload must be a JSON object.")
+    summary = ablation_payload.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Spark ablation payload must contain a summary object.")
+    missing_fact_examples_by_predicate = summary.get("missing_fact_examples_by_predicate")
+    if not isinstance(missing_fact_examples_by_predicate, dict):
+        raise ValueError("Spark ablation summary must contain missing_fact_examples_by_predicate.")
+    source_backed_examples_by_missing_predicate = summary.get("source_backed_examples_by_missing_predicate")
+    if not isinstance(source_backed_examples_by_missing_predicate, dict):
+        raise ValueError("Spark ablation summary must contain source_backed_examples_by_missing_predicate.")
+
+    resolved_data_file = str(data_file or ablation_payload.get("input_file") or "").strip()
+    if not resolved_data_file:
+        raise ValueError("Provide a Spark intake data file or use an ablation payload with input_file.")
+    intake_payload = _load_json_file(resolved_data_file)
+    if not isinstance(intake_payload, dict):
+        raise ValueError("Spark intake payload must be a JSON object.")
+    normalization = intake_payload.get("normalization")
+    if not isinstance(normalization, dict):
+        raise ValueError("Spark intake payload must contain a normalization object.")
+    normalized = normalization.get("normalized")
+    if not isinstance(normalized, dict):
+        raise ValueError("Spark intake payload must contain normalization.normalized.")
+    conversations = normalized.get("conversations")
+    if not isinstance(conversations, list):
+        raise ValueError("Spark intake payload must contain normalization.normalized.conversations.")
+
+    conversation_lookup: dict[str, dict] = {}
+    for conversation in conversations:
+        if not isinstance(conversation, dict):
+            continue
+        conversation_id = str(conversation.get("conversation_id") or "").strip()
+        if conversation_id:
+            conversation_lookup[conversation_id] = conversation
+
+    predicate_targets: list[dict[str, object]] = []
+    selected_conversation_ids: list[str] = []
+    seen_conversation_ids: set[str] = set()
+    missing_predicates = sorted(str(predicate).strip() for predicate in missing_fact_examples_by_predicate if str(predicate).strip())
+
+    for predicate in missing_predicates:
+        missing_examples_raw = missing_fact_examples_by_predicate.get(predicate, [])
+        source_examples_raw = source_backed_examples_by_missing_predicate.get(predicate, [])
+        missing_examples = [item for item in missing_examples_raw if isinstance(item, dict)]
+        source_examples = [item for item in source_examples_raw if isinstance(item, dict)][: max(0, exemplars_per_predicate)]
+        for item in [*missing_examples, *source_examples]:
+            conversation_id = str(item.get("conversation_id") or "").strip()
+            if conversation_id and conversation_id not in seen_conversation_ids:
+                seen_conversation_ids.add(conversation_id)
+                selected_conversation_ids.append(conversation_id)
+        predicate_targets.append(
+            {
+                "predicate": predicate,
+                "missing_query_count": int((summary.get("missing_fact_predicates") or {}).get(predicate, 0) or 0),
+                "source_backed_answered_count": int(
+                    (summary.get("source_backed_answered_counts_by_missing_predicate") or {}).get(predicate, 0) or 0
+                ),
+                "missing_examples": missing_examples,
+                "source_backed_examples": source_examples,
+            }
+        )
+
+    selected_conversations = [
+        conversation_lookup[conversation_id]
+        for conversation_id in selected_conversation_ids
+        if conversation_id in conversation_lookup
+    ]
+    missing_from_source = [conversation_id for conversation_id in selected_conversation_ids if conversation_id not in conversation_lookup]
+
+    filtered_normalized = dict(normalized)
+    filtered_normalized["conversations"] = selected_conversations
+
+    return {
+        "input_ablation_file": str(Path(ablation_file)),
+        "input_data_file": str(Path(resolved_data_file)),
+        "summary": {
+            "predicate_count": len(predicate_targets),
+            "selected_conversation_count": len(selected_conversations),
+            "missing_from_source_count": len(missing_from_source),
+            "selected_conversation_ids": selected_conversation_ids,
+            "missing_predicates": missing_predicates,
+        },
+        "predicate_targets": predicate_targets,
+        "missing_from_source": missing_from_source,
+        "normalization": {
+            "normalized": filtered_normalized,
+        },
+        "compile_result": intake_payload.get("compile_result"),
+        "trace": {
+            "operation": "build_spark_memory_kb_sourcing_slice",
+            "exemplars_per_predicate": exemplars_per_predicate,
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -7307,6 +7410,14 @@ def main() -> None:
     run_spark_memory_kb_ablation.add_argument("data_file")
     run_spark_memory_kb_ablation.add_argument("--limit", type=int)
     run_spark_memory_kb_ablation.add_argument("--write")
+    build_spark_memory_kb_sourcing_slice = subparsers.add_parser(
+        "build-spark-memory-kb-sourcing-slice",
+        help="Build a compact replay slice containing missing-fact conversations plus answered source-backed exemplars for the same predicates.",
+    )
+    build_spark_memory_kb_sourcing_slice.add_argument("ablation_file")
+    build_spark_memory_kb_sourcing_slice.add_argument("--data-file")
+    build_spark_memory_kb_sourcing_slice.add_argument("--exemplars-per-predicate", type=int, default=1)
+    build_spark_memory_kb_sourcing_slice.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -7951,6 +8062,17 @@ def main() -> None:
         payload = _run_spark_memory_kb_ablation(
             args.data_file,
             limit=args.limit,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-memory-kb-sourcing-slice":
+        payload = _build_spark_memory_kb_sourcing_slice(
+            args.ablation_file,
+            data_file=args.data_file,
+            exemplars_per_predicate=args.exemplars_per_predicate,
         )
         if args.write:
             _write_json(Path(args.write), payload)

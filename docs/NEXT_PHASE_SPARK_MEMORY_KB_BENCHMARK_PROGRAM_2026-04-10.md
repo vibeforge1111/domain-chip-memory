@@ -144,6 +144,36 @@ Interpretation:
     - `profile.timezone`: regression and core-profile threads answering "What is my timezone?" with `Asia/Dubai`
     - `profile.home_country`: many answered threads exist, but the only current miss is still a cleanroom boundary case
 
+## 2026-04-12 Compact Source-Backed Target Slice
+
+The first compact sourcing slice now exists and is replay-ready.
+
+Commands:
+
+- `python -m domain_chip_memory.cli build-spark-memory-kb-sourcing-slice tmp\spark_memory_kb_ablation_limit100_v8.json --write tmp\spark_memory_kb_sourcing_slice_limit100_v1.json`
+- `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\spark_memory_kb_sourcing_slice_limit100_v1.json --write tmp\spark_memory_kb_ablation_sourcing_slice_limit100_v1.json`
+
+Slice result:
+
+- predicates covered: `4`
+- selected conversations: `8`
+- missing-from-source conversations: `0`
+- slice query count: `26`
+- slice answered with KB support: `19`
+- slice missing-fact query count: `7`
+- slice missing-fact predicates:
+  - `profile.hack_actor`: `2`
+  - `profile.spark_role`: `2`
+  - `profile.timezone`: `2`
+  - `profile.home_country`: `1`
+
+Interpretation:
+
+- this is now the compact benchmark surface for sourcing work
+- the slice keeps one answered source-backed exemplar lane for each missing predicate family while retaining the actual missing conversations
+- the remaining misses on this compact slice are still all zero-source-evidence abstentions for those exact subject/predicate pairs
+- the next productive move is to build or normalize a truly source-backed version of those seven miss conversations, then rerun this compact slice instead of the full `125`-query replay
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
