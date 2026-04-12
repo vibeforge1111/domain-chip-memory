@@ -234,6 +234,7 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
     assert payload["summary"]["memory_only_answered"] == 0
     assert payload["summary"]["memory_plus_kb_answered"] == 0
     assert payload["summary"]["missing_fact_query_count"] == 1
+    assert payload["summary"]["missing_fact_predicates"] == {"profile.hack_actor": 1}
     assert payload["summary"]["classification_counts"] == {"missing_fact_query": 1}
     comparison = payload["comparisons"][0]
     assert comparison["value_found"] is False

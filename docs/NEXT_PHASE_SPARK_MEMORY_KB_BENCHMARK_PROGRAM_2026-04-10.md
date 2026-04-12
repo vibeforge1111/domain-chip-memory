@@ -81,6 +81,11 @@ Current result:
   - `answered_with_kb_support`: `113`
   - `missing_fact_query`: `11`
   - `query_abstention_without_kb_support`: `1`
+- missing-fact predicates:
+  - `profile.spark_role`: `4`
+  - `profile.hack_actor`: `4`
+  - `profile.timezone`: `2`
+  - `profile.home_country`: `1`
 - average `memory only` latency: `0.198 ms`
 - average `memory + KB` latency: `0.424 ms`
 
@@ -92,6 +97,9 @@ Interpretation:
 - the unanswered slice is now classified instead of flat:
   - most misses are true `value_found: false` missing-fact queries
   - one remaining unanswered query is a query-abstention path with no KB support, not a confirmed missing fact
+- the dominant missing-fact predicates are now explicit too:
+  - Spark role and hack actor are the main uncovered fields
+  - timezone and home country are secondary uncovered fields on this slice
 
 So the honest claim after this first A/B is:
 
