@@ -719,6 +719,28 @@ Gate interpretation:
 - it encodes the current rule that regression candidates must be exposed while cleanroom-boundary and deferred gauntlet lanes may remain absent
 - a downstream Builder release step can consume this one file and stop on any future regression leak or policy violation without understanding the full benchmark pipeline
 
+## 2026-04-12 Active Release Assert
+
+The repo now has a shell-friendly assert command on top of that gate.
+
+Command:
+
+- `python -m domain_chip_memory.cli assert-spark-memory-kb-active-release-ready tmp\spark_memory_kb_active_release_summary_limit100_v1.json --write tmp\spark_memory_kb_active_release_assert_limit100_v1.json`
+
+Assert result:
+
+- exit status: `0`
+- ready: `true`
+- failure reason count: `0`
+- health valid: `true`
+- policy honored: `true`
+
+Assert interpretation:
+
+- this is the first repo-local command in the chain that is directly usable as CI or release-step control flow
+- success returns the same gate payload and failure will now terminate the process with the failure reasons in the error text
+- a downstream Builder release script no longer needs to parse JSON just to decide whether the governed KB publish is acceptable
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

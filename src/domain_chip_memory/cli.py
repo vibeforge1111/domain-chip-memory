@@ -4449,6 +4449,18 @@ def _check_spark_memory_kb_active_release_summary(active_release_summary_file: s
     }
 
 
+def _assert_spark_memory_kb_active_release_ready(active_release_summary_file: str) -> dict:
+    payload = _check_spark_memory_kb_active_release_summary(active_release_summary_file)
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Active release gate payload must contain a summary object.")
+    if not bool(summary.get("ready")):
+        failure_reasons = [str(item).strip() for item in summary.get("failure_reasons", []) if str(item).strip()]
+        reason_text = ", ".join(failure_reasons) if failure_reasons else "unknown_failure"
+        raise SystemExit(f"Spark active release gate failed: {reason_text}")
+    return payload
+
+
 def _verify_spark_memory_kb_active_refresh_policy(
     active_refresh_file: str,
     policy_aligned_slice_file: str,
@@ -9037,6 +9049,12 @@ def main() -> None:
     )
     check_spark_memory_kb_active_release_summary.add_argument("active_release_summary_file")
     check_spark_memory_kb_active_release_summary.add_argument("--write")
+    assert_spark_memory_kb_active_release_ready = subparsers.add_parser(
+        "assert-spark-memory-kb-active-release-ready",
+        help="Exit non-zero when the active governed Spark KB release gate is not ready.",
+    )
+    assert_spark_memory_kb_active_release_ready.add_argument("active_release_summary_file")
+    assert_spark_memory_kb_active_release_ready.add_argument("--write")
     verify_spark_memory_kb_active_refresh_policy = subparsers.add_parser(
         "verify-spark-memory-kb-active-refresh-policy",
         help="Verify that a published active governed Spark KB still honors the policy rows from a policy-aligned slice payload.",
@@ -9864,6 +9882,15 @@ def main() -> None:
 
     if args.command == "check-spark-memory-kb-active-release-summary":
         payload = _check_spark_memory_kb_active_release_summary(
+            args.active_release_summary_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "assert-spark-memory-kb-active-release-ready":
+        payload = _assert_spark_memory_kb_active_release_ready(
             args.active_release_summary_file,
         )
         if args.write:

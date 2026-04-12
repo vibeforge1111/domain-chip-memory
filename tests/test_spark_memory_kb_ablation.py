@@ -1996,6 +1996,57 @@ def test_check_spark_memory_kb_active_release_summary_flags_regression_leak(tmp_
     assert "gauntlet_candidate_exposed" in payload["summary"]["failure_reasons"]
 
 
+def test_assert_spark_memory_kb_active_release_ready_passes_when_ready(tmp_path: Path):
+    summary_file = tmp_path / "active-release-summary.json"
+    summary_file.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "health_valid": True,
+                    "policy_honored": True,
+                    "policy_violation_count": 0,
+                    "found_count": 23,
+                    "missing_count": 3,
+                    "found_by_action_bucket": {"regression_candidate": 23},
+                    "missing_by_action_bucket": {"expected_cleanroom_boundary": 2, "gauntlet_candidate": 1},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = cli._assert_spark_memory_kb_active_release_ready(str(summary_file))
+
+    assert payload["summary"]["ready"] is True
+
+
+def test_assert_spark_memory_kb_active_release_ready_exits_on_failure(tmp_path: Path):
+    summary_file = tmp_path / "active-release-summary.json"
+    summary_file.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "health_valid": True,
+                    "policy_honored": True,
+                    "policy_violation_count": 0,
+                    "found_count": 24,
+                    "missing_count": 2,
+                    "found_by_action_bucket": {"gauntlet_candidate": 1, "regression_candidate": 23},
+                    "missing_by_action_bucket": {"expected_cleanroom_boundary": 2},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        cli._assert_spark_memory_kb_active_release_ready(str(summary_file))
+    except SystemExit as exc:
+        assert "gauntlet_candidate_exposed" in str(exc)
+    else:
+        raise AssertionError("Expected SystemExit for non-ready active release gate.")
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [
