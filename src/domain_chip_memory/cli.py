@@ -2663,6 +2663,24 @@ def _extract_spark_query_cases(normalized_payload: dict) -> list[dict]:
     return cases
 
 
+def _build_spark_conversation_subject_index(normalized_payload: dict) -> dict[str, str]:
+    raw_conversations = normalized_payload.get("conversations", [])
+    if not isinstance(raw_conversations, list):
+        return {}
+    subject_by_conversation_id: dict[str, str] = {}
+    for conversation in raw_conversations:
+        if not isinstance(conversation, dict):
+            continue
+        conversation_id = str(conversation.get("conversation_id") or "").strip()
+        metadata = conversation.get("metadata")
+        if not conversation_id or not isinstance(metadata, dict):
+            continue
+        subject = str(metadata.get("human_id") or "").strip()
+        if subject:
+            subject_by_conversation_id[conversation_id] = subject
+    return subject_by_conversation_id
+
+
 def _classify_spark_memory_kb_comparison(
     *,
     memory_only_found: bool,
@@ -4213,6 +4231,118 @@ def _read_spark_memory_kb_active_refresh_conversation_support(
         "operation": "read_spark_memory_kb_active_refresh_conversation_support",
     }
     return payload
+
+
+def _run_spark_memory_kb_active_refresh_read_report(
+    active_refresh_file: str,
+    policy_aligned_slice_file: str,
+    *,
+    limit: int | None = None,
+) -> dict:
+    resolution = _resolve_spark_memory_kb_active_refresh(active_refresh_file)
+    resolution_summary = resolution.get("summary")
+    if not isinstance(resolution_summary, dict):
+        raise ValueError("Active refresh resolution must contain a summary object.")
+    kb_output_dir = str(resolution_summary.get("kb_output_dir") or "").strip()
+    if not kb_output_dir:
+        raise ValueError("Active refresh resolution must contain summary.kb_output_dir.")
+
+    policy_payload = _load_json_file(policy_aligned_slice_file)
+    if not isinstance(policy_payload, dict):
+        raise ValueError("Policy-aligned slice payload must be a JSON object.")
+    normalization = policy_payload.get("normalization")
+    if not isinstance(normalization, dict):
+        raise ValueError("Policy-aligned slice payload must contain a normalization object.")
+    normalized = normalization.get("normalized")
+    if not isinstance(normalized, dict):
+        raise ValueError("Policy-aligned slice payload must contain normalization.normalized.")
+
+    subject_by_conversation_id = _build_spark_conversation_subject_index(normalized)
+    query_cases = _extract_spark_query_cases(normalized)
+    if limit is not None:
+        query_cases = query_cases[:limit]
+
+    comparisons: list[dict[str, object]] = []
+    found_count = 0
+    missing_count = 0
+    resolved_missing_fact_query_count = 0
+    unresolved_missing_fact_query_count = 0
+    found_by_scenario: dict[str, int] = {}
+    missing_by_scenario: dict[str, int] = {}
+    found_by_action_bucket: dict[str, int] = {}
+    missing_by_action_bucket: dict[str, int] = {}
+
+    for case in query_cases:
+        conversation_id = str(case.get("conversation_id") or "").strip()
+        subject = subject_by_conversation_id.get(conversation_id, "")
+        predicate = str(case.get("predicate") or "").strip()
+        scenario_bucket = _spark_conversation_scenario_bucket(conversation_id)
+        action_bucket = _spark_gap_action_bucket(scenario_bucket)
+        kb_support = (
+            _load_kb_current_state_support(kb_output_dir, subject=subject, predicate=predicate)
+            if subject and predicate
+            else {
+                "exists": False,
+                "page_path": None,
+                "value": None,
+                "supporting_evidence_links": [],
+                "supporting_evidence_count": 0,
+            }
+        )
+        found = bool(kb_support.get("supporting_evidence_count", 0) or kb_support.get("value"))
+        if found:
+            found_count += 1
+            found_by_scenario[scenario_bucket] = found_by_scenario.get(scenario_bucket, 0) + 1
+            found_by_action_bucket[action_bucket] = found_by_action_bucket.get(action_bucket, 0) + 1
+        else:
+            missing_count += 1
+            missing_by_scenario[scenario_bucket] = missing_by_scenario.get(scenario_bucket, 0) + 1
+            missing_by_action_bucket[action_bucket] = missing_by_action_bucket.get(action_bucket, 0) + 1
+        if case.get("value_found") is False:
+            if found:
+                resolved_missing_fact_query_count += 1
+            else:
+                unresolved_missing_fact_query_count += 1
+
+        comparisons.append(
+            {
+                "conversation_id": conversation_id,
+                "subject": subject or None,
+                "predicate": predicate,
+                "question": case.get("question"),
+                "scenario_bucket": scenario_bucket,
+                "action_bucket": action_bucket,
+                "value_found": case.get("value_found"),
+                "active_refresh": {
+                    "found": found,
+                    "value": kb_support.get("value"),
+                    "supporting_evidence_count": int(kb_support.get("supporting_evidence_count", 0) or 0),
+                    "page_path": kb_support.get("page_path"),
+                },
+            }
+        )
+
+    return {
+        "input_active_refresh_file": str(Path(active_refresh_file)),
+        "input_policy_aligned_slice_file": str(Path(policy_aligned_slice_file)),
+        "resolution": resolution,
+        "summary": {
+            "query_count": len(query_cases),
+            "found_count": found_count,
+            "missing_count": missing_count,
+            "resolved_missing_fact_query_count": resolved_missing_fact_query_count,
+            "unresolved_missing_fact_query_count": unresolved_missing_fact_query_count,
+            "found_by_scenario": dict(sorted(found_by_scenario.items())),
+            "missing_by_scenario": dict(sorted(missing_by_scenario.items())),
+            "found_by_action_bucket": dict(sorted(found_by_action_bucket.items())),
+            "missing_by_action_bucket": dict(sorted(missing_by_action_bucket.items())),
+        },
+        "comparisons": comparisons,
+        "trace": {
+            "operation": "run_spark_memory_kb_active_refresh_read_report",
+            "limit": limit,
+        },
+    }
 
 
 def _verify_spark_memory_kb_active_refresh_policy(
@@ -8781,6 +8911,14 @@ def main() -> None:
     read_spark_memory_kb_active_refresh_conversation_support.add_argument("conversation_id")
     read_spark_memory_kb_active_refresh_conversation_support.add_argument("predicate")
     read_spark_memory_kb_active_refresh_conversation_support.add_argument("--write")
+    run_spark_memory_kb_active_refresh_read_report = subparsers.add_parser(
+        "run-spark-memory-kb-active-refresh-read-report",
+        help="Run all query turns from a policy-aligned Spark slice through the published active governed KB.",
+    )
+    run_spark_memory_kb_active_refresh_read_report.add_argument("active_refresh_file")
+    run_spark_memory_kb_active_refresh_read_report.add_argument("policy_aligned_slice_file")
+    run_spark_memory_kb_active_refresh_read_report.add_argument("--limit", type=int)
+    run_spark_memory_kb_active_refresh_read_report.add_argument("--write")
     verify_spark_memory_kb_active_refresh_policy = subparsers.add_parser(
         "verify-spark-memory-kb-active-refresh-policy",
         help="Verify that a published active governed Spark KB still honors the policy rows from a policy-aligned slice payload.",
@@ -9578,6 +9716,17 @@ def main() -> None:
             args.policy_aligned_slice_file,
             conversation_id=args.conversation_id,
             predicate=args.predicate,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-memory-kb-active-refresh-read-report":
+        payload = _run_spark_memory_kb_active_refresh_read_report(
+            args.active_refresh_file,
+            args.policy_aligned_slice_file,
+            limit=args.limit,
         )
         if args.write:
             _write_json(Path(args.write), payload)

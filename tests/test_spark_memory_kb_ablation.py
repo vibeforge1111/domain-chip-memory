@@ -1753,6 +1753,132 @@ def test_read_spark_memory_kb_active_refresh_conversation_support_resolves_subje
     assert payload["summary"]["value"] == "North Korea"
 
 
+def test_run_spark_memory_kb_active_refresh_read_report_summarizes_found_and_missing_queries(tmp_path: Path):
+    kb_dir = tmp_path / "published" / "releases" / "spark-kb-test"
+    snapshot_file = kb_dir / "raw" / "memory-snapshots" / "latest.json"
+    allowed_page = kb_dir / "wiki" / "current-state" / "human-telegram-allowed-profile-hack-actor.md"
+    index_file = kb_dir / "wiki" / "index.md"
+    snapshot_file.parent.mkdir(parents=True)
+    allowed_page.parent.mkdir(parents=True)
+    index_file.parent.mkdir(parents=True, exist_ok=True)
+    (kb_dir / "CLAUDE.md").write_text("# KB\n", encoding="utf-8")
+    snapshot_file.write_text('{"current_state":[],"evidence":[],"events":[],"trace":{}}', encoding="utf-8")
+    index_file.write_text("# Index\n", encoding="utf-8")
+    allowed_page.write_text(
+        "\n".join(
+            [
+                "---",
+                "title: Allowed",
+                "---",
+                "# Allowed",
+                "## Value",
+                "North Korea",
+                "## Supporting Evidence",
+                "- [[evidence/test-evidence]]",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    active_refresh_file = tmp_path / "published" / "active-refresh.json"
+    active_refresh_file.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "materialized_kb_output_dir": str(kb_dir),
+                    "materialized_snapshot_file": str(snapshot_file),
+                    "conversation_count": 2,
+                    "accepted_writes": 1,
+                    "skipped_turns": 1,
+                    "policy_skipped_turn_count": 1,
+                    "policy_skipped_by_reason": {"block": 1},
+                    "decision_counts": {"allow": 1, "block": 1},
+                    "current_state_page_count": 1,
+                    "evidence_page_count": 1,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"
+    policy_aligned_slice_file.write_text(
+        json.dumps(
+            {
+                "normalization": {
+                    "normalized": {
+                        "conversations": [
+                            {
+                                "conversation_id": "allowed-conv",
+                                "metadata": {"human_id": "human:telegram:allowed"},
+                                "turns": [
+                                    {
+                                        "message_id": "req-1",
+                                        "role": "user",
+                                        "content": "Who hacked us?",
+                                        "metadata": {
+                                            "request_id": "req-1",
+                                            "source_event_type": "plugin_or_chip_influence_recorded",
+                                            "predicate": "profile.hack_actor",
+                                        },
+                                    },
+                                    {
+                                        "message_id": "req-1",
+                                        "role": "assistant",
+                                        "content": "North Korea",
+                                        "metadata": {
+                                            "request_id": "req-1",
+                                            "source_event_type": "tool_result_received",
+                                            "value_found": False,
+                                        },
+                                    },
+                                ],
+                            },
+                            {
+                                "conversation_id": "blocked-conv",
+                                "metadata": {"human_id": "human:telegram:blocked"},
+                                "turns": [
+                                    {
+                                        "message_id": "req-2",
+                                        "role": "user",
+                                        "content": "What is my timezone?",
+                                        "metadata": {
+                                            "request_id": "req-2",
+                                            "source_event_type": "plugin_or_chip_influence_recorded",
+                                            "predicate": "profile.timezone",
+                                        },
+                                    },
+                                    {
+                                        "message_id": "req-2",
+                                        "role": "assistant",
+                                        "content": "I do not know.",
+                                        "metadata": {
+                                            "request_id": "req-2",
+                                            "source_event_type": "tool_result_received",
+                                            "value_found": False,
+                                        },
+                                    },
+                                ],
+                            },
+                        ]
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = cli._run_spark_memory_kb_active_refresh_read_report(
+        str(active_refresh_file),
+        str(policy_aligned_slice_file),
+    )
+
+    assert payload["summary"]["query_count"] == 2
+    assert payload["summary"]["found_count"] == 1
+    assert payload["summary"]["missing_count"] == 1
+    assert payload["summary"]["resolved_missing_fact_query_count"] == 1
+    assert payload["summary"]["unresolved_missing_fact_query_count"] == 1
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [

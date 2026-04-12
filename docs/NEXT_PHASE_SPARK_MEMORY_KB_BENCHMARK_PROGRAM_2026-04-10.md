@@ -642,6 +642,30 @@ Conversation-read interpretation:
 - the published active refresh can now be queried with the same conversation identifier family used throughout the Spark/Builder artifacts
 - this is the closest repo-local approximation so far to a real Builder-side active KB read path
 
+## 2026-04-12 Active Read Report
+
+The repo now has a batch version of that published read surface too.
+
+Command:
+
+- `python -m domain_chip_memory.cli run-spark-memory-kb-active-refresh-read-report tmp\spark_memory_kb_refresh_publish_limit100_v1\active-refresh.json tmp\spark_memory_kb_policy_aligned_slice_payload_limit100_v1.json --write tmp\spark_memory_kb_active_read_report_limit100_v1.json`
+
+Active-read summary:
+
+- query count: `26`
+- found count: `23`
+- missing count: `3`
+- resolved original missing-fact queries: `4`
+- unresolved original missing-fact queries: `3`
+- found by scenario: `regression 23`
+- missing by scenario: `boundary_abstention_cleanroom 2`, `quality_lane_gauntlet 1`
+
+Active-read interpretation:
+
+- this is now the published-surface equivalent of the earlier replay ablations
+- the final active governed KB exposes only the regression lane and cleanly omits the blocked and deferred lanes
+- that makes the live published surface easy to audit in one artifact instead of checking single lookups one by one
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
