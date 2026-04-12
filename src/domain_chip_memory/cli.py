@@ -4167,6 +4167,115 @@ def _read_spark_memory_kb_active_refresh_support(
     }
 
 
+def _verify_spark_memory_kb_active_refresh_policy(
+    active_refresh_file: str,
+    policy_aligned_slice_file: str,
+) -> dict:
+    resolution = _resolve_spark_memory_kb_active_refresh(active_refresh_file)
+    resolution_summary = resolution.get("summary")
+    if not isinstance(resolution_summary, dict):
+        raise ValueError("Active refresh resolution must contain a summary object.")
+    kb_output_dir = str(resolution_summary.get("kb_output_dir") or "").strip()
+    if not kb_output_dir:
+        raise ValueError("Active refresh resolution must contain summary.kb_output_dir.")
+
+    policy_payload = _load_json_file(policy_aligned_slice_file)
+    if not isinstance(policy_payload, dict):
+        raise ValueError("Policy-aligned slice payload must be a JSON object.")
+    normalization = policy_payload.get("normalization")
+    promotion_policy_rows = policy_payload.get("promotion_policy_rows")
+    if not isinstance(normalization, dict) or not isinstance(promotion_policy_rows, list):
+        raise ValueError("Policy-aligned slice payload must contain normalization and promotion_policy_rows.")
+    normalized = normalization.get("normalized")
+    if not isinstance(normalized, dict):
+        raise ValueError("Policy-aligned slice payload must contain normalization.normalized.")
+    conversations = normalized.get("conversations")
+    if not isinstance(conversations, list):
+        raise ValueError("Policy-aligned slice payload must contain normalization.normalized.conversations.")
+
+    subject_by_conversation_id: dict[str, str] = {}
+    for conversation in conversations:
+        if not isinstance(conversation, dict):
+            continue
+        conversation_id = str(conversation.get("conversation_id") or "").strip()
+        metadata = conversation.get("metadata")
+        if not conversation_id or not isinstance(metadata, dict):
+            continue
+        subject = str(metadata.get("human_id") or "").strip()
+        if subject:
+            subject_by_conversation_id[conversation_id] = subject
+
+    honored_counts: dict[str, int] = {}
+    violated_counts: dict[str, int] = {}
+    subject_missing_count = 0
+    checked_rows: list[dict[str, object]] = []
+    violations: list[dict[str, object]] = []
+
+    for row in promotion_policy_rows:
+        if not isinstance(row, dict):
+            continue
+        decision = str(row.get("policy_decision") or "").strip().lower() or "unknown"
+        target_conversation_id = str(row.get("target_conversation_id") or "").strip()
+        predicate = str(row.get("predicate") or "").strip()
+        subject = subject_by_conversation_id.get(target_conversation_id, "")
+        if not subject or not predicate:
+            subject_missing_count += 1
+            violations.append(
+                {
+                    "policy_decision": decision,
+                    "target_conversation_id": target_conversation_id or None,
+                    "predicate": predicate or None,
+                    "reason": "missing_subject",
+                }
+            )
+            continue
+        kb_support = _load_kb_current_state_support(
+            kb_output_dir,
+            subject=subject,
+            predicate=predicate,
+        )
+        found = bool(kb_support.get("supporting_evidence_count", 0) or kb_support.get("value"))
+        expected_found = decision == "allow"
+        row_result = {
+            "policy_decision": decision,
+            "target_conversation_id": target_conversation_id,
+            "subject": subject,
+            "predicate": predicate,
+            "found": found,
+            "expected_found": expected_found,
+            "value": kb_support.get("value"),
+            "supporting_evidence_count": int(kb_support.get("supporting_evidence_count", 0) or 0),
+            "page_path": kb_support.get("page_path"),
+        }
+        checked_rows.append(row_result)
+        if found == expected_found:
+            honored_counts[decision] = honored_counts.get(decision, 0) + 1
+        else:
+            violated_counts[decision] = violated_counts.get(decision, 0) + 1
+            violations.append(dict(row_result))
+
+    return {
+        "input_active_refresh_file": str(Path(active_refresh_file)),
+        "input_policy_aligned_slice_file": str(Path(policy_aligned_slice_file)),
+        "resolution": resolution,
+        "summary": {
+            "kb_output_dir": kb_output_dir,
+            "policy_row_count": len([row for row in promotion_policy_rows if isinstance(row, dict)]),
+            "checked_row_count": len(checked_rows),
+            "subject_missing_count": subject_missing_count,
+            "honored_counts": dict(sorted(honored_counts.items())),
+            "violated_counts": dict(sorted(violated_counts.items())),
+            "violation_count": len(violations),
+            "policy_honored": len(violations) == 0,
+        },
+        "violations": violations,
+        "checked_rows": checked_rows,
+        "trace": {
+            "operation": "verify_spark_memory_kb_active_refresh_policy",
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -8615,6 +8724,13 @@ def main() -> None:
     read_spark_memory_kb_active_refresh_support.add_argument("subject")
     read_spark_memory_kb_active_refresh_support.add_argument("predicate")
     read_spark_memory_kb_active_refresh_support.add_argument("--write")
+    verify_spark_memory_kb_active_refresh_policy = subparsers.add_parser(
+        "verify-spark-memory-kb-active-refresh-policy",
+        help="Verify that a published active governed Spark KB still honors the policy rows from a policy-aligned slice payload.",
+    )
+    verify_spark_memory_kb_active_refresh_policy.add_argument("active_refresh_file")
+    verify_spark_memory_kb_active_refresh_policy.add_argument("policy_aligned_slice_file")
+    verify_spark_memory_kb_active_refresh_policy.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -9393,6 +9509,16 @@ def main() -> None:
             args.active_refresh_file,
             subject=args.subject,
             predicate=args.predicate,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "verify-spark-memory-kb-active-refresh-policy":
+        payload = _verify_spark_memory_kb_active_refresh_policy(
+            args.active_refresh_file,
+            args.policy_aligned_slice_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)

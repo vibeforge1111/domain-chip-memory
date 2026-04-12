@@ -596,6 +596,29 @@ Read interpretation:
 - the same published active refresh can now serve both a positive allowed lookup and a clean abstention on a blocked lane
 - that makes the policy effect visible at the final lookup boundary, not just during replay and compile steps
 
+## 2026-04-12 Active Policy Verification
+
+The repo now has a direct final-boundary verification step too.
+
+Command:
+
+- `python -m domain_chip_memory.cli verify-spark-memory-kb-active-refresh-policy tmp\spark_memory_kb_refresh_publish_limit100_v1\active-refresh.json tmp\spark_memory_kb_policy_aligned_slice_payload_limit100_v1.json --write tmp\spark_memory_kb_active_policy_verification_limit100_v1.json`
+
+Verification summary:
+
+- policy rows checked: `7`
+- checked rows: `7`
+- subject-missing rows: `0`
+- honored counts: `allow 4`, `block 2`, `defer 1`
+- violation count: `0`
+- policy honored: `true`
+
+Verification interpretation:
+
+- the published governed KB is no longer only assumed to honor policy; the repo now checks that explicitly against the original policy-aligned source rows
+- this verifies the final published lookup surface, not just replay-time skips or compile-time counts
+- if a future refresh accidentally reintroduces blocked or deferred facts, this command will surface the regression as a policy violation instead of relying on manual inspection
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
