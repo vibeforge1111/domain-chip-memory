@@ -284,6 +284,14 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
         "boundary_abstention_cleanroom": {"profile.timezone": 1},
         "regression": {"profile.hack_actor": 1},
     }
+    assert payload["summary"]["missing_fact_action_buckets"] == {
+        "expected_cleanroom_boundary": 1,
+        "regression_candidate": 1,
+    }
+    assert payload["summary"]["missing_fact_predicates_by_action_bucket"] == {
+        "expected_cleanroom_boundary": {"profile.timezone": 1},
+        "regression_candidate": {"profile.hack_actor": 1},
+    }
     assert payload["summary"]["missing_fact_examples_by_predicate"] == {
         "profile.hack_actor": [
             {
@@ -305,10 +313,12 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
     assert payload["summary"]["classification_counts"] == {"missing_fact_query": 2}
     regression_comparison = payload["comparisons"][0]
     assert regression_comparison["scenario_bucket"] == "regression"
+    assert regression_comparison["action_bucket"] == "regression_candidate"
     assert regression_comparison["value_found"] is False
     assert regression_comparison["memory_only"]["answer"] is None
     assert regression_comparison["memory_plus_kb"]["kb_page_exists"] is False
     assert regression_comparison["classification"] == "missing_fact_query"
     cleanroom_comparison = payload["comparisons"][1]
     assert cleanroom_comparison["scenario_bucket"] == "boundary_abstention_cleanroom"
+    assert cleanroom_comparison["action_bucket"] == "expected_cleanroom_boundary"
     assert cleanroom_comparison["classification"] == "missing_fact_query"

@@ -61,7 +61,7 @@ The first combined-system comparison now exists on a narrow Spark-shaped replay 
 Command:
 
 - `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v1.json`
-- latest scenario-aware rerun: `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v5.json`
+- latest scenario-aware rerun: `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v6.json`
 
 Slice definition:
 
@@ -95,8 +95,15 @@ Current result:
   - `regression`: `profile.spark_role` `2`, `profile.hack_actor` `2`
   - `boundary_abstention_cleanroom`: one each of `profile.spark_role`, `profile.hack_actor`, `profile.timezone`, `profile.home_country`
   - `quality_lane_gauntlet`: one each of `profile.spark_role`, `profile.hack_actor`, `profile.timezone`
-- average `memory only` latency: `0.208 ms`
-- average `memory + KB` latency: `0.465 ms`
+- operator action buckets:
+  - `expected_cleanroom_boundary`: `4`
+  - `regression_candidate`: `4`
+  - `gauntlet_candidate`: `3`
+- actionable predicates outside the cleanroom boundary lane:
+  - `regression_candidate`: `profile.spark_role` `2`, `profile.hack_actor` `2`
+  - `gauntlet_candidate`: `profile.spark_role` `1`, `profile.hack_actor` `1`, `profile.timezone` `1`
+- average `memory only` latency: `0.213 ms`
+- average `memory + KB` latency: `0.462 ms`
 
 Interpretation:
 
@@ -114,6 +121,9 @@ Interpretation:
   - regression misses are concentrated in `profile.spark_role` and `profile.hack_actor`
   - the cleanroom boundary lane is carrying the only `profile.home_country` miss and one of each other missing predicate
   - the gauntlet lane is missing Spark role, hack actor, and timezone, but not home country on this slice
+- the latest rerun also adds an operator action bucket:
+  - treat the four cleanroom-boundary misses as expected boundary behavior until a product requirement says otherwise
+  - treat the four regression misses and three gauntlet misses as the current candidate gap slice worth targeting next
 
 So the honest claim after this first A/B is:
 
