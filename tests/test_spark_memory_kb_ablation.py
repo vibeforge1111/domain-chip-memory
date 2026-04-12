@@ -1167,6 +1167,139 @@ def test_run_spark_memory_kb_ablation_can_recompile_policy_aligned_kb(
     assert missing_row["delta"]["answer_changed"] is False
 
 
+def test_build_spark_memory_kb_policy_aligned_slice_compiles_governed_snapshot(tmp_path: Path):
+    source_backed_slice_payload = {
+        "normalization": {
+            "normalized": {
+                "source": "spark_builder_state_db",
+                "writable_roles": ["user"],
+                "conversations": [
+                    {
+                        "conversation_id": "missing-timezone",
+                        "session_id": "missing-timezone",
+                        "metadata": {
+                            "chat_id": "missing-timezone",
+                            "human_id": "human:telegram:missing-timezone",
+                        },
+                        "turns": [
+                            {
+                                "message_id": "clone-timezone",
+                                "role": "user",
+                                "content": "My timezone is Asia/Dubai.",
+                                "timestamp": "2026-04-12T00:09:59Z",
+                                "metadata": {
+                                    "request_id": "clone-timezone",
+                                    "source_event_type": "memory_write_requested",
+                                    "operation": "update",
+                                    "subject": "human:telegram:missing-timezone",
+                                    "predicate": "profile.timezone",
+                                    "value": "Asia/Dubai",
+                                    "memory_kind": "observation",
+                                    "source_backed_clone": True,
+                                    "source_backed_predicate": "profile.timezone",
+                                    "source_backed_from_conversation_id": "answered-timezone",
+                                    "source_backed_from_message_id": "write-timezone",
+                                    "source_backed_target_conversation_id": "missing-timezone",
+                                },
+                            },
+                            {
+                                "message_id": "missing-query",
+                                "role": "user",
+                                "content": "What is my timezone?",
+                                "timestamp": "2026-04-12T00:10:00Z",
+                                "metadata": {
+                                    "request_id": "missing-query",
+                                    "source_event_type": "plugin_or_chip_influence_recorded",
+                                    "predicate": "profile.timezone",
+                                    "label": "timezone",
+                                    "query_kind": "single_fact",
+                                },
+                            },
+                        ],
+                        "probes": [],
+                    },
+                    {
+                        "conversation_id": "answered-timezone",
+                        "session_id": "answered-timezone",
+                        "metadata": {
+                            "chat_id": "answered-timezone",
+                            "human_id": "human:telegram:answered-timezone",
+                        },
+                        "turns": [
+                            {
+                                "message_id": "write-timezone",
+                                "role": "user",
+                                "content": "My timezone is Asia/Dubai.",
+                                "timestamp": "2026-04-12T00:00:00Z",
+                                "metadata": {
+                                    "request_id": "write-timezone",
+                                    "source_event_type": "memory_write_requested",
+                                    "operation": "update",
+                                    "subject": "human:telegram:answered-timezone",
+                                    "predicate": "profile.timezone",
+                                    "value": "Asia/Dubai",
+                                    "memory_kind": "observation",
+                                },
+                            }
+                        ],
+                        "probes": [],
+                    },
+                ],
+            }
+        }
+    }
+    source_backed_slice_file = tmp_path / "source-backed-slice.json"
+    source_backed_slice_file.write_text(json.dumps(source_backed_slice_payload), encoding="utf-8")
+    policy_file = tmp_path / "promotion-policy.json"
+    policy_file.write_text(
+        json.dumps(
+            {
+                "allowed_promotions": [],
+                "deferred_promotions": [],
+                "blocked_promotions": [
+                    {
+                        "policy_decision": "block",
+                        "target_conversation_id": "missing-timezone",
+                        "predicate": "profile.timezone",
+                        "source_conversation_id": "answered-timezone",
+                        "source_message_id": "write-timezone",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output_dir = tmp_path / "policy-aligned-kb"
+
+    payload = cli._build_spark_memory_kb_policy_aligned_slice(
+        str(source_backed_slice_file),
+        str(policy_file),
+        str(output_dir),
+    )
+
+    assert payload["summary"]["conversation_count"] == 2
+    assert payload["summary"]["accepted_writes"] == 1
+    assert payload["summary"]["skipped_turns"] == 1
+    assert payload["summary"]["policy_skipped_turn_count"] == 1
+    assert payload["summary"]["policy_skipped_by_reason"] == {"block": 1}
+    assert payload["compile_result"]["output_dir"] == str(output_dir)
+
+    blocked_support = cli._load_kb_current_state_support(
+        str(output_dir),
+        subject="human:telegram:missing-timezone",
+        predicate="profile.timezone",
+    )
+    allowed_support = cli._load_kb_current_state_support(
+        str(output_dir),
+        subject="human:telegram:answered-timezone",
+        predicate="profile.timezone",
+    )
+    assert blocked_support["supporting_evidence_count"] == 0
+    assert not blocked_support["value"]
+    assert allowed_support["supporting_evidence_count"] == 1
+    assert allowed_support["value"] == "Asia/Dubai"
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [

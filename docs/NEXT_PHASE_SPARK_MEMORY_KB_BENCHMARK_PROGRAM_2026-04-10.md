@@ -444,6 +444,30 @@ Policy-aligned interpretation:
 - the alignment bug is therefore not a replay limitation; it was a KB-compilation-policy mismatch
 - the practical requirement is now explicit: any production KB refresh that includes source-backed promotion data needs to compile from the same governed replay surface, or an equivalent policy-filtered snapshot
 
+## 2026-04-12 Policy-Aligned Slice Artifact
+
+The repo now has a direct builder command for that governed output too.
+
+Command:
+
+- `python -m domain_chip_memory.cli build-spark-memory-kb-policy-aligned-slice tmp\spark_memory_kb_source_backed_slice_limit100_v2.json tmp\spark_memory_kb_promotion_policy_limit100_v1.json tmp\spark_memory_kb_policy_aligned_slice_limit100_v1 --write tmp\spark_memory_kb_policy_aligned_slice_payload_limit100_v1.json`
+
+Artifact summary:
+
+- replayed conversations: `8`
+- accepted writes: `16`
+- skipped turns: `3`
+- policy-skipped turns: `3`
+- policy skip reasons: `block: 2`, `defer: 1`
+- compiled current-state pages: `16`
+- compiled evidence pages: `16`
+
+Artifact interpretation:
+
+- this is now a direct consumable governed KB artifact, not only an ablation mode
+- the policy manifest, shadow replay summary, governed snapshot, and compiled KB are now emitted together
+- upstream integration no longer has to infer which cloned writes were suppressed; the artifact carries the exact skip counts and reasons alongside the compiled output
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

@@ -3815,6 +3815,92 @@ def _build_spark_memory_kb_approved_promotion_slice(
     }
 
 
+def _build_spark_memory_kb_policy_aligned_slice(
+    source_backed_slice_file: str,
+    promotion_policy_file: str,
+    output_dir: str,
+) -> dict:
+    source_backed_payload = _load_json_file(source_backed_slice_file)
+    if not isinstance(source_backed_payload, dict):
+        raise ValueError("Source-backed slice payload must be a JSON object.")
+    normalization = source_backed_payload.get("normalization")
+    if not isinstance(normalization, dict):
+        raise ValueError("Source-backed slice payload must contain a normalization object.")
+    normalized = normalization.get("normalized")
+    if not isinstance(normalized, dict):
+        raise ValueError("Source-backed slice payload must contain normalization.normalized.")
+
+    promotion_policy_rows = _load_spark_memory_kb_promotion_policy_rows(promotion_policy_file)
+    writable_roles = normalized.get("writable_roles")
+    configured_roles = (
+        tuple(str(role) for role in writable_roles)
+        if isinstance(writable_roles, list)
+        else ("user",)
+    )
+    adapter = SparkShadowIngestAdapter(
+        writable_roles=configured_roles,
+        promotion_policy_rows=tuple(promotion_policy_rows),
+    )
+    evaluations, adapter = _execute_shadow_replay_payload(normalized, adapter=adapter)
+    shadow_payload = _build_shadow_report_payload_from_evaluations(evaluations)
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Memory KB Policy-Aligned Slice",
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+
+    policy_skipped_turn_count = 0
+    policy_skipped_by_reason: dict[str, int] = {}
+    for evaluation in shadow_payload.get("evaluations", []):
+        if not isinstance(evaluation, dict):
+            continue
+        trace = evaluation.get("trace")
+        if not isinstance(trace, dict):
+            continue
+        turn_traces = trace.get("turn_traces")
+        if not isinstance(turn_traces, list):
+            continue
+        for trace in turn_traces:
+            if not isinstance(trace, dict):
+                continue
+            if str(trace.get("action") or "").strip() != "skipped_promotion_policy":
+                continue
+            policy_skipped_turn_count += 1
+            reason = str(trace.get("unsupported_reason") or "").strip() or "unknown"
+            policy_skipped_by_reason[reason] = policy_skipped_by_reason.get(reason, 0) + 1
+
+    shadow_summary = dict(shadow_payload.get("report", {}).get("summary", {}))
+    conversations = normalized.get("conversations")
+    conversation_count = len([item for item in conversations if isinstance(item, dict)]) if isinstance(conversations, list) else 0
+
+    return {
+        "input_source_backed_slice_file": str(Path(source_backed_slice_file)),
+        "input_promotion_policy_file": str(Path(promotion_policy_file)),
+        "summary": {
+            "conversation_count": conversation_count,
+            "accepted_writes": int(shadow_summary.get("accepted_writes", 0) or 0),
+            "skipped_turns": int(shadow_summary.get("skipped_turns", 0) or 0),
+            "policy_skipped_turn_count": policy_skipped_turn_count,
+            "policy_skipped_by_reason": dict(sorted(policy_skipped_by_reason.items())),
+            "current_state_page_count": int(compile_result.get("current_state_page_count", 0) or 0),
+            "evidence_page_count": int(compile_result.get("evidence_page_count", 0) or 0),
+        },
+        "promotion_policy_rows": promotion_policy_rows,
+        "normalization": {
+            "normalized": normalized,
+        },
+        "shadow_report": shadow_payload,
+        "snapshot": snapshot,
+        "compile_result": compile_result,
+        "health_report": health_report,
+        "trace": {
+            "operation": "build_spark_memory_kb_policy_aligned_slice",
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -8221,6 +8307,14 @@ def main() -> None:
     build_spark_memory_kb_approved_promotion_slice.add_argument("output_dir")
     build_spark_memory_kb_approved_promotion_slice.add_argument("--include-optional", action="store_true")
     build_spark_memory_kb_approved_promotion_slice.add_argument("--write")
+    build_spark_memory_kb_policy_aligned_slice = subparsers.add_parser(
+        "build-spark-memory-kb-policy-aligned-slice",
+        help="Replay a source-backed Spark slice under promotion policy, then compile a policy-aligned KB artifact.",
+    )
+    build_spark_memory_kb_policy_aligned_slice.add_argument("source_backed_slice_file")
+    build_spark_memory_kb_policy_aligned_slice.add_argument("promotion_policy_file")
+    build_spark_memory_kb_policy_aligned_slice.add_argument("output_dir")
+    build_spark_memory_kb_policy_aligned_slice.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -8939,6 +9033,17 @@ def main() -> None:
             args.source_backed_slice_file,
             args.output_dir,
             include_optional=args.include_optional,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-memory-kb-policy-aligned-slice":
+        payload = _build_spark_memory_kb_policy_aligned_slice(
+            args.source_backed_slice_file,
+            args.promotion_policy_file,
+            args.output_dir,
         )
         if args.write:
             _write_json(Path(args.write), payload)
