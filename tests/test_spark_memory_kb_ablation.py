@@ -134,6 +134,8 @@ def test_run_spark_memory_kb_ablation_reports_matching_answer_and_kb_support(tmp
     assert payload["summary"]["memory_plus_kb_answered"] == 1
     assert payload["summary"]["answer_delta_count"] == 0
     assert payload["summary"]["kb_supported_query_count"] == 1
+    assert payload["summary"]["resolved_missing_fact_query_count"] == 0
+    assert payload["summary"]["unresolved_missing_fact_query_count"] == 0
     assert payload["summary"]["classification_counts"] == {"answered_with_kb_support": 1}
     comparison = payload["comparisons"][0]
     assert comparison["replay_source_evidence"] == {
@@ -328,6 +330,8 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
     assert payload["summary"]["memory_only_answered"] == 1
     assert payload["summary"]["memory_plus_kb_answered"] == 1
     assert payload["summary"]["missing_fact_query_count"] == 2
+    assert payload["summary"]["resolved_missing_fact_query_count"] == 0
+    assert payload["summary"]["unresolved_missing_fact_query_count"] == 2
     assert payload["summary"]["missing_fact_predicates"] == {
         "profile.hack_actor": 1,
         "profile.timezone": 1,
@@ -596,3 +600,176 @@ def test_build_spark_memory_kb_sourcing_slice_selects_missing_and_source_backed_
         "answered-timezone",
     ]
     assert payload["compile_result"] == {"output_dir": str(tmp_path / "kb")}
+
+
+def test_build_spark_memory_kb_source_backed_slice_injects_writes_and_clears_missing_query(
+    tmp_path: Path, monkeypatch
+):
+    sourcing_slice_payload = {
+        "predicate_targets": [
+            {
+                "predicate": "profile.timezone",
+                "missing_query_count": 1,
+                "source_backed_answered_count": 1,
+                "missing_examples": [
+                    {
+                        "conversation_id": "missing-timezone",
+                        "question": "What is my timezone?",
+                        "label": "timezone",
+                        "evidence_summary": "status=memory_profile_fact predicate=profile.timezone value_found=no",
+                    }
+                ],
+                "source_backed_examples": [
+                    {
+                        "conversation_id": "answered-timezone",
+                        "question": "What is my timezone?",
+                        "answer": "Asia/Dubai",
+                        "scenario_bucket": "regression",
+                    }
+                ],
+            }
+        ],
+        "normalization": {
+            "normalized": {
+                "source": "spark_builder_state_db",
+                "writable_roles": ["user"],
+                "conversations": [
+                    {
+                        "conversation_id": "missing-timezone",
+                        "session_id": "missing-timezone",
+                        "metadata": {
+                            "chat_id": "missing-timezone",
+                            "human_id": "human:telegram:missing-timezone",
+                        },
+                        "turns": [
+                            {
+                                "message_id": "missing-query",
+                                "role": "user",
+                                "content": "What is my timezone?",
+                                "timestamp": "2026-04-12T00:10:00Z",
+                                "metadata": {
+                                    "request_id": "missing-query",
+                                    "source_event_type": "plugin_or_chip_influence_recorded",
+                                    "predicate": "profile.timezone",
+                                    "label": "timezone",
+                                    "query_kind": "single_fact",
+                                },
+                            },
+                            {
+                                "message_id": "missing-query",
+                                "role": "assistant",
+                                "content": "Researcher bridge answered a single-fact profile query directly from memory.",
+                                "timestamp": "2026-04-12T00:10:01Z",
+                                "metadata": {
+                                    "request_id": "missing-query",
+                                    "source_event_type": "tool_result_received",
+                                    "bridge_mode": "memory_profile_fact",
+                                    "routing_decision": "memory_profile_fact_query",
+                                    "predicate": "profile.timezone",
+                                    "value_found": False,
+                                    "evidence_summary": "status=memory_profile_fact predicate=profile.timezone value_found=no",
+                                },
+                            },
+                        ],
+                        "probes": [],
+                    },
+                    {
+                        "conversation_id": "answered-timezone",
+                        "session_id": "answered-timezone",
+                        "metadata": {
+                            "chat_id": "answered-timezone",
+                            "human_id": "human:telegram:answered-timezone",
+                        },
+                        "turns": [
+                            {
+                                "message_id": "write-timezone",
+                                "role": "user",
+                                "content": "My timezone is Asia/Dubai.",
+                                "timestamp": "2026-04-12T00:00:00Z",
+                                "metadata": {
+                                    "request_id": "write-timezone",
+                                    "source_event_type": "memory_write_requested",
+                                    "operation": "update",
+                                    "subject": "human:telegram:answered-timezone",
+                                    "predicate": "profile.timezone",
+                                    "value": "Asia/Dubai",
+                                    "memory_kind": "observation",
+                                },
+                            },
+                            {
+                                "message_id": "answered-query",
+                                "role": "user",
+                                "content": "What is my timezone?",
+                                "timestamp": "2026-04-12T00:00:05Z",
+                                "metadata": {
+                                    "request_id": "answered-query",
+                                    "source_event_type": "plugin_or_chip_influence_recorded",
+                                    "predicate": "profile.timezone",
+                                    "label": "timezone",
+                                    "query_kind": "single_fact",
+                                },
+                            },
+                            {
+                                "message_id": "answered-query",
+                                "role": "assistant",
+                                "content": "Your timezone is Asia/Dubai.",
+                                "timestamp": "2026-04-12T00:00:06Z",
+                                "metadata": {
+                                    "request_id": "answered-query",
+                                    "source_event_type": "tool_result_received",
+                                    "bridge_mode": "memory_profile_fact",
+                                    "routing_decision": "memory_profile_fact_query",
+                                    "predicate": "profile.timezone",
+                                    "value_found": True,
+                                    "evidence_summary": "status=memory_profile_fact predicate=profile.timezone value_found=yes",
+                                },
+                            },
+                        ],
+                        "probes": [],
+                    },
+                ],
+            }
+        },
+    }
+    sourcing_slice_file = tmp_path / "sourcing-slice.json"
+    output_dir = tmp_path / "source-backed-kb"
+    output_file = tmp_path / "source-backed-slice.json"
+    sourcing_slice_file.write_text(json.dumps(sourcing_slice_payload), encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-memory-kb-source-backed-slice",
+            str(sourcing_slice_file),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["summary"]["predicate_count"] == 1
+    assert payload["summary"]["injected_write_count"] == 1
+    assert payload["summary"]["target_conversation_count"] == 1
+    assert payload["summary"]["missing_source_count"] == 0
+    injected = payload["injected_writes"][0]
+    assert injected["predicate"] == "profile.timezone"
+    assert injected["target_conversation_id"] == "missing-timezone"
+    injected_turn = payload["normalization"]["normalized"]["conversations"][0]["turns"][0]
+    assert injected_turn["metadata"]["source_backed_clone"] is True
+    assert injected_turn["metadata"]["subject"] == "human:telegram:missing-timezone"
+    assert injected_turn["metadata"]["value"] == "Asia/Dubai"
+    assert payload["compile_result"]["output_dir"] == str(output_dir)
+    assert payload["health_report"]["valid"] is True
+
+    ablation = cli._run_spark_memory_kb_ablation(str(output_file))
+    assert ablation["summary"]["missing_fact_query_count"] == 1
+    assert ablation["summary"]["resolved_missing_fact_query_count"] == 1
+    assert ablation["summary"]["unresolved_missing_fact_query_count"] == 0
+    assert ablation["summary"]["memory_only_answered"] == 2
+    assert ablation["summary"]["memory_plus_kb_answered"] == 2
+    assert ablation["summary"]["kb_supported_query_count"] == 2

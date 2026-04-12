@@ -174,6 +174,41 @@ Interpretation:
 - the remaining misses on this compact slice are still all zero-source-evidence abstentions for those exact subject/predicate pairs
 - the next productive move is to build or normalize a truly source-backed version of those seven miss conversations, then rerun this compact slice instead of the full `125`-query replay
 
+## 2026-04-12 Source-Backed Compact Slice
+
+The first truly source-backed compact slice now exists too.
+
+Commands:
+
+- `python -m domain_chip_memory.cli build-spark-memory-kb-source-backed-slice tmp\spark_memory_kb_sourcing_slice_limit100_v1.json tmp\spark_memory_kb_source_backed_slice_limit100_v2 --write tmp\spark_memory_kb_source_backed_slice_limit100_v2.json`
+- `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\spark_memory_kb_source_backed_slice_limit100_v2.json --write tmp\spark_memory_kb_ablation_source_backed_slice_limit100_v2.json`
+
+Source-backed build result:
+
+- injected write count: `7`
+- target conversation count: `7`
+- missing source count: `0`
+
+Source-backed compact-slice result:
+
+- query count: `26`
+- `memory only` answered: `26`
+- `memory + KB` answered: `26`
+- KB-supported query count: `26`
+- original missing-fact query count: `7`
+- resolved missing-fact query count: `7`
+- unresolved missing-fact query count: `0`
+- missing-fact source coverage: `with_replay_source_evidence: 7`
+- classification counts:
+  - `answered_with_kb_support`: `26`
+
+Interpretation:
+
+- the compact source-backed slice now demonstrates the exact point of the previous analysis
+- the seven compact-slice misses were not runtime incapability; they were zero-source-evidence abstentions
+- once the same predicates are backed by replayed write evidence inside those target conversations, all seven queries become answerable and KB-supported
+- the remaining work is no longer to prove the memory or KB layer can answer these predicates; it is to decide which production lanes should actually receive that source evidence and under what product rules
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

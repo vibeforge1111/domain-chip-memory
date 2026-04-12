@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import os
 import re
@@ -8,6 +9,7 @@ import sqlite3
 import subprocess
 import sys
 from dataclasses import asdict, replace
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from time import perf_counter
 
@@ -2759,6 +2761,8 @@ def _run_spark_memory_kb_ablation(
     answer_delta_count = 0
     kb_supported_query_count = 0
     missing_fact_query_count = 0
+    resolved_missing_fact_query_count = 0
+    unresolved_missing_fact_query_count = 0
     classification_counts: dict[str, int] = {}
     missing_fact_predicates: dict[str, int] = {}
     missing_fact_examples_by_predicate: dict[str, list[dict[str, str | None]]] = {}
@@ -2812,6 +2816,10 @@ def _run_spark_memory_kb_ablation(
             kb_supported_query_count += 1
         if case.get("value_found") is False:
             missing_fact_query_count += 1
+            if memory_only.found or memory_plus_kb_found:
+                resolved_missing_fact_query_count += 1
+            else:
+                unresolved_missing_fact_query_count += 1
             predicate_key = str(case["predicate"])
             missing_fact_predicates[predicate_key] = missing_fact_predicates.get(predicate_key, 0) + 1
             missing_fact_scenarios[scenario_bucket] = missing_fact_scenarios.get(scenario_bucket, 0) + 1
@@ -2935,6 +2943,8 @@ def _run_spark_memory_kb_ablation(
             "answer_delta_count": answer_delta_count,
             "kb_supported_query_count": kb_supported_query_count,
             "missing_fact_query_count": missing_fact_query_count,
+            "resolved_missing_fact_query_count": resolved_missing_fact_query_count,
+            "unresolved_missing_fact_query_count": unresolved_missing_fact_query_count,
             "missing_fact_predicates": dict(sorted(missing_fact_predicates.items())),
             "missing_fact_scenarios": dict(sorted(missing_fact_scenarios.items())),
             "missing_fact_predicates_by_scenario": {
@@ -3069,6 +3079,243 @@ def _build_spark_memory_kb_sourcing_slice(
         "trace": {
             "operation": "build_spark_memory_kb_sourcing_slice",
             "exemplars_per_predicate": exemplars_per_predicate,
+        },
+    }
+
+
+def _parse_utc_timestamp(value: str | None) -> datetime | None:
+    if value is None:
+        return None
+    normalized = str(value).strip()
+    if not normalized:
+        return None
+    if normalized.endswith("Z"):
+        normalized = normalized[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+
+
+def _format_utc_timestamp(value: datetime) -> str:
+    return value.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _select_source_backed_write_turn(
+    source_conversation: dict,
+    *,
+    predicate: str,
+    answer: str | None,
+) -> dict | None:
+    turns = source_conversation.get("turns", [])
+    if not isinstance(turns, list):
+        return None
+    candidates = []
+    for turn in turns:
+        if not isinstance(turn, dict):
+            continue
+        metadata = turn.get("metadata")
+        if not isinstance(metadata, dict):
+            continue
+        if str(turn.get("role") or "").strip().lower() != "user":
+            continue
+        if str(metadata.get("source_event_type") or "").strip().lower() != "memory_write_requested":
+            continue
+        if str(metadata.get("predicate") or "").strip() != predicate:
+            continue
+        candidates.append(turn)
+    if not candidates:
+        return None
+    normalized_answer = str(answer or "").strip()
+    if normalized_answer:
+        exact = [turn for turn in candidates if str(dict(turn.get("metadata", {})).get("value") or "").strip() == normalized_answer]
+        if exact:
+            candidates = exact
+    return copy.deepcopy(candidates[-1])
+
+
+def _inject_source_backed_write_turns(
+    normalized: dict,
+    *,
+    predicate_targets: list[dict],
+) -> tuple[dict, list[dict], list[dict]]:
+    conversations = normalized.get("conversations", [])
+    if not isinstance(conversations, list):
+        raise ValueError("Sourcing slice must contain normalization.normalized.conversations.")
+
+    conversation_lookup: dict[str, dict] = {}
+    for conversation in conversations:
+        if not isinstance(conversation, dict):
+            continue
+        conversation_id = str(conversation.get("conversation_id") or "").strip()
+        if conversation_id:
+            conversation_lookup[conversation_id] = conversation
+
+    injected_records: list[dict] = []
+    missing_sources: list[dict] = []
+    rewritten_conversations = copy.deepcopy(conversations)
+    rewritten_lookup = {
+        str(conversation.get("conversation_id") or "").strip(): conversation
+        for conversation in rewritten_conversations
+        if isinstance(conversation, dict) and str(conversation.get("conversation_id") or "").strip()
+    }
+
+    for target in predicate_targets:
+        if not isinstance(target, dict):
+            continue
+        predicate = str(target.get("predicate") or "").strip()
+        if not predicate:
+            continue
+        source_examples = target.get("source_backed_examples")
+        missing_examples = target.get("missing_examples")
+        if not isinstance(source_examples, list) or not source_examples:
+            missing_sources.append({"predicate": predicate, "reason": "no_source_backed_example"})
+            continue
+        source_example = next((item for item in source_examples if isinstance(item, dict)), None)
+        if source_example is None:
+            missing_sources.append({"predicate": predicate, "reason": "invalid_source_backed_example"})
+            continue
+        source_conversation_id = str(source_example.get("conversation_id") or "").strip()
+        source_conversation = conversation_lookup.get(source_conversation_id)
+        if source_conversation is None:
+            missing_sources.append(
+                {
+                    "predicate": predicate,
+                    "reason": "source_conversation_missing",
+                    "conversation_id": source_conversation_id,
+                }
+            )
+            continue
+        source_turn = _select_source_backed_write_turn(
+            source_conversation,
+            predicate=predicate,
+            answer=str(source_example.get("answer") or "").strip() or None,
+        )
+        if source_turn is None:
+            missing_sources.append(
+                {
+                    "predicate": predicate,
+                    "reason": "source_write_turn_missing",
+                    "conversation_id": source_conversation_id,
+                }
+            )
+            continue
+        if not isinstance(missing_examples, list):
+            continue
+        for missing_index, missing_example in enumerate(missing_examples):
+            if not isinstance(missing_example, dict):
+                continue
+            target_conversation_id = str(missing_example.get("conversation_id") or "").strip()
+            target_conversation = rewritten_lookup.get(target_conversation_id)
+            if target_conversation is None:
+                missing_sources.append(
+                    {
+                        "predicate": predicate,
+                        "reason": "target_conversation_missing",
+                        "conversation_id": target_conversation_id,
+                    }
+                )
+                continue
+            target_metadata = target_conversation.get("metadata")
+            if not isinstance(target_metadata, dict):
+                target_metadata = {}
+                target_conversation["metadata"] = target_metadata
+            target_turns = target_conversation.get("turns")
+            if not isinstance(target_turns, list):
+                target_turns = []
+                target_conversation["turns"] = target_turns
+            cloned_turn = copy.deepcopy(source_turn)
+            cloned_metadata = cloned_turn.get("metadata")
+            if not isinstance(cloned_metadata, dict):
+                cloned_metadata = {}
+                cloned_turn["metadata"] = cloned_metadata
+            first_timestamp = None
+            if target_turns:
+                first_timestamp = _parse_utc_timestamp(str(dict(target_turns[0]).get("timestamp") or ""))
+            if first_timestamp is not None:
+                first_timestamp = first_timestamp - timedelta(seconds=missing_index + 1)
+                cloned_turn["timestamp"] = _format_utc_timestamp(first_timestamp)
+            cloned_message_id = (
+                f"{cloned_turn.get('message_id', 'source-write')}:source-backed:{re.sub(r'[^a-z0-9]+', '-', predicate.lower()).strip('-')}"
+                f":{missing_index + 1}"
+            )
+            target_human_id = str(target_metadata.get("human_id") or "").strip()
+            target_chat_id = str(target_metadata.get("chat_id") or "").strip()
+            cloned_turn["message_id"] = cloned_message_id
+            cloned_turn["role"] = "user"
+            cloned_metadata["subject"] = target_human_id or str(cloned_metadata.get("subject") or "")
+            cloned_metadata["chat_id"] = target_chat_id or str(cloned_metadata.get("chat_id") or "")
+            cloned_metadata["request_id"] = cloned_message_id
+            cloned_metadata["source_backed_clone"] = True
+            cloned_metadata["source_backed_predicate"] = predicate
+            cloned_metadata["source_backed_from_conversation_id"] = source_conversation_id
+            cloned_metadata["source_backed_from_message_id"] = str(source_turn.get("message_id") or "")
+            cloned_metadata["source_backed_target_conversation_id"] = target_conversation_id
+            target_turns.insert(0, cloned_turn)
+            injected_records.append(
+                {
+                    "predicate": predicate,
+                    "target_conversation_id": target_conversation_id,
+                    "source_conversation_id": source_conversation_id,
+                    "source_message_id": str(source_turn.get("message_id") or ""),
+                    "cloned_message_id": cloned_message_id,
+                    "value": str(cloned_metadata.get("value") or "").strip() or None,
+                }
+            )
+
+    rewritten_normalized = dict(normalized)
+    rewritten_normalized["conversations"] = rewritten_conversations
+    return rewritten_normalized, injected_records, missing_sources
+
+
+def _build_spark_memory_kb_source_backed_slice(
+    sourcing_slice_file: str,
+    output_dir: str,
+) -> dict:
+    sourcing_payload = _load_json_file(sourcing_slice_file)
+    if not isinstance(sourcing_payload, dict):
+        raise ValueError("Sourcing slice payload must be a JSON object.")
+    predicate_targets = sourcing_payload.get("predicate_targets")
+    if not isinstance(predicate_targets, list):
+        raise ValueError("Sourcing slice payload must contain predicate_targets.")
+    normalization = sourcing_payload.get("normalization")
+    if not isinstance(normalization, dict):
+        raise ValueError("Sourcing slice payload must contain a normalization object.")
+    normalized = normalization.get("normalized")
+    if not isinstance(normalized, dict):
+        raise ValueError("Sourcing slice payload must contain normalization.normalized.")
+
+    rewritten_normalized, injected_records, missing_sources = _inject_source_backed_write_turns(
+        normalized,
+        predicate_targets=predicate_targets,
+    )
+    _, adapter = _execute_shadow_replay_payload(rewritten_normalized)
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Memory KB Source-Backed Slice",
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+
+    return {
+        "input_sourcing_slice_file": str(Path(sourcing_slice_file)),
+        "summary": {
+            "predicate_count": len([item for item in predicate_targets if isinstance(item, dict)]),
+            "injected_write_count": len(injected_records),
+            "target_conversation_count": len({str(item.get('target_conversation_id') or '') for item in injected_records if str(item.get('target_conversation_id') or '')}),
+            "missing_source_count": len(missing_sources),
+        },
+        "injected_writes": injected_records,
+        "missing_sources": missing_sources,
+        "normalization": {
+            "normalized": rewritten_normalized,
+        },
+        "snapshot": snapshot,
+        "compile_result": compile_result,
+        "health_report": health_report,
+        "trace": {
+            "operation": "build_spark_memory_kb_source_backed_slice",
         },
     }
 
@@ -7418,6 +7665,13 @@ def main() -> None:
     build_spark_memory_kb_sourcing_slice.add_argument("--data-file")
     build_spark_memory_kb_sourcing_slice.add_argument("--exemplars-per-predicate", type=int, default=1)
     build_spark_memory_kb_sourcing_slice.add_argument("--write")
+    build_spark_memory_kb_source_backed_slice = subparsers.add_parser(
+        "build-spark-memory-kb-source-backed-slice",
+        help="Inject source-backed write turns into missing-fact conversations, replay the result, and compile a fresh Spark KB slice.",
+    )
+    build_spark_memory_kb_source_backed_slice.add_argument("sourcing_slice_file")
+    build_spark_memory_kb_source_backed_slice.add_argument("output_dir")
+    build_spark_memory_kb_source_backed_slice.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -8073,6 +8327,16 @@ def main() -> None:
             args.ablation_file,
             data_file=args.data_file,
             exemplars_per_predicate=args.exemplars_per_predicate,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-memory-kb-source-backed-slice":
+        payload = _build_spark_memory_kb_source_backed_slice(
+            args.sourcing_slice_file,
+            args.output_dir,
         )
         if args.write:
             _write_json(Path(args.write), payload)
