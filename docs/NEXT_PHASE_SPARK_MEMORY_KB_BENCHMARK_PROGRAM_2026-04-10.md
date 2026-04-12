@@ -819,6 +819,32 @@ Read interpretation:
 - the top-level governed release manifest is now a complete repo-local lookup entrypoint, not just a release gate
 - downstream callers can resolve release state, assert readiness, read one fact, read one conversation fact, or audit the full published surface without manually passing `active-refresh.json` or the policy-aligned slice file
 
+## 2026-04-12 Governed Release Summary
+
+The ship command now persists top-level governed release audit files too.
+
+Commands:
+
+- `python -m domain_chip_memory.cli ship-spark-memory-kb-governed-release tmp\spark_memory_kb_refresh_manifest_limit100_v1.json tmp\spark_memory_kb_policy_aligned_slice_payload_limit100_v1.json tmp\spark_memory_kb_governed_ship_limit100_v1 --write tmp\spark_memory_kb_governed_ship_payload_limit100_v1.json`
+- `python -m domain_chip_memory.cli build-spark-memory-kb-governed-release-summary tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release.json --write tmp\spark_memory_kb_governed_release_summary_limit100_v1.json`
+
+Summary result:
+
+- governed release read report file: `tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release-read-report.json`
+- governed release summary file: `tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release-summary.json`
+- ready: `true`
+- health valid: `true`
+- policy honored: `true`
+- query count: `26`
+- found count: `23`
+- missing count: `3`
+- missing by action bucket: `expected_cleanroom_boundary 2`, `gauntlet_candidate 1`
+
+Summary interpretation:
+
+- a single ship run now leaves the top-level manifest, top-level read audit, and top-level compact summary together in the publish root
+- downstream automation no longer needs to synthesize a post-ship report itself just to inspect the published governed surface
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

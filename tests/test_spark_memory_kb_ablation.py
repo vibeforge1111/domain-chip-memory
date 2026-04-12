@@ -2322,6 +2322,59 @@ def test_run_spark_memory_kb_governed_release_read_report_uses_top_level_manifes
     assert payload["summary"]["query_count"] == 26
 
 
+def test_build_spark_memory_kb_governed_release_summary_combines_resolution_and_read_report(
+    tmp_path: Path,
+    monkeypatch,
+):
+    governed_release_file = tmp_path / "governed-release.json"
+    governed_release_file.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(
+        cli,
+        "_resolve_spark_memory_kb_governed_release",
+        lambda governed_release: {
+            "summary": {
+                "publish_root_dir": "tmp/published",
+                "release_output_dir": "tmp/published/releases/spark-kb-test",
+                "snapshot_file": "tmp/published/releases/spark-kb-test/raw/memory-snapshots/latest.json",
+                "health_valid": True,
+                "policy_honored": True,
+                "ready": True,
+                "failure_reason_count": 0,
+            }
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_run_spark_memory_kb_governed_release_read_report",
+        lambda governed_release, *, limit: {
+            "summary": {
+                "query_count": 26,
+                "found_count": 23,
+                "missing_count": 3,
+                "resolved_missing_fact_query_count": 4,
+                "unresolved_missing_fact_query_count": 3,
+                "found_by_action_bucket": {"regression_candidate": 23},
+                "missing_by_action_bucket": {"expected_cleanroom_boundary": 2, "gauntlet_candidate": 1},
+            }
+        },
+    )
+
+    payload = cli._build_spark_memory_kb_governed_release_summary(
+        str(governed_release_file),
+    )
+
+    assert payload["summary"]["publish_root_dir"] == "tmp/published"
+    assert payload["summary"]["release_output_dir"] == "tmp/published/releases/spark-kb-test"
+    assert payload["summary"]["health_valid"] is True
+    assert payload["summary"]["policy_honored"] is True
+    assert payload["summary"]["ready"] is True
+    assert payload["summary"]["query_count"] == 26
+    assert payload["summary"]["missing_by_action_bucket"] == {
+        "expected_cleanroom_boundary": 2,
+        "gauntlet_candidate": 1,
+    }
+
+
 def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(tmp_path: Path, monkeypatch):
     refresh_manifest_file = tmp_path / "refresh-manifest.json"
     policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"
@@ -2360,6 +2413,27 @@ def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(t
             }
         },
     )
+    monkeypatch.setattr(
+        cli,
+        "_run_spark_memory_kb_governed_release_read_report",
+        lambda governed_release_file, limit=None: {
+            "summary": {
+                "query_count": 26,
+                "found_count": 23,
+                "missing_count": 3,
+            }
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_build_spark_memory_kb_governed_release_summary",
+        lambda governed_release_file, limit=None: {
+            "summary": {
+                "ready": True,
+                "query_count": 26,
+            }
+        },
+    )
 
     payload = cli._ship_spark_memory_kb_governed_release(
         str(refresh_manifest_file),
@@ -2371,6 +2445,8 @@ def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(t
     assert Path(payload["active_release_summary_file"]).exists()
     assert Path(payload["active_release_gate_file"]).exists()
     assert Path(payload["governed_release_file"]).exists()
+    assert Path(payload["governed_release_read_report_file"]).exists()
+    assert Path(payload["governed_release_summary_file"]).exists()
     assert payload["summary"]["ready"] is True
 
 
