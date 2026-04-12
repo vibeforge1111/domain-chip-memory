@@ -2704,6 +2704,29 @@ def _spark_gap_action_bucket(scenario_bucket: str) -> str:
     return "other_candidate"
 
 
+def _build_snapshot_subject_predicate_index(snapshot: dict[str, object]) -> dict[tuple[str, str], dict[str, int]]:
+    index: dict[tuple[str, str], dict[str, int]] = {}
+    for row in snapshot.get("current_state", []):
+        if not isinstance(row, dict):
+            continue
+        subject = str(row.get("subject") or "").strip()
+        predicate = str(row.get("predicate") or "").strip()
+        if not subject or not predicate:
+            continue
+        bucket = index.setdefault((subject, predicate), {"current_state_count": 0, "observation_count": 0})
+        bucket["current_state_count"] += 1
+    for row in snapshot.get("observations", []):
+        if not isinstance(row, dict):
+            continue
+        subject = str(row.get("subject") or "").strip()
+        predicate = str(row.get("predicate") or "").strip()
+        if not subject or not predicate:
+            continue
+        bucket = index.setdefault((subject, predicate), {"current_state_count": 0, "observation_count": 0})
+        bucket["observation_count"] += 1
+    return index
+
+
 def _run_spark_memory_kb_ablation(
     data_file: str,
     *,
@@ -2724,6 +2747,8 @@ def _run_spark_memory_kb_ablation(
         raise ValueError("Spark intake payload must contain compile_result.output_dir.")
 
     _, adapter = _execute_shadow_replay_payload(normalized)
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    snapshot_index = _build_snapshot_subject_predicate_index(snapshot)
     query_cases = _extract_spark_query_cases(normalized)
     if limit is not None:
         query_cases = query_cases[:limit]
@@ -2741,12 +2766,17 @@ def _run_spark_memory_kb_ablation(
     missing_fact_predicates_by_scenario: dict[str, dict[str, int]] = {}
     missing_fact_action_buckets: dict[str, int] = {}
     missing_fact_predicates_by_action_bucket: dict[str, dict[str, int]] = {}
+    missing_fact_source_coverage: dict[str, int] = {}
     total_memory_only_latency_ms = 0.0
     total_memory_plus_kb_latency_ms = 0.0
 
     for case in query_cases:
         scenario_bucket = _spark_conversation_scenario_bucket(str(case["conversation_id"]))
         action_bucket = _spark_gap_action_bucket(scenario_bucket)
+        snapshot_support = snapshot_index.get((str(case["subject"]), str(case["predicate"])), {})
+        replay_current_state_count = int(snapshot_support.get("current_state_count", 0) or 0)
+        replay_observation_count = int(snapshot_support.get("observation_count", 0) or 0)
+        has_replay_source_evidence = replay_current_state_count > 0 or replay_observation_count > 0
         memory_start = perf_counter()
         memory_only = adapter.sdk.explain_answer(
             AnswerExplanationRequest(
@@ -2790,6 +2820,8 @@ def _run_spark_memory_kb_ablation(
             missing_fact_action_buckets[action_bucket] = missing_fact_action_buckets.get(action_bucket, 0) + 1
             action_predicates = missing_fact_predicates_by_action_bucket.setdefault(action_bucket, {})
             action_predicates[predicate_key] = action_predicates.get(predicate_key, 0) + 1
+            source_coverage_key = "with_replay_source_evidence" if has_replay_source_evidence else "without_replay_source_evidence"
+            missing_fact_source_coverage[source_coverage_key] = missing_fact_source_coverage.get(source_coverage_key, 0) + 1
             examples = missing_fact_examples_by_predicate.setdefault(predicate_key, [])
             if len(examples) < 2:
                 examples.append(
@@ -2828,6 +2860,11 @@ def _run_spark_memory_kb_ablation(
                 "routing_decision": case["routing_decision"],
                 "value_found": case["value_found"],
                 "evidence_summary": case["evidence_summary"],
+                "replay_source_evidence": {
+                    "has_source_evidence": has_replay_source_evidence,
+                    "current_state_count": replay_current_state_count,
+                    "observation_count": replay_observation_count,
+                },
                 "memory_only": {
                     "found": memory_only.found,
                     "answer": memory_only_answer,
@@ -2879,6 +2916,7 @@ def _run_spark_memory_kb_ablation(
                 action_bucket: dict(sorted(predicate_counts.items()))
                 for action_bucket, predicate_counts in sorted(missing_fact_predicates_by_action_bucket.items())
             },
+            "missing_fact_source_coverage": dict(sorted(missing_fact_source_coverage.items())),
             "missing_fact_examples_by_predicate": {
                 predicate: examples
                 for predicate, examples in sorted(missing_fact_examples_by_predicate.items())

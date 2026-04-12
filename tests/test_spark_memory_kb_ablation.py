@@ -136,6 +136,11 @@ def test_run_spark_memory_kb_ablation_reports_matching_answer_and_kb_support(tmp
     assert payload["summary"]["kb_supported_query_count"] == 1
     assert payload["summary"]["classification_counts"] == {"answered_with_kb_support": 1}
     comparison = payload["comparisons"][0]
+    assert comparison["replay_source_evidence"] == {
+        "has_source_evidence": True,
+        "current_state_count": 1,
+        "observation_count": 1,
+    }
     assert comparison["memory_only"]["answer"] == "Dubai"
     assert comparison["memory_plus_kb"]["answer"] == "Dubai"
     assert comparison["memory_plus_kb"]["supporting_evidence_count"] == 1
@@ -292,6 +297,7 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
         "expected_cleanroom_boundary": {"profile.timezone": 1},
         "regression_candidate": {"profile.hack_actor": 1},
     }
+    assert payload["summary"]["missing_fact_source_coverage"] == {"without_replay_source_evidence": 2}
     assert payload["summary"]["missing_fact_examples_by_predicate"] == {
         "profile.hack_actor": [
             {
@@ -314,6 +320,11 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
     regression_comparison = payload["comparisons"][0]
     assert regression_comparison["scenario_bucket"] == "regression"
     assert regression_comparison["action_bucket"] == "regression_candidate"
+    assert regression_comparison["replay_source_evidence"] == {
+        "has_source_evidence": False,
+        "current_state_count": 0,
+        "observation_count": 0,
+    }
     assert regression_comparison["value_found"] is False
     assert regression_comparison["memory_only"]["answer"] is None
     assert regression_comparison["memory_plus_kb"]["kb_page_exists"] is False
@@ -321,4 +332,9 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
     cleanroom_comparison = payload["comparisons"][1]
     assert cleanroom_comparison["scenario_bucket"] == "boundary_abstention_cleanroom"
     assert cleanroom_comparison["action_bucket"] == "expected_cleanroom_boundary"
+    assert cleanroom_comparison["replay_source_evidence"] == {
+        "has_source_evidence": False,
+        "current_state_count": 0,
+        "observation_count": 0,
+    }
     assert cleanroom_comparison["classification"] == "missing_fact_query"

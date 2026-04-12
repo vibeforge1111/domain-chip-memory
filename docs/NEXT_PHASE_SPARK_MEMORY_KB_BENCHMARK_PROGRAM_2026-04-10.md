@@ -61,7 +61,7 @@ The first combined-system comparison now exists on a narrow Spark-shaped replay 
 Command:
 
 - `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v1.json`
-- latest scenario-aware rerun: `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v6.json`
+- latest scenario-aware rerun: `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v7.json`
 
 Slice definition:
 
@@ -102,8 +102,10 @@ Current result:
 - actionable predicates outside the cleanroom boundary lane:
   - `regression_candidate`: `profile.spark_role` `2`, `profile.hack_actor` `2`
   - `gauntlet_candidate`: `profile.spark_role` `1`, `profile.hack_actor` `1`, `profile.timezone` `1`
-- average `memory only` latency: `0.213 ms`
-- average `memory + KB` latency: `0.462 ms`
+- replay source coverage on missing-fact queries:
+  - `without_replay_source_evidence`: `11`
+- average `memory only` latency: `0.208 ms`
+- average `memory + KB` latency: `0.455 ms`
 
 Interpretation:
 
@@ -123,7 +125,11 @@ Interpretation:
   - the gauntlet lane is missing Spark role, hack actor, and timezone, but not home country on this slice
 - the latest rerun also adds an operator action bucket:
   - treat the four cleanroom-boundary misses as expected boundary behavior until a product requirement says otherwise
-  - treat the four regression misses and three gauntlet misses as the current candidate gap slice worth targeting next
+  - treat the four regression misses and three gauntlet misses as the current coverage-target slice worth sourcing next
+- the more important correction is replay source coverage:
+  - all `11` missing-fact queries have zero replayed current-state or observation evidence for that exact subject and predicate
+  - that means this slice is currently showing zero-source-evidence abstentions, not a proven runtime or KB compilation failure on an actually-known fact
+  - the non-cleanroom `regression_candidate` and `gauntlet_candidate` buckets are still useful coverage targets, but they should not be described as confirmed product regressions without a source-backed replay slice
 
 So the honest claim after this first A/B is:
 
