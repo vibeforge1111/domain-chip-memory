@@ -2733,6 +2733,7 @@ def _run_spark_memory_kb_ablation(
     data_file: str,
     *,
     limit: int | None = None,
+    promotion_policy_file: str | None = None,
 ) -> dict:
     payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
     normalization = payload.get("normalization")
@@ -2747,8 +2748,21 @@ def _run_spark_memory_kb_ablation(
     kb_dir = str(compile_result.get("output_dir") or "").strip()
     if not kb_dir:
         raise ValueError("Spark intake payload must contain compile_result.output_dir.")
+    adapter = None
+    if promotion_policy_file:
+        promotion_policy_rows = _load_spark_memory_kb_promotion_policy_rows(promotion_policy_file)
+        writable_roles = normalized.get("writable_roles")
+        configured_roles = (
+            tuple(str(role) for role in writable_roles)
+            if isinstance(writable_roles, list)
+            else ("user",)
+        )
+        adapter = SparkShadowIngestAdapter(
+            writable_roles=configured_roles,
+            promotion_policy_rows=tuple(promotion_policy_rows),
+        )
 
-    _, adapter = _execute_shadow_replay_payload(normalized)
+    _, adapter = _execute_shadow_replay_payload(normalized, adapter=adapter)
     snapshot = adapter.sdk.export_knowledge_base_snapshot()
     snapshot_index = _build_snapshot_subject_predicate_index(snapshot)
     query_cases = _extract_spark_query_cases(normalized)
@@ -2976,6 +2990,7 @@ def _run_spark_memory_kb_ablation(
         "trace": {
             "operation": "run_spark_memory_kb_ablation",
             "limit": limit,
+            "promotion_policy_file": str(Path(promotion_policy_file)) if promotion_policy_file else None,
         },
     }
 
@@ -3787,6 +3802,22 @@ def _build_spark_memory_kb_approved_promotion_slice(
 
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def _load_spark_memory_kb_promotion_policy_rows(promotion_policy_file: str) -> list[dict[str, object]]:
+    payload = _load_json_file(promotion_policy_file)
+    if not isinstance(payload, dict):
+        raise ValueError("Spark promotion policy file must contain a JSON object.")
+
+    policy_rows: list[dict[str, object]] = []
+    for key in ("allowed_promotions", "deferred_promotions", "blocked_promotions"):
+        rows = payload.get(key)
+        if not isinstance(rows, list):
+            raise ValueError(f"Spark promotion policy file must contain a {key} list.")
+        for row in rows:
+            if isinstance(row, dict):
+                policy_rows.append(dict(row))
+    return policy_rows
 
 
 def _load_beam_category_counts(path: str | Path) -> dict[str, int]:
@@ -8121,6 +8152,7 @@ def main() -> None:
     )
     run_spark_memory_kb_ablation.add_argument("data_file")
     run_spark_memory_kb_ablation.add_argument("--limit", type=int)
+    run_spark_memory_kb_ablation.add_argument("--promotion-policy-file")
     run_spark_memory_kb_ablation.add_argument("--write")
     build_spark_memory_kb_sourcing_slice = subparsers.add_parser(
         "build-spark-memory-kb-sourcing-slice",
@@ -8817,6 +8849,7 @@ def main() -> None:
         payload = _run_spark_memory_kb_ablation(
             args.data_file,
             limit=args.limit,
+            promotion_policy_file=args.promotion_policy_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)

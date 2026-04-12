@@ -485,6 +485,154 @@ def test_shadow_ingest_treats_bridge_queries_and_bridge_replies_as_reference_tur
     assert result.turn_traces[2].action == "reference_turn"
 
 
+def test_shadow_ingest_applies_promotion_policy_to_source_backed_clone_writes():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(
+        sdk=sdk,
+        promotion_policy_rows=(
+            {
+                "policy_decision": "allow",
+                "target_conversation_id": "allowed-conv",
+                "predicate": "profile.hack_actor",
+                "source_conversation_id": "source-conv",
+                "source_message_id": "msg-hack",
+            },
+            {
+                "policy_decision": "block",
+                "target_conversation_id": "blocked-conv",
+                "predicate": "profile.timezone",
+                "source_conversation_id": "source-conv",
+                "source_message_id": "msg-timezone",
+            },
+        ),
+    )
+
+    allowed_result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="allowed-conv",
+            turns=[
+                SparkShadowTurn(
+                    message_id="clone-hack",
+                    role="user",
+                    content="We were hacked by North Korea.",
+                    timestamp="2026-04-12T00:00:00Z",
+                    metadata={
+                        "source_event_type": "memory_write_requested",
+                        "source_backed_clone": True,
+                        "source_backed_predicate": "profile.hack_actor",
+                        "source_backed_from_conversation_id": "source-conv",
+                        "source_backed_from_message_id": "msg-hack",
+                        "source_backed_target_conversation_id": "allowed-conv",
+                        "subject": "human:telegram:allowed",
+                        "predicate": "profile.hack_actor",
+                        "value": "North Korea",
+                        "operation": "update",
+                        "memory_role": "current_state",
+                    },
+                )
+            ],
+        )
+    )
+    blocked_result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="blocked-conv",
+            turns=[
+                SparkShadowTurn(
+                    message_id="clone-timezone",
+                    role="user",
+                    content="My timezone is Asia/Dubai.",
+                    timestamp="2026-04-12T00:00:01Z",
+                    metadata={
+                        "source_event_type": "memory_write_requested",
+                        "source_backed_clone": True,
+                        "source_backed_predicate": "profile.timezone",
+                        "source_backed_from_conversation_id": "source-conv",
+                        "source_backed_from_message_id": "msg-timezone",
+                        "source_backed_target_conversation_id": "blocked-conv",
+                        "subject": "human:telegram:blocked",
+                        "predicate": "profile.timezone",
+                        "value": "Asia/Dubai",
+                        "operation": "update",
+                        "memory_role": "current_state",
+                    },
+                )
+            ],
+        )
+    )
+
+    allowed_lookup = sdk.get_current_state(
+        CurrentStateRequest(subject="human:telegram:allowed", predicate="profile.hack_actor")
+    )
+    blocked_lookup = sdk.get_current_state(
+        CurrentStateRequest(subject="human:telegram:blocked", predicate="profile.timezone")
+    )
+
+    assert allowed_result.accepted_writes == 1
+    assert allowed_result.skipped_turns == 0
+    assert allowed_lookup.found is True
+    assert allowed_lookup.value == "North Korea"
+
+    assert blocked_result.accepted_writes == 0
+    assert blocked_result.skipped_turns == 1
+    assert blocked_lookup.found is False
+    assert blocked_result.turn_traces[0].action == "skipped_promotion_policy"
+    assert blocked_result.turn_traces[0].unsupported_reason == "block"
+    assert blocked_result.turn_traces[0].trace["policy_decision"] == "block"
+
+
+def test_shadow_ingest_default_denies_source_backed_clone_without_policy_row():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(
+        sdk=sdk,
+        promotion_policy_rows=(
+            {
+                "policy_decision": "allow",
+                "target_conversation_id": "other-conv",
+                "predicate": "profile.timezone",
+                "source_conversation_id": "source-conv",
+                "source_message_id": "msg-timezone",
+            },
+        ),
+    )
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="missing-policy-conv",
+            turns=[
+                SparkShadowTurn(
+                    message_id="clone-missing",
+                    role="user",
+                    content="My timezone is Asia/Dubai.",
+                    timestamp="2026-04-12T00:00:00Z",
+                    metadata={
+                        "source_event_type": "memory_write_requested",
+                        "source_backed_clone": True,
+                        "source_backed_predicate": "profile.timezone",
+                        "source_backed_from_conversation_id": "source-conv",
+                        "source_backed_from_message_id": "msg-timezone",
+                        "source_backed_target_conversation_id": "missing-policy-conv",
+                        "subject": "human:telegram:missing-policy",
+                        "predicate": "profile.timezone",
+                        "value": "Asia/Dubai",
+                        "operation": "update",
+                        "memory_role": "current_state",
+                    },
+                )
+            ],
+        )
+    )
+
+    lookup = sdk.get_current_state(
+        CurrentStateRequest(subject="human:telegram:missing-policy", predicate="profile.timezone")
+    )
+
+    assert result.accepted_writes == 0
+    assert result.skipped_turns == 1
+    assert lookup.found is False
+    assert result.turn_traces[0].action == "skipped_promotion_policy"
+    assert result.turn_traces[0].unsupported_reason == "missing_policy_row"
+
+
 def test_shadow_ingest_evaluation_summarizes_write_and_readback_quality():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)

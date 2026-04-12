@@ -388,6 +388,36 @@ Manifest interpretation:
 - the two cleanroom-boundary targets are preserved as explicit `block` rows
 - the next upstream Builder integration no longer needs to reconstruct policy from benchmark prose or example-only artifacts; it can consume one concrete manifest
 
+## 2026-04-12 Policy-Gated Runtime Replay
+
+The repo now has a governed replay too, not just a static manifest.
+
+Command:
+
+- `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\spark_memory_kb_source_backed_slice_limit100_v2.json --promotion-policy-file tmp\spark_memory_kb_promotion_policy_limit100_v1.json --write tmp\spark_memory_kb_ablation_source_backed_slice_policy_limit100_v1.json`
+
+Governed replay summary:
+
+- `26` queries
+- `23` answered by governed runtime replay
+- `26` answered by the existing compiled KB
+- `3` answer deltas
+- `7` original missing-fact queries
+- `7` resolved when the KB is consulted
+- runtime-side source coverage on the missing slice is now `with_replay_source_evidence: 4` and `without_replay_source_evidence: 3`
+
+Governed replay interpretation:
+
+- the `4` `allow` rows behave as intended: those regression-candidate promotions still resolve in runtime replay
+- the `2` cleanroom-boundary rows and `1` gauntlet row now abstain again in governed runtime replay
+- the current compiled KB still answers those three non-allowed lanes because the source-backed KB snapshot was compiled before policy was applied
+- that produces a real alignment bug: governed runtime memory is narrower than the visible KB surface on the same source-backed slice
+
+So the next implementation target is now concrete:
+
+- policy enforcement is no longer hypothetical; the replay layer already honors the manifest
+- the remaining gap is KB compilation and/or KB serving alignment so blocked or deferred promotions do not stay answerable through an ungated snapshot
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

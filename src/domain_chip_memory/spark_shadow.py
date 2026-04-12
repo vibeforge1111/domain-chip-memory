@@ -105,9 +105,16 @@ class SparkShadowIngestAdapter:
         sdk: SparkMemorySDK | None = None,
         *,
         writable_roles: tuple[str, ...] = ("user",),
+        promotion_policy_rows: tuple[JsonDict, ...] = (),
     ) -> None:
         self.sdk = sdk or SparkMemorySDK()
         self.writable_roles = tuple(role.strip().lower() for role in writable_roles if role.strip())
+        self.promotion_policy_rows = tuple(dict(row) for row in promotion_policy_rows if isinstance(row, dict))
+        self.promotion_policy_index: dict[tuple[str, str, str, str], JsonDict] = {}
+        for row in self.promotion_policy_rows:
+            key = self._promotion_policy_key(row)
+            if key is not None:
+                self.promotion_policy_index[key] = dict(row)
 
     def ingest_conversation(self, request: SparkShadowIngestRequest) -> SparkShadowIngestResult:
         session_id = request.session_id or request.conversation_id
@@ -159,6 +166,34 @@ class SparkShadowIngestAdapter:
                             "conversation_id": request.conversation_id,
                             "message_id": turn.message_id,
                             "role": normalized_role,
+                        },
+                    )
+                )
+                continue
+            policy_decision, policy_row = self._promotion_policy_decision(
+                request.conversation_id,
+                dict(turn.metadata),
+            )
+            if policy_decision not in (None, "allow"):
+                skipped_turns += 1
+                turn_traces.append(
+                    SparkShadowTurnTrace(
+                        message_id=turn.message_id,
+                        role=normalized_role,
+                        action="skipped_promotion_policy",
+                        session_id=session_id,
+                        turn_id=turn_id,
+                        accepted=False,
+                        unsupported_reason=policy_decision,
+                        trace={
+                            "operation": "shadow_ingest_turn",
+                            "status": "skipped_promotion_policy",
+                            "conversation_id": request.conversation_id,
+                            "message_id": turn.message_id,
+                            "role": normalized_role,
+                            "policy_decision": policy_decision,
+                            "policy_row": dict(policy_row) if isinstance(policy_row, dict) else None,
+                            "source_backed_clone": bool(turn.metadata.get("source_backed_clone")),
                         },
                     )
                 )
@@ -327,6 +362,41 @@ class SparkShadowIngestAdapter:
         if normalized_role not in self.writable_roles and source_event_type == "tool_result_received":
             return True
         return False
+
+    def _promotion_policy_key(self, row: JsonDict) -> tuple[str, str, str, str] | None:
+        target_conversation_id = str(row.get("target_conversation_id") or "").strip()
+        predicate = str(row.get("predicate") or "").strip()
+        source_conversation_id = str(row.get("source_conversation_id") or "").strip()
+        source_message_id = str(row.get("source_message_id") or "").strip()
+        if not target_conversation_id or not predicate or not source_conversation_id or not source_message_id:
+            return None
+        return (
+            target_conversation_id,
+            predicate,
+            source_conversation_id,
+            source_message_id,
+        )
+
+    def _promotion_policy_decision(
+        self,
+        conversation_id: str,
+        metadata: JsonDict,
+    ) -> tuple[str | None, JsonDict | None]:
+        if not self.promotion_policy_index:
+            return None, None
+        if not bool(metadata.get("source_backed_clone")):
+            return None, None
+        key = (
+            str(metadata.get("source_backed_target_conversation_id") or conversation_id or "").strip(),
+            str(metadata.get("source_backed_predicate") or metadata.get("predicate") or "").strip(),
+            str(metadata.get("source_backed_from_conversation_id") or "").strip(),
+            str(metadata.get("source_backed_from_message_id") or "").strip(),
+        )
+        row = self.promotion_policy_index.get(key)
+        if row is None:
+            return "missing_policy_row", None
+        decision = str(row.get("policy_decision") or "").strip().lower() or "missing_policy_decision"
+        return decision, row
 
     def _evaluate_probe(self, probe: SparkShadowProbe) -> SparkShadowProbeResult:
         if probe.probe_type == "current_state":
@@ -524,6 +594,7 @@ def build_shadow_ingest_contract_summary() -> dict[str, Any]:
         "behavior": [
             "accept Builder-style conversation turns",
             "write only configured roles into SparkMemorySDK",
+            "optionally apply promotion-policy gating to source-backed clone writes before persistence",
             "report accepted, rejected, skipped, and reference turns with replayable traces",
             "evaluate post-ingest current-state, historical-state, and evidence probes",
             "aggregate multiple shadow evaluations into a Spark-facing quality report",
