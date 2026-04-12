@@ -4167,6 +4167,54 @@ def _read_spark_memory_kb_active_refresh_support(
     }
 
 
+def _read_spark_memory_kb_active_refresh_conversation_support(
+    active_refresh_file: str,
+    policy_aligned_slice_file: str,
+    *,
+    conversation_id: str,
+    predicate: str,
+) -> dict:
+    policy_payload = _load_json_file(policy_aligned_slice_file)
+    if not isinstance(policy_payload, dict):
+        raise ValueError("Policy-aligned slice payload must be a JSON object.")
+    normalization = policy_payload.get("normalization")
+    if not isinstance(normalization, dict):
+        raise ValueError("Policy-aligned slice payload must contain a normalization object.")
+    normalized = normalization.get("normalized")
+    if not isinstance(normalized, dict):
+        raise ValueError("Policy-aligned slice payload must contain normalization.normalized.")
+    conversations = normalized.get("conversations")
+    if not isinstance(conversations, list):
+        raise ValueError("Policy-aligned slice payload must contain normalization.normalized.conversations.")
+
+    resolved_subject = ""
+    for conversation in conversations:
+        if not isinstance(conversation, dict):
+            continue
+        candidate_conversation_id = str(conversation.get("conversation_id") or "").strip()
+        if candidate_conversation_id != conversation_id:
+            continue
+        metadata = conversation.get("metadata")
+        if isinstance(metadata, dict):
+            resolved_subject = str(metadata.get("human_id") or "").strip()
+        break
+    if not resolved_subject:
+        raise ValueError(f"Conversation id not found in policy-aligned slice: {conversation_id}")
+
+    payload = _read_spark_memory_kb_active_refresh_support(
+        active_refresh_file,
+        subject=resolved_subject,
+        predicate=predicate,
+    )
+    payload["conversation_id"] = conversation_id
+    payload["summary"]["conversation_id"] = conversation_id
+    payload["summary"]["subject"] = resolved_subject
+    payload["trace"] = {
+        "operation": "read_spark_memory_kb_active_refresh_conversation_support",
+    }
+    return payload
+
+
 def _verify_spark_memory_kb_active_refresh_policy(
     active_refresh_file: str,
     policy_aligned_slice_file: str,
@@ -8724,6 +8772,15 @@ def main() -> None:
     read_spark_memory_kb_active_refresh_support.add_argument("subject")
     read_spark_memory_kb_active_refresh_support.add_argument("predicate")
     read_spark_memory_kb_active_refresh_support.add_argument("--write")
+    read_spark_memory_kb_active_refresh_conversation_support = subparsers.add_parser(
+        "read-spark-memory-kb-active-refresh-conversation-support",
+        help="Read governed KB support for one conversation_id/predicate pair using the policy-aligned slice to resolve human_id.",
+    )
+    read_spark_memory_kb_active_refresh_conversation_support.add_argument("active_refresh_file")
+    read_spark_memory_kb_active_refresh_conversation_support.add_argument("policy_aligned_slice_file")
+    read_spark_memory_kb_active_refresh_conversation_support.add_argument("conversation_id")
+    read_spark_memory_kb_active_refresh_conversation_support.add_argument("predicate")
+    read_spark_memory_kb_active_refresh_conversation_support.add_argument("--write")
     verify_spark_memory_kb_active_refresh_policy = subparsers.add_parser(
         "verify-spark-memory-kb-active-refresh-policy",
         help="Verify that a published active governed Spark KB still honors the policy rows from a policy-aligned slice payload.",
@@ -9508,6 +9565,18 @@ def main() -> None:
         payload = _read_spark_memory_kb_active_refresh_support(
             args.active_refresh_file,
             subject=args.subject,
+            predicate=args.predicate,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "read-spark-memory-kb-active-refresh-conversation-support":
+        payload = _read_spark_memory_kb_active_refresh_conversation_support(
+            args.active_refresh_file,
+            args.policy_aligned_slice_file,
+            conversation_id=args.conversation_id,
             predicate=args.predicate,
         )
         if args.write:

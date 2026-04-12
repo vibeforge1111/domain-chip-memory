@@ -1673,6 +1673,86 @@ def test_verify_spark_memory_kb_active_refresh_policy_reports_honored_rows(tmp_p
     assert payload["summary"]["violated_counts"] == {}
 
 
+def test_read_spark_memory_kb_active_refresh_conversation_support_resolves_subject(tmp_path: Path):
+    kb_dir = tmp_path / "published" / "releases" / "spark-kb-test"
+    snapshot_file = kb_dir / "raw" / "memory-snapshots" / "latest.json"
+    current_state_file = kb_dir / "wiki" / "current-state" / "human-telegram-allowed-profile-hack-actor.md"
+    index_file = kb_dir / "wiki" / "index.md"
+    snapshot_file.parent.mkdir(parents=True)
+    current_state_file.parent.mkdir(parents=True)
+    index_file.parent.mkdir(parents=True, exist_ok=True)
+    (kb_dir / "CLAUDE.md").write_text("# KB\n", encoding="utf-8")
+    snapshot_file.write_text('{"current_state":[],"evidence":[],"events":[],"trace":{}}', encoding="utf-8")
+    index_file.write_text("# Index\n", encoding="utf-8")
+    current_state_file.write_text(
+        "\n".join(
+            [
+                "---",
+                "title: Allowed",
+                "---",
+                "# Allowed",
+                "## Value",
+                "North Korea",
+                "## Supporting Evidence",
+                "- [[evidence/test-evidence]]",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    active_refresh_file = tmp_path / "published" / "active-refresh.json"
+    active_refresh_file.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "materialized_kb_output_dir": str(kb_dir),
+                    "materialized_snapshot_file": str(snapshot_file),
+                    "conversation_count": 8,
+                    "accepted_writes": 16,
+                    "skipped_turns": 3,
+                    "policy_skipped_turn_count": 3,
+                    "policy_skipped_by_reason": {"block": 2, "defer": 1},
+                    "decision_counts": {"allow": 4, "block": 2, "defer": 1},
+                    "current_state_page_count": 16,
+                    "evidence_page_count": 16,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"
+    policy_aligned_slice_file.write_text(
+        json.dumps(
+            {
+                "normalization": {
+                    "normalized": {
+                        "conversations": [
+                            {
+                                "conversation_id": "allowed-conv",
+                                "metadata": {"human_id": "human:telegram:allowed"},
+                            }
+                        ]
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = cli._read_spark_memory_kb_active_refresh_conversation_support(
+        str(active_refresh_file),
+        str(policy_aligned_slice_file),
+        conversation_id="allowed-conv",
+        predicate="profile.hack_actor",
+    )
+
+    assert payload["conversation_id"] == "allowed-conv"
+    assert payload["summary"]["conversation_id"] == "allowed-conv"
+    assert payload["summary"]["subject"] == "human:telegram:allowed"
+    assert payload["summary"]["found"] is True
+    assert payload["summary"]["value"] == "North Korea"
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [

@@ -619,6 +619,29 @@ Verification interpretation:
 - this verifies the final published lookup surface, not just replay-time skips or compile-time counts
 - if a future refresh accidentally reintroduces blocked or deferred facts, this command will surface the regression as a policy violation instead of relying on manual inspection
 
+## 2026-04-12 Conversation-Level Active Reads
+
+The repo now has a Builder-shaped read surface too.
+
+Command:
+
+- `python -m domain_chip_memory.cli read-spark-memory-kb-active-refresh-conversation-support tmp\spark_memory_kb_refresh_publish_limit100_v1\active-refresh.json tmp\spark_memory_kb_policy_aligned_slice_payload_limit100_v1.json session:telegram:dm:spark-memory-regression-user-2c339238-hack_actor_query_missing profile.hack_actor --write tmp\spark_memory_kb_active_conversation_support_hack_actor_limit100_v1.json`
+
+Conversation-read summary:
+
+- conversation id: `session:telegram:dm:spark-memory-regression-user-2c339238-hack_actor_query_missing`
+- resolved subject: `human:telegram:spark-memory-regression-user-2c339238-hack_actor_query_missing`
+- predicate: `profile.hack_actor`
+- found: `true`
+- value: `North Korea`
+- supporting evidence count: `1`
+
+Conversation-read interpretation:
+
+- a downstream caller no longer needs to know the internal `human_id` format to perform a governed KB lookup
+- the published active refresh can now be queried with the same conversation identifier family used throughout the Spark/Builder artifacts
+- this is the closest repo-local approximation so far to a real Builder-side active KB read path
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
