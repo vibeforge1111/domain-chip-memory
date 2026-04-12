@@ -418,6 +418,32 @@ So the next implementation target is now concrete:
 - policy enforcement is no longer hypothetical; the replay layer already honors the manifest
 - the remaining gap is KB compilation and/or KB serving alignment so blocked or deferred promotions do not stay answerable through an ungated snapshot
 
+## 2026-04-12 Policy-Aligned KB Replay
+
+That alignment gap now has a concrete remediation path too.
+
+Command:
+
+- `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\spark_memory_kb_source_backed_slice_limit100_v2.json --promotion-policy-file tmp\spark_memory_kb_promotion_policy_limit100_v1.json --recompile-kb-output-dir tmp\spark_memory_kb_source_backed_slice_policy_aligned_limit100_v1 --write tmp\spark_memory_kb_ablation_source_backed_slice_policy_aligned_limit100_v1.json`
+
+Policy-aligned summary:
+
+- `26` queries
+- `23` answered by governed runtime replay
+- `23` answered by the policy-aligned KB
+- `0` answer deltas
+- `7` original missing-fact queries
+- `4` resolved missing-fact queries
+- `3` unresolved missing-fact queries
+- `23` KB-supported queries
+
+Policy-aligned interpretation:
+
+- the `4` allowed regression promotions remain answerable and KB-supported
+- the `2` blocked cleanroom-boundary lanes plus the `1` deferred gauntlet lane stay unanswered in both runtime replay and KB output
+- the alignment bug is therefore not a replay limitation; it was a KB-compilation-policy mismatch
+- the practical requirement is now explicit: any production KB refresh that includes source-backed promotion data needs to compile from the same governed replay surface, or an equivalent policy-filtered snapshot
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

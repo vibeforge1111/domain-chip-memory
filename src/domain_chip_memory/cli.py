@@ -2734,6 +2734,7 @@ def _run_spark_memory_kb_ablation(
     *,
     limit: int | None = None,
     promotion_policy_file: str | None = None,
+    recompile_kb_output_dir: str | None = None,
 ) -> dict:
     payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
     normalization = payload.get("normalization")
@@ -2764,6 +2765,16 @@ def _run_spark_memory_kb_ablation(
 
     _, adapter = _execute_shadow_replay_payload(normalized, adapter=adapter)
     snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    effective_compile_result = compile_result
+    effective_health_report = None
+    if recompile_kb_output_dir:
+        effective_compile_result = scaffold_spark_knowledge_base(
+            recompile_kb_output_dir,
+            snapshot,
+            vault_title="Spark Memory KB Ablation Replay",
+        )
+        kb_dir = str(effective_compile_result.get("output_dir") or "").strip()
+        effective_health_report = build_spark_kb_health_report(kb_dir)
     snapshot_index = _build_snapshot_subject_predicate_index(snapshot)
     query_cases = _extract_spark_query_cases(normalized)
     if limit is not None:
@@ -2950,6 +2961,8 @@ def _run_spark_memory_kb_ablation(
     return {
         "input_file": str(Path(data_file)),
         "kb_dir": kb_dir,
+        "compile_result": effective_compile_result,
+        "health_report": effective_health_report,
         "summary": {
             "query_count": query_count,
             "memory_only_answered": memory_only_answered,
@@ -2991,6 +3004,8 @@ def _run_spark_memory_kb_ablation(
             "operation": "run_spark_memory_kb_ablation",
             "limit": limit,
             "promotion_policy_file": str(Path(promotion_policy_file)) if promotion_policy_file else None,
+            "recompile_kb_output_dir": str(Path(recompile_kb_output_dir)) if recompile_kb_output_dir else None,
+            "kb_source": "recompiled_from_replay_snapshot" if recompile_kb_output_dir else "input_compile_result",
         },
     }
 
@@ -8153,6 +8168,7 @@ def main() -> None:
     run_spark_memory_kb_ablation.add_argument("data_file")
     run_spark_memory_kb_ablation.add_argument("--limit", type=int)
     run_spark_memory_kb_ablation.add_argument("--promotion-policy-file")
+    run_spark_memory_kb_ablation.add_argument("--recompile-kb-output-dir")
     run_spark_memory_kb_ablation.add_argument("--write")
     build_spark_memory_kb_sourcing_slice = subparsers.add_parser(
         "build-spark-memory-kb-sourcing-slice",
@@ -8850,6 +8866,7 @@ def main() -> None:
             args.data_file,
             limit=args.limit,
             promotion_policy_file=args.promotion_policy_file,
+            recompile_kb_output_dir=args.recompile_kb_output_dir,
         )
         if args.write:
             _write_json(Path(args.write), payload)
