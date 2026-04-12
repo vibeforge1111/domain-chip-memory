@@ -1479,6 +1479,45 @@ def test_publish_spark_memory_kb_refresh_manifest_writes_active_refresh_file(tmp
     assert active_payload["summary"]["decision_counts"] == {"allow": 4, "block": 2, "defer": 1}
 
 
+def test_resolve_spark_memory_kb_active_refresh_reads_published_release(tmp_path: Path):
+    kb_dir = tmp_path / "published" / "releases" / "spark-kb-test"
+    snapshot_file = kb_dir / "raw" / "memory-snapshots" / "latest.json"
+    index_file = kb_dir / "wiki" / "index.md"
+    snapshot_file.parent.mkdir(parents=True)
+    index_file.parent.mkdir(parents=True)
+    (kb_dir / "CLAUDE.md").write_text("# KB\n", encoding="utf-8")
+    snapshot_file.write_text('{"current_state":[],"evidence":[],"events":[],"trace":{}}', encoding="utf-8")
+    index_file.write_text("# Index\n", encoding="utf-8")
+    active_refresh_file = tmp_path / "published" / "active-refresh.json"
+    active_refresh_file.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "materialized_kb_output_dir": str(kb_dir),
+                    "materialized_snapshot_file": str(snapshot_file),
+                    "conversation_count": 8,
+                    "accepted_writes": 16,
+                    "skipped_turns": 3,
+                    "policy_skipped_turn_count": 3,
+                    "policy_skipped_by_reason": {"block": 2, "defer": 1},
+                    "decision_counts": {"allow": 4, "block": 2, "defer": 1},
+                    "current_state_page_count": 16,
+                    "evidence_page_count": 16,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = cli._resolve_spark_memory_kb_active_refresh(str(active_refresh_file))
+
+    assert payload["summary"]["kb_output_dir"] == str(kb_dir)
+    assert payload["summary"]["snapshot_file"] == str(snapshot_file)
+    assert payload["summary"]["health_valid"] is False
+    assert payload["summary"]["decision_counts"] == {"allow": 4, "block": 2, "defer": 1}
+    assert payload["summary"]["policy_skipped_by_reason"] == {"block": 2, "defer": 1}
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [

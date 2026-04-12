@@ -546,6 +546,30 @@ Publish interpretation:
 - the release directory uses a short stable slug instead of the full source KB directory name; that change was necessary because the longer nested publish path tripped a real Windows path-depth failure during copy
 - an upstream Builder-side consumer can now point at `active-refresh.json` and avoid guessing which governed release directory is current
 
+## 2026-04-12 Active Refresh Resolution
+
+The repo now has a direct reader for that published pointer too.
+
+Command:
+
+- `python -m domain_chip_memory.cli resolve-spark-memory-kb-active-refresh tmp\spark_memory_kb_refresh_publish_limit100_v1\active-refresh.json --write tmp\spark_memory_kb_active_resolution_limit100_v1.json`
+
+Resolution summary:
+
+- resolved KB dir: `tmp\spark_memory_kb_refresh_publish_limit100_v1\releases\spark-kb-8dea2cb4d9dd`
+- resolved snapshot file: `tmp\spark_memory_kb_refresh_publish_limit100_v1\releases\spark-kb-8dea2cb4d9dd\raw\memory-snapshots\latest.json`
+- health valid: `true`
+- replayed conversations: `8`
+- accepted writes: `16`
+- skipped turns: `3`
+- decision counts: `allow 4`, `block 2`, `defer 1`
+
+Resolution interpretation:
+
+- a downstream Builder-side caller no longer needs to parse the publish payload or infer which release is active
+- one command now resolves the active governed KB and validates that the released directory still exists and still passes the KB health check
+- this is the narrowest current consumer surface in the repo for live governed KB lookup
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

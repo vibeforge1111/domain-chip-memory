@@ -4086,6 +4086,49 @@ def _publish_spark_memory_kb_refresh_manifest(
     }
 
 
+def _resolve_spark_memory_kb_active_refresh(active_refresh_file: str) -> dict:
+    payload = _load_json_file(active_refresh_file)
+    if not isinstance(payload, dict):
+        raise ValueError("Active refresh payload must be a JSON object.")
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Active refresh payload must contain a summary object.")
+
+    kb_output_dir = str(summary.get("materialized_kb_output_dir") or "").strip()
+    snapshot_file = str(summary.get("materialized_snapshot_file") or "").strip()
+    if not kb_output_dir or not snapshot_file:
+        raise ValueError("Active refresh summary must contain materialized_kb_output_dir and materialized_snapshot_file.")
+
+    kb_output_path = Path(kb_output_dir)
+    snapshot_path = Path(snapshot_file)
+    if not kb_output_path.is_dir():
+        raise ValueError(f"Active governed KB output_dir does not exist: {kb_output_path}")
+    if not snapshot_path.is_file():
+        raise ValueError(f"Active governed KB snapshot_file does not exist: {snapshot_path}")
+
+    health_report = build_spark_kb_health_report(kb_output_path)
+    return {
+        "input_active_refresh_file": str(Path(active_refresh_file)),
+        "summary": {
+            "kb_output_dir": str(kb_output_path),
+            "snapshot_file": str(snapshot_path),
+            "health_valid": bool(health_report.get("valid")),
+            "conversation_count": int(summary.get("conversation_count", 0) or 0),
+            "accepted_writes": int(summary.get("accepted_writes", 0) or 0),
+            "skipped_turns": int(summary.get("skipped_turns", 0) or 0),
+            "policy_skipped_turn_count": int(summary.get("policy_skipped_turn_count", 0) or 0),
+            "policy_skipped_by_reason": dict(sorted(dict(summary.get("policy_skipped_by_reason", {})).items())),
+            "decision_counts": dict(sorted(dict(summary.get("decision_counts", {})).items())),
+            "current_state_page_count": int(summary.get("current_state_page_count", 0) or 0),
+            "evidence_page_count": int(summary.get("evidence_page_count", 0) or 0),
+        },
+        "health_report": health_report,
+        "trace": {
+            "operation": "resolve_spark_memory_kb_active_refresh",
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -8520,6 +8563,12 @@ def main() -> None:
     publish_spark_memory_kb_refresh_manifest.add_argument("refresh_manifest_file")
     publish_spark_memory_kb_refresh_manifest.add_argument("publish_root_dir")
     publish_spark_memory_kb_refresh_manifest.add_argument("--write")
+    resolve_spark_memory_kb_active_refresh = subparsers.add_parser(
+        "resolve-spark-memory-kb-active-refresh",
+        help="Resolve and validate the active governed Spark KB referenced by an active-refresh file.",
+    )
+    resolve_spark_memory_kb_active_refresh.add_argument("active_refresh_file")
+    resolve_spark_memory_kb_active_refresh.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -9278,6 +9327,15 @@ def main() -> None:
         payload = _publish_spark_memory_kb_refresh_manifest(
             args.refresh_manifest_file,
             args.publish_root_dir,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "resolve-spark-memory-kb-active-refresh":
+        payload = _resolve_spark_memory_kb_active_refresh(
+            args.active_refresh_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)
