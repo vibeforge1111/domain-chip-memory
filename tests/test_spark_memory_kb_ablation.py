@@ -915,6 +915,14 @@ def test_build_spark_memory_kb_policy_verdict_labels_action_buckets(tmp_path: Pa
                 "Keep these lanes abstention-boundary in production unless a product requirement explicitly authorizes "
                 "promotion of cleanroom-style facts into the target conversation."
             ),
+            "resolved_queries": [
+                {
+                    "conversation_id": "cleanroom-timezone",
+                    "predicate": "profile.timezone",
+                    "question": "What is my timezone?",
+                    "answer": "Asia/Dubai",
+                }
+            ],
             "examples": [
                 {
                     "conversation_id": "cleanroom-timezone",
@@ -932,6 +940,14 @@ def test_build_spark_memory_kb_policy_verdict_labels_action_buckets(tmp_path: Pa
                 "These resolved once source evidence was present. Treat them as promotable sourcing candidates and "
                 "audit the real upstream path that should write the fact into the target conversation."
             ),
+            "resolved_queries": [
+                {
+                    "conversation_id": "regression-hack-actor",
+                    "predicate": "profile.hack_actor",
+                    "question": "Who hacked us?",
+                    "answer": "North Korea",
+                }
+            ],
             "examples": [
                 {
                     "conversation_id": "regression-hack-actor",
@@ -949,6 +965,14 @@ def test_build_spark_memory_kb_policy_verdict_labels_action_buckets(tmp_path: Pa
                 "These resolved with source backing, so the memory/KB layer is capable. Decide whether the gauntlet "
                 "lane should gain the same source coverage or intentionally remain sparse."
             ),
+            "resolved_queries": [
+                {
+                    "conversation_id": "gauntlet-timezone",
+                    "predicate": "profile.timezone",
+                    "question": "What is my timezone?",
+                    "answer": "Asia/Dubai",
+                }
+            ],
             "examples": [
                 {
                     "conversation_id": "gauntlet-timezone",
@@ -968,6 +992,14 @@ def test_build_spark_memory_kb_promotion_plan_joins_policy_and_lineage(tmp_path:
                 "action_bucket": "expected_cleanroom_boundary",
                 "verdict": "retain_boundary_by_default",
                 "recommendation": "keep boundary",
+                "resolved_queries": [
+                    {
+                        "conversation_id": "cleanroom-timezone",
+                        "predicate": "profile.timezone",
+                        "question": "What is my timezone?",
+                        "answer": "Asia/Dubai",
+                    }
+                ],
                 "examples": [
                     {
                         "conversation_id": "cleanroom-timezone",
@@ -981,6 +1013,14 @@ def test_build_spark_memory_kb_promotion_plan_joins_policy_and_lineage(tmp_path:
                 "action_bucket": "regression_candidate",
                 "verdict": "promotable_if_source_path_is_legitimate",
                 "recommendation": "promote if legit",
+                "resolved_queries": [
+                    {
+                        "conversation_id": "regression-hack-actor",
+                        "predicate": "profile.hack_actor",
+                        "question": "Who hacked us?",
+                        "answer": "North Korea",
+                    }
+                ],
                 "examples": [
                     {
                         "conversation_id": "regression-hack-actor",
@@ -994,6 +1034,14 @@ def test_build_spark_memory_kb_promotion_plan_joins_policy_and_lineage(tmp_path:
                 "action_bucket": "gauntlet_candidate",
                 "verdict": "expand_coverage_if_product_wants_recall",
                 "recommendation": "optional scope",
+                "resolved_queries": [
+                    {
+                        "conversation_id": "gauntlet-timezone",
+                        "predicate": "profile.timezone",
+                        "question": "What is my timezone?",
+                        "answer": "Asia/Dubai",
+                    }
+                ],
                 "examples": [
                     {
                         "conversation_id": "gauntlet-timezone",
@@ -1092,6 +1140,123 @@ def test_build_spark_memory_kb_promotion_plan_joins_policy_and_lineage(tmp_path:
         }
     ]
     assert payload["missing_lineage"] == []
+
+
+def test_build_spark_memory_kb_promotion_plan_uses_full_resolved_queries_not_truncated_examples(
+    tmp_path: Path,
+):
+    policy_payload = {
+        "policy_verdicts": [
+            {
+                "action_bucket": "regression_candidate",
+                "verdict": "promotable_if_source_path_is_legitimate",
+                "recommendation": "promote if legit",
+                "resolved_queries": [
+                    {
+                        "conversation_id": "regression-hack-actor-1",
+                        "predicate": "profile.hack_actor",
+                        "question": "Who hacked us?",
+                        "answer": "North Korea",
+                    },
+                    {
+                        "conversation_id": "regression-spark-role-1",
+                        "predicate": "profile.spark_role",
+                        "question": "What role will Spark play in this?",
+                        "answer": "important part of the rebuild",
+                    },
+                    {
+                        "conversation_id": "regression-hack-actor-2",
+                        "predicate": "profile.hack_actor",
+                        "question": "Who hacked us?",
+                        "answer": "North Korea",
+                    },
+                    {
+                        "conversation_id": "regression-spark-role-2",
+                        "predicate": "profile.spark_role",
+                        "question": "What role will Spark play in this?",
+                        "answer": "important part of the rebuild",
+                    },
+                ],
+                "examples": [
+                    {
+                        "conversation_id": "regression-hack-actor-1",
+                        "predicate": "profile.hack_actor",
+                        "question": "Who hacked us?",
+                        "answer": "North Korea",
+                    },
+                    {
+                        "conversation_id": "regression-spark-role-1",
+                        "predicate": "profile.spark_role",
+                        "question": "What role will Spark play in this?",
+                        "answer": "important part of the rebuild",
+                    },
+                    {
+                        "conversation_id": "regression-hack-actor-2",
+                        "predicate": "profile.hack_actor",
+                        "question": "Who hacked us?",
+                        "answer": "North Korea",
+                    },
+                ],
+            }
+        ]
+    }
+    source_backed_payload = {
+        "injected_writes": [
+            {
+                "predicate": "profile.hack_actor",
+                "target_conversation_id": "regression-hack-actor-1",
+                "source_conversation_id": "source-regression",
+                "source_message_id": "msg-hack-1",
+                "cloned_message_id": "clone-hack-1",
+                "value": "North Korea",
+            },
+            {
+                "predicate": "profile.spark_role",
+                "target_conversation_id": "regression-spark-role-1",
+                "source_conversation_id": "source-regression",
+                "source_message_id": "msg-role-1",
+                "cloned_message_id": "clone-role-1",
+                "value": "important part of the rebuild",
+            },
+            {
+                "predicate": "profile.hack_actor",
+                "target_conversation_id": "regression-hack-actor-2",
+                "source_conversation_id": "source-regression",
+                "source_message_id": "msg-hack-2",
+                "cloned_message_id": "clone-hack-2",
+                "value": "North Korea",
+            },
+            {
+                "predicate": "profile.spark_role",
+                "target_conversation_id": "regression-spark-role-2",
+                "source_conversation_id": "source-regression",
+                "source_message_id": "msg-role-2",
+                "cloned_message_id": "clone-role-2",
+                "value": "important part of the rebuild",
+            },
+        ]
+    }
+    policy_file = tmp_path / "policy-full.json"
+    source_backed_file = tmp_path / "source-backed-full.json"
+    policy_file.write_text(json.dumps(policy_payload), encoding="utf-8")
+    source_backed_file.write_text(json.dumps(source_backed_payload), encoding="utf-8")
+
+    payload = cli._build_spark_memory_kb_promotion_plan(str(policy_file), str(source_backed_file))
+
+    assert payload["summary"] == {
+        "promotable_target_count": 4,
+        "optional_target_count": 0,
+        "excluded_target_count": 0,
+        "missing_lineage_count": 0,
+    }
+    assert [
+        target["target_conversation_id"] for target in payload["promotable_targets"]
+    ] == [
+        "regression-hack-actor-1",
+        "regression-spark-role-1",
+        "regression-hack-actor-2",
+        "regression-spark-role-2",
+    ]
 
 
 def test_build_spark_memory_kb_approved_promotion_slice_filters_to_approved_targets(

@@ -253,6 +253,12 @@ Command:
 
 - `python -m domain_chip_memory.cli build-spark-memory-kb-policy-verdict tmp\spark_memory_kb_ablation_compare_source_backed_limit100_v1.json --write tmp\spark_memory_kb_policy_verdict_limit100_v1.json`
 
+Correction:
+
+- the original verdict artifact sampled up to three example rows per action bucket
+- that was enough for policy explanation, but it underpowered the downstream promotion plan because `regression_candidate` actually had `4` resolved targets
+- the fixed artifact is `tmp\spark_memory_kb_policy_verdict_limit100_v2.json`, which now keeps short `examples` plus the full `resolved_queries` list for each bucket
+
 Verdict summary:
 
 - resolved missing queries: `7`
@@ -282,11 +288,11 @@ The repo now carries a concrete promotion-plan artifact too.
 
 Command:
 
-- `python -m domain_chip_memory.cli build-spark-memory-kb-promotion-plan tmp\spark_memory_kb_policy_verdict_limit100_v1.json tmp\spark_memory_kb_source_backed_slice_limit100_v2.json --write tmp\spark_memory_kb_promotion_plan_limit100_v1.json`
+- `python -m domain_chip_memory.cli build-spark-memory-kb-promotion-plan tmp\spark_memory_kb_policy_verdict_limit100_v2.json tmp\spark_memory_kb_source_backed_slice_limit100_v2.json --write tmp\spark_memory_kb_promotion_plan_limit100_v2.json`
 
 Plan summary:
 
-- promotable regression targets: `3`
+- promotable regression targets: `4`
 - optional gauntlet targets: `1`
 - excluded cleanroom-boundary targets: `2`
 - missing lineage rows: `0`
@@ -308,6 +314,11 @@ Promotable targets:
   - source conversation: `session:telegram:dm:spark-memory-regression-user-2c339238`
   - source message: `sim:1775946706394651`
   - value: `North Korea`
+- `session:telegram:dm:spark-memory-regression-user-6742ae87-spark_role_abstention`
+  - predicate: `profile.spark_role`
+  - source conversation: `session:telegram:dm:spark-memory-regression-user-2c339238`
+  - source message: `sim:1775946707065672`
+  - value: `important part of the rebuild`
 
 Policy implication:
 
@@ -321,37 +332,37 @@ The repo now has a first production-candidate artifact too.
 
 Commands:
 
-- `python -m domain_chip_memory.cli build-spark-memory-kb-approved-promotion-slice tmp\spark_memory_kb_promotion_plan_limit100_v1.json tmp\spark_memory_kb_source_backed_slice_limit100_v2.json tmp\spark_memory_kb_approved_promotion_slice_limit100_v1 --write tmp\spark_memory_kb_approved_promotion_slice_limit100_v1.json`
-- `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\spark_memory_kb_approved_promotion_slice_limit100_v1.json --write tmp\spark_memory_kb_ablation_approved_promotion_slice_limit100_v1.json`
+- `python -m domain_chip_memory.cli build-spark-memory-kb-approved-promotion-slice tmp\spark_memory_kb_promotion_plan_limit100_v2.json tmp\spark_memory_kb_source_backed_slice_limit100_v2.json tmp\spark_memory_kb_approved_promotion_slice_limit100_v2 --write tmp\spark_memory_kb_approved_promotion_slice_limit100_v2.json`
+- `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\spark_memory_kb_approved_promotion_slice_limit100_v2.json --write tmp\spark_memory_kb_ablation_approved_promotion_slice_limit100_v2.json`
 
 Approved-slice summary:
 
-- selected promotable targets: `3`
-- selected conversations after retaining source lineage: `4`
+- selected promotable targets: `4`
+- selected conversations after retaining source lineage: `5`
 - optional gauntlet targets included: `false`
 - missing selected conversations: `0`
 
 Approved-slice A/B summary:
 
-- queries: `22`
-- memory-only answered: `22`
-- memory-plus-KB answered: `22`
+- queries: `23`
+- memory-only answered: `23`
+- memory-plus-KB answered: `23`
 - answer delta: `0`
-- KB-supported queries: `22`
-- original missing-fact queries inside this slice: `3`
-- resolved missing-fact queries: `3`
+- KB-supported queries: `23`
+- original missing-fact queries inside this slice: `4`
+- resolved missing-fact queries: `4`
 - unresolved missing-fact queries: `0`
 
 Approved promotable misses carried into the slice:
 
 - `profile.hack_actor`: `2`
-- `profile.spark_role`: `1`
+- `profile.spark_role`: `2`
 
 Interpretation:
 
 - the repo now has a filtered, policy-applied slice instead of only a recommendation artifact
 - the default production-candidate path stays narrow: regression candidates only, with no cleanroom-boundary or optional gauntlet targets included
-- all three promotable regression misses still resolve cleanly once their approved source lineage is retained
+- all four promotable regression misses now resolve cleanly once their approved source lineage is retained
 - if product wants the gauntlet lane later, `--include-optional` is the controlled expansion path rather than widening the default slice
 
 So the honest claim after this first A/B is:

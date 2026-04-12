@@ -3482,22 +3482,21 @@ def _build_spark_memory_kb_policy_verdict(compare_file: str) -> dict:
         count = int(bucket_counts.get(action_bucket, 0) or 0)
         if count <= 0:
             continue
-        examples = []
+        resolved_bucket_queries: list[dict[str, str | None]] = []
         for row in resolved_queries:
             if not isinstance(row, dict):
                 continue
             if str(row.get("action_bucket") or "").strip() != action_bucket:
                 continue
-            if len(examples) >= 3:
-                break
-            examples.append(
+            resolved_bucket_queries.append(
                 {
-                    "conversation_id": str(row.get("conversation_id") or "") or None,
-                    "predicate": str(row.get("predicate") or "") or None,
-                    "question": str(row.get("question") or "") or None,
-                    "answer": str(row.get("answer") or "") or None,
+                    "conversation_id": str(row.get("conversation_id") or "").strip() or None,
+                    "predicate": str(row.get("predicate") or "").strip() or None,
+                    "question": str(row.get("question") or "").strip() or None,
+                    "answer": str(row.get("answer") or "").strip() or None,
                 }
             )
+        examples = resolved_bucket_queries[:3]
         policy = bucket_to_verdict.get(
             action_bucket,
             {
@@ -3511,6 +3510,7 @@ def _build_spark_memory_kb_policy_verdict(compare_file: str) -> dict:
                 "resolved_count": count,
                 "verdict": policy["verdict"],
                 "recommendation": policy["recommendation"],
+                "resolved_queries": resolved_bucket_queries,
                 "examples": examples,
             }
         )
@@ -3565,14 +3565,15 @@ def _build_spark_memory_kb_promotion_plan(policy_verdict_file: str, source_backe
         action_bucket = str(verdict.get("action_bucket") or "").strip()
         recommendation = str(verdict.get("recommendation") or "").strip() or None
         verdict_label = str(verdict.get("verdict") or "").strip() or None
-        examples = verdict.get("examples")
-        if not isinstance(examples, list):
+        resolved_queries = verdict.get("resolved_queries")
+        rows = resolved_queries if isinstance(resolved_queries, list) else verdict.get("examples")
+        if not isinstance(rows, list):
             continue
-        for example in examples:
-            if not isinstance(example, dict):
+        for row in rows:
+            if not isinstance(row, dict):
                 continue
-            target_conversation_id = str(example.get("conversation_id") or "").strip()
-            predicate = str(example.get("predicate") or "").strip()
+            target_conversation_id = str(row.get("conversation_id") or "").strip()
+            predicate = str(row.get("predicate") or "").strip()
             lineage = injected_lookup.get((target_conversation_id, predicate))
             target_row = {
                 "action_bucket": action_bucket or None,
@@ -3580,8 +3581,8 @@ def _build_spark_memory_kb_promotion_plan(policy_verdict_file: str, source_backe
                 "recommendation": recommendation,
                 "target_conversation_id": target_conversation_id or None,
                 "predicate": predicate or None,
-                "question": str(example.get("question") or "").strip() or None,
-                "answer": str(example.get("answer") or "").strip() or None,
+                "question": str(row.get("question") or "").strip() or None,
+                "answer": str(row.get("answer") or "").strip() or None,
                 "source_conversation_id": str(dict(lineage or {}).get("source_conversation_id") or "").strip() or None,
                 "source_message_id": str(dict(lineage or {}).get("source_message_id") or "").strip() or None,
                 "cloned_message_id": str(dict(lineage or {}).get("cloned_message_id") or "").strip() or None,
