@@ -100,6 +100,7 @@ Interpretation:
 - the dominant missing-fact predicates are now explicit too:
   - Spark role and hack actor are the main uncovered fields
   - timezone and home country are secondary uncovered fields on this slice
+- the ablation summary now also carries compact example conversations and questions for each missing predicate, so the operator does not need to scan the full comparisons list to see representative misses
 
 So the honest claim after this first A/B is:
 

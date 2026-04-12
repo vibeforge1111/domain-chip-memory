@@ -2709,6 +2709,7 @@ def _run_spark_memory_kb_ablation(
     missing_fact_query_count = 0
     classification_counts: dict[str, int] = {}
     missing_fact_predicates: dict[str, int] = {}
+    missing_fact_examples_by_predicate: dict[str, list[dict[str, str | None]]] = {}
     total_memory_only_latency_ms = 0.0
     total_memory_plus_kb_latency_ms = 0.0
 
@@ -2750,6 +2751,16 @@ def _run_spark_memory_kb_ablation(
             missing_fact_query_count += 1
             predicate_key = str(case["predicate"])
             missing_fact_predicates[predicate_key] = missing_fact_predicates.get(predicate_key, 0) + 1
+            examples = missing_fact_examples_by_predicate.setdefault(predicate_key, [])
+            if len(examples) < 2:
+                examples.append(
+                    {
+                        "conversation_id": str(case["conversation_id"]),
+                        "question": str(case["question"]),
+                        "label": str(case["label"]) if case.get("label") is not None else None,
+                        "evidence_summary": str(case["evidence_summary"]) if case.get("evidence_summary") is not None else None,
+                    }
+                )
 
         classification = _classify_spark_memory_kb_comparison(
             memory_only_found=memory_only.found,
@@ -2817,6 +2828,10 @@ def _run_spark_memory_kb_ablation(
             "kb_supported_query_count": kb_supported_query_count,
             "missing_fact_query_count": missing_fact_query_count,
             "missing_fact_predicates": dict(sorted(missing_fact_predicates.items())),
+            "missing_fact_examples_by_predicate": {
+                predicate: examples
+                for predicate, examples in sorted(missing_fact_examples_by_predicate.items())
+            },
             "classification_counts": classification_counts,
             "average_memory_only_latency_ms": round(total_memory_only_latency_ms / query_count, 3) if query_count else 0.0,
             "average_memory_plus_kb_latency_ms": round(total_memory_plus_kb_latency_ms / query_count, 3) if query_count else 0.0,
