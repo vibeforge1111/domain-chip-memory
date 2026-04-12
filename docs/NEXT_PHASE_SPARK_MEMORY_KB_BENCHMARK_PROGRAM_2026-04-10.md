@@ -276,6 +276,45 @@ Practical next step:
 - if the goal is product behavior, stop building benchmark plumbing here
 - the next implementation question is which regression-candidate source paths should be allowed to write into the target conversation in production, while keeping the cleanroom boundary lane intentionally abstention-safe
 
+## 2026-04-12 Promotion Plan
+
+The repo now carries a concrete promotion-plan artifact too.
+
+Command:
+
+- `python -m domain_chip_memory.cli build-spark-memory-kb-promotion-plan tmp\spark_memory_kb_policy_verdict_limit100_v1.json tmp\spark_memory_kb_source_backed_slice_limit100_v2.json --write tmp\spark_memory_kb_promotion_plan_limit100_v1.json`
+
+Plan summary:
+
+- promotable regression targets: `3`
+- optional gauntlet targets: `1`
+- excluded cleanroom-boundary targets: `2`
+- missing lineage rows: `0`
+
+Promotable targets:
+
+- `session:telegram:dm:spark-memory-regression-user-2c339238-hack_actor_query_missing`
+  - predicate: `profile.hack_actor`
+  - source conversation: `session:telegram:dm:spark-memory-regression-user-2c339238`
+  - source message: `sim:1775946706394651`
+  - value: `North Korea`
+- `session:telegram:dm:spark-memory-regression-user-2c339238-spark_role_abstention`
+  - predicate: `profile.spark_role`
+  - source conversation: `session:telegram:dm:spark-memory-regression-user-2c339238`
+  - source message: `sim:1775946707065672`
+  - value: `important part of the rebuild`
+- `session:telegram:dm:spark-memory-regression-user-6742ae87-hack_actor_query_missing`
+  - predicate: `profile.hack_actor`
+  - source conversation: `session:telegram:dm:spark-memory-regression-user-2c339238`
+  - source message: `sim:1775946706394651`
+  - value: `North Korea`
+
+Policy implication:
+
+- this is now the smallest concrete implementation list for production-policy follow-through
+- if a product lane is approved, these exact regression targets have traceable source-write lineage ready for audit
+- the cleanroom boundary targets remain explicitly excluded unless product policy changes
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

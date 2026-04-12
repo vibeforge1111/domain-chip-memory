@@ -959,3 +959,136 @@ def test_build_spark_memory_kb_policy_verdict_labels_action_buckets(tmp_path: Pa
             ],
         },
     ]
+
+
+def test_build_spark_memory_kb_promotion_plan_joins_policy_and_lineage(tmp_path: Path):
+    policy_payload = {
+        "policy_verdicts": [
+            {
+                "action_bucket": "expected_cleanroom_boundary",
+                "verdict": "retain_boundary_by_default",
+                "recommendation": "keep boundary",
+                "examples": [
+                    {
+                        "conversation_id": "cleanroom-timezone",
+                        "predicate": "profile.timezone",
+                        "question": "What is my timezone?",
+                        "answer": "Asia/Dubai",
+                    }
+                ],
+            },
+            {
+                "action_bucket": "regression_candidate",
+                "verdict": "promotable_if_source_path_is_legitimate",
+                "recommendation": "promote if legit",
+                "examples": [
+                    {
+                        "conversation_id": "regression-hack-actor",
+                        "predicate": "profile.hack_actor",
+                        "question": "Who hacked us?",
+                        "answer": "North Korea",
+                    }
+                ],
+            },
+            {
+                "action_bucket": "gauntlet_candidate",
+                "verdict": "expand_coverage_if_product_wants_recall",
+                "recommendation": "optional scope",
+                "examples": [
+                    {
+                        "conversation_id": "gauntlet-timezone",
+                        "predicate": "profile.timezone",
+                        "question": "What is my timezone?",
+                        "answer": "Asia/Dubai",
+                    }
+                ],
+            },
+        ]
+    }
+    source_backed_payload = {
+        "injected_writes": [
+            {
+                "predicate": "profile.timezone",
+                "target_conversation_id": "cleanroom-timezone",
+                "source_conversation_id": "source-timezone",
+                "source_message_id": "msg-timezone",
+                "cloned_message_id": "clone-timezone",
+                "value": "Asia/Dubai",
+            },
+            {
+                "predicate": "profile.hack_actor",
+                "target_conversation_id": "regression-hack-actor",
+                "source_conversation_id": "source-hack-actor",
+                "source_message_id": "msg-hack-actor",
+                "cloned_message_id": "clone-hack-actor",
+                "value": "North Korea",
+            },
+            {
+                "predicate": "profile.timezone",
+                "target_conversation_id": "gauntlet-timezone",
+                "source_conversation_id": "source-gauntlet-timezone",
+                "source_message_id": "msg-gauntlet-timezone",
+                "cloned_message_id": "clone-gauntlet-timezone",
+                "value": "Asia/Dubai",
+            },
+        ]
+    }
+    policy_file = tmp_path / "policy.json"
+    source_backed_file = tmp_path / "source-backed.json"
+    policy_file.write_text(json.dumps(policy_payload), encoding="utf-8")
+    source_backed_file.write_text(json.dumps(source_backed_payload), encoding="utf-8")
+
+    payload = cli._build_spark_memory_kb_promotion_plan(str(policy_file), str(source_backed_file))
+
+    assert payload["summary"] == {
+        "promotable_target_count": 1,
+        "optional_target_count": 1,
+        "excluded_target_count": 1,
+        "missing_lineage_count": 0,
+    }
+    assert payload["promotable_targets"] == [
+        {
+            "action_bucket": "regression_candidate",
+            "verdict": "promotable_if_source_path_is_legitimate",
+            "recommendation": "promote if legit",
+            "target_conversation_id": "regression-hack-actor",
+            "predicate": "profile.hack_actor",
+            "question": "Who hacked us?",
+            "answer": "North Korea",
+            "source_conversation_id": "source-hack-actor",
+            "source_message_id": "msg-hack-actor",
+            "cloned_message_id": "clone-hack-actor",
+            "value": "North Korea",
+        }
+    ]
+    assert payload["optional_targets"] == [
+        {
+            "action_bucket": "gauntlet_candidate",
+            "verdict": "expand_coverage_if_product_wants_recall",
+            "recommendation": "optional scope",
+            "target_conversation_id": "gauntlet-timezone",
+            "predicate": "profile.timezone",
+            "question": "What is my timezone?",
+            "answer": "Asia/Dubai",
+            "source_conversation_id": "source-gauntlet-timezone",
+            "source_message_id": "msg-gauntlet-timezone",
+            "cloned_message_id": "clone-gauntlet-timezone",
+            "value": "Asia/Dubai",
+        }
+    ]
+    assert payload["excluded_targets"] == [
+        {
+            "action_bucket": "expected_cleanroom_boundary",
+            "verdict": "retain_boundary_by_default",
+            "recommendation": "keep boundary",
+            "target_conversation_id": "cleanroom-timezone",
+            "predicate": "profile.timezone",
+            "question": "What is my timezone?",
+            "answer": "Asia/Dubai",
+            "source_conversation_id": "source-timezone",
+            "source_message_id": "msg-timezone",
+            "cloned_message_id": "clone-timezone",
+            "value": "Asia/Dubai",
+        }
+    ]
+    assert payload["missing_lineage"] == []

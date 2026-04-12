@@ -3532,6 +3532,89 @@ def _build_spark_memory_kb_policy_verdict(compare_file: str) -> dict:
     }
 
 
+def _build_spark_memory_kb_promotion_plan(policy_verdict_file: str, source_backed_slice_file: str) -> dict:
+    policy_payload = _load_json_file(policy_verdict_file)
+    source_backed_payload = _load_json_file(source_backed_slice_file)
+    if not isinstance(policy_payload, dict) or not isinstance(source_backed_payload, dict):
+        raise ValueError("Promotion plan inputs must be JSON objects.")
+
+    policy_verdicts = policy_payload.get("policy_verdicts")
+    injected_writes = source_backed_payload.get("injected_writes")
+    if not isinstance(policy_verdicts, list) or not isinstance(injected_writes, list):
+        raise ValueError("Promotion plan requires policy_verdicts and injected_writes lists.")
+
+    injected_lookup: dict[tuple[str, str], dict] = {}
+    for row in injected_writes:
+        if not isinstance(row, dict):
+            continue
+        key = (
+            str(row.get("target_conversation_id") or "").strip(),
+            str(row.get("predicate") or "").strip(),
+        )
+        if key[0] and key[1]:
+            injected_lookup[key] = row
+
+    promotable_targets: list[dict[str, str | None]] = []
+    optional_targets: list[dict[str, str | None]] = []
+    excluded_targets: list[dict[str, str | None]] = []
+    missing_lineage: list[dict[str, str | None]] = []
+
+    for verdict in policy_verdicts:
+        if not isinstance(verdict, dict):
+            continue
+        action_bucket = str(verdict.get("action_bucket") or "").strip()
+        recommendation = str(verdict.get("recommendation") or "").strip() or None
+        verdict_label = str(verdict.get("verdict") or "").strip() or None
+        examples = verdict.get("examples")
+        if not isinstance(examples, list):
+            continue
+        for example in examples:
+            if not isinstance(example, dict):
+                continue
+            target_conversation_id = str(example.get("conversation_id") or "").strip()
+            predicate = str(example.get("predicate") or "").strip()
+            lineage = injected_lookup.get((target_conversation_id, predicate))
+            target_row = {
+                "action_bucket": action_bucket or None,
+                "verdict": verdict_label,
+                "recommendation": recommendation,
+                "target_conversation_id": target_conversation_id or None,
+                "predicate": predicate or None,
+                "question": str(example.get("question") or "").strip() or None,
+                "answer": str(example.get("answer") or "").strip() or None,
+                "source_conversation_id": str(dict(lineage or {}).get("source_conversation_id") or "").strip() or None,
+                "source_message_id": str(dict(lineage or {}).get("source_message_id") or "").strip() or None,
+                "cloned_message_id": str(dict(lineage or {}).get("cloned_message_id") or "").strip() or None,
+                "value": str(dict(lineage or {}).get("value") or "").strip() or None,
+            }
+            if lineage is None:
+                missing_lineage.append(target_row)
+            if action_bucket == "regression_candidate":
+                promotable_targets.append(target_row)
+            elif action_bucket == "gauntlet_candidate":
+                optional_targets.append(target_row)
+            elif action_bucket == "expected_cleanroom_boundary":
+                excluded_targets.append(target_row)
+
+    return {
+        "input_policy_verdict_file": str(Path(policy_verdict_file)),
+        "input_source_backed_slice_file": str(Path(source_backed_slice_file)),
+        "summary": {
+            "promotable_target_count": len(promotable_targets),
+            "optional_target_count": len(optional_targets),
+            "excluded_target_count": len(excluded_targets),
+            "missing_lineage_count": len(missing_lineage),
+        },
+        "promotable_targets": promotable_targets,
+        "optional_targets": optional_targets,
+        "excluded_targets": excluded_targets,
+        "missing_lineage": missing_lineage,
+        "trace": {
+            "operation": "build_spark_memory_kb_promotion_plan",
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -7897,6 +7980,13 @@ def main() -> None:
     )
     build_spark_memory_kb_policy_verdict.add_argument("compare_file")
     build_spark_memory_kb_policy_verdict.add_argument("--write")
+    build_spark_memory_kb_promotion_plan = subparsers.add_parser(
+        "build-spark-memory-kb-promotion-plan",
+        help="Join the Spark policy verdict with source-backed lineage to produce promotable, optional, and excluded targets.",
+    )
+    build_spark_memory_kb_promotion_plan.add_argument("policy_verdict_file")
+    build_spark_memory_kb_promotion_plan.add_argument("source_backed_slice_file")
+    build_spark_memory_kb_promotion_plan.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -8581,6 +8671,16 @@ def main() -> None:
     if args.command == "build-spark-memory-kb-policy-verdict":
         payload = _build_spark_memory_kb_policy_verdict(
             args.compare_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-memory-kb-promotion-plan":
+        payload = _build_spark_memory_kb_promotion_plan(
+            args.policy_verdict_file,
+            args.source_backed_slice_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)
