@@ -4345,6 +4345,55 @@ def _run_spark_memory_kb_active_refresh_read_report(
     }
 
 
+def _build_spark_memory_kb_active_release_summary(
+    active_refresh_file: str,
+    policy_aligned_slice_file: str,
+    *,
+    limit: int | None = None,
+) -> dict:
+    resolution = _resolve_spark_memory_kb_active_refresh(active_refresh_file)
+    policy_verification = _verify_spark_memory_kb_active_refresh_policy(
+        active_refresh_file,
+        policy_aligned_slice_file,
+    )
+    active_read_report = _run_spark_memory_kb_active_refresh_read_report(
+        active_refresh_file,
+        policy_aligned_slice_file,
+        limit=limit,
+    )
+
+    resolution_summary = resolution.get("summary", {})
+    verification_summary = policy_verification.get("summary", {})
+    read_summary = active_read_report.get("summary", {})
+
+    return {
+        "input_active_refresh_file": str(Path(active_refresh_file)),
+        "input_policy_aligned_slice_file": str(Path(policy_aligned_slice_file)),
+        "summary": {
+            "kb_output_dir": str(resolution_summary.get("kb_output_dir") or ""),
+            "snapshot_file": str(resolution_summary.get("snapshot_file") or ""),
+            "health_valid": bool(resolution_summary.get("health_valid")),
+            "policy_honored": bool(verification_summary.get("policy_honored")),
+            "policy_row_count": int(verification_summary.get("policy_row_count", 0) or 0),
+            "policy_violation_count": int(verification_summary.get("violation_count", 0) or 0),
+            "query_count": int(read_summary.get("query_count", 0) or 0),
+            "found_count": int(read_summary.get("found_count", 0) or 0),
+            "missing_count": int(read_summary.get("missing_count", 0) or 0),
+            "resolved_missing_fact_query_count": int(read_summary.get("resolved_missing_fact_query_count", 0) or 0),
+            "unresolved_missing_fact_query_count": int(read_summary.get("unresolved_missing_fact_query_count", 0) or 0),
+            "found_by_action_bucket": dict(sorted(dict(read_summary.get("found_by_action_bucket", {})).items())),
+            "missing_by_action_bucket": dict(sorted(dict(read_summary.get("missing_by_action_bucket", {})).items())),
+        },
+        "resolution": resolution,
+        "policy_verification": policy_verification,
+        "active_read_report": active_read_report,
+        "trace": {
+            "operation": "build_spark_memory_kb_active_release_summary",
+            "limit": limit,
+        },
+    }
+
+
 def _verify_spark_memory_kb_active_refresh_policy(
     active_refresh_file: str,
     policy_aligned_slice_file: str,
@@ -8919,6 +8968,14 @@ def main() -> None:
     run_spark_memory_kb_active_refresh_read_report.add_argument("policy_aligned_slice_file")
     run_spark_memory_kb_active_refresh_read_report.add_argument("--limit", type=int)
     run_spark_memory_kb_active_refresh_read_report.add_argument("--write")
+    build_spark_memory_kb_active_release_summary = subparsers.add_parser(
+        "build-spark-memory-kb-active-release-summary",
+        help="Build one release-readiness summary from the published active governed KB, policy verification, and active read report.",
+    )
+    build_spark_memory_kb_active_release_summary.add_argument("active_refresh_file")
+    build_spark_memory_kb_active_release_summary.add_argument("policy_aligned_slice_file")
+    build_spark_memory_kb_active_release_summary.add_argument("--limit", type=int)
+    build_spark_memory_kb_active_release_summary.add_argument("--write")
     verify_spark_memory_kb_active_refresh_policy = subparsers.add_parser(
         "verify-spark-memory-kb-active-refresh-policy",
         help="Verify that a published active governed Spark KB still honors the policy rows from a policy-aligned slice payload.",
@@ -9724,6 +9781,17 @@ def main() -> None:
 
     if args.command == "run-spark-memory-kb-active-refresh-read-report":
         payload = _run_spark_memory_kb_active_refresh_read_report(
+            args.active_refresh_file,
+            args.policy_aligned_slice_file,
+            limit=args.limit,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-memory-kb-active-release-summary":
+        payload = _build_spark_memory_kb_active_release_summary(
             args.active_refresh_file,
             args.policy_aligned_slice_file,
             limit=args.limit,

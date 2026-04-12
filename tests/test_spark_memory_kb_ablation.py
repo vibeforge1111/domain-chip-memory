@@ -1879,6 +1879,69 @@ def test_run_spark_memory_kb_active_refresh_read_report_summarizes_found_and_mis
     assert payload["summary"]["unresolved_missing_fact_query_count"] == 1
 
 
+def test_build_spark_memory_kb_active_release_summary_combines_resolution_verification_and_reads(
+    tmp_path: Path, monkeypatch
+):
+    active_refresh_file = tmp_path / "active-refresh.json"
+    policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"
+    active_refresh_file.write_text("{}", encoding="utf-8")
+    policy_aligned_slice_file.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        cli,
+        "_resolve_spark_memory_kb_active_refresh",
+        lambda path: {
+            "summary": {
+                "kb_output_dir": "tmp/published/release",
+                "snapshot_file": "tmp/published/release/raw/memory-snapshots/latest.json",
+                "health_valid": True,
+            }
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_verify_spark_memory_kb_active_refresh_policy",
+        lambda active, policy: {
+            "summary": {
+                "policy_honored": True,
+                "policy_row_count": 7,
+                "violation_count": 0,
+            }
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_run_spark_memory_kb_active_refresh_read_report",
+        lambda active, policy, limit=None: {
+            "summary": {
+                "query_count": 26,
+                "found_count": 23,
+                "missing_count": 3,
+                "resolved_missing_fact_query_count": 4,
+                "unresolved_missing_fact_query_count": 3,
+                "found_by_action_bucket": {"regression_candidate": 23},
+                "missing_by_action_bucket": {"expected_cleanroom_boundary": 2, "gauntlet_candidate": 1},
+            }
+        },
+    )
+
+    payload = cli._build_spark_memory_kb_active_release_summary(
+        str(active_refresh_file),
+        str(policy_aligned_slice_file),
+    )
+
+    assert payload["summary"]["kb_output_dir"] == "tmp/published/release"
+    assert payload["summary"]["health_valid"] is True
+    assert payload["summary"]["policy_honored"] is True
+    assert payload["summary"]["policy_row_count"] == 7
+    assert payload["summary"]["policy_violation_count"] == 0
+    assert payload["summary"]["query_count"] == 26
+    assert payload["summary"]["found_count"] == 23
+    assert payload["summary"]["missing_count"] == 3
+    assert payload["summary"]["resolved_missing_fact_query_count"] == 4
+    assert payload["summary"]["unresolved_missing_fact_query_count"] == 3
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [

@@ -666,6 +666,34 @@ Active-read interpretation:
 - the final active governed KB exposes only the regression lane and cleanly omits the blocked and deferred lanes
 - that makes the live published surface easy to audit in one artifact instead of checking single lookups one by one
 
+## 2026-04-12 Active Release Summary
+
+The repo now has a one-file release-readiness summary for the published governed surface.
+
+Command:
+
+- `python -m domain_chip_memory.cli build-spark-memory-kb-active-release-summary tmp\spark_memory_kb_refresh_publish_limit100_v1\active-refresh.json tmp\spark_memory_kb_policy_aligned_slice_payload_limit100_v1.json --write tmp\spark_memory_kb_active_release_summary_limit100_v1.json`
+
+Release-summary result:
+
+- health valid: `true`
+- policy honored: `true`
+- policy rows checked: `7`
+- policy violations: `0`
+- query count: `26`
+- found count: `23`
+- missing count: `3`
+- resolved original missing-fact queries: `4`
+- unresolved original missing-fact queries: `3`
+- found by action bucket: `regression_candidate 23`
+- missing by action bucket: `expected_cleanroom_boundary 2`, `gauntlet_candidate 1`
+
+Release-summary interpretation:
+
+- this is now the highest-signal single artifact in the repo for downstream integration
+- it combines active resolution, policy verification, and final published-surface read coverage in one place
+- a Builder-side integration can use this as its release gate without replaying the entire benchmark chain
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
