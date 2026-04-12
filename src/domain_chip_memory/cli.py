@@ -5,6 +5,7 @@ import copy
 import json
 import os
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -3977,6 +3978,62 @@ def _build_spark_memory_kb_refresh_manifest(policy_aligned_slice_file: str) -> d
         },
         "trace": {
             "operation": "build_spark_memory_kb_refresh_manifest",
+        },
+    }
+
+
+def _materialize_spark_memory_kb_refresh_manifest(
+    refresh_manifest_file: str,
+    output_dir: str,
+) -> dict:
+    payload = _load_json_file(refresh_manifest_file)
+    if not isinstance(payload, dict):
+        raise ValueError("Refresh manifest payload must be a JSON object.")
+    summary = payload.get("summary")
+    kb = payload.get("kb")
+    if not isinstance(summary, dict) or not isinstance(kb, dict):
+        raise ValueError("Refresh manifest payload must contain summary and kb objects.")
+
+    source_output_dir = str(summary.get("kb_output_dir") or kb.get("output_dir") or "").strip()
+    snapshot_file = str(summary.get("snapshot_file") or kb.get("snapshot_file") or "").strip()
+    if not source_output_dir or not snapshot_file:
+        raise ValueError("Refresh manifest must contain kb_output_dir and snapshot_file.")
+
+    source_output_path = Path(source_output_dir)
+    source_snapshot_path = Path(snapshot_file)
+    if not source_output_path.is_dir():
+        raise ValueError(f"Governed KB output_dir does not exist: {source_output_path}")
+    if not source_snapshot_path.is_file():
+        raise ValueError(f"Governed KB snapshot_file does not exist: {source_snapshot_path}")
+
+    target_output_path = Path(output_dir)
+    if target_output_path.exists():
+        raise ValueError(f"Target output_dir already exists: {target_output_path}")
+
+    shutil.copytree(source_output_path, target_output_path)
+    target_snapshot_path = target_output_path / "raw" / "memory-snapshots" / source_snapshot_path.name
+    target_health_report = build_spark_kb_health_report(target_output_path)
+
+    return {
+        "input_refresh_manifest_file": str(Path(refresh_manifest_file)),
+        "summary": {
+            "source_kb_output_dir": str(source_output_path),
+            "materialized_kb_output_dir": str(target_output_path),
+            "source_snapshot_file": str(source_snapshot_path),
+            "materialized_snapshot_file": str(target_snapshot_path),
+            "health_valid": bool(target_health_report.get("valid")),
+            "conversation_count": int(summary.get("conversation_count", 0) or 0),
+            "accepted_writes": int(summary.get("accepted_writes", 0) or 0),
+            "skipped_turns": int(summary.get("skipped_turns", 0) or 0),
+            "policy_skipped_turn_count": int(summary.get("policy_skipped_turn_count", 0) or 0),
+            "policy_skipped_by_reason": dict(sorted(dict(summary.get("policy_skipped_by_reason", {})).items())),
+            "decision_counts": dict(sorted(dict(summary.get("decision_counts", {})).items())),
+            "current_state_page_count": int(summary.get("current_state_page_count", 0) or 0),
+            "evidence_page_count": int(summary.get("evidence_page_count", 0) or 0),
+        },
+        "health_report": target_health_report,
+        "trace": {
+            "operation": "materialize_spark_memory_kb_refresh_manifest",
         },
     }
 
@@ -8401,6 +8458,13 @@ def main() -> None:
     )
     build_spark_memory_kb_refresh_manifest.add_argument("policy_aligned_slice_file")
     build_spark_memory_kb_refresh_manifest.add_argument("--write")
+    materialize_spark_memory_kb_refresh_manifest = subparsers.add_parser(
+        "materialize-spark-memory-kb-refresh-manifest",
+        help="Copy the governed Spark KB referenced by a refresh manifest into a caller-chosen output directory.",
+    )
+    materialize_spark_memory_kb_refresh_manifest.add_argument("refresh_manifest_file")
+    materialize_spark_memory_kb_refresh_manifest.add_argument("output_dir")
+    materialize_spark_memory_kb_refresh_manifest.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -9139,6 +9203,16 @@ def main() -> None:
     if args.command == "build-spark-memory-kb-refresh-manifest":
         payload = _build_spark_memory_kb_refresh_manifest(
             args.policy_aligned_slice_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "materialize-spark-memory-kb-refresh-manifest":
+        payload = _materialize_spark_memory_kb_refresh_manifest(
+            args.refresh_manifest_file,
+            args.output_dir,
         )
         if args.write:
             _write_json(Path(args.write), payload)

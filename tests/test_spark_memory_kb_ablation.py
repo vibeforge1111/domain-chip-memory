@@ -1370,6 +1370,61 @@ def test_build_spark_memory_kb_refresh_manifest_summarizes_governed_artifact(tmp
     assert manifest["policy_targets_by_decision"]["block"][0]["predicate"] == "profile.home_country"
 
 
+def test_materialize_spark_memory_kb_refresh_manifest_copies_governed_kb(tmp_path: Path):
+    source_kb_dir = tmp_path / "policy-aligned-kb"
+    source_snapshot_file = source_kb_dir / "raw" / "memory-snapshots" / "latest.json"
+    source_index_file = source_kb_dir / "wiki" / "index.md"
+    source_snapshot_file.parent.mkdir(parents=True)
+    source_index_file.parent.mkdir(parents=True)
+    (source_kb_dir / "CLAUDE.md").write_text("# KB\n", encoding="utf-8")
+    source_snapshot_file.write_text('{"current_state":[],"evidence":[],"events":[],"trace":{}}', encoding="utf-8")
+    source_index_file.write_text("# Index\n", encoding="utf-8")
+
+    manifest_file = tmp_path / "refresh-manifest.json"
+    manifest_file.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "kb_output_dir": str(source_kb_dir),
+                    "snapshot_file": str(source_snapshot_file),
+                    "conversation_count": 8,
+                    "accepted_writes": 16,
+                    "skipped_turns": 3,
+                    "policy_skipped_turn_count": 3,
+                    "policy_skipped_by_reason": {"block": 2, "defer": 1},
+                    "decision_counts": {"allow": 4, "block": 2, "defer": 1},
+                    "current_state_page_count": 16,
+                    "evidence_page_count": 16,
+                },
+                "kb": {
+                    "output_dir": str(source_kb_dir),
+                    "snapshot_file": str(source_snapshot_file),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    materialized_dir = tmp_path / "materialized-kb"
+
+    payload = cli._materialize_spark_memory_kb_refresh_manifest(
+        str(manifest_file),
+        str(materialized_dir),
+    )
+
+    assert payload["summary"]["source_kb_output_dir"] == str(source_kb_dir)
+    assert payload["summary"]["materialized_kb_output_dir"] == str(materialized_dir)
+    assert payload["summary"]["source_snapshot_file"] == str(source_snapshot_file)
+    assert payload["summary"]["materialized_snapshot_file"] == str(
+        materialized_dir / "raw" / "memory-snapshots" / "latest.json"
+    )
+    assert payload["summary"]["decision_counts"] == {"allow": 4, "block": 2, "defer": 1}
+    assert payload["summary"]["policy_skipped_by_reason"] == {"block": 2, "defer": 1}
+    assert payload["summary"]["health_valid"] is False
+    assert (materialized_dir / "CLAUDE.md").exists()
+    assert (materialized_dir / "wiki" / "index.md").exists()
+    assert (materialized_dir / "raw" / "memory-snapshots" / "latest.json").exists()
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [

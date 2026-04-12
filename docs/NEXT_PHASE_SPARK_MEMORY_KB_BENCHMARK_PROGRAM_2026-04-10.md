@@ -496,6 +496,31 @@ Refresh-manifest interpretation:
 - it points directly at the governed KB and governed snapshot instead of requiring the caller to parse a larger benchmark artifact
 - it keeps the policy envelope explicit through compact `policy_targets_by_decision` rows, so upstream code can both locate the compiled output and verify which promotions were allowed, blocked, or deferred
 
+## 2026-04-12 Refresh Materialization
+
+The repo now has a direct consumer path too.
+
+Command:
+
+- `python -m domain_chip_memory.cli materialize-spark-memory-kb-refresh-manifest tmp\spark_memory_kb_refresh_manifest_limit100_v1.json tmp\spark_memory_kb_refresh_materialized_limit100_v1 --write tmp\spark_memory_kb_refresh_materialized_payload_limit100_v1.json`
+
+Materialization summary:
+
+- source governed KB dir: `tmp\spark_memory_kb_policy_aligned_slice_limit100_v1`
+- materialized KB dir: `tmp\spark_memory_kb_refresh_materialized_limit100_v1`
+- materialized snapshot file: `tmp\spark_memory_kb_refresh_materialized_limit100_v1\raw\memory-snapshots\latest.json`
+- health valid: `true`
+- replayed conversations: `8`
+- accepted writes: `16`
+- skipped turns: `3`
+- decision counts: `allow 4`, `block 2`, `defer 1`
+
+Materialization interpretation:
+
+- an upstream refresher no longer needs to reconstruct or recompile the governed KB to consume it
+- the manifest can now be turned into a fresh output directory with one command while preserving the governed snapshot and health report
+- this is still intentionally copy-based, not merge-based, so the consumer path stays explicit and does not silently overwrite an existing target
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
