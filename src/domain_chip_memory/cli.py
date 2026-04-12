@@ -4627,6 +4627,72 @@ def _build_spark_memory_kb_governed_release_summary(
     }
 
 
+def _check_spark_memory_kb_governed_release_summary(governed_release_summary_file: str) -> dict:
+    payload = _load_json_file(governed_release_summary_file)
+    if not isinstance(payload, dict):
+        raise ValueError("Governed release summary payload must be a JSON object.")
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Governed release summary payload must contain a summary object.")
+
+    found_by_action_bucket = dict(summary.get("found_by_action_bucket", {}))
+    missing_by_action_bucket = dict(summary.get("missing_by_action_bucket", {}))
+    failure_reasons: list[str] = []
+    if not bool(summary.get("ready")):
+        failure_reasons.append("governed_release_not_ready")
+    if not bool(summary.get("health_valid")):
+        failure_reasons.append("health_invalid")
+    if not bool(summary.get("policy_honored")):
+        failure_reasons.append("policy_not_honored")
+    if int(summary.get("failure_reason_count", 0) or 0) != 0:
+        failure_reasons.append("upstream_failure_reason_count_nonzero")
+    if int(missing_by_action_bucket.get("regression_candidate", 0) or 0) != 0:
+        failure_reasons.append("regression_candidate_missing")
+    if int(found_by_action_bucket.get("expected_cleanroom_boundary", 0) or 0) != 0:
+        failure_reasons.append("cleanroom_boundary_exposed")
+    if int(found_by_action_bucket.get("gauntlet_candidate", 0) or 0) != 0:
+        failure_reasons.append("gauntlet_candidate_exposed")
+
+    allowed_missing_action_buckets = {
+        key: int(value or 0)
+        for key, value in sorted(missing_by_action_bucket.items())
+        if key in {"expected_cleanroom_boundary", "gauntlet_candidate"} and int(value or 0) != 0
+    }
+    return {
+        "input_governed_release_summary_file": str(Path(governed_release_summary_file)),
+        "summary": {
+            "ready": not failure_reasons,
+            "failure_reason_count": len(failure_reasons),
+            "failure_reasons": failure_reasons,
+            "health_valid": bool(summary.get("health_valid")),
+            "policy_honored": bool(summary.get("policy_honored")),
+            "upstream_ready": bool(summary.get("ready")),
+            "upstream_failure_reason_count": int(summary.get("failure_reason_count", 0) or 0),
+            "query_count": int(summary.get("query_count", 0) or 0),
+            "found_count": int(summary.get("found_count", 0) or 0),
+            "missing_count": int(summary.get("missing_count", 0) or 0),
+            "found_by_action_bucket": dict(sorted(found_by_action_bucket.items())),
+            "missing_by_action_bucket": dict(sorted(missing_by_action_bucket.items())),
+            "allowed_missing_action_buckets": allowed_missing_action_buckets,
+        },
+        "trace": {
+            "operation": "check_spark_memory_kb_governed_release_summary",
+        },
+    }
+
+
+def _assert_spark_memory_kb_governed_release_summary_ready(governed_release_summary_file: str) -> dict:
+    payload = _check_spark_memory_kb_governed_release_summary(governed_release_summary_file)
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Governed release gate payload must contain a summary object.")
+    if not bool(summary.get("ready")):
+        failure_reasons = [str(item).strip() for item in summary.get("failure_reasons", []) if str(item).strip()]
+        reason_text = ", ".join(failure_reasons) if failure_reasons else "unknown_failure"
+        raise SystemExit(f"Spark governed release summary gate failed: {reason_text}")
+    return payload
+
+
 def _resolve_spark_memory_kb_governed_release(governed_release_file: str) -> dict:
     payload = _load_json_file(governed_release_file)
     if not isinstance(payload, dict):
@@ -4764,12 +4830,18 @@ def _ship_spark_memory_kb_governed_release(
     governed_release_summary = _build_spark_memory_kb_governed_release_summary(str(governed_release_file))
     governed_release_summary_file = publish_root_path / "governed-release-summary.json"
     _write_json(governed_release_summary_file, governed_release_summary)
+    governed_release_gate = _assert_spark_memory_kb_governed_release_summary_ready(str(governed_release_summary_file))
+    governed_release_gate_file = publish_root_path / "governed-release-gate.json"
+    _write_json(governed_release_gate_file, governed_release_gate)
     governed_release_payload["governed_release_read_report_file"] = str(governed_release_read_report_file)
     governed_release_payload["governed_release_summary_file"] = str(governed_release_summary_file)
+    governed_release_payload["governed_release_gate_file"] = str(governed_release_gate_file)
     governed_release_payload["governed_release_read_report"] = governed_release_read_report
     governed_release_payload["governed_release_summary"] = governed_release_summary
+    governed_release_payload["governed_release_gate"] = governed_release_gate
     governed_release_payload["summary"]["governed_release_read_report_file"] = str(governed_release_read_report_file)
     governed_release_payload["summary"]["governed_release_summary_file"] = str(governed_release_summary_file)
+    governed_release_payload["summary"]["governed_release_gate_file"] = str(governed_release_gate_file)
     _write_json(governed_release_file, governed_release_payload)
     return governed_release_payload
 
@@ -9378,6 +9450,18 @@ def main() -> None:
     build_spark_memory_kb_governed_release_summary.add_argument("governed_release_file")
     build_spark_memory_kb_governed_release_summary.add_argument("--limit", type=int)
     build_spark_memory_kb_governed_release_summary.add_argument("--write")
+    check_spark_memory_kb_governed_release_summary = subparsers.add_parser(
+        "check-spark-memory-kb-governed-release-summary",
+        help="Convert a governed Spark KB release summary into a machine-friendly top-level pass/fail gate verdict.",
+    )
+    check_spark_memory_kb_governed_release_summary.add_argument("governed_release_summary_file")
+    check_spark_memory_kb_governed_release_summary.add_argument("--write")
+    assert_spark_memory_kb_governed_release_summary_ready = subparsers.add_parser(
+        "assert-spark-memory-kb-governed-release-summary-ready",
+        help="Exit non-zero when a governed Spark KB release summary does not pass the top-level gate.",
+    )
+    assert_spark_memory_kb_governed_release_summary_ready.add_argument("governed_release_summary_file")
+    assert_spark_memory_kb_governed_release_summary_ready.add_argument("--write")
     build_spark_memory_kb_active_release_summary = subparsers.add_parser(
         "build-spark-memory-kb-active-release-summary",
         help="Build one release-readiness summary from the published active governed KB, policy verification, and active read report.",
@@ -10268,6 +10352,24 @@ def main() -> None:
         payload = _build_spark_memory_kb_governed_release_summary(
             args.governed_release_file,
             limit=args.limit,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "check-spark-memory-kb-governed-release-summary":
+        payload = _check_spark_memory_kb_governed_release_summary(
+            args.governed_release_summary_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "assert-spark-memory-kb-governed-release-summary-ready":
+        payload = _assert_spark_memory_kb_governed_release_summary_ready(
+            args.governed_release_summary_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)

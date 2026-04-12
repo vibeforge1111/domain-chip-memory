@@ -832,6 +832,7 @@ Summary result:
 
 - governed release read report file: `tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release-read-report.json`
 - governed release summary file: `tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release-summary.json`
+- governed release gate file: `tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release-gate.json`
 - ready: `true`
 - health valid: `true`
 - policy honored: `true`
@@ -844,6 +845,24 @@ Summary interpretation:
 
 - a single ship run now leaves the top-level manifest, top-level read audit, and top-level compact summary together in the publish root
 - downstream automation no longer needs to synthesize a post-ship report itself just to inspect the published governed surface
+
+Top-level gate commands:
+
+- `python -m domain_chip_memory.cli check-spark-memory-kb-governed-release-summary tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release-summary.json --write tmp\spark_memory_kb_governed_release_gate_limit100_v1.json`
+- `python -m domain_chip_memory.cli assert-spark-memory-kb-governed-release-summary-ready tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release-summary.json --write tmp\spark_memory_kb_governed_release_assert_summary_limit100_v1.json`
+
+Top-level gate result:
+
+- ready: `true`
+- failure reason count: `0`
+- upstream ready: `true`
+- upstream failure reason count: `0`
+- allowed missing action buckets: `expected_cleanroom_boundary 2`, `gauntlet_candidate 1`
+
+Top-level gate interpretation:
+
+- the publish root now contains a full top-level machine gate alongside the manifest, read audit, and compact summary
+- downstream automation can stop at `governed-release-summary.json` / `governed-release-gate.json` without traversing into the active release artifacts at all
 
 So the honest claim after this first A/B is:
 
