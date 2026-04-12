@@ -9,6 +9,7 @@ import subprocess
 import sys
 from dataclasses import asdict, replace
 from pathlib import Path
+from time import perf_counter
 
 from .adapters import build_adapter_contract_summary
 from .baselines import build_baseline_contract_summary
@@ -2148,6 +2149,10 @@ def _normalize_builder_telegram_state_db(
                             "trace_ref": str(influence_row.get("trace_ref") or ""),
                             "source_event_id": str(influence_row.get("event_id") or ""),
                             "source_event_type": "plugin_or_chip_influence_recorded",
+                            "fact_name": str(query_payload_dict.get("fact_name") or "").strip() or None,
+                            "label": str(query_payload_dict.get("label") or "").strip() or None,
+                            "predicate": _query_predicate(query_payload_dict),
+                            "query_kind": str(query_payload_dict.get("query_kind") or "").strip() or None,
                         },
                     }
                 )
@@ -2231,6 +2236,14 @@ def _normalize_builder_telegram_state_db(
                             "source_event_type": "tool_result_received",
                             "keepability": tool_facts.get("keepability"),
                             "promotion_disposition": tool_facts.get("promotion_disposition"),
+                            "bridge_mode": bridge_mode or None,
+                            "routing_decision": routing_decision or None,
+                            "fact_name": str(tool_facts.get("fact_name") or "").strip() or None,
+                            "label": str(tool_facts.get("label") or "").strip() or None,
+                            "predicate": predicate,
+                            "value": value,
+                            "value_found": tool_facts.get("value_found"),
+                            "evidence_summary": str(tool_facts.get("evidence_summary") or "").strip() or None,
                         },
                     }
                 )
@@ -2544,6 +2557,272 @@ def _load_string_list_manifest(manifest_file: str, *, key: str, label: str) -> l
             item_path = manifest_path.parent / item_path
         resolved_items.append(str(item_path))
     return resolved_items
+
+
+def _kb_page_slug(value: object) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", "-", str(value or "").strip().lower())
+    slug = normalized.strip("-") or "item"
+    max_length = 80
+    if len(slug) <= max_length:
+        return slug
+    import hashlib
+
+    digest = hashlib.sha1(slug.encode("utf-8")).hexdigest()[:8]
+    trimmed = slug[: max_length - len(digest) - 1].rstrip("-")
+    return f"{trimmed}-{digest}" if trimmed else digest
+
+
+def _extract_markdown_section(text: str, heading: str) -> str | None:
+    pattern = rf"{re.escape(heading)}\n(.*?)(?:\n## |\Z)"
+    match = re.search(pattern, text, flags=re.DOTALL)
+    if not match:
+        return None
+    return match.group(1).strip() or None
+
+
+def _load_kb_current_state_support(kb_dir: str | Path, *, subject: str, predicate: str) -> dict:
+    page_path = Path(kb_dir) / "wiki" / "current-state" / f"{_kb_page_slug(subject)}-{_kb_page_slug(predicate)}.md"
+    if not page_path.exists():
+        return {
+            "exists": False,
+            "page_path": str(page_path),
+            "value": None,
+            "supporting_evidence_links": [],
+            "supporting_evidence_count": 0,
+        }
+    text = page_path.read_text(encoding="utf-8")
+    value = _extract_markdown_section(text, "## Value")
+    supporting = _extract_markdown_section(text, "## Supporting Evidence") or ""
+    evidence_links = [
+        line.removeprefix("- ").strip()
+        for line in supporting.splitlines()
+        if line.strip().startswith("- [[evidence/")
+    ]
+    return {
+        "exists": True,
+        "page_path": str(page_path),
+        "value": value,
+        "supporting_evidence_links": evidence_links,
+        "supporting_evidence_count": len(evidence_links),
+    }
+
+
+def _extract_spark_query_cases(normalized_payload: dict) -> list[dict]:
+    raw_conversations = normalized_payload.get("conversations", [])
+    if not isinstance(raw_conversations, list):
+        return []
+    cases: list[dict] = []
+    for conversation in raw_conversations:
+        if not isinstance(conversation, dict):
+            continue
+        conversation_id = str(conversation.get("conversation_id") or "").strip()
+        conversation_metadata = dict(conversation.get("metadata", {}))
+        subject = str(conversation_metadata.get("human_id") or "user").strip() or "user"
+        turns = [turn for turn in conversation.get("turns", []) if isinstance(turn, dict)]
+        assistant_by_request_id: dict[str, dict] = {}
+        for turn in turns:
+            turn_metadata = dict(turn.get("metadata", {}))
+            if str(turn.get("role") or "") != "assistant":
+                continue
+            request_id = str(turn_metadata.get("request_id") or "").strip()
+            if not request_id:
+                continue
+            assistant_by_request_id[request_id] = turn
+        for turn in turns:
+            turn_metadata = dict(turn.get("metadata", {}))
+            if str(turn.get("role") or "") != "user":
+                continue
+            if str(turn_metadata.get("source_event_type") or "") != "plugin_or_chip_influence_recorded":
+                continue
+            predicate = str(turn_metadata.get("predicate") or "").strip()
+            if not predicate:
+                continue
+            request_id = str(turn_metadata.get("request_id") or "").strip()
+            paired_assistant = assistant_by_request_id.get(request_id, {})
+            paired_metadata = dict(paired_assistant.get("metadata", {}))
+            cases.append(
+                {
+                    "conversation_id": conversation_id,
+                    "request_id": request_id,
+                    "question": str(turn.get("content") or "").strip(),
+                    "subject": subject,
+                    "predicate": predicate,
+                    "label": str(turn_metadata.get("label") or "").strip() or None,
+                    "query_kind": str(turn_metadata.get("query_kind") or "").strip() or None,
+                    "assistant_summary": str(paired_assistant.get("content") or "").strip() or None,
+                    "bridge_mode": str(paired_metadata.get("bridge_mode") or "").strip() or None,
+                    "routing_decision": str(paired_metadata.get("routing_decision") or "").strip() or None,
+                    "value_found": paired_metadata.get("value_found"),
+                    "evidence_summary": str(paired_metadata.get("evidence_summary") or "").strip() or None,
+                }
+            )
+    return cases
+
+
+def _classify_spark_memory_kb_comparison(
+    *,
+    memory_only_found: bool,
+    supporting_evidence_count: int,
+    value_found: object,
+    bridge_mode: str | None,
+    routing_decision: str | None,
+    query_kind: str | None,
+) -> str:
+    if memory_only_found:
+        return "answered_with_kb_support" if supporting_evidence_count > 0 else "answered_without_kb_support"
+    if value_found is False:
+        return "missing_fact_query"
+    if bridge_mode or routing_decision or query_kind:
+        return "query_abstention_without_kb_support"
+    return "unclassified_query_gap"
+
+
+def _run_spark_memory_kb_ablation(
+    data_file: str,
+    *,
+    limit: int | None = None,
+) -> dict:
+    payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
+    normalization = payload.get("normalization")
+    if not isinstance(normalization, dict):
+        raise ValueError("Spark intake payload must contain a normalization object.")
+    normalized = normalization.get("normalized")
+    if not isinstance(normalized, dict):
+        raise ValueError("Spark intake payload must contain normalization.normalized.")
+    compile_result = payload.get("compile_result")
+    if not isinstance(compile_result, dict):
+        raise ValueError("Spark intake payload must contain a compile_result object.")
+    kb_dir = str(compile_result.get("output_dir") or "").strip()
+    if not kb_dir:
+        raise ValueError("Spark intake payload must contain compile_result.output_dir.")
+
+    _, adapter = _execute_shadow_replay_payload(normalized)
+    query_cases = _extract_spark_query_cases(normalized)
+    if limit is not None:
+        query_cases = query_cases[:limit]
+
+    comparisons: list[dict] = []
+    memory_only_answered = 0
+    memory_plus_kb_answered = 0
+    answer_delta_count = 0
+    kb_supported_query_count = 0
+    missing_fact_query_count = 0
+    classification_counts: dict[str, int] = {}
+    total_memory_only_latency_ms = 0.0
+    total_memory_plus_kb_latency_ms = 0.0
+
+    for case in query_cases:
+        memory_start = perf_counter()
+        memory_only = adapter.sdk.explain_answer(
+            AnswerExplanationRequest(
+                question=case["question"],
+                subject=case["subject"],
+                predicate=case["predicate"],
+            )
+        )
+        memory_only_latency_ms = (perf_counter() - memory_start) * 1000.0
+
+        kb_start = perf_counter()
+        kb_support = _load_kb_current_state_support(
+            kb_dir,
+            subject=str(case["subject"]),
+            predicate=str(case["predicate"]),
+        )
+        kb_lookup_latency_ms = (perf_counter() - kb_start) * 1000.0
+
+        memory_only_answer = str(memory_only.answer or "").strip() or None
+        kb_value = str(kb_support.get("value") or "").strip() or None
+        memory_plus_kb_answer = memory_only_answer or kb_value
+        memory_plus_kb_found = bool(memory_only.found or kb_value)
+        answer_changed = memory_only_answer != memory_plus_kb_answer
+        supporting_evidence_count = int(kb_support.get("supporting_evidence_count", 0) or 0)
+
+        if memory_only.found:
+            memory_only_answered += 1
+        if memory_plus_kb_found:
+            memory_plus_kb_answered += 1
+        if answer_changed:
+            answer_delta_count += 1
+        if supporting_evidence_count > 0:
+            kb_supported_query_count += 1
+        if case.get("value_found") is False:
+            missing_fact_query_count += 1
+
+        classification = _classify_spark_memory_kb_comparison(
+            memory_only_found=memory_only.found,
+            supporting_evidence_count=supporting_evidence_count,
+            value_found=case.get("value_found"),
+            bridge_mode=case.get("bridge_mode"),
+            routing_decision=case.get("routing_decision"),
+            query_kind=case.get("query_kind"),
+        )
+        classification_counts[classification] = classification_counts.get(classification, 0) + 1
+
+        total_memory_only_latency_ms += memory_only_latency_ms
+        total_memory_plus_kb_latency_ms += memory_only_latency_ms + kb_lookup_latency_ms
+        comparisons.append(
+            {
+                "conversation_id": case["conversation_id"],
+                "request_id": case["request_id"],
+                "question": case["question"],
+                "subject": case["subject"],
+                "predicate": case["predicate"],
+                "label": case["label"],
+                "query_kind": case["query_kind"],
+                "bridge_mode": case["bridge_mode"],
+                "routing_decision": case["routing_decision"],
+                "value_found": case["value_found"],
+                "evidence_summary": case["evidence_summary"],
+                "memory_only": {
+                    "found": memory_only.found,
+                    "answer": memory_only_answer,
+                    "memory_role": memory_only.memory_role,
+                    "explanation": memory_only.explanation,
+                    "provenance_count": len(memory_only.provenance),
+                    "evidence_count": len(memory_only.evidence),
+                    "event_count": len(memory_only.events),
+                    "latency_ms": round(memory_only_latency_ms, 3),
+                },
+                "memory_plus_kb": {
+                    "found": memory_plus_kb_found,
+                    "answer": memory_plus_kb_answer,
+                    "kb_page_exists": bool(kb_support.get("exists")),
+                    "kb_page_path": kb_support.get("page_path"),
+                    "kb_value": kb_value,
+                    "supporting_evidence_count": supporting_evidence_count,
+                    "supporting_evidence_links": list(kb_support.get("supporting_evidence_links", [])),
+                    "latency_ms": round(memory_only_latency_ms + kb_lookup_latency_ms, 3),
+                },
+                "delta": {
+                    "answer_changed": answer_changed,
+                    "kb_added_support": supporting_evidence_count > 0,
+                    "assistant_summary": case["assistant_summary"],
+                },
+                "classification": classification,
+            }
+        )
+
+    query_count = len(query_cases)
+    return {
+        "input_file": str(Path(data_file)),
+        "kb_dir": kb_dir,
+        "summary": {
+            "query_count": query_count,
+            "memory_only_answered": memory_only_answered,
+            "memory_plus_kb_answered": memory_plus_kb_answered,
+            "answer_delta_count": answer_delta_count,
+            "kb_supported_query_count": kb_supported_query_count,
+            "missing_fact_query_count": missing_fact_query_count,
+            "classification_counts": classification_counts,
+            "average_memory_only_latency_ms": round(total_memory_only_latency_ms / query_count, 3) if query_count else 0.0,
+            "average_memory_plus_kb_latency_ms": round(total_memory_plus_kb_latency_ms / query_count, 3) if query_count else 0.0,
+        },
+        "comparisons": comparisons,
+        "trace": {
+            "operation": "run_spark_memory_kb_ablation",
+            "limit": limit,
+        },
+    }
 
 
 def _load_json_file(path: str | Path) -> object:
@@ -6876,6 +7155,13 @@ def main() -> None:
     run_spark_builder_state_telegram_intake.add_argument("--repo-source", action="append", default=[])
     run_spark_builder_state_telegram_intake.add_argument("--repo-source-manifest", action="append", default=[])
     run_spark_builder_state_telegram_intake.add_argument("--write")
+    run_spark_memory_kb_ablation = subparsers.add_parser(
+        "run-spark-memory-kb-ablation",
+        help="Compare memory-only versus memory-plus-KB support over query turns extracted from a Spark intake artifact.",
+    )
+    run_spark_memory_kb_ablation.add_argument("data_file")
+    run_spark_memory_kb_ablation.add_argument("--limit", type=int)
+    run_spark_memory_kb_ablation.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -7510,6 +7796,16 @@ def main() -> None:
             chat_id=args.chat_id,
             repo_sources=args.repo_source,
             repo_source_manifest_files=args.repo_source_manifest,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-memory-kb-ablation":
+        payload = _run_spark_memory_kb_ablation(
+            args.data_file,
+            limit=args.limit,
         )
         if args.write:
             _write_json(Path(args.write), payload)

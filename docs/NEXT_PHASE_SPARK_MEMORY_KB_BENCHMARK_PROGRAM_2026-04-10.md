@@ -25,6 +25,80 @@ Important boundary:
 - this does not mean the benchmark program is finished
 - it means the current runtime pin is now justified by an offline tie plus a live lead, instead of by live evidence alone
 
+## 2026-04-12 Spark Restart Check
+
+The first restart step from the checklist below has now been re-confirmed against the real Builder home:
+
+- `python -m domain_chip_memory.cli run-spark-builder-state-telegram-intake C:\Users\USER\.spark-intelligence tmp\state_telegram_restart_check_limit100_v2 --limit 100 --write tmp\state_telegram_restart_check_limit100_v2.json`
+- source path: `C:\Users\USER\.spark-intelligence\state.db`
+- processed `28` conversations with `121` accepted writes, `0` rejected writes, `0` skipped turns, and `380` reference turns
+- compiled KB health stayed clean with `valid: true`
+
+That is enough to treat the direct Builder `state.db` Telegram intake path as working end to end again.
+
+The honest follow-up matters:
+
+- this widened replay still did not surface any rejected writes or unsupported reasons
+- the zero-write cleanroom and regression threads are not currently true failure-taxonomy examples yet
+- they are query-only traces where Builder asks for a profile fact, then records a `tool_result_received` summary with no accepted write
+
+The important metadata lesson from this restart is now explicit:
+
+- the raw Builder `tool_result_received` rows already carry `bridge_mode`, `routing_decision`, `fact_name`, `label`, `predicate`, `evidence_summary`, and `value_found`
+- the replay normalizer had been dropping those fields on normalized assistant turns, which made missing-fact abstentions look like generic reference turns
+- the normalizer now preserves that query metadata, so future taxonomy and dossier work can distinguish `value_found: false` query misses from actual rejected writes
+
+So the truthful next step after this restart check is:
+
+- use the preserved query metadata to document clean abstentions versus missing-fact query misses
+- then choose the first `memory only` vs `memory + KB` slice with that distinction in view
+- only call something a Spark failure dossier when it is backed by a real rejection, skip, or explicit miss signal instead of a generic summary line
+
+## 2026-04-12 First Narrow Memory-Only Versus Memory-Plus-KB Result
+
+The first combined-system comparison now exists on a narrow Spark-shaped replay slice.
+
+Command:
+
+- `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v1.json`
+
+Slice definition:
+
+- input source: the real Builder `state.db` replay captured in `tmp\state_telegram_restart_check_limit100_v2.json`
+- query set: the replayed Spark profile-fact query turns extracted from that intake artifact
+- `memory only`: replay the normalized conversations back through governed memory and answer each extracted query with the SDK explanation path
+- `memory + KB`: answer the same query set, then check whether the compiled KB current-state page and supporting evidence pages exist for that same subject and predicate
+
+Current result:
+
+- query count: `125`
+- `memory only` answered: `113`
+- `memory + KB` answered: `113`
+- answer delta count: `0`
+- KB-supported query count: `113`
+- missing-fact query count: `11`
+- classified outcomes:
+  - `answered_with_kb_support`: `113`
+  - `missing_fact_query`: `11`
+  - `query_abstention_without_kb_support`: `1`
+- average `memory only` latency: `0.198 ms`
+- average `memory + KB` latency: `0.424 ms`
+
+Interpretation:
+
+- this first narrow slice does **not** show an answer-quality lift from the KB layer yet
+- it does show that the KB layer is lining up with the governed memory state on the answered queries
+- on this slice, the KB is currently improving inspectability and support visibility, not changing the answer itself
+- the unanswered slice is now classified instead of flat:
+  - most misses are true `value_found: false` missing-fact queries
+  - one remaining unanswered query is a query-abstention path with no KB support, not a confirmed missing fact
+
+So the honest claim after this first A/B is:
+
+- the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
+- the current result is neutral on answer quality
+- the KB is currently an auditability and support layer on this slice, not a measured answer-improvement layer yet
+
 ## Purpose
 
 This document exists to prevent the next phase from fragmenting into:

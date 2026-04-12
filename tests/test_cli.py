@@ -4386,6 +4386,174 @@ def test_run_spark_builder_state_telegram_intake_cli_renders_bridge_native_spark
         "What role will Spark play in this?",
         "Spark will be an important part of the rebuild.",
     ]
+    assert turns[2]["metadata"]["fact_name"] == "profile_spark_role"
+    assert turns[2]["metadata"]["label"] == "spark role"
+    assert turns[2]["metadata"]["predicate"] == "profile.spark_role"
+    assert turns[3]["metadata"]["bridge_mode"] == "memory_profile_fact"
+    assert turns[3]["metadata"]["routing_decision"] == "memory_profile_fact_query"
+    assert turns[3]["metadata"]["predicate"] == "profile.spark_role"
+
+
+def test_run_spark_builder_state_telegram_intake_cli_keeps_missing_query_metadata_from_builder_state_db(tmp_path: Path, monkeypatch):
+    builder_home = tmp_path / "builder-home-query-metadata"
+    output_dir = tmp_path / "spark_builder_state_query_metadata_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_query_metadata.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-query",
+                    "plugin_or_chip_influence_recorded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Personality influence was recorded before bridge execution.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "detected_profile_fact_query": {
+                                "fact_name": "profile_hack_actor",
+                                "label": "hack actor",
+                                "message_text": "Who hacked us?",
+                                "predicate": "profile.hack_actor",
+                                "query_kind": "single_fact",
+                            }
+                        }
+                    ),
+                    "2026-04-10 12:54:01",
+                ),
+                (
+                    "evt-query-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge answered a single-fact profile query directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_profile_fact",
+                            "routing_decision": "memory_profile_fact_query",
+                            "fact_name": "profile_hack_actor",
+                            "label": "hack actor",
+                            "predicate": "profile.hack_actor",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                            "evidence_summary": "status=memory_profile_fact predicate=profile.hack_actor value_found=no",
+                            "value_found": False,
+                        }
+                    ),
+                    "2026-04-10 12:54:02",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--chat-id",
+            "12345",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    turns = payload["normalization"]["normalized"]["conversations"][0]["turns"]
+    assert [turn["content"] for turn in turns] == [
+        "Who hacked us?",
+        "Researcher bridge answered a single-fact profile query directly from memory.",
+    ]
+    assert turns[0]["metadata"]["fact_name"] == "profile_hack_actor"
+    assert turns[0]["metadata"]["label"] == "hack actor"
+    assert turns[0]["metadata"]["predicate"] == "profile.hack_actor"
+    assert turns[0]["metadata"]["query_kind"] == "single_fact"
+    assert turns[1]["metadata"]["bridge_mode"] == "memory_profile_fact"
+    assert turns[1]["metadata"]["routing_decision"] == "memory_profile_fact_query"
+    assert turns[1]["metadata"]["fact_name"] == "profile_hack_actor"
+    assert turns[1]["metadata"]["label"] == "hack actor"
+    assert turns[1]["metadata"]["predicate"] == "profile.hack_actor"
+    assert turns[1]["metadata"]["value_found"] is False
+    assert turns[1]["metadata"]["evidence_summary"] == "status=memory_profile_fact predicate=profile.hack_actor value_found=no"
 
 
 def test_run_spark_shadow_report_batch_cli_can_aggregate_directory(tmp_path: Path, monkeypatch):
