@@ -4461,6 +4461,53 @@ def _assert_spark_memory_kb_active_release_ready(active_release_summary_file: st
     return payload
 
 
+def _ship_spark_memory_kb_governed_release(
+    refresh_manifest_file: str,
+    policy_aligned_slice_file: str,
+    publish_root_dir: str,
+) -> dict:
+    publish_payload = _publish_spark_memory_kb_refresh_manifest(
+        refresh_manifest_file,
+        publish_root_dir,
+    )
+    active_refresh = publish_payload.get("active_refresh")
+    active_refresh_file = publish_payload.get("active_refresh_file")
+    if not isinstance(active_refresh, dict) or not isinstance(active_refresh_file, str) or not active_refresh_file.strip():
+        raise ValueError("Publish payload must contain active_refresh metadata and active_refresh_file.")
+
+    active_release_summary = _build_spark_memory_kb_active_release_summary(
+        active_refresh_file,
+        policy_aligned_slice_file,
+    )
+    active_release_summary_path = Path(publish_root_dir) / "active-release-summary.json"
+    _write_json(active_release_summary_path, active_release_summary)
+    active_release_gate = _assert_spark_memory_kb_active_release_ready(str(active_release_summary_path))
+    active_release_gate_path = Path(publish_root_dir) / "active-release-gate.json"
+    _write_json(active_release_gate_path, active_release_gate)
+
+    return {
+        "input_refresh_manifest_file": str(Path(refresh_manifest_file)),
+        "input_policy_aligned_slice_file": str(Path(policy_aligned_slice_file)),
+        "publish_root_dir": str(Path(publish_root_dir)),
+        "active_refresh_file": str(Path(active_refresh_file)),
+        "active_release_summary_file": str(active_release_summary_path),
+        "active_release_gate_file": str(active_release_gate_path),
+        "publish": publish_payload,
+        "active_release_summary": active_release_summary,
+        "active_release_gate": active_release_gate,
+        "summary": {
+            "ready": bool(dict(active_release_gate.get("summary", {})).get("ready")),
+            "release_output_dir": str(publish_payload.get("release_output_dir") or ""),
+            "active_refresh_file": str(Path(active_refresh_file)),
+            "active_release_summary_file": str(active_release_summary_path),
+            "active_release_gate_file": str(active_release_gate_path),
+        },
+        "trace": {
+            "operation": "ship_spark_memory_kb_governed_release",
+        },
+    }
+
+
 def _verify_spark_memory_kb_active_refresh_policy(
     active_refresh_file: str,
     policy_aligned_slice_file: str,
@@ -9055,6 +9102,14 @@ def main() -> None:
     )
     assert_spark_memory_kb_active_release_ready.add_argument("active_release_summary_file")
     assert_spark_memory_kb_active_release_ready.add_argument("--write")
+    ship_spark_memory_kb_governed_release = subparsers.add_parser(
+        "ship-spark-memory-kb-governed-release",
+        help="Publish, summarize, and assert one governed Spark KB release from a refresh manifest in one step.",
+    )
+    ship_spark_memory_kb_governed_release.add_argument("refresh_manifest_file")
+    ship_spark_memory_kb_governed_release.add_argument("policy_aligned_slice_file")
+    ship_spark_memory_kb_governed_release.add_argument("publish_root_dir")
+    ship_spark_memory_kb_governed_release.add_argument("--write")
     verify_spark_memory_kb_active_refresh_policy = subparsers.add_parser(
         "verify-spark-memory-kb-active-refresh-policy",
         help="Verify that a published active governed Spark KB still honors the policy rows from a policy-aligned slice payload.",
@@ -9892,6 +9947,17 @@ def main() -> None:
     if args.command == "assert-spark-memory-kb-active-release-ready":
         payload = _assert_spark_memory_kb_active_release_ready(
             args.active_release_summary_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "ship-spark-memory-kb-governed-release":
+        payload = _ship_spark_memory_kb_governed_release(
+            args.refresh_manifest_file,
+            args.policy_aligned_slice_file,
+            args.publish_root_dir,
         )
         if args.write:
             _write_json(Path(args.write), payload)

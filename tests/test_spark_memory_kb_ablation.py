@@ -2047,6 +2047,57 @@ def test_assert_spark_memory_kb_active_release_ready_exits_on_failure(tmp_path: 
         raise AssertionError("Expected SystemExit for non-ready active release gate.")
 
 
+def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(tmp_path: Path, monkeypatch):
+    refresh_manifest_file = tmp_path / "refresh-manifest.json"
+    policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"
+    refresh_manifest_file.write_text("{}", encoding="utf-8")
+    policy_aligned_slice_file.write_text("{}", encoding="utf-8")
+    publish_root = tmp_path / "published"
+
+    active_refresh_file = publish_root / "active-refresh.json"
+    active_refresh_file.parent.mkdir(parents=True, exist_ok=True)
+    active_refresh_file.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(
+        cli,
+        "_publish_spark_memory_kb_refresh_manifest",
+        lambda refresh_manifest, publish_root_dir: {
+            "active_refresh": {"summary": {"materialized_kb_output_dir": "tmp/release"}},
+            "active_refresh_file": str(active_refresh_file),
+            "release_output_dir": str(publish_root / "releases" / "spark-kb-test"),
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_build_spark_memory_kb_active_release_summary",
+        lambda active_refresh, policy_slice: {
+            "summary": {
+                "ready": True,
+                "kb_output_dir": "tmp/release",
+            }
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_assert_spark_memory_kb_active_release_ready",
+        lambda summary_file: {
+            "summary": {
+                "ready": True,
+            }
+        },
+    )
+
+    payload = cli._ship_spark_memory_kb_governed_release(
+        str(refresh_manifest_file),
+        str(policy_aligned_slice_file),
+        str(publish_root),
+    )
+
+    assert Path(payload["active_refresh_file"]).exists()
+    assert Path(payload["active_release_summary_file"]).exists()
+    assert Path(payload["active_release_gate_file"]).exists()
+    assert payload["summary"]["ready"] is True
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [

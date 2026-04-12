@@ -741,6 +741,28 @@ Assert interpretation:
 - success returns the same gate payload and failure will now terminate the process with the failure reasons in the error text
 - a downstream Builder release script no longer needs to parse JSON just to decide whether the governed KB publish is acceptable
 
+## 2026-04-12 Governed Ship Command
+
+The repo now has a one-command governed release ship path too.
+
+Command:
+
+- `python -m domain_chip_memory.cli ship-spark-memory-kb-governed-release tmp\spark_memory_kb_refresh_manifest_limit100_v1.json tmp\spark_memory_kb_policy_aligned_slice_payload_limit100_v1.json tmp\spark_memory_kb_governed_ship_limit100_v1 --write tmp\spark_memory_kb_governed_ship_payload_limit100_v1.json`
+
+Ship result:
+
+- ready: `true`
+- release output dir: `tmp\spark_memory_kb_governed_ship_limit100_v1\releases\spark-kb-8dea2cb4d9dd`
+- active refresh file: `tmp\spark_memory_kb_governed_ship_limit100_v1\active-refresh.json`
+- active release summary file: `tmp\spark_memory_kb_governed_ship_limit100_v1\active-release-summary.json`
+- active release gate file: `tmp\spark_memory_kb_governed_ship_limit100_v1\active-release-gate.json`
+
+Ship interpretation:
+
+- this is now the shortest end-to-end governed release path in the repo
+- one command publishes the governed KB, writes the active pointer, builds the release summary, and emits the machine-friendly release gate
+- this is the closest repo-local artifact yet to what an actual Builder-side release job would need to call
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
