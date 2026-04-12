@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import os
 import re
@@ -4034,6 +4035,53 @@ def _materialize_spark_memory_kb_refresh_manifest(
         "health_report": target_health_report,
         "trace": {
             "operation": "materialize_spark_memory_kb_refresh_manifest",
+        },
+    }
+
+
+def _publish_spark_memory_kb_refresh_manifest(
+    refresh_manifest_file: str,
+    publish_root_dir: str,
+) -> dict:
+    manifest_payload = _load_json_file(refresh_manifest_file)
+    if not isinstance(manifest_payload, dict):
+        raise ValueError("Refresh manifest payload must be a JSON object.")
+    summary = manifest_payload.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Refresh manifest payload must contain a summary object.")
+
+    source_kb_output_dir = str(summary.get("kb_output_dir") or "").strip()
+    if not source_kb_output_dir:
+        raise ValueError("Refresh manifest must contain summary.kb_output_dir.")
+    release_hash = hashlib.sha1(source_kb_output_dir.encode("utf-8")).hexdigest()[:12]
+    release_name = f"spark-kb-{release_hash}"
+
+    publish_root_path = Path(publish_root_dir)
+    release_output_dir = publish_root_path / "releases" / release_name
+    materialized_payload = _materialize_spark_memory_kb_refresh_manifest(
+        refresh_manifest_file,
+        str(release_output_dir),
+    )
+    active_refresh_file = publish_root_path / "active-refresh.json"
+    active_payload = {
+        "refresh_manifest_file": str(Path(refresh_manifest_file)),
+        "published_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "summary": dict(materialized_payload.get("summary", {})),
+        "trace": {
+            "operation": "publish_spark_memory_kb_refresh_manifest",
+        },
+    }
+    _write_json(active_refresh_file, active_payload)
+
+    return {
+        "input_refresh_manifest_file": str(Path(refresh_manifest_file)),
+        "publish_root_dir": str(publish_root_path),
+        "release_output_dir": str(release_output_dir),
+        "active_refresh_file": str(active_refresh_file),
+        "materialized_payload": materialized_payload,
+        "active_refresh": active_payload,
+        "trace": {
+            "operation": "publish_spark_memory_kb_refresh_manifest",
         },
     }
 
@@ -8465,6 +8513,13 @@ def main() -> None:
     materialize_spark_memory_kb_refresh_manifest.add_argument("refresh_manifest_file")
     materialize_spark_memory_kb_refresh_manifest.add_argument("output_dir")
     materialize_spark_memory_kb_refresh_manifest.add_argument("--write")
+    publish_spark_memory_kb_refresh_manifest = subparsers.add_parser(
+        "publish-spark-memory-kb-refresh-manifest",
+        help="Publish a governed Spark KB refresh into a stable release directory plus active-refresh file.",
+    )
+    publish_spark_memory_kb_refresh_manifest.add_argument("refresh_manifest_file")
+    publish_spark_memory_kb_refresh_manifest.add_argument("publish_root_dir")
+    publish_spark_memory_kb_refresh_manifest.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -9213,6 +9268,16 @@ def main() -> None:
         payload = _materialize_spark_memory_kb_refresh_manifest(
             args.refresh_manifest_file,
             args.output_dir,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "publish-spark-memory-kb-refresh-manifest":
+        payload = _publish_spark_memory_kb_refresh_manifest(
+            args.refresh_manifest_file,
+            args.publish_root_dir,
         )
         if args.write:
             _write_json(Path(args.write), payload)

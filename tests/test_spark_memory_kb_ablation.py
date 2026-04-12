@@ -1425,6 +1425,60 @@ def test_materialize_spark_memory_kb_refresh_manifest_copies_governed_kb(tmp_pat
     assert (materialized_dir / "raw" / "memory-snapshots" / "latest.json").exists()
 
 
+def test_publish_spark_memory_kb_refresh_manifest_writes_active_refresh_file(tmp_path: Path):
+    source_kb_dir = tmp_path / "policy-aligned-kb"
+    source_snapshot_file = source_kb_dir / "raw" / "memory-snapshots" / "latest.json"
+    source_index_file = source_kb_dir / "wiki" / "index.md"
+    source_snapshot_file.parent.mkdir(parents=True)
+    source_index_file.parent.mkdir(parents=True)
+    (source_kb_dir / "CLAUDE.md").write_text("# KB\n", encoding="utf-8")
+    source_snapshot_file.write_text('{"current_state":[],"evidence":[],"events":[],"trace":{}}', encoding="utf-8")
+    source_index_file.write_text("# Index\n", encoding="utf-8")
+
+    manifest_file = tmp_path / "refresh-manifest.json"
+    manifest_file.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "kb_output_dir": str(source_kb_dir),
+                    "snapshot_file": str(source_snapshot_file),
+                    "conversation_count": 8,
+                    "accepted_writes": 16,
+                    "skipped_turns": 3,
+                    "policy_skipped_turn_count": 3,
+                    "policy_skipped_by_reason": {"block": 2, "defer": 1},
+                    "decision_counts": {"allow": 4, "block": 2, "defer": 1},
+                    "current_state_page_count": 16,
+                    "evidence_page_count": 16,
+                },
+                "kb": {
+                    "output_dir": str(source_kb_dir),
+                    "snapshot_file": str(source_snapshot_file),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    publish_root = tmp_path / "published"
+
+    payload = cli._publish_spark_memory_kb_refresh_manifest(
+        str(manifest_file),
+        str(publish_root),
+    )
+
+    release_dir = Path(payload["release_output_dir"])
+    active_refresh_file = publish_root / "active-refresh.json"
+    assert release_dir.parent == publish_root / "releases"
+    assert release_dir.name.startswith("spark-kb-")
+    assert payload["active_refresh_file"] == str(active_refresh_file)
+    assert release_dir.exists()
+    assert active_refresh_file.exists()
+    active_payload = json.loads(active_refresh_file.read_text(encoding="utf-8"))
+    assert active_payload["refresh_manifest_file"] == str(manifest_file)
+    assert active_payload["summary"]["materialized_kb_output_dir"] == str(release_dir)
+    assert active_payload["summary"]["decision_counts"] == {"allow": 4, "block": 2, "defer": 1}
+
+
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
     before_payload = {
         "comparisons": [

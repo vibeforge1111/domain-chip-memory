@@ -521,6 +521,31 @@ Materialization interpretation:
 - the manifest can now be turned into a fresh output directory with one command while preserving the governed snapshot and health report
 - this is still intentionally copy-based, not merge-based, so the consumer path stays explicit and does not silently overwrite an existing target
 
+## 2026-04-12 Refresh Publish
+
+The repo now has an activation-style publish step too.
+
+Command:
+
+- `python -m domain_chip_memory.cli publish-spark-memory-kb-refresh-manifest tmp\spark_memory_kb_refresh_manifest_limit100_v1.json tmp\spark_memory_kb_refresh_publish_limit100_v1 --write tmp\spark_memory_kb_refresh_publish_payload_limit100_v1.json`
+
+Publish summary:
+
+- publish root: `tmp\spark_memory_kb_refresh_publish_limit100_v1`
+- release dir: `tmp\spark_memory_kb_refresh_publish_limit100_v1\releases\spark-kb-8dea2cb4d9dd`
+- active refresh file: `tmp\spark_memory_kb_refresh_publish_limit100_v1\active-refresh.json`
+- health valid: `true`
+- replayed conversations: `8`
+- accepted writes: `16`
+- skipped turns: `3`
+- decision counts: `allow 4`, `block 2`, `defer 1`
+
+Publish interpretation:
+
+- this turns the governed refresh into a stable release directory plus one active pointer file
+- the release directory uses a short stable slug instead of the full source KB directory name; that change was necessary because the longer nested publish path tripped a real Windows path-depth failure during copy
+- an upstream Builder-side consumer can now point at `active-refresh.json` and avoid guessing which governed release directory is current
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
