@@ -3616,6 +3616,89 @@ def _build_spark_memory_kb_promotion_plan(policy_verdict_file: str, source_backe
     }
 
 
+def _build_spark_memory_kb_promotion_policy(
+    promotion_plan_file: str,
+    *,
+    include_optional: bool = False,
+) -> dict:
+    promotion_plan_payload = _load_json_file(promotion_plan_file)
+    if not isinstance(promotion_plan_payload, dict):
+        raise ValueError("Promotion policy input must be a JSON object.")
+
+    promotable_targets = promotion_plan_payload.get("promotable_targets")
+    optional_targets = promotion_plan_payload.get("optional_targets")
+    excluded_targets = promotion_plan_payload.get("excluded_targets")
+    if not isinstance(promotable_targets, list) or not isinstance(optional_targets, list) or not isinstance(excluded_targets, list):
+        raise ValueError("Promotion policy requires promotable_targets, optional_targets, and excluded_targets.")
+
+    def _policy_rows(targets: list[object], decision: str) -> list[dict[str, str | None]]:
+        rows: list[dict[str, str | None]] = []
+        for target in targets:
+            if not isinstance(target, dict):
+                continue
+            rows.append(
+                {
+                    "policy_decision": decision,
+                    "action_bucket": str(target.get("action_bucket") or "").strip() or None,
+                    "verdict": str(target.get("verdict") or "").strip() or None,
+                    "recommendation": str(target.get("recommendation") or "").strip() or None,
+                    "target_conversation_id": str(target.get("target_conversation_id") or "").strip() or None,
+                    "predicate": str(target.get("predicate") or "").strip() or None,
+                    "question": str(target.get("question") or "").strip() or None,
+                    "answer": str(target.get("answer") or "").strip() or None,
+                    "source_conversation_id": str(target.get("source_conversation_id") or "").strip() or None,
+                    "source_message_id": str(target.get("source_message_id") or "").strip() or None,
+                    "cloned_message_id": str(target.get("cloned_message_id") or "").strip() or None,
+                    "value": str(target.get("value") or "").strip() or None,
+                }
+            )
+        return rows
+
+    allowed_promotions = _policy_rows(
+        [item for item in promotable_targets if isinstance(item, dict)]
+        + ([item for item in optional_targets if isinstance(item, dict)] if include_optional else []),
+        "allow",
+    )
+    deferred_promotions = [] if include_optional else _policy_rows(
+        [item for item in optional_targets if isinstance(item, dict)],
+        "defer",
+    )
+    blocked_promotions = _policy_rows(
+        [item for item in excluded_targets if isinstance(item, dict)],
+        "block",
+    )
+
+    distinct_target_ids = {
+        str(row.get("target_conversation_id") or "").strip()
+        for row in [*allowed_promotions, *deferred_promotions, *blocked_promotions]
+        if str(row.get("target_conversation_id") or "").strip()
+    }
+    distinct_source_message_ids = {
+        str(row.get("source_message_id") or "").strip()
+        for row in [*allowed_promotions, *deferred_promotions, *blocked_promotions]
+        if str(row.get("source_message_id") or "").strip()
+    }
+
+    return {
+        "input_promotion_plan_file": str(Path(promotion_plan_file)),
+        "summary": {
+            "allow_count": len(allowed_promotions),
+            "defer_count": len(deferred_promotions),
+            "block_count": len(blocked_promotions),
+            "include_optional": include_optional,
+            "target_conversation_count": len(distinct_target_ids),
+            "source_message_count": len(distinct_source_message_ids),
+        },
+        "allowed_promotions": allowed_promotions,
+        "deferred_promotions": deferred_promotions,
+        "blocked_promotions": blocked_promotions,
+        "trace": {
+            "operation": "build_spark_memory_kb_promotion_policy",
+            "include_optional": include_optional,
+        },
+    }
+
+
 def _build_spark_memory_kb_approved_promotion_slice(
     promotion_plan_file: str,
     source_backed_slice_file: str,
@@ -8074,6 +8157,13 @@ def main() -> None:
     build_spark_memory_kb_promotion_plan.add_argument("policy_verdict_file")
     build_spark_memory_kb_promotion_plan.add_argument("source_backed_slice_file")
     build_spark_memory_kb_promotion_plan.add_argument("--write")
+    build_spark_memory_kb_promotion_policy = subparsers.add_parser(
+        "build-spark-memory-kb-promotion-policy",
+        help="Turn the Spark promotion plan into explicit allow, defer, and block policy rows for upstream consumption.",
+    )
+    build_spark_memory_kb_promotion_policy.add_argument("promotion_plan_file")
+    build_spark_memory_kb_promotion_policy.add_argument("--include-optional", action="store_true")
+    build_spark_memory_kb_promotion_policy.add_argument("--write")
     build_spark_memory_kb_approved_promotion_slice = subparsers.add_parser(
         "build-spark-memory-kb-approved-promotion-slice",
         help="Filter the source-backed Spark slice down to approved promotion targets and recompile a fresh KB.",
@@ -8777,6 +8867,16 @@ def main() -> None:
         payload = _build_spark_memory_kb_promotion_plan(
             args.policy_verdict_file,
             args.source_backed_slice_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-memory-kb-promotion-policy":
+        payload = _build_spark_memory_kb_promotion_policy(
+            args.promotion_plan_file,
+            include_optional=args.include_optional,
         )
         if args.write:
             _write_json(Path(args.write), payload)

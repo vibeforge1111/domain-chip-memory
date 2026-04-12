@@ -365,6 +365,29 @@ Interpretation:
 - all four promotable regression misses now resolve cleanly once their approved source lineage is retained
 - if product wants the gauntlet lane later, `--include-optional` is the controlled expansion path rather than widening the default slice
 
+## 2026-04-12 Promotion Policy Manifest
+
+The repo now has an upstream-consumable decision file too.
+
+Command:
+
+- `python -m domain_chip_memory.cli build-spark-memory-kb-promotion-policy tmp\spark_memory_kb_promotion_plan_limit100_v2.json --write tmp\spark_memory_kb_promotion_policy_limit100_v1.json`
+
+Policy summary:
+
+- `allow`: `4`
+- `defer`: `1`
+- `block`: `2`
+- distinct target conversations covered: `7`
+- distinct source messages referenced: `4`
+
+Manifest interpretation:
+
+- the four regression targets are now represented as exact `allow` rows keyed by target conversation, predicate, source conversation, and source message
+- the gauntlet timezone lane is preserved as an explicit `defer` row instead of disappearing from the output
+- the two cleanroom-boundary targets are preserved as explicit `block` rows
+- the next upstream Builder integration no longer needs to reconstruct policy from benchmark prose or example-only artifacts; it can consume one concrete manifest
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

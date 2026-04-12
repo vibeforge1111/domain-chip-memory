@@ -1259,6 +1259,136 @@ def test_build_spark_memory_kb_promotion_plan_uses_full_resolved_queries_not_tru
     ]
 
 
+def test_build_spark_memory_kb_promotion_policy_emits_allow_defer_and_block_rows(tmp_path: Path):
+    promotion_plan_payload = {
+        "promotable_targets": [
+            {
+                "action_bucket": "regression_candidate",
+                "verdict": "promotable_if_source_path_is_legitimate",
+                "recommendation": "promote if legit",
+                "target_conversation_id": "regression-hack-actor",
+                "predicate": "profile.hack_actor",
+                "question": "Who hacked us?",
+                "answer": "North Korea",
+                "source_conversation_id": "source-regression",
+                "source_message_id": "msg-hack-actor",
+                "cloned_message_id": "clone-hack-actor",
+                "value": "North Korea",
+            }
+        ],
+        "optional_targets": [
+            {
+                "action_bucket": "gauntlet_candidate",
+                "verdict": "expand_coverage_if_product_wants_recall",
+                "recommendation": "optional scope",
+                "target_conversation_id": "gauntlet-timezone",
+                "predicate": "profile.timezone",
+                "question": "What is my timezone?",
+                "answer": "Asia/Dubai",
+                "source_conversation_id": "source-regression",
+                "source_message_id": "msg-timezone",
+                "cloned_message_id": "clone-timezone",
+                "value": "Asia/Dubai",
+            }
+        ],
+        "excluded_targets": [
+            {
+                "action_bucket": "expected_cleanroom_boundary",
+                "verdict": "retain_boundary_by_default",
+                "recommendation": "keep boundary",
+                "target_conversation_id": "cleanroom-country",
+                "predicate": "profile.home_country",
+                "question": "What country do I live in?",
+                "answer": "Canada",
+                "source_conversation_id": "source-regression",
+                "source_message_id": "msg-country",
+                "cloned_message_id": "clone-country",
+                "value": "Canada",
+            }
+        ],
+    }
+    promotion_plan_file = tmp_path / "promotion-plan.json"
+    promotion_plan_file.write_text(json.dumps(promotion_plan_payload), encoding="utf-8")
+
+    payload = cli._build_spark_memory_kb_promotion_policy(str(promotion_plan_file))
+
+    assert payload["summary"] == {
+        "allow_count": 1,
+        "defer_count": 1,
+        "block_count": 1,
+        "include_optional": False,
+        "target_conversation_count": 3,
+        "source_message_count": 3,
+    }
+    assert payload["allowed_promotions"] == [
+        {
+            "policy_decision": "allow",
+            "action_bucket": "regression_candidate",
+            "verdict": "promotable_if_source_path_is_legitimate",
+            "recommendation": "promote if legit",
+            "target_conversation_id": "regression-hack-actor",
+            "predicate": "profile.hack_actor",
+            "question": "Who hacked us?",
+            "answer": "North Korea",
+            "source_conversation_id": "source-regression",
+            "source_message_id": "msg-hack-actor",
+            "cloned_message_id": "clone-hack-actor",
+            "value": "North Korea",
+        }
+    ]
+    assert payload["deferred_promotions"] == [
+        {
+            "policy_decision": "defer",
+            "action_bucket": "gauntlet_candidate",
+            "verdict": "expand_coverage_if_product_wants_recall",
+            "recommendation": "optional scope",
+            "target_conversation_id": "gauntlet-timezone",
+            "predicate": "profile.timezone",
+            "question": "What is my timezone?",
+            "answer": "Asia/Dubai",
+            "source_conversation_id": "source-regression",
+            "source_message_id": "msg-timezone",
+            "cloned_message_id": "clone-timezone",
+            "value": "Asia/Dubai",
+        }
+    ]
+    assert payload["blocked_promotions"] == [
+        {
+            "policy_decision": "block",
+            "action_bucket": "expected_cleanroom_boundary",
+            "verdict": "retain_boundary_by_default",
+            "recommendation": "keep boundary",
+            "target_conversation_id": "cleanroom-country",
+            "predicate": "profile.home_country",
+            "question": "What country do I live in?",
+            "answer": "Canada",
+            "source_conversation_id": "source-regression",
+            "source_message_id": "msg-country",
+            "cloned_message_id": "clone-country",
+            "value": "Canada",
+        }
+    ]
+
+    payload_with_optional = cli._build_spark_memory_kb_promotion_policy(
+        str(promotion_plan_file),
+        include_optional=True,
+    )
+
+    assert payload_with_optional["summary"] == {
+        "allow_count": 2,
+        "defer_count": 0,
+        "block_count": 1,
+        "include_optional": True,
+        "target_conversation_count": 3,
+        "source_message_count": 3,
+    }
+    assert [row["policy_decision"] for row in payload_with_optional["allowed_promotions"]] == [
+        "allow",
+        "allow",
+    ]
+    assert payload_with_optional["deferred_promotions"] == []
+
+
 def test_build_spark_memory_kb_approved_promotion_slice_filters_to_approved_targets(
     tmp_path: Path, monkeypatch
 ):
