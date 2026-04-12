@@ -3615,6 +3615,92 @@ def _build_spark_memory_kb_promotion_plan(policy_verdict_file: str, source_backe
     }
 
 
+def _build_spark_memory_kb_approved_promotion_slice(
+    promotion_plan_file: str,
+    source_backed_slice_file: str,
+    output_dir: str,
+    *,
+    include_optional: bool = False,
+) -> dict:
+    promotion_plan_payload = _load_json_file(promotion_plan_file)
+    source_backed_payload = _load_json_file(source_backed_slice_file)
+    if not isinstance(promotion_plan_payload, dict) or not isinstance(source_backed_payload, dict):
+        raise ValueError("Approved promotion slice inputs must be JSON objects.")
+
+    promotable_targets = promotion_plan_payload.get("promotable_targets")
+    optional_targets = promotion_plan_payload.get("optional_targets")
+    normalization = source_backed_payload.get("normalization")
+    if not isinstance(promotable_targets, list) or not isinstance(optional_targets, list) or not isinstance(normalization, dict):
+        raise ValueError("Approved promotion slice requires promotable_targets, optional_targets, and normalization.")
+    normalized = normalization.get("normalized")
+    if not isinstance(normalized, dict):
+        raise ValueError("Source-backed slice must contain normalization.normalized.")
+    conversations = normalized.get("conversations")
+    if not isinstance(conversations, list):
+        raise ValueError("Source-backed slice must contain normalization.normalized.conversations.")
+
+    selected_targets = [item for item in promotable_targets if isinstance(item, dict)]
+    if include_optional:
+        selected_targets.extend(item for item in optional_targets if isinstance(item, dict))
+
+    selected_conversation_ids: set[str] = set()
+    for target in selected_targets:
+        target_conversation_id = str(target.get("target_conversation_id") or "").strip()
+        source_conversation_id = str(target.get("source_conversation_id") or "").strip()
+        if target_conversation_id:
+            selected_conversation_ids.add(target_conversation_id)
+        if source_conversation_id:
+            selected_conversation_ids.add(source_conversation_id)
+
+    filtered_conversations = [
+        copy.deepcopy(conversation)
+        for conversation in conversations
+        if isinstance(conversation, dict)
+        and str(conversation.get("conversation_id") or "").strip() in selected_conversation_ids
+    ]
+    filtered_normalized = dict(normalized)
+    filtered_normalized["conversations"] = filtered_conversations
+
+    _, adapter = _execute_shadow_replay_payload(filtered_normalized)
+    snapshot = adapter.sdk.export_knowledge_base_snapshot()
+    compile_result = scaffold_spark_knowledge_base(
+        output_dir,
+        snapshot,
+        vault_title="Spark Memory KB Approved Promotion Slice",
+    )
+    health_report = build_spark_kb_health_report(output_dir)
+
+    present_conversation_ids = {
+        str(conversation.get("conversation_id") or "").strip()
+        for conversation in filtered_conversations
+        if isinstance(conversation, dict)
+    }
+    missing_conversation_ids = sorted(selected_conversation_ids - present_conversation_ids)
+
+    return {
+        "input_promotion_plan_file": str(Path(promotion_plan_file)),
+        "input_source_backed_slice_file": str(Path(source_backed_slice_file)),
+        "summary": {
+            "selected_target_count": len(selected_targets),
+            "selected_conversation_count": len(filtered_conversations),
+            "include_optional": include_optional,
+            "missing_conversation_count": len(missing_conversation_ids),
+        },
+        "selected_targets": selected_targets,
+        "missing_conversation_ids": missing_conversation_ids,
+        "normalization": {
+            "normalized": filtered_normalized,
+        },
+        "snapshot": snapshot,
+        "compile_result": compile_result,
+        "health_report": health_report,
+        "trace": {
+            "operation": "build_spark_memory_kb_approved_promotion_slice",
+            "include_optional": include_optional,
+        },
+    }
+
+
 def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -7987,6 +8073,15 @@ def main() -> None:
     build_spark_memory_kb_promotion_plan.add_argument("policy_verdict_file")
     build_spark_memory_kb_promotion_plan.add_argument("source_backed_slice_file")
     build_spark_memory_kb_promotion_plan.add_argument("--write")
+    build_spark_memory_kb_approved_promotion_slice = subparsers.add_parser(
+        "build-spark-memory-kb-approved-promotion-slice",
+        help="Filter the source-backed Spark slice down to approved promotion targets and recompile a fresh KB.",
+    )
+    build_spark_memory_kb_approved_promotion_slice.add_argument("promotion_plan_file")
+    build_spark_memory_kb_approved_promotion_slice.add_argument("source_backed_slice_file")
+    build_spark_memory_kb_approved_promotion_slice.add_argument("output_dir")
+    build_spark_memory_kb_approved_promotion_slice.add_argument("--include-optional", action="store_true")
+    build_spark_memory_kb_approved_promotion_slice.add_argument("--write")
     validate_spark_shadow_batch = subparsers.add_parser("validate-spark-shadow-replay-batch", help="Validate a directory of Builder-style shadow replay JSON files without running replay.")
     validate_spark_shadow_batch.add_argument("data_dir")
     validate_spark_shadow_batch.add_argument("--glob", default="*.json")
@@ -8681,6 +8776,18 @@ def main() -> None:
         payload = _build_spark_memory_kb_promotion_plan(
             args.policy_verdict_file,
             args.source_backed_slice_file,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-memory-kb-approved-promotion-slice":
+        payload = _build_spark_memory_kb_approved_promotion_slice(
+            args.promotion_plan_file,
+            args.source_backed_slice_file,
+            args.output_dir,
+            include_optional=args.include_optional,
         )
         if args.write:
             _write_json(Path(args.write), payload)

@@ -315,6 +315,45 @@ Policy implication:
 - if a product lane is approved, these exact regression targets have traceable source-write lineage ready for audit
 - the cleanroom boundary targets remain explicitly excluded unless product policy changes
 
+## 2026-04-12 Approved Promotion Slice
+
+The repo now has a first production-candidate artifact too.
+
+Commands:
+
+- `python -m domain_chip_memory.cli build-spark-memory-kb-approved-promotion-slice tmp\spark_memory_kb_promotion_plan_limit100_v1.json tmp\spark_memory_kb_source_backed_slice_limit100_v2.json tmp\spark_memory_kb_approved_promotion_slice_limit100_v1 --write tmp\spark_memory_kb_approved_promotion_slice_limit100_v1.json`
+- `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\spark_memory_kb_approved_promotion_slice_limit100_v1.json --write tmp\spark_memory_kb_ablation_approved_promotion_slice_limit100_v1.json`
+
+Approved-slice summary:
+
+- selected promotable targets: `3`
+- selected conversations after retaining source lineage: `4`
+- optional gauntlet targets included: `false`
+- missing selected conversations: `0`
+
+Approved-slice A/B summary:
+
+- queries: `22`
+- memory-only answered: `22`
+- memory-plus-KB answered: `22`
+- answer delta: `0`
+- KB-supported queries: `22`
+- original missing-fact queries inside this slice: `3`
+- resolved missing-fact queries: `3`
+- unresolved missing-fact queries: `0`
+
+Approved promotable misses carried into the slice:
+
+- `profile.hack_actor`: `2`
+- `profile.spark_role`: `1`
+
+Interpretation:
+
+- the repo now has a filtered, policy-applied slice instead of only a recommendation artifact
+- the default production-candidate path stays narrow: regression candidates only, with no cleanroom-boundary or optional gauntlet targets included
+- all three promotable regression misses still resolve cleanly once their approved source lineage is retained
+- if product wants the gauntlet lane later, `--include-optional` is the controlled expansion path rather than widening the default slice
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

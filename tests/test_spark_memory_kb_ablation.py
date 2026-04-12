@@ -1092,3 +1092,136 @@ def test_build_spark_memory_kb_promotion_plan_joins_policy_and_lineage(tmp_path:
         }
     ]
     assert payload["missing_lineage"] == []
+
+
+def test_build_spark_memory_kb_approved_promotion_slice_filters_to_approved_targets(
+    tmp_path: Path, monkeypatch
+):
+    promotion_plan_payload = {
+        "promotable_targets": [
+            {
+                "target_conversation_id": "regression-hack-actor",
+                "source_conversation_id": "source-hack-actor",
+                "predicate": "profile.hack_actor",
+            }
+        ],
+        "optional_targets": [
+            {
+                "target_conversation_id": "gauntlet-timezone",
+                "source_conversation_id": "source-gauntlet-timezone",
+                "predicate": "profile.timezone",
+            }
+        ],
+        "excluded_targets": [
+            {
+                "target_conversation_id": "cleanroom-timezone",
+                "source_conversation_id": "source-timezone",
+                "predicate": "profile.timezone",
+            }
+        ],
+    }
+    source_backed_payload = {
+        "normalization": {
+            "normalized": {
+                "source": "spark_builder_state_db",
+                "writable_roles": ["user"],
+                "conversations": [
+                    {"conversation_id": "source-hack-actor", "turns": [], "probes": []},
+                    {"conversation_id": "regression-hack-actor", "turns": [], "probes": []},
+                    {"conversation_id": "source-gauntlet-timezone", "turns": [], "probes": []},
+                    {"conversation_id": "gauntlet-timezone", "turns": [], "probes": []},
+                    {"conversation_id": "source-timezone", "turns": [], "probes": []},
+                    {"conversation_id": "cleanroom-timezone", "turns": [], "probes": []},
+                ],
+            }
+        }
+    }
+    promotion_plan_file = tmp_path / "promotion-plan.json"
+    source_backed_file = tmp_path / "source-backed.json"
+    promotion_plan_file.write_text(json.dumps(promotion_plan_payload), encoding="utf-8")
+    source_backed_file.write_text(json.dumps(source_backed_payload), encoding="utf-8")
+
+    replayed_conversation_ids: list[list[str]] = []
+
+    class _FakeSdk:
+        def __init__(self, conversation_ids: list[str]):
+            self._conversation_ids = conversation_ids
+
+        def export_knowledge_base_snapshot(self) -> dict:
+            return {"conversation_ids": list(self._conversation_ids)}
+
+    class _FakeAdapter:
+        def __init__(self, conversation_ids: list[str]):
+            self.sdk = _FakeSdk(conversation_ids)
+
+    def _fake_execute_shadow_replay_payload(normalized_payload: dict):
+        conversation_ids = [
+            str(conversation.get("conversation_id") or "")
+            for conversation in normalized_payload.get("conversations", [])
+            if isinstance(conversation, dict)
+        ]
+        replayed_conversation_ids.append(conversation_ids)
+        return None, _FakeAdapter(conversation_ids)
+
+    monkeypatch.setattr(cli, "_execute_shadow_replay_payload", _fake_execute_shadow_replay_payload)
+    monkeypatch.setattr(
+        cli,
+        "scaffold_spark_knowledge_base",
+        lambda output_dir, snapshot, vault_title: {
+            "output_dir": str(output_dir),
+            "vault_title": vault_title,
+            "snapshot": snapshot,
+        },
+    )
+    monkeypatch.setattr(cli, "build_spark_kb_health_report", lambda output_dir: {"valid": True, "output_dir": str(output_dir)})
+
+    payload = cli._build_spark_memory_kb_approved_promotion_slice(
+        str(promotion_plan_file),
+        str(source_backed_file),
+        str(tmp_path / "approved-kb"),
+    )
+
+    assert payload["summary"] == {
+        "selected_target_count": 1,
+        "selected_conversation_count": 2,
+        "include_optional": False,
+        "missing_conversation_count": 0,
+    }
+    assert replayed_conversation_ids == [["source-hack-actor", "regression-hack-actor"]]
+    assert payload["selected_targets"] == promotion_plan_payload["promotable_targets"]
+    assert [
+        conversation["conversation_id"]
+        for conversation in payload["normalization"]["normalized"]["conversations"]
+    ] == ["source-hack-actor", "regression-hack-actor"]
+    assert payload["snapshot"] == {"conversation_ids": ["source-hack-actor", "regression-hack-actor"]}
+    assert payload["compile_result"]["output_dir"] == str(tmp_path / "approved-kb")
+    assert payload["health_report"]["valid"] is True
+
+    payload_with_optional = cli._build_spark_memory_kb_approved_promotion_slice(
+        str(promotion_plan_file),
+        str(source_backed_file),
+        str(tmp_path / "approved-kb-with-optional"),
+        include_optional=True,
+    )
+
+    assert payload_with_optional["summary"] == {
+        "selected_target_count": 2,
+        "selected_conversation_count": 4,
+        "include_optional": True,
+        "missing_conversation_count": 0,
+    }
+    assert replayed_conversation_ids[-1] == [
+        "source-hack-actor",
+        "regression-hack-actor",
+        "source-gauntlet-timezone",
+        "gauntlet-timezone",
+    ]
+    assert [
+        conversation["conversation_id"]
+        for conversation in payload_with_optional["normalization"]["normalized"]["conversations"]
+    ] == [
+        "source-hack-actor",
+        "regression-hack-actor",
+        "source-gauntlet-timezone",
+        "gauntlet-timezone",
+    ]
