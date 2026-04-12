@@ -694,6 +694,31 @@ Release-summary interpretation:
 - it combines active resolution, policy verification, and final published-surface read coverage in one place
 - a Builder-side integration can use this as its release gate without replaying the entire benchmark chain
 
+## 2026-04-12 Active Release Gate
+
+The repo now has a direct pass/fail gate on top of that release summary.
+
+Command:
+
+- `python -m domain_chip_memory.cli check-spark-memory-kb-active-release-summary tmp\spark_memory_kb_active_release_summary_limit100_v1.json --write tmp\spark_memory_kb_active_release_gate_limit100_v1.json`
+
+Gate result:
+
+- ready: `true`
+- failure reason count: `0`
+- health valid: `true`
+- policy honored: `true`
+- policy violations: `0`
+- found count: `23`
+- missing count: `3`
+- allowed missing action buckets: `expected_cleanroom_boundary 2`, `gauntlet_candidate 1`
+
+Gate interpretation:
+
+- this is the narrowest machine-friendly release decision artifact in the repo now
+- it encodes the current rule that regression candidates must be exposed while cleanroom-boundary and deferred gauntlet lanes may remain absent
+- a downstream Builder release step can consume this one file and stop on any future regression leak or policy violation without understanding the full benchmark pipeline
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real

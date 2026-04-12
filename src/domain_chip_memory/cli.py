@@ -4394,6 +4394,61 @@ def _build_spark_memory_kb_active_release_summary(
     }
 
 
+def _check_spark_memory_kb_active_release_summary(active_release_summary_file: str) -> dict:
+    payload = _load_json_file(active_release_summary_file)
+    if not isinstance(payload, dict):
+        raise ValueError("Active release summary payload must be a JSON object.")
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Active release summary payload must contain a summary object.")
+
+    health_valid = bool(summary.get("health_valid"))
+    policy_honored = bool(summary.get("policy_honored"))
+    policy_violation_count = int(summary.get("policy_violation_count", 0) or 0)
+    found_by_action_bucket = dict(summary.get("found_by_action_bucket", {}))
+    missing_by_action_bucket = dict(summary.get("missing_by_action_bucket", {}))
+
+    failure_reasons: list[str] = []
+    if not health_valid:
+        failure_reasons.append("health_invalid")
+    if not policy_honored:
+        failure_reasons.append("policy_not_honored")
+    if policy_violation_count > 0:
+        failure_reasons.append("policy_violations_present")
+    if int(missing_by_action_bucket.get("regression_candidate", 0) or 0) > 0:
+        failure_reasons.append("regression_candidate_missing")
+    if int(found_by_action_bucket.get("expected_cleanroom_boundary", 0) or 0) > 0:
+        failure_reasons.append("cleanroom_boundary_exposed")
+    if int(found_by_action_bucket.get("gauntlet_candidate", 0) or 0) > 0:
+        failure_reasons.append("gauntlet_candidate_exposed")
+
+    allowed_missing_action_buckets = {
+        key: int(value or 0)
+        for key, value in missing_by_action_bucket.items()
+        if int(value or 0) > 0
+    }
+
+    return {
+        "input_active_release_summary_file": str(Path(active_release_summary_file)),
+        "summary": {
+            "ready": len(failure_reasons) == 0,
+            "failure_reason_count": len(failure_reasons),
+            "failure_reasons": failure_reasons,
+            "health_valid": health_valid,
+            "policy_honored": policy_honored,
+            "policy_violation_count": policy_violation_count,
+            "found_count": int(summary.get("found_count", 0) or 0),
+            "missing_count": int(summary.get("missing_count", 0) or 0),
+            "found_by_action_bucket": dict(sorted((str(key), int(value or 0)) for key, value in found_by_action_bucket.items())),
+            "missing_by_action_bucket": dict(sorted((str(key), int(value or 0)) for key, value in missing_by_action_bucket.items())),
+            "allowed_missing_action_buckets": dict(sorted(allowed_missing_action_buckets.items())),
+        },
+        "trace": {
+            "operation": "check_spark_memory_kb_active_release_summary",
+        },
+    }
+
+
 def _verify_spark_memory_kb_active_refresh_policy(
     active_refresh_file: str,
     policy_aligned_slice_file: str,
@@ -8976,6 +9031,12 @@ def main() -> None:
     build_spark_memory_kb_active_release_summary.add_argument("policy_aligned_slice_file")
     build_spark_memory_kb_active_release_summary.add_argument("--limit", type=int)
     build_spark_memory_kb_active_release_summary.add_argument("--write")
+    check_spark_memory_kb_active_release_summary = subparsers.add_parser(
+        "check-spark-memory-kb-active-release-summary",
+        help="Convert an active governed release summary into a machine-friendly pass/fail gate verdict.",
+    )
+    check_spark_memory_kb_active_release_summary.add_argument("active_release_summary_file")
+    check_spark_memory_kb_active_release_summary.add_argument("--write")
     verify_spark_memory_kb_active_refresh_policy = subparsers.add_parser(
         "verify-spark-memory-kb-active-refresh-policy",
         help="Verify that a published active governed Spark KB still honors the policy rows from a policy-aligned slice payload.",
@@ -9795,6 +9856,15 @@ def main() -> None:
             args.active_refresh_file,
             args.policy_aligned_slice_file,
             limit=args.limit,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "check-spark-memory-kb-active-release-summary":
+        payload = _check_spark_memory_kb_active_release_summary(
+            args.active_release_summary_file,
         )
         if args.write:
             _write_json(Path(args.write), payload)
