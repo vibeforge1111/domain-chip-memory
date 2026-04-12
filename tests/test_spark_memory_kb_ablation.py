@@ -2182,6 +2182,146 @@ def test_assert_spark_memory_kb_governed_release_ready_exits_on_failure(tmp_path
         raise AssertionError("Expected SystemExit for non-ready governed release gate.")
 
 
+def test_read_spark_memory_kb_governed_release_support_uses_top_level_manifest(tmp_path: Path, monkeypatch):
+    governed_release_file = tmp_path / "governed-release.json"
+    governed_release_file.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(
+        cli,
+        "_resolve_spark_memory_kb_governed_release",
+        lambda governed_release: {
+            "summary": {
+                "publish_root_dir": "tmp/published",
+                "active_refresh_file": "tmp/published/active-refresh.json",
+                "release_output_dir": "tmp/published/releases/spark-kb-test",
+            }
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_read_spark_memory_kb_active_refresh_support",
+        lambda active_refresh_file, *, subject, predicate: {
+            "summary": {
+                "kb_output_dir": "tmp/published/releases/spark-kb-test",
+                "found": True,
+                "value": "North Korea",
+                "supporting_evidence_count": 1,
+            }
+        },
+    )
+
+    payload = cli._read_spark_memory_kb_governed_release_support(
+        str(governed_release_file),
+        subject="human:telegram:test-user",
+        predicate="profile.hack_actor",
+    )
+
+    assert payload["input_governed_release_file"] == str(governed_release_file)
+    assert payload["summary"]["publish_root_dir"] == "tmp/published"
+    assert payload["summary"]["release_output_dir"] == "tmp/published/releases/spark-kb-test"
+    assert payload["summary"]["found"] is True
+    assert payload["summary"]["value"] == "North Korea"
+
+
+def test_read_spark_memory_kb_governed_release_conversation_support_uses_manifest_policy_slice(
+    tmp_path: Path,
+    monkeypatch,
+):
+    policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"
+    policy_aligned_slice_file.write_text("{}", encoding="utf-8")
+    governed_release_file = tmp_path / "governed-release.json"
+    governed_release_file.write_text(
+        json.dumps(
+            {
+                "input_policy_aligned_slice_file": str(policy_aligned_slice_file),
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        cli,
+        "_resolve_spark_memory_kb_governed_release",
+        lambda governed_release: {
+            "summary": {
+                "publish_root_dir": "tmp/published",
+                "active_refresh_file": "tmp/published/active-refresh.json",
+                "release_output_dir": "tmp/published/releases/spark-kb-test",
+            }
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_read_spark_memory_kb_active_refresh_conversation_support",
+        lambda active_refresh_file, policy_aligned_slice, *, conversation_id, predicate: {
+            "conversation_id": conversation_id,
+            "summary": {
+                "conversation_id": conversation_id,
+                "subject": "human:telegram:allowed",
+                "found": True,
+                "value": "North Korea",
+            },
+        },
+    )
+
+    payload = cli._read_spark_memory_kb_governed_release_conversation_support(
+        str(governed_release_file),
+        conversation_id="allowed-conv",
+        predicate="profile.hack_actor",
+    )
+
+    assert payload["input_governed_release_file"] == str(governed_release_file)
+    assert payload["input_policy_aligned_slice_file"] == str(policy_aligned_slice_file)
+    assert payload["summary"]["conversation_id"] == "allowed-conv"
+    assert payload["summary"]["subject"] == "human:telegram:allowed"
+    assert payload["summary"]["release_output_dir"] == "tmp/published/releases/spark-kb-test"
+
+
+def test_run_spark_memory_kb_governed_release_read_report_uses_top_level_manifest(tmp_path: Path, monkeypatch):
+    policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"
+    policy_aligned_slice_file.write_text("{}", encoding="utf-8")
+    governed_release_file = tmp_path / "governed-release.json"
+    governed_release_file.write_text(
+        json.dumps(
+            {
+                "input_policy_aligned_slice_file": str(policy_aligned_slice_file),
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        cli,
+        "_resolve_spark_memory_kb_governed_release",
+        lambda governed_release: {
+            "summary": {
+                "publish_root_dir": "tmp/published",
+                "active_refresh_file": "tmp/published/active-refresh.json",
+                "release_output_dir": "tmp/published/releases/spark-kb-test",
+            }
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "_run_spark_memory_kb_active_refresh_read_report",
+        lambda active_refresh_file, policy_aligned_slice, *, limit: {
+            "summary": {
+                "query_count": 26,
+                "found_count": 23,
+                "missing_count": 3,
+            }
+        },
+    )
+
+    payload = cli._run_spark_memory_kb_governed_release_read_report(
+        str(governed_release_file),
+        limit=10,
+    )
+
+    assert payload["input_governed_release_file"] == str(governed_release_file)
+    assert payload["input_policy_aligned_slice_file"] == str(policy_aligned_slice_file)
+    assert payload["summary"]["publish_root_dir"] == "tmp/published"
+    assert payload["summary"]["release_output_dir"] == "tmp/published/releases/spark-kb-test"
+    assert payload["summary"]["query_count"] == 26
+
+
 def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(tmp_path: Path, monkeypatch):
     refresh_manifest_file = tmp_path / "refresh-manifest.json"
     policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"

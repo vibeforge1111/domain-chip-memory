@@ -4474,12 +4474,121 @@ def _assert_spark_memory_kb_active_release_ready(active_release_summary_file: st
     return payload
 
 
+def _read_spark_memory_kb_governed_release_support(
+    governed_release_file: str,
+    *,
+    subject: str,
+    predicate: str,
+) -> dict:
+    resolution = _resolve_spark_memory_kb_governed_release(governed_release_file)
+    summary = resolution.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Governed release resolution payload must contain a summary object.")
+    active_refresh_file = str(summary.get("active_refresh_file") or "").strip()
+    if not active_refresh_file:
+        raise ValueError("Governed release resolution must contain summary.active_refresh_file.")
+
+    payload = _read_spark_memory_kb_active_refresh_support(
+        active_refresh_file,
+        subject=subject,
+        predicate=predicate,
+    )
+    payload["input_governed_release_file"] = str(Path(governed_release_file))
+    payload["governed_release_resolution"] = resolution
+    payload["summary"]["publish_root_dir"] = str(summary.get("publish_root_dir") or "")
+    payload["summary"]["release_output_dir"] = str(summary.get("release_output_dir") or "")
+    payload["trace"] = {
+        "operation": "read_spark_memory_kb_governed_release_support",
+    }
+    return payload
+
+
+def _read_spark_memory_kb_governed_release_conversation_support(
+    governed_release_file: str,
+    *,
+    conversation_id: str,
+    predicate: str,
+) -> dict:
+    governed_payload = _load_json_file(governed_release_file)
+    if not isinstance(governed_payload, dict):
+        raise ValueError("Governed release payload must be a JSON object.")
+    policy_aligned_slice_file = str(governed_payload.get("input_policy_aligned_slice_file") or "").strip()
+    if not policy_aligned_slice_file:
+        raise ValueError("Governed release payload must contain input_policy_aligned_slice_file.")
+    if not Path(policy_aligned_slice_file).is_file():
+        raise ValueError(f"Governed release policy_aligned_slice_file does not exist: {policy_aligned_slice_file}")
+
+    resolution = _resolve_spark_memory_kb_governed_release(governed_release_file)
+    summary = resolution.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Governed release resolution payload must contain a summary object.")
+    active_refresh_file = str(summary.get("active_refresh_file") or "").strip()
+    if not active_refresh_file:
+        raise ValueError("Governed release resolution must contain summary.active_refresh_file.")
+
+    payload = _read_spark_memory_kb_active_refresh_conversation_support(
+        active_refresh_file,
+        policy_aligned_slice_file,
+        conversation_id=conversation_id,
+        predicate=predicate,
+    )
+    payload["input_governed_release_file"] = str(Path(governed_release_file))
+    payload["input_policy_aligned_slice_file"] = str(Path(policy_aligned_slice_file))
+    payload["governed_release_resolution"] = resolution
+    payload["summary"]["publish_root_dir"] = str(summary.get("publish_root_dir") or "")
+    payload["summary"]["release_output_dir"] = str(summary.get("release_output_dir") or "")
+    payload["trace"] = {
+        "operation": "read_spark_memory_kb_governed_release_conversation_support",
+    }
+    return payload
+
+
+def _run_spark_memory_kb_governed_release_read_report(
+    governed_release_file: str,
+    *,
+    limit: int | None = None,
+) -> dict:
+    governed_payload = _load_json_file(governed_release_file)
+    if not isinstance(governed_payload, dict):
+        raise ValueError("Governed release payload must be a JSON object.")
+    policy_aligned_slice_file = str(governed_payload.get("input_policy_aligned_slice_file") or "").strip()
+    if not policy_aligned_slice_file:
+        raise ValueError("Governed release payload must contain input_policy_aligned_slice_file.")
+    if not Path(policy_aligned_slice_file).is_file():
+        raise ValueError(f"Governed release policy_aligned_slice_file does not exist: {policy_aligned_slice_file}")
+
+    resolution = _resolve_spark_memory_kb_governed_release(governed_release_file)
+    summary = resolution.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("Governed release resolution payload must contain a summary object.")
+    active_refresh_file = str(summary.get("active_refresh_file") or "").strip()
+    if not active_refresh_file:
+        raise ValueError("Governed release resolution must contain summary.active_refresh_file.")
+
+    payload = _run_spark_memory_kb_active_refresh_read_report(
+        active_refresh_file,
+        policy_aligned_slice_file,
+        limit=limit,
+    )
+    payload["input_governed_release_file"] = str(Path(governed_release_file))
+    payload["input_policy_aligned_slice_file"] = str(Path(policy_aligned_slice_file))
+    payload["governed_release_resolution"] = resolution
+    payload["summary"]["publish_root_dir"] = str(summary.get("publish_root_dir") or "")
+    payload["summary"]["release_output_dir"] = str(summary.get("release_output_dir") or "")
+    payload["trace"] = {
+        "operation": "run_spark_memory_kb_governed_release_read_report",
+        "limit": limit,
+    }
+    return payload
+
+
 def _resolve_spark_memory_kb_governed_release(governed_release_file: str) -> dict:
     payload = _load_json_file(governed_release_file)
     if not isinstance(payload, dict):
         raise ValueError("Governed release payload must be a JSON object.")
 
     publish_root_dir = str(payload.get("publish_root_dir") or "").strip()
+    policy_aligned_slice_file = str(payload.get("input_policy_aligned_slice_file") or "").strip()
     active_refresh_file = str(payload.get("active_refresh_file") or "").strip()
     active_release_summary_file = str(payload.get("active_release_summary_file") or "").strip()
     active_release_gate_file = str(payload.get("active_release_gate_file") or "").strip()
@@ -4522,6 +4631,7 @@ def _resolve_spark_memory_kb_governed_release(governed_release_file: str) -> dic
         "input_governed_release_file": str(Path(governed_release_file)),
         "summary": {
             "publish_root_dir": str(publish_root_path),
+            "policy_aligned_slice_file": policy_aligned_slice_file,
             "active_refresh_file": str(active_refresh_path),
             "active_release_summary_file": str(active_release_summary_path),
             "active_release_gate_file": str(active_release_gate_path),
@@ -9180,6 +9290,29 @@ def main() -> None:
     run_spark_memory_kb_active_refresh_read_report.add_argument("policy_aligned_slice_file")
     run_spark_memory_kb_active_refresh_read_report.add_argument("--limit", type=int)
     run_spark_memory_kb_active_refresh_read_report.add_argument("--write")
+    read_spark_memory_kb_governed_release_support = subparsers.add_parser(
+        "read-spark-memory-kb-governed-release-support",
+        help="Read current-state KB support for one subject/predicate pair from a top-level governed Spark KB release manifest.",
+    )
+    read_spark_memory_kb_governed_release_support.add_argument("governed_release_file")
+    read_spark_memory_kb_governed_release_support.add_argument("subject")
+    read_spark_memory_kb_governed_release_support.add_argument("predicate")
+    read_spark_memory_kb_governed_release_support.add_argument("--write")
+    read_spark_memory_kb_governed_release_conversation_support = subparsers.add_parser(
+        "read-spark-memory-kb-governed-release-conversation-support",
+        help="Read governed KB support for one conversation_id/predicate pair from a top-level governed Spark KB release manifest.",
+    )
+    read_spark_memory_kb_governed_release_conversation_support.add_argument("governed_release_file")
+    read_spark_memory_kb_governed_release_conversation_support.add_argument("conversation_id")
+    read_spark_memory_kb_governed_release_conversation_support.add_argument("predicate")
+    read_spark_memory_kb_governed_release_conversation_support.add_argument("--write")
+    run_spark_memory_kb_governed_release_read_report = subparsers.add_parser(
+        "run-spark-memory-kb-governed-release-read-report",
+        help="Run all query turns from the governed release manifest through the published governed KB surface.",
+    )
+    run_spark_memory_kb_governed_release_read_report.add_argument("governed_release_file")
+    run_spark_memory_kb_governed_release_read_report.add_argument("--limit", type=int)
+    run_spark_memory_kb_governed_release_read_report.add_argument("--write")
     build_spark_memory_kb_active_release_summary = subparsers.add_parser(
         "build-spark-memory-kb-active-release-summary",
         help="Build one release-readiness summary from the published active governed KB, policy verification, and active read report.",
@@ -10027,6 +10160,38 @@ def main() -> None:
         payload = _run_spark_memory_kb_active_refresh_read_report(
             args.active_refresh_file,
             args.policy_aligned_slice_file,
+            limit=args.limit,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "read-spark-memory-kb-governed-release-support":
+        payload = _read_spark_memory_kb_governed_release_support(
+            args.governed_release_file,
+            subject=args.subject,
+            predicate=args.predicate,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "read-spark-memory-kb-governed-release-conversation-support":
+        payload = _read_spark_memory_kb_governed_release_conversation_support(
+            args.governed_release_file,
+            conversation_id=args.conversation_id,
+            predicate=args.predicate,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "run-spark-memory-kb-governed-release-read-report":
+        payload = _run_spark_memory_kb_governed_release_read_report(
+            args.governed_release_file,
             limit=args.limit,
         )
         if args.write:

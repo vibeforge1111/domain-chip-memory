@@ -793,6 +793,32 @@ Resolution interpretation:
 - downstream automation can now start from the single top-level `governed-release.json` file instead of discovering the inner active files itself
 - the governed ship artifact is now self-describing enough to support both path resolution and shell-friendly readiness assertion from one entrypoint
 
+## 2026-04-12 Governed Release Reads
+
+The top-level governed release manifest now supports direct reads too.
+
+Commands:
+
+- `python -m domain_chip_memory.cli read-spark-memory-kb-governed-release-support tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release.json human:telegram:spark-memory-regression-user-2c339238-hack_actor_query_missing profile.hack_actor --write tmp\spark_memory_kb_governed_release_support_hack_actor_limit100_v1.json`
+- `python -m domain_chip_memory.cli read-spark-memory-kb-governed-release-conversation-support tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release.json session:telegram:dm:spark-memory-regression-user-2c339238-hack_actor_query_missing profile.hack_actor --write tmp\spark_memory_kb_governed_release_conversation_support_hack_actor_limit100_v1.json`
+- `python -m domain_chip_memory.cli run-spark-memory-kb-governed-release-read-report tmp\spark_memory_kb_governed_ship_limit100_v1\governed-release.json --write tmp\spark_memory_kb_governed_release_read_report_limit100_v1.json`
+
+Read result:
+
+- subject support found: `true`
+- conversation support found: `true`
+- subject and conversation values: `North Korea`
+- subject and conversation supporting evidence count: `1`
+- batch query count: `26`
+- batch found count: `23`
+- batch missing count: `3`
+- missing by action bucket: `expected_cleanroom_boundary 2`, `gauntlet_candidate 1`
+
+Read interpretation:
+
+- the top-level governed release manifest is now a complete repo-local lookup entrypoint, not just a release gate
+- downstream callers can resolve release state, assert readiness, read one fact, read one conversation fact, or audit the full published surface without manually passing `active-refresh.json` or the policy-aligned slice file
+
 So the honest claim after this first A/B is:
 
 - the first Spark-shaped `memory only` versus `memory + KB` comparison is now real
