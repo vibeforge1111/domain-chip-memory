@@ -61,7 +61,7 @@ The first combined-system comparison now exists on a narrow Spark-shaped replay 
 Command:
 
 - `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v1.json`
-- latest scenario-aware rerun: `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v7.json`
+- latest scenario-aware rerun: `python -m domain_chip_memory.cli run-spark-memory-kb-ablation tmp\state_telegram_restart_check_limit100_v2.json --write tmp\spark_memory_kb_ablation_limit100_v8.json`
 
 Slice definition:
 
@@ -104,8 +104,13 @@ Current result:
   - `gauntlet_candidate`: `profile.spark_role` `1`, `profile.hack_actor` `1`, `profile.timezone` `1`
 - replay source coverage on missing-fact queries:
   - `without_replay_source_evidence`: `11`
+- source-backed answered counts for the same missing predicates elsewhere in the replay:
+  - `profile.hack_actor`: `5`
+  - `profile.home_country`: `26`
+  - `profile.spark_role`: `2`
+  - `profile.timezone`: `8`
 - average `memory only` latency: `0.208 ms`
-- average `memory + KB` latency: `0.455 ms`
+- average `memory + KB` latency: `0.467 ms`
 
 Interpretation:
 
@@ -130,6 +135,14 @@ Interpretation:
   - all `11` missing-fact queries have zero replayed current-state or observation evidence for that exact subject and predicate
   - that means this slice is currently showing zero-source-evidence abstentions, not a proven runtime or KB compilation failure on an actually-known fact
   - the non-cleanroom `regression_candidate` and `gauntlet_candidate` buckets are still useful coverage targets, but they should not be described as confirmed product regressions without a source-backed replay slice
+- the new sourcing summary removes the ambiguity about where to get that next slice:
+  - every missing predicate family already has answered, source-backed examples elsewhere in the same replay
+  - that means the next benchmark step should be constructing a compact source-backed target slice, not hunting for new predicates
+  - the current best source-backed exemplars are:
+    - `profile.spark_role`: regression threads answering "What role will Spark play in this?" with `important part of the rebuild`
+    - `profile.hack_actor`: regression threads answering "Who hacked us?" with `North Korea`
+    - `profile.timezone`: regression and core-profile threads answering "What is my timezone?" with `Asia/Dubai`
+    - `profile.home_country`: many answered threads exist, but the only current miss is still a cleanroom boundary case
 
 So the honest claim after this first A/B is:
 

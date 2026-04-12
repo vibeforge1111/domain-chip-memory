@@ -249,6 +249,57 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
                         ],
                         "probes": [],
                     },
+                    {
+                        "conversation_id": "session:telegram:dm:spark-memory-regression-user-answered-timezone",
+                        "session_id": "session:telegram:dm:spark-memory-regression-user-answered-timezone",
+                        "metadata": {
+                            "human_id": "human:telegram:answered-timezone",
+                        },
+                        "turns": [
+                            {
+                                "message_id": "req-write-timezone",
+                                "role": "user",
+                                "content": "My timezone is Asia/Dubai.",
+                                "timestamp": "2026-04-12T00:03:00Z",
+                                "metadata": {
+                                    "source_event_type": "memory_write_requested",
+                                    "operation": "update",
+                                    "subject": "human:telegram:answered-timezone",
+                                    "predicate": "profile.timezone",
+                                    "value": "Asia/Dubai",
+                                },
+                            },
+                            {
+                                "message_id": "req-query-answered-timezone",
+                                "role": "user",
+                                "content": "What is my timezone?",
+                                "timestamp": "2026-04-12T00:03:10Z",
+                                "metadata": {
+                                    "request_id": "req-query-answered-timezone",
+                                    "source_event_type": "plugin_or_chip_influence_recorded",
+                                    "predicate": "profile.timezone",
+                                    "label": "timezone",
+                                    "query_kind": "single_fact",
+                                },
+                            },
+                            {
+                                "message_id": "req-query-answered-timezone",
+                                "role": "assistant",
+                                "content": "Your timezone is Asia/Dubai.",
+                                "timestamp": "2026-04-12T00:03:11Z",
+                                "metadata": {
+                                    "request_id": "req-query-answered-timezone",
+                                    "source_event_type": "tool_result_received",
+                                    "bridge_mode": "memory_profile_fact",
+                                    "routing_decision": "memory_profile_fact_query",
+                                    "predicate": "profile.timezone",
+                                    "value_found": True,
+                                    "evidence_summary": "status=memory_profile_fact predicate=profile.timezone value_found=yes",
+                                },
+                            },
+                        ],
+                        "probes": [],
+                    },
                 ],
             }
         },
@@ -273,9 +324,9 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
     cli.main()
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
-    assert payload["summary"]["query_count"] == 2
-    assert payload["summary"]["memory_only_answered"] == 0
-    assert payload["summary"]["memory_plus_kb_answered"] == 0
+    assert payload["summary"]["query_count"] == 3
+    assert payload["summary"]["memory_only_answered"] == 1
+    assert payload["summary"]["memory_plus_kb_answered"] == 1
     assert payload["summary"]["missing_fact_query_count"] == 2
     assert payload["summary"]["missing_fact_predicates"] == {
         "profile.hack_actor": 1,
@@ -298,6 +349,17 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
         "regression_candidate": {"profile.hack_actor": 1},
     }
     assert payload["summary"]["missing_fact_source_coverage"] == {"without_replay_source_evidence": 2}
+    assert payload["summary"]["source_backed_answered_counts_by_missing_predicate"] == {"profile.timezone": 1}
+    assert payload["summary"]["source_backed_examples_by_missing_predicate"] == {
+        "profile.timezone": [
+            {
+                "conversation_id": "session:telegram:dm:spark-memory-regression-user-answered-timezone",
+                "question": "What is my timezone?",
+                "answer": "Asia/Dubai",
+                "scenario_bucket": "regression",
+            }
+        ]
+    }
     assert payload["summary"]["missing_fact_examples_by_predicate"] == {
         "profile.hack_actor": [
             {
@@ -316,7 +378,10 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
             }
         ]
     }
-    assert payload["summary"]["classification_counts"] == {"missing_fact_query": 2}
+    assert payload["summary"]["classification_counts"] == {
+        "answered_without_kb_support": 1,
+        "missing_fact_query": 2,
+    }
     regression_comparison = payload["comparisons"][0]
     assert regression_comparison["scenario_bucket"] == "regression"
     assert regression_comparison["action_bucket"] == "regression_candidate"
@@ -338,3 +403,11 @@ def test_run_spark_memory_kb_ablation_tracks_missing_fact_queries(tmp_path: Path
         "observation_count": 0,
     }
     assert cleanroom_comparison["classification"] == "missing_fact_query"
+    answered_comparison = payload["comparisons"][2]
+    assert answered_comparison["scenario_bucket"] == "regression"
+    assert answered_comparison["replay_source_evidence"] == {
+        "has_source_evidence": True,
+        "current_state_count": 1,
+        "observation_count": 1,
+    }
+    assert answered_comparison["classification"] == "answered_without_kb_support"

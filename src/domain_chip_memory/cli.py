@@ -2895,6 +2895,36 @@ def _run_spark_memory_kb_ablation(
         )
 
     query_count = len(query_cases)
+    source_backed_answered_counts_by_missing_predicate: dict[str, int] = {}
+    source_backed_examples_by_missing_predicate: dict[str, list[dict[str, str | None]]] = {}
+    if missing_fact_predicates:
+        missing_predicate_keys = set(missing_fact_predicates)
+        for item in comparisons:
+            predicate = str(item.get("predicate") or "")
+            if predicate not in missing_predicate_keys:
+                continue
+            replay_source_evidence = item.get("replay_source_evidence")
+            if not isinstance(replay_source_evidence, dict):
+                continue
+            if not bool(replay_source_evidence.get("has_source_evidence")):
+                continue
+            memory_only = item.get("memory_only")
+            if not isinstance(memory_only, dict) or not bool(memory_only.get("found")):
+                continue
+            source_backed_answered_counts_by_missing_predicate[predicate] = (
+                source_backed_answered_counts_by_missing_predicate.get(predicate, 0) + 1
+            )
+            examples = source_backed_examples_by_missing_predicate.setdefault(predicate, [])
+            if len(examples) < 2:
+                examples.append(
+                    {
+                        "conversation_id": str(item.get("conversation_id") or ""),
+                        "question": str(item.get("question") or ""),
+                        "answer": str(memory_only.get("answer") or "") or None,
+                        "scenario_bucket": str(item.get("scenario_bucket") or "") or None,
+                    }
+                )
+
     return {
         "input_file": str(Path(data_file)),
         "kb_dir": kb_dir,
@@ -2917,6 +2947,13 @@ def _run_spark_memory_kb_ablation(
                 for action_bucket, predicate_counts in sorted(missing_fact_predicates_by_action_bucket.items())
             },
             "missing_fact_source_coverage": dict(sorted(missing_fact_source_coverage.items())),
+            "source_backed_answered_counts_by_missing_predicate": dict(
+                sorted(source_backed_answered_counts_by_missing_predicate.items())
+            ),
+            "source_backed_examples_by_missing_predicate": {
+                predicate: examples
+                for predicate, examples in sorted(source_backed_examples_by_missing_predicate.items())
+            },
             "missing_fact_examples_by_predicate": {
                 predicate: examples
                 for predicate, examples in sorted(missing_fact_examples_by_predicate.items())
