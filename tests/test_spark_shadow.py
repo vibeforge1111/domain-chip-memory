@@ -575,6 +575,76 @@ def test_shadow_ingest_reclassifies_execution_confirmations_as_residue():
     assert current_state.value == "Dubai"
 
 
+def test_shadow_ingest_reclassifies_meta_collaboration_prompts_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-meta-collaboration",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="let's actually think about the startup part together",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_reclassifies_reflective_meta_chat_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-reflective-meta",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="you ask a lot of questions from there",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
 def test_shadow_ingest_skips_unchanged_explicit_current_state_writes():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)

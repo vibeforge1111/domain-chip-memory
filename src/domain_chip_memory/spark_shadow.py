@@ -516,6 +516,8 @@ class SparkShadowIngestAdapter:
             return "non_memory_chat"
         if self._looks_like_non_memory_confirmation(normalized_text):
             return "non_memory_chat"
+        if self._looks_like_non_memory_meta_chat(normalized_text):
+            return "non_memory_chat"
         return None
 
     def _is_onboarding_residue(self, metadata: JsonDict) -> bool:
@@ -597,6 +599,21 @@ class SparkShadowIngestAdapter:
             "yeah lets do it",
             "yeah let's do it",
         }
+
+    def _looks_like_non_memory_meta_chat(self, normalized_text: str) -> bool:
+        stripped_text = self._strip_non_memory_chat_leading_filler(normalized_text)
+        if stripped_text.startswith(("you should ", "you are ", "you ask ")):
+            return True
+        collaboration_starters = (
+            "lets ",
+            "let's ",
+            "we should ",
+            "we have ",
+            "i guess we ",
+        )
+        if stripped_text.startswith(collaboration_starters):
+            return True
+        return stripped_text.startswith("i don't know, you ")
 
     def _normalize_non_memory_chat_text(self, text: str) -> str:
         normalized_text = str(text or "").replace("â€™", "'").replace("\u2019", "'").replace("`", "'").strip().lower()
