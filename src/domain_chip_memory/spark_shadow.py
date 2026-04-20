@@ -518,6 +518,8 @@ class SparkShadowIngestAdapter:
             return "non_memory_chat"
         if self._looks_like_non_memory_meta_chat(normalized_text):
             return "non_memory_chat"
+        if self._looks_like_non_memory_topic_fragment(normalized_text):
+            return "non_memory_chat"
         return None
 
     def _is_onboarding_residue(self, metadata: JsonDict) -> bool:
@@ -602,6 +604,8 @@ class SparkShadowIngestAdapter:
 
     def _looks_like_non_memory_meta_chat(self, normalized_text: str) -> bool:
         stripped_text = self._strip_non_memory_chat_leading_filler(normalized_text)
+        if "name yourself" in stripped_text:
+            return True
         if stripped_text.startswith(("you should ", "you are ", "you ask ")):
             return True
         collaboration_starters = (
@@ -614,6 +618,15 @@ class SparkShadowIngestAdapter:
         if stripped_text.startswith(collaboration_starters):
             return True
         return stripped_text.startswith("i don't know, you ")
+
+    def _looks_like_non_memory_topic_fragment(self, normalized_text: str) -> bool:
+        stripped_text = self._strip_non_memory_chat_leading_filler(normalized_text)
+        token_count = len(re.findall(r"[a-z0-9]+", stripped_text))
+        if token_count == 0 or token_count > 4:
+            return False
+        if re.search(r"\b(i|i'm|im|i've|ive|i'd|we|we're|were|you|my|our)\b", stripped_text):
+            return False
+        return not re.search(r"\b(am|is|are|was|were|be|been|being|have|has|had|do|does|did|live|lived|moved|move|want|wanted|trying|build|building)\b", stripped_text)
 
     def _normalize_non_memory_chat_text(self, text: str) -> str:
         normalized_text = str(text or "").replace("â€™", "'").replace("\u2019", "'").replace("`", "'").strip().lower()

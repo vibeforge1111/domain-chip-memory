@@ -645,6 +645,130 @@ def test_shadow_ingest_reclassifies_reflective_meta_chat_as_residue():
     assert current_state.value == "Dubai"
 
 
+def test_shadow_ingest_reclassifies_topic_fragments_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-topic-fragment",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="AI for customer support",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_reclassifies_name_yourself_meta_chat_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-name-yourself-meta",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="just chilling and testing you i guess, by the way you should name yourself Spark",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_accepts_builder_project_history_as_current_mission():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-project-history-mission",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I've been building a memory domain chip for you too right now thats in shadow tests but should be live soon",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+            ],
+        )
+    )
+
+    mission = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="current_mission"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 0
+    assert mission.found is True
+    assert mission.value == "build a memory domain chip for Spark"
+
+
+def test_shadow_ingest_accepts_building_spark_statement_as_current_mission():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-build-spark-mission",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I'm building you",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+            ],
+        )
+    )
+
+    mission = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="current_mission"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 0
+    assert mission.found is True
+    assert mission.value == "build Spark"
+
+
 def test_shadow_ingest_skips_unchanged_explicit_current_state_writes():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)

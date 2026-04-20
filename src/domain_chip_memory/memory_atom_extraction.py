@@ -193,6 +193,14 @@ def _extract_atoms_from_turn(
             )
         )
 
+    def _has_predicate(predicate: str) -> bool:
+        return any(atom.predicate == predicate for atom in atoms)
+
+    def _append_current_mission(value: str, *, entity_key: str) -> None:
+        if _has_predicate("current_mission"):
+            return
+        _append_atom("current_mission", value, entity_key=entity_key)
+
     def _scoped_pronoun_predicates(text_lower: str) -> list[str]:
         predicates: list[str] = []
         if "about" in text_lower and re.search(r"\bmy favou?rite colou?r\b", text_lower):
@@ -590,6 +598,28 @@ def _extract_atoms_from_turn(
             "counseling_motivation",
             "her own journey and the support she received, and how counseling improved her life",
             entity_key="own-journey-support-counseling",
+        )
+    if "i'm building you" in lower or "im building you" in lower:
+        _append_current_mission("build Spark", entity_key="build-spark")
+    if ("i've been building" in lower or "i have been building" in lower) and "spark intelligence systems" in lower and "domain chips" in lower:
+        _append_current_mission(
+            "build Spark Intelligence systems and domain chips",
+            entity_key="build-spark-intelligence-systems-domain-chips",
+        )
+    if "memory domain chip for you" in lower and ("shadow test" in lower or "shadow tests" in lower):
+        _append_current_mission(
+            "build a memory domain chip for Spark",
+            entity_key="build-memory-domain-chip-for-spark",
+        )
+    if "give life to you" in lower and "domain chips" in lower:
+        _append_current_mission(
+            "give Spark life through conversations, work, and domain chips",
+            entity_key="give-spark-life-through-conversations-work-domain-chips",
+        )
+    if "trying to get you to be great at many things" in lower and "domain chips" in lower:
+        _append_current_mission(
+            "make Spark great at many things through domain chips",
+            entity_key="make-spark-great-at-many-things-through-domain-chips",
         )
 
     patterns = [
