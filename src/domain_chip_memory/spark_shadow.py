@@ -154,6 +154,11 @@ class SparkShadowIngestAdapter:
                             "routing_decision": str(turn.metadata.get("routing_decision") or ""),
                             "memory_role": str(turn.metadata.get("memory_role") or ""),
                             "record_count": int(turn.metadata.get("record_count", 0) or 0),
+                            "read_outcome": str(turn.metadata.get("read_outcome") or ""),
+                            "retrieval_operation": str(turn.metadata.get("retrieval_operation") or ""),
+                            "contract_reason": str(turn.metadata.get("contract_reason") or ""),
+                            "observed_memory_role": str(turn.metadata.get("observed_memory_role") or ""),
+                            "explanation_text": str(turn.metadata.get("explanation_text") or ""),
                         },
                     )
                 )

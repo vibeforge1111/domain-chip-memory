@@ -593,6 +593,11 @@ def _extract_shadow_turn_rows(evaluations: list[dict]) -> list[dict]:
                     "routing_decision": str(trace.get("routing_decision") or ""),
                     "memory_role": str(trace.get("memory_role") or ""),
                     "record_count": int(trace.get("record_count", 0) or 0),
+                    "read_outcome": str(trace.get("read_outcome") or ""),
+                    "retrieval_operation": str(trace.get("retrieval_operation") or ""),
+                    "contract_reason": str(trace.get("contract_reason") or ""),
+                    "observed_memory_role": str(trace.get("observed_memory_role") or ""),
+                    "explanation_text": str(trace.get("explanation_text") or ""),
                     "write_kind": str(write_trace.get("write_kind") or ""),
                     "write_operation": str(write_trace.get("write_operation") or ""),
                     "persisted": bool(write_trace.get("persisted", False)),
@@ -715,6 +720,19 @@ def _build_shadow_failure_taxonomy_payload(
     probe_expectation_gap_rows = [
         row for row in probe_rows if float(row.get("expected_match_rate", 1.0) or 1.0) < 1.0
     ]
+
+    def _normalized_read_abstention_reason(row: dict) -> str:
+        reason = str(row.get("reason") or "").strip()
+        contract_reason = str(row.get("contract_reason") or "").strip()
+        read_outcome = str(row.get("read_outcome") or "").strip()
+        if reason:
+            return reason
+        if contract_reason:
+            return contract_reason
+        if read_outcome == "no_supported_answer":
+            return "no_supported_answer"
+        return "unknown"
+
     read_abstention_rows = [
         row
         for row in turn_rows
@@ -722,10 +740,18 @@ def _build_shadow_failure_taxonomy_payload(
         and row.get("role") == "assistant"
         and str(row.get("source_event_type") or "").strip() == "memory_read_abstained"
     ]
+    read_abstention_gap_rows: list[dict] = []
+    read_coverage_gap_rows: list[dict] = []
+    for row in read_abstention_rows:
+        normalized_reason = _normalized_read_abstention_reason(row)
+        if normalized_reason == "no_supported_answer":
+            read_coverage_gap_rows.append(row)
+        else:
+            read_abstention_gap_rows.append(row)
     read_abstention_by_reason: dict[str, int] = {}
     read_abstention_by_method: dict[str, int] = {}
     for row in read_abstention_rows:
-        reason = str(row.get("reason") or "").strip() or "unknown"
+        reason = _normalized_read_abstention_reason(row)
         method = str(row.get("method") or "").strip() or "unknown"
         read_abstention_by_reason[reason] = read_abstention_by_reason.get(reason, 0) + 1
         read_abstention_by_method[method] = read_abstention_by_method.get(method, 0) + 1
@@ -739,6 +765,10 @@ def _build_shadow_failure_taxonomy_payload(
     ]
     dominant_read_abstention_row = read_abstention_reason_rows[0] if read_abstention_reason_rows else None
     dominant_read_abstention_method_row = read_abstention_method_rows[0] if read_abstention_method_rows else None
+    read_abstention_gap_reason_rows = [
+        row for row in read_abstention_reason_rows if str(row.get("reason") or "").strip() != "no_supported_answer"
+    ]
+    dominant_read_gap_row = read_abstention_gap_reason_rows[0] if read_abstention_gap_reason_rows else None
     dominant_unsupported_row = max(
         unsupported_reasons,
         key=lambda row: (int(row.get("count", 0) or 0), str(row.get("reason", "") or "")),
@@ -880,15 +910,27 @@ def _build_shadow_failure_taxonomy_payload(
                 ),
             }
         )
-    if read_abstention_rows:
+    if read_abstention_gap_rows:
         issue_buckets.append(
             {
                 "label": "read_abstention_gap",
-                "count": len(read_abstention_rows),
-                "severity": "high" if str((dominant_read_abstention_row or {}).get("reason") or "") == "sdk_unavailable" else "medium",
+                "count": len(read_abstention_gap_rows),
+                "severity": "high" if str((dominant_read_gap_row or {}).get("reason") or "") == "sdk_unavailable" else "medium",
                 "summary": (
-                    f"{len(read_abstention_rows)} Builder memory reads abstained, led by "
-                    f"`{(dominant_read_abstention_row or {}).get('reason', 'unknown')}`."
+                    f"{len(read_abstention_gap_rows)} Builder memory reads abstained because of read-path gaps, led by "
+                    f"`{(dominant_read_gap_row or {}).get('reason', 'unknown')}`."
+                ),
+            }
+        )
+    if read_coverage_gap_rows:
+        issue_buckets.append(
+            {
+                "label": "read_coverage_gap",
+                "count": len(read_coverage_gap_rows),
+                "severity": "medium",
+                "summary": (
+                    f"{len(read_coverage_gap_rows)} Builder memory reads completed without a supported answer. "
+                    "That indicates missing memory coverage rather than a broken read path."
                 ),
             }
         )
@@ -970,8 +1012,8 @@ def _build_shadow_failure_taxonomy_payload(
                 ),
             }
         )
-    if dominant_read_abstention_row is not None:
-        reason = str(dominant_read_abstention_row.get("reason") or "")
+    if dominant_read_gap_row is not None:
+        reason = str(dominant_read_gap_row.get("reason") or "")
         if reason == "sdk_unavailable":
             recommended_next_actions.append(
                 {
@@ -1029,6 +1071,17 @@ def _build_shadow_failure_taxonomy_payload(
                         ),
                     }
                 )
+    if read_coverage_gap_rows:
+        recommended_next_actions.append(
+            {
+                "label": "expand_memory_coverage_for_read_queries",
+                "priority": 3,
+                "rationale": (
+                    "Builder read traffic is reaching the SDK but returning no supported answer. Add the missing "
+                    "profile facts and supporting evidence before treating read-side UX as healthy."
+                ),
+            }
+        )
     top_source_hotspot = source_hotspots[0] if source_hotspots else None
     if top_source_hotspot and int(top_source_hotspot.get("friction_count", 0) or 0) > 0:
         recommended_next_actions.append(
@@ -1075,6 +1128,8 @@ def _build_shadow_failure_taxonomy_payload(
             "dominant_read_abstention_method": (
                 str(dominant_read_abstention_method_row.get("method")) if dominant_read_abstention_method_row else None
             ),
+            "read_abstention_gap_count": len(read_abstention_gap_rows),
+            "read_coverage_gap_count": len(read_coverage_gap_rows),
             "has_probe_coverage": bool(probe_rows),
             "has_probe_expectation_gap": bool(probe_expectation_gap_rows),
             "issue_labels": issue_labels,
@@ -2146,6 +2201,9 @@ def _normalize_builder_telegram_state_db(
         record_count = int(facts.get("record_count", 0) or 0)
         retrieval_trace = facts.get("retrieval_trace")
         retrieval_trace_dict = retrieval_trace if isinstance(retrieval_trace, dict) else {}
+        answer_explanation = facts.get("answer_explanation")
+        answer_explanation_dict = answer_explanation if isinstance(answer_explanation, dict) else {}
+        explanation_text = str(answer_explanation_dict.get("explanation") or "").strip()
         predicate = str(retrieval_trace_dict.get("predicate") or "").strip() or None
         predicate_prefix = str(retrieval_trace_dict.get("predicate_prefix") or "").strip() or None
         if event_type == "memory_read_succeeded":
@@ -2155,7 +2213,42 @@ def _normalize_builder_telegram_state_db(
             return f"Memory read succeeded for `{method}` with `{record_count}` matching records."
         if reason:
             return f"Memory read abstained for `{method}` because `{reason}`."
+        if explanation_text:
+            return explanation_text
         return f"Memory read abstained for `{method}`."
+
+    def _read_result_trace_metadata(
+        facts: dict,
+        *,
+        event_type: str,
+    ) -> dict[str, object]:
+        retrieval_trace = facts.get("retrieval_trace")
+        retrieval_trace_dict = retrieval_trace if isinstance(retrieval_trace, dict) else {}
+        answer_explanation = facts.get("answer_explanation")
+        answer_explanation_dict = answer_explanation if isinstance(answer_explanation, dict) else {}
+        reason = str(facts.get("reason") or "").strip()
+        contract_reason = str(retrieval_trace_dict.get("contract_reason") or "").strip()
+        memory_role = str(facts.get("memory_role") or "").strip()
+        retrieval_operation = str(retrieval_trace_dict.get("operation") or "").strip()
+        explanation_text = str(answer_explanation_dict.get("explanation") or "").strip()
+        record_count = int(facts.get("record_count", 0) or 0)
+        read_outcome = "succeeded"
+        if event_type == "memory_read_abstained":
+            if reason or contract_reason:
+                read_outcome = "gap"
+            elif memory_role == "unknown" and record_count == 0 and (
+                retrieval_operation or explanation_text.lower().startswith("no supported answer")
+            ):
+                read_outcome = "no_supported_answer"
+            else:
+                read_outcome = "unknown_abstention"
+        return {
+            "read_outcome": read_outcome,
+            "retrieval_operation": retrieval_operation or None,
+            "contract_reason": contract_reason or None,
+            "observed_memory_role": str(retrieval_trace_dict.get("observed_memory_role") or "").strip() or None,
+            "explanation_text": explanation_text or None,
+        }
 
     def _known_identity_records(
         store: dict[str, dict[str, str]],
@@ -2695,6 +2788,10 @@ def _normalize_builder_telegram_state_db(
                                 "method": str(read_result_facts.get("method") or "").strip() or None,
                                 "reason": str(read_result_facts.get("reason") or "").strip() or None,
                                 "record_count": int(read_result_facts.get("record_count", 0) or 0),
+                                **_read_result_trace_metadata(
+                                    read_result_facts,
+                                    event_type=str(memory_read_result_row.get("event_type") or "").strip(),
+                                ),
                             },
                         }
                     )

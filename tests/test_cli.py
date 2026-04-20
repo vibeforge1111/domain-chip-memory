@@ -2367,6 +2367,90 @@ def test_build_shadow_failure_taxonomy_uses_read_abstention_method_when_reason_m
     )
 
 
+def test_build_shadow_failure_taxonomy_treats_no_supported_answer_reads_as_coverage_gap():
+    payload = cli._build_shadow_failure_taxonomy_payload(
+        {
+            "report": {
+                "run_count": 1,
+                "summary": {
+                    "accepted_writes": 0,
+                    "rejected_writes": 0,
+                    "skipped_turns": 0,
+                    "reference_turns": 2,
+                    "unsupported_reasons": [],
+                    "probe_rows": [],
+                },
+                "conversation_rows": [
+                    {
+                        "conversation_id": "memory-explain:organic-user",
+                        "accepted_writes": 0,
+                        "rejected_writes": 0,
+                        "skipped_turns": 0,
+                        "reference_turns": 2,
+                    }
+                ],
+            },
+            "evaluations": [
+                {
+                    "conversation_id": "memory-explain:organic-user",
+                    "session_id": "memory-explain:organic-user",
+                    "trace": {
+                        "turn_traces": [
+                            {
+                                "message_id": "req-2",
+                                "turn_id": "memory-explain:organic-user:shadow:1",
+                                "role": "user",
+                                "action": "reference_turn",
+                                "accepted": False,
+                                "trace": {
+                                    "content": "How do you know where I live?",
+                                    "timestamp": "2026-04-10T00:00:00Z",
+                                    "source_event_type": "memory_read_requested",
+                                    "method": "explain_answer",
+                                },
+                            },
+                            {
+                                "message_id": "req-2",
+                                "turn_id": "memory-explain:organic-user:shadow:2",
+                                "role": "assistant",
+                                "action": "reference_turn",
+                                "accepted": False,
+                                "trace": {
+                                    "content": "No supported answer for profile.city of human:telegram:8319079055; abstained with unknown.",
+                                    "timestamp": "2026-04-10T00:00:01Z",
+                                    "source_event_type": "memory_read_abstained",
+                                    "method": "explain_answer",
+                                    "reason": "",
+                                    "memory_role": "unknown",
+                                    "record_count": 0,
+                                    "read_outcome": "no_supported_answer",
+                                    "retrieval_operation": "explain_answer",
+                                    "explanation_text": (
+                                        "No supported answer for profile.city of human:telegram:8319079055; "
+                                        "abstained with unknown."
+                                    ),
+                                },
+                            },
+                        ]
+                    },
+                }
+            ],
+        },
+        source_mode="builder_export",
+    )
+
+    assert payload["summary"]["read_abstention_count"] == 1
+    assert payload["summary"]["read_abstention_gap_count"] == 0
+    assert payload["summary"]["read_coverage_gap_count"] == 1
+    assert payload["summary"]["dominant_read_abstention_reason"] == "no_supported_answer"
+    assert "read_abstention_gap" not in payload["summary"]["issue_labels"]
+    assert "read_coverage_gap" in payload["summary"]["issue_labels"]
+    assert any(
+        row["label"] == "expand_memory_coverage_for_read_queries"
+        for row in payload["recommended_next_actions"]
+    )
+
+
 def test_build_spark_kb_from_builder_export_cli_compiles_kb_from_builder_aliases(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "builder_export.json"
     output_dir = tmp_path / "spark_builder_kb"
@@ -4743,6 +4827,179 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_memory_read_only_buil
         "Memory read abstained for `get_current_state` because `sdk_unavailable`.",
     ]
     assert payload["turn_audit"]["top_reference_turns"][0]["content"] == "What is my mission right now?"
+
+
+def test_run_spark_builder_state_telegram_intake_cli_classifies_no_answer_explanations_as_coverage_gap(
+    tmp_path: Path,
+    monkeypatch,
+):
+    builder_home = tmp_path / "builder-home-explain-no-answer"
+    output_dir = tmp_path / "spark_builder_state_explain_no_answer_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_explain_no_answer.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-explain-query",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "memory-explain:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "explain_answer",
+                            "predicate": "profile.city",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-10 19:07:54",
+                ),
+                (
+                    "evt-explain-abstained",
+                    "memory_read_abstained",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "memory-explain:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "abstained",
+                    "Spark memory read abstained.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "answer_explanation": {
+                                "answer": None,
+                                "events": [],
+                                "evidence": [],
+                                "explanation": (
+                                    "No supported answer for profile.city of human:telegram:12345; "
+                                    "abstained with unknown."
+                                ),
+                            },
+                            "memory_role": "unknown",
+                            "method": "explain_answer",
+                            "reason": None,
+                            "record_count": 0,
+                            "retrieval_trace": {
+                                "operation": "explain_answer",
+                                "predicate": "profile.city",
+                                "question": "How do you know where I live?",
+                                "subject": "human:telegram:12345",
+                            },
+                        }
+                    ),
+                    "2026-04-10 19:07:55",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["summary"]["conversation_count"] == 1
+    assert payload["summary"]["reference_turns"] == 2
+    assert payload["failure_taxonomy"]["summary"]["read_abstention_count"] == 1
+    assert payload["failure_taxonomy"]["summary"]["read_abstention_gap_count"] == 0
+    assert payload["failure_taxonomy"]["summary"]["read_coverage_gap_count"] == 1
+    assert payload["failure_taxonomy"]["summary"]["dominant_read_abstention_reason"] == "no_supported_answer"
+    assert "read_abstention_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert "read_coverage_gap" in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert any(
+        row["label"] == "expand_memory_coverage_for_read_queries"
+        for row in payload["failure_taxonomy"]["recommended_next_actions"]
+    )
+    conversation = payload["normalization"]["normalized"]["conversations"][0]
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "How do you know where I live?",
+        "No supported answer for profile.city of human:telegram:12345; abstained with unknown.",
+    ]
 
 
 def test_run_spark_builder_state_telegram_intake_cli_replays_explanation_queries_with_probes(tmp_path: Path, monkeypatch):
