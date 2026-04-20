@@ -1938,14 +1938,12 @@ def _normalize_builder_telegram_state_db(
     def _turn_sort_key(item: dict) -> tuple[str, str]:
         return (str(item.get("timestamp") or ""), str(item.get("message_id") or ""))
 
-    raw_event_limit = max(limit * 8, 200)
     connection = sqlite3.connect(state_db_path)
     connection.row_factory = sqlite3.Row
     try:
-        rows = connection.execute(
-            """
-            SELECT *
-            FROM (
+        if selected_chat_id is not None:
+            rows = connection.execute(
+                """
                 SELECT
                     rowid AS row_order,
                     event_id,
@@ -1968,14 +1966,45 @@ def _normalize_builder_telegram_state_db(
                     'plugin_or_chip_influence_recorded',
                     'tool_result_received'
                 )
-                ORDER BY created_at DESC, event_id DESC
+                ORDER BY created_at ASC, row_order ASC
+                """
+            ).fetchall()
+        else:
+            raw_event_limit = max(limit * 8, 200)
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM (
+                    SELECT
+                        rowid AS row_order,
+                        event_id,
+                        event_type,
+                        created_at,
+                        request_id,
+                        trace_ref,
+                        channel_id,
+                        session_id,
+                        human_id,
+                        component,
+                        summary,
+                        facts_json
+                    FROM builder_events
+                    WHERE event_type IN (
+                        'intent_committed',
+                        'delivery_succeeded',
+                        'memory_write_requested',
+                        'memory_write_succeeded',
+                        'plugin_or_chip_influence_recorded',
+                        'tool_result_received'
+                    )
+                    ORDER BY created_at DESC, event_id DESC
+                    LIMIT ?
+                )
+                ORDER BY created_at ASC, row_order ASC
                 LIMIT ?
-            )
-            ORDER BY created_at ASC, row_order ASC
-            LIMIT ?
-            """,
-            (raw_event_limit, raw_event_limit),
-        ).fetchall()
+                """,
+                (raw_event_limit, raw_event_limit),
+            ).fetchall()
     finally:
         connection.close()
 

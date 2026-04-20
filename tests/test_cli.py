@@ -3018,6 +3018,170 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_builder_state_db(tmp_
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-turn-audit.md").exists()
 
 
+def test_normalize_builder_state_db_keeps_selected_chat_when_older_than_recent_unrelated_rows(tmp_path: Path):
+    builder_home = tmp_path / "builder-home-overflow"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+
+        rows = [
+            (
+                "target-intent",
+                "intent_committed",
+                "event",
+                "telegram",
+                "telegram_runtime",
+                "run-target",
+                None,
+                "corr-target",
+                None,
+                None,
+                "telegram",
+                "chat-target",
+                "12345",
+                None,
+                None,
+                "runtime",
+                "info",
+                "committed",
+                "Captured inbound Telegram message",
+                None,
+                None,
+                json.dumps(
+                    {
+                        "chat_id": "12345",
+                        "telegram_user_id": "12345",
+                        "update_id": 1,
+                        "message_text": "I live in Dubai.",
+                    }
+                ),
+                "2026-04-09 10:00:00",
+            ),
+            (
+                "target-delivery",
+                "delivery_succeeded",
+                "event",
+                "telegram",
+                "telegram_runtime",
+                "run-target",
+                None,
+                "corr-target",
+                None,
+                None,
+                "telegram",
+                "chat-target",
+                "12345",
+                None,
+                None,
+                "runtime",
+                "info",
+                "delivered",
+                "Delivered Telegram reply",
+                None,
+                None,
+                json.dumps(
+                    {
+                        "chat_id": "12345",
+                        "telegram_user_id": "12345",
+                        "update_id": 1,
+                        "delivered_text": "Noted.",
+                    }
+                ),
+                "2026-04-09 10:00:01",
+            ),
+        ]
+        for index in range(205):
+            rows.append(
+                (
+                    f"other-intent-{index}",
+                    "intent_committed",
+                    "event",
+                    "telegram",
+                    "telegram_runtime",
+                    f"run-other-{index}",
+                    None,
+                    f"corr-other-{index}",
+                    None,
+                    None,
+                    "telegram",
+                    f"chat-other-{index}",
+                    "99999",
+                    None,
+                    None,
+                    "runtime",
+                    "info",
+                    "committed",
+                    "Captured unrelated inbound Telegram message",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "chat_id": "99999",
+                            "telegram_user_id": "99999",
+                            "update_id": index + 2,
+                            "message_text": f"Unrelated message {index}",
+                        }
+                    ),
+                    f"2026-04-09 10:{(index // 60) + 1:02d}:{index % 60:02d}",
+                )
+            )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    payload = cli._normalize_builder_telegram_state_db(str(builder_home), limit=25, chat_id="12345")
+
+    assert payload["selected_chat_id"] == "12345"
+    assert payload["conversation_count"] == 1
+    conversation = payload["normalized"]["conversations"][0]
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "I live in Dubai.",
+        "Noted.",
+    ]
+
+
 def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder_state_db(tmp_path: Path, monkeypatch):
     builder_home = tmp_path / "builder-home-bridge"
     output_dir = tmp_path / "spark_builder_state_bridge_kb"
