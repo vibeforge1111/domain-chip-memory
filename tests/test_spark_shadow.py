@@ -470,6 +470,111 @@ def test_shadow_ingest_reclassifies_onboarding_turns_as_residue():
     assert current_state.value == "Dubai"
 
 
+def test_shadow_ingest_reclassifies_filler_prefixed_questions_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-filler-prefixed-question",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="hey can you do web search now",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_reclassifies_search_directives_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-search-directive",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="Search the web and tell me the current BTC price in USD with the source you used.",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_reclassifies_execution_confirmations_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-execution-confirmation",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="sure lets do it",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
 def test_shadow_ingest_skips_unchanged_explicit_current_state_writes():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)

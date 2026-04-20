@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from collections import Counter
 from dataclasses import asdict, dataclass, field
@@ -514,6 +514,8 @@ class SparkShadowIngestAdapter:
             return "non_memory_chat"
         if self._looks_like_non_memory_directive(normalized_text):
             return "non_memory_chat"
+        if self._looks_like_non_memory_confirmation(normalized_text):
+            return "non_memory_chat"
         return None
 
     def _is_onboarding_residue(self, metadata: JsonDict) -> bool:
@@ -542,8 +544,12 @@ class SparkShadowIngestAdapter:
             "what should ",
             "what can ",
         )
-        normalized_question_text = raw_text.replace("’", "'").replace("`", "'").strip().lower()
-        return "?" in raw_text or normalized_question_text.startswith(question_starters) or normalized_text.startswith(question_starters)
+        normalized_question_text = self._normalize_non_memory_chat_text(raw_text)
+        stripped_normalized_text = self._strip_non_memory_chat_leading_filler(normalized_text)
+        if normalized_question_text.startswith(question_starters) or stripped_normalized_text.startswith(question_starters):
+            return True
+        raw_question_text = raw_text.replace("â€™", "'").replace("\u2019", "'").replace("`", "'").strip().lower()
+        return "?" in raw_text or raw_question_text.startswith(question_starters) or normalized_text.startswith(question_starters)
 
     def _looks_like_non_memory_directive(self, normalized_text: str) -> bool:
         directive_starters = (
@@ -564,11 +570,60 @@ class SparkShadowIngestAdapter:
             "tell me ",
             "explain ",
             "think through ",
+            "search ",
+            "search the web ",
+            "look up ",
+            "check ",
+            "open ",
+            "import ",
         )
-        lines = [line.strip() for line in normalized_text.splitlines() if line.strip()]
+        stripped_text = self._strip_non_memory_chat_leading_filler(normalized_text)
+        lines = [self._strip_non_memory_chat_leading_filler(line.strip()) for line in stripped_text.splitlines() if line.strip()]
         if len(lines) >= 2 and any(line.startswith(directive_starters) for line in lines):
             return True
-        return normalized_text.startswith(directive_starters)
+        return stripped_text.startswith(directive_starters)
+
+    def _looks_like_non_memory_confirmation(self, normalized_text: str) -> bool:
+        stripped_text = self._strip_non_memory_chat_leading_filler(normalized_text)
+        return stripped_text in {
+            "sure lets do it",
+            "sure let's do it",
+            "lets do it",
+            "let's do it",
+            "sounds good lets do it",
+            "sounds good let's do it",
+            "yes lets do it",
+            "yes let's do it",
+            "yeah lets do it",
+            "yeah let's do it",
+        }
+
+    def _normalize_non_memory_chat_text(self, text: str) -> str:
+        normalized_text = str(text or "").replace("â€™", "'").replace("\u2019", "'").replace("`", "'").strip().lower()
+        return self._strip_non_memory_chat_leading_filler(normalized_text)
+
+    def _strip_non_memory_chat_leading_filler(self, normalized_text: str) -> str:
+        stripped = normalized_text.strip()
+        filler_prefixes = (
+            "hey ",
+            "hi ",
+            "hello ",
+            "spark ",
+            "btw ",
+            "ngl ",
+            "well ",
+            "well yes ",
+            "just ",
+            "please ",
+        )
+        changed = True
+        while changed:
+            changed = False
+            for prefix in filler_prefixes:
+                if stripped.startswith(prefix):
+                    stripped = stripped[len(prefix) :].strip()
+                    changed = True
+        return stripped
 
     def _has_structured_memory_hints(self, metadata: JsonDict) -> bool:
         operation = str(metadata.get("operation") or "").strip().lower()
@@ -1389,3 +1444,4 @@ def build_shadow_replay_contract_summary() -> dict[str, Any]:
             "Batch replay adds source_files and source_reports on top of the same aggregate report format.",
         ],
     }
+
