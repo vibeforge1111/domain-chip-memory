@@ -5572,6 +5572,131 @@ def test_normalize_builder_state_db_normalizes_double_prefixed_human_ids(tmp_pat
     ]
 
 
+def test_normalize_builder_state_db_normalizes_bare_telegram_human_ids(tmp_path: Path):
+    builder_home = tmp_path / "builder-home-bare-telegram-human-id"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "organic-read-1",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic",
+                    None,
+                    "corr-organic",
+                    "req-organic",
+                    "trace-organic",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "method": "get_current_state",
+                            "predicate": "profile.preferred_name",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-09 10:00:00",
+                ),
+                (
+                    "organic-read-2",
+                    "memory_read_abstained",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic",
+                    None,
+                    "corr-organic",
+                    "req-organic",
+                    "trace-organic",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "abstained",
+                    "Spark memory read abstained.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "method": "get_current_state",
+                            "memory_role": "unknown",
+                            "record_count": 0,
+                            "retrieval_trace": {
+                                "operation": "get_current_state",
+                                "predicate": "profile.preferred_name",
+                                "subject": "human:telegram:12345",
+                            },
+                        }
+                    ),
+                    "2026-04-09 10:00:01",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    payload = cli._normalize_builder_telegram_state_db(str(builder_home), limit=25)
+
+    conversation = payload["normalized"]["conversations"][0]
+    assert conversation["metadata"]["human_id"] == "human:telegram:12345"
+
+
 def test_normalize_builder_state_db_keeps_only_recent_conversations_with_user_turns(tmp_path: Path):
     builder_home = tmp_path / "builder-home-conversation-limit"
     builder_home.mkdir()

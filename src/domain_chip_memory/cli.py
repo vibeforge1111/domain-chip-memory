@@ -1928,6 +1928,8 @@ def _normalize_builder_telegram_state_db(
             return None
         while clean_human_id.startswith("human:human:"):
             clean_human_id = clean_human_id[len("human:") :]
+        if clean_human_id.startswith("telegram:"):
+            clean_human_id = f"human:{clean_human_id}"
         return clean_human_id or None
 
     def _builder_human_id(*, facts: dict, human_id: object) -> str | None:
