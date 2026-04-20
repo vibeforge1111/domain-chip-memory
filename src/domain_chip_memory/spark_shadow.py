@@ -147,6 +147,13 @@ class SparkShadowIngestAdapter:
                             "content": turn.content,
                             "timestamp": turn.timestamp,
                             "source_event_type": str(turn.metadata.get("source_event_type") or ""),
+                            "method": str(turn.metadata.get("method") or ""),
+                            "reason": str(turn.metadata.get("reason") or ""),
+                            "query_kind": str(turn.metadata.get("query_kind") or ""),
+                            "bridge_mode": str(turn.metadata.get("bridge_mode") or ""),
+                            "routing_decision": str(turn.metadata.get("routing_decision") or ""),
+                            "memory_role": str(turn.metadata.get("memory_role") or ""),
+                            "record_count": int(turn.metadata.get("record_count", 0) or 0),
                         },
                     )
                 )

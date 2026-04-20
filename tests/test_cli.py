@@ -2293,6 +2293,80 @@ def test_build_shadow_failure_taxonomy_flags_probe_value_mismatches():
     assert payload["recommended_next_actions"][0]["label"] == "investigate_probe_value_mismatches"
 
 
+def test_build_shadow_failure_taxonomy_uses_read_abstention_method_when_reason_missing():
+    payload = cli._build_shadow_failure_taxonomy_payload(
+        {
+            "report": {
+                "run_count": 1,
+                "summary": {
+                    "accepted_writes": 0,
+                    "rejected_writes": 0,
+                    "skipped_turns": 0,
+                    "reference_turns": 2,
+                    "unsupported_reasons": [],
+                    "probe_rows": [],
+                },
+                "conversation_rows": [
+                    {
+                        "conversation_id": "memory-explain:researcher_bridge",
+                        "accepted_writes": 0,
+                        "rejected_writes": 0,
+                        "skipped_turns": 0,
+                        "reference_turns": 2,
+                    }
+                ],
+            },
+            "evaluations": [
+                {
+                    "conversation_id": "memory-explain:researcher_bridge",
+                    "session_id": "memory-explain:researcher_bridge",
+                    "trace": {
+                        "turn_traces": [
+                            {
+                                "message_id": "req-1",
+                                "turn_id": "memory-explain:researcher_bridge:shadow:1",
+                                "role": "user",
+                                "action": "reference_turn",
+                                "accepted": False,
+                                "trace": {
+                                    "content": "How do you know that?",
+                                    "timestamp": "2026-04-10T00:00:00Z",
+                                    "source_event_type": "memory_read_requested",
+                                    "method": "explain_answer",
+                                },
+                            },
+                            {
+                                "message_id": "req-1",
+                                "turn_id": "memory-explain:researcher_bridge:shadow:2",
+                                "role": "assistant",
+                                "action": "reference_turn",
+                                "accepted": False,
+                                "trace": {
+                                    "content": "Memory read abstained for `explain_answer`.",
+                                    "timestamp": "2026-04-10T00:00:01Z",
+                                    "source_event_type": "memory_read_abstained",
+                                    "method": "explain_answer",
+                                    "reason": "",
+                                },
+                            },
+                        ]
+                    },
+                }
+            ],
+        },
+        source_mode="builder_export",
+    )
+
+    assert payload["summary"]["read_abstention_count"] == 1
+    assert payload["summary"]["dominant_read_abstention_reason"] == "unknown"
+    assert payload["summary"]["dominant_read_abstention_method"] == "explain_answer"
+    assert "read_abstention_gap" in payload["summary"]["issue_labels"]
+    assert any(
+        row["label"] == "investigate_read_abstention_method"
+        for row in payload["recommended_next_actions"]
+    )
+
+
 def test_build_spark_kb_from_builder_export_cli_compiles_kb_from_builder_aliases(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "builder_export.json"
     output_dir = tmp_path / "spark_builder_kb"
@@ -4654,6 +4728,14 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_memory_read_only_buil
     assert payload["summary"]["accepted_writes"] == 0
     assert payload["summary"]["reference_turns"] == 2
     assert payload["summary"]["reference_turn_count"] == 2
+    assert payload["failure_taxonomy"]["summary"]["read_abstention_count"] == 1
+    assert payload["failure_taxonomy"]["summary"]["dominant_read_abstention_reason"] == "sdk_unavailable"
+    assert "read_abstention_gap" in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert payload["failure_taxonomy"]["read_abstention_reasons"] == [{"reason": "sdk_unavailable", "count": 1}]
+    assert any(
+        row["label"] == "restore_memory_read_sdk_availability"
+        for row in payload["failure_taxonomy"]["recommended_next_actions"]
+    )
     conversation = payload["normalization"]["normalized"]["conversations"][0]
     assert conversation["metadata"]["chat_id"] == "12345"
     assert [turn["content"] for turn in conversation["turns"]] == [

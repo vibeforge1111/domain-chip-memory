@@ -509,46 +509,7 @@ def _build_shadow_failure_taxonomy_filed_outputs(shadow_payload: dict) -> list[d
 
 def _build_shadow_turn_audit_payload(shadow_payload: dict, *, top_n: int = 20) -> dict:
     evaluations = list(shadow_payload.get("evaluations", []))
-    turn_rows: list[dict] = []
-    for evaluation in evaluations:
-        if not isinstance(evaluation, dict):
-            continue
-        conversation_id = str(evaluation.get("conversation_id") or "unknown")
-        session_id = str(evaluation.get("session_id") or conversation_id)
-        trace_payload = evaluation.get("trace", {})
-        if not isinstance(trace_payload, dict):
-            continue
-        raw_turn_traces = trace_payload.get("turn_traces", [])
-        if not isinstance(raw_turn_traces, list):
-            continue
-        for item in raw_turn_traces:
-            if not isinstance(item, dict):
-                continue
-            trace = item.get("trace", {})
-            trace = trace if isinstance(trace, dict) else {}
-            write_trace = trace.get("write_trace", {})
-            write_trace = write_trace if isinstance(write_trace, dict) else {}
-            turn_rows.append(
-                {
-                    "conversation_id": conversation_id,
-                    "session_id": session_id,
-                    "message_id": str(item.get("message_id") or ""),
-                    "turn_id": str(item.get("turn_id") or ""),
-                    "role": str(item.get("role") or ""),
-                    "action": str(item.get("action") or ""),
-                    "accepted": bool(item.get("accepted", False)),
-                    "unsupported_reason": (
-                        str(item.get("unsupported_reason"))
-                        if item.get("unsupported_reason") is not None
-                        else None
-                    ),
-                    "content": str(trace.get("content") or ""),
-                    "timestamp": str(trace.get("timestamp") or ""),
-                    "write_kind": str(write_trace.get("write_kind") or ""),
-                    "write_operation": str(write_trace.get("write_operation") or ""),
-                    "persisted": bool(write_trace.get("persisted", False)),
-                }
-            )
+    turn_rows = _extract_shadow_turn_rows(evaluations)
 
     rejected_user_turns = [
         row for row in turn_rows if row["role"] == "user" and row["action"] == "rejected_write"
@@ -586,6 +547,58 @@ def _build_shadow_turn_audit_payload(shadow_payload: dict, *, top_n: int = 20) -
             "top_n": top_n,
         },
     }
+
+
+def _extract_shadow_turn_rows(evaluations: list[dict]) -> list[dict]:
+    turn_rows: list[dict] = []
+    for evaluation in evaluations:
+        if not isinstance(evaluation, dict):
+            continue
+        conversation_id = str(evaluation.get("conversation_id") or "unknown")
+        session_id = str(evaluation.get("session_id") or conversation_id)
+        trace_payload = evaluation.get("trace", {})
+        if not isinstance(trace_payload, dict):
+            continue
+        raw_turn_traces = trace_payload.get("turn_traces", [])
+        if not isinstance(raw_turn_traces, list):
+            continue
+        for item in raw_turn_traces:
+            if not isinstance(item, dict):
+                continue
+            trace = item.get("trace", {})
+            trace = trace if isinstance(trace, dict) else {}
+            write_trace = trace.get("write_trace", {})
+            write_trace = write_trace if isinstance(write_trace, dict) else {}
+            turn_rows.append(
+                {
+                    "conversation_id": conversation_id,
+                    "session_id": session_id,
+                    "message_id": str(item.get("message_id") or ""),
+                    "turn_id": str(item.get("turn_id") or ""),
+                    "role": str(item.get("role") or ""),
+                    "action": str(item.get("action") or ""),
+                    "accepted": bool(item.get("accepted", False)),
+                    "unsupported_reason": (
+                        str(item.get("unsupported_reason"))
+                        if item.get("unsupported_reason") is not None
+                        else None
+                    ),
+                    "content": str(trace.get("content") or ""),
+                    "timestamp": str(trace.get("timestamp") or ""),
+                    "source_event_type": str(trace.get("source_event_type") or ""),
+                    "method": str(trace.get("method") or ""),
+                    "reason": str(trace.get("reason") or ""),
+                    "query_kind": str(trace.get("query_kind") or ""),
+                    "bridge_mode": str(trace.get("bridge_mode") or ""),
+                    "routing_decision": str(trace.get("routing_decision") or ""),
+                    "memory_role": str(trace.get("memory_role") or ""),
+                    "record_count": int(trace.get("record_count", 0) or 0),
+                    "write_kind": str(write_trace.get("write_kind") or ""),
+                    "write_operation": str(write_trace.get("write_operation") or ""),
+                    "persisted": bool(write_trace.get("persisted", False)),
+                }
+            )
+    return turn_rows
 
 
 def _build_shadow_turn_audit_filed_outputs(shadow_payload: dict, *, top_n: int = 10) -> list[dict]:
@@ -665,6 +678,7 @@ def _build_shadow_failure_taxonomy_payload(
     conversation_rows = list(report.get("conversation_rows", []))
     probe_rows = list(summary.get("probe_rows", []))
     unsupported_reasons = list(summary.get("unsupported_reasons", []))
+    turn_rows = _extract_shadow_turn_rows(list(shadow_payload.get("evaluations", [])))
     source_reports = list(source_reports or [])
     source_files = list(source_files or [])
 
@@ -701,6 +715,30 @@ def _build_shadow_failure_taxonomy_payload(
     probe_expectation_gap_rows = [
         row for row in probe_rows if float(row.get("expected_match_rate", 1.0) or 1.0) < 1.0
     ]
+    read_abstention_rows = [
+        row
+        for row in turn_rows
+        if row.get("action") == "reference_turn"
+        and row.get("role") == "assistant"
+        and str(row.get("source_event_type") or "").strip() == "memory_read_abstained"
+    ]
+    read_abstention_by_reason: dict[str, int] = {}
+    read_abstention_by_method: dict[str, int] = {}
+    for row in read_abstention_rows:
+        reason = str(row.get("reason") or "").strip() or "unknown"
+        method = str(row.get("method") or "").strip() or "unknown"
+        read_abstention_by_reason[reason] = read_abstention_by_reason.get(reason, 0) + 1
+        read_abstention_by_method[method] = read_abstention_by_method.get(method, 0) + 1
+    read_abstention_reason_rows = [
+        {"reason": reason, "count": count}
+        for reason, count in sorted(read_abstention_by_reason.items(), key=lambda item: (-item[1], item[0]))
+    ]
+    read_abstention_method_rows = [
+        {"method": method, "count": count}
+        for method, count in sorted(read_abstention_by_method.items(), key=lambda item: (-item[1], item[0]))
+    ]
+    dominant_read_abstention_row = read_abstention_reason_rows[0] if read_abstention_reason_rows else None
+    dominant_read_abstention_method_row = read_abstention_method_rows[0] if read_abstention_method_rows else None
     dominant_unsupported_row = max(
         unsupported_reasons,
         key=lambda row: (int(row.get("count", 0) or 0), str(row.get("reason", "") or "")),
@@ -842,6 +880,18 @@ def _build_shadow_failure_taxonomy_payload(
                 ),
             }
         )
+    if read_abstention_rows:
+        issue_buckets.append(
+            {
+                "label": "read_abstention_gap",
+                "count": len(read_abstention_rows),
+                "severity": "high" if str((dominant_read_abstention_row or {}).get("reason") or "") == "sdk_unavailable" else "medium",
+                "summary": (
+                    f"{len(read_abstention_rows)} Builder memory reads abstained, led by "
+                    f"`{(dominant_read_abstention_row or {}).get('reason', 'unknown')}`."
+                ),
+            }
+        )
 
     recommended_next_actions: list[dict] = []
     if dominant_unsupported_row is not None:
@@ -920,6 +970,65 @@ def _build_shadow_failure_taxonomy_payload(
                 ),
             }
         )
+    if dominant_read_abstention_row is not None:
+        reason = str(dominant_read_abstention_row.get("reason") or "")
+        if reason == "sdk_unavailable":
+            recommended_next_actions.append(
+                {
+                    "label": "restore_memory_read_sdk_availability",
+                    "priority": 2,
+                    "rationale": (
+                        "Builder memory reads are abstaining because the SDK is unavailable. Restore live SDK "
+                        "availability before using read-side traffic as a memory quality signal."
+                    ),
+                }
+            )
+        elif reason == "invalid_request":
+            recommended_next_actions.append(
+                {
+                    "label": "fix_memory_read_request_shape",
+                    "priority": 2,
+                    "rationale": (
+                        "Builder memory reads are abstaining because the request shape is invalid. Normalize subject, "
+                        "predicate, and retrieval parameters before routing the read."
+                    ),
+                }
+            )
+        elif reason == "invalid_memory_role":
+            recommended_next_actions.append(
+                {
+                    "label": "fix_memory_read_role_routing",
+                    "priority": 2,
+                    "rationale": (
+                        "Builder memory reads are abstaining because the requested memory role is invalid. Tighten "
+                        "role selection before issuing retrieval calls."
+                    ),
+                }
+            )
+        else:
+            if reason == "unknown" and dominant_read_abstention_method_row is not None:
+                recommended_next_actions.append(
+                    {
+                        "label": "investigate_read_abstention_method",
+                        "priority": 2,
+                        "rationale": (
+                            f"Builder memory reads are abstaining without a reason code; the dominant abstention method "
+                            f"is `{dominant_read_abstention_method_row.get('method')}` and should be traced to the "
+                            "request builder or SDK contract path."
+                        ),
+                    }
+                )
+            else:
+                recommended_next_actions.append(
+                    {
+                        "label": "investigate_read_abstention_reason",
+                        "priority": 2,
+                        "rationale": (
+                            f"Builder memory reads are abstaining for `{reason}` and should be mapped to a concrete "
+                            "read-side fix."
+                        ),
+                    }
+                )
     top_source_hotspot = source_hotspots[0] if source_hotspots else None
     if top_source_hotspot and int(top_source_hotspot.get("friction_count", 0) or 0) > 0:
         recommended_next_actions.append(
@@ -959,12 +1068,21 @@ def _build_shadow_failure_taxonomy_payload(
             "dominant_unsupported_reason_count": (
                 int(dominant_unsupported_row.get("count", 0) or 0) if dominant_unsupported_row else 0
             ),
+            "read_abstention_count": len(read_abstention_rows),
+            "dominant_read_abstention_reason": (
+                str(dominant_read_abstention_row.get("reason")) if dominant_read_abstention_row else None
+            ),
+            "dominant_read_abstention_method": (
+                str(dominant_read_abstention_method_row.get("method")) if dominant_read_abstention_method_row else None
+            ),
             "has_probe_coverage": bool(probe_rows),
             "has_probe_expectation_gap": bool(probe_expectation_gap_rows),
             "issue_labels": issue_labels,
         },
         "issue_buckets": issue_buckets,
         "unsupported_reasons": unsupported_reasons,
+        "read_abstention_reasons": read_abstention_reason_rows,
+        "read_abstention_methods": read_abstention_method_rows,
         "probe_rows": probe_rows,
         "conversation_hotspots": conversation_hotspots,
         "source_hotspots": source_hotspots,
