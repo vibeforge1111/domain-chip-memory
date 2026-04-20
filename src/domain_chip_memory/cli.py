@@ -2065,7 +2065,29 @@ def _normalize_builder_telegram_state_db(
         finally:
             connection.close()
 
-    def _normalize_supported_rows(source_rows: list[sqlite3.Row]) -> tuple[list[str], dict[str, object]]:
+    def _is_synthetic_builder_regression_conversation(conversation: dict[str, object]) -> bool:
+        metadata = conversation.get("metadata")
+        metadata_dict = metadata if isinstance(metadata, dict) else {}
+        identifiers = [
+            str(conversation.get("conversation_id") or "").strip().lower(),
+            str(conversation.get("session_id") or "").strip().lower(),
+            str(metadata_dict.get("chat_id") or "").strip().lower(),
+        ]
+        if any("spark-memory-regression" in value or "regression-user" in value for value in identifiers if value):
+            return True
+        for turn in conversation.get("turns", []):
+            if not isinstance(turn, dict):
+                continue
+            message_id = str(turn.get("message_id") or "").strip().lower()
+            if message_id.startswith("sim:"):
+                return True
+        return False
+
+    def _normalize_supported_rows(
+        source_rows: list[sqlite3.Row],
+        *,
+        keep_synthetic_regression_when_only_available: bool,
+    ) -> tuple[list[str], dict[str, object]]:
         available_chat_ids_set: set[str] = set()
         conversations_by_key: dict[str, dict[str, object]] = {}
 
@@ -2447,6 +2469,27 @@ def _normalize_builder_telegram_state_db(
             if any(str(turn.get("role") or "").strip() == "user" for turn in conversation.get("turns", []) if isinstance(turn, dict))
         ]
         normalized_conversations.sort(key=_conversation_sort_key)
+        synthetic_regression_conversations = [
+            conversation
+            for conversation in normalized_conversations
+            if _is_synthetic_builder_regression_conversation(conversation)
+        ]
+        organic_conversations = [
+            conversation
+            for conversation in normalized_conversations
+            if not _is_synthetic_builder_regression_conversation(conversation)
+        ]
+        kept_synthetic_regression_fallback = False
+        used_organic_conversation_filter = False
+        if selected_chat_id is None:
+            if organic_conversations:
+                normalized_conversations = organic_conversations
+                used_organic_conversation_filter = bool(synthetic_regression_conversations)
+            elif synthetic_regression_conversations and not keep_synthetic_regression_when_only_available:
+                normalized_conversations = []
+                used_organic_conversation_filter = True
+            elif synthetic_regression_conversations:
+                kept_synthetic_regression_fallback = True
         if limit > 0:
             normalized_conversations = normalized_conversations[-limit:]
 
@@ -2456,6 +2499,12 @@ def _normalize_builder_telegram_state_db(
                 "source": "spark_builder_state_db",
                 "writable_roles": ["user"],
                 "conversations": normalized_conversations,
+                "trace": {
+                    "organic_conversation_count": len(organic_conversations),
+                    "synthetic_regression_conversation_count": len(synthetic_regression_conversations),
+                    "used_organic_conversation_filter": used_organic_conversation_filter,
+                    "kept_synthetic_regression_fallback": kept_synthetic_regression_fallback,
+                },
             },
         )
 
@@ -2463,7 +2512,10 @@ def _normalize_builder_telegram_state_db(
     if not rows:
         raise ValueError(f"No supported Builder Telegram state-db events found in {state_db_path}.")
 
-    available_chat_ids, normalized_payload = _normalize_supported_rows(rows)
+    available_chat_ids, normalized_payload = _normalize_supported_rows(
+        rows,
+        keep_synthetic_regression_when_only_available=False,
+    )
     used_full_supported_scan = False
     if (
         selected_chat_id is None
@@ -2471,7 +2523,10 @@ def _normalize_builder_telegram_state_db(
         and len(rows) >= raw_event_limit
     ):
         rows = _load_supported_builder_rows(scan_all=True)
-        available_chat_ids, normalized_payload = _normalize_supported_rows(rows)
+        available_chat_ids, normalized_payload = _normalize_supported_rows(
+            rows,
+            keep_synthetic_regression_when_only_available=True,
+        )
         used_full_supported_scan = True
 
     validation = validate_shadow_replay_payload(normalized_payload)

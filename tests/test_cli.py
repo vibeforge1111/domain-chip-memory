@@ -3566,6 +3566,213 @@ def test_normalize_builder_state_db_falls_back_to_full_scan_when_recent_window_i
     ]
 
 
+def test_normalize_builder_state_db_prefers_organic_conversations_over_synthetic_regression_window(tmp_path: Path):
+    builder_home = tmp_path / "builder-home-regression-window"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+
+        rows = [
+            (
+                "older-intent",
+                "intent_committed",
+                "event",
+                "telegram",
+                "telegram_runtime",
+                "run-older",
+                None,
+                "corr-older",
+                None,
+                None,
+                "telegram",
+                "session:telegram:12345",
+                "human:telegram:12345",
+                None,
+                None,
+                "runtime",
+                "info",
+                "committed",
+                "Captured inbound Telegram message",
+                None,
+                None,
+                json.dumps(
+                    {
+                        "chat_id": "12345",
+                        "telegram_user_id": "12345",
+                        "update_id": 1,
+                        "message_text": "My startup is Spark.",
+                    }
+                ),
+                "2026-04-09 10:00:00",
+            ),
+            (
+                "older-delivery",
+                "delivery_succeeded",
+                "event",
+                "telegram",
+                "telegram_runtime",
+                "run-older",
+                None,
+                "corr-older",
+                None,
+                None,
+                "telegram",
+                "session:telegram:12345",
+                "human:telegram:12345",
+                None,
+                None,
+                "runtime",
+                "info",
+                "delivered",
+                "Delivered Telegram reply",
+                None,
+                None,
+                json.dumps(
+                    {
+                        "chat_id": "12345",
+                        "telegram_user_id": "12345",
+                        "update_id": 1,
+                        "delivered_text": "Noted.",
+                    }
+                ),
+                "2026-04-09 10:00:01",
+            ),
+        ]
+        for index in range(101):
+            update_id = 1000 + index
+            chat_id = f"9{index:04d}"
+            session_id = f"session:telegram:dm:spark-memory-regression-user-{index:03d}"
+            human_id = f"human:telegram:spark-memory-regression-user-{index:03d}"
+            rows.extend(
+                [
+                    (
+                        f"regression-intent-{index}",
+                        "intent_committed",
+                        "event",
+                        "telegram",
+                        "telegram_runtime",
+                        f"run-regression-{index}",
+                        None,
+                        f"corr-regression-{index}",
+                        None,
+                        None,
+                        "telegram",
+                        session_id,
+                        human_id,
+                        None,
+                        None,
+                        "runtime",
+                        "info",
+                        "committed",
+                        "Captured inbound Telegram message",
+                        None,
+                        None,
+                        json.dumps(
+                            {
+                                "chat_id": chat_id,
+                                "telegram_user_id": chat_id,
+                                "update_id": update_id,
+                                "message_text": f"My name is Synthetic {index}.",
+                            }
+                        ),
+                        f"2026-04-09 10:{1 + (index // 60):02d}:{(index * 2) % 60:02d}",
+                    ),
+                    (
+                        f"regression-delivery-{index}",
+                        "delivery_succeeded",
+                        "event",
+                        "telegram",
+                        "telegram_runtime",
+                        f"run-regression-{index}",
+                        None,
+                        f"corr-regression-{index}",
+                        None,
+                        None,
+                        "telegram",
+                        session_id,
+                        human_id,
+                        None,
+                        None,
+                        "runtime",
+                        "info",
+                        "delivered",
+                        "Delivered Telegram reply",
+                        None,
+                        None,
+                        json.dumps(
+                            {
+                                "chat_id": chat_id,
+                                "telegram_user_id": chat_id,
+                                "update_id": update_id,
+                                "delivered_text": "Synthetic ack.",
+                            }
+                        ),
+                        f"2026-04-09 10:{1 + (index // 60):02d}:{((index * 2) % 60) + 1:02d}",
+                    ),
+                ]
+            )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    payload = cli._normalize_builder_telegram_state_db(str(builder_home), limit=1)
+
+    assert payload["conversation_count"] == 1
+    assert payload["trace"]["used_full_supported_scan"] is True
+    conversation = payload["normalized"]["conversations"][0]
+    assert conversation["metadata"]["chat_id"] == "12345"
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "My startup is Spark.",
+        "Noted.",
+    ]
+    assert payload["normalized"]["trace"]["organic_conversation_count"] == 1
+    assert payload["normalized"]["trace"]["synthetic_regression_conversation_count"] >= 1
+    assert payload["normalized"]["trace"]["used_organic_conversation_filter"] is True
+    assert payload["normalized"]["trace"]["kept_synthetic_regression_fallback"] is False
+
+
 def test_normalize_builder_state_db_keeps_only_recent_conversations_with_user_turns(tmp_path: Path):
     builder_home = tmp_path / "builder-home-conversation-limit"
     builder_home.mkdir()
