@@ -1657,6 +1657,27 @@ def _normalize_builder_telegram_state_db(
             return f"What is my {label}?"
         return None
 
+    def _query_message_from_predicate(predicate: str | None, *, predicate_prefix: str | None = None) -> str | None:
+        normalized_predicate = str(predicate or "").strip()
+        if normalized_predicate:
+            mapping = {
+                "profile.preferred_name": "What is my name?",
+                "profile.startup_name": "What is my startup?",
+                "profile.hack_actor": "Who hacked us?",
+                "profile.current_mission": "What is my mission right now?",
+                "profile.founder_of": "What company did I found?",
+                "profile.occupation": "What do I do?",
+                "profile.spark_role": "What role will Spark play in this?",
+                "profile.home_country": "What country do I live in?",
+                "profile.timezone": "What is my timezone?",
+                "profile.city": "Where do I live?",
+            }
+            return mapping.get(normalized_predicate, f"What is my {normalized_predicate}?")
+        normalized_prefix = str(predicate_prefix or "").strip()
+        if normalized_prefix in {"", "profile."}:
+            return "Who am I?"
+        return "What do you know about me?"
+
     def _explanation_question(*, predicate: str | None, label: str | None = None) -> str | None:
         normalized_predicate = str(predicate or "").strip()
         mapping = {
@@ -1968,6 +1989,56 @@ def _normalize_builder_telegram_state_db(
             return renderer(clean_value)
         return f"I'll remember {clean_value}."
 
+    def _read_request_question(
+        facts: dict,
+        *,
+        session_id: str | None,
+    ) -> str | None:
+        method = str(facts.get("method") or "").strip().lower()
+        query = str(facts.get("query") or "").strip()
+        predicate = str(facts.get("predicate") or "").strip() or None
+        predicate_prefix = str(facts.get("predicate_prefix") or "").strip() or None
+        if query:
+            return query
+        if method == "explain_answer":
+            return _explanation_question(predicate=predicate) or "How do you know that?"
+        if method == "retrieve_evidence":
+            return _explanation_question(predicate=predicate) or _query_message_from_predicate(
+                predicate,
+                predicate_prefix=predicate_prefix,
+            )
+        if method == "get_current_state":
+            return _query_message_from_predicate(predicate, predicate_prefix=predicate_prefix)
+        session_text = str(session_id or "").strip().lower()
+        if "inspect" in session_text:
+            return "Who am I?"
+        if "explain" in session_text:
+            return "How do you know that?"
+        if "retrieval" in session_text:
+            return "What evidence do you have for that?"
+        return None
+
+    def _read_result_message(
+        facts: dict,
+        *,
+        event_type: str,
+    ) -> str | None:
+        method = str(facts.get("method") or "").strip().lower() or "memory_read"
+        reason = str(facts.get("reason") or "").strip()
+        record_count = int(facts.get("record_count", 0) or 0)
+        retrieval_trace = facts.get("retrieval_trace")
+        retrieval_trace_dict = retrieval_trace if isinstance(retrieval_trace, dict) else {}
+        predicate = str(retrieval_trace_dict.get("predicate") or "").strip() or None
+        predicate_prefix = str(retrieval_trace_dict.get("predicate_prefix") or "").strip() or None
+        if event_type == "memory_read_succeeded":
+            question = _query_message_from_predicate(predicate, predicate_prefix=predicate_prefix)
+            if question:
+                return f"Memory read succeeded for `{question}` with `{record_count}` matching records."
+            return f"Memory read succeeded for `{method}` with `{record_count}` matching records."
+        if reason:
+            return f"Memory read abstained for `{method}` because `{reason}`."
+        return f"Memory read abstained for `{method}`."
+
     def _known_identity_records(
         store: dict[str, dict[str, str]],
         *,
@@ -2022,6 +2093,9 @@ def _normalize_builder_telegram_state_db(
                         'delivery_succeeded',
                         'memory_write_requested',
                         'memory_write_succeeded',
+                        'memory_read_requested',
+                        'memory_read_succeeded',
+                        'memory_read_abstained',
                         'plugin_or_chip_influence_recorded',
                         'tool_result_received'
                     )
@@ -2051,6 +2125,9 @@ def _normalize_builder_telegram_state_db(
                         'delivery_succeeded',
                         'memory_write_requested',
                         'memory_write_succeeded',
+                        'memory_read_requested',
+                        'memory_read_succeeded',
+                        'memory_read_abstained',
                         'plugin_or_chip_influence_recorded',
                         'tool_result_received'
                     )
@@ -2073,13 +2150,17 @@ def _normalize_builder_telegram_state_db(
             str(conversation.get("session_id") or "").strip().lower(),
             str(metadata_dict.get("chat_id") or "").strip().lower(),
         ]
-        if any("spark-memory-regression" in value or "regression-user" in value for value in identifiers if value):
+        if any(
+            "spark-memory-regression" in value or "regression-user" in value or "memory_regression" in value
+            for value in identifiers
+            if value
+        ):
             return True
         for turn in conversation.get("turns", []):
             if not isinstance(turn, dict):
                 continue
             message_id = str(turn.get("message_id") or "").strip().lower()
-            if message_id.startswith("sim:"):
+            if message_id.startswith("sim:") or message_id.startswith("memory_regression:"):
                 return True
         return False
 
@@ -2221,6 +2302,15 @@ def _normalize_builder_telegram_state_db(
 
             memory_write_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_requested"), None)
             memory_write_result_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_succeeded"), None)
+            memory_read_request_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_read_requested"), None)
+            memory_read_result_row = next(
+                (
+                    row
+                    for row in normalized_group
+                    if str(row.get("event_type") or "") in {"memory_read_succeeded", "memory_read_abstained"}
+                ),
+                None,
+            )
             influence_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "plugin_or_chip_influence_recorded"), None)
             tool_result_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "tool_result_received"), None)
 
@@ -2342,6 +2432,35 @@ def _normalize_builder_telegram_state_db(
                             },
                         }
                     )
+            elif memory_read_request_row is not None and memory_write_row is None:
+                read_request_facts = _load_facts(memory_read_request_row.get("facts_json"))
+                query_text = _read_request_question(
+                    read_request_facts,
+                    session_id=str(memory_read_request_row.get("session_id") or ""),
+                )
+                if query_text:
+                    conversation["turns"].append(
+                        {
+                            "message_id": str(memory_read_request_row.get("request_id") or memory_read_request_row.get("event_id") or ""),
+                            "role": "user",
+                            "content": query_text,
+                            "timestamp": _format_builder_timestamp(memory_read_request_row.get("created_at")),
+                            "metadata": {
+                                "chat_id": chat_value,
+                                "channel_kind": "telegram",
+                                "component": str(memory_read_request_row.get("component") or ""),
+                                "request_id": str(memory_read_request_row.get("request_id") or ""),
+                                "trace_ref": str(memory_read_request_row.get("trace_ref") or ""),
+                                "source_event_id": str(memory_read_request_row.get("event_id") or ""),
+                                "source_event_type": "memory_read_requested",
+                                "memory_role": str(read_request_facts.get("memory_role") or "").strip() or None,
+                                "method": str(read_request_facts.get("method") or "").strip() or None,
+                                "predicate": str(read_request_facts.get("predicate") or "").strip() or None,
+                                "predicate_prefix": str(read_request_facts.get("predicate_prefix") or "").strip() or None,
+                                "query_kind": str(read_request_facts.get("method") or "").strip() or None,
+                            },
+                        }
+                    )
 
             if tool_result_row is not None:
                 tool_facts = _load_facts(tool_result_row.get("facts_json"))
@@ -2430,6 +2549,34 @@ def _normalize_builder_telegram_state_db(
                                 "value": value,
                                 "value_found": tool_facts.get("value_found"),
                                 "evidence_summary": str(tool_facts.get("evidence_summary") or "").strip() or None,
+                            },
+                        }
+                    )
+            elif memory_read_result_row is not None and memory_write_row is None:
+                read_result_facts = _load_facts(memory_read_result_row.get("facts_json"))
+                response_text = _read_result_message(
+                    read_result_facts,
+                    event_type=str(memory_read_result_row.get("event_type") or "").strip(),
+                )
+                if response_text:
+                    conversation["turns"].append(
+                        {
+                            "message_id": str(memory_read_result_row.get("request_id") or memory_read_result_row.get("event_id") or ""),
+                            "role": "assistant",
+                            "content": response_text,
+                            "timestamp": _format_builder_timestamp(memory_read_result_row.get("created_at")),
+                            "metadata": {
+                                "chat_id": chat_value,
+                                "channel_kind": "telegram",
+                                "component": str(memory_read_result_row.get("component") or ""),
+                                "request_id": str(memory_read_result_row.get("request_id") or ""),
+                                "trace_ref": str(memory_read_result_row.get("trace_ref") or ""),
+                                "source_event_id": str(memory_read_result_row.get("event_id") or ""),
+                                "source_event_type": str(memory_read_result_row.get("event_type") or "").strip(),
+                                "memory_role": str(read_result_facts.get("memory_role") or "").strip() or None,
+                                "method": str(read_result_facts.get("method") or "").strip() or None,
+                                "reason": str(read_result_facts.get("reason") or "").strip() or None,
+                                "record_count": int(read_result_facts.get("record_count", 0) or 0),
                             },
                         }
                     )
@@ -2540,6 +2687,9 @@ def _normalize_builder_telegram_state_db(
             "delivery_succeeded",
             "memory_write_requested",
             "memory_write_succeeded",
+            "memory_read_requested",
+            "memory_read_succeeded",
+            "memory_read_abstained",
             "plugin_or_chip_influence_recorded",
             "tool_result_received",
         ],

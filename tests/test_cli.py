@@ -3773,6 +3773,202 @@ def test_normalize_builder_state_db_prefers_organic_conversations_over_synthetic
     assert payload["normalized"]["trace"]["kept_synthetic_regression_fallback"] is False
 
 
+def test_normalize_builder_state_db_filters_memory_regression_read_sessions_from_organic_cohort(tmp_path: Path):
+    builder_home = tmp_path / "builder-home-memory-regression-filter"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "organic-read-1",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic",
+                    None,
+                    "corr-organic",
+                    "req-organic",
+                    "trace-organic",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "telegram_user_id": "12345",
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "predicate": "profile.preferred_name",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-09 10:00:00",
+                ),
+                (
+                    "organic-read-2",
+                    "memory_read_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic",
+                    None,
+                    "corr-organic",
+                    "req-organic",
+                    "trace-organic",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "succeeded",
+                    "Spark memory read completed.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "record_count": 1,
+                            "retrieval_trace": {"predicate": "profile.preferred_name"},
+                        }
+                    ),
+                    "2026-04-09 10:00:01",
+                ),
+                (
+                    "synthetic-read-1",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-synthetic",
+                    None,
+                    "corr-synthetic",
+                    "memory_regression:inspect-human",
+                    "trace-synthetic",
+                    "telegram",
+                    "memory-inspect:memory_regression",
+                    "human:telegram:99999",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "telegram_user_id": "99999",
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "predicate_prefix": "",
+                            "subject": "human:telegram:99999",
+                        }
+                    ),
+                    "2026-04-09 10:05:00",
+                ),
+                (
+                    "synthetic-read-2",
+                    "memory_read_abstained",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-synthetic",
+                    None,
+                    "corr-synthetic",
+                    "memory_regression:inspect-human",
+                    "trace-synthetic",
+                    "telegram",
+                    "memory-inspect:memory_regression",
+                    "human:telegram:99999",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "abstained",
+                    "Spark memory read abstained.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "reason": "sdk_unavailable",
+                            "record_count": 0,
+                        }
+                    ),
+                    "2026-04-09 10:05:01",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    payload = cli._normalize_builder_telegram_state_db(str(builder_home), limit=25)
+
+    assert payload["conversation_count"] == 1
+    conversation = payload["normalized"]["conversations"][0]
+    assert conversation["metadata"]["chat_id"] == "12345"
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "What is my name?",
+        "Memory read succeeded for `What is my name?` with `1` matching records.",
+    ]
+    assert payload["normalized"]["trace"]["organic_conversation_count"] == 1
+    assert payload["normalized"]["trace"]["synthetic_regression_conversation_count"] == 1
+    assert payload["normalized"]["trace"]["used_organic_conversation_filter"] is True
+
+
 def test_normalize_builder_state_db_keeps_only_recent_conversations_with_user_turns(tmp_path: Path):
     builder_home = tmp_path / "builder-home-conversation-limit"
     builder_home.mkdir()
@@ -4315,6 +4511,156 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-turn-audit.md").exists()
+
+
+def test_run_spark_builder_state_telegram_intake_cli_reads_memory_read_only_builder_state_db(tmp_path: Path, monkeypatch):
+    builder_home = tmp_path / "builder-home-memory-read-only"
+    output_dir = tmp_path / "spark_builder_state_read_only_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_read_only.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-read-1",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-read-1",
+                    None,
+                    "corr-read-1",
+                    "req-read-1",
+                    "trace-read-1",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "telegram_user_id": "12345",
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "predicate": "profile.current_mission",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-09 10:00:00",
+                ),
+                (
+                    "evt-read-2",
+                    "memory_read_abstained",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-read-1",
+                    None,
+                    "corr-read-1",
+                    "req-read-1",
+                    "trace-read-1",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "abstained",
+                    "Spark memory read abstained.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "reason": "sdk_unavailable",
+                            "record_count": 0,
+                        }
+                    ),
+                    "2026-04-09 10:00:01",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["summary"]["conversation_count"] == 1
+    assert payload["summary"]["accepted_writes"] == 0
+    assert payload["summary"]["reference_turns"] == 2
+    assert payload["summary"]["reference_turn_count"] == 2
+    conversation = payload["normalization"]["normalized"]["conversations"][0]
+    assert conversation["metadata"]["chat_id"] == "12345"
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "What is my mission right now?",
+        "Memory read abstained for `get_current_state` because `sdk_unavailable`.",
+    ]
+    assert payload["turn_audit"]["top_reference_turns"][0]["content"] == "What is my mission right now?"
 
 
 def test_run_spark_builder_state_telegram_intake_cli_replays_explanation_queries_with_probes(tmp_path: Path, monkeypatch):

@@ -405,9 +405,16 @@ class SparkShadowIngestAdapter:
 
     def _is_reference_turn(self, turn: SparkShadowTurn, normalized_role: str) -> bool:
         source_event_type = str(turn.metadata.get("source_event_type") or "").strip().lower()
-        if normalized_role == "user" and source_event_type == "plugin_or_chip_influence_recorded":
+        if normalized_role == "user" and source_event_type in {
+            "plugin_or_chip_influence_recorded",
+            "memory_read_requested",
+        }:
             return True
-        if normalized_role not in self.writable_roles and source_event_type == "tool_result_received":
+        if normalized_role not in self.writable_roles and source_event_type in {
+            "tool_result_received",
+            "memory_read_succeeded",
+            "memory_read_abstained",
+        }:
             return True
         return False
 
