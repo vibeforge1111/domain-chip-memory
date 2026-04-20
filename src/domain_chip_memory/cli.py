@@ -1900,10 +1900,18 @@ def _normalize_builder_telegram_state_db(
         session_text = str(session_id or "").strip()
         if session_text.startswith("session:telegram:"):
             return session_text.rsplit(":", 1)[-1]
-        human_text = str(human_id or "").strip()
+        human_text = _normalize_builder_human_id(human_id) or ""
         if human_text.startswith("human:telegram:"):
             return human_text.rsplit(":", 1)[-1]
         return "unknown"
+
+    def _normalize_builder_human_id(human_id: object) -> str | None:
+        clean_human_id = str(human_id or "").strip()
+        if not clean_human_id:
+            return None
+        while clean_human_id.startswith("human:human:"):
+            clean_human_id = clean_human_id[len("human:") :]
+        return clean_human_id or None
 
     def _query_message(payload: dict) -> str | None:
         if not isinstance(payload, dict):
@@ -2585,13 +2593,13 @@ def _normalize_builder_telegram_state_db(
         available_chat_ids_set: set[str] = set()
         conversations_by_key: dict[str, dict[str, object]] = {}
         supporting_history_human_id_set = {
-            str(human_id).strip()
+            str(_normalize_builder_human_id(human_id) or "").strip()
             for human_id in (supporting_history_human_ids or [])
-            if str(human_id).strip()
+            if str(_normalize_builder_human_id(human_id) or "").strip()
         }
 
         def _conversation_for(chat_value: str, session_value: str | None, human_value: str | None) -> dict[str, object]:
-            clean_human_value = str(human_value or "").strip()
+            clean_human_value = str(_normalize_builder_human_id(human_value) or "").strip()
             if clean_human_value and clean_human_value in supporting_history_human_id_set:
                 conversation_key = f"telegram-chat-{chat_value}"
             else:
@@ -2604,7 +2612,7 @@ def _normalize_builder_telegram_state_db(
                     "metadata": {
                         "source": "spark_builder_state_db",
                         "chat_id": chat_value,
-                        "human_id": human_value,
+                        "human_id": clean_human_value or human_value,
                         "builder_home": str(root),
                         "state_db": str(state_db_path),
                     },
@@ -2713,7 +2721,7 @@ def _normalize_builder_telegram_state_db(
             first_row = normalized_group[0]
             first_facts = _load_facts(first_row.get("facts_json"))
             session_value = str(first_row.get("session_id") or "") or None
-            human_value = str(first_row.get("human_id") or "") or None
+            human_value = _normalize_builder_human_id(first_row.get("human_id"))
             chat_value = _builder_chat_id(
                 facts=first_facts,
                 session_id=first_row.get("session_id"),
@@ -2780,7 +2788,7 @@ def _normalize_builder_telegram_state_db(
                                     "source_event_id": str(memory_write_row.get("event_id") or ""),
                                     "source_event_type": "memory_write_requested",
                                     "memory_kind": "observation",
-                                    "subject": str(item.get("subject") or human_value or ""),
+                                    "subject": str(_normalize_builder_human_id(item.get("subject")) or human_value or ""),
                                     "predicate": predicate,
                                     "value": value,
                                     "operation": str(item.get("operation") or write_facts.get("operation") or ""),
@@ -2818,14 +2826,14 @@ def _normalize_builder_telegram_state_db(
                             _append_lookup_probes(
                                 conversation,
                                 base_probe_id=base_probe_id,
-                                subject=str(item.get("subject") or human_value or ""),
+                                subject=str(_normalize_builder_human_id(item.get("subject")) or human_value or ""),
                                 predicate=predicate,
                                 expected_value=value,
                             )
                             _append_historical_probe(
                                 conversation,
                                 base_probe_id=base_probe_id,
-                                subject=str(item.get("subject") or human_value or ""),
+                                subject=str(_normalize_builder_human_id(item.get("subject")) or human_value or ""),
                                 predicate=predicate,
                                 expected_value=value,
                                 as_of=_format_builder_timestamp(memory_write_row.get("created_at")),
@@ -3033,6 +3041,7 @@ def _normalize_builder_telegram_state_db(
             )
             final_values = session_values.get(session_key, {})
             reconciled_probes: list[dict[str, object]] = []
+            seen_lookup_probe_keys: set[tuple[str, str, str, str]] = set()
             for probe in conversation.get("probes", []):
                 if not isinstance(probe, dict):
                     continue
@@ -3049,6 +3058,16 @@ def _normalize_builder_telegram_state_db(
                         continue
                     if effective_predicate:
                         normalized_probe["predicate"] = effective_predicate
+                    dedupe_key = (
+                        probe_type,
+                        str(normalized_probe.get("subject") or "").strip(),
+                        str(normalized_probe.get("predicate") or "").strip(),
+                        str(normalized_probe.get("expected_value") or "").strip(),
+                    )
+                    if all(dedupe_key):
+                        if dedupe_key in seen_lookup_probe_keys:
+                            continue
+                        seen_lookup_probe_keys.add(dedupe_key)
                 reconciled_probes.append(normalized_probe)
             conversation["probes"] = reconciled_probes
 
