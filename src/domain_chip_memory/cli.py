@@ -1917,7 +1917,7 @@ def _normalize_builder_telegram_state_db(
         session_text = str(session_id or "").strip()
         if session_text.startswith("session:telegram:"):
             return session_text.rsplit(":", 1)[-1]
-        human_text = _normalize_builder_human_id(human_id) or ""
+        human_text = _builder_human_id(facts=facts, human_id=human_id) or ""
         if human_text.startswith("human:telegram:"):
             return human_text.rsplit(":", 1)[-1]
         return "unknown"
@@ -1929,6 +1929,23 @@ def _normalize_builder_telegram_state_db(
         while clean_human_id.startswith("human:human:"):
             clean_human_id = clean_human_id[len("human:") :]
         return clean_human_id or None
+
+    def _builder_human_id(*, facts: dict, human_id: object) -> str | None:
+        direct_human_id = _normalize_builder_human_id(human_id)
+        if direct_human_id:
+            return direct_human_id
+        facts_subject = _normalize_builder_human_id(facts.get("subject"))
+        if facts_subject:
+            return facts_subject
+        retrieval_trace = facts.get("retrieval_trace")
+        retrieval_trace_dict = retrieval_trace if isinstance(retrieval_trace, dict) else {}
+        retrieval_subject = _normalize_builder_human_id(retrieval_trace_dict.get("subject"))
+        if retrieval_subject:
+            return retrieval_subject
+        telegram_user_id = str(facts.get("telegram_user_id") or facts.get("user_id") or "").strip()
+        if telegram_user_id:
+            return f"human:telegram:{telegram_user_id}"
+        return None
 
     def _query_message(payload: dict) -> str | None:
         if not isinstance(payload, dict):
@@ -2382,6 +2399,7 @@ def _normalize_builder_telegram_state_db(
         retrieval_trace_dict = retrieval_trace if isinstance(retrieval_trace, dict) else {}
         answer_explanation = facts.get("answer_explanation")
         answer_explanation_dict = answer_explanation if isinstance(answer_explanation, dict) else {}
+        method = str(facts.get("method") or "").strip()
         reason = str(facts.get("reason") or "").strip()
         contract_reason = str(retrieval_trace_dict.get("contract_reason") or "").strip()
         memory_role = str(facts.get("memory_role") or "").strip()
@@ -2394,11 +2412,18 @@ def _normalize_builder_telegram_state_db(
         explanation_text = str(answer_explanation_dict.get("explanation") or "").strip()
         record_count = int(facts.get("record_count", 0) or 0)
         read_outcome = "succeeded"
-        supported_fact_value = _effective_query_value(known_values or {}, predicate)
+        supported_answer_exists = _has_supported_read_answer(
+            known_values or {},
+            method=method,
+            predicate=predicate,
+            predicate_prefix=predicate_prefix,
+            question=question,
+            query=query,
+        )
         if event_type == "memory_read_abstained":
             if reason or contract_reason:
                 read_outcome = "gap"
-            elif supported_fact_value and memory_role == "unknown" and record_count == 0:
+            elif supported_answer_exists and memory_role == "unknown" and record_count == 0:
                 contract_reason = "supported_fact_unanswered"
                 read_outcome = "gap"
             elif memory_role == "unknown" and record_count == 0 and (
@@ -2436,6 +2461,32 @@ def _normalize_builder_telegram_state_db(
             records.append((clean_predicate, value))
         records.sort(key=lambda item: item[0])
         return records
+
+    def _normalized_read_query_key(*, question: str | None, query: str | None) -> str:
+        return str(question or query or "").strip().lower().rstrip("?.! ")
+
+    def _has_supported_read_answer(
+        store: dict[str, dict[str, str]],
+        *,
+        method: str | None,
+        predicate: str | None,
+        predicate_prefix: str | None,
+        question: str | None,
+        query: str | None,
+    ) -> bool:
+        if _effective_query_value(store, predicate):
+            return True
+        normalized_method = str(method or "").strip().lower()
+        normalized_query_key = _normalized_read_query_key(question=question, query=query)
+        normalized_prefix = str(predicate_prefix or "").strip()
+        if (
+            normalized_method in {"get_current_state", "retrieve_evidence", "explain_answer"}
+            and not str(predicate or "").strip()
+            and normalized_query_key in {"who am i", "what do you know about me"}
+        ):
+            prefix = normalized_prefix or "profile."
+            return bool(_known_identity_records(store, predicate_prefix=prefix))
+        return False
 
     def _turn_sort_key(item: dict) -> tuple[str, str]:
         return (str(item.get("timestamp") or ""), str(item.get("message_id") or ""))
@@ -2580,6 +2631,21 @@ def _normalize_builder_telegram_state_db(
             for turn in turns
         )
 
+    def _is_synthetic_builder_identifier(value: object) -> bool:
+        clean_value = str(value or "").strip().lower()
+        if not clean_value:
+            return False
+        return any(
+            marker in clean_value
+            for marker in (
+                "spark-memory-regression",
+                "regression-user",
+                "memory_regression",
+                "spark-memory-soak",
+                "soak-user",
+            )
+        )
+
     def _is_synthetic_builder_regression_conversation(conversation: dict[str, object]) -> bool:
         metadata = conversation.get("metadata")
         metadata_dict = metadata if isinstance(metadata, dict) else {}
@@ -2589,30 +2655,18 @@ def _normalize_builder_telegram_state_db(
             str(metadata_dict.get("chat_id") or "").strip().lower(),
             str(metadata_dict.get("human_id") or "").strip().lower(),
         ]
-        if any(
-            "spark-memory-regression" in value
-            or "regression-user" in value
-            or "memory_regression" in value
-            or "spark-memory-soak" in value
-            or "soak-user" in value
-            for value in identifiers
-            if value
-        ):
+        if any(_is_synthetic_builder_identifier(value) for value in identifiers if value):
             return True
         for turn in conversation.get("turns", []):
             if not isinstance(turn, dict):
                 continue
-            message_id = str(turn.get("message_id") or "").strip().lower()
-            request_id = str((turn.get("metadata") or {}).get("request_id") or "").strip().lower()
-            if any(
-                "memory_regression" in value
-                or "spark-memory-regression" in value
-                or "regression-user" in value
-                or "spark-memory-soak" in value
-                or "soak-user" in value
-                for value in (message_id, request_id)
-                if value
-            ):
+            metadata_dict = turn.get("metadata") if isinstance(turn.get("metadata"), dict) else {}
+            turn_identifiers = [
+                str(turn.get("message_id") or "").strip().lower(),
+                str(metadata_dict.get("request_id") or "").strip().lower(),
+                str(metadata_dict.get("subject") or "").strip().lower(),
+            ]
+            if any(_is_synthetic_builder_identifier(value) for value in turn_identifiers if value):
                 return True
         return False
 
@@ -2634,13 +2688,15 @@ def _normalize_builder_telegram_state_db(
             clean_human_value = str(_normalize_builder_human_id(human_value) or "").strip()
             if clean_human_value and clean_human_value in supporting_history_human_id_set:
                 conversation_key = f"telegram-chat-{chat_value}"
+            elif clean_human_value and str(session_value or "").startswith("memory-"):
+                conversation_key = f"{session_value}:{clean_human_value}"
             else:
                 conversation_key = str(session_value or f"telegram-chat-{chat_value}")
             conversation = conversations_by_key.setdefault(
                 conversation_key,
                 {
                     "conversation_id": conversation_key,
-                    "session_id": session_value or conversation_key,
+                    "session_id": conversation_key if conversation_key != str(session_value or conversation_key) else (session_value or conversation_key),
                     "metadata": {
                         "source": "spark_builder_state_db",
                         "chat_id": chat_value,
@@ -2672,7 +2728,7 @@ def _normalize_builder_telegram_state_db(
                     {
                         "chat_id": row_chat_id,
                         "session_id": str(row["session_id"] or "") or None,
-                        "human_id": str(row["human_id"] or "") or None,
+                        "human_id": _builder_human_id(facts=facts, human_id=row["human_id"]),
                         "user_turn": None,
                         "assistant_turn": None,
                     },
@@ -2754,7 +2810,7 @@ def _normalize_builder_telegram_state_db(
             first_row = normalized_group[0]
             first_facts = _load_facts(first_row.get("facts_json"))
             session_value = str(first_row.get("session_id") or "") or None
-            human_value = _normalize_builder_human_id(first_row.get("human_id"))
+            human_value = _builder_human_id(facts=first_facts, human_id=first_row.get("human_id"))
             chat_value = _builder_chat_id(
                 facts=first_facts,
                 session_id=first_row.get("session_id"),
@@ -2945,6 +3001,7 @@ def _normalize_builder_telegram_state_db(
                                 "source_event_type": "memory_read_requested",
                                 "memory_role": str(read_request_facts.get("memory_role") or "").strip() or None,
                                 "method": str(read_request_facts.get("method") or "").strip() or None,
+                                "subject": str(_normalize_builder_human_id(read_request_facts.get("subject")) or human_value or "") or None,
                                 "predicate": str(read_request_facts.get("predicate") or "").strip() or None,
                                 "predicate_prefix": str(read_request_facts.get("predicate_prefix") or "").strip() or None,
                                 "query_kind": str(read_request_facts.get("method") or "").strip() or None,

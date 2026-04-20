@@ -4361,6 +4361,208 @@ def test_normalize_builder_state_db_filters_memory_regression_read_sessions_from
     assert payload["normalized"]["trace"]["used_organic_conversation_filter"] is True
 
 
+def test_normalize_builder_state_db_splits_shared_memory_retrieval_sessions_by_human(tmp_path: Path):
+    builder_home = tmp_path / "builder-home-shared-retrieval-session"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "organic-read-1",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic",
+                    None,
+                    "corr-organic",
+                    "req-organic",
+                    "trace-organic",
+                    "telegram",
+                    "memory-retrieval:researcher_bridge",
+                    None,
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "method": "retrieve_evidence",
+                            "query": "What do you know about me?",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-09 10:00:00",
+                ),
+                (
+                    "organic-read-2",
+                    "memory_read_abstained",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic",
+                    None,
+                    "corr-organic",
+                    "req-organic",
+                    "trace-organic",
+                    "telegram",
+                    "memory-retrieval:researcher_bridge",
+                    None,
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "abstained",
+                    "Spark memory read abstained.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "method": "retrieve_evidence",
+                            "memory_role": "unknown",
+                            "record_count": 0,
+                            "retrieval_trace": {
+                                "operation": "retrieve_evidence",
+                                "query": "What do you know about me?",
+                                "subject": "human:telegram:12345",
+                            },
+                        }
+                    ),
+                    "2026-04-09 10:00:01",
+                ),
+                (
+                    "synthetic-read-1",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-synthetic",
+                    None,
+                    "corr-synthetic",
+                    "req-synthetic",
+                    "trace-synthetic",
+                    "telegram",
+                    "memory-retrieval:researcher_bridge",
+                    "human:telegram:spark-memory-regression-user-001",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "method": "retrieve_events",
+                            "query": "Where did I live before?",
+                            "predicate": "profile.city",
+                            "subject": "human:telegram:spark-memory-regression-user-001",
+                        }
+                    ),
+                    "2026-04-09 10:05:00",
+                ),
+                (
+                    "synthetic-read-2",
+                    "memory_read_abstained",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-synthetic",
+                    None,
+                    "corr-synthetic",
+                    "req-synthetic",
+                    "trace-synthetic",
+                    "telegram",
+                    "memory-retrieval:researcher_bridge",
+                    "human:telegram:spark-memory-regression-user-001",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "abstained",
+                    "Spark memory read abstained.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "method": "retrieve_events",
+                            "memory_role": "unknown",
+                            "record_count": 0,
+                            "retrieval_trace": {
+                                "operation": "retrieve_events",
+                                "predicate": "profile.city",
+                                "query": "Where did I live before?",
+                                "subject": "human:telegram:spark-memory-regression-user-001",
+                            },
+                        }
+                    ),
+                    "2026-04-09 10:05:01",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    payload = cli._normalize_builder_telegram_state_db(str(builder_home), limit=25)
+
+    assert payload["conversation_count"] == 1
+    conversation = payload["normalized"]["conversations"][0]
+    assert conversation["metadata"]["human_id"] == "human:telegram:12345"
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "What do you know about me?",
+        "No supporting evidence found for `What do you know about me?`.",
+    ]
+    assert payload["normalized"]["trace"]["organic_conversation_count"] == 1
+    assert payload["normalized"]["trace"]["synthetic_regression_conversation_count"] == 1
+    assert payload["normalized"]["trace"]["used_organic_conversation_filter"] is True
+
+
 def test_normalize_builder_state_db_backfills_supporting_history_for_read_only_organic_conversation(tmp_path: Path):
     builder_home = tmp_path / "builder-home-supporting-history-backfill"
     builder_home.mkdir()
@@ -6475,6 +6677,289 @@ def test_run_spark_builder_state_telegram_intake_cli_flags_supported_fact_explan
     )
     assert payload["turn_audit"]["top_reference_turns"][1]["content"] == (
         "No supported answer for profile.city of human:telegram:12345; abstained with unknown."
+    )
+
+
+def test_run_spark_builder_state_telegram_intake_cli_flags_supported_identity_reads_as_read_gap(
+    tmp_path: Path,
+    monkeypatch,
+):
+    builder_home = tmp_path / "builder-home-identity-supported-gap"
+    output_dir = tmp_path / "spark_builder_state_identity_supported_gap_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_identity_supported_gap.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-write-name",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-name",
+                    "sim:evt-write-name",
+                    "trace-name",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.preferred_name",
+                                    "value": "Annie",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "My name is Annie.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-10 19:07:50",
+                ),
+                (
+                    "evt-write-name-result",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-name",
+                    "sim:evt-write-name",
+                    "trace-name",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "succeeded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-10 19:07:51",
+                ),
+                (
+                    "evt-write-job",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-job",
+                    "sim:evt-write-job",
+                    "trace-job",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.occupation",
+                                    "value": "entrepreneur",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "I'm an entrepreneur.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-10 19:07:52",
+                ),
+                (
+                    "evt-write-job-result",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-job",
+                    "sim:evt-write-job",
+                    "trace-job",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "succeeded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-10 19:07:53",
+                ),
+                (
+                    "evt-identity-query",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-identity",
+                    "req-identity",
+                    "trace-identity",
+                    "telegram",
+                    "memory-retrieval:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "method": "retrieve_evidence",
+                            "query": "What do you know about me?",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-10 19:07:54",
+                ),
+                (
+                    "evt-identity-abstained",
+                    "memory_read_abstained",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-identity",
+                    "req-identity",
+                    "trace-identity",
+                    "telegram",
+                    "memory-retrieval:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "abstained",
+                    "Spark memory read abstained.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "unknown",
+                            "method": "retrieve_evidence",
+                            "reason": None,
+                            "record_count": 0,
+                            "retrieval_trace": {
+                                "operation": "retrieve_evidence",
+                                "query": "What do you know about me?",
+                                "subject": "human:telegram:12345",
+                            },
+                        }
+                    ),
+                    "2026-04-10 19:07:55",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["failure_taxonomy"]["summary"]["read_abstention_count"] == 1
+    assert payload["failure_taxonomy"]["summary"]["read_abstention_gap_count"] == 1
+    assert payload["failure_taxonomy"]["summary"]["read_coverage_gap_count"] == 0
+    assert payload["failure_taxonomy"]["summary"]["dominant_read_abstention_reason"] == "supported_fact_unanswered"
+    assert "read_abstention_gap" in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert "read_coverage_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert any(
+        row["label"] == "fix_supported_read_answer_materialization"
+        for row in payload["failure_taxonomy"]["recommended_next_actions"]
     )
 
 
