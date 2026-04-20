@@ -1938,40 +1938,47 @@ def _normalize_builder_telegram_state_db(
     def _turn_sort_key(item: dict) -> tuple[str, str]:
         return (str(item.get("timestamp") or ""), str(item.get("message_id") or ""))
 
-    connection = sqlite3.connect(state_db_path)
-    connection.row_factory = sqlite3.Row
-    try:
-        if selected_chat_id is not None:
-            rows = connection.execute(
-                """
-                SELECT
-                    rowid AS row_order,
-                    event_id,
-                    event_type,
-                    created_at,
-                    request_id,
-                    trace_ref,
-                    channel_id,
-                    session_id,
-                    human_id,
-                    component,
-                    summary,
-                    facts_json
-                FROM builder_events
-                WHERE event_type IN (
-                    'intent_committed',
-                    'delivery_succeeded',
-                    'memory_write_requested',
-                    'memory_write_succeeded',
-                    'plugin_or_chip_influence_recorded',
-                    'tool_result_received'
-                )
-                ORDER BY created_at ASC, row_order ASC
-                """
-            ).fetchall()
-        else:
-            raw_event_limit = max(limit * 8, 200)
-            rows = connection.execute(
+    def _conversation_sort_key(conversation: dict[str, object]) -> tuple[str, str]:
+        turns = [turn for turn in conversation.get("turns", []) if isinstance(turn, dict)]
+        if not turns:
+            return ("", "")
+        return max((_turn_sort_key(turn) for turn in turns), default=("", ""))
+
+    raw_event_limit = max(limit * 8, 200)
+
+    def _load_supported_builder_rows(*, scan_all: bool) -> list[sqlite3.Row]:
+        connection = sqlite3.connect(state_db_path)
+        connection.row_factory = sqlite3.Row
+        try:
+            if selected_chat_id is not None or scan_all:
+                return connection.execute(
+                    """
+                    SELECT
+                        rowid AS row_order,
+                        event_id,
+                        event_type,
+                        created_at,
+                        request_id,
+                        trace_ref,
+                        channel_id,
+                        session_id,
+                        human_id,
+                        component,
+                        summary,
+                        facts_json
+                    FROM builder_events
+                    WHERE event_type IN (
+                        'intent_committed',
+                        'delivery_succeeded',
+                        'memory_write_requested',
+                        'memory_write_succeeded',
+                        'plugin_or_chip_influence_recorded',
+                        'tool_result_received'
+                    )
+                    ORDER BY created_at ASC, row_order ASC
+                    """
+                ).fetchall()
+            return connection.execute(
                 """
                 SELECT *
                 FROM (
@@ -2005,371 +2012,393 @@ def _normalize_builder_telegram_state_db(
                 """,
                 (raw_event_limit, raw_event_limit),
             ).fetchall()
-    finally:
-        connection.close()
+        finally:
+            connection.close()
 
-    if not rows:
-        raise ValueError(f"No supported Builder Telegram state-db events found in {state_db_path}.")
+    def _normalize_supported_rows(source_rows: list[sqlite3.Row]) -> tuple[list[str], dict[str, object]]:
+        available_chat_ids_set: set[str] = set()
+        conversations_by_key: dict[str, dict[str, object]] = {}
 
-    available_chat_ids_set: set[str] = set()
-    conversations_by_key: dict[str, dict[str, object]] = {}
-
-    def _conversation_for(chat_value: str, session_value: str | None, human_value: str | None) -> dict[str, object]:
-        conversation_key = str(session_value or f"telegram-chat-{chat_value}")
-        conversation = conversations_by_key.setdefault(
-            conversation_key,
-            {
-                "conversation_id": conversation_key,
-                "session_id": session_value or conversation_key,
-                "metadata": {
-                    "source": "spark_builder_state_db",
-                    "chat_id": chat_value,
-                    "human_id": human_value,
-                    "builder_home": str(root),
-                    "state_db": str(state_db_path),
-                },
-                "turns": [],
-                "probes": [],
-            },
-        )
-        return conversation
-
-    legacy_groups: dict[str, dict[str, object]] = {}
-    bridge_groups: dict[tuple[str, str], list[sqlite3.Row]] = {}
-    for row in rows:
-        facts = _load_facts(row["facts_json"])
-        row_chat_id = _builder_chat_id(
-            facts=facts,
-            session_id=row["session_id"],
-            human_id=row["human_id"],
-        )
-        available_chat_ids_set.add(row_chat_id)
-        event_type = str(row["event_type"] or "")
-        if event_type in {"intent_committed", "delivery_succeeded"}:
-            update_id = str(facts.get("update_id") or facts.get("message_id") or row["event_id"] or row["created_at"] or "unknown")
-            entry = legacy_groups.setdefault(
-                update_id,
+        def _conversation_for(chat_value: str, session_value: str | None, human_value: str | None) -> dict[str, object]:
+            conversation_key = str(session_value or f"telegram-chat-{chat_value}")
+            conversation = conversations_by_key.setdefault(
+                conversation_key,
                 {
-                    "chat_id": row_chat_id,
-                    "session_id": str(row["session_id"] or "") or None,
-                    "human_id": str(row["human_id"] or "") or None,
-                    "user_turn": None,
-                    "assistant_turn": None,
+                    "conversation_id": conversation_key,
+                    "session_id": session_value or conversation_key,
+                    "metadata": {
+                        "source": "spark_builder_state_db",
+                        "chat_id": chat_value,
+                        "human_id": human_value,
+                        "builder_home": str(root),
+                        "state_db": str(state_db_path),
+                    },
+                    "turns": [],
+                    "probes": [],
                 },
             )
-            timestamp = _format_builder_timestamp(row["created_at"])
-            if event_type == "intent_committed":
-                message_text = str(facts.get("message_text") or facts.get("text") or row["summary"] or "").strip()
-                if message_text:
-                    entry["user_turn"] = {
-                        "message_id": f"builder-user-{update_id}",
-                        "role": "user",
-                        "content": message_text,
-                        "timestamp": timestamp,
-                        "metadata": {
-                            "chat_id": row_chat_id,
-                            "update_id": update_id,
-                            "source_event_type": "intent_committed",
-                        },
-                    }
-            elif event_type == "delivery_succeeded":
-                delivered_text = str(
-                    facts.get("delivered_text")
-                    or facts.get("reply_text")
-                    or facts.get("message_text")
-                    or row["summary"]
-                    or ""
-                ).strip()
-                if delivered_text:
-                    entry["assistant_turn"] = {
-                        "message_id": f"builder-assistant-{update_id}",
-                        "role": "assistant",
-                        "content": delivered_text,
-                        "timestamp": timestamp,
-                        "metadata": {
-                            "chat_id": row_chat_id,
-                            "update_id": update_id,
-                            "source_event_type": "delivery_succeeded",
-                        },
-                    }
-            continue
+            return conversation
 
-        session_value = str(row["session_id"] or "")
-        request_value = str(row["request_id"] or row["trace_ref"] or row["event_id"] or "")
-        if session_value and request_value:
-            bridge_groups.setdefault((session_value, request_value), []).append(row)
+        legacy_groups: dict[str, dict[str, object]] = {}
+        bridge_groups: dict[tuple[str, str], list[sqlite3.Row]] = {}
+        for row in source_rows:
+            facts = _load_facts(row["facts_json"])
+            row_chat_id = _builder_chat_id(
+                facts=facts,
+                session_id=row["session_id"],
+                human_id=row["human_id"],
+            )
+            available_chat_ids_set.add(row_chat_id)
+            event_type = str(row["event_type"] or "")
+            if event_type in {"intent_committed", "delivery_succeeded"}:
+                update_id = str(facts.get("update_id") or facts.get("message_id") or row["event_id"] or row["created_at"] or "unknown")
+                entry = legacy_groups.setdefault(
+                    update_id,
+                    {
+                        "chat_id": row_chat_id,
+                        "session_id": str(row["session_id"] or "") or None,
+                        "human_id": str(row["human_id"] or "") or None,
+                        "user_turn": None,
+                        "assistant_turn": None,
+                    },
+                )
+                timestamp = _format_builder_timestamp(row["created_at"])
+                if event_type == "intent_committed":
+                    message_text = str(facts.get("message_text") or facts.get("text") or row["summary"] or "").strip()
+                    if message_text:
+                        entry["user_turn"] = {
+                            "message_id": f"builder-user-{update_id}",
+                            "role": "user",
+                            "content": message_text,
+                            "timestamp": timestamp,
+                            "metadata": {
+                                "chat_id": row_chat_id,
+                                "update_id": update_id,
+                                "source_event_type": "intent_committed",
+                            },
+                        }
+                elif event_type == "delivery_succeeded":
+                    delivered_text = str(
+                        facts.get("delivered_text")
+                        or facts.get("reply_text")
+                        or facts.get("message_text")
+                        or row["summary"]
+                        or ""
+                    ).strip()
+                    if delivered_text:
+                        entry["assistant_turn"] = {
+                            "message_id": f"builder-assistant-{update_id}",
+                            "role": "assistant",
+                            "content": delivered_text,
+                            "timestamp": timestamp,
+                            "metadata": {
+                                "chat_id": row_chat_id,
+                                "update_id": update_id,
+                                "source_event_type": "delivery_succeeded",
+                            },
+                        }
+                continue
 
-    for entry in legacy_groups.values():
-        chat_value = str(entry["chat_id"] or "unknown")
-        if selected_chat_id is not None and chat_value != selected_chat_id:
-            continue
-        conversation = _conversation_for(
-            chat_value,
-            entry.get("session_id"),
-            entry.get("human_id"),
-        )
-        user_turn = entry.get("user_turn")
-        assistant_turn = entry.get("assistant_turn")
-        if isinstance(user_turn, dict):
-            conversation["turns"].append(user_turn)
-        if isinstance(assistant_turn, dict):
-            conversation["turns"].append(assistant_turn)
+            session_value = str(row["session_id"] or "")
+            request_value = str(row["request_id"] or row["trace_ref"] or row["event_id"] or "")
+            if session_value and request_value:
+                bridge_groups.setdefault((session_value, request_value), []).append(row)
 
-    session_values: dict[str, dict[str, dict[str, str]]] = {}
-    session_histories: dict[str, dict[str, list[dict[str, str]]]] = {}
-    for _, group in sorted(
-        bridge_groups.items(),
-        key=lambda item: (
-            str(item[1][0]["created_at"] or ""),
-            int(item[1][0]["row_order"] or 0),
-            str(item[0][0]),
-            str(item[0][1]),
-        ),
-    ):
-        normalized_group = [dict(row) for row in group]
-        first_row = normalized_group[0]
-        first_facts = _load_facts(first_row.get("facts_json"))
-        session_value = str(first_row.get("session_id") or "") or None
-        human_value = str(first_row.get("human_id") or "") or None
-        chat_value = _builder_chat_id(
-            facts=first_facts,
-            session_id=first_row.get("session_id"),
-            human_id=first_row.get("human_id"),
-        )
-        if selected_chat_id is not None and chat_value != selected_chat_id:
-            continue
-        conversation = _conversation_for(chat_value, session_value, human_value)
-        known_values = session_values.setdefault(str(session_value or chat_value), {})
-        known_histories = session_histories.setdefault(str(session_value or chat_value), {})
+        for entry in legacy_groups.values():
+            chat_value = str(entry["chat_id"] or "unknown")
+            if selected_chat_id is not None and chat_value != selected_chat_id:
+                continue
+            conversation = _conversation_for(
+                chat_value,
+                entry.get("session_id"),
+                entry.get("human_id"),
+            )
+            user_turn = entry.get("user_turn")
+            assistant_turn = entry.get("assistant_turn")
+            if isinstance(user_turn, dict):
+                conversation["turns"].append(user_turn)
+            if isinstance(assistant_turn, dict):
+                conversation["turns"].append(assistant_turn)
 
-        memory_write_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_requested"), None)
-        memory_write_result_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_succeeded"), None)
-        influence_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "plugin_or_chip_influence_recorded"), None)
-        tool_result_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "tool_result_received"), None)
+        session_values: dict[str, dict[str, dict[str, str]]] = {}
+        session_histories: dict[str, dict[str, list[dict[str, str]]]] = {}
+        for _, group in sorted(
+            bridge_groups.items(),
+            key=lambda item: (
+                str(item[1][0]["created_at"] or ""),
+                int(item[1][0]["row_order"] or 0),
+                str(item[0][0]),
+                str(item[0][1]),
+            ),
+        ):
+            normalized_group = [dict(row) for row in group]
+            first_row = normalized_group[0]
+            first_facts = _load_facts(first_row.get("facts_json"))
+            session_value = str(first_row.get("session_id") or "") or None
+            human_value = str(first_row.get("human_id") or "") or None
+            chat_value = _builder_chat_id(
+                facts=first_facts,
+                session_id=first_row.get("session_id"),
+                human_id=first_row.get("human_id"),
+            )
+            if selected_chat_id is not None and chat_value != selected_chat_id:
+                continue
+            conversation = _conversation_for(chat_value, session_value, human_value)
+            known_values = session_values.setdefault(str(session_value or chat_value), {})
+            known_histories = session_histories.setdefault(str(session_value or chat_value), {})
 
-        if memory_write_row is not None:
-            write_facts = _load_facts(memory_write_row.get("facts_json"))
-            observations = write_facts.get("observations")
-            if isinstance(observations, list):
-                for item in observations:
-                    if not isinstance(item, dict):
-                        continue
-                    text = str(item.get("text") or "").strip()
-                    predicate = str(item.get("predicate") or "").strip()
-                    value = str(item.get("value") or "").strip()
-                    if not text:
-                        continue
+            memory_write_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_requested"), None)
+            memory_write_result_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_succeeded"), None)
+            influence_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "plugin_or_chip_influence_recorded"), None)
+            tool_result_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "tool_result_received"), None)
+
+            if memory_write_row is not None:
+                write_facts = _load_facts(memory_write_row.get("facts_json"))
+                observations = write_facts.get("observations")
+                if isinstance(observations, list):
+                    for item in observations:
+                        if not isinstance(item, dict):
+                            continue
+                        text = str(item.get("text") or "").strip()
+                        predicate = str(item.get("predicate") or "").strip()
+                        value = str(item.get("value") or "").strip()
+                        if not text:
+                            continue
+                        conversation["turns"].append(
+                            {
+                                "message_id": str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                                "role": "user",
+                                "content": text,
+                                "timestamp": _format_builder_timestamp(memory_write_row.get("created_at")),
+                                "metadata": {
+                                    "chat_id": chat_value,
+                                    "channel_kind": "telegram",
+                                    "component": str(memory_write_row.get("component") or ""),
+                                    "request_id": str(memory_write_row.get("request_id") or ""),
+                                    "trace_ref": str(memory_write_row.get("trace_ref") or ""),
+                                    "source_event_id": str(memory_write_row.get("event_id") or ""),
+                                    "source_event_type": "memory_write_requested",
+                                    "memory_kind": "observation",
+                                    "subject": str(item.get("subject") or human_value or ""),
+                                    "predicate": predicate,
+                                    "value": value,
+                                    "operation": str(item.get("operation") or write_facts.get("operation") or ""),
+                                    "memory_role": str(item.get("memory_role") or write_facts.get("memory_role") or ""),
+                                },
+                            }
+                        )
+                        result_facts = _load_facts(memory_write_result_row.get("facts_json")) if memory_write_result_row is not None else {}
+                        if int(result_facts.get("accepted_count", 0) or 0) > 0 and predicate and value:
+                            history = known_histories.setdefault(predicate, [])
+                            history.append(
+                                {
+                                    "value": value,
+                                    "timestamp": str(_format_builder_timestamp(memory_write_row.get("created_at")) or ""),
+                                    "message_id": str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                                }
+                            )
+                            _remember_known_value(
+                                known_values,
+                                predicate=predicate,
+                                value=value,
+                                timestamp=_format_builder_timestamp(memory_write_row.get("created_at")),
+                                message_id=str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                                evidence_text=text,
+                            )
+                            distinct_value_count = len(
+                                {
+                                    str(item.get("value") or "").strip()
+                                    for item in history
+                                    if str(item.get("value") or "").strip()
+                                }
+                            )
+                            base_probe_id = (
+                                f"{conversation['session_id']}:write:{str(memory_write_row.get('request_id') or memory_write_row.get('event_id') or '')}:{_probe_key(predicate)}"
+                            )
+                            _append_lookup_probes(
+                                conversation,
+                                base_probe_id=base_probe_id,
+                                subject=str(item.get("subject") or human_value or ""),
+                                predicate=predicate,
+                                expected_value=value,
+                            )
+                            _append_historical_probe(
+                                conversation,
+                                base_probe_id=base_probe_id,
+                                subject=str(item.get("subject") or human_value or ""),
+                                predicate=predicate,
+                                expected_value=value,
+                                as_of=_format_builder_timestamp(memory_write_row.get("created_at")),
+                                distinct_value_count=distinct_value_count,
+                            )
+
+            if influence_row is not None and memory_write_row is None:
+                influence_facts = _load_facts(influence_row.get("facts_json"))
+                query_payload = influence_facts.get("detected_profile_fact_query")
+                query_payload_dict = query_payload if isinstance(query_payload, dict) else {}
+                bridge_mode_hint = ""
+                routing_decision_hint = ""
+                if tool_result_row is not None:
+                    tool_facts_hint = _load_facts(tool_result_row.get("facts_json"))
+                    bridge_mode_hint = str(tool_facts_hint.get("bridge_mode") or "").strip()
+                    routing_decision_hint = str(tool_facts_hint.get("routing_decision") or "").strip()
+                query_text = _query_message(query_payload_dict)
+                if bridge_mode_hint == "memory_profile_fact_explanation" or routing_decision_hint == "memory_profile_fact_explanation":
+                    query_text = _explanation_question(
+                        predicate=_query_predicate(query_payload_dict),
+                        label=str(query_payload_dict.get("label") or "").strip() or None,
+                    ) or query_text
+                if query_text:
                     conversation["turns"].append(
                         {
-                            "message_id": str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                            "message_id": str(influence_row.get("request_id") or influence_row.get("event_id") or ""),
                             "role": "user",
-                            "content": text,
-                            "timestamp": _format_builder_timestamp(memory_write_row.get("created_at")),
+                            "content": query_text,
+                            "timestamp": _format_builder_timestamp(influence_row.get("created_at")),
                             "metadata": {
                                 "chat_id": chat_value,
                                 "channel_kind": "telegram",
-                                "component": str(memory_write_row.get("component") or ""),
-                                "request_id": str(memory_write_row.get("request_id") or ""),
-                                "trace_ref": str(memory_write_row.get("trace_ref") or ""),
-                                "source_event_id": str(memory_write_row.get("event_id") or ""),
-                                "source_event_type": "memory_write_requested",
-                                "memory_kind": "observation",
-                                "subject": str(item.get("subject") or human_value or ""),
-                                "predicate": predicate,
-                                "value": value,
-                                "operation": str(item.get("operation") or write_facts.get("operation") or ""),
-                                "memory_role": str(item.get("memory_role") or write_facts.get("memory_role") or ""),
+                                "component": str(influence_row.get("component") or ""),
+                                "request_id": str(influence_row.get("request_id") or ""),
+                                "trace_ref": str(influence_row.get("trace_ref") or ""),
+                                "source_event_id": str(influence_row.get("event_id") or ""),
+                                "source_event_type": "plugin_or_chip_influence_recorded",
+                                "fact_name": str(query_payload_dict.get("fact_name") or "").strip() or None,
+                                "label": str(query_payload_dict.get("label") or "").strip() or None,
+                                "predicate": _query_predicate(query_payload_dict),
+                                "query_kind": str(query_payload_dict.get("query_kind") or "").strip() or None,
                             },
                         }
                     )
-                    result_facts = _load_facts(memory_write_result_row.get("facts_json")) if memory_write_result_row is not None else {}
-                    if int(result_facts.get("accepted_count", 0) or 0) > 0 and predicate and value:
-                        history = known_histories.setdefault(predicate, [])
-                        history.append(
-                            {
-                                "value": value,
-                                "timestamp": str(_format_builder_timestamp(memory_write_row.get("created_at")) or ""),
-                                "message_id": str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
-                            }
-                        )
-                        _remember_known_value(
-                            known_values,
-                            predicate=predicate,
-                            value=value,
-                            timestamp=_format_builder_timestamp(memory_write_row.get("created_at")),
-                            message_id=str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
-                            evidence_text=text,
-                        )
-                        distinct_value_count = len(
-                            {
-                                str(item.get("value") or "").strip()
-                                for item in history
-                                if str(item.get("value") or "").strip()
-                            }
-                        )
-                        base_probe_id = (
-                            f"{conversation['session_id']}:write:{str(memory_write_row.get('request_id') or memory_write_row.get('event_id') or '')}:{_probe_key(predicate)}"
-                        )
-                        _append_lookup_probes(
-                            conversation,
-                            base_probe_id=base_probe_id,
-                            subject=str(item.get("subject") or human_value or ""),
-                            predicate=predicate,
-                            expected_value=value,
-                        )
-                        _append_historical_probe(
-                            conversation,
-                            base_probe_id=base_probe_id,
-                            subject=str(item.get("subject") or human_value or ""),
-                            predicate=predicate,
-                            expected_value=value,
-                            as_of=_format_builder_timestamp(memory_write_row.get("created_at")),
-                            distinct_value_count=distinct_value_count,
-                        )
 
-        if influence_row is not None and memory_write_row is None:
-            influence_facts = _load_facts(influence_row.get("facts_json"))
-            query_payload = influence_facts.get("detected_profile_fact_query")
-            query_payload_dict = query_payload if isinstance(query_payload, dict) else {}
-            bridge_mode_hint = ""
-            routing_decision_hint = ""
             if tool_result_row is not None:
-                tool_facts_hint = _load_facts(tool_result_row.get("facts_json"))
-                bridge_mode_hint = str(tool_facts_hint.get("bridge_mode") or "").strip()
-                routing_decision_hint = str(tool_facts_hint.get("routing_decision") or "").strip()
-            query_text = _query_message(query_payload_dict)
-            if bridge_mode_hint == "memory_profile_fact_explanation" or routing_decision_hint == "memory_profile_fact_explanation":
-                query_text = _explanation_question(
-                    predicate=_query_predicate(query_payload_dict),
-                    label=str(query_payload_dict.get("label") or "").strip() or None,
-                ) or query_text
-            if query_text:
-                conversation["turns"].append(
-                    {
-                        "message_id": str(influence_row.get("request_id") or influence_row.get("event_id") or ""),
-                        "role": "user",
-                        "content": query_text,
-                        "timestamp": _format_builder_timestamp(influence_row.get("created_at")),
-                        "metadata": {
-                            "chat_id": chat_value,
-                            "channel_kind": "telegram",
-                            "component": str(influence_row.get("component") or ""),
-                            "request_id": str(influence_row.get("request_id") or ""),
-                            "trace_ref": str(influence_row.get("trace_ref") or ""),
-                            "source_event_id": str(influence_row.get("event_id") or ""),
-                            "source_event_type": "plugin_or_chip_influence_recorded",
-                            "fact_name": str(query_payload_dict.get("fact_name") or "").strip() or None,
-                            "label": str(query_payload_dict.get("label") or "").strip() or None,
-                            "predicate": _query_predicate(query_payload_dict),
-                            "query_kind": str(query_payload_dict.get("query_kind") or "").strip() or None,
-                        },
-                    }
-                )
-
-        if tool_result_row is not None:
-            tool_facts = _load_facts(tool_result_row.get("facts_json"))
-            bridge_mode = str(tool_facts.get("bridge_mode") or "").strip()
-            routing_decision = str(tool_facts.get("routing_decision") or "").strip()
-            response_text = None
-            predicate = str(tool_facts.get("predicate") or "").strip() or None
-            value = str(tool_facts.get("value") or "").strip() or None
-            if bridge_mode == "memory_profile_fact_update" or routing_decision == "memory_profile_fact_observation":
-                response_text = _update_answer(predicate, value) or str(tool_result_row.get("summary") or "").strip()
-            elif bridge_mode == "memory_profile_fact" or routing_decision == "memory_profile_fact_query":
-                query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
-                query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
-                expected_value = _effective_query_value(known_values, query_predicate, value)
-                response_text = _query_answer(
-                    predicate=query_predicate,
-                    value=expected_value,
-                )
-                _append_lookup_probes(
-                    conversation,
-                    base_probe_id=(
-                        f"{conversation['session_id']}:query:{str(tool_result_row.get('request_id') or tool_result_row.get('event_id') or '')}:{_probe_key(query_predicate)}"
-                    ),
-                    subject=str(human_value or ""),
-                    predicate=query_predicate,
-                    expected_value=expected_value,
-                )
-                if response_text is None:
-                    response_text = str(tool_result_row.get("summary") or "").strip()
-            elif bridge_mode == "memory_profile_fact_explanation" or routing_decision == "memory_profile_fact_explanation":
-                query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
-                query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
-                expected_value = _effective_query_value(known_values, query_predicate, value)
-                _append_lookup_probes(
-                    conversation,
-                    base_probe_id=(
-                        f"{conversation['session_id']}:explanation:{str(tool_result_row.get('request_id') or tool_result_row.get('event_id') or '')}:{_probe_key(query_predicate)}"
-                    ),
-                    subject=str(human_value or ""),
-                    predicate=query_predicate,
-                    expected_value=expected_value,
-                )
-                response_text = _explanation_answer(
-                    predicate=query_predicate,
-                    value=expected_value,
-                    evidence_text=_effective_query_evidence_text(known_values, query_predicate),
-                ) or str(tool_result_row.get("summary") or "").strip()
-            elif bridge_mode == "memory_profile_identity" or routing_decision == "memory_profile_identity_summary":
-                response_text = _identity_answer(known_values) or str(tool_result_row.get("summary") or "").strip()
-                prefix = str(tool_facts.get("predicate_prefix") or "profile.").strip() or "profile."
-                for probe_index, (identity_predicate, identity_value) in enumerate(
-                    _known_identity_records(known_values, predicate_prefix=prefix),
-                    start=1,
-                ):
+                tool_facts = _load_facts(tool_result_row.get("facts_json"))
+                bridge_mode = str(tool_facts.get("bridge_mode") or "").strip()
+                routing_decision = str(tool_facts.get("routing_decision") or "").strip()
+                response_text = None
+                predicate = str(tool_facts.get("predicate") or "").strip() or None
+                value = str(tool_facts.get("value") or "").strip() or None
+                if bridge_mode == "memory_profile_fact_update" or routing_decision == "memory_profile_fact_observation":
+                    response_text = _update_answer(predicate, value) or str(tool_result_row.get("summary") or "").strip()
+                elif bridge_mode == "memory_profile_fact" or routing_decision == "memory_profile_fact_query":
+                    query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
+                    query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
+                    expected_value = _effective_query_value(known_values, query_predicate, value)
+                    response_text = _query_answer(
+                        predicate=query_predicate,
+                        value=expected_value,
+                    )
                     _append_lookup_probes(
                         conversation,
                         base_probe_id=(
-                            f"{conversation['session_id']}:identity:{str(tool_result_row.get('request_id') or tool_result_row.get('event_id') or '')}:{probe_index}:{_probe_key(identity_predicate)}"
+                            f"{conversation['session_id']}:query:{str(tool_result_row.get('request_id') or tool_result_row.get('event_id') or '')}:{_probe_key(query_predicate)}"
                         ),
                         subject=str(human_value or ""),
-                        predicate=identity_predicate,
-                        expected_value=identity_value,
+                        predicate=query_predicate,
+                        expected_value=expected_value,
                     )
-            if response_text:
-                conversation["turns"].append(
-                    {
-                        "message_id": str(tool_result_row.get("request_id") or tool_result_row.get("event_id") or ""),
-                        "role": "assistant",
-                        "content": response_text,
-                        "timestamp": _format_builder_timestamp(tool_result_row.get("created_at")),
-                        "metadata": {
-                            "chat_id": chat_value,
-                            "channel_kind": "telegram",
-                            "component": str(tool_result_row.get("component") or ""),
-                            "request_id": str(tool_result_row.get("request_id") or ""),
-                            "trace_ref": str(tool_result_row.get("trace_ref") or ""),
-                            "source_event_id": str(tool_result_row.get("event_id") or ""),
-                            "source_event_type": "tool_result_received",
-                            "keepability": tool_facts.get("keepability"),
-                            "promotion_disposition": tool_facts.get("promotion_disposition"),
-                            "bridge_mode": bridge_mode or None,
-                            "routing_decision": routing_decision or None,
-                            "fact_name": str(tool_facts.get("fact_name") or "").strip() or None,
-                            "label": str(tool_facts.get("label") or "").strip() or None,
-                            "predicate": predicate,
-                            "value": value,
-                            "value_found": tool_facts.get("value_found"),
-                            "evidence_summary": str(tool_facts.get("evidence_summary") or "").strip() or None,
-                        },
-                    }
-                )
+                    if response_text is None:
+                        response_text = str(tool_result_row.get("summary") or "").strip()
+                elif bridge_mode == "memory_profile_fact_explanation" or routing_decision == "memory_profile_fact_explanation":
+                    query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
+                    query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
+                    expected_value = _effective_query_value(known_values, query_predicate, value)
+                    _append_lookup_probes(
+                        conversation,
+                        base_probe_id=(
+                            f"{conversation['session_id']}:explanation:{str(tool_result_row.get('request_id') or tool_result_row.get('event_id') or '')}:{_probe_key(query_predicate)}"
+                        ),
+                        subject=str(human_value or ""),
+                        predicate=query_predicate,
+                        expected_value=expected_value,
+                    )
+                    response_text = _explanation_answer(
+                        predicate=query_predicate,
+                        value=expected_value,
+                        evidence_text=_effective_query_evidence_text(known_values, query_predicate),
+                    ) or str(tool_result_row.get("summary") or "").strip()
+                elif bridge_mode == "memory_profile_identity" or routing_decision == "memory_profile_identity_summary":
+                    response_text = _identity_answer(known_values) or str(tool_result_row.get("summary") or "").strip()
+                    prefix = str(tool_facts.get("predicate_prefix") or "profile.").strip() or "profile."
+                    for probe_index, (identity_predicate, identity_value) in enumerate(
+                        _known_identity_records(known_values, predicate_prefix=prefix),
+                        start=1,
+                    ):
+                        _append_lookup_probes(
+                            conversation,
+                            base_probe_id=(
+                                f"{conversation['session_id']}:identity:{str(tool_result_row.get('request_id') or tool_result_row.get('event_id') or '')}:{probe_index}:{_probe_key(identity_predicate)}"
+                            ),
+                            subject=str(human_value or ""),
+                            predicate=identity_predicate,
+                            expected_value=identity_value,
+                        )
+                if response_text:
+                    conversation["turns"].append(
+                        {
+                            "message_id": str(tool_result_row.get("request_id") or tool_result_row.get("event_id") or ""),
+                            "role": "assistant",
+                            "content": response_text,
+                            "timestamp": _format_builder_timestamp(tool_result_row.get("created_at")),
+                            "metadata": {
+                                "chat_id": chat_value,
+                                "channel_kind": "telegram",
+                                "component": str(tool_result_row.get("component") or ""),
+                                "request_id": str(tool_result_row.get("request_id") or ""),
+                                "trace_ref": str(tool_result_row.get("trace_ref") or ""),
+                                "source_event_id": str(tool_result_row.get("event_id") or ""),
+                                "source_event_type": "tool_result_received",
+                                "keepability": tool_facts.get("keepability"),
+                                "promotion_disposition": tool_facts.get("promotion_disposition"),
+                                "bridge_mode": bridge_mode or None,
+                                "routing_decision": routing_decision or None,
+                                "fact_name": str(tool_facts.get("fact_name") or "").strip() or None,
+                                "label": str(tool_facts.get("label") or "").strip() or None,
+                                "predicate": predicate,
+                                "value": value,
+                                "value_found": tool_facts.get("value_found"),
+                                "evidence_summary": str(tool_facts.get("evidence_summary") or "").strip() or None,
+                            },
+                        }
+                    )
 
-    available_chat_ids = sorted(available_chat_ids_set)
-    for conversation in conversations_by_key.values():
-        conversation["turns"].sort(key=_turn_sort_key)
+        available_chat_ids = sorted(available_chat_ids_set)
+        for conversation in conversations_by_key.values():
+            conversation["turns"].sort(key=_turn_sort_key)
 
-    normalized_payload = {
-        "source": "spark_builder_state_db",
-        "writable_roles": ["user"],
-        "conversations": [
+        normalized_conversations = [
             conversation
             for conversation in conversations_by_key.values()
-            if list(conversation.get("turns", []))
-        ],
-    }
+            if any(str(turn.get("role") or "").strip() == "user" for turn in conversation.get("turns", []) if isinstance(turn, dict))
+        ]
+        normalized_conversations.sort(key=_conversation_sort_key)
+        if limit > 0:
+            normalized_conversations = normalized_conversations[-limit:]
+
+        return (
+            available_chat_ids,
+            {
+                "source": "spark_builder_state_db",
+                "writable_roles": ["user"],
+                "conversations": normalized_conversations,
+            },
+        )
+
+    rows = _load_supported_builder_rows(scan_all=False)
+    if not rows:
+        raise ValueError(f"No supported Builder Telegram state-db events found in {state_db_path}.")
+
+    available_chat_ids, normalized_payload = _normalize_supported_rows(rows)
+    used_full_supported_scan = False
+    if (
+        selected_chat_id is None
+        and not list(normalized_payload.get("conversations", []))
+        and len(rows) >= raw_event_limit
+    ):
+        rows = _load_supported_builder_rows(scan_all=True)
+        available_chat_ids, normalized_payload = _normalize_supported_rows(rows)
+        used_full_supported_scan = True
+
     validation = validate_shadow_replay_payload(normalized_payload)
     contract = {
         "layer_name": "SparkBuilderTelegramStateDBAdapter",
@@ -2396,6 +2425,11 @@ def _normalize_builder_telegram_state_db(
         "validation": validation,
         "conversation_count": len(normalized_payload.get("conversations", [])),
         "event_count": len(rows),
+        "trace": {
+            "scan_mode": "full_supported_rows" if used_full_supported_scan or selected_chat_id is not None else "recent_supported_window",
+            "used_full_supported_scan": used_full_supported_scan,
+            "raw_event_limit": raw_event_limit,
+        },
     }
 
 
