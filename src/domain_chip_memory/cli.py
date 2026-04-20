@@ -740,6 +740,13 @@ def _build_shadow_failure_taxonomy_payload(
         and row.get("role") == "assistant"
         and str(row.get("source_event_type") or "").strip() == "memory_read_abstained"
     ]
+    read_success_rows = [
+        row
+        for row in turn_rows
+        if row.get("action") == "reference_turn"
+        and row.get("role") == "assistant"
+        and str(row.get("source_event_type") or "").strip() == "memory_read_succeeded"
+    ]
     read_abstention_gap_rows: list[dict] = []
     read_coverage_gap_rows: list[dict] = []
     for row in read_abstention_rows:
@@ -750,11 +757,15 @@ def _build_shadow_failure_taxonomy_payload(
             read_abstention_gap_rows.append(row)
     read_abstention_by_reason: dict[str, int] = {}
     read_abstention_by_method: dict[str, int] = {}
+    read_success_by_method: dict[str, int] = {}
     for row in read_abstention_rows:
         reason = _normalized_read_abstention_reason(row)
         method = str(row.get("method") or "").strip() or "unknown"
         read_abstention_by_reason[reason] = read_abstention_by_reason.get(reason, 0) + 1
         read_abstention_by_method[method] = read_abstention_by_method.get(method, 0) + 1
+    for row in read_success_rows:
+        method = str(row.get("method") or "").strip() or "unknown"
+        read_success_by_method[method] = read_success_by_method.get(method, 0) + 1
     read_abstention_reason_rows = [
         {"reason": reason, "count": count}
         for reason, count in sorted(read_abstention_by_reason.items(), key=lambda item: (-item[1], item[0]))
@@ -763,12 +774,18 @@ def _build_shadow_failure_taxonomy_payload(
         {"method": method, "count": count}
         for method, count in sorted(read_abstention_by_method.items(), key=lambda item: (-item[1], item[0]))
     ]
+    read_success_method_rows = [
+        {"method": method, "count": count}
+        for method, count in sorted(read_success_by_method.items(), key=lambda item: (-item[1], item[0]))
+    ]
     dominant_read_abstention_row = read_abstention_reason_rows[0] if read_abstention_reason_rows else None
     dominant_read_abstention_method_row = read_abstention_method_rows[0] if read_abstention_method_rows else None
+    dominant_read_success_method_row = read_success_method_rows[0] if read_success_method_rows else None
     read_abstention_gap_reason_rows = [
         row for row in read_abstention_reason_rows if str(row.get("reason") or "").strip() != "no_supported_answer"
     ]
     dominant_read_gap_row = read_abstention_gap_reason_rows[0] if read_abstention_gap_reason_rows else None
+    read_only_replay_gap = not probe_rows and accepted_writes == 0 and bool(read_success_rows)
     dominant_unsupported_row = max(
         unsupported_reasons,
         key=lambda row: (int(row.get("count", 0) or 0), str(row.get("reason", "") or "")),
@@ -889,7 +906,19 @@ def _build_shadow_failure_taxonomy_payload(
                 ),
             }
         )
-    if not probe_rows:
+    if read_only_replay_gap:
+        issue_buckets.append(
+            {
+                "label": "read_only_replay_gap",
+                "count": len(read_success_rows),
+                "severity": "medium",
+                "summary": (
+                    f"{len(read_success_rows)} Builder memory reads succeeded, but the replay cohort contains no "
+                    "supporting writes, so retrieval probes cannot be validated from this slice alone."
+                ),
+            }
+        )
+    elif not probe_rows:
         issue_buckets.append(
             {
                 "label": "probe_coverage_gap",
@@ -990,7 +1019,18 @@ def _build_shadow_failure_taxonomy_payload(
                 ),
             }
         )
-    if not probe_rows:
+    if read_only_replay_gap:
+        recommended_next_actions.append(
+            {
+                "label": "materialize_supporting_write_history",
+                "priority": 3,
+                "rationale": (
+                    "This replay slice contains successful read traffic but no accepted writes. Widen the Builder "
+                    "cohort or materialize the supporting write history before judging retrieval quality from probes."
+                ),
+            }
+        )
+    elif not probe_rows:
         recommended_next_actions.append(
             {
                 "label": "add_shadow_probes",
@@ -1122,11 +1162,15 @@ def _build_shadow_failure_taxonomy_payload(
                 int(dominant_unsupported_row.get("count", 0) or 0) if dominant_unsupported_row else 0
             ),
             "read_abstention_count": len(read_abstention_rows),
+            "read_success_count": len(read_success_rows),
             "dominant_read_abstention_reason": (
                 str(dominant_read_abstention_row.get("reason")) if dominant_read_abstention_row else None
             ),
             "dominant_read_abstention_method": (
                 str(dominant_read_abstention_method_row.get("method")) if dominant_read_abstention_method_row else None
+            ),
+            "dominant_read_success_method": (
+                str(dominant_read_success_method_row.get("method")) if dominant_read_success_method_row else None
             ),
             "read_abstention_gap_count": len(read_abstention_gap_rows),
             "read_coverage_gap_count": len(read_coverage_gap_rows),
@@ -1138,6 +1182,7 @@ def _build_shadow_failure_taxonomy_payload(
         "unsupported_reasons": unsupported_reasons,
         "read_abstention_reasons": read_abstention_reason_rows,
         "read_abstention_methods": read_abstention_method_rows,
+        "read_success_methods": read_success_method_rows,
         "probe_rows": probe_rows,
         "conversation_hotspots": conversation_hotspots,
         "source_hotspots": source_hotspots,

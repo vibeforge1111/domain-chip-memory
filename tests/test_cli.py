@@ -2451,6 +2451,81 @@ def test_build_shadow_failure_taxonomy_treats_no_supported_answer_reads_as_cover
     )
 
 
+def test_build_shadow_failure_taxonomy_flags_read_only_replay_gap_before_probe_gap():
+    payload = cli._build_shadow_failure_taxonomy_payload(
+        {
+            "report": {
+                "run_count": 1,
+                "summary": {
+                    "accepted_writes": 0,
+                    "rejected_writes": 0,
+                    "skipped_turns": 0,
+                    "reference_turns": 2,
+                    "unsupported_reasons": [],
+                    "probe_rows": [],
+                },
+                "conversation_rows": [
+                    {
+                        "conversation_id": "memory-lookup:organic-user",
+                        "accepted_writes": 0,
+                        "rejected_writes": 0,
+                        "skipped_turns": 0,
+                        "reference_turns": 2,
+                    }
+                ],
+            },
+            "evaluations": [
+                {
+                    "conversation_id": "memory-lookup:organic-user",
+                    "session_id": "memory-lookup:organic-user",
+                    "trace": {
+                        "turn_traces": [
+                            {
+                                "message_id": "req-3",
+                                "turn_id": "memory-lookup:organic-user:shadow:1",
+                                "role": "user",
+                                "action": "reference_turn",
+                                "accepted": False,
+                                "trace": {
+                                    "content": "What is my name?",
+                                    "timestamp": "2026-04-10T00:00:00Z",
+                                    "source_event_type": "memory_read_requested",
+                                    "method": "get_current_state",
+                                },
+                            },
+                            {
+                                "message_id": "req-3",
+                                "turn_id": "memory-lookup:organic-user:shadow:2",
+                                "role": "assistant",
+                                "action": "reference_turn",
+                                "accepted": False,
+                                "trace": {
+                                    "content": "Memory read succeeded for `What is my name?` with `1` matching records.",
+                                    "timestamp": "2026-04-10T00:00:01Z",
+                                    "source_event_type": "memory_read_succeeded",
+                                    "method": "get_current_state",
+                                    "memory_role": "current_state",
+                                    "record_count": 1,
+                                },
+                            },
+                        ]
+                    },
+                }
+            ],
+        },
+        source_mode="builder_export",
+    )
+
+    assert payload["summary"]["read_success_count"] == 1
+    assert payload["summary"]["dominant_read_success_method"] == "get_current_state"
+    assert "read_only_replay_gap" in payload["summary"]["issue_labels"]
+    assert "probe_coverage_gap" not in payload["summary"]["issue_labels"]
+    assert any(
+        row["label"] == "materialize_supporting_write_history"
+        for row in payload["recommended_next_actions"]
+    )
+
+
 def test_build_spark_kb_from_builder_export_cli_compiles_kb_from_builder_aliases(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "builder_export.json"
     output_dir = tmp_path / "spark_builder_kb"
@@ -5152,6 +5227,162 @@ def test_run_spark_builder_state_telegram_intake_cli_renders_retrieval_no_answer
         "No supporting evidence found for `What do you know about me?`.",
     ]
     assert payload["failure_taxonomy"]["summary"]["read_coverage_gap_count"] == 1
+
+
+def test_run_spark_builder_state_telegram_intake_cli_flags_read_only_replay_gap_for_read_successes(
+    tmp_path: Path,
+    monkeypatch,
+):
+    builder_home = tmp_path / "builder-home-read-success-only"
+    output_dir = tmp_path / "spark_builder_state_read_success_only_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_read_success_only.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-read-query",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "predicate": "profile.preferred_name",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-10 10:00:00",
+                ),
+                (
+                    "evt-read-success",
+                    "memory_read_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "succeeded",
+                    "Spark memory read completed.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "record_count": 1,
+                            "retrieval_trace": {
+                                "operation": "get_current_state",
+                                "predicate": "profile.preferred_name",
+                                "subject": "human:telegram:12345",
+                            },
+                        }
+                    ),
+                    "2026-04-10 10:00:01",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["summary"]["conversation_count"] == 1
+    assert payload["summary"]["accepted_writes"] == 0
+    assert payload["summary"]["reference_turns"] == 2
+    assert payload["failure_taxonomy"]["summary"]["read_success_count"] == 1
+    assert payload["failure_taxonomy"]["summary"]["dominant_read_success_method"] == "get_current_state"
+    assert "read_only_replay_gap" in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert "probe_coverage_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert any(
+        row["label"] == "materialize_supporting_write_history"
+        for row in payload["failure_taxonomy"]["recommended_next_actions"]
+    )
 
 
 def test_run_spark_builder_state_telegram_intake_cli_replays_explanation_queries_with_probes(tmp_path: Path, monkeypatch):
