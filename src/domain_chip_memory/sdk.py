@@ -30,6 +30,20 @@ def _normalize_scalar(value: str | None) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
 
 
+def _normalize_human_subject(value: str | None) -> str:
+    normalized = _normalize_scalar(value).lower()
+    if normalized.startswith("human:human:"):
+        normalized = normalized[len("human:") :]
+    if normalized.startswith("telegram:"):
+        normalized = f"human:{normalized}"
+    return normalized
+
+
+def _is_identity_summary_query(query: str | None) -> bool:
+    normalized = _normalize_scalar(query).lower().rstrip("?.! ")
+    return normalized in {"who am i", "what do you know about me"}
+
+
 DEFAULT_RUNTIME_MEMORY_ARCHITECTURE = "summary_synthesis_memory"
 DEFAULT_RUNTIME_MEMORY_PROVIDER = "heuristic_v1"
 
@@ -326,14 +340,24 @@ class SparkMemorySDK:
                     "limit": request.limit,
                 },
             )
+        normalized_subject = self._normalize_optional_subject(request.subject)
+        normalized_predicate = self._normalize_optional_predicate(request.predicate)
+        query_intent = "generic"
         observations = self._observations()
+        if normalized_subject and not normalized_predicate and _is_identity_summary_query(request.query):
+            query_intent = "profile_identity_summary"
+            observations = [
+                entry
+                for entry in self._current_state_observations()
+                if entry.subject == normalized_subject and entry.predicate not in {"raw_turn", "state_deletion"}
+            ]
         items = [
             self._observation_record(entry, memory_role=self._observation_memory_role(entry))
             for entry in self._rank_observations(
                 observations,
                 query=request.query,
-                subject=self._normalize_optional_subject(request.subject),
-                predicate=self._normalize_optional_predicate(request.predicate),
+                subject=normalized_subject,
+                predicate=normalized_predicate,
                 limit=request.limit,
             )
         ]
@@ -345,6 +369,7 @@ class SparkMemorySDK:
                 "subject": request.subject,
                 "predicate": request.predicate,
                 "limit": request.limit,
+                "query_intent": query_intent,
             },
         )
 
@@ -934,7 +959,7 @@ class SparkMemorySDK:
         return any(self._observation_memory_role(entry) != "episodic" for entry in observations)
 
     def _normalize_subject(self, subject: str) -> str:
-        return str(subject or "").strip().lower()
+        return _normalize_human_subject(subject)
 
     def _normalize_predicate(self, predicate: str) -> str:
         return str(predicate or "").strip().lower()
