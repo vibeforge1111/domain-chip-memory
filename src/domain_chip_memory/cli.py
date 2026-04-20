@@ -1728,6 +1728,7 @@ def _normalize_builder_telegram_state_db(
         if not predicate or not value:
             return
         store[predicate] = {
+            "predicate": predicate,
             "value": value,
             "timestamp": str(timestamp or ""),
             "message_id": str(message_id or ""),
@@ -1861,6 +1862,31 @@ def _normalize_builder_telegram_state_db(
         entry = _effective_query_entry(store, predicate)
         evidence_text = str((entry or {}).get("evidence_text") or "").strip()
         return evidence_text or None
+
+    def _resolve_probe_predicate_and_value(
+        store: dict[str, dict[str, str]],
+        *,
+        predicate: str | None,
+        expected_value: str | None,
+    ) -> tuple[str | None, str | None]:
+        normalized_predicate = str(predicate or "").strip() or None
+        clean_expected = str(expected_value or "").strip() or None
+        if normalized_predicate == "profile.startup_name":
+            direct_entry = store.get("profile.startup_name") or {}
+            founder_entry = store.get("profile.founder_of") or {}
+            direct_value = str(direct_entry.get("value") or "").strip() or None
+            founder_value = str(founder_entry.get("value") or "").strip() or None
+            if clean_expected and founder_value and clean_expected == founder_value:
+                return "profile.founder_of", founder_value
+            if clean_expected and direct_value and clean_expected == direct_value:
+                return "profile.startup_name", direct_value
+            effective_entry = _effective_query_entry(store, normalized_predicate) or {}
+            effective_predicate = str(effective_entry.get("predicate") or normalized_predicate).strip() or normalized_predicate
+            effective_value = str(effective_entry.get("value") or clean_expected or "").strip() or clean_expected
+            return effective_predicate, effective_value
+        current_entry = store.get(str(normalized_predicate or "").strip()) or {}
+        current_value = str(current_entry.get("value") or "").strip() or clean_expected
+        return normalized_predicate, current_value
 
     def _query_answer(*, predicate: str | None, value: str | None) -> str | None:
         clean_value = str(value or "").strip()
@@ -2389,6 +2415,31 @@ def _normalize_builder_telegram_state_db(
         available_chat_ids = sorted(available_chat_ids_set)
         for conversation in conversations_by_key.values():
             conversation["turns"].sort(key=_turn_sort_key)
+            session_key = str(
+                conversation.get("session_id")
+                or (conversation.get("metadata", {}) or {}).get("chat_id")
+                or ""
+            )
+            final_values = session_values.get(session_key, {})
+            reconciled_probes: list[dict[str, object]] = []
+            for probe in conversation.get("probes", []):
+                if not isinstance(probe, dict):
+                    continue
+                normalized_probe = dict(probe)
+                probe_type = str(normalized_probe.get("probe_type") or "").strip()
+                if probe_type in {"current_state", "evidence"}:
+                    effective_predicate, final_value = _resolve_probe_predicate_and_value(
+                        final_values,
+                        predicate=normalized_probe.get("predicate"),
+                        expected_value=normalized_probe.get("expected_value"),
+                    )
+                    expected_value = str(normalized_probe.get("expected_value") or "").strip() or None
+                    if expected_value and final_value and expected_value != final_value:
+                        continue
+                    if effective_predicate:
+                        normalized_probe["predicate"] = effective_predicate
+                reconciled_probes.append(normalized_probe)
+            conversation["probes"] = reconciled_probes
 
         normalized_conversations = [
             conversation

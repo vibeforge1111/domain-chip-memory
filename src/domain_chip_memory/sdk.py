@@ -9,7 +9,13 @@ from typing import Any
 from .contracts import JsonDict, MemoryRole, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
 from .memory_extraction import EventCalendarEntry, ObservationEntry
 from .memory_observation_runtime import build_event_calendar, build_observation_log
-from .memory_updates import build_current_state_view, has_active_state_deletion, state_deletion_target
+from .memory_updates import (
+    build_current_state_view,
+    entry_sort_key,
+    has_active_state_deletion,
+    observation_id_sort_key,
+    state_deletion_target,
+)
 
 
 def _tokenize(text: str) -> set[str]:
@@ -189,7 +195,7 @@ class SparkMemorySDK:
             if entry.subject == subject and entry.predicate == predicate
         ]
         if matches:
-            selected = sorted(matches, key=lambda entry: (_timestamp_key(entry.timestamp), entry.observation_id))[-1]
+            selected = sorted(matches, key=entry_sort_key)[-1]
             return MemoryLookupResult(
                 found=True,
                 value=str(selected.metadata.get("value", "")).strip() or None,
@@ -263,7 +269,7 @@ class SparkMemorySDK:
             if entry.subject == subject and entry.predicate == predicate
         ]
         if matches:
-            selected = sorted(matches, key=lambda entry: (_timestamp_key(entry.timestamp), entry.observation_id))[-1]
+            selected = sorted(matches, key=entry_sort_key)[-1]
             return MemoryLookupResult(
                 found=True,
                 value=str(selected.metadata.get("value", "")).strip() or None,
@@ -706,7 +712,7 @@ class SparkMemorySDK:
                 for entry in observations
                 if entry.subject == subject and state_deletion_target(entry) == predicate
             ],
-            key=lambda entry: (_timestamp_key(entry.timestamp), entry.observation_id),
+            key=lambda entry: (_timestamp_key(entry.timestamp), observation_id_sort_key(entry.observation_id)),
         )
 
     def _rank_observations(
@@ -719,7 +725,7 @@ class SparkMemorySDK:
         limit: int,
     ) -> list[ObservationEntry]:
         query_tokens = _tokenize(query or "")
-        ranked: list[tuple[int, str, str, ObservationEntry]] = []
+        ranked: list[tuple[int, str, tuple[Any, ...], ObservationEntry]] = []
         for entry in observations:
             if subject and entry.subject != subject:
                 continue
@@ -728,7 +734,7 @@ class SparkMemorySDK:
             overlap = len(query_tokens.intersection(_tokenize(entry.text))) if query_tokens else 0
             if query_tokens and overlap == 0 and not (subject or predicate):
                 continue
-            ranked.append((overlap, _timestamp_key(entry.timestamp), entry.observation_id, entry))
+            ranked.append((overlap, _timestamp_key(entry.timestamp), observation_id_sort_key(entry.observation_id), entry))
         ranked.sort(reverse=True)
         return [entry for _, _, _, entry in ranked[:limit]]
 

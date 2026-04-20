@@ -1,5 +1,6 @@
 from domain_chip_memory import (
     CurrentStateRequest,
+    EvidenceRetrievalRequest,
     SparkMemorySDK,
     SparkShadowIngestAdapter,
     SparkShadowIngestRequest,
@@ -410,6 +411,59 @@ def test_shadow_ingest_skips_unchanged_explicit_current_state_writes():
     assert result.turn_traces[1].unsupported_reason == "unchanged_current_state"
     assert current_state.found is True
     assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_same_timestamp_later_turn_wins_current_state():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    filler_turns = [
+        SparkShadowTurn(
+            message_id=f"m{index}",
+            role="assistant",
+            content="Noted.",
+            timestamp="2026-04-20T00:00:00Z",
+        )
+        for index in range(1, 9)
+    ]
+    turns = [
+        *filler_turns,
+        SparkShadowTurn(
+            message_id="m9",
+            role="user",
+            content="I live in Dubai.",
+            timestamp="2026-04-20T00:00:00Z",
+        ),
+        SparkShadowTurn(
+            message_id="m10",
+            role="assistant",
+            content="Noted.",
+            timestamp="2026-04-20T00:00:00Z",
+        ),
+        SparkShadowTurn(
+            message_id="m11",
+            role="user",
+            content="I live in Abu Dhabi now.",
+            timestamp="2026-04-20T00:00:00Z",
+        ),
+    ]
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-same-timestamp-order",
+            turns=turns,
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+    evidence = sdk.retrieve_evidence(
+        EvidenceRetrievalRequest(subject="user", predicate="location", limit=2)
+    )
+
+    assert result.accepted_writes == 2
+    assert current_state.found is True
+    assert current_state.value == "Abu Dhabi"
+    assert evidence.items[0].text == "I live in Abu Dhabi"
 
 
 def test_shadow_ingest_accepts_founder_startup_and_hack_facts():

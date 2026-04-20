@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+import re
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .contracts import NormalizedQuestion
     from .memory_extraction import ObservationEntry
 
 
-def entry_sort_key(observation: "ObservationEntry") -> tuple[str, str]:
-    return observation.timestamp or "", observation.observation_id
+def observation_id_sort_key(observation_id: str | None) -> tuple[Any, ...]:
+    parts = re.split(r"(\d+)", str(observation_id or ""))
+    return tuple(int(part) if part.isdigit() else part for part in parts if part != "")
+
+
+def entry_sort_key(observation: "ObservationEntry") -> tuple[str, tuple[Any, ...]]:
+    return observation.timestamp or "", observation_id_sort_key(observation.observation_id)
 
 
 def state_deletion_target(observation: "ObservationEntry") -> str:
@@ -42,11 +48,11 @@ def build_current_state_view(observations: list["ObservationEntry"]) -> list["Ob
             str(observation.metadata.get("entity_key", "")),
         )
         current = latest_by_key.get(key)
-        if current is None or (observation.timestamp or "") >= (current.timestamp or ""):
+        if current is None or entry_sort_key(observation) >= entry_sort_key(current):
             latest_by_key[key] = observation
     return sorted(
         [*latest_by_key.values(), *passthrough],
-        key=lambda entry: (entry.timestamp or "", entry.observation_id),
+        key=entry_sort_key,
     )
 
 
