@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from collections import Counter
 from datetime import datetime, timedelta, timezone
+import hashlib
 import re
 from pathlib import Path
 from typing import Any
@@ -10,9 +12,14 @@ def _utc_timestamp() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
-def _slugify(value: str) -> str:
+def _slugify(value: str, *, max_length: int = 80) -> str:
     normalized = re.sub(r"[^a-z0-9]+", "-", str(value).strip().lower())
-    return normalized.strip("-") or "item"
+    slug = normalized.strip("-") or "item"
+    if len(slug) <= max_length:
+        return slug
+    digest = hashlib.sha1(slug.encode("utf-8")).hexdigest()[:8]
+    trimmed = slug[: max_length - len(digest) - 1].rstrip("-")
+    return f"{trimmed}-{digest}" if trimmed else digest
 
 
 def _yaml_scalar(value: str) -> str:
@@ -425,18 +432,25 @@ def scaffold_spark_knowledge_base(
                 "path": str(session_page_path),
             }
         )
+    repo_source_paths = [
+        Path(source)
+        for source in repo_sources or []
+        if Path(source).exists() and Path(source).is_file()
+    ]
+    repo_source_stem_counts = Counter(path.stem.lower() for path in repo_source_paths)
+
     ingested_repo_sources = 0
-    for source in repo_sources or []:
-        source_path = Path(source)
-        if not source_path.exists() or not source_path.is_file():
-            continue
+    for source_path in repo_source_paths:
         ingested_repo_sources += 1
         raw_file_name = f"{ingested_repo_sources:02d}-{source_path.name}"
         raw_repo_path = raw_repos_dir / raw_file_name
         raw_text = source_path.read_text(encoding="utf-8", errors="replace")
         raw_repo_path.write_text(raw_text, encoding="utf-8")
 
-        source_slug = _slugify(source_path.stem)
+        source_slug_seed = source_path.stem
+        if repo_source_stem_counts[source_path.stem.lower()] > 1:
+            source_slug_seed = source_path.as_posix()
+        source_slug = _slugify(source_slug_seed)
         repo_source_page_path = sources_dir / f"repo-{source_slug}.md"
         relative_source = source_path.as_posix()
         excerpt_lines = [line.rstrip() for line in raw_text.splitlines()[:12]]

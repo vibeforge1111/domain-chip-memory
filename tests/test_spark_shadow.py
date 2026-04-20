@@ -309,10 +309,105 @@ def test_shadow_ingest_counts_rejected_unsupported_writes():
     current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
 
     assert result.accepted_writes == 1
-    assert result.rejected_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
     assert result.reference_turns == 0
-    assert result.turn_traces[0].action == "rejected_write"
-    assert result.turn_traces[0].unsupported_reason == "no_structured_memory_extracted"
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "low_signal_residue"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_skips_metadata_backed_ephemeral_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-metadata-residue",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="Browser status ok.",
+                    timestamp="2026-04-20T00:00:00Z",
+                    metadata={
+                        "keepability": "ephemeral_context",
+                        "promotion_disposition": "not_promotable",
+                        "bridge_mode": "external_autodiscovered",
+                        "routing_decision": "provider_fallback_chat+manual_recommended",
+                    },
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "low_signal_residue"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_skips_unchanged_explicit_current_state_writes():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-unchanged-state",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:00Z",
+                    metadata={
+                        "source_event_type": "memory_write_requested",
+                        "subject": "human:telegram:test",
+                        "predicate": "profile.city",
+                        "value": "Dubai",
+                        "operation": "update",
+                        "memory_role": "current_state",
+                    },
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I still live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                    metadata={
+                        "source_event_type": "memory_write_requested",
+                        "subject": "human:telegram:test",
+                        "predicate": "profile.city",
+                        "value": "Dubai",
+                        "operation": "update",
+                        "memory_role": "current_state",
+                    },
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(
+        CurrentStateRequest(subject="human:telegram:test", predicate="profile.city")
+    )
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[1].action == "skipped_unchanged_current_state"
+    assert result.turn_traces[1].unsupported_reason == "unchanged_current_state"
     assert current_state.found is True
     assert current_state.value == "Dubai"
 
@@ -684,14 +779,14 @@ def test_shadow_ingest_evaluation_summarizes_write_and_readback_quality():
     )
 
     assert evaluation.summary["accepted_writes"] == 1
-    assert evaluation.summary["rejected_writes"] == 1
-    assert evaluation.summary["skipped_turns"] == 1
+    assert evaluation.summary["rejected_writes"] == 0
+    assert evaluation.summary["skipped_turns"] == 2
     assert evaluation.summary["reference_turns"] == 0
     assert evaluation.summary["accepted_rate"] == 0.3333
-    assert evaluation.summary["rejected_rate"] == 0.3333
-    assert evaluation.summary["skipped_rate"] == 0.3333
+    assert evaluation.summary["rejected_rate"] == 0.0
+    assert evaluation.summary["skipped_rate"] == 0.6667
     assert evaluation.summary["unsupported_reasons"] == [
-        {"reason": "no_structured_memory_extracted", "count": 1}
+        {"reason": "low_signal_residue", "count": 1}
     ]
     assert evaluation.summary["current_state_hit_rate"]["hits"] == 1
     assert evaluation.summary["current_state_hit_rate"]["rate"] == 1.0
@@ -830,15 +925,15 @@ def test_shadow_report_aggregates_multiple_evaluations():
 
     assert report.run_count == 2
     assert report.summary["accepted_writes"] == 2
-    assert report.summary["rejected_writes"] == 1
-    assert report.summary["skipped_turns"] == 1
+    assert report.summary["rejected_writes"] == 0
+    assert report.summary["skipped_turns"] == 2
     assert report.summary["reference_turns"] == 0
     assert report.summary["total_turns"] == 4
     assert report.summary["accepted_rate"] == 0.5
-    assert report.summary["rejected_rate"] == 0.25
-    assert report.summary["skipped_rate"] == 0.25
+    assert report.summary["rejected_rate"] == 0.0
+    assert report.summary["skipped_rate"] == 0.5
     assert report.summary["unsupported_reasons"] == [
-        {"reason": "no_structured_memory_extracted", "count": 1}
+        {"reason": "low_signal_residue", "count": 1}
     ]
     assert report.summary["probe_rows"] == [
         {
@@ -878,8 +973,8 @@ def test_shadow_report_aggregates_multiple_evaluations():
             "conversation_id": "builder-conv-6",
             "session_id": "builder-conv-6",
             "accepted_writes": 1,
-            "rejected_writes": 1,
-            "skipped_turns": 0,
+            "rejected_writes": 0,
+            "skipped_turns": 1,
             "reference_turns": 0,
             "probe_count": 1,
         },

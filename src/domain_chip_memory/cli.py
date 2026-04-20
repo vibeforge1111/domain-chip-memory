@@ -553,7 +553,7 @@ def _build_shadow_turn_audit_payload(shadow_payload: dict, *, top_n: int = 20) -
     rejected_user_turns = [
         row for row in turn_rows if row["role"] == "user" and row["action"] == "rejected_write"
     ]
-    skipped_turns = [row for row in turn_rows if row["action"] == "skipped_role"]
+    skipped_turns = [row for row in turn_rows if str(row["action"]).startswith("skipped_")]
     reference_turns = [row for row in turn_rows if row["action"] == "reference_turn"]
     accepted_user_turns = [row for row in turn_rows if row["role"] == "user" and row["accepted"]]
 
@@ -673,9 +673,32 @@ def _build_shadow_failure_taxonomy_payload(
     skipped_turns = int(summary.get("skipped_turns", 0) or 0)
     reference_turns = int(summary.get("reference_turns", 0) or 0)
     total_turns = int(summary.get("total_turns", accepted_writes + rejected_writes + skipped_turns + reference_turns) or 0)
+    residue_reasons = {"low_signal_residue"}
+    duplicate_churn_reasons = {"unchanged_current_state"}
+    promotion_policy_reasons = {"missing_policy_row", "missing_policy_decision", "defer", "block"}
+    residue_reason_rows = [
+        row for row in unsupported_reasons if str(row.get("reason") or "").strip() in residue_reasons
+    ]
+    duplicate_churn_rows = [
+        row for row in unsupported_reasons if str(row.get("reason") or "").strip() in duplicate_churn_reasons
+    ]
+    structured_gap_reason_rows = [
+        row
+        for row in unsupported_reasons
+        if str(row.get("reason") or "").strip() not in residue_reasons | duplicate_churn_reasons | promotion_policy_reasons
+    ]
     unsupported_total = sum(int(row.get("count", 0) or 0) for row in unsupported_reasons)
+    residue_total = sum(int(row.get("count", 0) or 0) for row in residue_reason_rows)
+    duplicate_churn_total = sum(int(row.get("count", 0) or 0) for row in duplicate_churn_rows)
+    structured_gap_total = sum(int(row.get("count", 0) or 0) for row in structured_gap_reason_rows)
+    gate_skip_total = max(skipped_turns - residue_total - duplicate_churn_total, 0)
     dominant_unsupported_row = max(
         unsupported_reasons,
+        key=lambda row: (int(row.get("count", 0) or 0), str(row.get("reason", "") or "")),
+        default=None,
+    )
+    dominant_structured_gap_row = max(
+        structured_gap_reason_rows,
         key=lambda row: (int(row.get("count", 0) or 0), str(row.get("reason", "") or "")),
         default=None,
     )
@@ -741,24 +764,51 @@ def _build_shadow_failure_taxonomy_payload(
                 "summary": f"{rejected_writes} turns were rejected by governed memory writes.",
             }
         )
-    if skipped_turns:
+    if gate_skip_total:
         issue_buckets.append(
             {
                 "label": "role_scope_gap",
-                "count": skipped_turns,
+                "count": gate_skip_total,
                 "severity": "medium",
-                "summary": f"{skipped_turns} turns were skipped by writable-role policy.",
+                "summary": (
+                    f"{gate_skip_total} turns were skipped before persistence by writable-role or "
+                    "promotion-policy gates."
+                ),
             }
         )
-    if unsupported_total:
+    if residue_total:
+        issue_buckets.append(
+            {
+                "label": "residue_quarantine",
+                "count": residue_total,
+                "severity": "low",
+                "summary": (
+                    f"{residue_total} low-signal turns were quarantined as conversational residue instead of "
+                    "being treated as failed memory writes."
+                ),
+            }
+        )
+    if duplicate_churn_total:
+        issue_buckets.append(
+            {
+                "label": "duplicate_write_churn",
+                "count": duplicate_churn_total,
+                "severity": "medium",
+                "summary": (
+                    f"{duplicate_churn_total} writes were skipped because the governed current-state value already "
+                    "matched the incoming value."
+                ),
+            }
+        )
+    if structured_gap_total:
         issue_buckets.append(
             {
                 "label": "structured_extraction_gap",
-                "count": unsupported_total,
+                "count": structured_gap_total,
                 "severity": "high",
                 "summary": (
-                    f"{unsupported_total} turns were rejected for unsupported reasons, led by "
-                    f"`{dominant_unsupported_row.get('reason', 'unknown')}`."
+                    f"{structured_gap_total} turns were rejected for unsupported reasons, led by "
+                    f"`{(dominant_structured_gap_row or {}).get('reason', 'unknown')}`."
                 ),
             }
         )
@@ -784,7 +834,29 @@ def _build_shadow_failure_taxonomy_payload(
     recommended_next_actions: list[dict] = []
     if dominant_unsupported_row is not None:
         reason = str(dominant_unsupported_row.get("reason", "") or "")
-        if reason == "no_structured_memory_extracted":
+        if reason == "low_signal_residue":
+            recommended_next_actions.append(
+                {
+                    "label": "confirm_residue_quarantine",
+                    "priority": 1,
+                    "rationale": (
+                        "The dominant skipped reason is low-signal residue. Confirm the greeting and acknowledgment "
+                        "quarantine stays conservative and does not suppress real memory-worthy user facts."
+                    ),
+                }
+            )
+        elif reason == "unchanged_current_state":
+            recommended_next_actions.append(
+                {
+                    "label": "confirm_duplicate_write_suppression",
+                    "priority": 1,
+                    "rationale": (
+                        "The dominant skipped reason is unchanged current state. Confirm that repeat Builder writes "
+                        "are being collapsed intentionally and that true state transitions still persist."
+                    ),
+                }
+            )
+        elif reason == "no_structured_memory_extracted":
             recommended_next_actions.append(
                 {
                     "label": "improve_structured_write_extraction",
@@ -803,14 +875,14 @@ def _build_shadow_failure_taxonomy_payload(
                     "rationale": f"The dominant unsupported reason is `{reason}` and should be mapped to a concrete Spark-side fix.",
                 }
             )
-    if skipped_turns:
+    if gate_skip_total:
         recommended_next_actions.append(
             {
                 "label": "confirm_writable_role_policy",
                 "priority": 2,
                 "rationale": (
-                    "Skipped turns are currently being filtered by writable-role policy. Confirm that this is intended "
-                    "and that noisy assistant-only turns are not masking real user-memory opportunities."
+                    "Skipped turns are currently being filtered before persistence by writable-role or promotion "
+                    "policy. Confirm that this is intended and not masking real user-memory opportunities."
                 ),
             }
         )
@@ -1466,12 +1538,16 @@ def _run_spark_builder_telegram_intake(
     repo_sources: list[str] | None = None,
     repo_source_manifest_files: list[str] | None = None,
 ) -> dict:
+    effective_repo_source_manifest_files = _default_builder_repo_source_manifest_files(
+        builder_dir,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
     payload = _run_spark_telegram_intake_batch(
         builder_dir,
         output_dir,
         glob_pattern=glob_pattern,
         repo_sources=repo_sources,
-        repo_source_manifest_files=repo_source_manifest_files,
+        repo_source_manifest_files=effective_repo_source_manifest_files,
     )
     payload["builder_source_dir"] = str(Path(builder_dir))
     payload["summary"]["builder_artifact_glob"] = glob_pattern
@@ -2303,6 +2379,10 @@ def _run_spark_builder_state_telegram_intake(
     repo_sources: list[str] | None = None,
     repo_source_manifest_files: list[str] | None = None,
 ) -> dict:
+    effective_repo_source_manifest_files = _default_builder_repo_source_manifest_files(
+        builder_home,
+        repo_source_manifest_files=repo_source_manifest_files,
+    )
     normalization = _normalize_builder_telegram_state_db(builder_home, limit=limit, chat_id=chat_id)
     normalized = normalization["normalized"]
     evaluations, adapter = _execute_shadow_replay_payload(normalized)
@@ -2317,7 +2397,7 @@ def _run_spark_builder_state_telegram_intake(
     snapshot = adapter.sdk.export_knowledge_base_snapshot()
     resolved_repo_sources = _resolve_repo_source_files(
         repo_sources=repo_sources,
-        repo_source_manifest_files=repo_source_manifest_files,
+        repo_source_manifest_files=effective_repo_source_manifest_files,
     )
     compile_result = scaffold_spark_knowledge_base(
         output_dir,
@@ -2352,6 +2432,7 @@ def _run_spark_builder_state_telegram_intake(
             "reference_turn_count": int(turn_audit.get("summary", {}).get("reference_turn_count", 0) or 0),
             "kb_valid": bool(health_report.get("valid", False)),
             "kb_filed_output_count": int(compile_result.get("filed_output_count", 0) or 0),
+            "repo_source_manifest_file_count": len(effective_repo_source_manifest_files),
         },
         "trace": {
             "operation": "run_spark_builder_state_telegram_intake",
@@ -2359,6 +2440,22 @@ def _run_spark_builder_state_telegram_intake(
             "chat_id": chat_id,
         },
     }
+
+
+def _default_builder_repo_source_manifest_files(
+    builder_home: str,
+    *,
+    repo_source_manifest_files: list[str] | None = None,
+) -> list[str]:
+    if repo_source_manifest_files:
+        return list(repo_source_manifest_files)
+    root = Path(builder_home)
+    if root.is_file():
+        root = root.parent
+    attachments_snapshot = root / "attachments.snapshot.json"
+    if attachments_snapshot.exists() and attachments_snapshot.is_file():
+        return [str(attachments_snapshot)]
+    return []
 
 
 def _validate_shadow_replay_batch_payload(data_dir: str, *, glob_pattern: str = "*.json") -> dict:
@@ -2561,6 +2658,123 @@ def _load_string_list_manifest(manifest_file: str, *, key: str, label: str) -> l
             item_path = manifest_path.parent / item_path
         resolved_items.append(str(item_path))
     return resolved_items
+
+
+def _resolve_manifest_path_item(manifest_path: Path, value: object) -> Path | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    path = Path(text)
+    if not path.is_absolute():
+        path = manifest_path.parent / path
+    return path
+
+
+def _append_unique_repo_source_path(
+    resolved_items: list[str],
+    seen: set[str],
+    path: Path | None,
+) -> None:
+    if path is None or not path.exists() or not path.is_file():
+        return
+    normalized = str(path)
+    if normalized in seen:
+        return
+    seen.add(normalized)
+    resolved_items.append(normalized)
+
+
+def _discover_repo_source_files_from_root(root: Path) -> list[Path]:
+    if not root.exists() or not root.is_dir():
+        return []
+
+    discovered: list[Path] = []
+    seen: set[str] = set()
+
+    def _add(path: Path) -> None:
+        _append_unique_repo_source_path(discovered_strings, seen, path)
+
+    discovered_strings: list[str] = []
+    for relative in (
+        "spark-chip.json",
+        "CLAUDE.md",
+        "README.md",
+        "README.mdx",
+        "README.txt",
+        "PROJECT.md",
+        "ARCHITECTURE.md",
+    ):
+        _add(root / relative)
+
+    for pattern in ("*.md", "*.mdx"):
+        for path in sorted(root.glob(pattern)):
+            _add(path)
+
+    docs_dir = root / "docs"
+    if docs_dir.exists() and docs_dir.is_dir():
+        docs_paths = [
+            path
+            for pattern in ("*.md", "*.mdx")
+            for path in sorted(docs_dir.rglob(pattern))
+            if path.is_file()
+        ]
+        for path in docs_paths[:8]:
+            _add(path)
+
+    return [Path(item) for item in discovered_strings]
+
+
+def _load_repo_source_manifest(manifest_file: str) -> list[str]:
+    manifest_path = Path(manifest_file)
+    payload = _load_json_file(manifest_path)
+    if isinstance(payload, list):
+        if not all(isinstance(item, str) for item in payload):
+            raise ValueError("Repo source manifest file must contain a JSON list of strings.")
+        return _load_string_list_manifest(manifest_file, key="repo_sources", label="Repo source manifest file")
+
+    if not isinstance(payload, dict):
+        raise ValueError(
+            "Repo source manifest file must contain a JSON list of strings, "
+            "an object with a 'repo_sources' list, or a Spark Builder attachments snapshot."
+        )
+
+    repo_sources = payload.get("repo_sources")
+    if isinstance(repo_sources, list) and all(isinstance(item, str) for item in repo_sources):
+        return _load_string_list_manifest(manifest_file, key="repo_sources", label="Repo source manifest file")
+
+    resolved_items: list[str] = []
+    seen: set[str] = set()
+    records = payload.get("records")
+    if isinstance(records, list):
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            for key in ("manifest_path", "hook_manifest_path"):
+                _append_unique_repo_source_path(
+                    resolved_items,
+                    seen,
+                    _resolve_manifest_path_item(manifest_path, record.get(key)),
+                )
+            repo_root = _resolve_manifest_path_item(manifest_path, record.get("repo_root"))
+            for discovered in _discover_repo_source_files_from_root(repo_root or Path()):
+                _append_unique_repo_source_path(resolved_items, seen, discovered)
+
+    for key in ("chip_roots", "path_roots"):
+        roots = payload.get(key)
+        if not isinstance(roots, list):
+            continue
+        for raw_root in roots:
+            root = _resolve_manifest_path_item(manifest_path, raw_root)
+            for discovered in _discover_repo_source_files_from_root(root or Path()):
+                _append_unique_repo_source_path(resolved_items, seen, discovered)
+
+    if resolved_items:
+        return resolved_items
+
+    raise ValueError(
+        "Repo source manifest file must contain a 'repo_sources' list or a Spark Builder attachments snapshot "
+        "with records/chip_roots/path_roots that resolve to source files."
+    )
 
 
 def _kb_page_slug(value: object) -> str:
@@ -5324,13 +5538,7 @@ def _resolve_repo_source_files(
 ) -> list[str]:
     resolved_repo_sources = list(repo_sources or [])
     for repo_source_manifest_file in repo_source_manifest_files or []:
-        resolved_repo_sources.extend(
-            _load_string_list_manifest(
-                repo_source_manifest_file,
-                key="repo_sources",
-                label="Repo source manifest file",
-            )
-        )
+        resolved_repo_sources.extend(_load_repo_source_manifest(repo_source_manifest_file))
     return resolved_repo_sources
 
 
@@ -5390,13 +5598,7 @@ def _validate_spark_kb_inputs(
     repo_source_manifest_errors: list[dict[str, str]] = []
     for repo_source_manifest_file in repo_source_manifest_files or []:
         try:
-            resolved_repo_sources.extend(
-                _load_string_list_manifest(
-                    repo_source_manifest_file,
-                    key="repo_sources",
-                    label="Repo source manifest file",
-                )
-            )
+            resolved_repo_sources.extend(_load_repo_source_manifest(repo_source_manifest_file))
         except Exception as exc:
             repo_source_manifest_errors.append({"file": str(repo_source_manifest_file), "error": str(exc)})
     resolved_repo_sources = [*(repo_sources or []), *resolved_repo_sources]

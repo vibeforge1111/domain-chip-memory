@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import asdict, dataclass, field
+import re
 from typing import Any
 
 from .contracts import JsonDict
@@ -170,6 +171,29 @@ class SparkShadowIngestAdapter:
                     )
                 )
                 continue
+            if self._is_low_signal_residue_turn(turn, normalized_role):
+                skipped_turns += 1
+                turn_traces.append(
+                    SparkShadowTurnTrace(
+                        message_id=turn.message_id,
+                        role=normalized_role,
+                        action="skipped_residue",
+                        session_id=session_id,
+                        turn_id=turn_id,
+                        accepted=False,
+                        unsupported_reason="low_signal_residue",
+                        trace={
+                            "operation": "shadow_ingest_turn",
+                            "status": "skipped_residue",
+                            "conversation_id": request.conversation_id,
+                            "message_id": turn.message_id,
+                            "role": normalized_role,
+                            "content": turn.content,
+                            "timestamp": turn.timestamp,
+                        },
+                    )
+                )
+                continue
             policy_decision, policy_row = self._promotion_policy_decision(
                 request.conversation_id,
                 dict(turn.metadata),
@@ -194,6 +218,30 @@ class SparkShadowIngestAdapter:
                             "policy_decision": policy_decision,
                             "policy_row": dict(policy_row) if isinstance(policy_row, dict) else None,
                             "source_backed_clone": bool(turn.metadata.get("source_backed_clone")),
+                        },
+                    )
+                )
+                continue
+            unchanged_state_reason = self._unchanged_current_state_reason(turn, normalized_role)
+            if unchanged_state_reason is not None:
+                skipped_turns += 1
+                turn_traces.append(
+                    SparkShadowTurnTrace(
+                        message_id=turn.message_id,
+                        role=normalized_role,
+                        action="skipped_unchanged_current_state",
+                        session_id=session_id,
+                        turn_id=turn_id,
+                        accepted=False,
+                        unsupported_reason=unchanged_state_reason,
+                        trace={
+                            "operation": "shadow_ingest_turn",
+                            "status": "skipped_unchanged_current_state",
+                            "conversation_id": request.conversation_id,
+                            "message_id": turn.message_id,
+                            "role": normalized_role,
+                            "content": turn.content,
+                            "timestamp": turn.timestamp,
                         },
                     )
                 )
@@ -362,6 +410,117 @@ class SparkShadowIngestAdapter:
         if normalized_role not in self.writable_roles and source_event_type == "tool_result_received":
             return True
         return False
+
+    def _is_low_signal_residue_turn(self, turn: SparkShadowTurn, normalized_role: str) -> bool:
+        if normalized_role not in self.writable_roles:
+            return False
+        metadata = dict(turn.metadata)
+        if self._has_structured_memory_hints(metadata):
+            return False
+        if self._is_metadata_backed_residue(metadata):
+            return True
+        normalized_text = self._normalize_residue_text(turn.content)
+        if not normalized_text:
+            return True
+        if normalized_text.startswith("/") and len(normalized_text.split()) <= 4:
+            return True
+        if not re.search(r"[a-z0-9]", normalized_text):
+            return True
+        return normalized_text in {
+            "hello",
+            "hello there",
+            "hi",
+            "hi there",
+            "hey",
+            "hey there",
+            "thanks",
+            "thank you",
+            "ok",
+            "okay",
+            "ok thanks",
+            "okay thanks",
+            "got it",
+            "sounds good",
+            "cool",
+            "nice",
+            "great",
+            "awesome",
+            "sure",
+        }
+
+    def _has_structured_memory_hints(self, metadata: JsonDict) -> bool:
+        operation = str(metadata.get("operation") or "").strip().lower()
+        if operation and operation != "auto":
+            return True
+        if any(str(metadata.get(key) or "").strip() for key in ("subject", "predicate", "value")):
+            return True
+        if str(metadata.get("memory_kind") or "").strip().lower() == "event":
+            return True
+        if bool(metadata.get("source_backed_clone")):
+            return True
+        source_event_type = str(metadata.get("source_event_type") or "").strip().lower()
+        if source_event_type in {"memory_write_requested", "plugin_or_chip_influence_recorded"}:
+            return True
+        return False
+
+    def _is_metadata_backed_residue(self, metadata: JsonDict) -> bool:
+        keepability = str(metadata.get("keepability") or "").strip().lower()
+        promotion_disposition = str(metadata.get("promotion_disposition") or "").strip().lower()
+        bridge_mode = str(metadata.get("bridge_mode") or "").strip().lower()
+        routing_decision = str(metadata.get("routing_decision") or "").strip().lower()
+        ephemeral_keepabilities = {
+            "ephemeral_context",
+            "user_preference_ephemeral",
+        }
+        non_promotable_bridge_modes = {
+            "external_autodiscovered",
+        }
+        non_promotable_routing_decisions = {
+            "provider_fallback_chat+manual_recommended",
+            "provider_execution+manual_recommended",
+        }
+        if keepability in ephemeral_keepabilities:
+            return True
+        if promotion_disposition == "not_promotable":
+            return True
+        if bridge_mode in non_promotable_bridge_modes:
+            return True
+        if routing_decision in non_promotable_routing_decisions:
+            return True
+        return False
+
+    def _unchanged_current_state_reason(self, turn: SparkShadowTurn, normalized_role: str) -> str | None:
+        if normalized_role not in self.writable_roles:
+            return None
+        metadata = dict(turn.metadata)
+        memory_kind = str(metadata.get("memory_kind") or "observation").strip().lower()
+        if memory_kind == "event":
+            return None
+        operation = str(metadata.get("operation") or "").strip().lower()
+        if operation not in {"create", "update"}:
+            return None
+        subject = str(metadata.get("subject") or "").strip()
+        predicate = str(metadata.get("predicate") or "").strip()
+        value = str(metadata.get("value") or "").strip()
+        if not subject or not predicate or not value:
+            return None
+        current_state = self.sdk.get_current_state(
+            CurrentStateRequest(
+                subject=subject,
+                predicate=predicate,
+            )
+        )
+        if not current_state.found:
+            return None
+        existing_value = self._normalize_residue_text(str(current_state.value or ""))
+        incoming_value = self._normalize_residue_text(value)
+        if existing_value and incoming_value and existing_value == incoming_value:
+            return "unchanged_current_state"
+        return None
+
+    def _normalize_residue_text(self, text: str) -> str:
+        lowered = re.sub(r"\s+", " ", str(text or "").strip().lower())
+        return lowered.strip(" \t\r\n.!?,;:-_")
 
     def _promotion_policy_key(self, row: JsonDict) -> tuple[str, str, str, str] | None:
         target_conversation_id = str(row.get("target_conversation_id") or "").strip()

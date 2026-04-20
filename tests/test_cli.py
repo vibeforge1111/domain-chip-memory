@@ -351,8 +351,8 @@ def test_demo_spark_shadow_report_command_runs_and_can_write(tmp_path: Path, mon
     written = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["report"]["run_count"] == 2
     assert payload["report"]["summary"]["accepted_writes"] == 3
-    assert payload["report"]["summary"]["rejected_writes"] == 1
-    assert payload["report"]["summary"]["skipped_turns"] == 1
+    assert payload["report"]["summary"]["rejected_writes"] == 0
+    assert payload["report"]["summary"]["skipped_turns"] == 2
     assert payload["report"]["summary"]["probe_rows"]
     assert written["report"]["conversation_rows"][0]["conversation_id"] == "spark-shadow-demo-1"
 
@@ -942,6 +942,124 @@ def test_build_spark_kb_command_ingests_repo_sources_from_manifest(tmp_path: Pat
     assert (output_dir / "raw" / "repos" / "02-src-snippet.py").exists()
 
 
+def test_build_spark_kb_command_ingests_repo_sources_from_builder_attachments_snapshot_manifest(
+    tmp_path: Path,
+    monkeypatch,
+):
+    output_dir = tmp_path / "compiled_vault"
+    snapshot_file = tmp_path / "snapshot.json"
+    builder_manifest = tmp_path / "attachments.snapshot.json"
+    chip_root = tmp_path / "domain-chip-sample"
+    path_root = tmp_path / "specialization-path-sample"
+    summary_file = tmp_path / "summary.json"
+
+    chip_root.mkdir()
+    (chip_root / "docs").mkdir()
+    path_root.mkdir()
+
+    (chip_root / "spark-chip.json").write_text('{"key":"domain-chip-sample"}\n', encoding="utf-8")
+    (chip_root / "README.md").write_text("# Sample Chip\n\nChip notes.\n", encoding="utf-8")
+    (chip_root / "docs" / "guide.md").write_text("# Guide\n\nMore chip notes.\n", encoding="utf-8")
+    (path_root / "README.md").write_text("# Sample Path\n\nPath notes.\n", encoding="utf-8")
+
+    builder_manifest.write_text(
+        json.dumps(
+            {
+                "chip_roots": [str(chip_root)],
+                "path_roots": [str(path_root)],
+                "records": [
+                    {
+                        "kind": "chip",
+                        "repo_root": str(chip_root),
+                        "manifest_path": str(chip_root / "spark-chip.json"),
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    snapshot_file.write_text(
+        json.dumps(
+            {
+                "runtime_class": "SparkMemorySDK",
+                "generated_at": "2025-03-10T00:00:00+00:00",
+                "counts": {
+                    "session_count": 1,
+                    "current_state_count": 1,
+                    "observation_count": 1,
+                    "event_count": 0,
+                },
+                "sessions": [
+                    {
+                        "session_id": "session-attachments",
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "turns": [
+                            {
+                                "turn_id": "session-attachments:t1",
+                                "speaker": "user",
+                                "text": "Remember my preferred city is Dubai.",
+                            }
+                        ],
+                    }
+                ],
+                "current_state": [
+                    {
+                        "memory_role": "current_state",
+                        "subject": "user",
+                        "predicate": "location",
+                        "text": "user location Dubai",
+                        "session_id": "session-attachments",
+                        "turn_ids": ["session-attachments:t1"],
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "metadata": {"value": "Dubai", "observation_id": "obs-attachments-1"},
+                    }
+                ],
+                "observations": [
+                    {
+                        "memory_role": "structured_evidence",
+                        "subject": "user",
+                        "predicate": "location",
+                        "text": "user location Dubai",
+                        "session_id": "session-attachments",
+                        "turn_ids": ["session-attachments:t1"],
+                        "timestamp": "2025-03-10T00:00:00+00:00",
+                        "metadata": {"value": "Dubai", "observation_id": "obs-attachments-1"},
+                    }
+                ],
+                "events": [],
+                "trace": {"operation": "export_knowledge_base_snapshot"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "build-spark-kb",
+            str(snapshot_file),
+            str(output_dir),
+            "--repo-source-manifest",
+            str(builder_manifest),
+            "--write",
+            str(summary_file),
+        ],
+    )
+
+    cli.main()
+
+    written = json.loads(summary_file.read_text(encoding="utf-8"))
+    assert written["repo_source_manifest_file_count"] == 1
+    assert written["compile_result"]["repo_source_count"] == 4
+    repo_pages = sorted(path.name for path in (output_dir / "wiki" / "sources").glob("repo-*.md"))
+    assert len(repo_pages) == 4
+    assert len(set(repo_pages)) == 4
+    assert (output_dir / "raw" / "repos" / "01-spark-chip.json").exists()
+    assert (output_dir / "raw" / "repos" / "02-README.md").exists()
+
+
 def test_build_spark_kb_from_shadow_replay_cli_compiles_kb_from_spark_flow(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "spark_shadow.json"
     output_dir = tmp_path / "spark_shadow_kb"
@@ -1114,7 +1232,7 @@ def test_build_spark_kb_from_shadow_replay_batch_cli_compiles_one_vault_for_dire
     assert payload["shadow_report"]["run_count"] == 2
     assert payload["snapshot"]["runtime_class"] == "SparkMemorySDK"
     assert payload["compile_result"]["repo_source_count"] == 1
-    assert payload["compile_result"]["filed_output_count"] == 3
+    assert payload["compile_result"]["filed_output_count"] == 4
     assert payload["health_report"]["valid"] is True
     assert (output_dir / "wiki" / "current-state" / "user-location.md").exists()
     assert (output_dir / "wiki" / "current-state" / "user-favorite-coffee.md").exists()
@@ -1617,8 +1735,8 @@ def test_run_spark_shadow_report_cli_can_write_report(tmp_path: Path, monkeypatc
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["report"]["run_count"] == 2
     assert payload["report"]["summary"]["accepted_writes"] == 3
-    assert payload["report"]["summary"]["rejected_writes"] == 1
-    assert payload["report"]["summary"]["skipped_turns"] == 1
+    assert payload["report"]["summary"]["rejected_writes"] == 0
+    assert payload["report"]["summary"]["skipped_turns"] == 2
     assert payload["report"]["summary"]["probe_rows"] == [
         {
             "probe_type": "current_state",
@@ -1829,9 +1947,10 @@ def test_run_spark_shadow_report_from_builder_export_cli_can_write_report(tmp_pa
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["report"]["run_count"] == 1
     assert payload["report"]["summary"]["accepted_writes"] == 1
-    assert payload["report"]["summary"]["rejected_writes"] == 1
+    assert payload["report"]["summary"]["rejected_writes"] == 0
+    assert payload["report"]["summary"]["skipped_turns"] == 1
     assert payload["report"]["summary"]["unsupported_reasons"] == [
-        {"reason": "no_structured_memory_extracted", "count": 1}
+        {"reason": "low_signal_residue", "count": 1}
     ]
 
 
@@ -1981,11 +2100,11 @@ def test_build_spark_shadow_failure_taxonomy_from_builder_export_cli_can_write_t
 
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["source_mode"] == "builder_export"
-    assert payload["summary"]["dominant_unsupported_reason"] == "no_structured_memory_extracted"
-    assert "structured_extraction_gap" in payload["summary"]["issue_labels"]
+    assert payload["summary"]["dominant_unsupported_reason"] == "low_signal_residue"
+    assert "residue_quarantine" in payload["summary"]["issue_labels"]
     assert "probe_coverage_gap" in payload["summary"]["issue_labels"]
     assert payload["conversation_hotspots"][0]["conversation_id"] == "builder-thread-1"
-    assert payload["recommended_next_actions"][0]["label"] == "improve_structured_write_extraction"
+    assert payload["recommended_next_actions"][0]["label"] == "confirm_residue_quarantine"
 
 
 def test_build_spark_kb_from_builder_export_cli_compiles_kb_from_builder_aliases(tmp_path: Path, monkeypatch):
@@ -2150,13 +2269,14 @@ def test_run_spark_shadow_report_from_builder_export_batch_cli_can_write_aggrega
     assert payload["contract"]["layer_name"] == "SparkBuilderShadowAdapter"
     assert payload["report"]["run_count"] == 2
     assert payload["report"]["summary"]["accepted_writes"] == 2
-    assert payload["report"]["summary"]["rejected_writes"] == 1
+    assert payload["report"]["summary"]["rejected_writes"] == 0
+    assert payload["report"]["summary"]["skipped_turns"] == 1
     assert payload["source_files"] == [
         str(data_dir / "thread_a.json"),
         str(data_dir / "thread_b.json"),
     ]
     assert payload["source_reports"][1]["summary"]["unsupported_reasons"] == [
-        {"reason": "no_structured_memory_extracted", "count": 1}
+        {"reason": "low_signal_residue", "count": 1}
     ]
 
 
@@ -2235,12 +2355,13 @@ def test_build_spark_shadow_failure_taxonomy_from_builder_export_batch_cli_can_w
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["source_mode"] == "builder_export_batch"
     assert payload["summary"]["run_count"] == 2
-    assert payload["summary"]["dominant_unsupported_reason"] == "no_structured_memory_extracted"
+    assert payload["summary"]["dominant_unsupported_reason"] == "low_signal_residue"
     assert "role_scope_gap" in payload["summary"]["issue_labels"]
-    assert "structured_extraction_gap" in payload["summary"]["issue_labels"]
+    assert "residue_quarantine" in payload["summary"]["issue_labels"]
     assert payload["source_hotspots"][0]["file"] == str(data_dir / "thread_b.json")
     assert payload["source_hotspots"][0]["friction_count"] == 2
     assert any(row["label"] == "confirm_writable_role_policy" for row in payload["recommended_next_actions"])
+    assert any(row["label"] == "confirm_residue_quarantine" for row in payload["recommended_next_actions"])
     assert any(row["label"] == "add_shadow_probes" for row in payload["recommended_next_actions"])
 
 
@@ -2336,13 +2457,13 @@ def test_build_spark_kb_from_builder_export_batch_cli_compiles_one_vault_for_dir
     assert payload["contract"]["layer_name"] == "SparkBuilderShadowAdapter"
     assert payload["shadow_report"]["run_count"] == 2
     assert payload["shadow_report"]["summary"]["accepted_writes"] == 2
-    assert payload["shadow_report"]["summary"]["rejected_writes"] == 1
-    assert payload["shadow_report"]["summary"]["skipped_turns"] == 1
-    assert payload["compile_result"]["filed_output_count"] == 3
+    assert payload["shadow_report"]["summary"]["rejected_writes"] == 0
+    assert payload["shadow_report"]["summary"]["skipped_turns"] == 2
+    assert payload["compile_result"]["filed_output_count"] == 4
     assert payload["health_report"]["valid"] is True
     assert payload["source_reports"][0]["summary"]["accepted_writes"] == 1
     assert payload["source_reports"][1]["summary"]["unsupported_reasons"] == [
-        {"reason": "no_structured_memory_extracted", "count": 1}
+        {"reason": "low_signal_residue", "count": 1}
     ]
     assert (output_dir / "wiki" / "current-state" / "user-location.md").exists()
     assert (output_dir / "wiki" / "current-state" / "user-favorite-coffee.md").exists()
@@ -2440,11 +2561,11 @@ def test_run_spark_builder_intake_batch_cli_runs_full_builder_flow(tmp_path: Pat
     assert payload["summary"]["file_count"] == 2
     assert payload["summary"]["valid_builder_exports"] is True
     assert payload["summary"]["accepted_writes"] == 2
-    assert payload["summary"]["rejected_writes"] == 1
-    assert payload["summary"]["skipped_turns"] == 1
-    assert payload["summary"]["dominant_unsupported_reason"] == "no_structured_memory_extracted"
+    assert payload["summary"]["rejected_writes"] == 0
+    assert payload["summary"]["skipped_turns"] == 2
+    assert payload["summary"]["dominant_unsupported_reason"] == "low_signal_residue"
     assert "role_scope_gap" in payload["summary"]["issue_labels"]
-    assert "structured_extraction_gap" in payload["summary"]["issue_labels"]
+    assert "residue_quarantine" in payload["summary"]["issue_labels"]
     assert payload["summary"]["kb_valid"] is True
     assert payload["summary"]["kb_filed_output_count"] == 4
     assert payload["kb"]["health_report"]["valid"] is True
@@ -2571,9 +2692,9 @@ def test_run_spark_telegram_intake_batch_cli_runs_full_telegram_flow(tmp_path: P
     assert payload["summary"]["valid_telegram_exports"] is True
     assert payload["summary"]["run_count"] == 2
     assert payload["summary"]["accepted_writes"] == 1
-    assert payload["summary"]["rejected_writes"] == 1
-    assert payload["summary"]["skipped_turns"] == 1
-    assert "structured_extraction_gap" in payload["summary"]["issue_labels"]
+    assert payload["summary"]["rejected_writes"] == 0
+    assert payload["summary"]["skipped_turns"] == 2
+    assert "residue_quarantine" in payload["summary"]["issue_labels"]
     assert "probe_coverage_gap" in payload["summary"]["issue_labels"]
     assert payload["summary"]["kb_valid"] is True
     assert payload["summary"]["kb_filed_output_count"] == 4
@@ -2639,10 +2760,68 @@ def test_run_spark_builder_telegram_intake_cli_scans_builder_tmp_updates(tmp_pat
     assert payload["summary"]["file_count"] == 2
     assert payload["summary"]["valid_telegram_exports"] is True
     assert payload["summary"]["accepted_writes"] == 1
-    assert payload["summary"]["rejected_writes"] == 1
-    assert payload["summary"]["skipped_turns"] == 0
+    assert payload["summary"]["rejected_writes"] == 0
+    assert payload["summary"]["skipped_turns"] == 1
     assert payload["kb"]["health_report"]["valid"] is True
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
+
+
+def test_run_spark_builder_telegram_intake_cli_auto_uses_builder_attachments_snapshot_for_repo_sources(
+    tmp_path: Path,
+    monkeypatch,
+):
+    builder_dir = tmp_path / "spark-intelligence-builder"
+    output_dir = tmp_path / "spark_builder_telegram_intake_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_telegram_intake.json"
+    attached_repo = tmp_path / "domain-chip-sample"
+    builder_dir.mkdir()
+    attached_repo.mkdir()
+
+    (builder_dir / ".tmp-telegram-allowed.json").write_text(
+        json.dumps(
+            {
+                "update_id": 1001,
+                "message": {
+                    "message_id": 7,
+                    "date": "2025-03-01T09:00:00Z",
+                    "from": {"id": 12345, "username": "allowed_user"},
+                    "chat": {"id": 12345, "type": "private"},
+                    "text": "I live in Dubai.",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (attached_repo / "README.md").write_text("# Sample Chip\n\nAttached repo notes.\n", encoding="utf-8")
+    (builder_dir / "attachments.snapshot.json").write_text(
+        json.dumps(
+            {
+                "chip_roots": [str(attached_repo)],
+                "records": [{"kind": "chip", "repo_root": str(attached_repo)}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-telegram-intake",
+            str(builder_dir),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["summary"]["file_count"] == 1
+    assert payload["kb"]["compile_result"]["repo_source_count"] == 1
+    assert any(path.name.startswith("repo-readme") for path in (output_dir / "wiki" / "sources").glob("repo-*.md"))
 
 
 def test_run_spark_builder_state_telegram_intake_cli_reads_builder_state_db(tmp_path: Path, monkeypatch):
@@ -2827,10 +3006,10 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_builder_state_db(tmp_
     assert payload["summary"]["conversation_count"] == 1
     assert payload["summary"]["selected_chat_id"] == "12345"
     assert payload["summary"]["accepted_writes"] == 1
-    assert payload["summary"]["rejected_writes"] == 1
-    assert payload["summary"]["skipped_turns"] == 1
-    assert payload["summary"]["rejected_user_turn_count"] == 1
-    assert payload["turn_audit"]["summary"]["rejected_user_turn_count"] == 1
+    assert payload["summary"]["rejected_writes"] == 0
+    assert payload["summary"]["skipped_turns"] == 2
+    assert payload["summary"]["rejected_user_turn_count"] == 0
+    assert payload["turn_audit"]["summary"]["rejected_user_turn_count"] == 0
     assert payload["summary"]["kb_valid"] is True
     assert payload["compile_result"]["filed_output_count"] == 4
     assert payload["health_report"]["valid"] is True
@@ -3143,10 +3322,11 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
     assert payload["summary"]["skipped_turns"] == 0
     assert payload["summary"]["reference_turns"] == 3
     assert payload["summary"]["reference_turn_count"] == 3
-    assert payload["shadow_report"]["summary"]["current_state_hit_rate"]["total"] == 2
-    assert payload["shadow_report"]["summary"]["current_state_hit_rate"]["hits"] == 2
-    assert payload["shadow_report"]["summary"]["evidence_hit_rate"]["total"] == 2
-    assert payload["shadow_report"]["summary"]["evidence_hit_rate"]["hits"] == 2
+    probe_rows = {row["probe_type"]: row for row in payload["shadow_report"]["summary"]["probe_rows"]}
+    assert probe_rows["current_state"]["total"] == 2
+    assert probe_rows["current_state"]["hits"] == 2
+    assert probe_rows["evidence"]["total"] == 2
+    assert probe_rows["evidence"]["hits"] == 2
     assert payload["turn_audit"]["summary"]["rejected_user_turn_count"] == 0
     assert payload["turn_audit"]["summary"]["reference_turn_count"] == 3
     assert payload["summary"]["kb_valid"] is True
@@ -3371,8 +3551,9 @@ def test_run_spark_builder_state_telegram_intake_cli_replays_explanation_queries
         "current_state",
         "evidence",
     ]
-    assert payload["shadow_report"]["summary"]["current_state_hit_rate"]["total"] == 2
-    assert payload["shadow_report"]["summary"]["evidence_hit_rate"]["total"] == 2
+    probe_rows = {row["probe_type"]: row for row in payload["shadow_report"]["summary"]["probe_rows"]}
+    assert probe_rows["current_state"]["total"] == 2
+    assert probe_rows["evidence"]["total"] == 2
     assert payload["failure_taxonomy"]["summary"]["has_probe_coverage"] is True
     assert "probe_coverage_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
 
@@ -4650,15 +4831,15 @@ def test_run_spark_shadow_report_batch_cli_can_aggregate_directory(tmp_path: Pat
     payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert payload["report"]["run_count"] == 2
     assert payload["report"]["summary"]["accepted_writes"] == 2
-    assert payload["report"]["summary"]["rejected_writes"] == 1
-    assert payload["report"]["summary"]["skipped_turns"] == 1
+    assert payload["report"]["summary"]["rejected_writes"] == 0
+    assert payload["report"]["summary"]["skipped_turns"] == 2
     assert payload["source_files"] == [
         str(data_dir / "slice_a.json"),
         str(data_dir / "slice_b.json"),
     ]
     assert payload["source_reports"][0]["summary"]["accepted_writes"] == 1
     assert payload["source_reports"][1]["summary"]["unsupported_reasons"] == [
-        {"reason": "no_structured_memory_extracted", "count": 1}
+        {"reason": "low_signal_residue", "count": 1}
     ]
     assert payload["report"]["summary"]["probe_rows"] == [
         {
