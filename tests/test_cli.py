@@ -2293,6 +2293,46 @@ def test_build_shadow_failure_taxonomy_flags_probe_value_mismatches():
     assert payload["recommended_next_actions"][0]["label"] == "investigate_probe_value_mismatches"
 
 
+def test_build_shadow_failure_taxonomy_treats_non_memory_chat_as_residue():
+    payload = cli._build_shadow_failure_taxonomy_payload(
+        {
+            "report": {
+                "run_count": 1,
+                "summary": {
+                    "accepted_writes": 1,
+                    "rejected_writes": 0,
+                    "skipped_turns": 1,
+                    "reference_turns": 0,
+                    "total_turns": 2,
+                    "accepted_rate": 0.5,
+                    "rejected_rate": 0.0,
+                    "skipped_rate": 0.5,
+                    "reference_rate": 0.0,
+                    "unsupported_reasons": [
+                        {"reason": "non_memory_chat", "count": 1},
+                    ],
+                    "probe_rows": [],
+                },
+                "conversation_rows": [
+                    {
+                        "conversation_id": "builder-thread-1",
+                        "accepted_writes": 1,
+                        "rejected_writes": 0,
+                        "skipped_turns": 1,
+                        "reference_turns": 0,
+                    }
+                ],
+            }
+        },
+        source_mode="builder_export",
+    )
+
+    assert payload["summary"]["dominant_unsupported_reason"] == "non_memory_chat"
+    assert "residue_quarantine" in payload["summary"]["issue_labels"]
+    assert "structured_extraction_gap" not in payload["summary"]["issue_labels"]
+    assert payload["recommended_next_actions"][0]["label"] == "confirm_residue_quarantine"
+
+
 def test_build_shadow_failure_taxonomy_uses_read_abstention_method_when_reason_missing():
     payload = cli._build_shadow_failure_taxonomy_payload(
         {

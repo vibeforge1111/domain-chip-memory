@@ -692,7 +692,7 @@ def _build_shadow_failure_taxonomy_payload(
     skipped_turns = int(summary.get("skipped_turns", 0) or 0)
     reference_turns = int(summary.get("reference_turns", 0) or 0)
     total_turns = int(summary.get("total_turns", accepted_writes + rejected_writes + skipped_turns + reference_turns) or 0)
-    residue_reasons = {"low_signal_residue"}
+    residue_reasons = {"low_signal_residue", "non_memory_chat"}
     duplicate_churn_reasons = {"unchanged_current_state"}
     promotion_policy_reasons = {"missing_policy_row", "missing_policy_decision", "defer", "block"}
     residue_reason_rows = [
@@ -967,14 +967,14 @@ def _build_shadow_failure_taxonomy_payload(
     recommended_next_actions: list[dict] = []
     if dominant_unsupported_row is not None:
         reason = str(dominant_unsupported_row.get("reason", "") or "")
-        if reason == "low_signal_residue":
+        if reason in {"low_signal_residue", "non_memory_chat"}:
             recommended_next_actions.append(
                 {
                     "label": "confirm_residue_quarantine",
                     "priority": 1,
                     "rationale": (
-                        "The dominant skipped reason is low-signal residue. Confirm the greeting and acknowledgment "
-                        "quarantine stays conservative and does not suppress real memory-worthy user facts."
+                        "The dominant skipped reason is quarantined non-memory residue. Confirm the residue gate "
+                        "stays conservative and does not suppress real memory-worthy user facts."
                     ),
                 }
             )
@@ -2583,6 +2583,8 @@ def _normalize_builder_telegram_state_db(
                                 "chat_id": row_chat_id,
                                 "update_id": update_id,
                                 "source_event_type": "intent_committed",
+                                "onboarding_step": str(facts.get("step") or "").strip() or None,
+                                "onboarding_completed": bool(facts.get("completed")),
                             },
                         }
                 elif event_type == "delivery_succeeded":

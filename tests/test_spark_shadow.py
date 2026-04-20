@@ -360,6 +360,116 @@ def test_shadow_ingest_skips_metadata_backed_ephemeral_residue():
     assert current_state.value == "Dubai"
 
 
+def test_shadow_ingest_reclassifies_non_memory_questions_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-non-memory-question",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="What's on your mind?",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_reclassifies_unicode_question_chat_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-unicode-question",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="what’s on your mind?",
+                    timestamp="2026-04-20T00:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
+def test_shadow_ingest_reclassifies_onboarding_turns_as_residue():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-onboarding-residue",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="energetic",
+                    timestamp="2026-04-20T00:00:00Z",
+                    metadata={
+                        "source_event_type": "intent_committed",
+                        "onboarding_step": "awaiting_persona",
+                        "onboarding_completed": False,
+                    },
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2026-04-20T00:00:01Z",
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.accepted_writes == 1
+    assert result.rejected_writes == 0
+    assert result.skipped_turns == 1
+    assert result.turn_traces[0].action == "skipped_residue"
+    assert result.turn_traces[0].unsupported_reason == "non_memory_chat"
+    assert current_state.found is True
+    assert current_state.value == "Dubai"
+
+
 def test_shadow_ingest_skips_unchanged_explicit_current_state_writes():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)

@@ -285,10 +285,36 @@ class SparkShadowIngestAdapter:
             if write_result.accepted:
                 accepted_writes += 1
                 action = "accepted_write"
+                turn_traces.append(self._build_turn_trace(turn, normalized_role, action, write_result))
             else:
-                rejected_writes += 1
-                action = "rejected_write"
-            turn_traces.append(self._build_turn_trace(turn, normalized_role, action, write_result))
+                non_memory_chat_reason = self._non_memory_chat_reason(turn, normalized_role, write_result)
+                if non_memory_chat_reason is not None:
+                    skipped_turns += 1
+                    turn_traces.append(
+                        SparkShadowTurnTrace(
+                            message_id=turn.message_id,
+                            role=normalized_role,
+                            action="skipped_residue",
+                            session_id=write_result.session_id,
+                            turn_id=write_result.turn_id,
+                            accepted=False,
+                            unsupported_reason=non_memory_chat_reason,
+                            trace={
+                                "operation": "shadow_ingest_turn",
+                                "status": "skipped_residue",
+                                "message_id": turn.message_id,
+                                "role": normalized_role,
+                                "content": turn.content,
+                                "timestamp": turn.timestamp,
+                                "write_trace": dict(write_result.trace),
+                                "original_unsupported_reason": write_result.unsupported_reason,
+                            },
+                        )
+                    )
+                else:
+                    rejected_writes += 1
+                    action = "rejected_write"
+                    turn_traces.append(self._build_turn_trace(turn, normalized_role, action, write_result))
 
         return SparkShadowIngestResult(
             conversation_id=request.conversation_id,
@@ -466,6 +492,83 @@ class SparkShadowIngestAdapter:
             "awesome",
             "sure",
         }
+
+    def _non_memory_chat_reason(
+        self,
+        turn: SparkShadowTurn,
+        normalized_role: str,
+        write_result: MemoryWriteResult,
+    ) -> str | None:
+        if normalized_role not in self.writable_roles:
+            return None
+        if str(write_result.unsupported_reason or "").strip() != "no_structured_memory_extracted":
+            return None
+        metadata = dict(turn.metadata)
+        if self._is_onboarding_residue(metadata):
+            return "non_memory_chat"
+        raw_text = str(turn.content or "")
+        normalized_text = self._normalize_residue_text(raw_text)
+        if not normalized_text:
+            return "non_memory_chat"
+        if self._looks_like_non_memory_question(raw_text, normalized_text):
+            return "non_memory_chat"
+        if self._looks_like_non_memory_directive(normalized_text):
+            return "non_memory_chat"
+        return None
+
+    def _is_onboarding_residue(self, metadata: JsonDict) -> bool:
+        onboarding_step = str(metadata.get("onboarding_step") or "").strip().lower()
+        if onboarding_step:
+            return True
+        return bool(metadata.get("onboarding_completed"))
+
+    def _looks_like_non_memory_question(self, raw_text: str, normalized_text: str) -> bool:
+        question_starters = (
+            "what ",
+            "what's ",
+            "whats ",
+            "when ",
+            "where ",
+            "who ",
+            "why ",
+            "how ",
+            "can you ",
+            "could you ",
+            "would you ",
+            "do you ",
+            "did you ",
+            "will you ",
+            "should i ",
+            "what should ",
+            "what can ",
+        )
+        normalized_question_text = raw_text.replace("’", "'").replace("`", "'").strip().lower()
+        return "?" in raw_text or normalized_question_text.startswith(question_starters) or normalized_text.startswith(question_starters)
+
+    def _looks_like_non_memory_directive(self, normalized_text: str) -> bool:
+        directive_starters = (
+            "help me ",
+            "be ",
+            "keep ",
+            "avoid ",
+            "default to ",
+            "prefer ",
+            "dont ",
+            "don't ",
+            "do not ",
+            "ask ",
+            "analyze ",
+            "create ",
+            "list ",
+            "show me ",
+            "tell me ",
+            "explain ",
+            "think through ",
+        )
+        lines = [line.strip() for line in normalized_text.splitlines() if line.strip()]
+        if len(lines) >= 2 and any(line.startswith(directive_starters) for line in lines):
+            return True
+        return normalized_text.startswith(directive_starters)
 
     def _has_structured_memory_hints(self, metadata: JsonDict) -> bool:
         operation = str(metadata.get("operation") or "").strip().lower()
