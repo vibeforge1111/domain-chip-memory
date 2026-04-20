@@ -2204,17 +2204,35 @@ def _normalize_builder_telegram_state_db(
         answer_explanation = facts.get("answer_explanation")
         answer_explanation_dict = answer_explanation if isinstance(answer_explanation, dict) else {}
         explanation_text = str(answer_explanation_dict.get("explanation") or "").strip()
+        retrieval_operation = str(retrieval_trace_dict.get("operation") or method).strip().lower() or method
+        question = str(retrieval_trace_dict.get("question") or "").strip()
+        query = str(retrieval_trace_dict.get("query") or "").strip()
         predicate = str(retrieval_trace_dict.get("predicate") or "").strip() or None
         predicate_prefix = str(retrieval_trace_dict.get("predicate_prefix") or "").strip() or None
+        query_text = question or query or _query_message_from_predicate(
+            predicate,
+            predicate_prefix=predicate_prefix,
+        )
         if event_type == "memory_read_succeeded":
-            question = _query_message_from_predicate(predicate, predicate_prefix=predicate_prefix)
-            if question:
-                return f"Memory read succeeded for `{question}` with `{record_count}` matching records."
+            if query_text:
+                return f"Memory read succeeded for `{query_text}` with `{record_count}` matching records."
             return f"Memory read succeeded for `{method}` with `{record_count}` matching records."
         if reason:
             return f"Memory read abstained for `{method}` because `{reason}`."
         if explanation_text:
             return explanation_text
+        if retrieval_operation == "retrieve_evidence":
+            if query_text:
+                return f"No supporting evidence found for `{query_text}`."
+            return "No supporting evidence was found in memory."
+        if retrieval_operation == "retrieve_events":
+            if query_text:
+                return f"No supporting events found for `{query_text}`."
+            return "No supporting events were found in memory."
+        if retrieval_operation in {"get_current_state", "get_historical_state"}:
+            if query_text:
+                return f"No supported memory answer found for `{query_text}`."
+            return "No supported memory answer was found."
         return f"Memory read abstained for `{method}`."
 
     def _read_result_trace_metadata(

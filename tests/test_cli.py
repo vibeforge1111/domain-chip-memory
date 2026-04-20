@@ -5002,6 +5002,158 @@ def test_run_spark_builder_state_telegram_intake_cli_classifies_no_answer_explan
     ]
 
 
+def test_run_spark_builder_state_telegram_intake_cli_renders_retrieval_no_answer_messages(
+    tmp_path: Path,
+    monkeypatch,
+):
+    builder_home = tmp_path / "builder-home-retrieval-no-answer"
+    output_dir = tmp_path / "spark_builder_state_retrieval_no_answer_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_retrieval_no_answer.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-retrieval-query",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "memory-retrieval:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "retrieve_evidence",
+                            "query": "What do you know about me?",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-10 19:07:54",
+                ),
+                (
+                    "evt-retrieval-abstained",
+                    "memory_read_abstained",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "memory-retrieval:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "abstained",
+                    "Spark memory read abstained.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "unknown",
+                            "method": "retrieve_evidence",
+                            "reason": None,
+                            "record_count": 0,
+                            "retrieval_trace": {
+                                "operation": "retrieve_evidence",
+                                "query": "What do you know about me?",
+                                "subject": "human:telegram:12345",
+                            },
+                        }
+                    ),
+                    "2026-04-10 19:07:55",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    conversation = payload["normalization"]["normalized"]["conversations"][0]
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "What do you know about me?",
+        "No supporting evidence found for `What do you know about me?`.",
+    ]
+    assert payload["failure_taxonomy"]["summary"]["read_coverage_gap_count"] == 1
+
+
 def test_run_spark_builder_state_telegram_intake_cli_replays_explanation_queries_with_probes(tmp_path: Path, monkeypatch):
     builder_home = tmp_path / "builder-home-explanation"
     output_dir = tmp_path / "spark_builder_state_explanation_kb"
