@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import re
 from pathlib import Path
+import shutil
 from typing import Any
 
 
@@ -20,6 +21,32 @@ def _slugify(value: str, *, max_length: int = 80) -> str:
     digest = hashlib.sha1(slug.encode("utf-8")).hexdigest()[:8]
     trimmed = slug[: max_length - len(digest) - 1].rstrip("-")
     return f"{trimmed}-{digest}" if trimmed else digest
+
+
+def _safe_repo_raw_file_name(index: int, source_path: Path, *, max_length: int = 120) -> str:
+    prefix = f"{index:02d}-"
+    candidate = f"{prefix}{source_path.name}"
+    if len(candidate) <= max_length:
+        return candidate
+    suffix = source_path.suffix
+    stem = re.sub(r"[^A-Za-z0-9._-]+", "-", source_path.stem).strip("-.") or "repo-source"
+    digest = hashlib.sha1(source_path.name.encode("utf-8")).hexdigest()[:8]
+    available = max_length - len(prefix) - len(suffix) - len(digest) - 1
+    trimmed = stem[: max(available, 1)].rstrip("-.")
+    if not trimmed:
+        trimmed = "repo-source"
+    return f"{prefix}{trimmed}-{digest}{suffix}"
+
+
+def _reset_generated_directory(directory: Path) -> None:
+    if not directory.exists():
+        directory.mkdir(parents=True, exist_ok=True)
+        return
+    for child in directory.iterdir():
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
 
 
 def _yaml_scalar(value: str) -> str:
@@ -283,6 +310,19 @@ def scaffold_spark_knowledge_base(
     ):
         directory.mkdir(parents=True, exist_ok=True)
 
+    for directory in (
+        raw_snapshot_dir,
+        raw_repos_dir,
+        current_state_dir,
+        evidence_dir,
+        events_dir,
+        sources_dir,
+        syntheses_dir,
+        outputs_dir,
+        attachments_images_dir,
+    ):
+        _reset_generated_directory(directory)
+
     snapshot_path = raw_snapshot_dir / "latest.json"
     snapshot_path.write_text(json_dumps(snapshot), encoding="utf-8")
     (output_path / "CLAUDE.md").write_text(
@@ -442,7 +482,7 @@ def scaffold_spark_knowledge_base(
     ingested_repo_sources = 0
     for source_path in repo_source_paths:
         ingested_repo_sources += 1
-        raw_file_name = f"{ingested_repo_sources:02d}-{source_path.name}"
+        raw_file_name = _safe_repo_raw_file_name(ingested_repo_sources, source_path)
         raw_repo_path = raw_repos_dir / raw_file_name
         raw_text = source_path.read_text(encoding="utf-8", errors="replace")
         raw_repo_path.write_text(raw_text, encoding="utf-8")
@@ -968,7 +1008,7 @@ def build_spark_kb_health_report(output_dir: str | Path) -> dict[str, Any]:
     orphan_pages = [
         path
         for path, count in sorted(inbound_link_counts.items())
-        if count == 0 and not path.endswith("wiki/index.md")
+        if count == 0 and path not in {"wiki/index.md", "wiki/log.md"}
     ]
     return {
         "output_dir": str(output_path),

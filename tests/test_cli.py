@@ -507,6 +507,152 @@ def test_demo_spark_kb_can_ingest_explicit_repo_source(tmp_path: Path, monkeypat
     assert (output_dir / "wiki" / "sources" / "repo-notes.md").exists()
 
 
+def test_spark_kb_scaffold_truncates_overlong_repo_source_raw_copy_name(tmp_path: Path):
+    output_dir = tmp_path / "spark_kb_vault"
+    long_name = (
+        "run-research-asset_universe-BTC-ETH-doctrine_id-trend_regime_following-market_regime-"
+        "trend-paper_gate-strict-strategy_id-ema_pullback-long-trace-window.md"
+    )
+    repo_source = tmp_path / long_name
+    repo_source.write_text("# Long Repo Source\n\nBuilder attachment snapshot source.\n", encoding="utf-8")
+    snapshot = {
+        "runtime_class": "SparkMemorySDK",
+        "generated_at": "2025-03-10T00:00:00+00:00",
+        "counts": {
+            "session_count": 1,
+            "current_state_count": 1,
+            "observation_count": 1,
+            "event_count": 0,
+        },
+        "sessions": [
+            {
+                "session_id": "session-long-repo-source",
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "turns": [
+                    {"turn_id": "session-long-repo-source:t1", "speaker": "user", "text": "I live in Dubai."},
+                ],
+            }
+        ],
+        "current_state": [
+            {
+                "memory_role": "current_state",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-long-repo-source",
+                "turn_ids": ["session-long-repo-source:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "Dubai", "observation_id": "obs-long-repo-source-1"},
+            }
+        ],
+        "observations": [
+            {
+                "memory_role": "structured_evidence",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-long-repo-source",
+                "turn_ids": ["session-long-repo-source:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "Dubai", "observation_id": "obs-long-repo-source-1"},
+            }
+        ],
+        "events": [],
+        "trace": {"operation": "export_knowledge_base_snapshot"},
+    }
+
+    scaffold_spark_knowledge_base(output_dir, snapshot, repo_sources=[repo_source])
+
+    raw_repo_files = list((output_dir / "raw" / "repos").glob("01-*"))
+    assert len(raw_repo_files) == 1
+    assert len(raw_repo_files[0].name) <= 120
+    source_pages = list((output_dir / "wiki" / "sources").glob("repo-*.md"))
+    assert len(source_pages) == 1
+    source_page = source_pages[0]
+    source_page_text = source_page.read_text(encoding="utf-8")
+    assert f"raw/repos/{raw_repo_files[0].name}" in source_page_text
+
+
+def test_spark_kb_scaffold_rerun_clears_stale_repo_raw_files(tmp_path: Path):
+    output_dir = tmp_path / "spark_kb_vault"
+    first_repo_source = tmp_path / (
+        "run-research-benchmark_profile-speedrun_route-policy_id-right_scout-startup_action-none-"
+        "task_id-leave_bedroom-tick_stride-24.md"
+    )
+    second_repo_source = tmp_path / (
+        "run-research-benchmark_profile-speedrun_route-policy_id-right_scout-startup_action-none-"
+        "task_id-leave_bed-final-pass.md"
+    )
+    first_repo_source.write_text("# First Repo Source\n\nFirst Builder attachment snapshot source.\n", encoding="utf-8")
+    second_repo_source.write_text("# Second Repo Source\n\nSecond Builder attachment snapshot source.\n", encoding="utf-8")
+    snapshot = {
+        "runtime_class": "SparkMemorySDK",
+        "generated_at": "2025-03-10T00:00:00+00:00",
+        "counts": {
+            "session_count": 1,
+            "current_state_count": 1,
+            "observation_count": 1,
+            "event_count": 0,
+        },
+        "sessions": [
+            {
+                "session_id": "session-rerun-cleanup",
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "turns": [
+                    {"turn_id": "session-rerun-cleanup:t1", "speaker": "user", "text": "I live in Dubai."},
+                ],
+            }
+        ],
+        "current_state": [
+            {
+                "memory_role": "current_state",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-rerun-cleanup",
+                "turn_ids": ["session-rerun-cleanup:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "Dubai", "observation_id": "obs-rerun-cleanup-1"},
+            }
+        ],
+        "observations": [
+            {
+                "memory_role": "structured_evidence",
+                "subject": "user",
+                "predicate": "location",
+                "text": "user location Dubai",
+                "session_id": "session-rerun-cleanup",
+                "turn_ids": ["session-rerun-cleanup:t1"],
+                "timestamp": "2025-03-10T00:00:00+00:00",
+                "metadata": {"value": "Dubai", "observation_id": "obs-rerun-cleanup-1"},
+            }
+        ],
+        "events": [],
+        "trace": {"operation": "export_knowledge_base_snapshot"},
+    }
+
+    scaffold_spark_knowledge_base(output_dir, snapshot, repo_sources=[first_repo_source])
+    first_raw_repo_file = next((output_dir / "raw" / "repos").glob("01-*"))
+
+    scaffold_spark_knowledge_base(output_dir, snapshot, repo_sources=[second_repo_source])
+
+    raw_repo_files = list((output_dir / "raw" / "repos").glob("01-*"))
+    assert len(raw_repo_files) == 1
+    assert raw_repo_files[0].name != first_raw_repo_file.name
+    assert first_raw_repo_file.exists() is False
+    source_pages = list((output_dir / "wiki" / "sources").glob("repo-*.md"))
+    assert len(source_pages) == 1
+    source_page_text = source_pages[0].read_text(encoding="utf-8")
+    assert second_repo_source.name in source_page_text
+    assert first_repo_source.name not in source_page_text
+
+    payload = build_spark_kb_health_report(output_dir)
+
+    assert payload["valid"] is True
+    assert payload["repo_source_pages_missing_raw_copy"] == []
+    assert payload["raw_repo_files_without_source_pages"] == []
+
+
 def test_spark_kb_health_report_tracks_repo_and_output_surfaces(tmp_path: Path):
     output_dir = tmp_path / "spark_kb_vault"
     repo_source = tmp_path / "NOTES.md"
