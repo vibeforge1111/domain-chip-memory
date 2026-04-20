@@ -4202,6 +4202,285 @@ def test_normalize_builder_state_db_filters_memory_regression_read_sessions_from
     assert payload["normalized"]["trace"]["used_organic_conversation_filter"] is True
 
 
+def test_normalize_builder_state_db_backfills_supporting_history_for_read_only_organic_conversation(tmp_path: Path):
+    builder_home = tmp_path / "builder-home-supporting-history-backfill"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        rows: list[tuple[object, ...]] = [
+            (
+                "organic-write-1",
+                "memory_write_requested",
+                "fact",
+                "spark_intelligence_builder",
+                "memory_orchestrator",
+                "run-organic-write",
+                None,
+                "corr-organic-write",
+                "sim:1775855156496717",
+                "trace-organic-write",
+                "telegram",
+                "session:telegram:dm:12345",
+                "human:telegram:12345",
+                None,
+                "researcher_bridge",
+                "runtime",
+                "info",
+                "recorded",
+                "Memory write requested.",
+                None,
+                None,
+                json.dumps(
+                    {
+                        "memory_role": "current_state",
+                        "observations": [
+                            {
+                                "subject": "human:telegram:12345",
+                                "predicate": "profile.preferred_name",
+                                "value": "Annie",
+                                "operation": "update",
+                                "memory_role": "current_state",
+                                "text": "My name is Annie.",
+                            }
+                        ],
+                    }
+                ),
+                "2026-04-09 09:00:00",
+            ),
+            (
+                "organic-write-2",
+                "memory_write_succeeded",
+                "fact",
+                "spark_intelligence_builder",
+                "memory_orchestrator",
+                "run-organic-write",
+                None,
+                "corr-organic-write",
+                "sim:1775855156496717",
+                "trace-organic-write",
+                "telegram",
+                "session:telegram:dm:12345",
+                "human:telegram:12345",
+                None,
+                "researcher_bridge",
+                "runtime",
+                "info",
+                "succeeded",
+                "Memory write succeeded.",
+                None,
+                None,
+                json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                "2026-04-09 09:00:01",
+            ),
+        ]
+        for index in range(205):
+            rows.extend(
+                [
+                    (
+                        f"synthetic-read-{index}-req",
+                        "memory_read_requested",
+                        "fact",
+                        "spark_intelligence_builder",
+                        "memory_orchestrator",
+                        f"run-synthetic-{index}",
+                        None,
+                        f"corr-synthetic-{index}",
+                        "memory_regression:inspect-human",
+                        f"trace-synthetic-{index}",
+                        "telegram",
+                        "memory-inspect:memory_regression",
+                        "human:telegram:99999",
+                        None,
+                        "researcher_bridge",
+                        "runtime",
+                        "info",
+                        "requested",
+                        "Spark memory read requested.",
+                        None,
+                        None,
+                        json.dumps(
+                            {
+                                "memory_role": "current_state",
+                                "method": "get_current_state",
+                                "predicate_prefix": "",
+                                "subject": "human:telegram:99999",
+                            }
+                        ),
+                        f"2026-04-09 10:{index // 60:02d}:{index % 60:02d}",
+                    ),
+                    (
+                        f"synthetic-read-{index}-res",
+                        "memory_read_abstained",
+                        "fact",
+                        "spark_intelligence_builder",
+                        "memory_orchestrator",
+                        f"run-synthetic-{index}",
+                        None,
+                        f"corr-synthetic-{index}",
+                        "memory_regression:inspect-human",
+                        f"trace-synthetic-{index}",
+                        "telegram",
+                        "memory-inspect:memory_regression",
+                        "human:telegram:99999",
+                        None,
+                        "researcher_bridge",
+                        "runtime",
+                        "info",
+                        "abstained",
+                        "Spark memory read abstained.",
+                        None,
+                        None,
+                        json.dumps(
+                            {
+                                "memory_role": "current_state",
+                                "method": "get_current_state",
+                                "reason": "sdk_unavailable",
+                                "record_count": 0,
+                            }
+                        ),
+                        f"2026-04-09 11:{index // 60:02d}:{index % 60:02d}",
+                    ),
+                ]
+            )
+        rows.extend(
+            [
+                (
+                    "organic-read-1",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic-read",
+                    None,
+                    "corr-organic-read",
+                    "req-organic-read",
+                    "trace-organic-read",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "predicate": "profile.preferred_name",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-09 13:00:00",
+                ),
+                (
+                    "organic-read-2",
+                    "memory_read_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic-read",
+                    None,
+                    "corr-organic-read",
+                    "req-organic-read",
+                    "trace-organic-read",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "succeeded",
+                    "Spark memory read completed.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "record_count": 1,
+                            "retrieval_trace": {
+                                "operation": "get_current_state",
+                                "predicate": "profile.preferred_name",
+                                "subject": "human:telegram:12345",
+                            },
+                        }
+                    ),
+                    "2026-04-09 13:00:01",
+                ),
+            ]
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    payload = cli._normalize_builder_telegram_state_db(str(builder_home), limit=1)
+
+    assert payload["conversation_count"] == 1
+    assert payload["trace"]["used_full_supported_scan"] is False
+    assert payload["trace"]["used_supporting_history_backfill"] is True
+    assert payload["normalized"]["trace"]["organic_conversation_count"] == 1
+    conversation = payload["normalized"]["conversations"][0]
+    assert conversation["metadata"]["chat_id"] == "12345"
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "My name is Annie.",
+        "What is my name?",
+        "Memory read succeeded for `What is my name?` with `1` matching records.",
+    ]
+    assert [probe["probe_type"] for probe in conversation["probes"]] == [
+        "current_state",
+        "evidence",
+    ]
+    assert conversation["probes"][0]["predicate"] == "profile.preferred_name"
+    assert conversation["probes"][0]["expected_value"] == "Annie"
+
+
 def test_normalize_builder_state_db_keeps_only_recent_conversations_with_user_turns(tmp_path: Path):
     builder_home = tmp_path / "builder-home-conversation-limit"
     builder_home.mkdir()
@@ -5383,6 +5662,307 @@ def test_run_spark_builder_state_telegram_intake_cli_flags_read_only_replay_gap_
         row["label"] == "materialize_supporting_write_history"
         for row in payload["failure_taxonomy"]["recommended_next_actions"]
     )
+
+
+def test_run_spark_builder_state_telegram_intake_cli_backfills_supporting_history_for_recent_read_only_slice(
+    tmp_path: Path,
+    monkeypatch,
+):
+    builder_home = tmp_path / "builder-home-backfill-cli"
+    output_dir = tmp_path / "spark_builder_state_backfill_cli_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_backfill_cli.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        rows: list[tuple[object, ...]] = [
+            (
+                "organic-write-1",
+                "memory_write_requested",
+                "fact",
+                "spark_intelligence_builder",
+                "memory_orchestrator",
+                "run-organic-write",
+                None,
+                "corr-organic-write",
+                "sim:1775855156496717",
+                "trace-organic-write",
+                "telegram",
+                "session:telegram:dm:12345",
+                "human:telegram:12345",
+                None,
+                "researcher_bridge",
+                "runtime",
+                "info",
+                "recorded",
+                "Memory write requested.",
+                None,
+                None,
+                json.dumps(
+                    {
+                        "memory_role": "current_state",
+                        "observations": [
+                            {
+                                "subject": "human:telegram:12345",
+                                "predicate": "profile.preferred_name",
+                                "value": "Annie",
+                                "operation": "update",
+                                "memory_role": "current_state",
+                                "text": "My name is Annie.",
+                            }
+                        ],
+                    }
+                ),
+                "2026-04-09 09:00:00",
+            ),
+            (
+                "organic-write-2",
+                "memory_write_succeeded",
+                "fact",
+                "spark_intelligence_builder",
+                "memory_orchestrator",
+                "run-organic-write",
+                None,
+                "corr-organic-write",
+                "sim:1775855156496717",
+                "trace-organic-write",
+                "telegram",
+                "session:telegram:dm:12345",
+                "human:telegram:12345",
+                None,
+                "researcher_bridge",
+                "runtime",
+                "info",
+                "succeeded",
+                "Memory write succeeded.",
+                None,
+                None,
+                json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                "2026-04-09 09:00:01",
+            ),
+        ]
+        for index in range(205):
+            rows.extend(
+                [
+                    (
+                        f"synthetic-read-{index}-req",
+                        "memory_read_requested",
+                        "fact",
+                        "spark_intelligence_builder",
+                        "memory_orchestrator",
+                        f"run-synthetic-{index}",
+                        None,
+                        f"corr-synthetic-{index}",
+                        "memory_regression:inspect-human",
+                        f"trace-synthetic-{index}",
+                        "telegram",
+                        "memory-inspect:memory_regression",
+                        "human:telegram:99999",
+                        None,
+                        "researcher_bridge",
+                        "runtime",
+                        "info",
+                        "requested",
+                        "Spark memory read requested.",
+                        None,
+                        None,
+                        json.dumps(
+                            {
+                                "memory_role": "current_state",
+                                "method": "get_current_state",
+                                "predicate_prefix": "",
+                                "subject": "human:telegram:99999",
+                            }
+                        ),
+                        f"2026-04-09 10:{index // 60:02d}:{index % 60:02d}",
+                    ),
+                    (
+                        f"synthetic-read-{index}-res",
+                        "memory_read_abstained",
+                        "fact",
+                        "spark_intelligence_builder",
+                        "memory_orchestrator",
+                        f"run-synthetic-{index}",
+                        None,
+                        f"corr-synthetic-{index}",
+                        "memory_regression:inspect-human",
+                        f"trace-synthetic-{index}",
+                        "telegram",
+                        "memory-inspect:memory_regression",
+                        "human:telegram:99999",
+                        None,
+                        "researcher_bridge",
+                        "runtime",
+                        "info",
+                        "abstained",
+                        "Spark memory read abstained.",
+                        None,
+                        None,
+                        json.dumps(
+                            {
+                                "memory_role": "current_state",
+                                "method": "get_current_state",
+                                "reason": "sdk_unavailable",
+                                "record_count": 0,
+                            }
+                        ),
+                        f"2026-04-09 11:{index // 60:02d}:{index % 60:02d}",
+                    ),
+                ]
+            )
+        rows.extend(
+            [
+                (
+                    "organic-read-1",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic-read",
+                    None,
+                    "corr-organic-read",
+                    "req-organic-read",
+                    "trace-organic-read",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "predicate": "profile.preferred_name",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-09 13:00:00",
+                ),
+                (
+                    "organic-read-2",
+                    "memory_read_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-organic-read",
+                    None,
+                    "corr-organic-read",
+                    "req-organic-read",
+                    "trace-organic-read",
+                    "telegram",
+                    "memory-lookup:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "succeeded",
+                    "Spark memory read completed.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "get_current_state",
+                            "record_count": 1,
+                            "retrieval_trace": {
+                                "operation": "get_current_state",
+                                "predicate": "profile.preferred_name",
+                                "subject": "human:telegram:12345",
+                            },
+                        }
+                    ),
+                    "2026-04-09 13:00:01",
+                ),
+            ]
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--limit",
+            "1",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    conversation = payload["normalization"]["normalized"]["conversations"][0]
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "My name is Annie.",
+        "What is my name?",
+        "Memory read succeeded for `What is my name?` with `1` matching records.",
+    ]
+    assert payload["normalization"]["trace"]["used_supporting_history_backfill"] is True
+    assert payload["normalization"]["normalized"]["trace"]["organic_conversation_count"] == 1
+    assert payload["summary"]["accepted_writes"] == 1
+    assert "read_only_replay_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert "probe_coverage_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    probe_rows = {row["probe_type"]: row for row in payload["shadow_report"]["summary"]["probe_rows"]}
+    assert probe_rows["current_state"]["total"] == 1
+    assert probe_rows["current_state"]["hits"] == 1
+    assert probe_rows["evidence"]["total"] == 1
+    assert probe_rows["evidence"]["hits"] == 1
 
 
 def test_run_spark_builder_state_telegram_intake_cli_replays_explanation_queries_with_probes(tmp_path: Path, monkeypatch):

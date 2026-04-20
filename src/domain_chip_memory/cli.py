@@ -2340,6 +2340,20 @@ def _normalize_builder_telegram_state_db(
         return max((_turn_sort_key(turn) for turn in turns), default=("", ""))
 
     raw_event_limit = max(limit * 8, 200)
+    supported_event_types = (
+        "intent_committed",
+        "delivery_succeeded",
+        "memory_write_requested",
+        "memory_write_succeeded",
+        "memory_read_requested",
+        "memory_read_succeeded",
+        "memory_read_abstained",
+        "plugin_or_chip_influence_recorded",
+        "tool_result_received",
+    )
+
+    def _supported_event_where_clause() -> str:
+        return ", ".join(f"'{event_type}'" for event_type in supported_event_types)
 
     def _load_supported_builder_rows(*, scan_all: bool) -> list[sqlite3.Row]:
         connection = sqlite3.connect(state_db_path)
@@ -2347,7 +2361,7 @@ def _normalize_builder_telegram_state_db(
         try:
             if selected_chat_id is not None or scan_all:
                 return connection.execute(
-                    """
+                    f"""
                     SELECT
                         rowid AS row_order,
                         event_id,
@@ -2362,22 +2376,12 @@ def _normalize_builder_telegram_state_db(
                         summary,
                         facts_json
                     FROM builder_events
-                    WHERE event_type IN (
-                        'intent_committed',
-                        'delivery_succeeded',
-                        'memory_write_requested',
-                        'memory_write_succeeded',
-                        'memory_read_requested',
-                        'memory_read_succeeded',
-                        'memory_read_abstained',
-                        'plugin_or_chip_influence_recorded',
-                        'tool_result_received'
-                    )
+                    WHERE event_type IN ({_supported_event_where_clause()})
                     ORDER BY created_at ASC, row_order ASC
                     """
                 ).fetchall()
             return connection.execute(
-                """
+                f"""
                 SELECT *
                 FROM (
                     SELECT
@@ -2394,17 +2398,7 @@ def _normalize_builder_telegram_state_db(
                         summary,
                         facts_json
                     FROM builder_events
-                    WHERE event_type IN (
-                        'intent_committed',
-                        'delivery_succeeded',
-                        'memory_write_requested',
-                        'memory_write_succeeded',
-                        'memory_read_requested',
-                        'memory_read_succeeded',
-                        'memory_read_abstained',
-                        'plugin_or_chip_influence_recorded',
-                        'tool_result_received'
-                    )
+                    WHERE event_type IN ({_supported_event_where_clause()})
                     ORDER BY created_at DESC, event_id DESC
                     LIMIT ?
                 )
@@ -2416,6 +2410,69 @@ def _normalize_builder_telegram_state_db(
         finally:
             connection.close()
 
+    def _load_supported_builder_rows_for_humans(human_ids: list[str]) -> list[sqlite3.Row]:
+        clean_human_ids = sorted({str(human_id).strip() for human_id in human_ids if str(human_id).strip()})
+        if not clean_human_ids:
+            return []
+        placeholders = ", ".join("?" for _ in clean_human_ids)
+        connection = sqlite3.connect(state_db_path)
+        connection.row_factory = sqlite3.Row
+        try:
+            return connection.execute(
+                f"""
+                SELECT
+                    rowid AS row_order,
+                    event_id,
+                    event_type,
+                    created_at,
+                    request_id,
+                    trace_ref,
+                    channel_id,
+                    session_id,
+                    human_id,
+                    component,
+                    summary,
+                    facts_json
+                FROM builder_events
+                WHERE event_type IN ({_supported_event_where_clause()})
+                AND human_id IN ({placeholders})
+                ORDER BY created_at ASC, row_order ASC
+                """,
+                clean_human_ids,
+            ).fetchall()
+        finally:
+            connection.close()
+
+    def _merge_supported_rows(*groups: list[sqlite3.Row]) -> list[dict[str, object]]:
+        merged_by_key: dict[str, dict[str, object]] = {}
+        for group in groups:
+            for row in group:
+                row_dict = dict(row)
+                key = str(row_dict.get("row_order") or row_dict.get("event_id") or "")
+                if not key:
+                    continue
+                merged_by_key[key] = row_dict
+        return sorted(
+            merged_by_key.values(),
+            key=lambda row: (str(row.get("created_at") or ""), int(row.get("row_order") or 0)),
+        )
+
+    def _conversation_needs_supporting_history(conversation: dict[str, object]) -> bool:
+        turns = [turn for turn in conversation.get("turns", []) if isinstance(turn, dict)]
+        if not turns:
+            return False
+        has_memory_write_turn = any(
+            str((turn.get("metadata") or {}).get("source_event_type") or "").strip() == "memory_write_requested"
+            for turn in turns
+        )
+        if has_memory_write_turn:
+            return False
+        return any(
+            str((turn.get("metadata") or {}).get("source_event_type") or "").strip()
+            in {"memory_read_succeeded", "memory_read_abstained"}
+            for turn in turns
+        )
+
     def _is_synthetic_builder_regression_conversation(conversation: dict[str, object]) -> bool:
         metadata = conversation.get("metadata")
         metadata_dict = metadata if isinstance(metadata, dict) else {}
@@ -2423,9 +2480,14 @@ def _normalize_builder_telegram_state_db(
             str(conversation.get("conversation_id") or "").strip().lower(),
             str(conversation.get("session_id") or "").strip().lower(),
             str(metadata_dict.get("chat_id") or "").strip().lower(),
+            str(metadata_dict.get("human_id") or "").strip().lower(),
         ]
         if any(
-            "spark-memory-regression" in value or "regression-user" in value or "memory_regression" in value
+            "spark-memory-regression" in value
+            or "regression-user" in value
+            or "memory_regression" in value
+            or "spark-memory-soak" in value
+            or "soak-user" in value
             for value in identifiers
             if value
         ):
@@ -2434,7 +2496,16 @@ def _normalize_builder_telegram_state_db(
             if not isinstance(turn, dict):
                 continue
             message_id = str(turn.get("message_id") or "").strip().lower()
-            if message_id.startswith("sim:") or message_id.startswith("memory_regression:"):
+            request_id = str((turn.get("metadata") or {}).get("request_id") or "").strip().lower()
+            if any(
+                "memory_regression" in value
+                or "spark-memory-regression" in value
+                or "regression-user" in value
+                or "spark-memory-soak" in value
+                or "soak-user" in value
+                for value in (message_id, request_id)
+                if value
+            ):
                 return True
         return False
 
@@ -2442,12 +2513,22 @@ def _normalize_builder_telegram_state_db(
         source_rows: list[sqlite3.Row],
         *,
         keep_synthetic_regression_when_only_available: bool,
+        supporting_history_human_ids: list[str] | None = None,
     ) -> tuple[list[str], dict[str, object]]:
         available_chat_ids_set: set[str] = set()
         conversations_by_key: dict[str, dict[str, object]] = {}
+        supporting_history_human_id_set = {
+            str(human_id).strip()
+            for human_id in (supporting_history_human_ids or [])
+            if str(human_id).strip()
+        }
 
         def _conversation_for(chat_value: str, session_value: str | None, human_value: str | None) -> dict[str, object]:
-            conversation_key = str(session_value or f"telegram-chat-{chat_value}")
+            clean_human_value = str(human_value or "").strip()
+            if clean_human_value and clean_human_value in supporting_history_human_id_set:
+                conversation_key = f"telegram-chat-{chat_value}"
+            else:
+                conversation_key = str(session_value or f"telegram-chat-{chat_value}")
             conversation = conversations_by_key.setdefault(
                 conversation_key,
                 {
@@ -2942,6 +3023,8 @@ def _normalize_builder_telegram_state_db(
         keep_synthetic_regression_when_only_available=False,
     )
     used_full_supported_scan = False
+    used_supporting_history_backfill = False
+    supporting_history_backfill_row_count = 0
     if (
         selected_chat_id is None
         and not list(normalized_payload.get("conversations", []))
@@ -2953,6 +3036,27 @@ def _normalize_builder_telegram_state_db(
             keep_synthetic_regression_when_only_available=True,
         )
         used_full_supported_scan = True
+    if not used_full_supported_scan and selected_chat_id is None:
+        base_row_count = len(rows)
+        backfill_human_ids = sorted(
+            {
+                str((conversation.get("metadata") or {}).get("human_id") or "").strip()
+                for conversation in normalized_payload.get("conversations", [])
+                if isinstance(conversation, dict) and _conversation_needs_supporting_history(conversation)
+            }
+        )
+        if backfill_human_ids:
+            backfill_rows = _load_supported_builder_rows_for_humans(backfill_human_ids)
+            merged_rows = _merge_supported_rows(rows, backfill_rows)
+            if len(merged_rows) > len(rows):
+                rows = merged_rows
+                available_chat_ids, normalized_payload = _normalize_supported_rows(
+                    rows,
+                    keep_synthetic_regression_when_only_available=False,
+                    supporting_history_human_ids=backfill_human_ids,
+                )
+                used_supporting_history_backfill = True
+                supporting_history_backfill_row_count = max(len(rows) - base_row_count, 0)
 
     validation = validate_shadow_replay_payload(normalized_payload)
     contract = {
@@ -2986,6 +3090,8 @@ def _normalize_builder_telegram_state_db(
         "trace": {
             "scan_mode": "full_supported_rows" if used_full_supported_scan or selected_chat_id is not None else "recent_supported_window",
             "used_full_supported_scan": used_full_supported_scan,
+            "used_supporting_history_backfill": used_supporting_history_backfill,
+            "supporting_history_backfill_row_count": supporting_history_backfill_row_count,
             "raw_event_limit": raw_event_limit,
         },
     }
