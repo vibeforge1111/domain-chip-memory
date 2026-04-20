@@ -6245,6 +6245,239 @@ def test_run_spark_builder_state_telegram_intake_cli_classifies_no_answer_explan
     ]
 
 
+def test_run_spark_builder_state_telegram_intake_cli_flags_supported_fact_explanations_as_read_gap(
+    tmp_path: Path,
+    monkeypatch,
+):
+    builder_home = tmp_path / "builder-home-explain-supported-gap"
+    output_dir = tmp_path / "spark_builder_state_explain_supported_gap_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_explain_supported_gap.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-write-city",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-city",
+                    "sim:evt-write-city",
+                    "trace-city",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.city",
+                                    "value": "Dubai",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "I live in Dubai.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-10 19:07:50",
+                ),
+                (
+                    "evt-write-city-result",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-city",
+                    "sim:evt-write-city",
+                    "trace-city",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "succeeded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-10 19:07:51",
+                ),
+                (
+                    "evt-explain-query",
+                    "memory_read_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "memory-explain:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "requested",
+                    "Spark memory read requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "method": "explain_answer",
+                            "predicate": "profile.city",
+                            "subject": "human:telegram:12345",
+                        }
+                    ),
+                    "2026-04-10 19:07:54",
+                ),
+                (
+                    "evt-explain-abstained",
+                    "memory_read_abstained",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "memory-explain:researcher_bridge",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "abstained",
+                    "Spark memory read abstained.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "answer_explanation": {
+                                "answer": None,
+                                "events": [],
+                                "evidence": [],
+                                "explanation": (
+                                    "No supported answer for profile.city of human:telegram:12345; "
+                                    "abstained with unknown."
+                                ),
+                            },
+                            "memory_role": "unknown",
+                            "method": "explain_answer",
+                            "reason": None,
+                            "record_count": 0,
+                            "retrieval_trace": {
+                                "operation": "explain_answer",
+                                "predicate": "profile.city",
+                                "question": "How do you know where I live?",
+                                "subject": "human:telegram:12345",
+                            },
+                        }
+                    ),
+                    "2026-04-10 19:07:55",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert payload["failure_taxonomy"]["summary"]["read_abstention_count"] == 1
+    assert payload["failure_taxonomy"]["summary"]["read_abstention_gap_count"] == 1
+    assert payload["failure_taxonomy"]["summary"]["read_coverage_gap_count"] == 0
+    assert payload["failure_taxonomy"]["summary"]["dominant_read_abstention_reason"] == "supported_fact_unanswered"
+    assert "read_abstention_gap" in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert "read_coverage_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert any(
+        row["label"] == "fix_supported_read_answer_materialization"
+        for row in payload["failure_taxonomy"]["recommended_next_actions"]
+    )
+    assert payload["turn_audit"]["top_reference_turns"][1]["content"] == (
+        "No supported answer for profile.city of human:telegram:12345; abstained with unknown."
+    )
+
+
 def test_run_spark_builder_state_telegram_intake_cli_renders_retrieval_no_answer_messages(
     tmp_path: Path,
     monkeypatch,

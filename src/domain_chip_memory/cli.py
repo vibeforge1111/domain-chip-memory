@@ -616,6 +616,11 @@ def _extract_shadow_turn_rows(evaluations: list[dict]) -> list[dict]:
                     "contract_reason": str(trace.get("contract_reason") or ""),
                     "observed_memory_role": str(trace.get("observed_memory_role") or ""),
                     "explanation_text": str(trace.get("explanation_text") or ""),
+                    "predicate": str(trace.get("predicate") or ""),
+                    "predicate_prefix": str(trace.get("predicate_prefix") or ""),
+                    "question": str(trace.get("question") or ""),
+                    "query": str(trace.get("query") or ""),
+                    "subject": str(trace.get("subject") or ""),
                     "write_kind": str(write_trace.get("write_kind") or ""),
                     "write_operation": str(write_trace.get("write_operation") or ""),
                     "persisted": bool(write_trace.get("persisted", False)),
@@ -1108,7 +1113,19 @@ def _build_shadow_failure_taxonomy_payload(
         )
     if dominant_read_gap_row is not None:
         reason = str(dominant_read_gap_row.get("reason") or "")
-        if reason == "sdk_unavailable":
+        if reason == "supported_fact_unanswered":
+            recommended_next_actions.append(
+                {
+                    "label": "fix_supported_read_answer_materialization",
+                    "priority": 2,
+                    "rationale": (
+                        "Builder reported no supported answer even though replay already has governed memory for "
+                        "the requested fact. Trace the read contract and answer-materialization path before calling "
+                        "this a memory coverage issue."
+                    ),
+                }
+            )
+        elif reason == "sdk_unavailable":
             recommended_next_actions.append(
                 {
                     "label": "restore_memory_read_sdk_availability",
@@ -2359,6 +2376,7 @@ def _normalize_builder_telegram_state_db(
         facts: dict,
         *,
         event_type: str,
+        known_values: dict[str, dict[str, str]] | None = None,
     ) -> dict[str, object]:
         retrieval_trace = facts.get("retrieval_trace")
         retrieval_trace_dict = retrieval_trace if isinstance(retrieval_trace, dict) else {}
@@ -2368,11 +2386,20 @@ def _normalize_builder_telegram_state_db(
         contract_reason = str(retrieval_trace_dict.get("contract_reason") or "").strip()
         memory_role = str(facts.get("memory_role") or "").strip()
         retrieval_operation = str(retrieval_trace_dict.get("operation") or "").strip()
+        predicate = str(retrieval_trace_dict.get("predicate") or "").strip() or None
+        predicate_prefix = str(retrieval_trace_dict.get("predicate_prefix") or "").strip() or None
+        question = str(retrieval_trace_dict.get("question") or "").strip() or None
+        query = str(retrieval_trace_dict.get("query") or "").strip() or None
+        subject = str(retrieval_trace_dict.get("subject") or "").strip() or None
         explanation_text = str(answer_explanation_dict.get("explanation") or "").strip()
         record_count = int(facts.get("record_count", 0) or 0)
         read_outcome = "succeeded"
+        supported_fact_value = _effective_query_value(known_values or {}, predicate)
         if event_type == "memory_read_abstained":
             if reason or contract_reason:
+                read_outcome = "gap"
+            elif supported_fact_value and memory_role == "unknown" and record_count == 0:
+                contract_reason = "supported_fact_unanswered"
                 read_outcome = "gap"
             elif memory_role == "unknown" and record_count == 0 and (
                 retrieval_operation or explanation_text.lower().startswith("no supported answer")
@@ -2386,6 +2413,11 @@ def _normalize_builder_telegram_state_db(
             "contract_reason": contract_reason or None,
             "observed_memory_role": str(retrieval_trace_dict.get("observed_memory_role") or "").strip() or None,
             "explanation_text": explanation_text or None,
+            "predicate": predicate,
+            "predicate_prefix": predicate_prefix,
+            "question": question,
+            "query": query,
+            "subject": subject,
         }
 
     def _known_identity_records(
@@ -2706,6 +2738,7 @@ def _normalize_builder_telegram_state_db(
                 conversation["turns"].append(assistant_turn)
 
         session_values: dict[str, dict[str, dict[str, str]]] = {}
+        human_values: dict[str, dict[str, dict[str, str]]] = {}
         session_histories: dict[str, dict[str, list[dict[str, str]]]] = {}
         collapsed_duplicate_sim_write_count = 0
         for _, group in sorted(
@@ -2731,6 +2764,8 @@ def _normalize_builder_telegram_state_db(
                 continue
             conversation = _conversation_for(chat_value, session_value, human_value)
             known_values = session_values.setdefault(str(session_value or chat_value), {})
+            known_human_values = human_values.setdefault(str(human_value or ""), {}) if human_value else {}
+            combined_known_values = {**known_human_values, **known_values}
             known_histories = session_histories.setdefault(str(session_value or chat_value), {})
 
             memory_write_row = next((row for row in normalized_group if str(row.get("event_type") or "") == "memory_write_requested"), None)
@@ -2813,6 +2848,15 @@ def _normalize_builder_telegram_state_db(
                                 message_id=request_id_value,
                                 evidence_text=text,
                             )
+                            if human_value:
+                                _remember_known_value(
+                                    known_human_values,
+                                    predicate=predicate,
+                                    value=value,
+                                    timestamp=_format_builder_timestamp(memory_write_row.get("created_at")),
+                                    message_id=request_id_value,
+                                    evidence_text=text,
+                                )
                             distinct_value_count = len(
                                 {
                                     str(item.get("value") or "").strip()
@@ -2920,7 +2964,7 @@ def _normalize_builder_telegram_state_db(
                 elif bridge_mode == "memory_profile_fact" or routing_decision == "memory_profile_fact_query":
                     query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
                     query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
-                    expected_value = _effective_query_value(known_values, query_predicate, value)
+                    expected_value = _effective_query_value(combined_known_values, query_predicate, value)
                     response_text = _query_answer(
                         predicate=query_predicate,
                         value=expected_value,
@@ -2939,7 +2983,7 @@ def _normalize_builder_telegram_state_db(
                 elif bridge_mode == "memory_profile_fact_explanation" or routing_decision == "memory_profile_fact_explanation":
                     query_payload = _load_facts(influence_row.get("facts_json")).get("detected_profile_fact_query") if influence_row is not None else {}
                     query_predicate = _query_predicate(query_payload if isinstance(query_payload, dict) else {}) or predicate
-                    expected_value = _effective_query_value(known_values, query_predicate, value)
+                    expected_value = _effective_query_value(combined_known_values, query_predicate, value)
                     _append_lookup_probes(
                         conversation,
                         base_probe_id=(
@@ -2952,13 +2996,13 @@ def _normalize_builder_telegram_state_db(
                     response_text = _explanation_answer(
                         predicate=query_predicate,
                         value=expected_value,
-                        evidence_text=_effective_query_evidence_text(known_values, query_predicate),
+                        evidence_text=_effective_query_evidence_text(combined_known_values, query_predicate),
                     ) or str(tool_result_row.get("summary") or "").strip()
                 elif bridge_mode == "memory_profile_identity" or routing_decision == "memory_profile_identity_summary":
-                    response_text = _identity_answer(known_values) or str(tool_result_row.get("summary") or "").strip()
+                    response_text = _identity_answer(combined_known_values) or str(tool_result_row.get("summary") or "").strip()
                     prefix = str(tool_facts.get("predicate_prefix") or "profile.").strip() or "profile."
                     for probe_index, (identity_predicate, identity_value) in enumerate(
-                        _known_identity_records(known_values, predicate_prefix=prefix),
+                        _known_identity_records(combined_known_values, predicate_prefix=prefix),
                         start=1,
                     ):
                         _append_lookup_probes(
@@ -3026,6 +3070,7 @@ def _normalize_builder_telegram_state_db(
                                 **_read_result_trace_metadata(
                                     read_result_facts,
                                     event_type=str(memory_read_result_row.get("event_type") or "").strip(),
+                                    known_values=combined_known_values,
                                 ),
                             },
                         }
