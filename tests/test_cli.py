@@ -2107,6 +2107,46 @@ def test_build_spark_shadow_failure_taxonomy_from_builder_export_cli_can_write_t
     assert payload["recommended_next_actions"][0]["label"] == "confirm_residue_quarantine"
 
 
+def test_build_shadow_failure_taxonomy_flags_probe_value_mismatches():
+    payload = cli._build_shadow_failure_taxonomy_payload(
+        {
+            "report": {
+                "run_count": 1,
+                "summary": {
+                    "accepted_writes": 2,
+                    "rejected_writes": 0,
+                    "skipped_turns": 0,
+                    "reference_turns": 2,
+                    "total_turns": 4,
+                    "accepted_rate": 0.5,
+                    "rejected_rate": 0.0,
+                    "skipped_rate": 0.0,
+                    "reference_rate": 0.5,
+                    "unsupported_reasons": [],
+                    "probe_rows": [
+                        {
+                            "probe_type": "current_state",
+                            "hits": 2,
+                            "total": 2,
+                            "hit_rate": 1.0,
+                            "expected_matches": 1,
+                            "expected_total": 2,
+                            "expected_match_rate": 0.5,
+                        }
+                    ],
+                },
+                "conversation_rows": [],
+            }
+        },
+        source_mode="builder_export",
+    )
+
+    assert payload["summary"]["has_probe_coverage"] is True
+    assert payload["summary"]["has_probe_expectation_gap"] is True
+    assert "probe_quality_gap" in payload["summary"]["issue_labels"]
+    assert payload["recommended_next_actions"][0]["label"] == "investigate_probe_value_mismatches"
+
+
 def test_build_spark_kb_from_builder_export_cli_compiles_kb_from_builder_aliases(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "builder_export.json"
     output_dir = tmp_path / "spark_builder_kb"

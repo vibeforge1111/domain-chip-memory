@@ -692,6 +692,15 @@ def _build_shadow_failure_taxonomy_payload(
     duplicate_churn_total = sum(int(row.get("count", 0) or 0) for row in duplicate_churn_rows)
     structured_gap_total = sum(int(row.get("count", 0) or 0) for row in structured_gap_reason_rows)
     gate_skip_total = max(skipped_turns - residue_total - duplicate_churn_total, 0)
+    probe_quality_rows = [
+        row
+        for row in probe_rows
+        if float(row.get("hit_rate", 0.0) or 0.0) < 1.0
+        or float(row.get("expected_match_rate", 1.0) or 1.0) < 1.0
+    ]
+    probe_expectation_gap_rows = [
+        row for row in probe_rows if float(row.get("expected_match_rate", 1.0) or 1.0) < 1.0
+    ]
     dominant_unsupported_row = max(
         unsupported_reasons,
         key=lambda row: (int(row.get("count", 0) or 0), str(row.get("reason", "") or "")),
@@ -821,13 +830,16 @@ def _build_shadow_failure_taxonomy_payload(
                 "summary": "No shadow probes were present, so retrieval quality is not being measured yet.",
             }
         )
-    elif any(float(row.get("hit_rate", 0.0) or 0.0) < 1.0 for row in probe_rows):
+    elif probe_quality_rows:
         issue_buckets.append(
             {
                 "label": "probe_quality_gap",
-                "count": sum(1 for row in probe_rows if float(row.get("hit_rate", 0.0) or 0.0) < 1.0),
+                "count": len(probe_quality_rows),
                 "severity": "high",
-                "summary": "At least one probe type is missing expected hits on the current replay batch.",
+                "summary": (
+                    "At least one probe type is missing hits or returning values that do not match the "
+                    "expected replay target."
+                ),
             }
         )
 
@@ -897,6 +909,17 @@ def _build_shadow_failure_taxonomy_payload(
                 ),
             }
         )
+    elif probe_expectation_gap_rows:
+        recommended_next_actions.append(
+            {
+                "label": "investigate_probe_value_mismatches",
+                "priority": 3,
+                "rationale": (
+                    "Probe coverage exists, but at least one probe type is returning non-expected values. "
+                    "Inspect replay ordering, recency resolution, and evidence selection before calling retrieval healthy."
+                ),
+            }
+        )
     top_source_hotspot = source_hotspots[0] if source_hotspots else None
     if top_source_hotspot and int(top_source_hotspot.get("friction_count", 0) or 0) > 0:
         recommended_next_actions.append(
@@ -937,6 +960,7 @@ def _build_shadow_failure_taxonomy_payload(
                 int(dominant_unsupported_row.get("count", 0) or 0) if dominant_unsupported_row else 0
             ),
             "has_probe_coverage": bool(probe_rows),
+            "has_probe_expectation_gap": bool(probe_expectation_gap_rows),
             "issue_labels": issue_labels,
         },
         "issue_buckets": issue_buckets,
