@@ -514,6 +514,15 @@ def _build_shadow_turn_audit_payload(shadow_payload: dict, *, top_n: int = 20) -
     rejected_user_turns = [
         row for row in turn_rows if row["role"] == "user" and row["action"] == "rejected_write"
     ]
+    skipped_user_turns = [
+        row for row in turn_rows if row["role"] == "user" and str(row["action"]).startswith("skipped_")
+    ]
+    skipped_duplicate_user_turns = [
+        row for row in skipped_user_turns if str(row.get("unsupported_reason") or "").strip() == "unchanged_current_state"
+    ]
+    skipped_assistant_turns = [
+        row for row in turn_rows if row["role"] == "assistant" and str(row["action"]).startswith("skipped_")
+    ]
     skipped_turns = [row for row in turn_rows if str(row["action"]).startswith("skipped_")]
     reference_turns = [row for row in turn_rows if row["action"] == "reference_turn"]
     accepted_user_turns = [row for row in turn_rows if row["role"] == "user" and row["accepted"]]
@@ -526,6 +535,9 @@ def _build_shadow_turn_audit_payload(shadow_payload: dict, *, top_n: int = 20) -
         )
 
     rejected_user_turns = sorted(rejected_user_turns, key=_rank_key)
+    skipped_user_turns = sorted(skipped_user_turns, key=_rank_key)
+    skipped_duplicate_user_turns = sorted(skipped_duplicate_user_turns, key=_rank_key)
+    skipped_assistant_turns = sorted(skipped_assistant_turns, key=_rank_key)
     skipped_turns = sorted(skipped_turns, key=_rank_key)
     reference_turns = sorted(reference_turns, key=_rank_key)
     accepted_user_turns = sorted(accepted_user_turns, key=_rank_key)
@@ -536,9 +548,15 @@ def _build_shadow_turn_audit_payload(shadow_payload: dict, *, top_n: int = 20) -
             "accepted_user_turn_count": len(accepted_user_turns),
             "rejected_user_turn_count": len(rejected_user_turns),
             "skipped_turn_count": len(skipped_turns),
+            "skipped_user_turn_count": len(skipped_user_turns),
+            "skipped_duplicate_user_turn_count": len(skipped_duplicate_user_turns),
+            "skipped_assistant_turn_count": len(skipped_assistant_turns),
             "reference_turn_count": len(reference_turns),
         },
         "top_rejected_user_turns": rejected_user_turns[:top_n],
+        "top_skipped_user_turns": skipped_user_turns[:top_n],
+        "top_skipped_duplicate_user_turns": skipped_duplicate_user_turns[:top_n],
+        "top_skipped_assistant_turns": skipped_assistant_turns[:top_n],
         "top_skipped_turns": skipped_turns[:top_n],
         "top_reference_turns": reference_turns[:top_n],
         "top_accepted_user_turns": accepted_user_turns[:top_n],
@@ -609,6 +627,9 @@ def _extract_shadow_turn_rows(evaluations: list[dict]) -> list[dict]:
 def _build_shadow_turn_audit_filed_outputs(shadow_payload: dict, *, top_n: int = 10) -> list[dict]:
     audit = _build_shadow_turn_audit_payload(shadow_payload, top_n=top_n)
     rejected_turns = list(audit.get("top_rejected_user_turns", []))
+    skipped_user_turns = list(audit.get("top_skipped_user_turns", []))
+    skipped_duplicate_user_turns = list(audit.get("top_skipped_duplicate_user_turns", []))
+    skipped_assistant_turns = list(audit.get("top_skipped_assistant_turns", []))
     skipped_turns = list(audit.get("top_skipped_turns", []))
     reference_turns = list(audit.get("top_reference_turns", []))
     accepted_turns = list(audit.get("top_accepted_user_turns", []))
@@ -627,6 +648,27 @@ def _build_shadow_turn_audit_filed_outputs(shadow_payload: dict, *, top_n: int =
             f"role `{row.get('role', 'unknown')}` skipped: {row.get('content', '')}"
         )
         for row in skipped_turns
+    ]
+    skipped_user_lines = [
+        (
+            f"`{row.get('conversation_id', 'unknown')}` `{row.get('message_id', 'unknown')}` "
+            f"reason `{row.get('unsupported_reason') or 'unknown'}` skipped user write: {row.get('content', '')}"
+        )
+        for row in skipped_user_turns
+    ]
+    skipped_duplicate_user_lines = [
+        (
+            f"`{row.get('conversation_id', 'unknown')}` `{row.get('message_id', 'unknown')}` "
+            f"duplicate `{row.get('unsupported_reason') or 'unknown'}`: {row.get('content', '')}"
+        )
+        for row in skipped_duplicate_user_turns
+    ]
+    skipped_assistant_lines = [
+        (
+            f"`{row.get('conversation_id', 'unknown')}` `{row.get('message_id', 'unknown')}` "
+            f"assistant skipped `{row.get('action', 'unknown')}`: {row.get('content', '')}"
+        )
+        for row in skipped_assistant_turns
     ]
     reference_lines = [
         (
@@ -649,7 +691,8 @@ def _build_shadow_turn_audit_filed_outputs(shadow_payload: dict, *, top_n: int =
             "question": "Which Spark shadow turns are being accepted, rejected, or skipped right now?",
             "answer": (
                 f"The current replay includes {summary.get('rejected_user_turn_count', 0)} rejected user turns, "
-                f"{summary.get('skipped_turn_count', 0)} skipped turns, and "
+                f"{summary.get('skipped_user_turn_count', 0)} skipped user turns plus "
+                f"{summary.get('skipped_assistant_turn_count', 0)} skipped assistant turns, and "
                 f"{summary.get('reference_turn_count', 0)} reference turns, plus "
                 f"{summary.get('accepted_user_turn_count', 0)} accepted user turns."
             ),
@@ -660,6 +703,15 @@ def _build_shadow_turn_audit_filed_outputs(shadow_payload: dict, *, top_n: int =
             "memory_role": "shadow_report",
             "provenance": [
                 *([f"Rejected turn: {line}" for line in rejected_lines] or ["Rejected turn: none recorded."]),
+                *([f"Skipped user turn: {line}" for line in skipped_user_lines] or ["Skipped user turn: none recorded."]),
+                *(
+                    [f"Skipped duplicate user turn: {line}" for line in skipped_duplicate_user_lines]
+                    or ["Skipped duplicate user turn: none recorded."]
+                ),
+                *(
+                    [f"Skipped assistant turn: {line}" for line in skipped_assistant_lines]
+                    or ["Skipped assistant turn: none recorded."]
+                ),
                 *([f"Skipped turn: {line}" for line in skipped_lines] or ["Skipped turn: none recorded."]),
                 *([f"Reference turn: {line}" for line in reference_lines] or ["Reference turn: none recorded."]),
                 *([f"Accepted turn: {line}" for line in accepted_lines] or ["Accepted turn: none recorded."]),
@@ -709,6 +761,8 @@ def _build_shadow_failure_taxonomy_payload(
     unsupported_total = sum(int(row.get("count", 0) or 0) for row in unsupported_reasons)
     residue_total = sum(int(row.get("count", 0) or 0) for row in residue_reason_rows)
     duplicate_churn_total = sum(int(row.get("count", 0) or 0) for row in duplicate_churn_rows)
+    duplicate_churn_issue_threshold = 5
+    has_material_duplicate_churn = duplicate_churn_total >= duplicate_churn_issue_threshold
     structured_gap_total = sum(int(row.get("count", 0) or 0) for row in structured_gap_reason_rows)
     gate_skip_total = max(skipped_turns - residue_total - duplicate_churn_total, 0)
     probe_quality_rows = [
@@ -882,7 +936,7 @@ def _build_shadow_failure_taxonomy_payload(
                 ),
             }
         )
-    if duplicate_churn_total:
+    if has_material_duplicate_churn:
         issue_buckets.append(
             {
                 "label": "duplicate_write_churn",
@@ -978,7 +1032,7 @@ def _build_shadow_failure_taxonomy_payload(
                     ),
                 }
             )
-        elif reason == "unchanged_current_state":
+        elif reason == "unchanged_current_state" and has_material_duplicate_churn:
             recommended_next_actions.append(
                 {
                     "label": "confirm_duplicate_write_suppression",
@@ -1974,6 +2028,19 @@ def _normalize_builder_telegram_state_db(
             "evidence_text": str(evidence_text or ""),
         }
 
+    def _known_value_matches(
+        store: dict[str, dict[str, str]],
+        *,
+        predicate: str,
+        value: str,
+    ) -> bool:
+        entry = _effective_query_entry(store, predicate)
+        if not isinstance(entry, dict):
+            return False
+        known_value = str(entry.get("value") or "").strip().lower()
+        incoming_value = str(value or "").strip().lower()
+        return bool(known_value) and bool(incoming_value) and known_value == incoming_value
+
     def _effective_query_entry(store: dict[str, dict[str, str]], predicate: str | None) -> dict[str, str] | None:
         normalized = str(predicate or "").strip()
         if normalized == "profile.startup_name":
@@ -2632,6 +2699,7 @@ def _normalize_builder_telegram_state_db(
 
         session_values: dict[str, dict[str, dict[str, str]]] = {}
         session_histories: dict[str, dict[str, list[dict[str, str]]]] = {}
+        collapsed_duplicate_sim_write_count = 0
         for _, group in sorted(
             bridge_groups.items(),
             key=lambda item: (
@@ -2673,6 +2741,9 @@ def _normalize_builder_telegram_state_db(
 
             if memory_write_row is not None:
                 write_facts = _load_facts(memory_write_row.get("facts_json"))
+                result_facts = _load_facts(memory_write_result_row.get("facts_json")) if memory_write_result_row is not None else {}
+                accepted_count = int(result_facts.get("accepted_count", 0) or 0)
+                request_id_value = str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or "").strip()
                 observations = write_facts.get("observations")
                 if isinstance(observations, list):
                     for item in observations:
@@ -2683,9 +2754,20 @@ def _normalize_builder_telegram_state_db(
                         value = str(item.get("value") or "").strip()
                         if not text:
                             continue
+                        memory_role = str(item.get("memory_role") or write_facts.get("memory_role") or "").strip().lower()
+                        if (
+                            request_id_value.lower().startswith("sim:")
+                            and accepted_count > 0
+                            and memory_role == "current_state"
+                            and predicate
+                            and value
+                            and _known_value_matches(known_values, predicate=predicate, value=value)
+                        ):
+                            collapsed_duplicate_sim_write_count += 1
+                            continue
                         conversation["turns"].append(
                             {
-                                "message_id": str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                                "message_id": request_id_value,
                                 "role": "user",
                                 "content": text,
                                 "timestamp": _format_builder_timestamp(memory_write_row.get("created_at")),
@@ -2706,14 +2788,13 @@ def _normalize_builder_telegram_state_db(
                                 },
                             }
                         )
-                        result_facts = _load_facts(memory_write_result_row.get("facts_json")) if memory_write_result_row is not None else {}
-                        if int(result_facts.get("accepted_count", 0) or 0) > 0 and predicate and value:
+                        if accepted_count > 0 and predicate and value:
                             history = known_histories.setdefault(predicate, [])
                             history.append(
                                 {
                                     "value": value,
                                     "timestamp": str(_format_builder_timestamp(memory_write_row.get("created_at")) or ""),
-                                    "message_id": str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                                    "message_id": request_id_value,
                                 }
                             )
                             _remember_known_value(
@@ -2721,7 +2802,7 @@ def _normalize_builder_telegram_state_db(
                                 predicate=predicate,
                                 value=value,
                                 timestamp=_format_builder_timestamp(memory_write_row.get("created_at")),
-                                message_id=str(memory_write_row.get("request_id") or memory_write_row.get("event_id") or ""),
+                                message_id=request_id_value,
                                 evidence_text=text,
                             )
                             distinct_value_count = len(
@@ -2732,7 +2813,7 @@ def _normalize_builder_telegram_state_db(
                                 }
                             )
                             base_probe_id = (
-                                f"{conversation['session_id']}:write:{str(memory_write_row.get('request_id') or memory_write_row.get('event_id') or '')}:{_probe_key(predicate)}"
+                                f"{conversation['session_id']}:write:{request_id_value}:{_probe_key(predicate)}"
                             )
                             _append_lookup_probes(
                                 conversation,
@@ -3012,6 +3093,8 @@ def _normalize_builder_telegram_state_db(
                     "synthetic_regression_conversation_count": len(synthetic_regression_conversations),
                     "used_organic_conversation_filter": used_organic_conversation_filter,
                     "kept_synthetic_regression_fallback": kept_synthetic_regression_fallback,
+                    "collapsed_duplicate_sim_write_count": collapsed_duplicate_sim_write_count,
+                    "collapsed_duplicate_supporting_sim_write_count": collapsed_duplicate_sim_write_count,
                 },
             },
         )
@@ -3094,6 +3177,14 @@ def _normalize_builder_telegram_state_db(
             "used_full_supported_scan": used_full_supported_scan,
             "used_supporting_history_backfill": used_supporting_history_backfill,
             "supporting_history_backfill_row_count": supporting_history_backfill_row_count,
+            "collapsed_duplicate_sim_write_count": int(
+                normalized_payload.get("trace", {}).get("collapsed_duplicate_sim_write_count", 0) or 0
+            ),
+            "collapsed_duplicate_supporting_sim_write_count": int(
+                normalized_payload.get("trace", {}).get("collapsed_duplicate_supporting_sim_write_count", 0)
+                or normalized_payload.get("trace", {}).get("collapsed_duplicate_sim_write_count", 0)
+                or 0
+            ),
             "raw_event_limit": raw_event_limit,
         },
     }
