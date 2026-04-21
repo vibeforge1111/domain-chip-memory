@@ -8455,6 +8455,293 @@ def test_run_spark_builder_state_telegram_intake_cli_replays_explanation_queries
     assert "probe_coverage_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
 
 
+def test_run_spark_builder_state_telegram_intake_cli_drops_stale_current_state_probes_after_delete(tmp_path: Path, monkeypatch):
+    builder_home = tmp_path / "builder-home-generic-delete"
+    output_dir = tmp_path / "spark_builder_state_generic_delete_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_generic_delete.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-write-1",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "telegram_generic_observation_loader",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "operation": "update",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.cofounder_name",
+                                    "value": "Omar",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "My cofounder is Omar.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-21 11:00:00",
+                ),
+                (
+                    "evt-write-1-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "telegram_generic_observation_loader",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-21 11:00:00",
+                ),
+                (
+                    "evt-write-2",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "telegram_generic_observation_loader",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "operation": "update",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.cofounder_name",
+                                    "value": "Sara",
+                                    "operation": "update",
+                                    "memory_role": "current_state",
+                                    "text": "Actually, my cofounder is Sara.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-21 11:01:00",
+                ),
+                (
+                    "evt-write-2-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "telegram_generic_observation_loader",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-21 11:01:00",
+                ),
+                (
+                    "evt-write-3",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-3",
+                    None,
+                    "corr-3",
+                    "req-3",
+                    "trace-3",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "telegram_generic_observation_loader",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "current_state",
+                            "operation": "delete",
+                            "observations": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "profile.cofounder_name",
+                                    "value": None,
+                                    "operation": "delete",
+                                    "memory_role": "current_state",
+                                    "text": "Forget my cofounder.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-21 11:02:00",
+                ),
+                (
+                    "evt-write-3-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-3",
+                    None,
+                    "corr-3",
+                    "req-3",
+                    "trace-3",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "telegram_generic_observation_loader",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-21 11:02:00",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--chat-id",
+            "12345",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    conversation = payload["normalization"]["normalized"]["conversations"][0]
+    assert [turn["content"] for turn in conversation["turns"]] == [
+        "My cofounder is Omar.",
+        "Actually, my cofounder is Sara.",
+        "Forget my cofounder.",
+    ]
+    assert [probe["probe_type"] for probe in conversation["probes"]] == [
+        "evidence",
+        "evidence",
+        "historical_state",
+    ]
+    probe_rows = {row["probe_type"]: row for row in payload["shadow_report"]["summary"]["probe_rows"]}
+    assert "current_state" not in probe_rows
+    assert probe_rows["evidence"]["total"] == 2
+    assert probe_rows["evidence"]["hits"] == 2
+    assert probe_rows["historical_state"]["total"] == 1
+    assert probe_rows["historical_state"]["hits"] == 1
+    assert "probe_quality_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
+
+
 def test_run_spark_builder_state_telegram_intake_cli_prefers_newer_founder_fact_for_startup_query(tmp_path: Path, monkeypatch):
     builder_home = tmp_path / "builder-home-founder-startup-alias"
     output_dir = tmp_path / "spark_builder_state_founder_startup_kb"

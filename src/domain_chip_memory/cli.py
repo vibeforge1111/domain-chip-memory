@@ -2119,6 +2119,16 @@ def _normalize_builder_telegram_state_db(
             "evidence_text": str(evidence_text or ""),
         }
 
+    def _forget_known_value(
+        store: dict[str, dict[str, str]],
+        *,
+        predicate: str,
+    ) -> None:
+        clean_predicate = str(predicate or "").strip()
+        if not clean_predicate:
+            return
+        store.pop(clean_predicate, None)
+
     def _known_value_matches(
         store: dict[str, dict[str, str]],
         *,
@@ -2279,10 +2289,10 @@ def _normalize_builder_telegram_state_db(
                 return "profile.startup_name", direct_value
             effective_entry = _effective_query_entry(store, normalized_predicate) or {}
             effective_predicate = str(effective_entry.get("predicate") or normalized_predicate).strip() or normalized_predicate
-            effective_value = str(effective_entry.get("value") or clean_expected or "").strip() or clean_expected
+            effective_value = str(effective_entry.get("value") or "").strip() or None
             return effective_predicate, effective_value
         current_entry = store.get(str(normalized_predicate or "").strip()) or {}
-        current_value = str(current_entry.get("value") or "").strip() or clean_expected
+        current_value = str(current_entry.get("value") or "").strip() or None
         return normalized_predicate, current_value
 
     def _query_answer(*, predicate: str | None, value: str | None) -> str | None:
@@ -3072,6 +3082,14 @@ def _normalize_builder_telegram_state_db(
                                 as_of=_format_builder_timestamp(memory_write_row.get("created_at")),
                                 distinct_value_count=distinct_value_count,
                             )
+                        elif (
+                            accepted_count > 0
+                            and predicate
+                            and str(item.get("operation") or write_facts.get("operation") or "").strip().lower() == "delete"
+                        ):
+                            _forget_known_value(known_values, predicate=predicate)
+                            if human_value:
+                                _forget_known_value(known_human_values, predicate=predicate)
                 events = write_facts.get("events")
                 if isinstance(events, list):
                     for item in events:
@@ -3423,6 +3441,8 @@ def _normalize_builder_telegram_state_db(
                         expected_value=normalized_probe.get("expected_value"),
                     )
                     expected_value = str(normalized_probe.get("expected_value") or "").strip() or None
+                    if probe_type == "current_state" and expected_value and not final_value:
+                        continue
                     if expected_value and final_value and expected_value != final_value:
                         continue
                     if effective_predicate:
