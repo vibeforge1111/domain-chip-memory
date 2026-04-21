@@ -115,6 +115,10 @@ def execute_builder_memory_read(
 def _materialize_lookup_result(*, method: str, result: Any) -> dict[str, Any]:
     facts = {
         "memory_role": result.memory_role,
+        "memory_roles": list((result.trace or {}).get("memory_roles") or []),
+        "primary_memory_role": str((result.trace or {}).get("primary_memory_role") or result.memory_role),
+        "canonical_memory_roles": list((result.trace or {}).get("canonical_memory_roles") or []),
+        "provenance_roles": list((result.trace or {}).get("provenance_roles") or []),
         "method": method,
         "record_count": len(result.provenance),
         "retrieval_trace": dict(result.trace),
@@ -139,6 +143,9 @@ def _materialize_retrieval_result(*, method: str, result: Any) -> dict[str, Any]
     first_role = result.items[0].memory_role if result.items else "unknown"
     facts = {
         "memory_role": first_role,
+        "memory_roles": list((result.trace or {}).get("memory_roles") or []),
+        "primary_memory_role": str((result.trace or {}).get("primary_memory_role") or first_role),
+        "canonical_memory_roles": list((result.trace or {}).get("canonical_memory_roles") or []),
         "method": method,
         "record_count": len(result.items),
         "retrieval_trace": dict(result.trace),
@@ -168,6 +175,10 @@ def _materialize_explanation_result(*, method: str, result: Any) -> dict[str, An
     }
     facts = {
         "memory_role": result.memory_role,
+        "memory_roles": list((result.trace or {}).get("memory_roles") or []),
+        "primary_memory_role": str((result.trace or {}).get("primary_memory_role") or result.memory_role),
+        "canonical_memory_roles": list((result.trace or {}).get("canonical_memory_roles") or []),
+        "provenance_roles": list((result.trace or {}).get("provenance_roles") or []),
         "method": method,
         "record_count": len(result.provenance),
         "answer_explanation": answer_explanation,
