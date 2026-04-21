@@ -283,6 +283,8 @@ class SparkShadowIngestAdapter:
                 self.sdk.write_event(write_request) if memory_kind == "event" else self.sdk.write_observation(write_request)
             )
             if write_result.accepted:
+                if memory_kind == "event":
+                    self._consolidate_telegram_event_summary(write_request)
                 accepted_writes += 1
                 action = "accepted_write"
                 turn_traces.append(self._build_turn_trace(turn, normalized_role, action, write_result))
@@ -334,6 +336,42 @@ class SparkShadowIngestAdapter:
                 "skipped_turns": skipped_turns,
                 "reference_turns": reference_turns,
             },
+        )
+
+    def _consolidate_telegram_event_summary(self, write_request: MemoryWriteRequest) -> None:
+        predicate = str(write_request.predicate or "").strip()
+        prefix = "telegram.event."
+        if not predicate.startswith(prefix):
+            return
+        suffix = predicate[len(prefix) :].strip()
+        subject = str(write_request.subject or "").strip()
+        value = str(write_request.value or "").strip()
+        if not suffix or not subject or not value:
+            return
+        summary_predicate = f"telegram.summary.latest_{suffix}"
+        metadata = dict(write_request.metadata)
+        self.sdk.write_observation(
+            MemoryWriteRequest(
+                text=write_request.text,
+                speaker=write_request.speaker,
+                timestamp=write_request.timestamp,
+                session_id=write_request.session_id,
+                turn_id=write_request.turn_id,
+                operation="update",
+                subject=subject,
+                predicate=summary_predicate,
+                value=value,
+                metadata={
+                    **metadata,
+                    "memory_role": "current_state",
+                    "source_surface": "telegram_event_consolidation",
+                    "source_event_predicate": predicate,
+                    "entity_key": summary_predicate,
+                    "normalized_value": value,
+                    "value": value,
+                    "consolidated_from_event": True,
+                },
+            )
         )
 
     def evaluate_ingest(

@@ -6211,10 +6211,8 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
         "What is my startup?",
         "You created Seedify.",
     ]
-    assert len(probes) == 4
+    assert len(probes) == 2
     assert [probe["probe_type"] for probe in probes] == [
-        "current_state",
-        "evidence",
         "current_state",
         "evidence",
     ]
@@ -6227,10 +6225,10 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
     assert payload["summary"]["reference_turns"] == 3
     assert payload["summary"]["reference_turn_count"] == 3
     probe_rows = {row["probe_type"]: row for row in payload["shadow_report"]["summary"]["probe_rows"]}
-    assert probe_rows["current_state"]["total"] == 2
-    assert probe_rows["current_state"]["hits"] == 2
-    assert probe_rows["evidence"]["total"] == 2
-    assert probe_rows["evidence"]["hits"] == 2
+    assert probe_rows["current_state"]["total"] == 1
+    assert probe_rows["current_state"]["hits"] == 1
+    assert probe_rows["evidence"]["total"] == 1
+    assert probe_rows["evidence"]["hits"] == 1
     assert payload["turn_audit"]["summary"]["rejected_user_turn_count"] == 0
     assert payload["turn_audit"]["summary"]["reference_turn_count"] == 3
     assert payload["summary"]["kb_valid"] is True
@@ -6239,6 +6237,545 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-run-summary.md").exists()
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-failure-taxonomy.md").exists()
     assert (output_dir / "wiki" / "outputs" / "query-spark-shadow-turn-audit.md").exists()
+
+
+def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_telegram_event_builder_state_db(
+    tmp_path: Path,
+    monkeypatch,
+):
+    builder_home = tmp_path / "builder-home-bridge-events"
+    output_dir = tmp_path / "spark_builder_state_bridge_events_kb"
+    output_file = tmp_path / "artifacts" / "spark_builder_state_bridge_events.json"
+    builder_home.mkdir()
+    state_db = builder_home / "state.db"
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE builder_events (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                truth_kind TEXT NOT NULL,
+                target_surface TEXT NOT NULL,
+                component TEXT NOT NULL,
+                run_id TEXT,
+                parent_event_id TEXT,
+                correlation_id TEXT,
+                request_id TEXT,
+                trace_ref TEXT,
+                channel_id TEXT,
+                session_id TEXT,
+                human_id TEXT,
+                agent_id TEXT,
+                actor_id TEXT,
+                evidence_lane TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                status TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                reason_code TEXT,
+                provenance_json TEXT,
+                facts_json TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO builder_events (
+                event_id, event_type, truth_kind, target_surface, component, run_id, parent_event_id,
+                correlation_id, request_id, trace_ref, channel_id, session_id, human_id, agent_id,
+                actor_id, evidence_lane, severity, status, summary, reason_code, provenance_json,
+                facts_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "evt-meeting-write",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "event",
+                            "events": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "telegram.event.meeting",
+                                    "value": "meeting with Omar on May 3",
+                                    "operation": "event",
+                                    "memory_role": "event",
+                                    "text": "My meeting with Omar is on May 3.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-21 10:00:00",
+                ),
+                (
+                    "evt-meeting-write-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-21 10:00:01",
+                ),
+                (
+                    "evt-meeting-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-1",
+                    None,
+                    "corr-1",
+                    "req-1",
+                    "trace-1",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge acknowledged a Telegram event directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_telegram_event_update",
+                            "routing_decision": "memory_telegram_event_observation",
+                            "predicate": "telegram.event.meeting",
+                            "value": "meeting with Omar on May 3",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-21 10:00:02",
+                ),
+                (
+                    "evt-flight-write-1",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "event",
+                            "events": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "telegram.event.flight",
+                                    "value": "flight to Tokyo on May 18",
+                                    "operation": "event",
+                                    "memory_role": "event",
+                                    "text": "My flight to Tokyo is on May 18.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-21 10:01:00",
+                ),
+                (
+                    "evt-flight-write-1-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-21 10:01:01",
+                ),
+                (
+                    "evt-flight-reply-1",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-2",
+                    None,
+                    "corr-2",
+                    "req-2",
+                    "trace-2",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge acknowledged a Telegram event directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_telegram_event_update",
+                            "routing_decision": "memory_telegram_event_observation",
+                            "predicate": "telegram.event.flight",
+                            "value": "flight to Tokyo on May 18",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-21 10:01:02",
+                ),
+                (
+                    "evt-flight-write-2",
+                    "memory_write_requested",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-3",
+                    None,
+                    "corr-3",
+                    "req-3",
+                    "trace-3",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write requested.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "memory_role": "event",
+                            "events": [
+                                {
+                                    "subject": "human:telegram:12345",
+                                    "predicate": "telegram.event.flight",
+                                    "value": "flight to Tokyo on May 24",
+                                    "operation": "event",
+                                    "memory_role": "event",
+                                    "text": "My flight to Tokyo is on May 24.",
+                                }
+                            ],
+                        }
+                    ),
+                    "2026-04-21 10:02:00",
+                ),
+                (
+                    "evt-flight-write-2-ok",
+                    "memory_write_succeeded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "memory_orchestrator",
+                    "run-3",
+                    None,
+                    "corr-3",
+                    "req-3",
+                    "trace-3",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Memory write succeeded.",
+                    None,
+                    None,
+                    json.dumps({"accepted_count": 1, "rejected_count": 0}),
+                    "2026-04-21 10:02:01",
+                ),
+                (
+                    "evt-flight-reply-2",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-3",
+                    None,
+                    "corr-3",
+                    "req-3",
+                    "trace-3",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge acknowledged a Telegram event directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_telegram_event_update",
+                            "routing_decision": "memory_telegram_event_observation",
+                            "predicate": "telegram.event.flight",
+                            "value": "flight to Tokyo on May 24",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-21 10:02:02",
+                ),
+                (
+                    "evt-flight-query-latest",
+                    "plugin_or_chip_influence_recorded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-4",
+                    None,
+                    "corr-4",
+                    "req-4",
+                    "trace-4",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Personality influence was recorded before bridge execution.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "detected_memory_event_query": {
+                                "predicate": "telegram.event.flight",
+                                "label": "flight",
+                                "query_kind": "latest_event",
+                                "message_text": "What flight do I have?",
+                            }
+                        }
+                    ),
+                    "2026-04-21 10:03:00",
+                ),
+                (
+                    "evt-flight-query-latest-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-4",
+                    None,
+                    "corr-4",
+                    "req-4",
+                    "trace-4",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge answered a latest Telegram event query directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_telegram_event_latest",
+                            "routing_decision": "memory_telegram_event_latest_query",
+                            "predicate": "telegram.event.flight",
+                            "summary_predicate": "telegram.summary.latest_flight",
+                            "label": "flight",
+                            "record_count": 1,
+                            "read_method": "get_current_state",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-21 10:03:01",
+                ),
+                (
+                    "evt-flight-query-history",
+                    "plugin_or_chip_influence_recorded",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-5",
+                    None,
+                    "corr-5",
+                    "req-5",
+                    "trace-5",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Personality influence was recorded before bridge execution.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "detected_memory_event_query": {
+                                "predicate": "telegram.event.flight",
+                                "label": "flight events",
+                                "query_kind": "recent_events",
+                                "message_text": "What flights did I mention?",
+                            }
+                        }
+                    ),
+                    "2026-04-21 10:04:00",
+                ),
+                (
+                    "evt-flight-query-history-reply",
+                    "tool_result_received",
+                    "fact",
+                    "spark_intelligence_builder",
+                    "researcher_bridge",
+                    "run-5",
+                    None,
+                    "corr-5",
+                    "req-5",
+                    "trace-5",
+                    "telegram",
+                    "session:telegram:dm:12345",
+                    "human:telegram:12345",
+                    None,
+                    "researcher_bridge",
+                    "runtime",
+                    "info",
+                    "recorded",
+                    "Researcher bridge answered a Telegram event query directly from memory.",
+                    None,
+                    None,
+                    json.dumps(
+                        {
+                            "bridge_mode": "memory_telegram_event_history",
+                            "routing_decision": "memory_telegram_event_query",
+                            "predicate": "telegram.event.flight",
+                            "label": "flight events",
+                            "event_record_count": 2,
+                            "read_method": "retrieve_events",
+                            "keepability": "ephemeral_context",
+                            "promotion_disposition": "not_promotable",
+                        }
+                    ),
+                    "2026-04-21 10:04:01",
+                ),
+            ],
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-builder-state-telegram-intake",
+            str(builder_home),
+            str(output_dir),
+            "--chat-id",
+            "12345",
+            "--write",
+            str(output_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    turns = payload["normalization"]["normalized"]["conversations"][0]["turns"]
+    probes = payload["normalization"]["normalized"]["conversations"][0]["probes"]
+
+    assert [turn["content"] for turn in turns] == [
+        "My meeting with Omar is on May 3.",
+        "I'll remember your meeting with Omar on May 3.",
+        "My flight to Tokyo is on May 18.",
+        "I'll remember your flight to Tokyo on May 18.",
+        "My flight to Tokyo is on May 24.",
+        "I'll remember your flight to Tokyo on May 24.",
+        "What flight do I have?",
+        "Your latest saved flight is flight to Tokyo on May 24.",
+        "What flights did I mention?",
+        "I have 2 saved events: flight to Tokyo on May 18 then flight to Tokyo on May 24.",
+    ]
+    assert payload["summary"]["conversation_count"] == 1
+    assert payload["summary"]["accepted_writes"] == 3
+    assert "probe_coverage_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert "probe_quality_gap" not in payload["failure_taxonomy"]["summary"]["issue_labels"]
+    assert any(
+        probe["probe_type"] == "current_state" and probe["predicate"] == "telegram.summary.latest_flight"
+        for probe in probes
+    )
+    assert any(
+        probe["probe_type"] == "current_state" and probe["predicate"] == "telegram.summary.latest_meeting"
+        for probe in probes
+    )
 
 
 def test_run_spark_builder_state_telegram_intake_cli_reads_memory_read_only_builder_state_db(tmp_path: Path, monkeypatch):

@@ -957,6 +957,53 @@ def test_shadow_ingest_can_route_turn_to_event_write():
     assert result.turn_traces[0].trace["write_trace"]["operation"] == "write_memory"
 
 
+def test_shadow_ingest_consolidates_telegram_event_write_into_latest_current_state():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="builder-conv-telegram-event",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="My flight to Tokyo is on May 18.",
+                    timestamp="2025-03-01T09:00:00Z",
+                    metadata={
+                        "memory_kind": "event",
+                        "subject": "human:telegram:test",
+                        "predicate": "telegram.event.flight",
+                        "value": "flight to Tokyo on May 18",
+                        "operation": "event",
+                    },
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="My flight to Tokyo is on May 24.",
+                    timestamp="2025-03-02T09:00:00Z",
+                    metadata={
+                        "memory_kind": "event",
+                        "subject": "human:telegram:test",
+                        "predicate": "telegram.event.flight",
+                        "value": "flight to Tokyo on May 24",
+                        "operation": "event",
+                    },
+                ),
+            ],
+        )
+    )
+
+    current_state = sdk.get_current_state(
+        CurrentStateRequest(subject="human:telegram:test", predicate="telegram.summary.latest_flight")
+    )
+
+    assert result.accepted_writes == 2
+    assert current_state.found is True
+    assert current_state.value == "flight to Tokyo on May 24"
+
+
 def test_shadow_ingest_uses_explicit_structured_metadata_when_present():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)
