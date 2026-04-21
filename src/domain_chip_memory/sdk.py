@@ -46,7 +46,7 @@ def _is_identity_summary_query(query: str | None) -> bool:
     return normalized in {"who am i", "what do you know about me"}
 
 
-DEFAULT_RUNTIME_MEMORY_ARCHITECTURE = "summary_synthesis_memory"
+DEFAULT_RUNTIME_MEMORY_ARCHITECTURE = "dual_store_event_calendar_hybrid"
 DEFAULT_RUNTIME_MEMORY_PROVIDER = "heuristic_v1"
 
 
