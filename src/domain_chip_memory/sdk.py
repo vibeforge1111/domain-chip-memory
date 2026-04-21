@@ -687,7 +687,13 @@ class SparkMemorySDK:
             observations = build_observation_log(single_turn_sample)
             events = build_event_calendar(single_turn_sample)
 
-        accepted = self._write_has_supported_memory(observations, events)
+        explicit_episodic_only_write = (
+            manual_write
+            and bool(observations)
+            and not events
+            and all(self._observation_memory_role(entry) == "episodic" for entry in observations)
+        )
+        accepted = self._write_has_supported_memory(observations, events) or explicit_episodic_only_write
         observation_records = [
             self._observation_record(entry, memory_role=self._observation_memory_role(entry))
             for entry in observations

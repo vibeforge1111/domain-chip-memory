@@ -242,6 +242,41 @@ def test_sdk_rejects_unsupported_write_without_persisting_raw_residue():
     assert evidence.items == []
 
 
+def test_sdk_accepts_explicit_episodic_raw_turn_write_and_retrieves_it():
+    sdk = SparkMemorySDK()
+
+    write_result = sdk.write_observation(
+        MemoryWriteRequest(
+            operation="create",
+            subject="user",
+            predicate="raw_turn",
+            value="The pricing page felt confusing during the demo.",
+            text="The pricing page felt confusing during the demo.",
+            timestamp="2025-03-01T09:00:00Z",
+            metadata={
+                "memory_role": "episodic",
+                "source_surface": "builder_test",
+                "raw_episode": True,
+            },
+        )
+    )
+    evidence = sdk.retrieve_evidence(
+        EvidenceRetrievalRequest(
+            query="What happened during the demo?",
+            subject="user",
+            limit=3,
+        )
+    )
+
+    assert write_result.accepted is True
+    assert write_result.trace["persisted"] is True
+    assert write_result.observations
+    assert write_result.observations[0].memory_role == "episodic"
+    assert evidence.items
+    assert evidence.items[0].memory_role == "episodic"
+    assert "demo" in evidence.items[0].text.lower()
+
+
 def test_sdk_rejects_empty_write_request():
     sdk = SparkMemorySDK()
 
