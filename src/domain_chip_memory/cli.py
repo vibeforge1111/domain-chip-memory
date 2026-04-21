@@ -2190,6 +2190,28 @@ def _normalize_builder_telegram_state_db(
         if isinstance(cast_probes, list):
             cast_probes.append(probe)
 
+    def _prune_historical_probes(
+        conversation: dict[str, object],
+        *,
+        predicate: str | None,
+        as_of: str | None,
+    ) -> None:
+        clean_predicate = str(predicate or "").strip()
+        clean_as_of = str(as_of or "").strip()
+        probes = conversation.get("probes")
+        if not clean_predicate or not clean_as_of or not isinstance(probes, list):
+            return
+        conversation["probes"] = [
+            probe
+            for probe in probes
+            if not (
+                isinstance(probe, dict)
+                and str(probe.get("probe_type") or "").strip() == "historical_state"
+                and str(probe.get("predicate") or "").strip() == clean_predicate
+                and str(probe.get("as_of") or "").strip() == clean_as_of
+            )
+        ]
+
     def _append_lookup_probes(
         conversation: dict[str, object],
         *,
@@ -3031,11 +3053,12 @@ def _normalize_builder_telegram_state_db(
                             }
                         )
                         if accepted_count > 0 and predicate and value:
+                            write_timestamp = _format_builder_timestamp(memory_write_row.get("created_at"))
                             history = known_histories.setdefault(predicate, [])
                             history.append(
                                 {
                                     "value": value,
-                                    "timestamp": str(_format_builder_timestamp(memory_write_row.get("created_at")) or ""),
+                                    "timestamp": str(write_timestamp or ""),
                                     "message_id": request_id_value,
                                 }
                             )
@@ -3043,7 +3066,7 @@ def _normalize_builder_telegram_state_db(
                                 known_values,
                                 predicate=predicate,
                                 value=value,
-                                timestamp=_format_builder_timestamp(memory_write_row.get("created_at")),
+                                timestamp=write_timestamp,
                                 message_id=request_id_value,
                                 evidence_text=text,
                             )
@@ -3052,7 +3075,7 @@ def _normalize_builder_telegram_state_db(
                                     known_human_values,
                                     predicate=predicate,
                                     value=value,
-                                    timestamp=_format_builder_timestamp(memory_write_row.get("created_at")),
+                                    timestamp=write_timestamp,
                                     message_id=request_id_value,
                                     evidence_text=text,
                                 )
@@ -3073,13 +3096,18 @@ def _normalize_builder_telegram_state_db(
                                 predicate=predicate,
                                 expected_value=value,
                             )
+                            _prune_historical_probes(
+                                conversation,
+                                predicate=predicate,
+                                as_of=write_timestamp,
+                            )
                             _append_historical_probe(
                                 conversation,
                                 base_probe_id=base_probe_id,
                                 subject=str(_normalize_builder_human_id(item.get("subject")) or human_value or ""),
                                 predicate=predicate,
                                 expected_value=value,
-                                as_of=_format_builder_timestamp(memory_write_row.get("created_at")),
+                                as_of=write_timestamp,
                                 distinct_value_count=distinct_value_count,
                             )
                         elif (
@@ -3087,6 +3115,11 @@ def _normalize_builder_telegram_state_db(
                             and predicate
                             and str(item.get("operation") or write_facts.get("operation") or "").strip().lower() == "delete"
                         ):
+                            _prune_historical_probes(
+                                conversation,
+                                predicate=predicate,
+                                as_of=_format_builder_timestamp(memory_write_row.get("created_at")),
+                            )
                             _forget_known_value(known_values, predicate=predicate)
                             if human_value:
                                 _forget_known_value(known_human_values, predicate=predicate)
