@@ -13,6 +13,7 @@ AnswerCandidateType = Literal[
     "location",
     "preference",
     "current_state",
+    "event_history",
     "abstain",
 ]
 AnswerCandidateSource = Literal[

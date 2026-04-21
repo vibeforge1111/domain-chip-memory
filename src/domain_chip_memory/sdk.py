@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import os
@@ -9,6 +10,7 @@ from typing import Any
 from .contracts import JsonDict, MemoryRole, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
 from .memory_extraction import EventCalendarEntry, ObservationEntry
 from .memory_observation_runtime import build_event_calendar, build_observation_log
+from .memory_roles import canonical_memory_role, sdk_memory_role_contracts
 from .memory_updates import (
     build_current_state_view,
     entry_sort_key,
@@ -216,12 +218,14 @@ class SparkMemorySDK:
                 text=selected.text,
                 memory_role="current_state",
                 provenance=[self._observation_record(selected, memory_role="current_state")],
-                trace={
-                    "operation": "get_current_state",
-                    "subject": subject,
-                    "predicate": predicate,
-                    "observation_count": len(observations),
-                },
+                trace=self._lookup_trace(
+                    operation="get_current_state",
+                    subject=subject,
+                    predicate=predicate,
+                    observation_count=len(observations),
+                    memory_role="current_state",
+                    provenance_roles=["current_state"],
+                ),
             )
         if has_active_state_deletion(observations, subject=subject, predicate=predicate):
             deletion_entries = self._deletion_entries(observations, subject=subject, predicate=predicate)
@@ -231,12 +235,14 @@ class SparkMemorySDK:
                 text=None,
                 memory_role="state_deletion",
                 provenance=[self._observation_record(deletion_entries[-1], memory_role="state_deletion")] if deletion_entries else [],
-                trace={
-                    "operation": "get_current_state",
-                    "subject": subject,
-                    "predicate": predicate,
-                    "observation_count": len(observations),
-                },
+                trace=self._lookup_trace(
+                    operation="get_current_state",
+                    subject=subject,
+                    predicate=predicate,
+                    observation_count=len(observations),
+                    memory_role="state_deletion",
+                    provenance_roles=["state_deletion"] if deletion_entries else [],
+                ),
             )
         return MemoryLookupResult(
             found=False,
@@ -244,12 +250,14 @@ class SparkMemorySDK:
             text=None,
             memory_role="unknown",
             provenance=[],
-            trace={
-                "operation": "get_current_state",
-                "subject": subject,
-                "predicate": predicate,
-                "observation_count": len(observations),
-            },
+            trace=self._lookup_trace(
+                operation="get_current_state",
+                subject=subject,
+                predicate=predicate,
+                observation_count=len(observations),
+                memory_role="unknown",
+                provenance_roles=[],
+            ),
         )
 
     def get_historical_state(self, request: HistoricalStateRequest) -> MemoryLookupResult:
@@ -290,13 +298,15 @@ class SparkMemorySDK:
                 text=selected.text,
                 memory_role="structured_evidence",
                 provenance=[self._observation_record(selected, memory_role="structured_evidence")],
-                trace={
-                    "operation": "get_historical_state",
-                    "subject": subject,
-                    "predicate": predicate,
-                    "as_of": request.as_of,
-                    "observation_count": len(observations),
-                },
+                trace=self._lookup_trace(
+                    operation="get_historical_state",
+                    subject=subject,
+                    predicate=predicate,
+                    observation_count=len(observations),
+                    memory_role="structured_evidence",
+                    provenance_roles=["structured_evidence"],
+                    extra_trace={"as_of": request.as_of},
+                ),
             )
         if has_active_state_deletion(observations, subject=subject, predicate=predicate):
             deletion_entries = self._deletion_entries(observations, subject=subject, predicate=predicate)
@@ -306,13 +316,15 @@ class SparkMemorySDK:
                 text=None,
                 memory_role="state_deletion",
                 provenance=[self._observation_record(deletion_entries[-1], memory_role="state_deletion")] if deletion_entries else [],
-                trace={
-                    "operation": "get_historical_state",
-                    "subject": subject,
-                    "predicate": predicate,
-                    "as_of": request.as_of,
-                    "observation_count": len(observations),
-                },
+                trace=self._lookup_trace(
+                    operation="get_historical_state",
+                    subject=subject,
+                    predicate=predicate,
+                    observation_count=len(observations),
+                    memory_role="state_deletion",
+                    provenance_roles=["state_deletion"] if deletion_entries else [],
+                    extra_trace={"as_of": request.as_of},
+                ),
             )
         return MemoryLookupResult(
             found=False,
@@ -320,13 +332,15 @@ class SparkMemorySDK:
             text=None,
             memory_role="unknown",
             provenance=[],
-            trace={
-                "operation": "get_historical_state",
-                "subject": subject,
-                "predicate": predicate,
-                "as_of": request.as_of,
-                "observation_count": len(observations),
-            },
+            trace=self._lookup_trace(
+                operation="get_historical_state",
+                subject=subject,
+                predicate=predicate,
+                observation_count=len(observations),
+                memory_role="unknown",
+                provenance_roles=[],
+                extra_trace={"as_of": request.as_of},
+            ),
         )
 
     def retrieve_evidence(self, request: EvidenceRetrievalRequest) -> MemoryRetrievalResult:
@@ -363,14 +377,15 @@ class SparkMemorySDK:
         ]
         return MemoryRetrievalResult(
             items=items,
-            trace={
-                "operation": "retrieve_evidence",
-                "query": request.query,
-                "subject": request.subject,
-                "predicate": request.predicate,
-                "limit": request.limit,
-                "query_intent": query_intent,
-            },
+            trace=self._retrieval_trace(
+                operation="retrieve_evidence",
+                items=items,
+                query=request.query,
+                subject=request.subject,
+                predicate=request.predicate,
+                limit=request.limit,
+                query_intent=query_intent,
+            ),
         )
 
     def retrieve_events(self, request: EventRetrievalRequest) -> MemoryRetrievalResult:
@@ -397,13 +412,14 @@ class SparkMemorySDK:
         ]
         return MemoryRetrievalResult(
             items=items,
-            trace={
-                "operation": "retrieve_events",
-                "query": request.query,
-                "subject": request.subject,
-                "predicate": request.predicate,
-                "limit": request.limit,
-            },
+            trace=self._retrieval_trace(
+                operation="retrieve_events",
+                items=items,
+                query=request.query,
+                subject=request.subject,
+                predicate=request.predicate,
+                limit=request.limit,
+            ),
         )
 
     def explain_answer(self, request: AnswerExplanationRequest) -> AnswerExplanationResult:
@@ -457,13 +473,15 @@ class SparkMemorySDK:
             provenance=state_result.provenance,
             evidence=evidence.items,
             events=events.items,
-            trace={
-                "operation": "explain_answer",
-                "question": request.question,
-                "subject": request.subject,
-                "predicate": request.predicate,
-                "as_of": request.as_of,
-            },
+            trace=self._explanation_trace(
+                question=request.question,
+                subject=request.subject,
+                predicate=request.predicate,
+                as_of=request.as_of,
+                state_result=state_result,
+                evidence=evidence.items,
+                events=events.items,
+            ),
         )
 
     def reconsolidate_manual_memory(self) -> MemoryMaintenanceResult:
@@ -492,9 +510,16 @@ class SparkMemorySDK:
             for entry in self._observations()
         ]
         event_records = [self._event_record(entry) for entry in self._events()]
+        role_contracts = sdk_memory_role_contracts()
         return {
             "runtime_class": "SparkMemorySDK",
             "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            "memory_role_contract": {
+                "roles": role_contracts,
+                "canonical_aliases": {
+                    contract["runtime_role"]: contract["canonical_role"] for contract in role_contracts
+                },
+            },
             "counts": {
                 "session_count": len(self._sessions),
                 "current_state_count": len(current_state_records),
@@ -629,6 +654,11 @@ class SparkMemorySDK:
             events = build_event_calendar(single_turn_sample)
 
         accepted = self._write_has_supported_memory(observations, events)
+        observation_records = [
+            self._observation_record(entry, memory_role=self._observation_memory_role(entry))
+            for entry in observations
+        ]
+        event_records = [self._event_record(entry) for entry in events]
         if accepted:
             self._upsert_session(session_id, turn, request.timestamp)
             if manual_write:
@@ -641,11 +671,8 @@ class SparkMemorySDK:
             accepted=accepted,
             observations_written=len(observations),
             events_written=len(events),
-            observations=[
-                self._observation_record(entry, memory_role=self._observation_memory_role(entry))
-                for entry in observations
-            ],
-            events=[self._event_record(entry) for entry in events],
+            observations=observation_records,
+            events=event_records,
             unsupported_reason=None if accepted else "no_structured_memory_extracted",
             trace={
                 "operation": "write_memory",
@@ -655,6 +682,10 @@ class SparkMemorySDK:
                 "write_kind": write_kind,
                 "write_operation": operation,
                 "persisted": accepted,
+                "memory_roles": self._unique_memory_roles([*observation_records, *event_records]),
+                "memory_role_counts": self._memory_role_counts([*observation_records, *event_records]),
+                "primary_memory_role": self._primary_memory_role([*observation_records, *event_records]),
+                "canonical_memory_roles": self._canonical_memory_roles([*observation_records, *event_records]),
             },
         )
 
@@ -1005,8 +1036,112 @@ class SparkMemorySDK:
             text=None,
             memory_role="unknown",
             provenance=[],
-            trace=trace,
+            trace=self._with_role_trace(trace, memory_role="unknown", provenance_roles=[]),
         )
+
+    def _lookup_trace(
+        self,
+        *,
+        operation: str,
+        subject: str,
+        predicate: str,
+        observation_count: int,
+        memory_role: MemoryRole,
+        provenance_roles: list[MemoryRole],
+        extra_trace: JsonDict | None = None,
+    ) -> JsonDict:
+        trace: JsonDict = {
+            "operation": operation,
+            "subject": subject,
+            "predicate": predicate,
+            "observation_count": observation_count,
+        }
+        if extra_trace:
+            trace.update(extra_trace)
+        return self._with_role_trace(trace, memory_role=memory_role, provenance_roles=provenance_roles)
+
+    def _retrieval_trace(
+        self,
+        *,
+        operation: str,
+        items: list[RetrievedMemoryRecord],
+        query: str | None,
+        subject: str | None,
+        predicate: str | None,
+        limit: int,
+        query_intent: str | None = None,
+    ) -> JsonDict:
+        trace: JsonDict = {
+            "operation": operation,
+            "query": query,
+            "subject": subject,
+            "predicate": predicate,
+            "limit": limit,
+        }
+        if query_intent is not None:
+            trace["query_intent"] = query_intent
+        trace["memory_roles"] = self._unique_memory_roles(items)
+        trace["memory_role_counts"] = self._memory_role_counts(items)
+        trace["primary_memory_role"] = self._primary_memory_role(items)
+        trace["canonical_memory_roles"] = self._canonical_memory_roles(items)
+        return trace
+
+    def _explanation_trace(
+        self,
+        *,
+        question: str,
+        subject: str,
+        predicate: str,
+        as_of: str | None,
+        state_result: MemoryLookupResult,
+        evidence: list[RetrievedMemoryRecord],
+        events: list[RetrievedMemoryRecord],
+    ) -> JsonDict:
+        memory_roles = self._unique_memory_roles([*state_result.provenance, *evidence, *events])
+        if state_result.memory_role not in memory_roles:
+            memory_roles = [state_result.memory_role, *memory_roles]
+        return {
+            "operation": "explain_answer",
+            "question": question,
+            "subject": subject,
+            "predicate": predicate,
+            "as_of": as_of,
+            "memory_role": state_result.memory_role,
+            "primary_memory_role": state_result.memory_role,
+            "memory_roles": memory_roles,
+            "state_memory_role": state_result.memory_role,
+            "evidence_memory_roles": self._unique_memory_roles(evidence),
+            "event_memory_roles": self._unique_memory_roles(events),
+            "canonical_memory_roles": [canonical_memory_role(role) for role in memory_roles],
+        }
+
+    def _with_role_trace(
+        self,
+        trace: JsonDict,
+        *,
+        memory_role: MemoryRole,
+        provenance_roles: list[MemoryRole],
+    ) -> JsonDict:
+        unique_provenance_roles = list(dict.fromkeys(provenance_roles))
+        trace["memory_role"] = memory_role
+        trace["primary_memory_role"] = memory_role
+        trace["memory_roles"] = [memory_role] if memory_role != "unknown" else []
+        trace["provenance_roles"] = unique_provenance_roles
+        trace["canonical_memory_roles"] = [canonical_memory_role(role) for role in trace["memory_roles"]]
+        return trace
+
+    def _memory_role_counts(self, items: list[RetrievedMemoryRecord]) -> JsonDict:
+        counts = Counter(item.memory_role for item in items if str(item.memory_role or "").strip())
+        return {role: counts[role] for role in sorted(counts)}
+
+    def _unique_memory_roles(self, items: list[RetrievedMemoryRecord]) -> list[str]:
+        return list(dict.fromkeys(item.memory_role for item in items if str(item.memory_role or "").strip()))
+
+    def _canonical_memory_roles(self, items: list[RetrievedMemoryRecord]) -> list[str]:
+        return list(dict.fromkeys(canonical_memory_role(item.memory_role) for item in items if str(item.memory_role or "").strip()))
+
+    def _primary_memory_role(self, items: list[RetrievedMemoryRecord]) -> str:
+        return items[0].memory_role if items else "unknown"
 
     def _observation_record(self, entry: ObservationEntry, *, memory_role: MemoryRole) -> RetrievedMemoryRecord:
         return RetrievedMemoryRecord(
@@ -1050,6 +1185,18 @@ def build_sdk_contract_summary() -> dict[str, Any]:
         "runtime_class": "SparkMemorySDK",
         "runtime_memory_architecture": _runtime_memory_architecture(),
         "runtime_memory_provider": _runtime_memory_provider(),
+        "memory_roles": sdk_memory_role_contracts(),
+        "answer_candidate_types": [
+            "generic",
+            "exact_numeric",
+            "currency",
+            "date",
+            "location",
+            "preference",
+            "current_state",
+            "event_history",
+            "abstain",
+        ],
         "write_methods": ["write_observation", "write_event"],
         "write_operations": {
             "write_observation": ["auto", "create", "update", "delete"],
@@ -1080,6 +1227,35 @@ def build_sdk_contract_summary() -> dict[str, Any]:
             "MemoryMaintenanceResult",
             "RetrievedMemoryRecord",
         ],
+        "trace_contracts": {
+            "write_memory": [
+                "memory_roles",
+                "memory_role_counts",
+                "primary_memory_role",
+                "canonical_memory_roles",
+            ],
+            "read_memory": [
+                "memory_role",
+                "memory_roles",
+                "primary_memory_role",
+                "provenance_roles",
+                "canonical_memory_roles",
+            ],
+            "retrieve_memory": [
+                "memory_roles",
+                "memory_role_counts",
+                "primary_memory_role",
+                "canonical_memory_roles",
+            ],
+            "explain_answer": [
+                "memory_role",
+                "memory_roles",
+                "state_memory_role",
+                "evidence_memory_roles",
+                "event_memory_roles",
+                "canonical_memory_roles",
+            ],
+        },
     }
 
 
