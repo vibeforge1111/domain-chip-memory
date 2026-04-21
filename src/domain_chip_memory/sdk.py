@@ -7,10 +7,11 @@ import os
 import re
 from typing import Any
 
-from .contracts import JsonDict, MemoryRole, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
+from .contracts import JsonDict, MemoryRole, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn, RetentionClass
 from .memory_extraction import EventCalendarEntry, ObservationEntry
 from .memory_observation_runtime import build_event_calendar, build_observation_log
 from .memory_roles import canonical_memory_role, sdk_memory_role_contracts
+from .memory_retention import default_retention_class, sdk_retention_contracts, sdk_retention_defaults_by_role
 from .memory_updates import (
     build_current_state_view,
     entry_sort_key,
@@ -48,6 +49,16 @@ def _is_identity_summary_query(query: str | None) -> bool:
 
 DEFAULT_RUNTIME_MEMORY_ARCHITECTURE = "dual_store_event_calendar_hybrid"
 DEFAULT_RUNTIME_MEMORY_PROVIDER = "heuristic_v1"
+SDK_LIFECYCLE_FIELDS: tuple[str, ...] = (
+    "created_at",
+    "document_time",
+    "event_time",
+    "valid_from",
+    "valid_to",
+    "supersedes",
+    "conflicts_with",
+    "deleted_at",
+)
 
 
 def _runtime_memory_architecture() -> str:
@@ -73,6 +84,14 @@ class MemoryWriteRequest:
     subject: str | None = None
     predicate: str | None = None
     value: str | None = None
+    retention_class: RetentionClass | None = None
+    document_time: str | None = None
+    event_time: str | None = None
+    valid_from: str | None = None
+    valid_to: str | None = None
+    supersedes: str | None = None
+    conflicts_with: list[str] = field(default_factory=list)
+    deleted_at: str | None = None
     metadata: JsonDict = field(default_factory=dict)
 
 
@@ -124,6 +143,8 @@ class RetrievedMemoryRecord:
     session_id: str
     turn_ids: list[str]
     timestamp: str | None
+    retention_class: RetentionClass | None = None
+    lifecycle: JsonDict = field(default_factory=dict)
     metadata: JsonDict = field(default_factory=dict)
 
 
@@ -225,6 +246,7 @@ class SparkMemorySDK:
                     observation_count=len(observations),
                     memory_role="current_state",
                     provenance_roles=["current_state"],
+                    provenance_items=[self._observation_record(selected, memory_role="current_state")],
                 ),
             )
         if has_active_state_deletion(observations, subject=subject, predicate=predicate):
@@ -242,6 +264,7 @@ class SparkMemorySDK:
                     observation_count=len(observations),
                     memory_role="state_deletion",
                     provenance_roles=["state_deletion"] if deletion_entries else [],
+                    provenance_items=[self._observation_record(deletion_entries[-1], memory_role="state_deletion")] if deletion_entries else [],
                 ),
             )
         return MemoryLookupResult(
@@ -250,15 +273,16 @@ class SparkMemorySDK:
             text=None,
             memory_role="unknown",
             provenance=[],
-            trace=self._lookup_trace(
-                operation="get_current_state",
-                subject=subject,
-                predicate=predicate,
-                observation_count=len(observations),
-                memory_role="unknown",
-                provenance_roles=[],
-            ),
-        )
+                trace=self._lookup_trace(
+                    operation="get_current_state",
+                    subject=subject,
+                    predicate=predicate,
+                    observation_count=len(observations),
+                    memory_role="unknown",
+                    provenance_roles=[],
+                    provenance_items=[],
+                ),
+            )
 
     def get_historical_state(self, request: HistoricalStateRequest) -> MemoryLookupResult:
         invalid_reason = self._invalid_subject_predicate_reason(request.subject, request.predicate)
@@ -305,6 +329,7 @@ class SparkMemorySDK:
                     observation_count=len(observations),
                     memory_role="structured_evidence",
                     provenance_roles=["structured_evidence"],
+                    provenance_items=[self._observation_record(selected, memory_role="structured_evidence")],
                     extra_trace={"as_of": request.as_of},
                 ),
             )
@@ -323,6 +348,7 @@ class SparkMemorySDK:
                     observation_count=len(observations),
                     memory_role="state_deletion",
                     provenance_roles=["state_deletion"] if deletion_entries else [],
+                    provenance_items=[self._observation_record(deletion_entries[-1], memory_role="state_deletion")] if deletion_entries else [],
                     extra_trace={"as_of": request.as_of},
                 ),
             )
@@ -332,16 +358,17 @@ class SparkMemorySDK:
             text=None,
             memory_role="unknown",
             provenance=[],
-            trace=self._lookup_trace(
-                operation="get_historical_state",
-                subject=subject,
-                predicate=predicate,
-                observation_count=len(observations),
-                memory_role="unknown",
-                provenance_roles=[],
-                extra_trace={"as_of": request.as_of},
-            ),
-        )
+                trace=self._lookup_trace(
+                    operation="get_historical_state",
+                    subject=subject,
+                    predicate=predicate,
+                    observation_count=len(observations),
+                    memory_role="unknown",
+                    provenance_roles=[],
+                    provenance_items=[],
+                    extra_trace={"as_of": request.as_of},
+                ),
+            )
 
     def retrieve_evidence(self, request: EvidenceRetrievalRequest) -> MemoryRetrievalResult:
         if request.limit < 1:
@@ -520,6 +547,13 @@ class SparkMemorySDK:
                     contract["runtime_role"]: contract["canonical_role"] for contract in role_contracts
                 },
             },
+            "retention_contract": {
+                "classes": sdk_retention_contracts(),
+                "defaults_by_memory_role": sdk_retention_defaults_by_role(),
+            },
+            "lifecycle_contract": {
+                "fields": list(SDK_LIFECYCLE_FIELDS),
+            },
             "counts": {
                 "session_count": len(self._sessions),
                 "current_state_count": len(current_state_records),
@@ -686,6 +720,9 @@ class SparkMemorySDK:
                 "memory_role_counts": self._memory_role_counts([*observation_records, *event_records]),
                 "primary_memory_role": self._primary_memory_role([*observation_records, *event_records]),
                 "canonical_memory_roles": self._canonical_memory_roles([*observation_records, *event_records]),
+                "retention_classes": self._unique_retention_classes([*observation_records, *event_records]),
+                "primary_retention_class": self._primary_retention_class([*observation_records, *event_records]),
+                "lifecycle_fields_present": self._lifecycle_fields_present_for_items([*observation_records, *event_records]),
             },
         )
 
@@ -872,6 +909,7 @@ class SparkMemorySDK:
                         timestamp=request.timestamp,
                         metadata={
                             **dict(request.metadata),
+                            **self._request_contract_metadata(request, write_operation=write_operation),
                             "value": value,
                             "write_operation": write_operation,
                         },
@@ -900,6 +938,7 @@ class SparkMemorySDK:
                         timestamp=request.timestamp,
                         metadata={
                             **dict(request.metadata),
+                            **self._request_contract_metadata(request, write_operation=write_operation),
                             "target_predicate": predicate,
                             "deleted_value": value,
                             "write_operation": write_operation,
@@ -929,6 +968,7 @@ class SparkMemorySDK:
                     timestamp=request.timestamp,
                     metadata={
                         **metadata,
+                        **self._request_contract_metadata(request, write_operation=write_operation),
                         "value": value,
                         "entity_key": entity_key,
                         "write_operation": write_operation,
@@ -955,6 +995,38 @@ class SparkMemorySDK:
         if write_operation == "delete":
             return f"delete {predicate_text} for {subject_text}: {value_text}".strip(" :")
         return f"{subject_text} {predicate_text} {value_text}".strip()
+
+    def _request_contract_metadata(
+        self,
+        request: MemoryWriteRequest,
+        *,
+        write_operation: str,
+    ) -> JsonDict:
+        metadata: JsonDict = {}
+        if request.retention_class is not None:
+            metadata["retention_class"] = request.retention_class
+        if request.document_time:
+            metadata["document_time"] = request.document_time
+        if request.event_time:
+            metadata["event_time"] = request.event_time
+        if request.valid_from:
+            metadata["valid_from"] = request.valid_from
+        if request.valid_to:
+            metadata["valid_to"] = request.valid_to
+        if request.supersedes:
+            metadata["supersedes"] = request.supersedes
+        if request.conflicts_with:
+            metadata["conflicts_with"] = [str(item).strip() for item in request.conflicts_with if str(item).strip()]
+        if request.deleted_at:
+            metadata["deleted_at"] = request.deleted_at
+        elif write_operation == "delete" and request.timestamp:
+            metadata["deleted_at"] = request.timestamp
+        if request.timestamp:
+            metadata.setdefault("created_at", request.timestamp)
+            metadata.setdefault("document_time", request.document_time or request.timestamp)
+            if write_operation in {"create", "update", "event"}:
+                metadata.setdefault("valid_from", request.valid_from or request.timestamp)
+        return metadata
 
     def _build_manual_current_state_snapshot(
         self,
@@ -1036,7 +1108,7 @@ class SparkMemorySDK:
             text=None,
             memory_role="unknown",
             provenance=[],
-            trace=self._with_role_trace(trace, memory_role="unknown", provenance_roles=[]),
+            trace=self._with_role_trace(trace, memory_role="unknown", provenance_roles=[], items=[]),
         )
 
     def _lookup_trace(
@@ -1048,6 +1120,7 @@ class SparkMemorySDK:
         observation_count: int,
         memory_role: MemoryRole,
         provenance_roles: list[MemoryRole],
+        provenance_items: list[RetrievedMemoryRecord] | None = None,
         extra_trace: JsonDict | None = None,
     ) -> JsonDict:
         trace: JsonDict = {
@@ -1058,7 +1131,12 @@ class SparkMemorySDK:
         }
         if extra_trace:
             trace.update(extra_trace)
-        return self._with_role_trace(trace, memory_role=memory_role, provenance_roles=provenance_roles)
+        return self._with_role_trace(
+            trace,
+            memory_role=memory_role,
+            provenance_roles=provenance_roles,
+            items=provenance_items or [],
+        )
 
     def _retrieval_trace(
         self,
@@ -1084,6 +1162,9 @@ class SparkMemorySDK:
         trace["memory_role_counts"] = self._memory_role_counts(items)
         trace["primary_memory_role"] = self._primary_memory_role(items)
         trace["canonical_memory_roles"] = self._canonical_memory_roles(items)
+        trace["retention_classes"] = self._unique_retention_classes(items)
+        trace["primary_retention_class"] = self._primary_retention_class(items)
+        trace["lifecycle_fields_present"] = self._lifecycle_fields_present_for_items(items)
         return trace
 
     def _explanation_trace(
@@ -1113,6 +1194,9 @@ class SparkMemorySDK:
             "evidence_memory_roles": self._unique_memory_roles(evidence),
             "event_memory_roles": self._unique_memory_roles(events),
             "canonical_memory_roles": [canonical_memory_role(role) for role in memory_roles],
+            "retention_classes": self._unique_retention_classes([*state_result.provenance, *evidence, *events]),
+            "primary_retention_class": self._primary_retention_class([*state_result.provenance, *evidence, *events]),
+            "lifecycle_fields_present": self._lifecycle_fields_present_for_items([*state_result.provenance, *evidence, *events]),
         }
 
     def _with_role_trace(
@@ -1121,6 +1205,7 @@ class SparkMemorySDK:
         *,
         memory_role: MemoryRole,
         provenance_roles: list[MemoryRole],
+        items: list[RetrievedMemoryRecord],
     ) -> JsonDict:
         unique_provenance_roles = list(dict.fromkeys(provenance_roles))
         trace["memory_role"] = memory_role
@@ -1128,6 +1213,9 @@ class SparkMemorySDK:
         trace["memory_roles"] = [memory_role] if memory_role != "unknown" else []
         trace["provenance_roles"] = unique_provenance_roles
         trace["canonical_memory_roles"] = [canonical_memory_role(role) for role in trace["memory_roles"]]
+        trace["retention_class"] = self._primary_retention_class(items)
+        trace["retention_classes"] = self._unique_retention_classes(items)
+        trace["lifecycle_fields_present"] = self._lifecycle_fields_present_for_items(items)
         return trace
 
     def _memory_role_counts(self, items: list[RetrievedMemoryRecord]) -> JsonDict:
@@ -1143,7 +1231,83 @@ class SparkMemorySDK:
     def _primary_memory_role(self, items: list[RetrievedMemoryRecord]) -> str:
         return items[0].memory_role if items else "unknown"
 
+    def _unique_retention_classes(self, items: list[RetrievedMemoryRecord]) -> list[str]:
+        return list(
+            dict.fromkeys(
+                item.retention_class for item in items if str(item.retention_class or "").strip()
+            )
+        )
+
+    def _primary_retention_class(self, items: list[RetrievedMemoryRecord]) -> str | None:
+        for item in items:
+            if str(item.retention_class or "").strip():
+                return item.retention_class
+        return None
+
+    def _lifecycle_fields_present_for_items(self, items: list[RetrievedMemoryRecord]) -> list[str]:
+        present: list[str] = []
+        for field_name in SDK_LIFECYCLE_FIELDS:
+            if any(self._lifecycle_has_value(item.lifecycle.get(field_name)) for item in items):
+                present.append(field_name)
+        return present
+
+    def _lifecycle_has_value(self, value: Any) -> bool:
+        if value is None:
+            return False
+        if isinstance(value, list):
+            return any(self._lifecycle_has_value(item) for item in value)
+        return str(value).strip() != ""
+
+    def _record_retention_class(
+        self,
+        *,
+        memory_role: MemoryRole,
+        metadata: JsonDict,
+    ) -> RetentionClass | None:
+        return default_retention_class(memory_role, metadata=metadata)
+
+    def _record_lifecycle(
+        self,
+        *,
+        memory_role: MemoryRole,
+        timestamp: str | None,
+        metadata: JsonDict,
+    ) -> JsonDict:
+        created_at = _normalize_scalar(metadata.get("created_at")) or _normalize_scalar(timestamp)
+        document_time = _normalize_scalar(metadata.get("document_time")) or created_at
+        lifecycle: JsonDict = {}
+        if created_at:
+            lifecycle["created_at"] = created_at
+        if document_time:
+            lifecycle["document_time"] = document_time
+        event_time = _normalize_scalar(metadata.get("event_time"))
+        if event_time:
+            lifecycle["event_time"] = event_time
+        valid_from = _normalize_scalar(metadata.get("valid_from"))
+        if not valid_from and memory_role in {"current_state", "structured_evidence", "event"}:
+            valid_from = created_at
+        if valid_from:
+            lifecycle["valid_from"] = valid_from
+        valid_to = _normalize_scalar(metadata.get("valid_to"))
+        if valid_to:
+            lifecycle["valid_to"] = valid_to
+        supersedes = _normalize_scalar(metadata.get("supersedes"))
+        if supersedes:
+            lifecycle["supersedes"] = supersedes
+        conflicts_with = metadata.get("conflicts_with")
+        if isinstance(conflicts_with, list):
+            normalized_conflicts = [str(item).strip() for item in conflicts_with if str(item).strip()]
+            if normalized_conflicts:
+                lifecycle["conflicts_with"] = normalized_conflicts
+        deleted_at = _normalize_scalar(metadata.get("deleted_at"))
+        if not deleted_at and memory_role == "state_deletion":
+            deleted_at = created_at
+        if deleted_at:
+            lifecycle["deleted_at"] = deleted_at
+        return lifecycle
+
     def _observation_record(self, entry: ObservationEntry, *, memory_role: MemoryRole) -> RetrievedMemoryRecord:
+        metadata = dict(entry.metadata)
         return RetrievedMemoryRecord(
             memory_role=memory_role,
             subject=entry.subject,
@@ -1152,10 +1316,13 @@ class SparkMemorySDK:
             session_id=entry.session_id,
             turn_ids=entry.turn_ids,
             timestamp=entry.timestamp,
-            metadata=dict(entry.metadata),
+            retention_class=self._record_retention_class(memory_role=memory_role, metadata=metadata),
+            lifecycle=self._record_lifecycle(memory_role=memory_role, timestamp=entry.timestamp, metadata=metadata),
+            metadata=metadata,
         )
 
     def _event_record(self, entry: EventCalendarEntry) -> RetrievedMemoryRecord:
+        metadata = dict(entry.metadata)
         return RetrievedMemoryRecord(
             memory_role="event",
             subject=entry.subject,
@@ -1164,7 +1331,9 @@ class SparkMemorySDK:
             session_id=entry.session_id,
             turn_ids=entry.turn_ids,
             timestamp=entry.timestamp,
-            metadata=dict(entry.metadata),
+            retention_class=self._record_retention_class(memory_role="event", metadata=metadata),
+            lifecycle=self._record_lifecycle(memory_role="event", timestamp=entry.timestamp, metadata=metadata),
+            metadata=metadata,
         )
 
     def _retrieved_record_dict(self, record: RetrievedMemoryRecord) -> JsonDict:
@@ -1176,6 +1345,8 @@ class SparkMemorySDK:
             "session_id": record.session_id,
             "turn_ids": list(record.turn_ids),
             "timestamp": record.timestamp,
+            "retention_class": record.retention_class,
+            "lifecycle": dict(record.lifecycle),
             "metadata": dict(record.metadata),
         }
 
@@ -1186,6 +1357,9 @@ def build_sdk_contract_summary() -> dict[str, Any]:
         "runtime_memory_architecture": _runtime_memory_architecture(),
         "runtime_memory_provider": _runtime_memory_provider(),
         "memory_roles": sdk_memory_role_contracts(),
+        "retention_classes": sdk_retention_contracts(),
+        "retention_defaults_by_memory_role": sdk_retention_defaults_by_role(),
+        "lifecycle_fields": list(SDK_LIFECYCLE_FIELDS),
         "answer_candidate_types": [
             "generic",
             "exact_numeric",
@@ -1233,6 +1407,9 @@ def build_sdk_contract_summary() -> dict[str, Any]:
                 "memory_role_counts",
                 "primary_memory_role",
                 "canonical_memory_roles",
+                "retention_classes",
+                "primary_retention_class",
+                "lifecycle_fields_present",
             ],
             "read_memory": [
                 "memory_role",
@@ -1240,12 +1417,18 @@ def build_sdk_contract_summary() -> dict[str, Any]:
                 "primary_memory_role",
                 "provenance_roles",
                 "canonical_memory_roles",
+                "retention_class",
+                "retention_classes",
+                "lifecycle_fields_present",
             ],
             "retrieve_memory": [
                 "memory_roles",
                 "memory_role_counts",
                 "primary_memory_role",
                 "canonical_memory_roles",
+                "retention_classes",
+                "primary_retention_class",
+                "lifecycle_fields_present",
             ],
             "explain_answer": [
                 "memory_role",
@@ -1254,6 +1437,9 @@ def build_sdk_contract_summary() -> dict[str, Any]:
                 "evidence_memory_roles",
                 "event_memory_roles",
                 "canonical_memory_roles",
+                "retention_classes",
+                "primary_retention_class",
+                "lifecycle_fields_present",
             ],
         },
     }

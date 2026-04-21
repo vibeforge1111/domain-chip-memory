@@ -39,6 +39,15 @@ MemoryRole = Literal[
     "aggregate",
     "ambiguity",
 ]
+RetentionClass = Literal[
+    "session_ephemeral",
+    "episodic_archive",
+    "active_state",
+    "durable_profile",
+    "time_bound_event",
+    "derived_belief",
+    "ops_residue",
+]
 
 
 @dataclass(frozen=True)
