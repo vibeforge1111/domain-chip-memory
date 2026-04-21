@@ -12,6 +12,7 @@ def test_builder_read_adapter_materializes_explanation_success_for_bare_telegram
             predicate="profile.city",
             value="Dubai",
             timestamp="2025-03-01T09:00:00Z",
+            supersedes="city:seed",
         )
     )
 
@@ -29,6 +30,10 @@ def test_builder_read_adapter_materializes_explanation_success_for_bare_telegram
     assert payload["facts"]["memory_role"] == "current_state"
     assert payload["facts"]["answer_explanation"]["answer"] == "Dubai"
     assert payload["facts"]["answer_explanation"]["evidence"]
+    evidence = payload["facts"]["answer_explanation"]["evidence"][0]
+    assert evidence["observation_id"]
+    assert evidence["retention_class"] == "durable_profile"
+    assert evidence["lifecycle"]["supersedes"] == "city:seed"
     assert payload["facts"]["retrieval_trace"]["subject"] == "telegram:12345"
 
 

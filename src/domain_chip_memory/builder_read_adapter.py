@@ -206,5 +206,9 @@ def _retrieved_record_dict(item: Any) -> dict[str, Any]:
         "session_id": item.session_id,
         "turn_ids": list(item.turn_ids),
         "timestamp": item.timestamp,
+        "observation_id": getattr(item, "observation_id", None),
+        "event_id": getattr(item, "event_id", None),
+        "retention_class": getattr(item, "retention_class", None),
+        "lifecycle": dict(getattr(item, "lifecycle", {}) or {}),
         "metadata": dict(item.metadata),
     }

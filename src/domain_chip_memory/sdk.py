@@ -143,6 +143,8 @@ class RetrievedMemoryRecord:
     session_id: str
     turn_ids: list[str]
     timestamp: str | None
+    observation_id: str | None = None
+    event_id: str | None = None
     retention_class: RetentionClass | None = None
     lifecycle: JsonDict = field(default_factory=dict)
     metadata: JsonDict = field(default_factory=dict)
@@ -1329,6 +1331,7 @@ class SparkMemorySDK:
             session_id=entry.session_id,
             turn_ids=entry.turn_ids,
             timestamp=entry.timestamp,
+            observation_id=entry.observation_id,
             retention_class=self._record_retention_class(memory_role=memory_role, metadata=metadata),
             lifecycle=self._record_lifecycle(memory_role=memory_role, timestamp=entry.timestamp, metadata=metadata),
             metadata=metadata,
@@ -1344,6 +1347,7 @@ class SparkMemorySDK:
             session_id=entry.session_id,
             turn_ids=entry.turn_ids,
             timestamp=entry.timestamp,
+            event_id=entry.event_id,
             retention_class=self._record_retention_class(memory_role="event", metadata=metadata),
             lifecycle=self._record_lifecycle(memory_role="event", timestamp=entry.timestamp, metadata=metadata),
             metadata=metadata,
@@ -1358,6 +1362,8 @@ class SparkMemorySDK:
             "session_id": record.session_id,
             "turn_ids": list(record.turn_ids),
             "timestamp": record.timestamp,
+            "observation_id": record.observation_id,
+            "event_id": record.event_id,
             "retention_class": record.retention_class,
             "lifecycle": dict(record.lifecycle),
             "metadata": dict(record.metadata),
