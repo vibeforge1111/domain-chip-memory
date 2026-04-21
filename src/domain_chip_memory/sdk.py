@@ -877,6 +877,8 @@ class SparkMemorySDK:
                 ],
                 "events": [],
             }
+        metadata = dict(request.metadata)
+        entity_key = _normalize_scalar(metadata.get("entity_key")) or value.lower()
         return {
             "unsupported_reason": None,
             "observations": [
@@ -895,9 +897,9 @@ class SparkMemorySDK:
                     turn_ids=[turn_id],
                     timestamp=request.timestamp,
                     metadata={
-                        **dict(request.metadata),
+                        **metadata,
                         "value": value,
-                        "entity_key": value.lower(),
+                        "entity_key": entity_key,
                         "write_operation": write_operation,
                     },
                 )
