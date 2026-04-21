@@ -46,6 +46,54 @@ def test_sdk_write_and_get_current_state():
     assert result.provenance[0].memory_role == "current_state"
 
 
+def test_sdk_write_and_get_current_state_for_founder_startup_and_hack_facts():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="I am an entrepreneur.",
+            timestamp="2025-01-01T09:00:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="My startup is Seedify.",
+            timestamp="2025-01-01T09:01:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="We were hacked by North Korea.",
+            timestamp="2025-01-01T09:02:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="I am the founder of Spark Swarm.",
+            timestamp="2025-01-01T09:03:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="I am trying to survive the hack and revive the companies.",
+            timestamp="2025-01-01T09:04:00Z",
+        )
+    )
+
+    startup = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="startup_name"))
+    attacker = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="hack_actor"))
+    founder = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="founder_of"))
+    mission = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="current_mission"))
+
+    assert startup.found is True
+    assert startup.value == "Seedify"
+    assert attacker.found is True
+    assert attacker.value == "North Korea"
+    assert founder.found is True
+    assert founder.value == "Spark Swarm"
+    assert mission.found is True
+    assert mission.value == "survive the hack and revive the companies"
+
+
 def test_sdk_get_current_state_respects_deletion():
     sdk = SparkMemorySDK()
     sdk.write_observation(
@@ -100,6 +148,59 @@ def test_sdk_get_historical_state_uses_as_of_cutoff():
     assert result.found is True
     assert result.value == "Dubai"
     assert result.memory_role == "structured_evidence"
+
+
+def test_sdk_explicit_current_state_observation_preserves_runtime_role() -> None:
+    sdk = SparkMemorySDK()
+
+    result = sdk.write_observation(
+        MemoryWriteRequest(
+            text="human:test profile.current_owner Nadia",
+            operation="update",
+            subject="human:test",
+            predicate="profile.current_owner",
+            value="Nadia",
+            timestamp="2025-03-01T09:00:00Z",
+            retention_class="active_state",
+            valid_from="2025-03-01T09:00:00Z",
+            metadata={"memory_role": "current_state", "source_surface": "builder_test"},
+        )
+    )
+
+    assert result.accepted is True
+    assert result.observations
+    assert result.observations[0].memory_role == "current_state"
+    assert result.trace["memory_roles"] == ["current_state"]
+    assert result.trace["primary_memory_role"] == "current_state"
+
+
+def test_sdk_explicit_delete_observation_preserves_state_deletion_role() -> None:
+    sdk = SparkMemorySDK()
+
+    result = sdk.write_observation(
+        MemoryWriteRequest(
+            text="delete profile.current_owner for human:test: Nadia",
+            operation="delete",
+            subject="human:test",
+            predicate="profile.current_owner",
+            value="Nadia",
+            timestamp="2025-03-02T09:00:00Z",
+            retention_class="active_state",
+            deleted_at="2025-03-02T09:00:00Z",
+            metadata={
+                "memory_role": "current_state",
+                "write_operation": "delete",
+                "deleted_at": "2025-03-02T09:00:00Z",
+                "source_surface": "builder_test",
+            },
+        )
+    )
+
+    assert result.accepted is True
+    assert result.observations
+    assert result.observations[0].memory_role == "state_deletion"
+    assert result.trace["memory_roles"] == ["state_deletion"]
+    assert result.trace["primary_memory_role"] == "state_deletion"
 
 
 def test_sdk_retrieve_evidence_and_events_return_typed_roles():

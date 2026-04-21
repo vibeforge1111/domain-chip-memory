@@ -855,10 +855,17 @@ class SparkMemorySDK:
         return [entry for _, _, _, entry in ranked[:limit]]
 
     def _observation_memory_role(self, entry: ObservationEntry) -> MemoryRole:
+        metadata = entry.metadata if isinstance(entry.metadata, dict) else {}
         if entry.predicate == "state_deletion":
+            return "state_deletion"
+        write_operation = str(metadata.get("write_operation") or "").strip().lower()
+        if write_operation == "delete" or metadata.get("deleted_at"):
             return "state_deletion"
         if entry.predicate == "raw_turn":
             return "episodic"
+        explicit_role = str(metadata.get("memory_role") or "").strip()
+        if explicit_role in {"current_state", "state_deletion", "structured_evidence", "episodic", "belief", "aggregate", "ambiguity"}:
+            return explicit_role  # type: ignore[return-value]
         return "structured_evidence"
 
     def _unsupported_operation_reason(self, operation: str, *, write_kind: str) -> str | None:
