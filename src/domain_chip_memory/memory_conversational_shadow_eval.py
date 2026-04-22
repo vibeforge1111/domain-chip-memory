@@ -4,6 +4,7 @@ import re
 from typing import Any
 
 from .answer_candidates import build_answer_candidate
+from .baselines import build_lexical_packets
 from .contracts import JsonDict, NormalizedBenchmarkSample, NormalizedQuestion
 from .memory_conversational_index import build_conversational_index
 from .memory_conversational_retrieval import _entry_score, retrieve_conversational_entries
@@ -414,6 +415,64 @@ def build_exact_turn_hybrid_shadow_packets(
     return shadow_manifest.to_dict(), hybrid_packets
 
 
+def build_lexical_hybrid_shadow_packets(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    top_k_sessions: int = 2,
+    fallback_sessions: int = 1,
+) -> tuple[JsonDict, list[BaselinePromptPacket]]:
+    manifest, summary_packets = build_summary_synthesis_memory_packets(samples)
+    _, lexical_packets = build_lexical_packets(
+        samples,
+        top_k_sessions=top_k_sessions,
+        fallback_sessions=fallback_sessions,
+    )
+    lexical_by_question_id = {packet.question_id: packet for packet in lexical_packets}
+    hybrid_packets: list[BaselinePromptPacket] = []
+
+    for summary_packet in summary_packets:
+        lexical_packet = lexical_by_question_id[summary_packet.question_id]
+        hybrid_retrieved_items, hybrid_context_blocks = _ordered_shadow_context_blocks(
+            shadow_items=list(lexical_packet.retrieved_context_items),
+            summary_items=list(summary_packet.retrieved_context_items),
+            answer_candidate_text=summary_packet.answer_candidates[0].text if summary_packet.answer_candidates else None,
+        )
+        hybrid_packets.append(
+            BaselinePromptPacket(
+                benchmark_name=summary_packet.benchmark_name,
+                baseline_name="summary_synthesis_memory_lexical_shadow",
+                sample_id=summary_packet.sample_id,
+                question_id=summary_packet.question_id,
+                question=summary_packet.question,
+                assembled_context="\n\n".join(hybrid_context_blocks),
+                retrieved_context_items=hybrid_retrieved_items,
+                metadata={
+                    **summary_packet.metadata,
+                    "route": "summary_synthesis_memory_lexical_shadow",
+                    "shadow_selector": "lexical_session_overlap",
+                    "lexical_top_k_sessions": top_k_sessions,
+                    "lexical_fallback_sessions": fallback_sessions,
+                    "lexical_item_count": len(lexical_packet.retrieved_context_items),
+                },
+                answer_candidates=summary_packet.answer_candidates,
+            )
+        )
+
+    shadow_manifest = build_run_manifest(
+        samples,
+        baseline_name="summary_synthesis_memory_lexical_shadow",
+        run_id=str(manifest.get("run_id", "")),
+        benchmark_name=str(manifest.get("benchmark_name", "")),
+        metadata={
+            **dict(manifest.get("metadata", {})),
+            "shadow_selector": "lexical_session_overlap",
+            "lexical_top_k_sessions": top_k_sessions,
+            "lexical_fallback_sessions": fallback_sessions,
+        },
+    )
+    return shadow_manifest.to_dict(), hybrid_packets
+
+
 def build_typed_graph_hybrid_shadow_packets(
     samples: list[NormalizedBenchmarkSample],
     *,
@@ -595,6 +654,28 @@ def build_exact_turn_shadow_answer_eval(
         variant_label="hybrid",
         variant_item_count_field="hybrid_conversational_item_count",
         variant_packet_metadata_field="conversational_item_count",
+    )
+
+
+def build_lexical_shadow_answer_eval(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    top_k_sessions: int = 2,
+    fallback_sessions: int = 1,
+    provider_name: str = "heuristic",
+) -> JsonDict:
+    _, hybrid_packets = build_lexical_hybrid_shadow_packets(
+        samples,
+        top_k_sessions=top_k_sessions,
+        fallback_sessions=fallback_sessions,
+    )
+    return _build_shadow_answer_eval(
+        samples,
+        provider_name=provider_name,
+        variant_packets=hybrid_packets,
+        variant_label="lexical_hybrid",
+        variant_item_count_field="lexical_hybrid_item_count",
+        variant_packet_metadata_field="lexical_item_count",
     )
 
 

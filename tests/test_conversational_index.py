@@ -6,6 +6,8 @@ from domain_chip_memory.memory_conversational_retrieval import retrieve_conversa
 from domain_chip_memory.memory_conversational_shadow_eval import (
     build_exact_turn_shadow_answer_eval,
     build_exact_turn_hybrid_shadow_packets,
+    build_lexical_hybrid_shadow_packets,
+    build_lexical_shadow_answer_eval,
     build_multi_shadow_answer_eval,
     build_typed_graph_shadow_answer_eval,
     build_typed_graph_hybrid_shadow_packets,
@@ -597,6 +599,65 @@ def test_typed_graph_shadow_answer_eval_projects_alias_binding_to_clean_answer()
 
     assert row["graph_hybrid_answer"] == "Jo"
     assert row["graph_hybrid_correct"] is True
+
+
+def test_lexical_hybrid_shadow_packets_include_lexical_session_overlap_items():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What nickname does Nate use for Joanna?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_lexical_hybrid_shadow_packets(subset, top_k_sessions=2, fallback_sessions=1)
+    packet = packets[0]
+
+    assert packet.baseline_name == "summary_synthesis_memory_lexical_shadow"
+    assert packet.metadata["lexical_item_count"] > 0
+    assert any(item.strategy == "lexical_session_overlap" for item in packet.retrieved_context_items)
+
+
+def test_lexical_shadow_answer_eval_reports_summary_and_lexical_outputs():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What nickname does Nate use for Joanna?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    report = build_lexical_shadow_answer_eval(subset, top_k_sessions=2, fallback_sessions=1, provider_name="heuristic")
+    row = report["rows"][0]
+
+    assert report["overall"]["provider_name"] == "heuristic_v1"
+    assert "summary_answer" in row
+    assert "lexical_hybrid_answer" in row
+    assert row["lexical_hybrid_item_count"] > 0
 
 
 def test_multi_shadow_answer_eval_reports_summary_exact_turn_and_graph_outputs():
