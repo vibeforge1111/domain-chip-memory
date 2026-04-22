@@ -102,6 +102,22 @@ Covered by [test_conversational_index.py](/C:/Users/USER/Desktop/domain-chip-mem
 - graph-hybrid shadow packets stay off for broad synthesis questions
 - multi-shadow answer eval exposes all three packet families through one comparison interface
 
+## Real Eval Entry Point
+
+The repo now has a direct CLI entry point for real-provider comparison:
+
+```powershell
+python -m domain_chip_memory.cli run-locomo-multi-shadow-eval benchmark_data/official/LoCoMo/data/locomo10.json --provider openai:<model> --sample-id conv-41 --sample-id conv-42 --sample-id conv-43 --sample-id conv-44 --sample-id conv-47 --sample-id conv-48 --sample-id conv-49 --sample-id conv-50 --category 1 --category 2 --category 3 --exclude-missing-gold --write C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\real-provider-multi-shadow.json
+```
+
+That command compares:
+
+- summary-only packets
+- exact-turn hybrid packets
+- typed-graph hybrid packets
+
+under one provider surface.
+
 ## Next Step
 
 Use this sidecar as the substrate for:

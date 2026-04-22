@@ -31,6 +31,7 @@ from .loaders import (
     load_longmemeval_json,
 )
 from .memory_contract_summary import build_memory_system_contract_summary
+from .memory_conversational_shadow_eval import build_multi_shadow_answer_eval
 from .packets import build_strategy_packet
 from .providers import build_provider_contract_summary, get_provider
 from .runner import build_runner_contract_summary, run_baseline
@@ -114,6 +115,31 @@ def _limit_questions(
         )
         for sample in samples
     ]
+
+
+def _filter_locomo_shadow_samples(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    sample_ids: list[str] | None = None,
+    categories: list[str] | None = None,
+    exclude_missing_gold: bool = False,
+) -> list[NormalizedBenchmarkSample]:
+    requested_ids = {sample_id.strip() for sample_id in (sample_ids or []) if sample_id.strip()}
+    requested_categories = {category.strip() for category in (categories or []) if category.strip()}
+    filtered: list[NormalizedBenchmarkSample] = []
+    for sample in samples:
+        if requested_ids and sample.sample_id not in requested_ids:
+            continue
+        questions = [
+            question
+            for question in sample.questions
+            if (not requested_categories or question.category in requested_categories)
+            and (not exclude_missing_gold or not bool(question.metadata.get("gold_answer_missing")))
+        ]
+        if not questions:
+            continue
+        filtered.append(replace(sample, questions=questions))
+    return filtered
 
 
 def _load_resume_predictions(path: Path | None) -> list[BaselinePrediction]:
@@ -11089,6 +11115,22 @@ def main() -> None:
     compare_locomo.add_argument("--fallback-sessions", type=int, default=1)
     compare_locomo.add_argument("--write")
 
+    run_locomo_multi_shadow = subparsers.add_parser(
+        "run-locomo-multi-shadow-eval",
+        help="Run summary vs exact-turn vs typed-graph shadow answer evaluation over a LoCoMo slice.",
+    )
+    run_locomo_multi_shadow.add_argument("data_file")
+    run_locomo_multi_shadow.add_argument("--provider", default="heuristic_v1")
+    run_locomo_multi_shadow.add_argument("--limit", type=int)
+    run_locomo_multi_shadow.add_argument("--question-offset", type=int, default=0)
+    run_locomo_multi_shadow.add_argument("--question-limit", type=int)
+    run_locomo_multi_shadow.add_argument("--sample-id", action="append")
+    run_locomo_multi_shadow.add_argument("--category", action="append")
+    run_locomo_multi_shadow.add_argument("--exclude-missing-gold", action="store_true")
+    run_locomo_multi_shadow.add_argument("--conversational-limit", type=int, default=8)
+    run_locomo_multi_shadow.add_argument("--graph-limit", type=int, default=6)
+    run_locomo_multi_shadow.add_argument("--write")
+
     compare_goodai = subparsers.add_parser("compare-goodai-local", help="Run all default systems over GoodAI config and definitions and emit a compact comparison.")
     compare_goodai.add_argument("config_file")
     compare_goodai.add_argument("definitions_dir")
@@ -11995,6 +12037,28 @@ def main() -> None:
         )
         if args.write:
             _write_json(write_path, payload)
+        _print(payload)
+        return
+
+    if args.command == "run-locomo-multi-shadow-eval":
+        samples = _filter_locomo_shadow_samples(
+            _limit_questions(
+                load_locomo_json(args.data_file, limit=args.limit),
+                question_offset=args.question_offset,
+                question_limit=args.question_limit,
+            ),
+            sample_ids=args.sample_id,
+            categories=args.category,
+            exclude_missing_gold=args.exclude_missing_gold,
+        )
+        payload = build_multi_shadow_answer_eval(
+            samples,
+            provider_name=args.provider,
+            conversational_limit=args.conversational_limit,
+            graph_limit=args.graph_limit,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
         _print(payload)
         return
 
