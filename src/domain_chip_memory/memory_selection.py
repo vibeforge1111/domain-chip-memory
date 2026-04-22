@@ -67,7 +67,7 @@ def select_evidence_entries(
 ) -> list[ObservationEntry]:
     ranked_inputs = observations
     question_predicates = set(_question_predicates(question))
-    typed_predicates = {"loss_event", "gift_event", "support_event", "relationship_edge", "family_edge", "shared_activity"}
+    typed_predicates = {"loss_event", "gift_event", "support_event", "shared_activity"}
     typed_inputs = [
         entry
         for entry in observations
@@ -81,7 +81,7 @@ def select_evidence_entries(
         )
     ]
     if typed_inputs:
-        ranked_inputs = typed_inputs
+        ranked_inputs = typed_inputs + [entry for entry in observations if entry not in typed_inputs]
     if _is_locomo_evidence_first_question(question):
         preferred_inputs = [
             entry

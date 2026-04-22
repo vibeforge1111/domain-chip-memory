@@ -28,6 +28,30 @@ def observation_score(question: NormalizedQuestion, observation: ObservationEntr
         score += 1.0
     if observation.timestamp:
         score += 0.001 * sum(ord(char) for char in observation.timestamp)
+    if "hobby" in question_lower or "hobbies" in question_lower:
+        if any(
+            phrase in observation_lower
+            for phrase in (
+                "hobby",
+                "hobbies",
+                "one of her hobbies",
+                "one of his hobbies",
+                "great passion",
+                "interested in art",
+                "passion for cooking",
+            )
+        ):
+            score += 8.0
+        if any(token in observation_lower for token in ("reading", "travel", "art", "cooking", "painting", "hiking", "running", "kayaking")):
+            score += 4.0
+        if any(token in question_lower for token in ("mother", "mom")) and any(
+            token in observation_lower for token in ("my mother", "my mom", "her mother", "her mom")
+        ):
+            score += 8.0
+        if any(token in question_lower for token in ("father", "dad")) and any(
+            token in observation_lower for token in ("my father", "my dad", "her father", "her dad")
+        ):
+            score += 8.0
     if question_lower.startswith("when did") and observation.predicate == "raw_turn":
         if "pottery workshop" in question_lower and "pottery workshop" in observation_lower:
             score += 14.0

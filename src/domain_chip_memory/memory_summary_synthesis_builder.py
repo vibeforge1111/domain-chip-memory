@@ -308,13 +308,28 @@ def build_summary_synthesis_memory_packets(
     packets: list[BaselinePromptPacket] = []
     for sample in samples:
         observations = build_observation_log(sample)
-        reflected = reflect_observations(observations)
         raw_entries = raw_user_turn_entries(sample)
-        structured_observations = [entry for entry in observations if entry.predicate != "raw_turn"]
         for question in sample.questions:
+            question_predicate_set = set(question_predicates(question))
+            question_observations = [
+                entry
+                for entry in observations
+                if not (
+                    entry.metadata.get("typed_conversational")
+                    and entry.predicate not in question_predicate_set
+                    and not (
+                        _question_prefers_temporal_reconstruction(question)
+                        and entry.predicate in {"loss_event", "gift_event"}
+                    )
+                )
+            ]
+            question_structured_observations = [
+                entry for entry in question_observations if entry.predicate != "raw_turn"
+            ]
+            question_reflected = reflect_observations(question_observations)
             current_state_deleted = has_active_current_state_deletion(
                 question,
-                observations,
+                question_observations,
                 is_current_state_question=is_current_state_question,
                 question_subjects=question_subjects,
                 question_predicates=question_predicates,
@@ -334,19 +349,19 @@ def build_summary_synthesis_memory_packets(
                 )
             stable_window = dedupe_observations(
                 sorted(
-                    observations,
+                    question_observations,
                     key=lambda entry: (observation_score(question, entry), entry.timestamp or "", entry.observation_id),
                     reverse=True,
                 )
             )[:observation_limit]
             ranked_reflections = sorted(
-                reflected,
+                question_reflected,
                 key=lambda entry: (observation_score(question, entry), entry.timestamp or "", entry.observation_id),
                 reverse=True,
             )[:reflection_limit]
             current_state_entries = select_current_state_entries(
                 question,
-                reflected,
+                question_reflected,
                 limit=2,
                 score_entry=lambda entry: observation_score(question, entry),
                 preferred_predicates=set(question_predicates(question)),
@@ -357,18 +372,18 @@ def build_summary_synthesis_memory_packets(
                 topic_summary, topical_support = topical_episode_support(
                     question,
                     stable_window,
-                    observations,
+                    question_observations,
                     max_support=max_topic_support,
                 )
             contradiction_support = _select_contradiction_support_entries(
                 question,
-                [*raw_entries, *observations, *structured_observations],
+                [*raw_entries, *question_observations, *question_structured_observations],
                 dedupe_observations=dedupe_observations,
                 limit=max(4, max_topic_support + 2),
             )
             synthesis_entries = _build_synthesis_entries(
                 question,
-                dedupe_observations([*contradiction_support, *structured_observations, *stable_window, *ranked_reflections]),
+                dedupe_observations([*contradiction_support, *question_structured_observations, *stable_window, *ranked_reflections]),
                 evidence_score=evidence_score,
                 observation_score=observation_score,
                 dedupe_observations=dedupe_observations,
@@ -382,8 +397,8 @@ def build_summary_synthesis_memory_packets(
                     *preference_support,
                     *stable_window,
                     *topical_support,
-                    *structured_observations,
-                    *observations,
+                    *question_structured_observations,
+                    *question_observations,
                 ]
             )
             evidence_entries = select_evidence_entries(
@@ -398,8 +413,8 @@ def build_summary_synthesis_memory_packets(
                 *preference_support,
                 *stable_window,
                 *topical_support,
-                *structured_observations,
-                *observations,
+                *question_structured_observations,
+                *question_observations,
                 *ranked_reflections,
             ]
             candidate_pool = dedupe_observations(raw_candidate_pool)
@@ -533,14 +548,14 @@ def build_summary_synthesis_memory_packets(
                             *locomo_evidence_first_entries,
                             *stable_window,
                             *topical_support,
-                            *structured_observations,
-                            *observations,
+                            *question_structured_observations,
+                            *question_observations,
                         ]
                     )
             if _question_prefers_temporal_reconstruction(question):
                 typed_temporal_entries = [
                     entry
-                    for entry in observations
+                    for entry in question_observations
                     if entry.metadata.get("typed_conversational")
                     and entry.predicate in {"loss_event", "gift_event"}
                 ]

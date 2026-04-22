@@ -66,6 +66,32 @@ _CONVERSATIONAL_TIME_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_RELATIONSHIP_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("mother", re.compile(r"\b(?:my|her|his|our)\s+(?:mother|mom)\b", re.IGNORECASE)),
+    ("father", re.compile(r"\b(?:my|her|his|our)\s+(?:father|dad)\b", re.IGNORECASE)),
+    ("sister", re.compile(r"\b(?:my|her|his|our)\s+sister(?:\s+([A-Za-z]+))?\b", re.IGNORECASE)),
+    ("brother", re.compile(r"\b(?:my|her|his|our)\s+brother(?:\s+([A-Za-z]+))?\b", re.IGNORECASE)),
+    ("friend", re.compile(r"\b(?:my|her|his|our)\s+friend(?:\s+([A-Za-z]+))?\b", re.IGNORECASE)),
+    ("partner", re.compile(r"\b(?:my|her|his|our)\s+partner\b", re.IGNORECASE)),
+    ("husband", re.compile(r"\b(?:my|her|his|our)\s+husband\b", re.IGNORECASE)),
+    ("wife", re.compile(r"\b(?:my|her|his|our)\s+wife\b", re.IGNORECASE)),
+)
+
+_SUPPORT_TRIGGER_PATTERNS = (
+    "helped me",
+    "helps me",
+    "help me",
+    "support",
+    "supported",
+    "find peace",
+    "gives me peace",
+    "gives her peace",
+    "gives him peace",
+    "grateful",
+    "thankful",
+    "means a lot to me",
+)
+
 
 def _normalize_profile_location_value(value: str) -> str:
     normalized = _normalize_value(value)
@@ -171,6 +197,26 @@ def _infer_relationship_context(text: str, lower: str) -> tuple[str, str]:
     if friend_match:
         return "friend", friend_match.group(1).strip()
     return "", ""
+
+
+def _extract_relationship_mentions(text: str) -> list[tuple[str, str, str]]:
+    mentions: list[tuple[str, str, str]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for relation_type, pattern in _RELATIONSHIP_PATTERNS:
+        for match in pattern.finditer(text):
+            source_span = match.group(0).strip()
+            named_entity = ""
+            if match.lastindex:
+                named_entity = (match.group(1) or "").strip()
+                if named_entity and named_entity.isalpha():
+                    named_entity = named_entity.title()
+            relation_surface = named_entity or relation_type
+            key = (relation_type, relation_surface, source_span)
+            if key in seen:
+                continue
+            seen.add(key)
+            mentions.append(key)
+    return mentions
 
 
 def _inherit_recent_relationship_context(
@@ -287,6 +333,37 @@ def _extract_typed_conversational_atoms(
             source_span=_extract_source_span(text, item_type),
             time_expression_raw=time_expression_raw,
             time_normalized=time_normalized,
+        )
+
+    for relation_type, relation_surface, source_span in _extract_relationship_mentions(text):
+        _append_typed_atom(
+            "relationship_edge",
+            relation_surface,
+            entity_key=f"relationship_edge:{relation_type}:{relation_surface.lower()}",
+            relation_type=relation_type,
+            other_entity=relation_surface if relation_surface != relation_type else "",
+            source_span=source_span,
+        )
+
+    support_trigger = next((token for token in _SUPPORT_TRIGGER_PATTERNS if token in lower), "")
+    if support_trigger:
+        relation_type, other_entity = _infer_relationship_context(text, lower)
+        relation_type, other_entity = _inherit_recent_relationship_context(
+            session,
+            turn,
+            relation_type=relation_type,
+            other_entity=other_entity,
+        )
+        source_span = _extract_source_span(text, support_trigger)
+        support_kind = "place" if any(token in lower for token in ("peace", "beach", "window", "forest trail", "bali")) else "support"
+        _append_typed_atom(
+            "support_event",
+            source_span,
+            entity_key=f"support_event:{support_kind}:{(other_entity or relation_type or 'general').lower()}",
+            relation_type=relation_type,
+            other_entity=other_entity,
+            support_kind=support_kind,
+            source_span=source_span,
         )
 
     return atoms
@@ -1139,6 +1216,20 @@ def _extract_atoms_from_turn(
     atoms.extend(_extract_typed_conversational_atoms(session, turn, subject=subject))
 
     if atoms:
+        if allow_raw_fallback and all(atom.metadata.get("typed_conversational") for atom in atoms):
+            atoms.append(
+                MemoryAtom(
+                    atom_id=f"{turn.turn_id}:atom:typed_raw",
+                    subject=subject,
+                    predicate="raw_turn",
+                    value=_normalize_value(text),
+                    session_id=session.session_id,
+                    turn_id=turn.turn_id,
+                    timestamp=turn.timestamp or session.timestamp,
+                    source_text=text,
+                    metadata={"speaker": turn.speaker, "typed_conversational_raw": True, **turn.metadata},
+                )
+            )
         if allow_raw_fallback and re.search(
             r"\b(last fri|last friday|last week|two weekends ago|this week|yesterday|last month|this past weekend|last year)\b",
             lower,

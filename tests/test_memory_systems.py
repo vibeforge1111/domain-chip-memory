@@ -10796,6 +10796,22 @@ def test_extract_memory_atoms_adds_typed_conversational_events_for_locomo_social
     ]
     assert pendant_gift_atoms
 
+    relationship_atoms = [
+        atom
+        for atom in atoms
+        if atom.predicate == "relationship_edge"
+        and atom.metadata.get("relation_type") == "mother"
+    ]
+    assert relationship_atoms
+
+    support_atoms = [
+        atom
+        for atom in atoms
+        if atom.predicate == "support_event"
+        and "peace" in atom.value.lower()
+    ]
+    assert support_atoms
+
 
 def test_extract_memory_atoms_compacts_fallback_claim_for_homepage_route():
     from domain_chip_memory.adapters import BEAMAdapter
