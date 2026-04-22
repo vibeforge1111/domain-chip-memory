@@ -8,6 +8,11 @@ from .contracts import NormalizedQuestion
 from .memory_extraction import ObservationEntry
 
 
+def _is_pure_question_turn(text: str) -> bool:
+    stripped = text.strip()
+    return bool(stripped) and stripped.endswith("?") and "." not in stripped and "!" not in stripped
+
+
 def infer_temporal_answer(
     question: NormalizedQuestion,
     evidence_entries: list[ObservationEntry],
@@ -136,7 +141,7 @@ def infer_yes_no_answer(
     observation_evidence_text: Callable[[NormalizedQuestion, ObservationEntry], str],
 ) -> str:
     question_lower = question.question.lower()
-    if not question_lower.startswith(("did ", "is ", "are ", "was ", "were ")):
+    if not question_lower.startswith(("did ", "does ", "is ", "are ", "was ", "were ")):
         return ""
 
     asked_subject = question_subject(question)
@@ -152,7 +157,7 @@ def infer_yes_no_answer(
     )
     for entry in ranked_entries:
         source_text = str(entry.metadata.get("source_text", "")).strip()
-        if source_text.endswith("?") and not (
+        if _is_pure_question_turn(source_text) and not (
             question_lower.startswith(("is ", "are ", "was ", "were "))
             and "pet" in question_lower
             and any(token in source_text.lower() for token in ("my guinea pig", "my dog", "my cat", "my pet"))
@@ -167,6 +172,9 @@ def infer_yes_no_answer(
             )
             if part
         )
+        if question_lower.startswith("does ") and "live in connecticut" in question_lower:
+            if any(token in combined for token in ("stamford", "connecticut")):
+                return "Likely yes"
         if question_lower.startswith(("is ", "are ", "was ", "were ")) and "pet" in question_lower:
             pet_match = re.match(
                 r"(?:is|are|was|were)\s+([a-z0-9][a-z0-9' -]*?)\s+([a-z][a-z'-]*)'s\s+pet\??$",

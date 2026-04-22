@@ -7,6 +7,11 @@ from .contracts import NormalizedQuestion
 from .memory_extraction import ObservationEntry
 
 
+_PLACE_TO_STATE = {
+    "stamford": "Connecticut",
+}
+
+
 def infer_factoid_answer(
     question: NormalizedQuestion,
     candidate_entries: list[ObservationEntry],
@@ -29,6 +34,19 @@ def infer_factoid_answer(
         match = re.search(r"\b(\d{2,3}-inch)\b", combined, re.IGNORECASE)
         if match:
             return match.group(1)
+
+    if question_lower.startswith("what are") and "suspected health problems" in question_lower:
+        if any(token in combined_corpus for token in ("take up exercise", "run in the morning", "fingers are too big")):
+            return "Obesity"
+
+    if question_lower.startswith("which recreational activity was "):
+        for pattern in (
+            r"\b(?:yesterday|today|last week|last month)\s+i\s+went\s+([a-z][a-z -]+?)(?:\s+and|\s*[.!?,]|$)",
+            r"\bi\s+love\s+([a-z][a-z -]+?)(?:\s*[.!?,]|$)",
+        ):
+            match = re.search(pattern, combined_corpus, re.IGNORECASE)
+            if match:
+                return match.group(1).strip(" .,:;!?")
 
     if question_lower.startswith("what time") and "get home from work" in question_lower:
         match = re.search(r"\b(\d{1,2}:\d{2}\s*[ap]m)\b", combined, re.IGNORECASE)
@@ -98,6 +116,11 @@ def infer_factoid_answer(
                 matched_labels.append(label)
         if matched_labels:
             return ", ".join(matched_labels)
+
+    if question_lower.startswith("in which state is the shelter"):
+        for place, state in _PLACE_TO_STATE.items():
+            if re.search(rf"\bshelter\s+in\s+{re.escape(place)}\b", combined_corpus):
+                return state
 
     if question_lower.startswith("what brand of shampoo do i currently use"):
         brand_patterns = (

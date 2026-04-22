@@ -7,6 +7,16 @@ from .contracts import NormalizedQuestion
 from .memory_extraction import ObservationEntry
 
 
+def _is_pure_question_turn(text: str) -> bool:
+    stripped = text.strip()
+    return bool(stripped) and stripped.endswith("?") and "." not in stripped and "!" not in stripped
+
+
+def _is_locomo_evidence_first_question(question: NormalizedQuestion) -> bool:
+    source_format = str(question.metadata.get("source_format", "")).strip().lower()
+    return source_format == "locomo_qa" and str(question.category).strip() in {"1", "2", "3"}
+
+
 def select_preference_support_entries(
     question: NormalizedQuestion,
     entries: list[ObservationEntry],
@@ -54,8 +64,18 @@ def select_evidence_entries(
     observation_evidence_text: Callable[[NormalizedQuestion, ObservationEntry], str],
     limit: int = 4,
 ) -> list[ObservationEntry]:
+    ranked_inputs = observations
+    if _is_locomo_evidence_first_question(question):
+        preferred_inputs = [
+            entry
+            for entry in observations
+            if entry.predicate not in {"preference", "summary_synthesis"}
+            and not _is_pure_question_turn(str(entry.metadata.get("source_text", "")).strip())
+        ]
+        if preferred_inputs:
+            ranked_inputs = preferred_inputs
     ranked = sorted(
-        observations,
+        ranked_inputs,
         key=lambda entry: (evidence_score(question, entry), observation_score(question, entry), entry.timestamp or "", entry.observation_id),
         reverse=True,
     )

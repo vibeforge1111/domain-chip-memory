@@ -498,7 +498,15 @@ def build_summary_synthesis_memory_packets(
                 )
                 if locomo_evidence_first_entries:
                     answer_evidence_entries = locomo_evidence_first_entries
-                    answer_context_entries = locomo_evidence_first_entries
+                    answer_context_entries = dedupe_observations(
+                        [
+                            *locomo_evidence_first_entries,
+                            *stable_window,
+                            *topical_support,
+                            *structured_observations,
+                            *observations,
+                        ]
+                    )
 
             answer_text = choose_answer_candidate(
                 question,

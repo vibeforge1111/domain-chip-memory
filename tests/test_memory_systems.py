@@ -12531,6 +12531,51 @@ def test_summary_synthesis_locomo_unseen_scoreable_questions_prefer_exact_suppor
     assert packet_by_id["conv-41-qa-4"].answer_candidates[0].source == "evidence_memory"
 
 
+def test_summary_synthesis_locomo_unseen_conv47_recovers_exact_supportable_answers():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-47"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=[
+            next(question for question in sample.questions if question.question_id == question_id)
+            for question_id in (
+                "conv-47-qa-1",
+                "conv-47-qa-2",
+                "conv-47-qa-3",
+                "conv-47-qa-4",
+                "conv-47-qa-6",
+                "conv-47-qa-7",
+                "conv-47-qa-8",
+            )
+        ],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_summary_synthesis_memory_packets([subset])
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "answer_candidate: obesity" in packet_by_id["conv-47-qa-1"].assembled_context.lower()
+    assert "answer_candidate: bowling" in packet_by_id["conv-47-qa-2"].assembled_context.lower()
+    assert "answer_candidate: vr club, mcgee's, baseball game" in packet_by_id["conv-47-qa-3"].assembled_context.lower()
+    assert "answer_candidate: no" in packet_by_id["conv-47-qa-4"].assembled_context.lower()
+    answer_6 = packet_by_id["conv-47-qa-6"].assembled_context.lower()
+    assert "john's favorite game is cs:go" in answer_6
+    assert "james's favorite game is apex legends" in answer_6
+    assert "answer_candidate: likely yes" in packet_by_id["conv-47-qa-7"].assembled_context.lower()
+    assert "answer_candidate: connecticut" in packet_by_id["conv-47-qa-8"].assembled_context.lower()
+    assert packet_by_id["conv-47-qa-1"].answer_candidates[0].source == "evidence_memory"
+    assert packet_by_id["conv-47-qa-2"].answer_candidates[0].source == "evidence_memory"
+    assert packet_by_id["conv-47-qa-3"].answer_candidates[0].source == "evidence_memory"
+    assert packet_by_id["conv-47-qa-6"].answer_candidates[0].source == "evidence_memory"
+    assert packet_by_id["conv-47-qa-7"].answer_candidates[0].source == "evidence_memory"
+    assert packet_by_id["conv-47-qa-8"].answer_candidates[0].source == "evidence_memory"
+
+
 def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
     samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
     keep = {

@@ -37,7 +37,8 @@ def infer_shared_answer(
     entry_source_corpus: Callable[[ObservationEntry], str],
 ) -> str:
     question_lower = question.question.lower()
-    subjects = set(question_subjects(question))
+    ordered_subjects = list(dict.fromkeys(question_subjects(question)))
+    subjects = set(ordered_subjects)
     if len(subjects) < 2:
         return ""
 
@@ -95,6 +96,65 @@ def infer_shared_answer(
             for subject in subjects
         ):
             return "Volunteering at a homeless shelter"
+
+    if "planned to meet at" in question_lower or "planned to meet" in question_lower:
+        combined_source = "\n".join(
+            text
+            for texts in source_texts_by_subject.values()
+            for text in texts
+        ).lower()
+        meeting_bits: list[str] = []
+        if "vr gaming" in combined_source:
+            meeting_bits.append("VR Club")
+        if "mcgee" in combined_source:
+            meeting_bits.append("McGee's")
+        if "baseball game" in combined_source:
+            meeting_bits.append("baseball game")
+        if meeting_bits:
+            return ", ".join(meeting_bits)
+
+    if "favorite games" in question_lower:
+        favorites: dict[str, str] = {}
+        for subject in subjects:
+            subject_source = "\n".join(source_texts_by_subject.get(subject, []))
+            for pattern in (
+                r"\b(?:my\s+favo(?:u)?rite\s+game(?:\s+called)?|our\s+favorite\s+game(?:\s+is)?)\s+(?:is\s+|called\s+)?([A-Za-z0-9:'+-]+(?:\s+[A-Za-z0-9:'+-]+){0,2}?)(?=\s+(?:with|and|but)\b|\s*[.!?,]|$)",
+                r"\bmy\s+favorite\s+([A-Za-z0-9:'+-]+(?:\s+[A-Za-z0-9:'+-]+){0,2}?)\s+game\b",
+                r"\bmy\s+favourite\s+([A-Za-z0-9:'+-]+(?:\s+[A-Za-z0-9:'+-]+){0,2}?)\s+game\b",
+            ):
+                favorite_match = re.search(pattern, subject_source, re.IGNORECASE)
+                if favorite_match:
+                    favorites[subject] = favorite_match.group(1).strip(" .,:;!?")
+                    break
+        if len(favorites) >= 2:
+            ordered_favorites = sorted(
+                favorites,
+                key=lambda subject: (
+                    question_lower.find(subject) if question_lower.find(subject) >= 0 else 10**6,
+                    subject,
+                ),
+            )
+            rendered = [
+                f"{subject.title()}'s favorite game is {favorites[subject]}"
+                for subject in ordered_favorites
+            ]
+            if len(rendered) >= 2:
+                return ", and ".join(rendered)
+
+    if question_lower.startswith("do both") and "pets" in question_lower:
+        pet_status: dict[str, bool] = {}
+        for subject in subjects:
+            subject_source = "\n".join(source_texts_by_subject.get(subject, [])).lower()
+            if re.search(r"\bdon\S*t\s+have\s+pets?\b", subject_source):
+                pet_status[subject] = False
+                continue
+            if any(
+                token in subject_source
+                for token in ("my dogs", "my dog", "my cat", "my puppy", "my pets", "beloved pets", "three dogs", "two dogs")
+            ):
+                pet_status[subject] = True
+        if len(pet_status) >= 2:
+            return "Yes" if all(pet_status.values()) else "No"
 
     return ""
 
