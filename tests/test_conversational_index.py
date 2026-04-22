@@ -296,7 +296,9 @@ def test_exact_turn_hybrid_shadow_packets_add_conversational_evidence_for_exact_
     assert packet.baseline_name == "summary_synthesis_memory_exact_turn_shadow"
     assert packet.metadata["shadow_selector"] == "exact_turn_conversational_evidence"
     assert packet.metadata["conversational_item_count"] > 0
+    assert packet.retrieved_context_items[0].strategy == "exact_turn_conversational_shadow"
     assert "conversational_evidence:" in packet.assembled_context.lower()
+    assert "answer_candidate:" not in packet.assembled_context.lower()
     assert "prius" in retrieval_text
     assert any(item.strategy == "exact_turn_conversational_shadow" for item in packet.retrieved_context_items)
 
@@ -389,8 +391,10 @@ def test_typed_graph_hybrid_shadow_packets_add_alias_binding_evidence_for_conv42
 
     assert packet.baseline_name == "summary_synthesis_memory_typed_graph_shadow"
     assert packet.metadata["graph_item_count"] > 0
+    assert packet.retrieved_context_items[0].strategy == "typed_temporal_graph_shadow"
     assert any(item.strategy == "typed_temporal_graph_shadow" for item in packet.retrieved_context_items)
     assert "graph_evidence: hey jo" in packet.assembled_context.lower()
+    assert "answer_candidate:" not in packet.assembled_context.lower()
 
 
 def test_typed_graph_hybrid_shadow_packets_stay_summary_only_for_broad_synthesis_question():

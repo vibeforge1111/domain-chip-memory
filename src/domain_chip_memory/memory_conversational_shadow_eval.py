@@ -243,6 +243,19 @@ def _merge_retrieved_context_items(
     return merged
 
 
+def _ordered_shadow_context_blocks(
+    *,
+    shadow_items: list[RetrievedContextItem],
+    summary_items: list[RetrievedContextItem],
+    answer_candidate_text: str | None,
+) -> tuple[list[RetrievedContextItem], list[str]]:
+    ordered_items = _merge_retrieved_context_items(shadow_items, summary_items)
+    context_blocks = [item.text for item in ordered_items]
+    if not shadow_items and answer_candidate_text:
+        context_blocks.append(f"answer_candidate: {answer_candidate_text}")
+    return ordered_items, context_blocks
+
+
 def _graph_hit_to_retrieved_context_item(hit: TypedTemporalGraphHit) -> RetrievedContextItem:
     return RetrievedContextItem(
         session_id=str(hit.metadata.get("session_id", "")),
@@ -280,13 +293,11 @@ def build_exact_turn_hybrid_shadow_packets(
                     _conversational_entry_to_retrieved_context_item(question, entry)
                     for entry in conversational_hits
                 ]
-                hybrid_retrieved_items = _merge_retrieved_context_items(
-                    hybrid_retrieved_items,
-                    conversational_retrieved_items,
-                )
-            hybrid_context_blocks = [item.text for item in hybrid_retrieved_items]
-            if summary_packet.answer_candidates:
-                hybrid_context_blocks.append(f"answer_candidate: {summary_packet.answer_candidates[0].text}")
+            hybrid_retrieved_items, hybrid_context_blocks = _ordered_shadow_context_blocks(
+                shadow_items=conversational_retrieved_items,
+                summary_items=list(summary_packet.retrieved_context_items),
+                answer_candidate_text=summary_packet.answer_candidates[0].text if summary_packet.answer_candidates else None,
+            )
             hybrid_packets.append(
                 BaselinePromptPacket(
                     benchmark_name=summary_packet.benchmark_name,
@@ -339,13 +350,11 @@ def build_typed_graph_hybrid_shadow_packets(
             if _question_prefers_typed_graph_evidence(question):
                 graph_hits = retrieve_typed_temporal_graph_hits(question, graph, limit=graph_limit)
                 graph_items = [_graph_hit_to_retrieved_context_item(hit) for hit in graph_hits]
-                hybrid_retrieved_items = _merge_retrieved_context_items(
-                    hybrid_retrieved_items,
-                    graph_items,
-                )
-            hybrid_context_blocks = [item.text for item in hybrid_retrieved_items]
-            if summary_packet.answer_candidates:
-                hybrid_context_blocks.append(f"answer_candidate: {summary_packet.answer_candidates[0].text}")
+            hybrid_retrieved_items, hybrid_context_blocks = _ordered_shadow_context_blocks(
+                shadow_items=graph_items,
+                summary_items=list(summary_packet.retrieved_context_items),
+                answer_candidate_text=summary_packet.answer_candidates[0].text if summary_packet.answer_candidates else None,
+            )
             hybrid_packets.append(
                 BaselinePromptPacket(
                     benchmark_name=summary_packet.benchmark_name,
