@@ -69,6 +69,7 @@ Implemented:
 - eval-only graph retrieval over relationship facts and temporal events
 - eval-only graph retrieval over alias bindings and commitment records
 - eval-only graph-hybrid shadow packets on top of `summary_synthesis_memory`
+- eval-only multi-family shadow answer evaluation across `summary`, `exact-turn`, and `typed-graph`
 
 Not implemented yet:
 
@@ -99,6 +100,7 @@ Covered by [test_conversational_index.py](/C:/Users/USER/Desktop/domain-chip-mem
 
 - graph-hybrid shadow packets add alias-binding evidence for `conv-42`
 - graph-hybrid shadow packets stay off for broad synthesis questions
+- multi-shadow answer eval exposes all three packet families through one comparison interface
 
 ## Next Step
 

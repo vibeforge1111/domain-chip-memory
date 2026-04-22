@@ -506,6 +506,124 @@ def build_typed_graph_shadow_answer_eval(
     )
 
 
+def build_multi_shadow_answer_eval(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    provider_name: str = "heuristic",
+    conversational_limit: int = 8,
+    graph_limit: int = 6,
+) -> JsonDict:
+    _, summary_packets = build_summary_synthesis_memory_packets(samples)
+    _, exact_turn_packets = build_exact_turn_hybrid_shadow_packets(
+        samples,
+        conversational_limit=conversational_limit,
+    )
+    _, graph_packets = build_typed_graph_hybrid_shadow_packets(
+        samples,
+        graph_limit=graph_limit,
+    )
+    question_by_id = {
+        question.question_id: question
+        for sample in samples
+        for question in sample.questions
+    }
+    provider = get_provider(provider_name)
+    rows: list[JsonDict] = []
+    by_sample: dict[str, dict[str, int]] = {}
+    summary_correct = 0
+    exact_turn_correct = 0
+    graph_correct = 0
+
+    for summary_packet, exact_turn_packet, graph_packet in zip(
+        summary_packets,
+        exact_turn_packets,
+        graph_packets,
+        strict=True,
+    ):
+        question = question_by_id[summary_packet.question_id]
+        summary_response = provider.generate_answer(summary_packet)
+        summary_prediction = _build_prediction(
+            summary_packet,
+            question=question,
+            provider=provider,
+            answer=summary_response.answer,
+            provider_metadata=summary_response.metadata,
+        )
+        exact_turn_response = provider.generate_answer(exact_turn_packet)
+        exact_turn_prediction = _build_prediction(
+            exact_turn_packet,
+            question=question,
+            provider=provider,
+            answer=exact_turn_response.answer,
+            provider_metadata=exact_turn_response.metadata,
+        )
+        graph_response = provider.generate_answer(graph_packet)
+        graph_prediction = _build_prediction(
+            graph_packet,
+            question=question,
+            provider=provider,
+            answer=graph_response.answer,
+            provider_metadata=graph_response.metadata,
+        )
+        sample_metrics = by_sample.setdefault(
+            summary_packet.sample_id,
+            {
+                "summary_correct": 0,
+                "exact_turn_correct": 0,
+                "graph_correct": 0,
+                "total": 0,
+            },
+        )
+        sample_metrics["total"] += 1
+        if summary_prediction.is_correct:
+            summary_correct += 1
+            sample_metrics["summary_correct"] += 1
+        if exact_turn_prediction.is_correct:
+            exact_turn_correct += 1
+            sample_metrics["exact_turn_correct"] += 1
+        if graph_prediction.is_correct:
+            graph_correct += 1
+            sample_metrics["graph_correct"] += 1
+        rows.append(
+            {
+                "sample_id": summary_packet.sample_id,
+                "question_id": summary_packet.question_id,
+                "question": summary_packet.question,
+                "expected_answers": question.expected_answers,
+                "summary_answer": summary_prediction.predicted_answer,
+                "summary_correct": summary_prediction.is_correct,
+                "exact_turn_answer": exact_turn_prediction.predicted_answer,
+                "exact_turn_correct": exact_turn_prediction.is_correct,
+                "graph_answer": graph_prediction.predicted_answer,
+                "graph_correct": graph_prediction.is_correct,
+                "question_prefers_exact_conversational_evidence": _question_prefers_exact_conversational_evidence(
+                    question
+                ),
+                "question_prefers_typed_graph_evidence": _question_prefers_typed_graph_evidence(question),
+                "exact_turn_conversational_item_count": int(exact_turn_packet.metadata.get("conversational_item_count", 0)),
+                "graph_item_count": int(graph_packet.metadata.get("graph_item_count", 0)),
+            }
+        )
+
+    total = len(rows)
+    return {
+        "overall": {
+            "provider_name": provider.name,
+            "summary_correct": summary_correct,
+            "exact_turn_correct": exact_turn_correct,
+            "graph_correct": graph_correct,
+            "total": total,
+            "summary_accuracy": round(summary_correct / total, 4) if total else 0.0,
+            "exact_turn_accuracy": round(exact_turn_correct / total, 4) if total else 0.0,
+            "graph_accuracy": round(graph_correct / total, 4) if total else 0.0,
+            "exact_turn_delta_vs_summary": exact_turn_correct - summary_correct,
+            "graph_delta_vs_summary": graph_correct - summary_correct,
+        },
+        "by_sample": by_sample,
+        "rows": rows,
+    }
+
+
 def build_conversational_shadow_eval(
     samples: list[NormalizedBenchmarkSample],
     *,
