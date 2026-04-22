@@ -194,6 +194,7 @@ def _entity_link_search_terms(question: NormalizedQuestion) -> set[str]:
 def _entity_linked_score(question: NormalizedQuestion, entry: ConversationalIndexEntry) -> float:
     score = _entry_score(question, entry)
     question_lower = question.question.lower()
+    entry_lower = _entry_search_text(entry).lower()
     search_terms = _entity_link_search_terms(question)
     metadata_values = {
         str(entry.subject).strip().lower(),
@@ -224,6 +225,29 @@ def _entity_linked_score(question: NormalizedQuestion, entry: ConversationalInde
             score += 10.0
     if entry.predicate in {"reported_speech", "unknown_record", "negation_record"}:
         score += 6.0
+    if entry.predicate == "reported_speech":
+        source_span = str(entry.metadata.get("source_span", "")).strip().lower()
+        reported_content = str(entry.metadata.get("reported_content", "")).strip().lower()
+        if question_lower.startswith("what did "):
+            score += 12.0
+        if any(token in question_lower for token in ("say", "said", "tell", "told")):
+            score += 12.0
+        if question.question_date and entry.timestamp and question.question_date in entry.timestamp:
+            score += 12.0
+        if "injury" in question_lower and ("doctor" in source_span or "doctor" in reported_content):
+            score += 10.0
+    if entry.predicate == "unknown_record":
+        if any(token in question_lower for token in ("remember", "know", "sure")):
+            score += 10.0
+        if any(token in question_lower for token in ("game", "plan", "handle", "understand")) and any(
+            token in entry_lower for token in ("game", "plan", "handle", "understand")
+        ):
+            score += 4.0
+    if entry.predicate == "negation_record":
+        if any(token in question_lower for token in ("ever", "before", "yet")):
+            score += 8.0
+        if any(token in question_lower for token in ("tried", "been", "had", "visited")):
+            score += 4.0
     if entry.entry_type == "typed_atom":
         score += 3.0
     return score

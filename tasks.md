@@ -129,3 +129,17 @@ Tasks:
 - prefer additive layers over rewrites
 - commit in small checkpoints
 - only promote runtime after real-provider evidence is clearly better
+
+## Current Fusion Direction
+
+- lexical is a weak fallback lane, not a primary conversational-memory strategy
+- entity-linked conversational retrieval is the current best shadow lane for:
+  - alias / nickname questions
+  - negation / before / ever questions
+  - uncertainty / memory-gap questions
+  - reported-speech slot filling
+- typed-graph remains important for:
+  - relation/social graph facts
+  - temporal event anchoring
+  - structured social-memory retrieval beyond plain entity matching
+- summary remains the backbone for broad synthesis, not exact slot filling

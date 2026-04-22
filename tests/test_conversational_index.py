@@ -758,6 +758,35 @@ def test_entity_linked_hybrid_shadow_packets_do_not_surface_alias_candidate_for_
     assert not any(candidate.text == "Cal" for candidate in packet.answer_candidates)
 
 
+def test_entity_linked_hybrid_shadow_packets_surface_reported_speech_candidate_for_tim_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-43"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question_id == "conv-43-qa-137"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_entity_linked_hybrid_shadow_packets(subset, entity_limit=6)
+    packet = packets[0]
+
+    assert any(item.metadata.get("predicate") == "reported_speech" for item in packet.retrieved_context_items)
+    assert "answer_candidate: the doctor said it's not too serious." in packet.assembled_context.lower()
+    assert packet.answer_candidates[0].text == "The doctor said it's not too serious."
+
+
 def test_multi_shadow_answer_eval_reports_summary_exact_turn_and_graph_outputs():
     sample = next(
         record
