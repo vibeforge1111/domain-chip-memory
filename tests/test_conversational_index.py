@@ -6,6 +6,7 @@ from domain_chip_memory.memory_conversational_retrieval import retrieve_conversa
 from domain_chip_memory.memory_conversational_shadow_eval import (
     build_exact_turn_shadow_answer_eval,
     build_exact_turn_hybrid_shadow_packets,
+    build_typed_graph_shadow_answer_eval,
     build_typed_graph_hybrid_shadow_packets,
     _expected_answer_coverage,
     _question_prefers_exact_conversational_evidence,
@@ -366,3 +367,34 @@ def test_typed_graph_hybrid_shadow_packets_stay_summary_only_for_broad_synthesis
 
     assert packet.metadata["graph_item_count"] == 0
     assert all(item.strategy != "typed_temporal_graph_shadow" for item in packet.retrieved_context_items)
+
+
+def test_typed_graph_shadow_answer_eval_tracks_alias_binding_shadow_packets():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What nickname does Nate use for Joanna?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    report = build_typed_graph_shadow_answer_eval(subset, graph_limit=4, provider_name="heuristic")
+    row = report["rows"][0]
+
+    assert report["overall"]["provider_name"] == "heuristic_v1"
+    assert row["question_prefers_typed_graph_evidence"] is True
+    assert row["graph_hybrid_graph_item_count"] > 0
+    assert "summary_answer" in row
+    assert "graph_hybrid_answer" in row

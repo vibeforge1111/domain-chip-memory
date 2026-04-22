@@ -372,17 +372,16 @@ def build_typed_graph_hybrid_shadow_packets(
     return shadow_manifest.to_dict(), hybrid_packets
 
 
-def build_exact_turn_shadow_answer_eval(
+def _build_shadow_answer_eval(
     samples: list[NormalizedBenchmarkSample],
     *,
-    conversational_limit: int = 8,
-    provider_name: str = "heuristic",
+    provider_name: str,
+    variant_packets: list[BaselinePromptPacket],
+    variant_label: str,
+    variant_item_count_field: str,
+    variant_packet_metadata_field: str,
 ) -> JsonDict:
     _, summary_packets = build_summary_synthesis_memory_packets(samples)
-    _, hybrid_packets = build_exact_turn_hybrid_shadow_packets(
-        samples,
-        conversational_limit=conversational_limit,
-    )
     question_by_id = {
         question.question_id: question
         for sample in samples
@@ -391,10 +390,10 @@ def build_exact_turn_shadow_answer_eval(
     provider = get_provider(provider_name)
     rows: list[JsonDict] = []
     summary_correct = 0
-    hybrid_correct = 0
+    variant_correct = 0
     by_sample: dict[str, dict[str, int]] = {}
 
-    for summary_packet, hybrid_packet in zip(summary_packets, hybrid_packets, strict=True):
+    for summary_packet, variant_packet in zip(summary_packets, variant_packets, strict=True):
         question = question_by_id[summary_packet.question_id]
         summary_response = provider.generate_answer(summary_packet)
         summary_prediction = _build_prediction(
@@ -404,28 +403,28 @@ def build_exact_turn_shadow_answer_eval(
             answer=summary_response.answer,
             provider_metadata=summary_response.metadata,
         )
-        hybrid_response = provider.generate_answer(hybrid_packet)
-        hybrid_prediction = _build_prediction(
-            hybrid_packet,
+        variant_response = provider.generate_answer(variant_packet)
+        variant_prediction = _build_prediction(
+            variant_packet,
             question=question,
             provider=provider,
-            answer=hybrid_response.answer,
-            provider_metadata=hybrid_response.metadata,
+            answer=variant_response.answer,
+            provider_metadata=variant_response.metadata,
         )
         sample_metrics = by_sample.setdefault(
             summary_packet.sample_id,
-            {"summary_correct": 0, "hybrid_correct": 0, "improved": 0, "regressed": 0, "total": 0},
+            {"summary_correct": 0, f"{variant_label}_correct": 0, "improved": 0, "regressed": 0, "total": 0},
         )
         sample_metrics["total"] += 1
         if summary_prediction.is_correct:
             summary_correct += 1
             sample_metrics["summary_correct"] += 1
-        if hybrid_prediction.is_correct:
-            hybrid_correct += 1
-            sample_metrics["hybrid_correct"] += 1
-        if not summary_prediction.is_correct and hybrid_prediction.is_correct:
+        if variant_prediction.is_correct:
+            variant_correct += 1
+            sample_metrics[f"{variant_label}_correct"] += 1
+        if not summary_prediction.is_correct and variant_prediction.is_correct:
             sample_metrics["improved"] += 1
-        if summary_prediction.is_correct and not hybrid_prediction.is_correct:
+        if summary_prediction.is_correct and not variant_prediction.is_correct:
             sample_metrics["regressed"] += 1
         rows.append(
             {
@@ -435,16 +434,17 @@ def build_exact_turn_shadow_answer_eval(
                 "expected_answers": question.expected_answers,
                 "summary_answer": summary_prediction.predicted_answer,
                 "summary_correct": summary_prediction.is_correct,
-                "hybrid_answer": hybrid_prediction.predicted_answer,
-                "hybrid_correct": hybrid_prediction.is_correct,
-                "improved": (not summary_prediction.is_correct and hybrid_prediction.is_correct),
-                "regressed": (summary_prediction.is_correct and not hybrid_prediction.is_correct),
+                f"{variant_label}_answer": variant_prediction.predicted_answer,
+                f"{variant_label}_correct": variant_prediction.is_correct,
+                "improved": (not summary_prediction.is_correct and variant_prediction.is_correct),
+                "regressed": (summary_prediction.is_correct and not variant_prediction.is_correct),
                 "question_prefers_exact_conversational_evidence": _question_prefers_exact_conversational_evidence(
                     question
                 ),
+                "question_prefers_typed_graph_evidence": _question_prefers_typed_graph_evidence(question),
                 "summary_retrieved_context_item_count": len(summary_packet.retrieved_context_items),
-                "hybrid_retrieved_context_item_count": len(hybrid_packet.retrieved_context_items),
-                "hybrid_conversational_item_count": int(hybrid_packet.metadata.get("conversational_item_count", 0)),
+                f"{variant_label}_retrieved_context_item_count": len(variant_packet.retrieved_context_items),
+                variant_item_count_field: int(variant_packet.metadata.get(variant_packet_metadata_field, 0)),
             }
         )
 
@@ -453,17 +453,57 @@ def build_exact_turn_shadow_answer_eval(
         "overall": {
             "provider_name": provider.name,
             "summary_correct": summary_correct,
-            "hybrid_correct": hybrid_correct,
+            f"{variant_label}_correct": variant_correct,
             "total": total,
             "summary_accuracy": round(summary_correct / total, 4) if total else 0.0,
-            "hybrid_accuracy": round(hybrid_correct / total, 4) if total else 0.0,
-            "hybrid_delta_vs_summary": hybrid_correct - summary_correct,
+            f"{variant_label}_accuracy": round(variant_correct / total, 4) if total else 0.0,
+            f"{variant_label}_delta_vs_summary": variant_correct - summary_correct,
             "improved": sum(1 for row in rows if row["improved"]),
             "regressed": sum(1 for row in rows if row["regressed"]),
         },
         "by_sample": by_sample,
         "rows": rows,
     }
+
+
+def build_exact_turn_shadow_answer_eval(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    conversational_limit: int = 8,
+    provider_name: str = "heuristic",
+) -> JsonDict:
+    _, hybrid_packets = build_exact_turn_hybrid_shadow_packets(
+        samples,
+        conversational_limit=conversational_limit,
+    )
+    return _build_shadow_answer_eval(
+        samples,
+        provider_name=provider_name,
+        variant_packets=hybrid_packets,
+        variant_label="hybrid",
+        variant_item_count_field="hybrid_conversational_item_count",
+        variant_packet_metadata_field="conversational_item_count",
+    )
+
+
+def build_typed_graph_shadow_answer_eval(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    graph_limit: int = 6,
+    provider_name: str = "heuristic",
+) -> JsonDict:
+    _, hybrid_packets = build_typed_graph_hybrid_shadow_packets(
+        samples,
+        graph_limit=graph_limit,
+    )
+    return _build_shadow_answer_eval(
+        samples,
+        provider_name=provider_name,
+        variant_packets=hybrid_packets,
+        variant_label="graph_hybrid",
+        variant_item_count_field="graph_hybrid_graph_item_count",
+        variant_packet_metadata_field="graph_item_count",
+    )
 
 
 def build_conversational_shadow_eval(
