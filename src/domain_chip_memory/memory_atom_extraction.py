@@ -69,7 +69,13 @@ _CONVERSATIONAL_TIME_PATTERN = re.compile(
 
 def _normalize_profile_location_value(value: str) -> str:
     normalized = _normalize_value(value)
-    return re.sub(r"\s+(?:now|again)$", "", normalized, flags=re.IGNORECASE).strip()
+    normalized = re.sub(
+        r"\s+(?:now|again|last month|last year|last week|yesterday|today|this month|this week|next month|next week|tomorrow)$",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    return normalized.strip()
 
 
 def _compact_fallback_source_text(text: str) -> str:

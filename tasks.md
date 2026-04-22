@@ -110,7 +110,7 @@ These gates must hold before any runtime promotion:
 - [ ] unseen LoCoMo slice improves with real providers
 - [ ] BEAM regression stays clean
 - [ ] LongMemEval regression stays clean
-- [ ] Telegram multi-party probe pack stays clean on aliases / commitments / negation / uncertainty / reported speech / grief-support / relative time
+- [x] Telegram multi-party probe pack stays clean on aliases / commitments / negation / uncertainty / reported speech / grief-support / relative time
 - [ ] no benchmark-only heuristics added without a production-memory justification
 
 ## Real-World Validation
@@ -121,7 +121,7 @@ Tasks:
 
 - [x] create Telegram-style multi-party memory probes
 - [x] include commitments, aliases, social graph, grief/support, negation, uncertainty
-- [ ] verify answer quality on those probes
+- [x] verify answer quality on those probes
 - [x] verify retrieval coverage on those probes
 
 ## Operating Rules

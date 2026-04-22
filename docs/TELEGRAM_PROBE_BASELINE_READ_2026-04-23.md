@@ -18,10 +18,14 @@ python -m domain_chip_memory.cli run-spark-shadow-report docs/examples/spark_sha
 - the shadow report ran end to end over all `6` conversations
 - evidence retrieval is now materially stronger:
   - evidence hit rate: `10/10`
-  - evidence expected-match rate: `8/10`
+  - evidence expected-match rate: `10/10`
 - state handling remains strong:
   - historical state: `1/1`
+  - historical expected-match rate: `1/1`
   - current state hit rate: `1/1`
+  - current state expected-match rate: `1/1`
+- accepted writes improved to `12/14`
+- rejected writes dropped to `0`
 
 ## What Improved
 
@@ -34,17 +38,26 @@ The product-facing shadow path now cleanly retrieves:
 - reported speech
 - multi-party relationship edges
 - grief/support evidence
+- relative-time current/historical state
+- mail / action evidence from conversational turns
+
+The previously uncovered conversational turns now promote cleanly:
+
+- `Yesterday I mailed an appreciation letter to the community center.`
+- `I still feel close to her when I visit the rose garden.`
+- `Leo and I are presenting the prototype on Tuesday.`
 
 This happened because typed conversational bridge observations are now retained on the runtime retrieval surface instead of only helping write acceptance.
 
 ## Remaining Gaps
 
-The pack is not fully clean yet. The main misses are now answer-surface quality rather than empty retrieval:
+This specific Telegram probe pack is now clean.
 
-- `loss_event` time grounding is still too coarse for the expected value surface
-- relative-time mail evidence currently retrieves the wrong commitment-shaped fact
-- current-state location still hits, but its exact expected surface is not yet normalized in the probe readout
-- a few turns are still rejected as `no_structured_memory_extracted`, which means product-facing conversational coverage is still incomplete
+Remaining work is broader than this pack:
+
+- widen product-facing probes beyond the current `12` checks
+- keep the same families green while widening coverage
+- preserve BEAM / LongMemEval / LoCoMo gains while the product-facing lane stays clean
 
 ## What This Means
 
@@ -56,18 +69,17 @@ The probe pack is already useful because it separates:
 Current honest read:
 
 - the typed conversational work has now propagated into the shadow replay/product-facing lane
-- retrieval coverage is strong on the checked Telegram conversational families
-- the next product-facing work is answer-surface tightening and broader write coverage, not basic conversational retrieval
+- retrieval and answer quality are both strong on the checked Telegram conversational families
+- the next product-facing work is widening probe coverage, not basic conversational retrieval or bridge persistence
 
 ## Next Product-Facing Priorities
 
-1. tighten answer surfaces for `loss_event` and relative-time commitment questions
-2. improve current-state expected-value normalization in the Telegram probe read
-3. widen write coverage so fewer conversational turns fall through as `no_structured_memory_extracted`
-4. rerun the same probe pack after each product-facing bridge step
+1. widen the Telegram probe pack beyond the current `12` probes
+2. keep this pack green while widening product-facing conversational coverage
+3. rerun the same probe pack after each product-facing bridge step
 
 ## Promotion Implication
 
 This pack should now be treated as a product-facing gate.
 
-Runtime promotion should not rely only on LoCoMo improvements while this pack still has answer-surface misses and uncovered conversational turns.
+Runtime promotion should not rely only on LoCoMo improvements; this pack should stay green as a standing product-facing regression gate.

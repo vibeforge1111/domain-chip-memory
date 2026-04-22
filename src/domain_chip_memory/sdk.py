@@ -796,6 +796,7 @@ class SparkMemorySDK:
                         "write_operation": "auto",
                         "value": value,
                         "entity_key": f"{entry.predicate}:{value.lower()}",
+                        "bridge_priority": 1,
                         "created_at": timestamp,
                         "document_time": timestamp,
                         "valid_from": timestamp,
@@ -990,7 +991,8 @@ class SparkMemorySDK:
             overlap = len(query_tokens.intersection(_tokenize(entry.text))) if query_tokens else 0
             if query_tokens and overlap == 0 and not (subject or predicate):
                 continue
-            ranked.append((overlap, _timestamp_key(entry.timestamp), observation_id_sort_key(entry.observation_id), entry))
+            bridge_priority = int(entry.metadata.get("bridge_priority", 0)) if isinstance(entry.metadata, dict) else 0
+            ranked.append((overlap + bridge_priority, _timestamp_key(entry.timestamp), observation_id_sort_key(entry.observation_id), entry))
         ranked.sort(reverse=True)
         return [entry for _, _, _, entry in ranked[:limit]]
 

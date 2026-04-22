@@ -12,7 +12,7 @@ _CONVERSATIONAL_TIME_PATTERN = re.compile(
 )
 
 _FUTURE_TIME_PATTERN = re.compile(
-    r"\b(this month|next month|this week|next week|tomorrow|later today|in (?:19|20)\d{2})\b",
+    r"\b(this month|next month|this week|next week|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|on\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|tomorrow|later today|in (?:19|20)\d{2})\b",
     re.IGNORECASE,
 )
 
@@ -38,6 +38,7 @@ _SUPPORT_TRIGGER_PATTERNS = (
     "grateful",
     "thankful",
     "means a lot to me",
+    "feel close",
 )
 
 _COMMITMENT_TRIGGER_PATTERNS = (
@@ -177,7 +178,20 @@ def _extract_commitment_event(text: str) -> tuple[str, str, str] | None:
         time_match = _FUTURE_TIME_PATTERN.search(lower)
         time_expression_raw = time_match.group(1).lower() if time_match else ""
         return trigger, source_span, time_expression_raw
-    return None
+    action_match = re.search(
+        r"\b(?:i|we|[a-z]+\s+and\s+i)\s+(?:mailed|sent|delivered|posted|are\s+presenting)\b",
+        lower,
+        re.IGNORECASE,
+    )
+    if action_match is None:
+        return None
+    time_match = _FUTURE_TIME_PATTERN.search(lower) or _CONVERSATIONAL_TIME_PATTERN.search(lower)
+    if time_match is None:
+        return None
+    trigger = action_match.group(0).strip()
+    source_span = _extract_source_span(text, trigger)
+    time_expression_raw = time_match.group(1).lower()
+    return trigger, source_span, time_expression_raw
 
 
 def _extract_negation_record(text: str) -> tuple[str, str] | None:

@@ -1497,6 +1497,90 @@ def test_shadow_ingest_evaluation_supports_negation_unknown_reported_speech_and_
     assert all(result.matched_expected is True for result in evaluation.probe_results)
 
 
+def test_shadow_ingest_evaluation_supports_relative_time_mail_and_clean_location_surface():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    ingest_result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="telegram-relative-time-tightened",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I live in London.",
+                    timestamp="2026-01-01T09:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I moved to Dubai last month.",
+                    timestamp="2026-03-01T09:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m3",
+                    role="user",
+                    content="Yesterday I mailed an appreciation letter to the community center.",
+                    timestamp="2026-03-15T09:00:00Z",
+                ),
+            ],
+        )
+    )
+    evaluation = adapter.evaluate_ingest(
+        ingest_result,
+        probes=[
+            SparkShadowProbe(
+                probe_id="p1",
+                probe_type="current_state",
+                subject="user",
+                predicate="location",
+                expected_value="Dubai",
+            ),
+            SparkShadowProbe(
+                probe_id="p2",
+                probe_type="evidence",
+                subject="user",
+                predicate="commitment_event",
+                query="What did the user mail yesterday?",
+                expected_value="appreciation letter",
+                min_results=1,
+            ),
+        ],
+    )
+
+    assert ingest_result.accepted_writes == 3
+    assert all(result.hit for result in evaluation.probe_results)
+    assert all(result.matched_expected is True for result in evaluation.probe_results)
+
+
+def test_shadow_ingest_supports_followup_grief_and_planned_group_activity_turns():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    ingest_result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="telegram-followup-coverage",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I still feel close to her when I visit the rose garden.",
+                    timestamp="2026-04-08T18:05:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="Leo and I are presenting the prototype on Tuesday.",
+                    timestamp="2026-04-10T13:02:00Z",
+                ),
+            ],
+        )
+    )
+
+    assert ingest_result.accepted_writes == 2
+    assert all(trace.action == "accepted_write" for trace in ingest_result.turn_traces)
+
+
 def test_shadow_report_aggregates_multiple_evaluations():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)
