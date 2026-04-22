@@ -7,6 +7,8 @@ from .memory_extraction import _tokenize
 from .typed_temporal_graph_memory import (
     AliasBinding,
     CommitmentRecord,
+    NegationRecord,
+    ReportedSpeechRecord,
     RelationshipFact,
     TemporalMemoryEvent,
     TypedTemporalGraphMemory,
@@ -77,6 +79,46 @@ def _commitment_record_score(question: NormalizedQuestion, record: CommitmentRec
             score += 2.0
     if any(token in question_lower for token in ("going to", "plan", "conference", "posted")):
         score += 6.0
+    return score
+
+
+def _negation_record_score(question: NormalizedQuestion, record: NegationRecord) -> float:
+    question_lower = question.question.lower()
+    question_tokens = _question_tokens(question.question)
+    claim_tokens = set(_tokenize(record.claim_text))
+    score = 0.0
+    score += 2.0 * float(len(question_tokens.intersection(claim_tokens)))
+    if _subject_name_matches(question_lower, record.subject_entity_id):
+        score += 6.0
+    if any(token in question_lower for token in ("ever", "before", "yet")):
+        score += 8.0
+    if any(token in question_lower for token in ("tried", "been", "had", "visited")):
+        score += 4.0
+    if record.negation_cue and record.negation_cue in {"never", "haven't", "hasn't", "didn't", "not"}:
+        score += 4.0
+    return score
+
+
+def _reported_speech_record_score(question: NormalizedQuestion, record: ReportedSpeechRecord) -> float:
+    question_lower = question.question.lower()
+    question_tokens = _question_tokens(question.question)
+    content_tokens = set(_tokenize(record.reported_content))
+    provenance_tokens = set(_tokenize(record.provenance.source_span))
+    score = 0.0
+    score += 2.0 * float(len(question_tokens.intersection(content_tokens)))
+    score += 1.0 * float(len(question_tokens.intersection(provenance_tokens)))
+    if _subject_name_matches(question_lower, record.subject_entity_id):
+        score += 4.0
+    if question_lower.startswith("what did "):
+        score += 10.0
+    if any(token in question_lower for token in ("say", "said", "tell", "told")):
+        score += 10.0
+    if record.speech_verb and record.speech_verb.split()[0] in question_lower:
+        score += 2.0
+    if question.question_date and record.provenance.timestamp and question.question_date in record.provenance.timestamp:
+        score += 12.0
+    if "injury" in question_lower and "doctor" in record.provenance.source_span.lower():
+        score += 8.0
     return score
 
 
@@ -160,6 +202,44 @@ def retrieve_typed_temporal_graph_hits(
                     "subject_entity_id": record.subject_entity_id,
                     "commitment_trigger": record.trigger,
                     "time_normalized": record.time_anchor.normalized_expression if record.time_anchor else "",
+                    "session_id": record.provenance.session_id,
+                    "turn_id": record.provenance.turn_id,
+                },
+            )
+        )
+    for record in graph.negation_records:
+        score = _negation_record_score(question, record)
+        if score <= 0:
+            continue
+        hits.append(
+            TypedTemporalGraphHit(
+                hit_id=record.negation_id,
+                hit_type="negation_record",
+                score=score,
+                text=record.provenance.source_span,
+                metadata={
+                    "subject_entity_id": record.subject_entity_id,
+                    "negation_cue": record.negation_cue,
+                    "claim_text": record.claim_text,
+                    "session_id": record.provenance.session_id,
+                    "turn_id": record.provenance.turn_id,
+                },
+            )
+        )
+    for record in graph.reported_speech_records:
+        score = _reported_speech_record_score(question, record)
+        if score <= 0:
+            continue
+        hits.append(
+            TypedTemporalGraphHit(
+                hit_id=record.record_id,
+                hit_type="reported_speech_record",
+                score=score,
+                text=record.provenance.source_span,
+                metadata={
+                    "subject_entity_id": record.subject_entity_id,
+                    "speech_verb": record.speech_verb,
+                    "reported_content": record.reported_content,
                     "session_id": record.provenance.session_id,
                     "turn_id": record.provenance.turn_id,
                 },

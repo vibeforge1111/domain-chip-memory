@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from domain_chip_memory.contracts import NormalizedQuestion
 from domain_chip_memory.loaders import load_locomo_json
 from domain_chip_memory.typed_temporal_graph_memory import build_typed_temporal_graph_memory
 from domain_chip_memory.typed_temporal_graph_retrieval import retrieve_typed_temporal_graph_hits
@@ -107,3 +108,49 @@ def test_retrieve_typed_temporal_graph_hits_recovers_conv26_commitment_record():
     assert hits[0].hit_type == "commitment_record"
     assert hits[0].metadata["time_normalized"] == "this month"
     assert "transgender conference" in hits[0].text.lower()
+
+
+def test_retrieve_typed_temporal_graph_hits_recovers_tim_reported_speech_record():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if any(question.question == "What did Tim say about his injury on 16 November, 2023?" for question in record.questions)
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What did Tim say about his injury on 16 November, 2023?"
+    )
+
+    graph = build_typed_temporal_graph_memory(sample)
+    hits = retrieve_typed_temporal_graph_hits(question, graph, limit=4)
+
+    assert hits
+    assert hits[0].hit_type == "reported_speech_record"
+    assert "it's not too serious" in hits[0].metadata["reported_content"].lower()
+    assert "doctor said it's not too serious" in hits[0].text.lower()
+
+
+def test_retrieve_typed_temporal_graph_hits_recovers_negation_record_for_boston_history_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if any("never been to boston before" in turn.text.lower() for session in record.sessions for turn in session.turns)
+    )
+    question = NormalizedQuestion(
+        question_id="synthetic-negation-boston",
+        question="Has Calvin been to Boston before?",
+        category="1",
+        expected_answers=["No"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={},
+    )
+
+    graph = build_typed_temporal_graph_memory(sample)
+    hits = retrieve_typed_temporal_graph_hits(question, graph, limit=4)
+
+    assert hits
+    assert hits[0].hit_type == "negation_record"
+    assert hits[0].metadata["negation_cue"] == "never"
+    assert "never been to boston before" in hits[0].metadata["claim_text"].lower()

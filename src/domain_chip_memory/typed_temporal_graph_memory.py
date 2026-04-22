@@ -73,6 +73,26 @@ class CommitmentRecord:
 
 
 @dataclass(frozen=True)
+class NegationRecord:
+    negation_id: str
+    subject_entity_id: str
+    negation_cue: str
+    claim_text: str
+    provenance: ProvenanceSpan
+    metadata: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ReportedSpeechRecord:
+    record_id: str
+    subject_entity_id: str
+    speech_verb: str
+    reported_content: str
+    provenance: ProvenanceSpan
+    metadata: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class TemporalMemoryEvent:
     event_id: str
     event_type: str
@@ -93,6 +113,8 @@ class TypedTemporalGraphMemory:
     alias_bindings: tuple[AliasBinding, ...]
     relationship_facts: tuple[RelationshipFact, ...]
     commitment_records: tuple[CommitmentRecord, ...]
+    negation_records: tuple[NegationRecord, ...]
+    reported_speech_records: tuple[ReportedSpeechRecord, ...]
     temporal_events: tuple[TemporalMemoryEvent, ...]
     metadata: JsonDict = field(default_factory=dict)
 
@@ -179,6 +201,8 @@ def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> Type
     alias_bindings: list[AliasBinding] = []
     relationship_facts: list[RelationshipFact] = []
     commitment_records: list[CommitmentRecord] = []
+    negation_records: list[NegationRecord] = []
+    reported_speech_records: list[ReportedSpeechRecord] = []
     temporal_events: list[TemporalMemoryEvent] = []
 
     for entry in index_entries:
@@ -238,6 +262,32 @@ def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> Type
             )
             continue
 
+        if entry.predicate == "negation_record":
+            negation_records.append(
+                NegationRecord(
+                    negation_id=entry.entry_id,
+                    subject_entity_id=subject_entity.entity_id,
+                    negation_cue=str(entry.metadata.get("negation_cue", "")).strip(),
+                    claim_text=str(entry.metadata.get("claim_text", "")).strip() or provenance.source_span,
+                    provenance=provenance,
+                    metadata={},
+                )
+            )
+            continue
+
+        if entry.predicate == "reported_speech":
+            reported_speech_records.append(
+                ReportedSpeechRecord(
+                    record_id=entry.entry_id,
+                    subject_entity_id=subject_entity.entity_id,
+                    speech_verb=str(entry.metadata.get("speech_verb", "")).strip(),
+                    reported_content=str(entry.metadata.get("reported_content", "")).strip(),
+                    provenance=provenance,
+                    metadata={},
+                )
+            )
+            continue
+
         if entry.predicate not in {"loss_event", "gift_event", "support_event"}:
             continue
         if other_entity_label:
@@ -263,6 +313,8 @@ def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> Type
         alias_bindings=tuple(alias_bindings),
         relationship_facts=tuple(relationship_facts),
         commitment_records=tuple(commitment_records),
+        negation_records=tuple(negation_records),
+        reported_speech_records=tuple(reported_speech_records),
         temporal_events=tuple(temporal_events),
         metadata={"source": "conversational_index_typed_atoms"},
     )

@@ -121,3 +121,31 @@ def test_build_typed_temporal_graph_memory_promotes_commitment_record_for_conv26
         and "transgender conference" in record.provenance.source_span.lower()
         for record in graph.commitment_records
     )
+
+
+def test_build_typed_temporal_graph_memory_promotes_negation_and_reported_speech_records():
+    samples = load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+    calvin_sample = next(
+        sample
+        for sample in samples
+        if any("never been to boston before" in turn.text.lower() for session in sample.sessions for turn in session.turns)
+    )
+    tim_sample = next(
+        sample
+        for sample in samples
+        if any("the doctor said it's not too serious" in turn.text.lower() for session in sample.sessions for turn in session.turns)
+    )
+
+    calvin_graph = build_typed_temporal_graph_memory(calvin_sample)
+    tim_graph = build_typed_temporal_graph_memory(tim_sample)
+
+    assert any(
+        record.negation_cue == "never"
+        and "never been to boston before" in record.claim_text.lower()
+        for record in calvin_graph.negation_records
+    )
+    assert any(
+        record.speech_verb == "said"
+        and "it's not too serious" in record.reported_content.lower()
+        for record in tim_graph.reported_speech_records
+    )

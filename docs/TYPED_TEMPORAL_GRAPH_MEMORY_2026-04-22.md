@@ -34,6 +34,8 @@ This layer promotes those atoms into a graph-shaped memory surface with:
 - alias bindings
 - relationship facts
 - commitment records
+- negation records
+- reported speech records
 - temporal events
 - normalized time anchors
 - provenance spans
@@ -63,18 +65,18 @@ Implemented:
 - alias bindings from conversational nickname/address patterns such as `Hey Jo`
 - relationship facts from `relationship_edge`
 - commitment records from future-plan language such as `I'm going to ... this month`
+- negation records from conversational history blockers such as `I've never been to Boston before`
+- reported speech records from turns such as `The doctor said it's not too serious`
 - temporal events from `loss_event`, `gift_event`, `support_event`
 - helper filters for subject/event-family queries
 - normalization guard against obvious noisy object labels such as sentence-start verb bleed
 - eval-only graph retrieval over relationship facts and temporal events
-- eval-only graph retrieval over alias bindings and commitment records
+- eval-only graph retrieval over alias bindings, commitment records, negation records, and reported speech
 - eval-only graph-hybrid shadow packets on top of `summary_synthesis_memory`
 - eval-only multi-family shadow answer evaluation across `summary`, `exact-turn`, and `typed-graph`
 
 Not implemented yet:
 
-- negation records
-- reported speech
 - bi-temporal validity windows
 
 ## Validation
@@ -87,6 +89,8 @@ Covered by [test_typed_temporal_graph_memory.py](/C:/Users/USER/Desktop/domain-c
 - `conv-49` avoids carrying a bogus `Got` entity into the graph sidecar
 - `conv-42` promotes nickname `Jo -> Joanna` into an alias binding
 - `conv-26` promotes `I'm going to a transgender conference this month` into a commitment record
+- Calvin/Boston turns promote negation history such as `I've never been to Boston before`
+- Tim injury turns promote reported speech such as `The doctor said it's not too serious`
 
 Covered by [test_typed_temporal_graph_retrieval.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_typed_temporal_graph_retrieval.py):
 
@@ -95,6 +99,8 @@ Covered by [test_typed_temporal_graph_retrieval.py](/C:/Users/USER/Desktop/domai
 - `conv-49` graph retrieval does not surface the bogus `Got` object label
 - `conv-42` nickname questions recover alias-binding provenance
 - `conv-26` future-plan questions recover commitment provenance and normalized time
+- Tim injury questions recover reported-speech provenance
+- Boston history questions recover negation provenance
 
 Covered by [test_conversational_index.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_conversational_index.py):
 

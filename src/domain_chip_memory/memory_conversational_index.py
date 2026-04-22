@@ -51,6 +51,16 @@ _COMMITMENT_TRIGGER_PATTERNS = (
     "planning to",
 )
 
+_NEGATION_CUE_PATTERN = re.compile(
+    r"\b(never|nope|not|haven't|hasn't|hadn't|didn't|can't|cannot|won't|wouldn't)\b",
+    re.IGNORECASE,
+)
+
+_REPORTED_SPEECH_PATTERN = re.compile(
+    r"\b(?P<verb>said|told(?:\s+(?:me|us|him|her|them))?)\b(?P<content>.+)",
+    re.IGNORECASE,
+)
+
 
 @dataclass(frozen=True)
 class ConversationalIndexEntry:
@@ -79,6 +89,19 @@ def _extract_source_span(text: str, keyword: str) -> str:
         if keyword_lower in sentence.lower():
             return sentence.strip(" \"'")
     return text.strip()
+
+
+def _text_spans(text: str) -> list[str]:
+    spans: list[str] = []
+    for sentence in re.split(r"(?<=[.!?])\s+", text):
+        stripped = sentence.strip()
+        if not stripped:
+            continue
+        for clause in re.split(r"(?<=;)\s+", stripped):
+            clause_stripped = clause.strip()
+            if clause_stripped:
+                spans.append(clause_stripped)
+    return spans
 
 
 def _anchor_year(timestamp: str | None) -> int | None:
@@ -139,6 +162,29 @@ def _extract_commitment_event(text: str) -> tuple[str, str, str] | None:
         time_match = _FUTURE_TIME_PATTERN.search(lower)
         time_expression_raw = time_match.group(1).lower() if time_match else ""
         return trigger, source_span, time_expression_raw
+    return None
+
+
+def _extract_negation_record(text: str) -> tuple[str, str] | None:
+    for span in _text_spans(text):
+        match = _NEGATION_CUE_PATTERN.search(span)
+        if match is None:
+            continue
+        cue = match.group(1).lower()
+        return cue, span.strip(" \"'")
+    return None
+
+
+def _extract_reported_speech(text: str) -> tuple[str, str, str] | None:
+    for span in _text_spans(text):
+        match = _REPORTED_SPEECH_PATTERN.search(span)
+        if match is None:
+            continue
+        speech_verb = match.group("verb").lower().strip()
+        reported_content = match.group("content").strip(" -:,.!?\"'")
+        if len(reported_content.split()) < 2:
+            continue
+        return speech_verb, span.strip(" \"'"), reported_content
     return None
 
 
@@ -353,6 +399,50 @@ def build_conversational_index(sample: NormalizedBenchmarkSample) -> list[Conver
                             "source_span": source_span,
                             "time_expression_raw": time_expression_raw,
                             "time_normalized": time_normalized,
+                        },
+                    )
+                )
+
+            negation_record = _extract_negation_record(text)
+            if negation_record is not None:
+                negation_cue, source_span = negation_record
+                entries.append(
+                    ConversationalIndexEntry(
+                        entry_id=f"{turn.turn_id}:typed:negation_record",
+                        entry_type="typed_atom",
+                        subject=subject,
+                        predicate="negation_record",
+                        text=text,
+                        session_id=session.session_id,
+                        turn_id=turn.turn_id,
+                        timestamp=timestamp,
+                        metadata={
+                            "speaker": turn.speaker,
+                            "negation_cue": negation_cue,
+                            "claim_text": source_span,
+                            "source_span": source_span,
+                        },
+                    )
+                )
+
+            reported_speech = _extract_reported_speech(text)
+            if reported_speech is not None:
+                speech_verb, source_span, reported_content = reported_speech
+                entries.append(
+                    ConversationalIndexEntry(
+                        entry_id=f"{turn.turn_id}:typed:reported_speech",
+                        entry_type="typed_atom",
+                        subject=subject,
+                        predicate="reported_speech",
+                        text=text,
+                        session_id=session.session_id,
+                        turn_id=turn.turn_id,
+                        timestamp=timestamp,
+                        metadata={
+                            "speaker": turn.speaker,
+                            "speech_verb": speech_verb,
+                            "reported_content": reported_content,
+                            "source_span": source_span,
                         },
                     )
                 )

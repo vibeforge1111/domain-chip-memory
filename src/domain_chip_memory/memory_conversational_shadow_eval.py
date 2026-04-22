@@ -190,8 +190,14 @@ def _question_prefers_typed_graph_evidence(question: NormalizedQuestion) -> bool
     question_lower = question.question.lower()
     if "nickname" in question_lower:
         return True
+    if question_lower.startswith("what did ") and any(token in question_lower for token in ("say", "said", "tell", "told")):
+        return True
     if question_lower.startswith("when ") and any(
         token in question_lower for token in ("going to", "conference", "pass away", "passed away")
+    ):
+        return True
+    if any(token in question_lower for token in ("ever", "before")) and any(
+        token in question_lower for token in ("tried", "been", "visited", "had")
     ):
         return True
     if any(token in question_lower for token in ("peace", "support", "grieving", "comfort")):

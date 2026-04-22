@@ -145,6 +145,40 @@ def test_build_conversational_index_extracts_commitment_event_for_conv26():
     )
 
 
+def test_build_conversational_index_extracts_negation_record_for_boston_history():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if any("never been to boston before" in turn.text.lower() for session in record.sessions for turn in session.turns)
+    )
+
+    entries = build_conversational_index(sample)
+
+    assert any(
+        entry.predicate == "negation_record"
+        and entry.metadata.get("negation_cue") == "never"
+        and "never been to boston before" in str(entry.metadata.get("claim_text", "")).lower()
+        for entry in entries
+    )
+
+
+def test_build_conversational_index_extracts_reported_speech_for_tim_injury():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if any("the doctor said it's not too serious" in turn.text.lower() for session in record.sessions for turn in session.turns)
+    )
+
+    entries = build_conversational_index(sample)
+
+    assert any(
+        entry.predicate == "reported_speech"
+        and entry.metadata.get("speech_verb") == "said"
+        and "it's not too serious" in str(entry.metadata.get("reported_content", "")).lower()
+        for entry in entries
+    )
+
+
 def test_expected_answer_coverage_accepts_multi_item_family_answers():
     assert _expected_answer_coverage(
         "My mom was interested in art. My mom had a big passion for cooking. Reading was one of her hobbies. Travel was also her great passion.",
@@ -399,6 +433,35 @@ def test_typed_graph_shadow_answer_eval_tracks_alias_binding_shadow_packets():
     assert row["graph_hybrid_graph_item_count"] > 0
     assert "summary_answer" in row
     assert "graph_hybrid_answer" in row
+
+
+def test_typed_graph_hybrid_shadow_packets_add_reported_speech_evidence_for_tim_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if any(question.question == "What did Tim say about his injury on 16 November, 2023?" for question in record.questions)
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What did Tim say about his injury on 16 November, 2023?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_typed_graph_hybrid_shadow_packets(subset, graph_limit=4)
+    packet = packets[0]
+
+    assert packet.metadata["graph_item_count"] > 0
+    assert any(item.metadata.get("hit_type") == "reported_speech_record" for item in packet.retrieved_context_items)
+    assert "doctor said it's not too serious" in packet.assembled_context.lower()
 
 
 def test_multi_shadow_answer_eval_reports_summary_exact_turn_and_graph_outputs():
