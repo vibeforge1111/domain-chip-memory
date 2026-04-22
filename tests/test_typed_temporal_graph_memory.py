@@ -149,3 +149,19 @@ def test_build_typed_temporal_graph_memory_promotes_negation_and_reported_speech
         and "it's not too serious" in record.reported_content.lower()
         for record in tim_graph.reported_speech_records
     )
+
+
+def test_build_typed_temporal_graph_memory_promotes_unknown_record():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if any("can't remember such a game" in turn.text.lower() for session in record.sessions for turn in session.turns)
+    )
+
+    graph = build_typed_temporal_graph_memory(sample)
+
+    assert any(
+        record.uncertainty_cue == "can't_remember"
+        and "can't remember such a game" in record.claim_text.lower()
+        for record in graph.unknown_records
+    )

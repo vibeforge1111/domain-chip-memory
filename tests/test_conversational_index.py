@@ -179,6 +179,23 @@ def test_build_conversational_index_extracts_reported_speech_for_tim_injury():
     )
 
 
+def test_build_conversational_index_extracts_unknown_record_for_conv47_memory_gap():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if any("can't remember such a game" in turn.text.lower() for session in record.sessions for turn in session.turns)
+    )
+
+    entries = build_conversational_index(sample)
+
+    assert any(
+        entry.predicate == "unknown_record"
+        and entry.metadata.get("uncertainty_cue") == "can't_remember"
+        and "can't remember such a game" in str(entry.metadata.get("claim_text", "")).lower()
+        for entry in entries
+    )
+
+
 def test_expected_answer_coverage_accepts_multi_item_family_answers():
     assert _expected_answer_coverage(
         "My mom was interested in art. My mom had a big passion for cooking. Reading was one of her hobbies. Travel was also her great passion.",
@@ -462,6 +479,41 @@ def test_typed_graph_hybrid_shadow_packets_add_reported_speech_evidence_for_tim_
     assert packet.metadata["graph_item_count"] > 0
     assert any(item.metadata.get("hit_type") == "reported_speech_record" for item in packet.retrieved_context_items)
     assert "doctor said it's not too serious" in packet.assembled_context.lower()
+
+
+def test_typed_graph_hybrid_shadow_packets_add_unknown_evidence_for_memory_gap_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if any("can't remember such a game" in turn.text.lower() for session in record.sessions for turn in session.turns)
+    )
+    from domain_chip_memory.contracts import NormalizedQuestion
+
+    question = NormalizedQuestion(
+        question_id="synthetic-unknown-conv47",
+        question="Can James remember such a game?",
+        category="1",
+        expected_answers=["No"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={},
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_typed_graph_hybrid_shadow_packets(subset, graph_limit=4)
+    packet = packets[0]
+
+    assert packet.metadata["graph_item_count"] > 0
+    assert any(item.metadata.get("hit_type") == "unknown_record" for item in packet.retrieved_context_items)
+    assert "can't remember such a game" in packet.assembled_context.lower()
 
 
 def test_multi_shadow_answer_eval_reports_summary_exact_turn_and_graph_outputs():

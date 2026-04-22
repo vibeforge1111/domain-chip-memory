@@ -61,6 +61,12 @@ _REPORTED_SPEECH_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_UNKNOWN_CUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("can't_remember", re.compile(r"\b(?:i\s+)?can't remember\b", re.IGNORECASE)),
+    ("not_sure", re.compile(r"\b(?:i(?:'m| am)\s+)?not sure\b", re.IGNORECASE)),
+    ("dont_know", re.compile(r"\b(?:i\s+)?do(?:n't| not)\s+know\b", re.IGNORECASE)),
+)
+
 
 @dataclass(frozen=True)
 class ConversationalIndexEntry:
@@ -185,6 +191,15 @@ def _extract_reported_speech(text: str) -> tuple[str, str, str] | None:
         if len(reported_content.split()) < 2:
             continue
         return speech_verb, span.strip(" \"'"), reported_content
+    return None
+
+
+def _extract_unknown_record(text: str) -> tuple[str, str] | None:
+    for span in _text_spans(text):
+        for cue_name, pattern in _UNKNOWN_CUE_PATTERNS:
+            if pattern.search(span) is None:
+                continue
+            return cue_name, span.strip(" \"'")
     return None
 
 
@@ -442,6 +457,28 @@ def build_conversational_index(sample: NormalizedBenchmarkSample) -> list[Conver
                             "speaker": turn.speaker,
                             "speech_verb": speech_verb,
                             "reported_content": reported_content,
+                            "source_span": source_span,
+                        },
+                    )
+                )
+
+            unknown_record = _extract_unknown_record(text)
+            if unknown_record is not None:
+                uncertainty_cue, source_span = unknown_record
+                entries.append(
+                    ConversationalIndexEntry(
+                        entry_id=f"{turn.turn_id}:typed:unknown_record",
+                        entry_type="typed_atom",
+                        subject=subject,
+                        predicate="unknown_record",
+                        text=text,
+                        session_id=session.session_id,
+                        turn_id=turn.turn_id,
+                        timestamp=timestamp,
+                        metadata={
+                            "speaker": turn.speaker,
+                            "uncertainty_cue": uncertainty_cue,
+                            "claim_text": source_span,
                             "source_span": source_span,
                         },
                     )

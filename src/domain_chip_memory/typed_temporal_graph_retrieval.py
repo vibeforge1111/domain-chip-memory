@@ -12,6 +12,7 @@ from .typed_temporal_graph_memory import (
     RelationshipFact,
     TemporalMemoryEvent,
     TypedTemporalGraphMemory,
+    UnknownRecord,
 )
 
 
@@ -119,6 +120,25 @@ def _reported_speech_record_score(question: NormalizedQuestion, record: Reported
         score += 12.0
     if "injury" in question_lower and "doctor" in record.provenance.source_span.lower():
         score += 8.0
+    return score
+
+
+def _unknown_record_score(question: NormalizedQuestion, record: UnknownRecord) -> float:
+    question_lower = question.question.lower()
+    question_tokens = _question_tokens(question.question)
+    claim_tokens = set(_tokenize(record.claim_text))
+    score = 0.0
+    score += 2.0 * float(len(question_tokens.intersection(claim_tokens)))
+    if _subject_name_matches(question_lower, record.subject_entity_id):
+        score += 6.0
+    if any(token in question_lower for token in ("remember", "know", "sure")):
+        score += 10.0
+    if any(token in question_lower for token in ("game", "plan", "handle", "understand")) and any(
+        token in record.claim_text.lower() for token in ("game", "plan", "handle", "understand")
+    ):
+        score += 4.0
+    if record.uncertainty_cue:
+        score += 4.0
     return score
 
 
@@ -240,6 +260,25 @@ def retrieve_typed_temporal_graph_hits(
                     "subject_entity_id": record.subject_entity_id,
                     "speech_verb": record.speech_verb,
                     "reported_content": record.reported_content,
+                    "session_id": record.provenance.session_id,
+                    "turn_id": record.provenance.turn_id,
+                },
+            )
+        )
+    for record in graph.unknown_records:
+        score = _unknown_record_score(question, record)
+        if score <= 0:
+            continue
+        hits.append(
+            TypedTemporalGraphHit(
+                hit_id=record.record_id,
+                hit_type="unknown_record",
+                score=score,
+                text=record.provenance.source_span,
+                metadata={
+                    "subject_entity_id": record.subject_entity_id,
+                    "uncertainty_cue": record.uncertainty_cue,
+                    "claim_text": record.claim_text,
                     "session_id": record.provenance.session_id,
                     "turn_id": record.provenance.turn_id,
                 },

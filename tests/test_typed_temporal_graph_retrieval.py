@@ -154,3 +154,28 @@ def test_retrieve_typed_temporal_graph_hits_recovers_negation_record_for_boston_
     assert hits[0].hit_type == "negation_record"
     assert hits[0].metadata["negation_cue"] == "never"
     assert "never been to boston before" in hits[0].metadata["claim_text"].lower()
+
+
+def test_retrieve_typed_temporal_graph_hits_recovers_unknown_record_for_memory_gap_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if any("can't remember such a game" in turn.text.lower() for session in record.sessions for turn in session.turns)
+    )
+    question = NormalizedQuestion(
+        question_id="synthetic-unknown-conv47",
+        question="Can James remember such a game?",
+        category="1",
+        expected_answers=["No"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={},
+    )
+
+    graph = build_typed_temporal_graph_memory(sample)
+    hits = retrieve_typed_temporal_graph_hits(question, graph, limit=4)
+
+    assert hits
+    assert hits[0].hit_type == "unknown_record"
+    assert hits[0].metadata["uncertainty_cue"] == "can't_remember"
+    assert "can't remember such a game" in hits[0].metadata["claim_text"].lower()

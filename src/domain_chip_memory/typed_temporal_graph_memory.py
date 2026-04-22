@@ -93,6 +93,16 @@ class ReportedSpeechRecord:
 
 
 @dataclass(frozen=True)
+class UnknownRecord:
+    record_id: str
+    subject_entity_id: str
+    uncertainty_cue: str
+    claim_text: str
+    provenance: ProvenanceSpan
+    metadata: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class TemporalMemoryEvent:
     event_id: str
     event_type: str
@@ -115,6 +125,7 @@ class TypedTemporalGraphMemory:
     commitment_records: tuple[CommitmentRecord, ...]
     negation_records: tuple[NegationRecord, ...]
     reported_speech_records: tuple[ReportedSpeechRecord, ...]
+    unknown_records: tuple[UnknownRecord, ...]
     temporal_events: tuple[TemporalMemoryEvent, ...]
     metadata: JsonDict = field(default_factory=dict)
 
@@ -203,6 +214,7 @@ def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> Type
     commitment_records: list[CommitmentRecord] = []
     negation_records: list[NegationRecord] = []
     reported_speech_records: list[ReportedSpeechRecord] = []
+    unknown_records: list[UnknownRecord] = []
     temporal_events: list[TemporalMemoryEvent] = []
 
     for entry in index_entries:
@@ -288,6 +300,19 @@ def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> Type
             )
             continue
 
+        if entry.predicate == "unknown_record":
+            unknown_records.append(
+                UnknownRecord(
+                    record_id=entry.entry_id,
+                    subject_entity_id=subject_entity.entity_id,
+                    uncertainty_cue=str(entry.metadata.get("uncertainty_cue", "")).strip(),
+                    claim_text=str(entry.metadata.get("claim_text", "")).strip() or provenance.source_span,
+                    provenance=provenance,
+                    metadata={},
+                )
+            )
+            continue
+
         if entry.predicate not in {"loss_event", "gift_event", "support_event"}:
             continue
         if other_entity_label:
@@ -315,6 +340,7 @@ def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> Type
         commitment_records=tuple(commitment_records),
         negation_records=tuple(negation_records),
         reported_speech_records=tuple(reported_speech_records),
+        unknown_records=tuple(unknown_records),
         temporal_events=tuple(temporal_events),
         metadata={"source": "conversational_index_typed_atoms"},
     )

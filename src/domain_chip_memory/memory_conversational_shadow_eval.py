@@ -192,6 +192,8 @@ def _question_prefers_typed_graph_evidence(question: NormalizedQuestion) -> bool
         return True
     if question_lower.startswith("what did ") and any(token in question_lower for token in ("say", "said", "tell", "told")):
         return True
+    if any(token in question_lower for token in ("remember", "know", "sure")):
+        return True
     if question_lower.startswith("when ") and any(
         token in question_lower for token in ("going to", "conference", "pass away", "passed away")
     ):

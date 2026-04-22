@@ -36,6 +36,7 @@ This layer promotes those atoms into a graph-shaped memory surface with:
 - commitment records
 - negation records
 - reported speech records
+- unknown records
 - temporal events
 - normalized time anchors
 - provenance spans
@@ -67,6 +68,7 @@ Implemented:
 - commitment records from future-plan language such as `I'm going to ... this month`
 - negation records from conversational history blockers such as `I've never been to Boston before`
 - reported speech records from turns such as `The doctor said it's not too serious`
+- unknown records from turns such as `I can't remember such a game`
 - temporal events from `loss_event`, `gift_event`, `support_event`
 - helper filters for subject/event-family queries
 - normalization guard against obvious noisy object labels such as sentence-start verb bleed
@@ -91,6 +93,7 @@ Covered by [test_typed_temporal_graph_memory.py](/C:/Users/USER/Desktop/domain-c
 - `conv-26` promotes `I'm going to a transgender conference this month` into a commitment record
 - Calvin/Boston turns promote negation history such as `I've never been to Boston before`
 - Tim injury turns promote reported speech such as `The doctor said it's not too serious`
+- conv-47 memory-gap turns promote unknown records such as `I can't remember such a game`
 
 Covered by [test_typed_temporal_graph_retrieval.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_typed_temporal_graph_retrieval.py):
 
@@ -101,6 +104,7 @@ Covered by [test_typed_temporal_graph_retrieval.py](/C:/Users/USER/Desktop/domai
 - `conv-26` future-plan questions recover commitment provenance and normalized time
 - Tim injury questions recover reported-speech provenance
 - Boston history questions recover negation provenance
+- memory-gap questions recover unknown-record provenance
 
 Covered by [test_conversational_index.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_conversational_index.py):
 
