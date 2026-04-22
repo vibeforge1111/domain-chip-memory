@@ -12,6 +12,8 @@ from .providers import get_provider
 from .runner import _build_prediction
 from .runs import BaselinePromptPacket, RetrievedContextItem, build_run_manifest
 from .scorecards import _normalize_answer
+from .typed_temporal_graph_memory import build_typed_temporal_graph_memory
+from .typed_temporal_graph_retrieval import TypedTemporalGraphHit, retrieve_typed_temporal_graph_hits
 
 
 _COVERAGE_STOPWORDS = {
@@ -184,6 +186,19 @@ def _question_prefers_exact_conversational_evidence(question: NormalizedQuestion
     return False
 
 
+def _question_prefers_typed_graph_evidence(question: NormalizedQuestion) -> bool:
+    question_lower = question.question.lower()
+    if "nickname" in question_lower:
+        return True
+    if question_lower.startswith("when ") and any(
+        token in question_lower for token in ("going to", "conference", "pass away", "passed away")
+    ):
+        return True
+    if any(token in question_lower for token in ("peace", "support", "grieving", "comfort")):
+        return True
+    return False
+
+
 def _conversational_entry_to_retrieved_context_item(
     question: NormalizedQuestion,
     entry: Any,
@@ -218,6 +233,18 @@ def _merge_retrieved_context_items(
         seen_keys.add(dedupe_key)
         merged.append(item)
     return merged
+
+
+def _graph_hit_to_retrieved_context_item(hit: TypedTemporalGraphHit) -> RetrievedContextItem:
+    return RetrievedContextItem(
+        session_id=str(hit.metadata.get("session_id", "")),
+        turn_ids=[str(hit.metadata.get("turn_id", ""))] if str(hit.metadata.get("turn_id", "")).strip() else [],
+        score=hit.score,
+        strategy="typed_temporal_graph_shadow",
+        text=f"graph_evidence: {hit.text}",
+        memory_role="structured_evidence",
+        metadata={**hit.metadata, "hit_type": hit.hit_type},
+    )
 
 
 def build_exact_turn_hybrid_shadow_packets(
@@ -281,6 +308,65 @@ def build_exact_turn_hybrid_shadow_packets(
             **dict(manifest.get("metadata", {})),
             "shadow_selector": "exact_turn_conversational_evidence",
             "conversational_limit": conversational_limit,
+        },
+    )
+    return shadow_manifest.to_dict(), hybrid_packets
+
+
+def build_typed_graph_hybrid_shadow_packets(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    graph_limit: int = 6,
+) -> tuple[JsonDict, list[BaselinePromptPacket]]:
+    manifest, summary_packets = build_summary_synthesis_memory_packets(samples)
+    packet_by_question_id = {packet.question_id: packet for packet in summary_packets}
+    hybrid_packets: list[BaselinePromptPacket] = []
+
+    for sample in samples:
+        graph = build_typed_temporal_graph_memory(sample)
+        for question in sample.questions:
+            summary_packet = packet_by_question_id[question.question_id]
+            hybrid_retrieved_items = list(summary_packet.retrieved_context_items)
+            graph_items: list[RetrievedContextItem] = []
+            if _question_prefers_typed_graph_evidence(question):
+                graph_hits = retrieve_typed_temporal_graph_hits(question, graph, limit=graph_limit)
+                graph_items = [_graph_hit_to_retrieved_context_item(hit) for hit in graph_hits]
+                hybrid_retrieved_items = _merge_retrieved_context_items(
+                    hybrid_retrieved_items,
+                    graph_items,
+                )
+            hybrid_context_blocks = [item.text for item in hybrid_retrieved_items]
+            if summary_packet.answer_candidates:
+                hybrid_context_blocks.append(f"answer_candidate: {summary_packet.answer_candidates[0].text}")
+            hybrid_packets.append(
+                BaselinePromptPacket(
+                    benchmark_name=summary_packet.benchmark_name,
+                    baseline_name="summary_synthesis_memory_typed_graph_shadow",
+                    sample_id=summary_packet.sample_id,
+                    question_id=summary_packet.question_id,
+                    question=summary_packet.question,
+                    assembled_context="\n\n".join(hybrid_context_blocks),
+                    retrieved_context_items=hybrid_retrieved_items,
+                    metadata={
+                        **summary_packet.metadata,
+                        "route": "summary_synthesis_memory_typed_graph_shadow",
+                        "shadow_selector": "typed_temporal_graph_evidence",
+                        "graph_limit": graph_limit,
+                        "graph_item_count": len(graph_items),
+                    },
+                    answer_candidates=summary_packet.answer_candidates,
+                )
+            )
+
+    shadow_manifest = build_run_manifest(
+        samples,
+        baseline_name="summary_synthesis_memory_typed_graph_shadow",
+        run_id=str(manifest.get("run_id", "")),
+        benchmark_name=str(manifest.get("benchmark_name", "")),
+        metadata={
+            **dict(manifest.get("metadata", {})),
+            "shadow_selector": "typed_temporal_graph_evidence",
+            "graph_limit": graph_limit,
         },
     )
     return shadow_manifest.to_dict(), hybrid_packets

@@ -6,6 +6,7 @@ from domain_chip_memory.memory_conversational_retrieval import retrieve_conversa
 from domain_chip_memory.memory_conversational_shadow_eval import (
     build_exact_turn_shadow_answer_eval,
     build_exact_turn_hybrid_shadow_packets,
+    build_typed_graph_hybrid_shadow_packets,
     _expected_answer_coverage,
     _question_prefers_exact_conversational_evidence,
     _question_uses_conversational_hybrid,
@@ -307,3 +308,61 @@ def test_exact_turn_shadow_answer_eval_tracks_exact_fact_shadow_packets():
     assert row["hybrid_answer"] == "two"
     assert row["summary_correct"] is True
     assert row["hybrid_correct"] is True
+
+
+def test_typed_graph_hybrid_shadow_packets_add_alias_binding_evidence_for_conv42():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What nickname does Nate use for Joanna?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_typed_graph_hybrid_shadow_packets(subset, graph_limit=4)
+    packet = packets[0]
+
+    assert packet.baseline_name == "summary_synthesis_memory_typed_graph_shadow"
+    assert packet.metadata["graph_item_count"] > 0
+    assert any(item.strategy == "typed_temporal_graph_shadow" for item in packet.retrieved_context_items)
+    assert "graph_evidence: hey jo" in packet.assembled_context.lower()
+
+
+def test_typed_graph_hybrid_shadow_packets_stay_summary_only_for_broad_synthesis_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What kind of interests do Joanna and Nate share?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_typed_graph_hybrid_shadow_packets(subset, graph_limit=4)
+    packet = packets[0]
+
+    assert packet.metadata["graph_item_count"] == 0
+    assert all(item.strategy != "typed_temporal_graph_shadow" for item in packet.retrieved_context_items)

@@ -68,6 +68,7 @@ Implemented:
 - normalization guard against obvious noisy object labels such as sentence-start verb bleed
 - eval-only graph retrieval over relationship facts and temporal events
 - eval-only graph retrieval over alias bindings and commitment records
+- eval-only graph-hybrid shadow packets on top of `summary_synthesis_memory`
 
 Not implemented yet:
 
@@ -93,6 +94,11 @@ Covered by [test_typed_temporal_graph_retrieval.py](/C:/Users/USER/Desktop/domai
 - `conv-49` graph retrieval does not surface the bogus `Got` object label
 - `conv-42` nickname questions recover alias-binding provenance
 - `conv-26` future-plan questions recover commitment provenance and normalized time
+
+Covered by [test_conversational_index.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_conversational_index.py):
+
+- graph-hybrid shadow packets add alias-binding evidence for `conv-42`
+- graph-hybrid shadow packets stay off for broad synthesis questions
 
 ## Next Step
 
