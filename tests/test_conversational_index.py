@@ -394,7 +394,10 @@ def test_typed_graph_hybrid_shadow_packets_add_alias_binding_evidence_for_conv42
     assert packet.retrieved_context_items[0].strategy == "typed_temporal_graph_shadow"
     assert any(item.strategy == "typed_temporal_graph_shadow" for item in packet.retrieved_context_items)
     assert "graph_evidence: hey jo" in packet.assembled_context.lower()
-    assert "answer_candidate:" not in packet.assembled_context.lower()
+    assert "answer_candidate: jo" in packet.assembled_context.lower()
+    assert packet.answer_candidates
+    assert packet.answer_candidates[0].text == "Jo"
+    assert packet.answer_candidates[0].metadata["source_kind"] == "typed_temporal_graph"
 
 
 def test_typed_graph_hybrid_shadow_packets_stay_summary_only_for_broad_synthesis_question():
@@ -483,6 +486,8 @@ def test_typed_graph_hybrid_shadow_packets_add_reported_speech_evidence_for_tim_
     assert packet.metadata["graph_item_count"] > 0
     assert any(item.metadata.get("hit_type") == "reported_speech_record" for item in packet.retrieved_context_items)
     assert "doctor said it's not too serious" in packet.assembled_context.lower()
+    assert "answer_candidate: it's not too serious" in packet.assembled_context.lower()
+    assert packet.answer_candidates[0].text == "it's not too serious"
 
 
 def test_typed_graph_hybrid_shadow_packets_add_unknown_evidence_for_memory_gap_question():
@@ -518,6 +523,36 @@ def test_typed_graph_hybrid_shadow_packets_add_unknown_evidence_for_memory_gap_q
     assert packet.metadata["graph_item_count"] > 0
     assert any(item.metadata.get("hit_type") == "unknown_record" for item in packet.retrieved_context_items)
     assert "can't remember such a game" in packet.assembled_context.lower()
+    assert "answer_candidate: unknown" in packet.assembled_context.lower()
+    assert packet.answer_candidates[0].text == "unknown"
+
+
+def test_typed_graph_shadow_answer_eval_projects_alias_binding_to_clean_answer():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What nickname does Nate use for Joanna?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    report = build_typed_graph_shadow_answer_eval(subset, graph_limit=4, provider_name="heuristic")
+    row = report["rows"][0]
+
+    assert row["graph_hybrid_answer"] == "Jo"
+    assert row["graph_hybrid_correct"] is True
 
 
 def test_multi_shadow_answer_eval_reports_summary_exact_turn_and_graph_outputs():

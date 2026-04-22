@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from .answer_candidates import build_answer_candidate
 from .contracts import JsonDict, NormalizedBenchmarkSample, NormalizedQuestion
 from .memory_conversational_index import build_conversational_index
 from .memory_conversational_retrieval import _entry_score, retrieve_conversational_entries
@@ -268,6 +269,63 @@ def _graph_hit_to_retrieved_context_item(hit: TypedTemporalGraphHit) -> Retrieve
     )
 
 
+def _graph_hit_answer_candidate_text(question: NormalizedQuestion, hit: TypedTemporalGraphHit) -> str:
+    question_lower = question.question.lower()
+    if hit.hit_type == "alias_binding":
+        return str(hit.metadata.get("alias", "")).strip()
+    if hit.hit_type == "reported_speech_record":
+        return str(hit.metadata.get("reported_content", "")).strip()
+    if hit.hit_type in {"commitment_record", "temporal_event"} and question_lower.startswith("when "):
+        return str(hit.metadata.get("time_normalized", "")).strip()
+    if hit.hit_type == "relationship_fact" and question_lower.startswith(("who ", "what ")):
+        return str(hit.metadata.get("object_label", "")).strip()
+    if hit.hit_type == "negation_record" and (
+        question_lower.startswith(("is ", "are ", "do ", "does ", "did ", "can ", "has ", "have ", "had "))
+        or " before" in question_lower
+        or "ever " in question_lower
+    ):
+        return "No"
+    if hit.hit_type == "unknown_record":
+        return "unknown"
+    return ""
+
+
+def _typed_graph_answer_candidates(
+    question: NormalizedQuestion,
+    graph_hits: list[TypedTemporalGraphHit],
+    summary_candidates: list[Any],
+) -> list[Any]:
+    merged_candidates: list[Any] = []
+    seen_text: set[str] = set()
+    for hit in graph_hits:
+        answer_text = _graph_hit_answer_candidate_text(question, hit)
+        if not answer_text:
+            continue
+        normalized = answer_text.strip().lower()
+        if not normalized or normalized in seen_text:
+            continue
+        seen_text.add(normalized)
+        merged_candidates.append(
+            build_answer_candidate(
+                question.question,
+                answer_text,
+                source="evidence_memory",
+                metadata={
+                    "source_kind": "typed_temporal_graph",
+                    "hit_type": hit.hit_type,
+                    "hit_id": hit.hit_id,
+                },
+            )
+        )
+    for candidate in summary_candidates:
+        normalized = candidate.text.strip().lower()
+        if not normalized or normalized in seen_text:
+            continue
+        seen_text.add(normalized)
+        merged_candidates.append(candidate)
+    return merged_candidates
+
+
 def build_exact_turn_hybrid_shadow_packets(
     samples: list[NormalizedBenchmarkSample],
     *,
@@ -347,6 +405,7 @@ def build_typed_graph_hybrid_shadow_packets(
             summary_packet = packet_by_question_id[question.question_id]
             hybrid_retrieved_items = list(summary_packet.retrieved_context_items)
             graph_items: list[RetrievedContextItem] = []
+            graph_hits: list[TypedTemporalGraphHit] = []
             if _question_prefers_typed_graph_evidence(question):
                 graph_hits = retrieve_typed_temporal_graph_hits(question, graph, limit=graph_limit)
                 graph_items = [_graph_hit_to_retrieved_context_item(hit) for hit in graph_hits]
@@ -355,6 +414,13 @@ def build_typed_graph_hybrid_shadow_packets(
                 summary_items=list(summary_packet.retrieved_context_items),
                 answer_candidate_text=summary_packet.answer_candidates[0].text if summary_packet.answer_candidates else None,
             )
+            answer_candidates = _typed_graph_answer_candidates(
+                question,
+                graph_hits,
+                list(summary_packet.answer_candidates),
+            )
+            if answer_candidates:
+                hybrid_context_blocks.append(f"answer_candidate: {answer_candidates[0].text}")
             hybrid_packets.append(
                 BaselinePromptPacket(
                     benchmark_name=summary_packet.benchmark_name,
@@ -371,7 +437,7 @@ def build_typed_graph_hybrid_shadow_packets(
                         "graph_limit": graph_limit,
                         "graph_item_count": len(graph_items),
                     },
-                    answer_candidates=summary_packet.answer_candidates,
+                    answer_candidates=answer_candidates,
                 )
             )
 

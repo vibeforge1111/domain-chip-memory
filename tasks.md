@@ -1,147 +1,131 @@
 # Tasks
 
-Date: 2026-03-29
-Status: active
+Date: 2026-04-22
 
-## Objective
+This file tracks the active conversational-memory hardening program for Spark.
 
-Turn `domain-chip-memory` into a memory system that:
+Primary goal:
 
-- wins the benchmark stack honestly across `BEAM`, `LongMemEval`, and clean `LoCoMo`
-- functions as a true memory layer with correction, deletion, supersession, provenance, abstention, and historical reconstruction
-- remains lightweight enough for real runtime use
-- reaches Spark only through shadow-mode evidence first
+- make conversational / Telegram-style memory genuinely strong, not benchmark-patched
 
-## Program Rules
+Success bar:
 
-- Do not optimize for score theater.
-- Do not split benchmark memory and product memory into separate stacks.
-- Keep provider rescue as a shrinking guardrail, not the main source of correctness.
-- Treat `BEAM` as the core architecture proof benchmark.
-- Treat `LongMemEval_s` and clean `LoCoMo` as non-negotiable guardrails around `BEAM`.
-- Re-run the relevant benchmark and product-memory gates after every real behavior mutation.
+- LoCoMo improves materially on unseen slices
+- no regression on BEAM / LongMemEval
+- the same architecture changes help real multi-party chat memory, not just benchmark packs
 
-## Current Truth
+## Current Program
 
-What is strongly proven:
+## Phase 1: Typed Answer Projection
 
-- local `ProductMemory`
-- bounded `LongMemEval_s`
-- clean bounded `LoCoMo`
-- local `BEAM` pilot pressure
+Status: in progress
 
-What is not fully proven:
+Problem:
 
-- full benchmark closure
-- fully role-clean runtime architecture
-- runtime quality metrics
-- real Spark trace replay quality
+- typed graph retrieval often finds the right fact
+- providers still see raw support text like `Hey Jo` instead of a clean answer value like `Jo`
 
-## Exact Workstreams
+Tasks:
 
-### 1. Keep The Frontier Honest
+- [x] add typed graph sidecar for alias / commitment / negation / reported speech / unknown / temporal events
+- [x] add eval-only typed graph retrieval
+- [x] project typed graph hits into normalized answer candidates
+- [x] verify alias questions return normalized alias values, not support spans
+- [ ] verify reported-speech questions return reported content, not full support sentences
+- [ ] verify negation / unknown questions surface `No` / `unknown` cleanly
+- [ ] rerun targeted real-provider probes after projection
 
-- Keep [FRONTIER_STATUS_2026-03-28.md](docs/FRONTIER_STATUS_2026-03-28.md) or its successor as the single measured snapshot.
-- Keep [MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md](docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md) current.
-- Reconcile any drift between handoff docs and the active measured truth.
+## Phase 2: Retrieval Fusion
 
-### 2. Finish The Benchmark Proof Stack
+Status: pending
 
-- Extend `LongMemEval_s` beyond the currently measured frontier.
-- Broaden clean `LoCoMo` coverage beyond the currently bounded slices.
-- Lock the first canonical `GoodAI` run.
-- Maintain the local `BEAM` pilot lane.
-- Run and pin the first exact small-lane official-public `BEAM` reproduction path.
+Problem:
 
-### 3. Finish The Memory Architecture
+- current shadow lanes are mostly summary vs exact-turn vs typed-graph
+- stronger systems fuse semantic + lexical + symbolic/entity signals
 
-- Make memory roles runtime-real:
-  - raw episodic archive
-  - structured evidence
-  - current-state/profile
-  - temporal-event memory
-  - belief/reflection
-  - working memory
-  - offline maintenance
-- Make lifecycle operators explicit:
-  - `create`
-  - `update`
-  - `delete`
-  - `restore`
-  - `supersede`
-  - `contradict`
-- Reduce correctness dependence inside provider rescue.
+Tasks:
 
-### 4. Prove Runtime Quality
+- [ ] add lexical / BM25 retrieval lane
+- [ ] add entity / alias boost lane
+- [ ] define fusion policy across:
+  - summary
+  - exact-turn
+  - typed-graph
+  - lexical
+  - entity-linked
+- [ ] run shadow retrieval coverage comparison on unseen LoCoMo slice
+- [ ] run shadow answer comparison with real providers
 
-- Add direct reporting for:
-  - p50 latency
-  - p95 latency
-  - prompt tokens
-  - total tokens
-  - memory growth
-  - stale-state error rate
-  - correction success rate
-  - deletion reliability
-  - provenance support rate
-  - abstention honesty
-  - maintenance stability
-  - memory drift rate
+## Phase 3: Entity Linking Hardening
 
-### 5. Keep Spark In Shadow
+Status: pending
 
-- Keep Builder integration on `shadow-only`.
-- Require replayable traces.
-- Turn shadow failures into substrate fixes.
-- Do not promote from intuition.
+Problem:
 
-## Intent Lanes
+- conversational questions rely on alias resolution, kinship resolution, and pronoun carryover
 
-These are intentionally open-ended.
+Tasks:
 
-Use them when the architecture needs exploration that a literal checklist would miss.
+- [ ] strengthen alias binding resolution beyond greeting-only cases
+- [ ] normalize family / kinship references across `mom`, `mother`, `her mother`, `my mom`
+- [ ] add longer-range person resolution across sessions
+- [ ] add tests for unseen social-reference questions
 
-### Intent Lane A: Make Memory Roles Feel Real
+## Phase 4: Temporal Validity
 
-Question:
+Status: pending
 
-- what role boundary would break first under real product use
+Problem:
 
-### Intent Lane B: Make Current-State Handling Unbreakable
+- current temporal normalization is useful but shallow
+- we do not yet model fact validity windows strongly enough
 
-Question:
+Tasks:
 
-- what would still break delete, correction, restore, or supersession under realistic complexity
+- [ ] add valid-from / valid-until style temporal fact handling
+- [ ] preserve superseded facts instead of flattening into one current answer
+- [ ] improve historical queries over older relative-time expressions
+- [ ] verify no regression on LongMemEval / BEAM temporal slices
 
-### Intent Lane C: Make BEAM Pressure Transfer
+## Phase 5: Cross-Event Synthesis
 
-Question:
+Status: pending
 
-- what fails when context stops being forgiving
+Problem:
 
-### Intent Lane D: Make Benchmark Wins Transfer
+- summary memory is still useful, but it should be synthesized from related event clusters rather than standing alone
 
-Question:
+Tasks:
 
-- is this gain true architecture quality or just benchmark convenience
+- [ ] build cross-event summary lane over typed conversational events
+- [ ] keep it separate from raw episode memory
+- [ ] compare event-summary hybrid against current summary-only lane
 
-## Immediate Next Actions
+## Evaluation Gates
 
-- keep the current docs organized around one honest current-state view
-- keep the first MiniMax-scored official-public `BEAM` lane explicitly marked as alternate judge evidence
-- clear the current exact-official official-public `BEAM` judge blocker:
-  - restore OpenAI judge quota
-- rerun the first exact official-public `BEAM` `128K` judged lane once the OpenAI judge path is available
-- extend the next honest `LongMemEval_s` slice
-- choose the next clean `LoCoMo` lane
-- lock the first canonical `GoodAI` run
-- add direct runtime metric capture to serious artifacts
-- get the first real Spark shadow trace batch
+These gates must hold before any runtime promotion:
 
-## Definition Of Done
+- [ ] targeted LoCoMo alias / relation / temporal probes improve
+- [ ] unseen LoCoMo slice improves with real providers
+- [ ] BEAM regression stays clean
+- [ ] LongMemEval regression stays clean
+- [ ] no benchmark-only heuristics added without a production-memory justification
 
-- the benchmark story is broad, honest, and reproducible
-- the architecture is role-clean in runtime reality
-- runtime quality is measured directly
-- benchmark wins transfer to product-memory behavior
-- Spark shadow evidence is good enough to define rollout gates
+## Real-World Validation
+
+The benchmark is not enough. We also need production-shaped checks.
+
+Tasks:
+
+- [ ] create Telegram-style multi-party memory probes
+- [ ] include commitments, aliases, social graph, grief/support, negation, uncertainty
+- [ ] verify retrieval and answer quality on those probes
+
+## Operating Rules
+
+- do not replace `summary_synthesis_memory`
+- do not overfit to single LoCoMo conversations
+- prefer additive layers over rewrites
+- commit in small checkpoints
+- only promote runtime after real-provider evidence is clearly better

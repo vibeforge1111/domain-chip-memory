@@ -463,6 +463,44 @@ def _ordered_predictions(
     ]
 
 
+def _normalized_prediction_surface(text: str) -> str:
+    return " ".join(_normalize_answer_surface(text).lower().strip().split())
+
+
+def _should_preserve_projected_answer_candidate(primary_answer_candidate: Any | None) -> bool:
+    if primary_answer_candidate is None:
+        return False
+    if str(getattr(primary_answer_candidate, "source", "")).strip().lower() != "evidence_memory":
+        return False
+    source_kind = str(getattr(primary_answer_candidate, "metadata", {}).get("source_kind", "")).strip().lower()
+    return source_kind == "typed_temporal_graph"
+
+
+def _project_answer_to_primary_candidate(answer: str, primary_answer_candidate: Any | None) -> str:
+    if primary_answer_candidate is None:
+        return answer.strip()
+    candidate_text = str(getattr(primary_answer_candidate, "text", "")).strip()
+    if not candidate_text:
+        return answer.strip()
+
+    cleaned = answer.strip()
+    if not cleaned:
+        return candidate_text
+
+    normalized_cleaned = _normalized_prediction_surface(cleaned)
+    normalized_candidate = _normalized_prediction_surface(candidate_text)
+    if not normalized_cleaned or not normalized_candidate:
+        return candidate_text if not normalized_cleaned else cleaned
+    if normalized_cleaned == normalized_candidate:
+        return candidate_text
+
+    candidate_tokens = set(re.findall(r"[a-z0-9]+", normalized_candidate))
+    cleaned_tokens = set(re.findall(r"[a-z0-9]+", normalized_cleaned))
+    if candidate_tokens and candidate_tokens.issubset(cleaned_tokens):
+        return candidate_text
+    return cleaned
+
+
 def _build_prediction(
     packet: BaselinePromptPacket,
     *,
@@ -481,10 +519,12 @@ def _build_prediction(
             or question_dataset_scale in {"500K", "1M", "10M"}
         )
     )
-    if not preserve_non_128k_beam_surface:
+    primary_answer_candidate = packet.answer_candidates[0] if packet.answer_candidates else None
+    if _should_preserve_projected_answer_candidate(primary_answer_candidate):
+        answer = _project_answer_to_primary_candidate(answer, primary_answer_candidate)
+    elif not preserve_non_128k_beam_surface:
         answer = _expand_answer_from_context(packet.question, answer, packet.assembled_context)
     normalized_pred = " ".join(_normalize_answer_surface(answer).lower().strip().split())
-    primary_answer_candidate = packet.answer_candidates[0] if packet.answer_candidates else None
     retrieved_role_counts = Counter(
         item.memory_role for item in packet.retrieved_context_items if str(item.memory_role or "").strip()
     )
