@@ -9,9 +9,13 @@ if TYPE_CHECKING:
     from .memory_extraction import ObservationEntry
 
 
-def observation_id_sort_key(observation_id: str | None) -> tuple[Any, ...]:
+def observation_id_sort_key(observation_id: str | None) -> tuple[tuple[int, Any], ...]:
     parts = re.split(r"(\d+)", str(observation_id or ""))
-    return tuple(int(part) if part.isdigit() else part for part in parts if part != "")
+    return tuple(
+        (0, int(part)) if part.isdigit() else (1, part)
+        for part in parts
+        if part != ""
+    )
 
 
 def entry_sort_key(observation: "ObservationEntry") -> tuple[str, tuple[Any, ...]]:

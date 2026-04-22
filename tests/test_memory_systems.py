@@ -506,6 +506,35 @@ def test_observational_memory_reflection_keeps_latest_fact():
     assert "I live in London" not in location_entries
 
 
+def test_observational_memory_reflection_accepts_mixed_observation_id_token_types():
+    observations = [
+        ObservationEntry(
+            observation_id="loc-10",
+            subject="user",
+            predicate="location",
+            text="I live in Dubai.",
+            session_id="s1",
+            turn_ids=["t1"],
+            timestamp="2025-01-05T09:00:00Z",
+            metadata={"value": "Dubai"},
+        ),
+        ObservationEntry(
+            observation_id="1-note",
+            subject="user",
+            predicate="raw_turn",
+            text="I also mentioned my commute.",
+            session_id="s2",
+            turn_ids=["t2"],
+            timestamp="2025-01-05T09:01:00Z",
+            metadata={},
+        ),
+    ]
+
+    reflected = reflect_observations(observations)
+
+    assert [entry.observation_id for entry in reflected] == ["loc-10", "1-note"]
+
+
 def test_observational_memory_reflection_suppresses_deleted_current_state_until_new_update():
     from domain_chip_memory.adapters import BEAMAdapter
 
