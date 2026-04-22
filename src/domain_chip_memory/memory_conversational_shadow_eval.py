@@ -59,6 +59,64 @@ _SUPPORT_TOKENS = {
     "comforting",
 }
 
+_EXACT_TURN_PREFIXES = (
+    "who ",
+    "where ",
+    "when ",
+    "which ",
+    "how many ",
+    "is ",
+    "are ",
+    "do ",
+    "does ",
+    "did ",
+    "can ",
+)
+
+_EXACT_TURN_WHAT_KEYWORDS = {
+    "activity",
+    "activities",
+    "area",
+    "attend",
+    "attended",
+    "class",
+    "classes",
+    "city",
+    "country",
+    "dream",
+    "dreams",
+    "engines",
+    "go to",
+    "go with",
+    "hobby",
+    "hobbies",
+    "instrument",
+    "instruments",
+    "live",
+    "lives",
+    "located",
+    "location",
+    "married",
+    "own",
+    "owned",
+    "owns",
+    "pet",
+    "pets",
+    "play",
+    "plays",
+    "resume",
+    "resumed",
+    "test",
+    "tests",
+    "view",
+    "views",
+    "visit",
+    "visiting",
+    "went with",
+    "work",
+    "works",
+}
+
 
 def _coverage_tokens(text: str) -> set[str]:
     return {
@@ -114,6 +172,15 @@ def _question_uses_conversational_hybrid(question: NormalizedQuestion) -> bool:
     return False
 
 
+def _question_prefers_exact_conversational_evidence(question: NormalizedQuestion) -> bool:
+    question_lower = question.question.lower()
+    if question_lower.startswith(_EXACT_TURN_PREFIXES):
+        return True
+    if question_lower.startswith("what "):
+        return any(token in question_lower for token in _EXACT_TURN_WHAT_KEYWORDS)
+    return False
+
+
 def build_conversational_shadow_eval(
     samples: list[NormalizedBenchmarkSample],
     *,
@@ -127,6 +194,7 @@ def build_conversational_shadow_eval(
     conversational_covered = 0
     hybrid_covered = 0
     gated_hybrid_covered = 0
+    exact_turn_hybrid_covered = 0
     total = 0
     by_sample: dict[str, dict[str, int]] = {}
 
@@ -136,6 +204,7 @@ def build_conversational_shadow_eval(
         sample_conversational_covered = 0
         sample_hybrid_covered = 0
         sample_gated_hybrid_covered = 0
+        sample_exact_turn_hybrid_covered = 0
         sample_total = 0
         for question in sample.questions:
             packet = packet_by_question_id[question.question_id]
@@ -152,6 +221,9 @@ def build_conversational_shadow_eval(
             gated_hybrid_has_coverage = summary_has_coverage or (
                 _question_uses_conversational_hybrid(question) and conversational_has_coverage
             )
+            exact_turn_hybrid_has_coverage = summary_has_coverage or (
+                _question_prefers_exact_conversational_evidence(question) and conversational_has_coverage
+            )
             rows.append(
                 {
                     "sample_id": sample.sample_id,
@@ -159,10 +231,14 @@ def build_conversational_shadow_eval(
                     "question": question.question,
                     "expected_answers": question.expected_answers,
                     "question_uses_conversational_hybrid": _question_uses_conversational_hybrid(question),
+                    "question_prefers_exact_conversational_evidence": _question_prefers_exact_conversational_evidence(
+                        question
+                    ),
                     "summary_retrieval_covered": summary_has_coverage,
                     "conversational_retrieval_covered": conversational_has_coverage,
                     "hybrid_retrieval_covered": hybrid_has_coverage,
                     "gated_hybrid_retrieval_covered": gated_hybrid_has_coverage,
+                    "exact_turn_hybrid_retrieval_covered": exact_turn_hybrid_has_coverage,
                     "summary_retrieval_text": summary_text,
                     "conversational_retrieval_text": conversational_text,
                 }
@@ -181,11 +257,15 @@ def build_conversational_shadow_eval(
             if gated_hybrid_has_coverage:
                 sample_gated_hybrid_covered += 1
                 gated_hybrid_covered += 1
+            if exact_turn_hybrid_has_coverage:
+                sample_exact_turn_hybrid_covered += 1
+                exact_turn_hybrid_covered += 1
         by_sample[sample.sample_id] = {
             "summary_covered": sample_summary_covered,
             "conversational_covered": sample_conversational_covered,
             "hybrid_covered": sample_hybrid_covered,
             "gated_hybrid_covered": sample_gated_hybrid_covered,
+            "exact_turn_hybrid_covered": sample_exact_turn_hybrid_covered,
             "total": sample_total,
         }
 
@@ -195,14 +275,17 @@ def build_conversational_shadow_eval(
             "conversational_covered": conversational_covered,
             "hybrid_covered": hybrid_covered,
             "gated_hybrid_covered": gated_hybrid_covered,
+            "exact_turn_hybrid_covered": exact_turn_hybrid_covered,
             "total": total,
             "summary_coverage_rate": round(summary_covered / total, 4) if total else 0.0,
             "conversational_coverage_rate": round(conversational_covered / total, 4) if total else 0.0,
             "hybrid_coverage_rate": round(hybrid_covered / total, 4) if total else 0.0,
             "gated_hybrid_coverage_rate": round(gated_hybrid_covered / total, 4) if total else 0.0,
+            "exact_turn_hybrid_coverage_rate": round(exact_turn_hybrid_covered / total, 4) if total else 0.0,
             "coverage_delta": conversational_covered - summary_covered,
             "hybrid_delta_vs_summary": hybrid_covered - summary_covered,
             "gated_hybrid_delta_vs_summary": gated_hybrid_covered - summary_covered,
+            "exact_turn_hybrid_delta_vs_summary": exact_turn_hybrid_covered - summary_covered,
         },
         "by_sample": by_sample,
         "rows": rows,

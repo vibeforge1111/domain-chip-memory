@@ -5,6 +5,7 @@ from domain_chip_memory.memory_conversational_index import build_conversational_
 from domain_chip_memory.memory_conversational_retrieval import retrieve_conversational_entries
 from domain_chip_memory.memory_conversational_shadow_eval import (
     _expected_answer_coverage,
+    _question_prefers_exact_conversational_evidence,
     _question_uses_conversational_hybrid,
     build_conversational_shadow_eval,
 )
@@ -141,6 +142,7 @@ def test_conversational_shadow_eval_beats_summary_retrieval_on_conv48_family_hob
     assert row["conversational_retrieval_covered"] is True
     assert row["hybrid_retrieval_covered"] is True
     assert row["gated_hybrid_retrieval_covered"] is True
+    assert row["exact_turn_hybrid_retrieval_covered"] is True
 
 
 def test_question_uses_conversational_hybrid_stays_off_for_non_social_factoid():
@@ -152,3 +154,25 @@ def test_question_uses_conversational_hybrid_stays_off_for_non_social_factoid():
     )
 
     assert _question_uses_conversational_hybrid(question) is False
+
+
+def test_question_prefers_exact_conversational_evidence_for_exact_personal_fact():
+    question = next(
+        question
+        for sample in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        for question in sample.questions
+        if question.question == "How many Prius has Evan owned?"
+    )
+
+    assert _question_prefers_exact_conversational_evidence(question) is True
+
+
+def test_question_prefers_exact_conversational_evidence_stays_off_for_broad_interest_synthesis():
+    question = next(
+        question
+        for sample in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        for question in sample.questions
+        if question.question == "What kind of interests do Joanna and Nate share?"
+    )
+
+    assert _question_prefers_exact_conversational_evidence(question) is False
