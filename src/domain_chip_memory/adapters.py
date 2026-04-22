@@ -138,6 +138,7 @@ class LoCoMoAdapter:
             evidence_session_ids = sorted(
                 {dia_to_session[turn_id] for turn_id in evidence_turn_ids if turn_id in dia_to_session}
             )
+            gold_answer_missing = "answer" not in qa_item or qa_item.get("answer") is None
             questions.append(
                 NormalizedQuestion(
                     question_id=f"{instance.get('sample_id', 'locomo')}-qa-{index + 1}",
@@ -150,6 +151,7 @@ class LoCoMoAdapter:
                         "source_format": "locomo_qa",
                         "speaker_a": speaker_a,
                         "speaker_b": speaker_b,
+                        "gold_answer_missing": gold_answer_missing,
                     },
                 )
             )

@@ -33,7 +33,7 @@ from .contracts import JsonDict, NormalizedBenchmarkSample, NormalizedQuestion
 from .runs import BaselinePromptPacket, BenchmarkRunManifest
 
 
-AUDIT_EXCLUDED_KNOWN_ISSUE_CLASSES = {"benchmark_inconsistency"}
+AUDIT_EXCLUDED_KNOWN_ISSUE_CLASSES = {"benchmark_inconsistency", "missing_gold_answer"}
 
 
 @dataclass(frozen=True)
@@ -326,6 +326,16 @@ def _label_count_rows(counter: Counter[str]) -> list[dict[str, Any]]:
     return [{"label": label, "count": counter[label]} for label in sorted(counter)]
 
 
+def _derived_known_issue(prediction: BaselinePrediction) -> dict[str, Any] | None:
+    if prediction.benchmark_name == "LoCoMo" and bool(prediction.metadata.get("gold_answer_missing")):
+        return {
+            "classification": "missing_gold_answer",
+            "summary": "LoCoMo row omitted the gold answer field, so it belongs in the benchmark-audit lane only.",
+            "recommended_lane": "benchmark_audit",
+        }
+    return None
+
+
 def _build_product_memory_summary(predictions: list[BaselinePrediction]) -> dict[str, Any]:
     latency_values: list[float | int] = []
     token_values: list[float | int] = []
@@ -556,7 +566,7 @@ def build_scorecard(
                 product_task_correct[task_label] += 1
                 product_operation_correct[operation_label] += 1
                 product_scope_correct[scope_label] += 1
-        known_issue = get_known_benchmark_issue(prediction.question_id)
+        known_issue = _derived_known_issue(prediction) or get_known_benchmark_issue(prediction.question_id)
         is_audit_excluded = False
         if known_issue:
             prediction_dict["metadata"]["known_issue"] = known_issue

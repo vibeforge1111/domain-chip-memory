@@ -505,6 +505,7 @@ def _build_prediction(
             "memory_operation": question.metadata.get("memory_operation"),
             "memory_scope": question.metadata.get("memory_scope"),
             "expected_answer_candidate_source": question.metadata.get("expected_answer_candidate_source"),
+            "gold_answer_missing": bool(question.metadata.get("gold_answer_missing")),
             "retrieved_context_item_count": len(packet.retrieved_context_items),
             "retrieved_memory_roles": retrieved_roles,
             "retrieved_memory_role_counts": dict(retrieved_role_counts),

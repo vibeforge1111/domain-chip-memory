@@ -84,6 +84,38 @@ def test_locomo_loader(tmp_path: Path):
     assert samples[0].questions[0].expected_answers == ["jazz"]
 
 
+def test_locomo_loader_marks_missing_gold_answers_for_audit_lane(tmp_path: Path):
+    data_file = tmp_path / "locomo_missing_gold.json"
+    data_file.write_text(
+        json.dumps(
+            [
+                {
+                    "sample_id": "locomo-1",
+                    "conversation": {
+                        "speaker_a": "Alice",
+                        "speaker_b": "Bob",
+                        "session_1_date_time": "2024-01-01",
+                        "session_1": [{"speaker": "Alice", "dia_id": "d1", "text": "I like jazz."}],
+                    },
+                    "qa": [
+                        {
+                            "question": "What music does Alice like?",
+                            "category": "5",
+                            "evidence": ["d1"],
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    samples = load_locomo_json(data_file)
+
+    assert samples[0].questions[0].expected_answers == []
+    assert samples[0].questions[0].metadata["gold_answer_missing"] is True
+
+
 def test_beam_loader_and_runner(tmp_path: Path):
     data_file = tmp_path / "beam.json"
     data_file.write_text(

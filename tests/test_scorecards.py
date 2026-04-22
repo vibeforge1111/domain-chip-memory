@@ -100,6 +100,41 @@ def test_build_scorecard_flags_known_benchmark_issues():
     assert "known_issue" not in scorecard["predictions"][1]["metadata"]
 
 
+def test_build_scorecard_excludes_locomo_missing_gold_rows_from_audited_scoring():
+    scorecard = build_scorecard(
+        {
+            "run_id": "locomo-missing-gold-run",
+            "benchmark_name": "LoCoMo",
+            "baseline_name": "summary_synthesis_memory",
+            "sample_ids": ["conv-41"],
+            "question_ids": ["conv-41-qa-401"],
+            "question_count": 1,
+            "metadata": {},
+        },
+        [
+            BaselinePrediction(
+                benchmark_name="LoCoMo",
+                baseline_name="summary_synthesis_memory",
+                sample_id="conv-41",
+                question_id="conv-41-qa-401",
+                category="5",
+                predicted_answer="unknown",
+                expected_answers=[],
+                is_correct=False,
+                metadata={"provider_name": "heuristic_v1", "gold_answer_missing": True},
+            )
+        ],
+    )
+
+    assert scorecard["overall"]["total"] == 1
+    assert scorecard["overall"]["accuracy"] == 0.0
+    assert scorecard["audited_overall"]["total"] == 0
+    assert scorecard["audited_overall"]["excluded"] == 1
+    assert scorecard["known_issue_summary"]["total_flagged"] == 1
+    assert scorecard["known_issue_summary"]["audit_excluded_total"] == 1
+    assert scorecard["predictions"][0]["metadata"]["known_issue"]["classification"] == "missing_gold_answer"
+
+
 def test_build_scorecard_emits_beam_benchmark_slices():
     scorecard = build_scorecard(
         {
