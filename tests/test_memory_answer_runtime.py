@@ -6,6 +6,7 @@ from domain_chip_memory.memory_answer_runtime import (
     _detect_profile_memory_query,
     _infer_profile_memory_answer,
 )
+from domain_chip_memory.memory_temporal_answers import infer_yes_no_answer
 from domain_chip_memory.memory_extraction import EventCalendarEntry, ObservationEntry
 
 
@@ -250,3 +251,23 @@ def test_infer_profile_memory_answer_treats_location_entries_as_city_history():
     )
 
     assert answer == "Before Abu Dhabi, you lived in Dubai."
+
+
+def test_infer_yes_no_answer_accepts_event_calendar_entries():
+    answer = infer_yes_no_answer(
+        _question("Did I live in Dubai?"),
+        [
+            _event_entry(
+                event_id="e1",
+                predicate="city",
+                value="Dubai",
+                timestamp="2026-04-10T00:00:00Z",
+            ),
+        ],
+        question_subject=lambda _question: "user",
+        evidence_score=lambda _question, _entry: 1.0,
+        observation_score=lambda _question, _entry: 1.0,
+        observation_evidence_text=lambda _question, entry: entry.text,
+    )
+
+    assert answer == ""

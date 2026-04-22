@@ -142,7 +142,12 @@ def infer_yes_no_answer(
     asked_subject = question_subject(question)
     ranked_entries = sorted(
         evidence_entries,
-        key=lambda entry: (evidence_score(question, entry), observation_score(question, entry), entry.timestamp or "", entry.observation_id),
+        key=lambda entry: (
+            evidence_score(question, entry),
+            observation_score(question, entry),
+            entry.timestamp or "",
+            getattr(entry, "observation_id", getattr(entry, "event_id", "")),
+        ),
         reverse=True,
     )
     for entry in ranked_entries:
