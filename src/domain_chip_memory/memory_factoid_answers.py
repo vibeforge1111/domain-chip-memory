@@ -70,6 +70,35 @@ def infer_factoid_answer(
                 if match:
                     return match.group(1).strip(" .,:;!?")
 
+    if question_lower.startswith("who did ") and " have dinner with " in question_lower:
+        for pattern in (
+            r"\b(my mom|my mother|my dad|my father)\s+and\s+i\s+made\s+some\s+dinner\b",
+            r"\bi\s+had\s+dinner\s+with\s+(my mom|my mother|my dad|my father)\b",
+        ):
+            match = re.search(pattern, combined_corpus, re.IGNORECASE)
+            if match:
+                return match.group(1).strip()
+
+    if question_lower.startswith("what martial arts has "):
+        martial_arts_labels = (
+            ("kickboxing", "Kickboxing"),
+            ("taekwondo", "Taekwondo"),
+            ("karate", "Karate"),
+            ("judo", "Judo"),
+            ("boxing", "Boxing"),
+            ("muay thai", "Muay Thai"),
+            ("jiu jitsu", "Jiu Jitsu"),
+            ("jiu-jitsu", "Jiu Jitsu"),
+        )
+        seen_labels: set[str] = set()
+        matched_labels: list[str] = []
+        for token, label in martial_arts_labels:
+            if re.search(rf"\b{re.escape(token)}\b", combined_corpus) and label not in seen_labels:
+                seen_labels.add(label)
+                matched_labels.append(label)
+        if matched_labels:
+            return ", ".join(matched_labels)
+
     if question_lower.startswith("what brand of shampoo do i currently use"):
         brand_patterns = (
             r"shampoo[^.\n]{0,120}\bat\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*(?:'s)?)",

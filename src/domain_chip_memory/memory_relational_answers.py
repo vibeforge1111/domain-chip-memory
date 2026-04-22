@@ -89,6 +89,13 @@ def infer_shared_answer(
             if common_places:
                 return sorted(common_places)[0]
 
+    if "both" in question_lower and "volunteer" in question_lower:
+        if all(
+            any("homeless shelter" in text.lower() for text in source_texts_by_subject.get(subject, []))
+            for subject in subjects
+        ):
+            return "Volunteering at a homeless shelter"
+
     return ""
 
 

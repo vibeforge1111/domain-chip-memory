@@ -648,6 +648,11 @@ def _question_prefers_summary_synthesis(question: NormalizedQuestion) -> bool:
     )
 
 
+def _is_locomo_evidence_first_question(question: NormalizedQuestion) -> bool:
+    source_format = str(question.metadata.get("source_format", "")).strip().lower()
+    return source_format == "locomo_qa" and str(question.category).strip() in {"1", "2", "3"}
+
+
 def _question_is_contradiction_resolution(question: NormalizedQuestion) -> bool:
     return str(question.category or "").strip().lower() == "contradiction_resolution"
 
@@ -5340,6 +5345,13 @@ def _choose_summary_synthesis_answer_candidate(
     contradiction_answer = _infer_question_aligned_contradiction_clarification(question, aggregate_candidate_entries)
     if contradiction_answer:
         return contradiction_answer
+    if _is_locomo_evidence_first_question(question):
+        locomo_factoid_answer = _infer_factoid_answer(question, aggregate_candidate_entries)
+        if locomo_factoid_answer:
+            return locomo_factoid_answer
+        locomo_shared_answer = _infer_shared_answer(question, aggregate_candidate_entries)
+        if locomo_shared_answer:
+            return locomo_shared_answer
     sequence_answer = _infer_sequence_synthesis_answer(question, aggregate_candidate_entries)
     if sequence_answer:
         return sequence_answer

@@ -118,6 +118,30 @@ def _claim_is_negated(text: str) -> bool:
     return any(pattern in normalized for pattern in _NEGATION_PATTERNS)
 
 
+def _is_locomo_evidence_first_question(question: NormalizedQuestion) -> bool:
+    source_format = str(question.metadata.get("source_format", "")).strip().lower()
+    return source_format == "locomo_qa" and str(question.category).strip() in {"1", "2", "3"}
+
+
+def _normalized_surface_text(text: str) -> str:
+    return " ".join(str(text).lower().strip().split())
+
+
+def _answer_matches_entries(answer_text: str, entries: list[ObservationEntry]) -> bool:
+    normalized_answer = _normalized_surface_text(answer_text)
+    if not normalized_answer:
+        return False
+    for entry in entries:
+        candidate_surfaces = (
+            entry.text,
+            str(entry.metadata.get("source_text", "")),
+            str(entry.metadata.get("value", "")),
+        )
+        if any(normalized_answer in _normalized_surface_text(surface) for surface in candidate_surfaces if surface):
+            return True
+    return False
+
+
 def _contradiction_entry_score(question: NormalizedQuestion, entry: ObservationEntry) -> float:
     claim_text = _entry_claim_text(entry)
     normalized_claim = re.sub(r"\s+", " ", claim_text.lower()).strip()
@@ -458,11 +482,29 @@ def build_summary_synthesis_memory_packets(
                 metadata_builder=lambda entry: build_entry_metadata(entry, include_media_fields=True),
             )
 
+            answer_evidence_entries = evidence_entries
+            answer_context_entries = (
+                raw_candidate_pool if (is_dated_state_question(question) or is_relative_state_question(question)) else candidate_pool
+            )
+            if sample.benchmark_name == "LoCoMo" and _is_locomo_evidence_first_question(question):
+                locomo_evidence_first_entries = dedupe_observations(
+                    [
+                        *[entry for entry in evidence_entries if entry.predicate != "summary_synthesis"],
+                        *topical_support,
+                        *[entry for entry in ranked_reflections if entry.predicate != "summary_synthesis"],
+                        *current_state_entries,
+                        *preference_support,
+                    ]
+                )
+                if locomo_evidence_first_entries:
+                    answer_evidence_entries = locomo_evidence_first_entries
+                    answer_context_entries = locomo_evidence_first_entries
+
             answer_text = choose_answer_candidate(
                 question,
-                evidence_entries,
+                answer_evidence_entries,
                 ranked_reflections,
-                raw_candidate_pool if (is_dated_state_question(question) or is_relative_state_question(question)) else candidate_pool,
+                answer_context_entries,
                 aggregate_pool,
             )
             ambiguous_relative_state = has_ambiguous_relative_state_anchor(question, raw_candidate_pool)
@@ -485,6 +527,17 @@ def build_summary_synthesis_memory_packets(
                     source = "referential_ambiguity"
                 elif ambiguous_relative_state and answer_text.lower() == "unknown":
                     source = "temporal_ambiguity"
+                elif sample.benchmark_name == "LoCoMo" and _is_locomo_evidence_first_question(question):
+                    if _answer_matches_entries(answer_text, evidence_entries):
+                        source = "evidence_memory"
+                    elif _answer_matches_entries(answer_text, ranked_reflections):
+                        source = "belief_memory"
+                    elif _answer_matches_entries(answer_text, topical_support):
+                        source = "topic_continuity"
+                    elif _answer_matches_entries(answer_text, synthesis_entries):
+                        source = "aggregate_memory"
+                    elif evidence_entries:
+                        source = "evidence_memory"
                 elif (is_dated_state_question(question) or is_relative_state_question(question)) and evidence_entries:
                     source = "evidence_memory"
                 elif synthesis_entries:

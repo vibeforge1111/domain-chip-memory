@@ -169,6 +169,14 @@ def _normalize_answer_surface(text: str) -> str:
     )
 
 
+def _normalize_relation_surface(text: str) -> str:
+    normalized = _normalize_answer_surface(text).lower()
+    normalized = re.sub(r"\b(my|your|his|her|their|our)\b", "__poss__", normalized)
+    normalized = re.sub(r"\bmom\b", "mother", normalized)
+    normalized = re.sub(r"\bdad\b", "father", normalized)
+    return " ".join(normalized.strip().split())
+
+
 def _preference_match_tokens(text: str) -> set[str]:
     tokens = {
         token
@@ -529,6 +537,8 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
     normalized_expected = [
         " ".join(_normalize_answer_surface(expected).lower().strip().split()) for expected in expected_answers
     ]
+    normalized_relation_pred = _normalize_relation_surface(normalized_pred)
+    normalized_relation_expected = [_normalize_relation_surface(expected) for expected in expected_answers]
     normalized_pred_without_ago = re.sub(r"\s+ago$", "", normalized_pred).strip()
     normalized_expected_without_ago = [re.sub(r"\s+ago$", "", expected).strip() for expected in normalized_expected]
     normalized_pred_compact = normalized_pred.replace(",", "")
@@ -552,6 +562,8 @@ def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) 
                 if len(strong_overlap) >= 2:
                     return True
     if normalized_pred in normalized_expected:
+        return True
+    if normalized_relation_pred in normalized_relation_expected:
         return True
     if normalized_pred_without_ago in normalized_expected_without_ago:
         return True

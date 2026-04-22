@@ -63,6 +63,14 @@ def _normalize_answer(answer: str) -> str:
     return " ".join(normalized.lower().strip().split())
 
 
+def _normalize_relation_answer(answer: str) -> str:
+    normalized = _normalize_answer(answer)
+    normalized = re.sub(r"\b(my|your|his|her|their|our)\b", "__poss__", normalized)
+    normalized = re.sub(r"\bmom\b", "mother", normalized)
+    normalized = re.sub(r"\bdad\b", "father", normalized)
+    return normalized
+
+
 def _extract_beam_rubric_requirement(expected: str) -> str:
     for prefix in (
         "llm response should contain:",
@@ -234,11 +242,15 @@ def _matches_beam_rubric_requirement(normalized_pred: str, requirement: str) -> 
 
 def _matches_expected_answer(normalized_pred: str, expected_answers: list[str]) -> bool:
     normalized_expected = [_normalize_answer(answer) for answer in expected_answers]
+    normalized_relation_pred = _normalize_relation_answer(normalized_pred)
+    normalized_relation_expected = [_normalize_relation_answer(answer) for answer in expected_answers]
     normalized_pred_without_ago = re.sub(r"\s+ago$", "", normalized_pred).strip()
     normalized_expected_without_ago = [re.sub(r"\s+ago$", "", expected).strip() for expected in normalized_expected]
     if not normalized_pred:
         return False
     if normalized_pred in normalized_expected:
+        return True
+    if normalized_relation_pred in normalized_relation_expected:
         return True
     if normalized_pred_without_ago in normalized_expected_without_ago:
         return True

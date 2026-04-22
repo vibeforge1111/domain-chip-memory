@@ -12503,6 +12503,34 @@ def test_locomo_conv26_scoreable_tail_yes_no_candidates_are_preserved():
     assert "answer_candidate: No" in packet_by_id["conv-26-qa-179"].assembled_context
 
 
+def test_summary_synthesis_locomo_unseen_scoreable_questions_prefer_exact_support_over_aggregate_chatter():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-41"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=[
+            next(question for question in sample.questions if question.question_id == question_id)
+            for question_id in ("conv-41-qa-1", "conv-41-qa-3", "conv-41-qa-4")
+        ],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_summary_synthesis_memory_packets([subset])
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "answer_candidate: my mom" in packet_by_id["conv-41-qa-1"].assembled_context.lower()
+    assert "answer_candidate: kickboxing, taekwondo" in packet_by_id["conv-41-qa-3"].assembled_context.lower()
+    assert "answer_candidate: volunteering at a homeless shelter" in packet_by_id["conv-41-qa-4"].assembled_context.lower()
+    assert packet_by_id["conv-41-qa-1"].answer_candidates[0].source == "evidence_memory"
+    assert packet_by_id["conv-41-qa-3"].answer_candidates[0].source == "evidence_memory"
+    assert packet_by_id["conv-41-qa-4"].answer_candidates[0].source == "evidence_memory"
+
+
 def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
     samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
     keep = {

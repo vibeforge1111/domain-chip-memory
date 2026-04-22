@@ -178,6 +178,11 @@ def test_runner_matches_expected_answer_with_smart_apostrophe_variants():
     ) is True
 
 
+def test_runner_matches_relation_answer_across_possessive_and_family_variants():
+    assert _matches_expected_answer("my mom", ["her mother"]) is True
+    assert _matches_expected_answer("his dad", ["my father"]) is True
+
+
 def test_runner_matches_unknown_for_longmemeval_abstention_explanation():
     assert _matches_expected_answer(
         "unknown",
