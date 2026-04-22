@@ -4,6 +4,7 @@ from domain_chip_memory.loaders import load_locomo_json
 from domain_chip_memory.memory_conversational_index import build_conversational_index
 from domain_chip_memory.memory_conversational_retrieval import retrieve_conversational_entries
 from domain_chip_memory.memory_conversational_shadow_eval import (
+    build_exact_turn_hybrid_shadow_packets,
     _expected_answer_coverage,
     _question_prefers_exact_conversational_evidence,
     _question_uses_conversational_hybrid,
@@ -176,3 +177,65 @@ def test_question_prefers_exact_conversational_evidence_stays_off_for_broad_inte
     )
 
     assert _question_prefers_exact_conversational_evidence(question) is False
+
+
+def test_exact_turn_hybrid_shadow_packets_add_conversational_evidence_for_exact_fact_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-49"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "How many Prius has Evan owned?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_exact_turn_hybrid_shadow_packets(subset, conversational_limit=8)
+    packet = packets[0]
+    retrieval_text = "\n".join(item.text.lower() for item in packet.retrieved_context_items)
+
+    assert packet.baseline_name == "summary_synthesis_memory_exact_turn_shadow"
+    assert packet.metadata["shadow_selector"] == "exact_turn_conversational_evidence"
+    assert packet.metadata["conversational_item_count"] > 0
+    assert "conversational_evidence:" in packet.assembled_context.lower()
+    assert "prius" in retrieval_text
+    assert any(item.strategy == "exact_turn_conversational_shadow" for item in packet.retrieved_context_items)
+
+
+def test_exact_turn_hybrid_shadow_packets_stay_summary_only_for_broad_synthesis_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What kind of interests do Joanna and Nate share?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_exact_turn_hybrid_shadow_packets(subset, conversational_limit=8)
+    packet = packets[0]
+
+    assert packet.metadata["conversational_item_count"] == 0
+    assert all(item.strategy != "exact_turn_conversational_shadow" for item in packet.retrieved_context_items)
+    assert "conversational_evidence:" not in packet.assembled_context.lower()

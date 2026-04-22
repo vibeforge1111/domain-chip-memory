@@ -5,9 +5,10 @@ from typing import Any
 
 from .contracts import JsonDict, NormalizedBenchmarkSample, NormalizedQuestion
 from .memory_conversational_index import build_conversational_index
-from .memory_conversational_retrieval import retrieve_conversational_entries
+from .memory_conversational_retrieval import _entry_score, retrieve_conversational_entries
 from .memory_extraction import _tokenize
 from .packet_builders import build_summary_synthesis_memory_packets
+from .runs import BaselinePromptPacket, RetrievedContextItem, build_run_manifest
 from .scorecards import _normalize_answer
 
 
@@ -179,6 +180,108 @@ def _question_prefers_exact_conversational_evidence(question: NormalizedQuestion
     if question_lower.startswith("what "):
         return any(token in question_lower for token in _EXACT_TURN_WHAT_KEYWORDS)
     return False
+
+
+def _conversational_entry_to_retrieved_context_item(
+    question: NormalizedQuestion,
+    entry: Any,
+) -> RetrievedContextItem:
+    return RetrievedContextItem(
+        session_id=entry.session_id,
+        turn_ids=[entry.turn_id],
+        score=_entry_score(question, entry),
+        strategy="exact_turn_conversational_shadow",
+        text=f"conversational_evidence: {entry.text}",
+        memory_role="evidence",
+        metadata={
+            "entry_type": entry.entry_type,
+            "predicate": entry.predicate,
+            "subject": entry.subject,
+            "timestamp": entry.timestamp,
+            **entry.metadata,
+        },
+    )
+
+
+def _merge_retrieved_context_items(
+    summary_items: list[RetrievedContextItem],
+    conversational_items: list[RetrievedContextItem],
+) -> list[RetrievedContextItem]:
+    merged: list[RetrievedContextItem] = []
+    seen_keys: set[tuple[str, tuple[str, ...], str]] = set()
+    for item in [*summary_items, *conversational_items]:
+        dedupe_key = (item.session_id, tuple(item.turn_ids), item.text.strip().lower())
+        if dedupe_key in seen_keys:
+            continue
+        seen_keys.add(dedupe_key)
+        merged.append(item)
+    return merged
+
+
+def build_exact_turn_hybrid_shadow_packets(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    conversational_limit: int = 8,
+) -> tuple[JsonDict, list[BaselinePromptPacket]]:
+    manifest, summary_packets = build_summary_synthesis_memory_packets(samples)
+    packet_by_question_id = {packet.question_id: packet for packet in summary_packets}
+    hybrid_packets: list[BaselinePromptPacket] = []
+
+    for sample in samples:
+        index_entries = build_conversational_index(sample)
+        for question in sample.questions:
+            summary_packet = packet_by_question_id[question.question_id]
+            hybrid_retrieved_items = list(summary_packet.retrieved_context_items)
+            conversational_retrieved_items: list[RetrievedContextItem] = []
+            if _question_prefers_exact_conversational_evidence(question):
+                conversational_hits = retrieve_conversational_entries(
+                    question,
+                    index_entries,
+                    limit=conversational_limit,
+                )
+                conversational_retrieved_items = [
+                    _conversational_entry_to_retrieved_context_item(question, entry)
+                    for entry in conversational_hits
+                ]
+                hybrid_retrieved_items = _merge_retrieved_context_items(
+                    hybrid_retrieved_items,
+                    conversational_retrieved_items,
+                )
+            hybrid_context_blocks = [item.text for item in hybrid_retrieved_items]
+            if summary_packet.answer_candidates:
+                hybrid_context_blocks.append(f"answer_candidate: {summary_packet.answer_candidates[0].text}")
+            hybrid_packets.append(
+                BaselinePromptPacket(
+                    benchmark_name=summary_packet.benchmark_name,
+                    baseline_name="summary_synthesis_memory_exact_turn_shadow",
+                    sample_id=summary_packet.sample_id,
+                    question_id=summary_packet.question_id,
+                    question=summary_packet.question,
+                    assembled_context="\n\n".join(hybrid_context_blocks),
+                    retrieved_context_items=hybrid_retrieved_items,
+                    metadata={
+                        **summary_packet.metadata,
+                        "route": "summary_synthesis_memory_exact_turn_shadow",
+                        "shadow_selector": "exact_turn_conversational_evidence",
+                        "conversational_limit": conversational_limit,
+                        "conversational_item_count": len(conversational_retrieved_items),
+                    },
+                    answer_candidates=summary_packet.answer_candidates,
+                )
+            )
+
+    shadow_manifest = build_run_manifest(
+        samples,
+        baseline_name="summary_synthesis_memory_exact_turn_shadow",
+        run_id=str(manifest.get("run_id", "")),
+        benchmark_name=str(manifest.get("benchmark_name", "")),
+        metadata={
+            **dict(manifest.get("metadata", {})),
+            "shadow_selector": "exact_turn_conversational_evidence",
+            "conversational_limit": conversational_limit,
+        },
+    )
+    return shadow_manifest.to_dict(), hybrid_packets
 
 
 def build_conversational_shadow_eval(
