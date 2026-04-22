@@ -12669,6 +12669,73 @@ def test_summary_synthesis_locomo_conv42_temporal_anchor_questions_recover_older
     assert "answer_candidate: finished her screenplay and printed it" in packet_by_id["conv-42-qa-10"].assembled_context.lower()
 
 
+def test_summary_synthesis_locomo_conv48_social_memory_questions_recover_exact_lists_and_anchors():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-48"
+    )
+    selected_question_ids = (
+        "conv-48-qa-1",
+        "conv-48-qa-2",
+        "conv-48-qa-4",
+        "conv-48-qa-5",
+        "conv-48-qa-6",
+        "conv-48-qa-7",
+        "conv-48-qa-9",
+        "conv-48-qa-11",
+        "conv-48-qa-12",
+        "conv-48-qa-14",
+        "conv-48-qa-15",
+        "conv-48-qa-19",
+        "conv-48-qa-20",
+    )
+    selected_questions = [
+        next(question for question in sample.questions if question.question_id == question_id)
+        for question_id in selected_question_ids
+    ]
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=selected_questions,
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_summary_synthesis_memory_packets([subset])
+    packet_by_id = {packet.question_id: packet for packet in packets}
+    packet_by_text = {
+        question.question: packet_by_id[question.question_id]
+        for question in selected_questions
+    }
+
+    assert "answer_candidate: an electrical engineering project" in packet_by_text["What kind of project was Jolene working on in the beginning of January 2023?"].assembled_context.lower()
+    assert "answer_candidate: mother, father, her friend karlie" in packet_by_text["Which of Deborah`s family and friends have passed away?"].assembled_context.lower()
+    assert "answer_candidate: in 2022" in packet_by_text["When did Jolene`s mother pass away?"].assembled_context.lower()
+    assert "answer_candidate: in 2010" in packet_by_text["When did Jolene's mom gift her a pendant?"].assembled_context.lower()
+    assert "answer_candidate: in france" in packet_by_text["In what country did Jolene's mother buy her the pendant?"].assembled_context.lower()
+    assert "answer_candidate: pendants" in packet_by_text["What symbolic gifts do Deborah and Jolene have from their mothers?"].assembled_context.lower()
+    answer_helped = packet_by_text["What helped Deborah find peace when grieving deaths of her loved ones?"].assembled_context.lower()
+    assert "yoga" in answer_helped
+    assert "old photos" in answer_helped
+    assert "roses and dahlias" in answer_helped
+    assert "nature" in answer_helped
+    assert "answer_candidate: in 1993" in packet_by_text["When was Deborah's parents' wedding?"].assembled_context.lower()
+    assert "answer_candidate: yes" in packet_by_text["Is Deborah married?"].assembled_context.lower()
+    answer_places = packet_by_text["What places give Deborah peace?"].assembled_context.lower()
+    assert "spot by the window" in answer_places
+    assert "beach" in answer_places
+    assert "bali" in answer_places
+    assert "forest trail" in answer_places
+    answer_hobbies = packet_by_text["What were Deborah's mother's hobbies?"].assembled_context.lower()
+    assert "reading" in answer_hobbies
+    assert "traveling" in answer_hobbies
+    assert "art" in answer_hobbies
+    assert "cooking" in answer_hobbies
+    assert "answer_candidate: in france" in packet_by_text["In what country did Jolene buy snake Seraphim?"].assembled_context.lower()
+    assert "answer_candidate: two" in packet_by_text["How many times has Jolene been to France?"].assembled_context.lower()
+
+
 def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
     samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
     keep = {

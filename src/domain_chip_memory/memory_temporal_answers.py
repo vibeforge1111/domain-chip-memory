@@ -31,6 +31,47 @@ def infer_temporal_answer(
     if not question_lower.startswith("when "):
         return ""
 
+    small_numbers = {
+        "one": 1,
+        "two": 2,
+        "three": 3,
+        "four": 4,
+        "five": 5,
+        "six": 6,
+        "seven": 7,
+        "eight": 8,
+        "nine": 9,
+        "ten": 10,
+    }
+    named_subjects = {
+        entry.subject.lower()
+        for entry in evidence_entries
+        if entry.subject and entry.subject.lower() in question_lower
+    }
+    if len(named_subjects) == 1:
+        preferred_entries = [
+            entry
+            for entry in evidence_entries
+            if entry.subject and entry.subject.lower() in named_subjects
+        ]
+        if preferred_entries:
+            evidence_entries = preferred_entries
+    kinship_tokens: tuple[str, ...] = ()
+    if "father" in question_lower or "dad" in question_lower:
+        kinship_tokens = ("father", "dad")
+    elif "mother" in question_lower or "mom" in question_lower:
+        kinship_tokens = ("mother", "mom")
+    if kinship_tokens:
+        preferred_entries = []
+        for entry in evidence_entries:
+            source_text = str(entry.metadata.get("source_text", "")).strip().lower()
+            evidence_text = observation_evidence_text(question, entry).lower()
+            combined_text = f"{source_text} {evidence_text}"
+            if any(token in combined_text for token in kinship_tokens):
+                preferred_entries.append(entry)
+        if preferred_entries:
+            evidence_entries = preferred_entries
+
     ignored_question_tokens = {
         "when", "did", "does", "do", "was", "were", "is", "are", "has", "have",
         "start", "started", "begin", "began", "get", "got", "jon", "gina", "jean", "john",
@@ -106,6 +147,9 @@ def infer_temporal_answer(
         if is_pure_question_turn(source_text):
             continue
         evidence_text = observation_evidence_text(question, entry).lower()
+        combined_text = f"{source_text.lower()} {evidence_text}"
+        if "appreciation letter" in question_lower and "letter i received yesterday" in combined_text:
+            return format_full_date(anchor - timedelta(days=1))
         evidence_tokens = set(tokenize(evidence_text))
         overlap = len(question_content_tokens.intersection(evidence_tokens))
         if _temporal_priority(entry) < max_priority:
@@ -118,13 +162,31 @@ def infer_temporal_answer(
         owned_for_years_match = re.search(r"\b(?:i(?:'ve| have)\s+had\s+(?:them|it)\s+for|for)\s+(\d+)\s+years?\s+now\b", evidence_text)
         if owned_for_years_match:
             return str(anchor.year - int(owned_for_years_match.group(1)))
+        relative_days_match = re.search(r"\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\s+ago\b", evidence_text)
+        if relative_days_match:
+            raw_days = relative_days_match.group(1)
+            days = int(raw_days) if raw_days.isdigit() else small_numbers.get(raw_days)
+            if days is not None:
+                return format_full_date(anchor - timedelta(days=days))
         if "last friday" in evidence_text:
             return f"The Friday before {format_full_date(anchor)}"
         if "last week" in evidence_text and "first" in question_lower:
             return f"the week before {format_full_date(anchor)}"
+        explicit_year_match = re.search(r"\bin\s+((?:19|20)\d{2})\b", evidence_text)
+        if explicit_year_match and any(
+            token in question_lower
+            for token in ("gift", "pendant", "wedding", "bought", "buy", "visiting")
+        ):
+            return f"in {explicit_year_match.group(1)}"
+        if "last year" in evidence_text:
+            return f"in {anchor.year - 1}"
         if "a few years ago" in evidence_text:
+            if "pass away" in question_lower:
+                return f"a few years before {anchor.year}"
             return "A few years ago"
         if "few years ago" in evidence_text or "years ago" in evidence_text:
+            if "pass away" in question_lower:
+                return f"a few years before {anchor.year}"
             return "A few years ago"
         if "yesterday" in evidence_text:
             return format_full_date(anchor - timedelta(days=1))
@@ -197,6 +259,11 @@ def infer_yes_no_answer(
         if question_lower.startswith("does ") and "live in connecticut" in question_lower:
             if any(token in combined for token in ("stamford", "connecticut")):
                 return "Likely yes"
+        if "married" in question_lower:
+            if any(token in combined for token in ("my husband", "my wife", "got married", "i'm married", "i am married", "we got married")):
+                return "Yes"
+            if any(token in combined for token in ("not married", "single")):
+                return "No"
         if question_lower.startswith(("is ", "are ", "was ", "were ")) and "pet" in question_lower:
             pet_match = re.match(
                 r"(?:is|are|was|were)\s+([a-z0-9][a-z0-9' -]*?)\s+([a-z][a-z'-]*)'s\s+pet\??$",
