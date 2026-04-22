@@ -12576,6 +12576,66 @@ def test_summary_synthesis_locomo_unseen_conv47_recovers_exact_supportable_answe
     assert packet_by_id["conv-47-qa-8"].answer_candidates[0].source == "evidence_memory"
 
 
+def test_summary_synthesis_locomo_conv49_typed_fact_and_count_questions_recover_exact_answers():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-49"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=[
+            next(question for question in sample.questions if question.question_id == question_id)
+            for question_id in (
+                "conv-49-qa-1",
+                "conv-49-qa-2",
+                "conv-49-qa-3",
+                "conv-49-qa-4",
+                "conv-49-qa-5",
+                "conv-49-qa-6",
+                "conv-49-qa-7",
+                "conv-49-qa-8",
+                "conv-49-qa-9",
+                "conv-49-qa-12",
+                "conv-49-qa-15",
+                "conv-49-qa-16",
+                "conv-49-qa-17",
+                "conv-49-qa-19",
+            )
+        ],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_summary_synthesis_memory_packets([subset])
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "answer_candidate: prius" in packet_by_id["conv-49-qa-1"].assembled_context.lower()
+    assert "answer_candidate: his old prius and his new prius." in packet_by_id["conv-49-qa-2"].assembled_context.lower()
+    assert "answer_candidate: rockies, jasper" in packet_by_id["conv-49-qa-3"].assembled_context.lower()
+    assert "answer_candidate: two" in packet_by_id["conv-49-qa-4"].assembled_context.lower()
+    assert "answer_candidate: painting" in packet_by_id["conv-49-qa-5"].assembled_context.lower()
+    assert "answer_candidate: canada" in packet_by_id["conv-49-qa-6"].assembled_context.lower()
+    assert "answer_candidate: two" in packet_by_id["conv-49-qa-7"].assembled_context.lower()
+    answer_8 = packet_by_id["conv-49-qa-8"].assembled_context.lower()
+    assert "painting" in answer_8
+    assert "kayaking" in answer_8
+    assert "hiking" in answer_8
+    assert "cooking" in answer_8
+    assert "running" in answer_8
+    assert "answer_candidate: watercolor painting" in packet_by_id["conv-49-qa-9"].assembled_context.lower()
+    assert "answer_candidate: weight problem" in packet_by_id["conv-49-qa-12"].assembled_context.lower()
+    assert "answer_candidate: ginger snaps" in packet_by_id["conv-49-qa-15"].assembled_context.lower()
+    assert "answer_candidate: soda, candy" in packet_by_id["conv-49-qa-16"].assembled_context.lower()
+    assert "answer_candidate: malfunctioning self-checkout machines." in packet_by_id["conv-49-qa-17"].assembled_context.lower()
+    answer_19 = packet_by_id["conv-49-qa-19"].assembled_context.lower()
+    assert "flavored seltzer water" in answer_19
+    assert "dark chocolate with high cocoa content" in answer_19
+    assert "energy balls" in answer_19
+    assert "grilled chicken salad with avocado" in answer_19
+
+
 def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
     samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
     keep = {
