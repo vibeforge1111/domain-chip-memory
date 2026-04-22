@@ -30,6 +30,7 @@ def infer_temporal_answer(
     question_lower = question.question.lower()
     if not question_lower.startswith("when "):
         return ""
+    death_question = "pass away" in question_lower or "passed away" in question_lower
 
     small_numbers = {
         "one": 1,
@@ -52,7 +53,51 @@ def infer_temporal_answer(
             )
         )
 
-    if "passed away" in question_lower:
+    typed_entries = sorted(
+        [entry for entry in evidence_entries if entry.metadata.get("typed_conversational")],
+        key=lambda entry: (
+            evidence_score(question, entry),
+            observation_score(question, entry),
+            entry.timestamp or "",
+            getattr(entry, "observation_id", getattr(entry, "event_id", "")),
+        ),
+        reverse=True,
+    )
+    named_subjects = {
+        entry.subject.lower()
+        for entry in evidence_entries
+        if entry.subject and entry.subject.lower() in question_lower
+    }
+    for entry in typed_entries:
+        if named_subjects and entry.subject and entry.subject.lower() not in named_subjects:
+            continue
+        relation_type = str(entry.metadata.get("relation_type", "")).lower()
+        time_normalized = str(entry.metadata.get("time_normalized", "")).strip()
+        time_expression_raw = str(entry.metadata.get("time_expression_raw", "")).strip().lower()
+        if entry.predicate == "loss_event" and death_question:
+            if any(token in question_lower for token in ("mother", "mom")) and relation_type != "mother":
+                continue
+            if any(token in question_lower for token in ("father", "dad")) and relation_type != "father":
+                continue
+            if time_normalized:
+                return time_normalized
+            if time_expression_raw == "last year":
+                anchor = parse_observation_anchor(entry.timestamp)
+                if anchor:
+                    return f"in {anchor.year - 1}"
+            relative_days_match = re.search(r"\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\s+ago\b", time_expression_raw)
+            if relative_days_match:
+                anchor = parse_observation_anchor(entry.timestamp)
+                if anchor:
+                    raw_days = relative_days_match.group(1)
+                    days = int(raw_days) if raw_days.isdigit() else small_numbers.get(raw_days)
+                    if days is not None:
+                        return format_full_date(anchor - timedelta(days=days))
+        if entry.predicate == "gift_event" and any(token in question_lower for token in ("pendant", "necklace", "gift")):
+            if time_normalized:
+                return time_normalized
+
+    if death_question:
         for entry in evidence_entries:
             anchor = parse_observation_anchor(entry.timestamp)
             if not anchor:
@@ -80,11 +125,6 @@ def infer_temporal_answer(
                     if days is not None:
                         return format_full_date(anchor - timedelta(days=days))
 
-    named_subjects = {
-        entry.subject.lower()
-        for entry in evidence_entries
-        if entry.subject and entry.subject.lower() in question_lower
-    }
     if len(named_subjects) == 1:
         preferred_entries = [
             entry
@@ -105,7 +145,7 @@ def infer_temporal_answer(
             evidence_text = observation_evidence_text(question, entry).lower()
             combined_text = f"{source_text} {evidence_text}"
             pronoun_match = False
-            if "passed away" in question_lower and _has_temporal_cue(combined_text):
+            if death_question and _has_temporal_cue(combined_text):
                 if any(token in question_lower for token in ("mother", "mom")) and "she passed away" in combined_text:
                     pronoun_match = True
                 if any(token in question_lower for token in ("father", "dad")) and "he passed away" in combined_text:
@@ -141,7 +181,7 @@ def infer_temporal_answer(
     def _temporal_priority(entry: ObservationEntry) -> int:
         evidence_text = observation_evidence_text(question, entry).lower()
         priority = 0
-        if "passed away" in question_lower and "passed away" in evidence_text:
+        if death_question and "passed away" in evidence_text:
             priority += 4
             if _has_temporal_cue(evidence_text):
                 priority += 8
@@ -199,7 +239,7 @@ def infer_temporal_answer(
             continue
         evidence_text = observation_evidence_text(question, entry).lower()
         combined_text = f"{source_text.lower()} {evidence_text}"
-        if "passed away" in question_lower and "passed away" in evidence_text and not _has_temporal_cue(evidence_text):
+        if death_question and "passed away" in evidence_text and not _has_temporal_cue(evidence_text):
             continue
         if "letter" in question_lower and "letter" in evidence_text and not _has_temporal_cue(evidence_text):
             continue
@@ -208,7 +248,7 @@ def infer_temporal_answer(
         evidence_tokens = set(tokenize(evidence_text))
         overlap = len(question_content_tokens.intersection(evidence_tokens))
         strong_temporal_match = (
-            ("passed away" in question_lower and "passed away" in evidence_text and _has_temporal_cue(evidence_text))
+            (death_question and "passed away" in evidence_text and _has_temporal_cue(evidence_text))
             or ("letter" in question_lower and "letter" in evidence_text and _has_temporal_cue(evidence_text))
         )
         if _temporal_priority(entry) < max_priority:

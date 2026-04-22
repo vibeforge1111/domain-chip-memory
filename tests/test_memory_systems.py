@@ -10767,6 +10767,36 @@ def test_extract_memory_atoms_captures_benchmark_specific_patterns():
     assert all(atom.metadata.get("speaker") != "assistant" or atom.predicate != "raw_turn" for atom in atoms)
 
 
+def test_extract_memory_atoms_adds_typed_conversational_events_for_locomo_social_memory():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-48"
+    )
+
+    atoms = extract_memory_atoms(sample)
+
+    mother_loss_atoms = [
+        atom
+        for atom in atoms
+        if atom.predicate == "loss_event"
+        and atom.metadata.get("relation_type") == "mother"
+        and atom.metadata.get("time_normalized") == "a few years before 2023"
+    ]
+    assert mother_loss_atoms
+    assert any("passed away" in str(atom.metadata.get("source_span", "")).lower() for atom in mother_loss_atoms)
+
+    pendant_gift_atoms = [
+        atom
+        for atom in atoms
+        if atom.predicate == "gift_event"
+        and atom.metadata.get("relation_type") == "mother"
+        and atom.metadata.get("item_type") == "pendant"
+        and atom.metadata.get("time_normalized") == "in 2010"
+    ]
+    assert pendant_gift_atoms
+
+
 def test_extract_memory_atoms_compacts_fallback_claim_for_homepage_route():
     from domain_chip_memory.adapters import BEAMAdapter
 
@@ -12678,6 +12708,7 @@ def test_summary_synthesis_locomo_conv48_social_memory_questions_recover_exact_l
     selected_question_ids = (
         "conv-48-qa-1",
         "conv-48-qa-2",
+        "conv-48-qa-3",
         "conv-48-qa-4",
         "conv-48-qa-5",
         "conv-48-qa-6",
@@ -12713,6 +12744,7 @@ def test_summary_synthesis_locomo_conv48_social_memory_questions_recover_exact_l
 
     assert "answer_candidate: an electrical engineering project" in packet_by_text["What kind of project was Jolene working on in the beginning of January 2023?"].assembled_context.lower()
     assert "answer_candidate: mother, father, her friend karlie" in packet_by_text["Which of Deborah`s family and friends have passed away?"].assembled_context.lower()
+    assert "answer_candidate: a few years before 2023" in packet_by_text["When did Deborah`s mother pass away?"].assembled_context.lower()
     assert "answer_candidate: in 2022" in packet_by_text["When did Jolene`s mother pass away?"].assembled_context.lower()
     assert "answer_candidate: in 2010" in packet_by_text["When did Jolene's mom gift her a pendant?"].assembled_context.lower()
     assert "answer_candidate: in france" in packet_by_text["In what country did Jolene's mother buy her the pendant?"].assembled_context.lower()

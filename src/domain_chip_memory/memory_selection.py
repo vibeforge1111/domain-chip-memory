@@ -5,6 +5,7 @@ from collections.abc import Callable
 
 from .contracts import NormalizedQuestion
 from .memory_extraction import ObservationEntry
+from .memory_queries import _question_predicates
 
 
 def _is_pure_question_turn(text: str) -> bool:
@@ -65,6 +66,22 @@ def select_evidence_entries(
     limit: int = 4,
 ) -> list[ObservationEntry]:
     ranked_inputs = observations
+    question_predicates = set(_question_predicates(question))
+    typed_predicates = {"loss_event", "gift_event", "support_event", "relationship_edge", "family_edge", "shared_activity"}
+    typed_inputs = [
+        entry
+        for entry in observations
+        if entry.predicate in typed_predicates
+        and (
+            entry.predicate in question_predicates
+            or (
+                question.question.lower().startswith("when ")
+                and entry.predicate in {"loss_event", "gift_event"}
+            )
+        )
+    ]
+    if typed_inputs:
+        ranked_inputs = typed_inputs
     if _is_locomo_evidence_first_question(question):
         preferred_inputs = [
             entry

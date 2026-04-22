@@ -202,6 +202,9 @@ def build_profile_identity_summary_answer(entries: list[ObservationEntry]) -> st
 def answer_candidate_surface_text(subject: str, predicate: str, value: str, source_text: str) -> str:
     surface_subject = _subject_to_surface(subject)
     if predicate in {
+        "loss_event",
+        "gift_event",
+        "support_event",
         "commute_duration",
         "attended_play",
         "playlist_name",

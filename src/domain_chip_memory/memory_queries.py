@@ -102,6 +102,12 @@ def _question_subjects(question: NormalizedQuestion) -> list[str]:
 def _question_predicates(question: NormalizedQuestion) -> list[str]:
     question_lower = question.question.lower()
     predicates: list[str] = []
+    if "pass away" in question_lower or "passed away" in question_lower:
+        predicates.append("loss_event")
+    if any(token in question_lower for token in ("pendant", "necklace", "symbolic gifts", "gift")):
+        predicates.append("gift_event")
+    if any(token in question_lower for token in ("grieving", "find peace", "helped", "supported")):
+        predicates.append("support_event")
     if any(phrase in question_lower for phrase in ("what is my name", "what's my name")):
         predicates.append("preferred_name")
     if any(

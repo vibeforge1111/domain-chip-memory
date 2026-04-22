@@ -588,6 +588,38 @@ def _infer_yes_no_answer(question: NormalizedQuestion, evidence_entries: list[Ob
     )
 
 
+def _merge_typed_temporal_candidate_entries(
+    question: NormalizedQuestion,
+    evidence_entries: list[ObservationEntry],
+    candidate_entries: list[ObservationEntry] | None,
+) -> list[ObservationEntry]:
+    merged = list(candidate_entries or evidence_entries)
+    if not _question_prefers_temporal_reconstruction(question):
+        return merged
+    for entry in evidence_entries:
+        if (
+            entry.metadata.get("typed_conversational")
+            and entry.predicate in {"loss_event", "gift_event"}
+            and entry not in merged
+        ):
+            merged.insert(0, entry)
+    return merged
+
+
+def _typed_temporal_evidence_entries(
+    question: NormalizedQuestion,
+    evidence_entries: list[ObservationEntry],
+) -> list[ObservationEntry]:
+    if not _question_prefers_temporal_reconstruction(question):
+        return []
+    return [
+        entry
+        for entry in evidence_entries
+        if entry.metadata.get("typed_conversational")
+        and entry.predicate in {"loss_event", "gift_event"}
+    ]
+
+
 def _question_prefers_temporal_reconstruction(question: NormalizedQuestion) -> bool:
     question_lower = question.question.lower()
     return any(
@@ -5223,7 +5255,12 @@ def _choose_stateful_answer_candidate(
     abstention_answer = _abstention_answer(question)
     if abstention_answer:
         return abstention_answer
-    candidate_entries = context_entries or evidence_entries
+    typed_temporal_entries = _typed_temporal_evidence_entries(question, evidence_entries)
+    if typed_temporal_entries:
+        direct_temporal_answer = _infer_temporal_answer(question, typed_temporal_entries)
+        if direct_temporal_answer:
+            return direct_temporal_answer
+    candidate_entries = _merge_typed_temporal_candidate_entries(question, evidence_entries, context_entries)
     aggregate_candidate_entries = list(aggregate_entries or [])
     for entry in candidate_entries:
         if entry not in aggregate_candidate_entries:
@@ -5326,7 +5363,7 @@ def _choose_summary_synthesis_answer_candidate(
     context_entries: list[ObservationEntry] | None = None,
     aggregate_entries: list[ObservationEntry] | None = None,
 ) -> str:
-    candidate_entries = list(context_entries or evidence_entries)
+    candidate_entries = _merge_typed_temporal_candidate_entries(question, evidence_entries, context_entries)
     aggregate_candidate_entries = list(aggregate_entries or [])
     for entry in candidate_entries:
         if entry not in aggregate_candidate_entries:
@@ -5345,6 +5382,15 @@ def _choose_summary_synthesis_answer_candidate(
     contradiction_answer = _infer_question_aligned_contradiction_clarification(question, aggregate_candidate_entries)
     if contradiction_answer:
         return contradiction_answer
+    typed_temporal_entries = _typed_temporal_evidence_entries(question, evidence_entries)
+    if typed_temporal_entries:
+        direct_temporal_answer = _infer_temporal_answer(question, typed_temporal_entries)
+        if direct_temporal_answer:
+            return direct_temporal_answer
+    if _question_prefers_temporal_reconstruction(question):
+        temporal_answer = _infer_temporal_answer(question, candidate_entries)
+        if temporal_answer:
+            return temporal_answer
     if _is_locomo_evidence_first_question(question):
         locomo_factoid_answer = _infer_factoid_answer(question, aggregate_candidate_entries)
         if locomo_factoid_answer:
@@ -5378,7 +5424,7 @@ def _choose_contradiction_aware_summary_synthesis_answer_candidate(
     context_entries: list[ObservationEntry] | None = None,
     aggregate_entries: list[ObservationEntry] | None = None,
 ) -> str:
-    candidate_entries = list(context_entries or evidence_entries)
+    candidate_entries = _merge_typed_temporal_candidate_entries(question, evidence_entries, context_entries)
     aggregate_candidate_entries = list(aggregate_entries or [])
     for entry in candidate_entries:
         if entry not in aggregate_candidate_entries:
@@ -5397,6 +5443,15 @@ def _choose_contradiction_aware_summary_synthesis_answer_candidate(
     contradiction_answer = _infer_question_aligned_contradiction_clarification(question, aggregate_candidate_entries)
     if contradiction_answer:
         return contradiction_answer
+    typed_temporal_entries = _typed_temporal_evidence_entries(question, evidence_entries)
+    if typed_temporal_entries:
+        direct_temporal_answer = _infer_temporal_answer(question, typed_temporal_entries)
+        if direct_temporal_answer:
+            return direct_temporal_answer
+    if _question_prefers_temporal_reconstruction(question):
+        temporal_answer = _infer_temporal_answer(question, candidate_entries)
+        if temporal_answer:
+            return temporal_answer
     sequence_answer = _infer_sequence_synthesis_answer(question, aggregate_candidate_entries)
     if sequence_answer:
         return sequence_answer

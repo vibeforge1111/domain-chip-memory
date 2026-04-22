@@ -159,7 +159,7 @@ def _temporal_sentence_bonus(question_lower: str, sentence_lower: str) -> float:
     bonus = 0.0
     if re.search(r"\b(yesterday|today|last week|last month|last year|few years ago|a few years ago|two days ago|three days ago|in \d{4})\b", sentence_lower):
         bonus += 5.0
-    if "passed away" in question_lower and "passed away" in sentence_lower:
+    if ("pass away" in question_lower or "passed away" in question_lower) and "passed away" in sentence_lower:
         bonus += 6.0
     if "letter" in question_lower and "letter" in sentence_lower:
         bonus += 7.0

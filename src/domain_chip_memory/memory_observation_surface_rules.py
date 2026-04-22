@@ -5,6 +5,8 @@ from .memory_extraction import _subject_to_surface
 
 def observation_surface_text(subject: str, predicate: str, value: str, source_text: str) -> str:
     surface_subject = _subject_to_surface(subject)
+    if predicate in {"loss_event", "gift_event", "support_event"}:
+        return value
     if predicate == "location":
         return f"{surface_subject} live in {value}" if subject == "user" else f"{surface_subject} lives in {value}"
     if predicate == "preference":

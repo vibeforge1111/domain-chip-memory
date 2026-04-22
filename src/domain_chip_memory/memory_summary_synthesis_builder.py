@@ -123,6 +123,29 @@ def _is_locomo_evidence_first_question(question: NormalizedQuestion) -> bool:
     return source_format == "locomo_qa" and str(question.category).strip() in {"1", "2", "3"}
 
 
+def _question_prefers_temporal_reconstruction(question: NormalizedQuestion) -> bool:
+    question_lower = question.question.lower()
+    return any(
+        cue in question_lower
+        for cue in (
+            "when did",
+            "when was",
+            "how long",
+            "how many days",
+            "how many weeks",
+            "how many months",
+            "how many years",
+            "before ",
+            "after ",
+            "between ",
+            "first ",
+            "last ",
+            "earlier ",
+            "later ",
+        )
+    )
+
+
 def _normalized_surface_text(text: str) -> str:
     return " ".join(str(text).lower().strip().split())
 
@@ -487,15 +510,22 @@ def build_summary_synthesis_memory_packets(
                 raw_candidate_pool if (is_dated_state_question(question) or is_relative_state_question(question)) else candidate_pool
             )
             if sample.benchmark_name == "LoCoMo" and _is_locomo_evidence_first_question(question):
-                locomo_evidence_first_entries = dedupe_observations(
-                    [
-                        *[entry for entry in evidence_entries if entry.predicate != "summary_synthesis"],
-                        *topical_support,
-                        *[entry for entry in ranked_reflections if entry.predicate != "summary_synthesis"],
-                        *current_state_entries,
-                        *preference_support,
-                    ]
-                )
+                if _question_prefers_temporal_reconstruction(question):
+                    locomo_evidence_first_entries = dedupe_observations(
+                        [
+                            *[entry for entry in evidence_entries if entry.predicate != "summary_synthesis"],
+                        ]
+                    )
+                else:
+                    locomo_evidence_first_entries = dedupe_observations(
+                        [
+                            *[entry for entry in evidence_entries if entry.predicate != "summary_synthesis"],
+                            *topical_support,
+                            *[entry for entry in ranked_reflections if entry.predicate != "summary_synthesis"],
+                            *current_state_entries,
+                            *preference_support,
+                        ]
+                    )
                 if locomo_evidence_first_entries:
                     answer_evidence_entries = locomo_evidence_first_entries
                     answer_context_entries = dedupe_observations(
@@ -506,6 +536,20 @@ def build_summary_synthesis_memory_packets(
                             *structured_observations,
                             *observations,
                         ]
+                    )
+            if _question_prefers_temporal_reconstruction(question):
+                typed_temporal_entries = [
+                    entry
+                    for entry in observations
+                    if entry.metadata.get("typed_conversational")
+                    and entry.predicate in {"loss_event", "gift_event"}
+                ]
+                if typed_temporal_entries:
+                    answer_evidence_entries = dedupe_observations(
+                        [*typed_temporal_entries, *answer_evidence_entries]
+                    )
+                    answer_context_entries = dedupe_observations(
+                        [*typed_temporal_entries, *answer_context_entries]
                     )
 
             answer_text = choose_answer_candidate(

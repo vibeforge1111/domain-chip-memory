@@ -61,6 +61,11 @@ _FALLBACK_ACTION_PATTERNS = (
     "login module",
 )
 
+_CONVERSATIONAL_TIME_PATTERN = re.compile(
+    r"\b(a few years ago|few years ago|last year|yesterday|today|(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\s+ago|in (?:19|20)\d{2})\b",
+    re.IGNORECASE,
+)
+
 
 def _normalize_profile_location_value(value: str) -> str:
     normalized = _normalize_value(value)
@@ -119,6 +124,172 @@ def _compact_fallback_source_text(text: str) -> str:
     if best_score < 4.0:
         return ""
     return best_clause.strip(" ,;:-")
+
+
+def _extract_source_span(text: str, keyword: str) -> str:
+    sentences = [
+        sentence.strip()
+        for sentence in re.split(r"(?<=[.!?])\s+", text)
+        if sentence.strip()
+    ]
+    keyword_lower = keyword.lower()
+    for sentence in sentences:
+        if keyword_lower in sentence.lower():
+            return sentence.strip(" \"'")
+    return text.strip()
+
+
+def _anchor_year(timestamp: str | None) -> int | None:
+    if not timestamp:
+        return None
+    match = re.search(r"\b((?:19|20)\d{2})\b", timestamp)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def _normalize_conversational_time_expression(expression: str, timestamp: str | None) -> str:
+    normalized = expression.strip().lower()
+    anchor_year = _anchor_year(timestamp)
+    if re.search(r"\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\s+ago\b", normalized):
+        return ""
+    if normalized in {"yesterday", "today"}:
+        return ""
+    if normalized in {"a few years ago", "few years ago"} and anchor_year is not None:
+        return f"a few years before {anchor_year}"
+    if normalized == "last year" and anchor_year is not None:
+        return f"in {anchor_year - 1}"
+    return normalized
+
+
+def _infer_relationship_context(text: str, lower: str) -> tuple[str, str]:
+    if any(token in lower for token in ("my mother", "my mom", "her mother", "her mom", "our mother", "our mom", "me and my mother", "me and my mom")):
+        return "mother", "mother"
+    if any(token in lower for token in ("my father", "my dad", "her father", "her dad", "our father", "our dad", "me and my father", "me and my dad")):
+        return "father", "father"
+    friend_match = re.search(r"\b(?:my|her|his|our)\s+friend\s+([A-Z][a-z]+)\b", text)
+    if friend_match:
+        return "friend", friend_match.group(1).strip()
+    return "", ""
+
+
+def _inherit_recent_relationship_context(
+    session: NormalizedSession,
+    turn: NormalizedTurn,
+    *,
+    relation_type: str,
+    other_entity: str,
+) -> tuple[str, str]:
+    if relation_type or other_entity:
+        return relation_type, other_entity
+    turn_index = next((index for index, candidate in enumerate(session.turns) if candidate.turn_id == turn.turn_id), -1)
+    if turn_index <= 0:
+        return relation_type, other_entity
+    for prior_turn in reversed(session.turns[:turn_index]):
+        if prior_turn.speaker != turn.speaker:
+            continue
+        inherited_relation_type, inherited_other_entity = _infer_relationship_context(prior_turn.text, prior_turn.text.lower())
+        if inherited_relation_type or inherited_other_entity:
+            return inherited_relation_type, inherited_other_entity
+    return relation_type, other_entity
+
+
+def _extract_typed_conversational_atoms(
+    session: NormalizedSession,
+    turn: NormalizedTurn,
+    *,
+    subject: str,
+) -> list[MemoryAtom]:
+    text = turn.text.strip()
+    lower = text.lower()
+    timestamp = turn.timestamp or session.timestamp
+    atoms: list[MemoryAtom] = []
+
+    def _append_typed_atom(predicate: str, value: str, **metadata: object) -> None:
+        atoms.append(
+            MemoryAtom(
+                atom_id=f"{turn.turn_id}:atom:typed:{predicate}:{len(atoms)}",
+                subject=subject,
+                predicate=predicate,
+                value=_normalize_value(value),
+                session_id=session.session_id,
+                turn_id=turn.turn_id,
+                timestamp=timestamp,
+                source_text=text,
+                metadata={
+                    "speaker": turn.speaker,
+                    "typed_conversational": True,
+                    **metadata,
+                    **turn.metadata,
+                },
+            )
+        )
+
+    if "passed away" in lower:
+        relation_type, other_entity = _infer_relationship_context(text, lower)
+        relation_type, other_entity = _inherit_recent_relationship_context(
+            session,
+            turn,
+            relation_type=relation_type,
+            other_entity=other_entity,
+        )
+        time_match = _CONVERSATIONAL_TIME_PATTERN.search(lower)
+        time_expression_raw = time_match.group(1).lower() if time_match else ""
+        time_normalized = _normalize_conversational_time_expression(time_expression_raw, timestamp) if time_expression_raw else ""
+        relation_surface = other_entity or relation_type or "someone"
+        value_parts = [relation_surface, "passed away"]
+        if time_normalized:
+            value_parts.append(time_normalized)
+        elif time_expression_raw:
+            value_parts.append(time_expression_raw)
+        _append_typed_atom(
+            "loss_event",
+            " ".join(value_parts),
+            entity_key=f"loss_event:{(other_entity or relation_type or 'unknown').lower()}",
+            event_type="loss",
+            relation_type=relation_type,
+            other_entity=other_entity,
+            source_span=_extract_source_span(text, "passed away"),
+            time_expression_raw=time_expression_raw,
+            time_normalized=time_normalized,
+        )
+
+    if any(token in lower for token in ("pendant", "necklace")) and any(
+        token in lower for token in ("gave me", "gave it to me", "gifted me", "bought me", "bought this", "got me")
+    ):
+        relation_type, other_entity = _infer_relationship_context(text, lower)
+        relation_type, other_entity = _inherit_recent_relationship_context(
+            session,
+            turn,
+            relation_type=relation_type,
+            other_entity=other_entity,
+        )
+        item_type = "pendant" if "pendant" in lower else "necklace"
+        year_match = re.search(r"\bin\s+((?:19|20)\d{2})\b", lower)
+        place_match = re.search(r"\b(?:visited|in)\s+([A-Z][a-z]+)\b", text)
+        time_expression_raw = f"in {year_match.group(1)}" if year_match else ""
+        time_normalized = _normalize_conversational_time_expression(time_expression_raw, timestamp) if time_expression_raw else ""
+        place = place_match.group(1).strip() if place_match else ""
+        value_parts = [relation_type or other_entity or "someone", "gifted", item_type]
+        if time_normalized:
+            value_parts.append(time_normalized)
+        if place:
+            value_parts.append(f"in {place}")
+        _append_typed_atom(
+            "gift_event",
+            " ".join(value_parts),
+            entity_key=f"gift_event:{item_type}:{(relation_type or other_entity or 'unknown').lower()}",
+            event_type="gift",
+            relation_type=relation_type,
+            other_entity=other_entity,
+            item_type=item_type,
+            place=place.lower(),
+            source_span=_extract_source_span(text, item_type),
+            time_expression_raw=time_expression_raw,
+            time_normalized=time_normalized,
+        )
+
+    return atoms
 
 
 def _extract_atoms_from_turn(
@@ -964,6 +1135,8 @@ def _extract_atoms_from_turn(
                 metadata=metadata,
             )
         )
+
+    atoms.extend(_extract_typed_conversational_atoms(session, turn, subject=subject))
 
     if atoms:
         if allow_raw_fallback and re.search(

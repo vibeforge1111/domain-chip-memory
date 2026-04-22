@@ -27,6 +27,7 @@ def evidence_score(
     score = observation_score(question, observation)
     predicates = set(_question_predicates(question))
     question_lower = question.question.lower()
+    death_question = "pass away" in question_lower or "passed away" in question_lower
     evidence_text = observation_evidence_text(question, observation)
     observation_context_lower = observation.text.lower()
     evidence_tokens = set(_tokenize(evidence_text))
@@ -59,6 +60,16 @@ def evidence_score(
             score += 1.5
     else:
         score -= 1.5
+    if observation.metadata.get("typed_conversational"):
+        if observation.predicate in predicates:
+            score += 3.0
+        relation_type = str(observation.metadata.get("relation_type", "")).lower()
+        if observation.predicate in {"loss_event", "gift_event"} and any(token in question_lower for token in ("mother", "mom")) and relation_type == "mother":
+            score += 8.0
+        if observation.predicate in {"loss_event", "gift_event"} and any(token in question_lower for token in ("father", "dad")) and relation_type == "father":
+            score += 8.0
+        if question_lower.startswith("when ") and observation.predicate in {"loss_event", "gift_event"}:
+            score += 8.0
     if len(evidence_tokens) <= 8:
         score += 1.0
     if question_lower.startswith("how did") and "appreciate" in evidence_text.lower():
@@ -80,7 +91,7 @@ def evidence_score(
         score += 4.0
     if question_lower.startswith("when ") and "festival" in question_lower and "next month" in evidence_text.lower():
         score += 10.0
-    if question_lower.startswith("when ") and "passed away" in question_lower:
+    if question_lower.startswith("when ") and death_question:
         has_temporal_cue = bool(
             re.search(
                 r"\b(a few years ago|few years ago|last year|yesterday|today|\d+ days ago|one day ago|two days ago|three days ago|in \d{4})\b",

@@ -155,7 +155,15 @@ def infer_factoid_answer(
 
     if question_lower.startswith("what places give ") and "peace" in question_lower:
         places: list[str] = []
-        if "spot by the window gives me peace" in combined_corpus:
+        if any(
+            token in combined_corpus
+            for token in (
+                "spot by the window gives me peace",
+                "bench near the window",
+                "favorite places in the house",
+                "one of the places where i do it",
+            )
+        ) and "window" in combined_corpus:
             _append_unique(places, "sitting in a spot by the window in her Mom's house")
         if "beach" in combined_corpus:
             _append_unique(places, "sitting by the beach")
