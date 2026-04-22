@@ -18279,6 +18279,67 @@ def test_run_locomo_cli_question_offset_can_write_shifted_slice(tmp_path: Path, 
     assert payload["run_manifest"]["question_ids"] == ["locomo-1-qa-2"]
 
 
+def test_run_locomo_multi_shadow_eval_can_filter_question_id(tmp_path: Path, monkeypatch):
+    data_file = tmp_path / "locomo.json"
+    output_file = tmp_path / "artifacts" / "locomo_multi_shadow.json"
+    data_file.write_text(
+        json.dumps(
+            [
+                {
+                    "sample_id": "locomo-1",
+                    "conversation": {
+                        "speaker_a": "Alice",
+                        "speaker_b": "Bob",
+                        "session_1_date_time": "2024-01-01",
+                        "session_1": [
+                            {"speaker": "Alice", "dia_id": "d1", "text": "I like jazz."},
+                            {"speaker": "Bob", "dia_id": "d2", "text": "I like chess."},
+                        ],
+                    },
+                    "qa": [
+                        {
+                            "question": "What music does Alice like?",
+                            "answer": "jazz",
+                            "category": "1",
+                            "evidence": ["d1"],
+                        },
+                        {
+                            "question": "What does Bob like?",
+                            "answer": "chess",
+                            "category": "1",
+                            "evidence": ["d2"],
+                        },
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-locomo-multi-shadow-eval",
+            str(data_file),
+            "--provider",
+            "heuristic_v1",
+            "--sample-id",
+            "locomo-1",
+            "--question-id",
+            "locomo-1-qa-2",
+            "--write",
+            str(output_file),
+        ],
+    )
+    cli.main()
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert payload["overall"]["total"] == 1
+    assert payload["rows"][0]["question_id"] == "locomo-1-qa-2"
+
+
 def test_run_locomo_cli_can_resume_and_checkpoint_progress(tmp_path: Path, monkeypatch):
     data_file = tmp_path / "locomo.json"
     output_file = tmp_path / "artifacts" / "locomo_scorecard.json"

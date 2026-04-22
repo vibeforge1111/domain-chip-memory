@@ -122,10 +122,12 @@ def _filter_locomo_shadow_samples(
     *,
     sample_ids: list[str] | None = None,
     categories: list[str] | None = None,
+    question_ids: list[str] | None = None,
     exclude_missing_gold: bool = False,
 ) -> list[NormalizedBenchmarkSample]:
     requested_ids = {sample_id.strip() for sample_id in (sample_ids or []) if sample_id.strip()}
     requested_categories = {category.strip() for category in (categories or []) if category.strip()}
+    requested_question_ids = {question_id.strip() for question_id in (question_ids or []) if question_id.strip()}
     filtered: list[NormalizedBenchmarkSample] = []
     for sample in samples:
         if requested_ids and sample.sample_id not in requested_ids:
@@ -134,6 +136,7 @@ def _filter_locomo_shadow_samples(
             question
             for question in sample.questions
             if (not requested_categories or question.category in requested_categories)
+            and (not requested_question_ids or question.question_id in requested_question_ids)
             and (not exclude_missing_gold or not bool(question.metadata.get("gold_answer_missing")))
         ]
         if not questions:
@@ -11126,6 +11129,7 @@ def main() -> None:
     run_locomo_multi_shadow.add_argument("--question-limit", type=int)
     run_locomo_multi_shadow.add_argument("--sample-id", action="append")
     run_locomo_multi_shadow.add_argument("--category", action="append")
+    run_locomo_multi_shadow.add_argument("--question-id", action="append")
     run_locomo_multi_shadow.add_argument("--exclude-missing-gold", action="store_true")
     run_locomo_multi_shadow.add_argument("--conversational-limit", type=int, default=8)
     run_locomo_multi_shadow.add_argument("--graph-limit", type=int, default=6)
@@ -12049,6 +12053,7 @@ def main() -> None:
             ),
             sample_ids=args.sample_id,
             categories=args.category,
+            question_ids=args.question_id,
             exclude_missing_gold=args.exclude_missing_gold,
         )
         payload = build_multi_shadow_answer_eval(
