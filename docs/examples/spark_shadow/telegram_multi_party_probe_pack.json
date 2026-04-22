@@ -1,0 +1,268 @@
+{
+  "writable_roles": [
+    "user"
+  ],
+  "conversations": [
+    {
+      "conversation_id": "telegram-alias-commitment",
+      "session_id": "telegram-chat-alias",
+      "metadata": {
+        "source": "telegram",
+        "scenario": "alias_and_commitment"
+      },
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "Hey, everyone calls me Jo in here.",
+          "timestamp": "2026-04-01T09:00:00Z"
+        },
+        {
+          "message_id": "m2",
+          "role": "assistant",
+          "content": "Noted, I'll use Jo.",
+          "timestamp": "2026-04-01T09:01:00Z"
+        },
+        {
+          "message_id": "m3",
+          "role": "user",
+          "content": "I'm going to send the investor memo next Friday.",
+          "timestamp": "2026-04-03T10:00:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p1",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "alias_binding",
+          "query": "What nickname does the user use in this chat?",
+          "expected_value": "Jo",
+          "min_results": 1
+        },
+        {
+          "probe_id": "p2",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "commitment_event",
+          "query": "What is the user planning to send next Friday?",
+          "expected_value": "investor memo",
+          "min_results": 1
+        }
+      ]
+    },
+    {
+      "conversation_id": "telegram-negation-uncertainty",
+      "session_id": "telegram-chat-memory-gap",
+      "metadata": {
+        "source": "telegram",
+        "scenario": "negation_and_unknown"
+      },
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "I've never been to Boston before.",
+          "timestamp": "2026-04-05T11:00:00Z"
+        },
+        {
+          "message_id": "m2",
+          "role": "user",
+          "content": "I can't remember the name of that co-op game we talked about.",
+          "timestamp": "2026-04-05T11:05:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p3",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "negation_record",
+          "query": "Had the user been to Boston before?",
+          "expected_value": "No",
+          "min_results": 1
+        },
+        {
+          "probe_id": "p4",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "unknown_record",
+          "query": "What game can't the user remember?",
+          "expected_value": "unknown",
+          "min_results": 1
+        }
+      ]
+    },
+    {
+      "conversation_id": "telegram-reported-speech",
+      "session_id": "telegram-chat-health",
+      "metadata": {
+        "source": "telegram",
+        "scenario": "reported_speech"
+      },
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "The doctor said it's not too serious, just rest for a few days.",
+          "timestamp": "2026-04-07T08:30:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p5",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "reported_speech",
+          "query": "What did the doctor say about the injury?",
+          "expected_value": "The doctor said it's not too serious",
+          "min_results": 1
+        }
+      ]
+    },
+    {
+      "conversation_id": "telegram-grief-support",
+      "session_id": "telegram-chat-grief",
+      "metadata": {
+        "source": "telegram",
+        "scenario": "grief_support_and_peace"
+      },
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "My mom passed away a few years ago and yoga helped me find some peace again.",
+          "timestamp": "2026-04-08T18:00:00Z"
+        },
+        {
+          "message_id": "m2",
+          "role": "user",
+          "content": "I still feel close to her when I visit the rose garden.",
+          "timestamp": "2026-04-08T18:05:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p6",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "loss_event",
+          "query": "When did the user's mother pass away?",
+          "expected_value": "a few years ago",
+          "min_results": 1
+        },
+        {
+          "probe_id": "p7",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "support_event",
+          "query": "What helped the user find peace while grieving?",
+          "expected_value": "yoga",
+          "min_results": 1
+        }
+      ]
+    },
+    {
+      "conversation_id": "telegram-relative-time",
+      "session_id": "telegram-chat-relative-time",
+      "metadata": {
+        "source": "telegram",
+        "scenario": "relative_time_and_history"
+      },
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "I live in London.",
+          "timestamp": "2026-01-01T09:00:00Z"
+        },
+        {
+          "message_id": "m2",
+          "role": "user",
+          "content": "I moved to Dubai last month.",
+          "timestamp": "2026-03-01T09:00:00Z"
+        },
+        {
+          "message_id": "m3",
+          "role": "user",
+          "content": "Yesterday I mailed an appreciation letter to the community center.",
+          "timestamp": "2026-03-15T09:00:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p8",
+          "probe_type": "historical_state",
+          "subject": "user",
+          "predicate": "location",
+          "as_of": "2026-02-01T00:00:00Z",
+          "expected_value": "London"
+        },
+        {
+          "probe_id": "p9",
+          "probe_type": "current_state",
+          "subject": "user",
+          "predicate": "location",
+          "expected_value": "Dubai"
+        },
+        {
+          "probe_id": "p10",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "commitment_event",
+          "query": "What did the user mail yesterday?",
+          "expected_value": "appreciation letter",
+          "min_results": 1
+        }
+      ]
+    },
+    {
+      "conversation_id": "telegram-multi-party-social",
+      "session_id": "telegram-group-social",
+      "metadata": {
+        "source": "telegram",
+        "scenario": "multi_party_social_graph"
+      },
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "Anna is my sister and Leo is my project partner.",
+          "timestamp": "2026-04-10T13:00:00Z"
+        },
+        {
+          "message_id": "m2",
+          "role": "assistant",
+          "content": "Got it.",
+          "timestamp": "2026-04-10T13:01:00Z"
+        },
+        {
+          "message_id": "m3",
+          "role": "user",
+          "content": "Leo and I are presenting the prototype on Tuesday.",
+          "timestamp": "2026-04-10T13:02:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p11",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "relationship_edge",
+          "query": "Who is Anna to the user?",
+          "expected_value": "sister",
+          "min_results": 1
+        },
+        {
+          "probe_id": "p12",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "relationship_edge",
+          "query": "Who is Leo to the user?",
+          "expected_value": "project partner",
+          "min_results": 1
+        }
+      ]
+    }
+  ]
+}

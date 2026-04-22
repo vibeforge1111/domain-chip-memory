@@ -10607,10 +10607,13 @@ def test_run_spark_shadow_report_batch_cli_can_aggregate_directory(tmp_path: Pat
 def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatch):
     repo_root = Path(__file__).resolve().parents[1]
     single_file = repo_root / "docs" / "examples" / "spark_shadow" / "single_replay.json"
+    telegram_probe_file = repo_root / "docs" / "examples" / "spark_shadow" / "telegram_multi_party_probe_pack.json"
     batch_dir = repo_root / "docs" / "examples" / "spark_shadow" / "batch_replay"
     single_validation_output = tmp_path / "artifacts" / "single_validation.json"
+    telegram_validation_output = tmp_path / "artifacts" / "telegram_validation.json"
     batch_validation_output = tmp_path / "artifacts" / "batch_validation.json"
     single_output = tmp_path / "artifacts" / "single_report.json"
+    telegram_output = tmp_path / "artifacts" / "telegram_report.json"
     batch_output = tmp_path / "artifacts" / "batch_report.json"
 
     monkeypatch.setattr(
@@ -10634,6 +10637,23 @@ def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatc
         "argv",
         [
             "domain_chip_memory.cli",
+            "validate-spark-shadow-replay",
+            str(telegram_probe_file),
+            "--write",
+            str(telegram_validation_output),
+        ],
+    )
+    cli.main()
+
+    telegram_validation_payload = json.loads(telegram_validation_output.read_text(encoding="utf-8"))
+    assert telegram_validation_payload["valid"] is True
+    assert telegram_validation_payload["conversation_count"] == 6
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
             "run-spark-shadow-report",
             str(single_file),
             "--write",
@@ -10645,6 +10665,22 @@ def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatc
     single_payload = json.loads(single_output.read_text(encoding="utf-8"))
     assert single_payload["report"]["run_count"] == 2
     assert single_payload["report"]["summary"]["accepted_writes"] == 3
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "run-spark-shadow-report",
+            str(telegram_probe_file),
+            "--write",
+            str(telegram_output),
+        ],
+    )
+    cli.main()
+
+    telegram_payload = json.loads(telegram_output.read_text(encoding="utf-8"))
+    assert telegram_payload["report"]["run_count"] == 6
 
     monkeypatch.setattr(
         sys,

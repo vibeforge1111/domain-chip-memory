@@ -19,6 +19,7 @@ This aggregate runner is also what the GitHub Actions workflow executes.
 
 - `spark_shadow/single_replay.json`: single replay example
 - `spark_shadow/batch_replay/`: batch replay examples
+- `spark_shadow/telegram_multi_party_probe_pack.json`: Telegram-style multi-party conversational probe pack
 
 ## SDK Maintenance
 
