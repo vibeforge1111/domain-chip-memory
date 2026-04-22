@@ -209,6 +209,21 @@ def _question_prefers_typed_graph_evidence(question: NormalizedQuestion) -> bool
     return False
 
 
+def _question_prefers_entity_linked_evidence(question: NormalizedQuestion) -> bool:
+    question_lower = question.question.lower()
+    if "nickname" in question_lower or "call" in question_lower:
+        return True
+    if question_lower.startswith("what did ") and any(token in question_lower for token in ("say", "said", "tell", "told")):
+        return True
+    if any(token in question_lower for token in ("remember", "know", "sure")):
+        return True
+    if any(token in question_lower for token in ("ever", "before")) and any(
+        token in question_lower for token in ("tried", "been", "visited", "had")
+    ):
+        return True
+    return False
+
+
 def _conversational_entry_to_retrieved_context_item(
     question: NormalizedQuestion,
     entry: Any,
@@ -676,6 +691,75 @@ def build_typed_graph_hybrid_shadow_packets(
     return shadow_manifest.to_dict(), hybrid_packets
 
 
+def build_fused_conversational_hybrid_shadow_packets(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    entity_limit: int = 6,
+    graph_limit: int = 6,
+) -> tuple[JsonDict, list[BaselinePromptPacket]]:
+    manifest, summary_packets = build_summary_synthesis_memory_packets(samples)
+    _, entity_packets = build_entity_linked_hybrid_shadow_packets(samples, entity_limit=entity_limit)
+    _, graph_packets = build_typed_graph_hybrid_shadow_packets(samples, graph_limit=graph_limit)
+    summary_by_question_id = {packet.question_id: packet for packet in summary_packets}
+    entity_by_question_id = {packet.question_id: packet for packet in entity_packets}
+    graph_by_question_id = {packet.question_id: packet for packet in graph_packets}
+    fused_packets: list[BaselinePromptPacket] = []
+
+    for sample in samples:
+        for question in sample.questions:
+            summary_packet = summary_by_question_id[question.question_id]
+            entity_packet = entity_by_question_id[question.question_id]
+            graph_packet = graph_by_question_id[question.question_id]
+            selector = "summary_backbone"
+            selected_packet = summary_packet
+
+            if _question_prefers_entity_linked_evidence(question):
+                selector = "entity_linked_first"
+                selected_packet = entity_packet
+            elif _question_prefers_typed_graph_evidence(question):
+                selector = "typed_graph_first"
+                selected_packet = graph_packet
+
+            fused_packets.append(
+                BaselinePromptPacket(
+                    benchmark_name=selected_packet.benchmark_name,
+                    baseline_name="summary_synthesis_memory_fused_conversational_shadow",
+                    sample_id=selected_packet.sample_id,
+                    question_id=selected_packet.question_id,
+                    question=selected_packet.question,
+                    assembled_context=selected_packet.assembled_context,
+                    retrieved_context_items=list(selected_packet.retrieved_context_items),
+                    metadata={
+                        **summary_packet.metadata,
+                        **selected_packet.metadata,
+                        "route": "summary_synthesis_memory_fused_conversational_shadow",
+                        "shadow_selector": selector,
+                        "fused_variant_baseline": selected_packet.baseline_name,
+                        "fused_selected_item_count": len(selected_packet.retrieved_context_items),
+                        "entity_limit": entity_limit,
+                        "graph_limit": graph_limit,
+                        "entity_item_count": int(entity_packet.metadata.get("entity_item_count", 0)),
+                        "graph_item_count": int(graph_packet.metadata.get("graph_item_count", 0)),
+                    },
+                    answer_candidates=list(selected_packet.answer_candidates),
+                )
+            )
+
+    shadow_manifest = build_run_manifest(
+        samples,
+        baseline_name="summary_synthesis_memory_fused_conversational_shadow",
+        run_id=str(manifest.get("run_id", "")),
+        benchmark_name=str(manifest.get("benchmark_name", "")),
+        metadata={
+            **dict(manifest.get("metadata", {})),
+            "shadow_selector": "fused_conversational_shadow",
+            "entity_limit": entity_limit,
+            "graph_limit": graph_limit,
+        },
+    )
+    return shadow_manifest.to_dict(), fused_packets
+
+
 def _build_shadow_answer_eval(
     samples: list[NormalizedBenchmarkSample],
     *,
@@ -852,6 +936,28 @@ def build_typed_graph_shadow_answer_eval(
     )
 
 
+def build_fused_conversational_shadow_answer_eval(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    entity_limit: int = 6,
+    graph_limit: int = 6,
+    provider_name: str = "heuristic",
+) -> JsonDict:
+    _, hybrid_packets = build_fused_conversational_hybrid_shadow_packets(
+        samples,
+        entity_limit=entity_limit,
+        graph_limit=graph_limit,
+    )
+    return _build_shadow_answer_eval(
+        samples,
+        provider_name=provider_name,
+        variant_packets=hybrid_packets,
+        variant_label="fused_hybrid",
+        variant_item_count_field="fused_hybrid_selected_item_count",
+        variant_packet_metadata_field="fused_selected_item_count",
+    )
+
+
 def build_multi_shadow_answer_eval(
     samples: list[NormalizedBenchmarkSample],
     *,
@@ -864,8 +970,14 @@ def build_multi_shadow_answer_eval(
         samples,
         conversational_limit=conversational_limit,
     )
+    _, entity_packets = build_entity_linked_hybrid_shadow_packets(samples)
     _, graph_packets = build_typed_graph_hybrid_shadow_packets(
         samples,
+        graph_limit=graph_limit,
+    )
+    _, fused_packets = build_fused_conversational_hybrid_shadow_packets(
+        samples,
+        entity_limit=6,
         graph_limit=graph_limit,
     )
     question_by_id = {
@@ -878,12 +990,16 @@ def build_multi_shadow_answer_eval(
     by_sample: dict[str, dict[str, int]] = {}
     summary_correct = 0
     exact_turn_correct = 0
+    entity_correct = 0
     graph_correct = 0
+    fused_correct = 0
 
-    for summary_packet, exact_turn_packet, graph_packet in zip(
+    for summary_packet, exact_turn_packet, entity_packet, graph_packet, fused_packet in zip(
         summary_packets,
         exact_turn_packets,
+        entity_packets,
         graph_packets,
+        fused_packets,
         strict=True,
     ):
         question = question_by_id[summary_packet.question_id]
@@ -903,6 +1019,14 @@ def build_multi_shadow_answer_eval(
             answer=exact_turn_response.answer,
             provider_metadata=exact_turn_response.metadata,
         )
+        entity_response = provider.generate_answer(entity_packet)
+        entity_prediction = _build_prediction(
+            entity_packet,
+            question=question,
+            provider=provider,
+            answer=entity_response.answer,
+            provider_metadata=entity_response.metadata,
+        )
         graph_response = provider.generate_answer(graph_packet)
         graph_prediction = _build_prediction(
             graph_packet,
@@ -911,12 +1035,22 @@ def build_multi_shadow_answer_eval(
             answer=graph_response.answer,
             provider_metadata=graph_response.metadata,
         )
+        fused_response = provider.generate_answer(fused_packet)
+        fused_prediction = _build_prediction(
+            fused_packet,
+            question=question,
+            provider=provider,
+            answer=fused_response.answer,
+            provider_metadata=fused_response.metadata,
+        )
         sample_metrics = by_sample.setdefault(
             summary_packet.sample_id,
             {
                 "summary_correct": 0,
                 "exact_turn_correct": 0,
+                "entity_correct": 0,
                 "graph_correct": 0,
+                "fused_correct": 0,
                 "total": 0,
             },
         )
@@ -927,9 +1061,15 @@ def build_multi_shadow_answer_eval(
         if exact_turn_prediction.is_correct:
             exact_turn_correct += 1
             sample_metrics["exact_turn_correct"] += 1
+        if entity_prediction.is_correct:
+            entity_correct += 1
+            sample_metrics["entity_correct"] += 1
         if graph_prediction.is_correct:
             graph_correct += 1
             sample_metrics["graph_correct"] += 1
+        if fused_prediction.is_correct:
+            fused_correct += 1
+            sample_metrics["fused_correct"] += 1
         rows.append(
             {
                 "sample_id": summary_packet.sample_id,
@@ -940,14 +1080,22 @@ def build_multi_shadow_answer_eval(
                 "summary_correct": summary_prediction.is_correct,
                 "exact_turn_answer": exact_turn_prediction.predicted_answer,
                 "exact_turn_correct": exact_turn_prediction.is_correct,
+                "entity_answer": entity_prediction.predicted_answer,
+                "entity_correct": entity_prediction.is_correct,
                 "graph_answer": graph_prediction.predicted_answer,
                 "graph_correct": graph_prediction.is_correct,
+                "fused_answer": fused_prediction.predicted_answer,
+                "fused_correct": fused_prediction.is_correct,
                 "question_prefers_exact_conversational_evidence": _question_prefers_exact_conversational_evidence(
                     question
                 ),
+                "question_prefers_entity_linked_evidence": _question_prefers_entity_linked_evidence(question),
                 "question_prefers_typed_graph_evidence": _question_prefers_typed_graph_evidence(question),
                 "exact_turn_conversational_item_count": int(exact_turn_packet.metadata.get("conversational_item_count", 0)),
+                "entity_item_count": int(entity_packet.metadata.get("entity_item_count", 0)),
                 "graph_item_count": int(graph_packet.metadata.get("graph_item_count", 0)),
+                "fused_selector": fused_packet.metadata.get("shadow_selector", ""),
+                "fused_variant_baseline": fused_packet.metadata.get("fused_variant_baseline", ""),
             }
         )
 
@@ -957,13 +1105,19 @@ def build_multi_shadow_answer_eval(
             "provider_name": provider.name,
             "summary_correct": summary_correct,
             "exact_turn_correct": exact_turn_correct,
+            "entity_correct": entity_correct,
             "graph_correct": graph_correct,
+            "fused_correct": fused_correct,
             "total": total,
             "summary_accuracy": round(summary_correct / total, 4) if total else 0.0,
             "exact_turn_accuracy": round(exact_turn_correct / total, 4) if total else 0.0,
+            "entity_accuracy": round(entity_correct / total, 4) if total else 0.0,
             "graph_accuracy": round(graph_correct / total, 4) if total else 0.0,
+            "fused_accuracy": round(fused_correct / total, 4) if total else 0.0,
             "exact_turn_delta_vs_summary": exact_turn_correct - summary_correct,
+            "entity_delta_vs_summary": entity_correct - summary_correct,
             "graph_delta_vs_summary": graph_correct - summary_correct,
+            "fused_delta_vs_summary": fused_correct - summary_correct,
         },
         "by_sample": by_sample,
         "rows": rows,

@@ -48,7 +48,7 @@ Tasks:
 
 - [x] add lexical / BM25 retrieval lane
 - [x] add entity / alias boost lane
-- [ ] define fusion policy across:
+- [x] define fusion policy across:
   - summary
   - exact-turn
   - typed-graph

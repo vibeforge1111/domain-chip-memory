@@ -4,6 +4,8 @@ from domain_chip_memory.loaders import load_locomo_json
 from domain_chip_memory.memory_conversational_index import build_conversational_index
 from domain_chip_memory.memory_conversational_retrieval import retrieve_conversational_entries
 from domain_chip_memory.memory_conversational_shadow_eval import (
+    build_fused_conversational_hybrid_shadow_packets,
+    build_fused_conversational_shadow_answer_eval,
     build_entity_linked_hybrid_shadow_packets,
     build_entity_linked_shadow_answer_eval,
     build_exact_turn_shadow_answer_eval,
@@ -787,6 +789,93 @@ def test_entity_linked_hybrid_shadow_packets_surface_reported_speech_candidate_f
     assert packet.answer_candidates[0].text == "The doctor said it's not too serious."
 
 
+def test_fused_conversational_hybrid_shadow_packets_route_alias_questions_to_entity_lane():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What nickname does Nate use for Joanna?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_fused_conversational_hybrid_shadow_packets(subset, entity_limit=6, graph_limit=4)
+    packet = packets[0]
+
+    assert packet.baseline_name == "summary_synthesis_memory_fused_conversational_shadow"
+    assert packet.metadata["shadow_selector"] == "entity_linked_first"
+    assert packet.metadata["fused_variant_baseline"] == "summary_synthesis_memory_entity_linked_shadow"
+    assert packet.answer_candidates[0].text == "Jo"
+
+
+def test_fused_conversational_hybrid_shadow_packets_route_temporal_questions_to_graph_lane():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-48"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "When did Deborah`s mother pass away?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_fused_conversational_hybrid_shadow_packets(subset, entity_limit=6, graph_limit=6)
+    packet = packets[0]
+
+    assert packet.metadata["shadow_selector"] == "typed_graph_first"
+    assert packet.metadata["fused_variant_baseline"] == "summary_synthesis_memory_typed_graph_shadow"
+    assert packet.metadata["graph_item_count"] > 0
+
+
+def test_fused_conversational_hybrid_shadow_packets_keep_summary_for_broad_synthesis_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What kind of interests do Joanna and Nate share?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_fused_conversational_hybrid_shadow_packets(subset, entity_limit=6, graph_limit=6)
+    packet = packets[0]
+
+    assert packet.metadata["shadow_selector"] == "summary_backbone"
+    assert packet.metadata["fused_variant_baseline"] == "summary_synthesis_memory"
+
+
 def test_multi_shadow_answer_eval_reports_summary_exact_turn_and_graph_outputs():
     sample = next(
         record
@@ -814,5 +903,42 @@ def test_multi_shadow_answer_eval_reports_summary_exact_turn_and_graph_outputs()
     assert report["overall"]["provider_name"] == "heuristic_v1"
     assert "summary_answer" in row
     assert "exact_turn_answer" in row
+    assert "entity_answer" in row
     assert "graph_answer" in row
+    assert "fused_answer" in row
     assert row["graph_item_count"] > 0
+
+
+def test_fused_conversational_shadow_answer_eval_reports_summary_and_fused_outputs():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What nickname does Nate use for Joanna?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    report = build_fused_conversational_shadow_answer_eval(
+        subset,
+        entity_limit=6,
+        graph_limit=4,
+        provider_name="heuristic",
+    )
+    row = report["rows"][0]
+
+    assert report["overall"]["provider_name"] == "heuristic_v1"
+    assert "summary_answer" in row
+    assert "fused_hybrid_answer" in row
+    assert row["fused_hybrid_selected_item_count"] >= 0
