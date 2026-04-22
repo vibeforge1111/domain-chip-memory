@@ -14,6 +14,7 @@ from domain_chip_memory.memory_conversational_shadow_eval import (
     _question_uses_conversational_hybrid,
     build_conversational_shadow_eval,
 )
+from domain_chip_memory.runner import _build_prediction
 
 
 def test_build_conversational_index_keeps_full_turns_and_typed_social_atoms_for_conv48():
@@ -486,8 +487,12 @@ def test_typed_graph_hybrid_shadow_packets_add_reported_speech_evidence_for_tim_
     assert packet.metadata["graph_item_count"] > 0
     assert any(item.metadata.get("hit_type") == "reported_speech_record" for item in packet.retrieved_context_items)
     assert "doctor said it's not too serious" in packet.assembled_context.lower()
-    assert "answer_candidate: it's not too serious" in packet.assembled_context.lower()
-    assert packet.answer_candidates[0].text == "it's not too serious"
+    assert "answer_candidate: the doctor said it's not too serious." in packet.assembled_context.lower()
+    assert "synthesis:" not in packet.assembled_context.lower()
+    assert "reflection:" not in packet.assembled_context.lower()
+    assert "episode_observation:" not in packet.assembled_context.lower()
+    assert not any(line.strip().startswith("evidence:") for line in packet.assembled_context.lower().splitlines())
+    assert packet.answer_candidates[0].text == "The doctor said it's not too serious."
 
 
 def test_typed_graph_hybrid_shadow_packets_add_unknown_evidence_for_memory_gap_question():
@@ -525,6 +530,45 @@ def test_typed_graph_hybrid_shadow_packets_add_unknown_evidence_for_memory_gap_q
     assert "can't remember such a game" in packet.assembled_context.lower()
     assert "answer_candidate: unknown" in packet.assembled_context.lower()
     assert packet.answer_candidates[0].text == "unknown"
+
+
+def test_typed_graph_prediction_projects_reported_speech_back_to_canonical_candidate():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-43"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question_id == "conv-43-qa-137"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_typed_graph_hybrid_shadow_packets(subset, graph_limit=6)
+    packet = packets[0]
+
+    class _Provider:
+        name = "codex"
+
+    prediction = _build_prediction(
+        packet,
+        question=question,
+        provider=_Provider(),
+        answer="it's not too serious.",
+        provider_metadata={},
+    )
+
+    assert prediction.predicted_answer == "The doctor said it's not too serious."
+    assert prediction.is_correct is True
 
 
 def test_typed_graph_shadow_answer_eval_projects_alias_binding_to_clean_answer():

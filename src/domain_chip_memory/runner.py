@@ -498,6 +498,13 @@ def _project_answer_to_primary_candidate(answer: str, primary_answer_candidate: 
     cleaned_tokens = set(re.findall(r"[a-z0-9]+", normalized_cleaned))
     if candidate_tokens and candidate_tokens.issubset(cleaned_tokens):
         return candidate_text
+    if (
+        candidate_tokens
+        and cleaned_tokens
+        and cleaned_tokens.issubset(candidate_tokens)
+        and len(candidate_tokens - cleaned_tokens) <= 3
+    ):
+        return candidate_text
     return cleaned
 
 

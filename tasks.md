@@ -31,9 +31,9 @@ Tasks:
 - [x] add eval-only typed graph retrieval
 - [x] project typed graph hits into normalized answer candidates
 - [x] verify alias questions return normalized alias values, not support spans
-- [ ] verify reported-speech questions return reported content, not full support sentences
+- [x] verify reported-speech questions return reported content, not full support sentences
 - [ ] verify negation / unknown questions surface `No` / `unknown` cleanly
-- [ ] rerun targeted real-provider probes after projection
+- [x] rerun targeted real-provider probes after projection
 
 ## Phase 2: Retrieval Fusion
 

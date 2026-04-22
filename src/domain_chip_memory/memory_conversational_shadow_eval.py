@@ -274,7 +274,11 @@ def _graph_hit_answer_candidate_text(question: NormalizedQuestion, hit: TypedTem
     if hit.hit_type == "alias_binding":
         return str(hit.metadata.get("alias", "")).strip()
     if hit.hit_type == "reported_speech_record":
-        return str(hit.metadata.get("reported_content", "")).strip()
+        return (
+            str(hit.metadata.get("source_span", "")).strip()
+            or hit.text.strip()
+            or str(hit.metadata.get("reported_content", "")).strip()
+        )
     if hit.hit_type in {"commitment_record", "temporal_event"} and question_lower.startswith("when "):
         return str(hit.metadata.get("time_normalized", "")).strip()
     if hit.hit_type == "relationship_fact" and question_lower.startswith(("who ", "what ")):
@@ -324,6 +328,26 @@ def _typed_graph_answer_candidates(
         seen_text.add(normalized)
         merged_candidates.append(candidate)
     return merged_candidates
+
+
+def _typed_graph_summary_fallback_items(
+    question: NormalizedQuestion,
+    summary_items: list[RetrievedContextItem],
+    graph_hits: list[TypedTemporalGraphHit],
+) -> list[RetrievedContextItem]:
+    if not graph_hits or not _question_prefers_typed_graph_evidence(question):
+        return summary_items
+    if any(
+        hit.hit_type in {"alias_binding", "reported_speech_record", "unknown_record", "negation_record"}
+        for hit in graph_hits
+    ):
+        return []
+    filtered_items = [
+        item
+        for item in summary_items
+        if not item.text.lower().startswith(("synthesis:", "reflection:"))
+    ]
+    return filtered_items or summary_items
 
 
 def build_exact_turn_hybrid_shadow_packets(
@@ -409,9 +433,14 @@ def build_typed_graph_hybrid_shadow_packets(
             if _question_prefers_typed_graph_evidence(question):
                 graph_hits = retrieve_typed_temporal_graph_hits(question, graph, limit=graph_limit)
                 graph_items = [_graph_hit_to_retrieved_context_item(hit) for hit in graph_hits]
+            summary_fallback_items = _typed_graph_summary_fallback_items(
+                question,
+                list(summary_packet.retrieved_context_items),
+                graph_hits,
+            )
             hybrid_retrieved_items, hybrid_context_blocks = _ordered_shadow_context_blocks(
                 shadow_items=graph_items,
-                summary_items=list(summary_packet.retrieved_context_items),
+                summary_items=summary_fallback_items,
                 answer_candidate_text=summary_packet.answer_candidates[0].text if summary_packet.answer_candidates else None,
             )
             answer_candidates = _typed_graph_answer_candidates(
