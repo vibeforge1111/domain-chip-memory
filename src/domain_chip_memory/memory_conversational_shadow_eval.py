@@ -235,6 +235,10 @@ def _fused_shadow_selector(question: NormalizedQuestion) -> str:
     return "summary_backbone"
 
 
+def question_uses_fused_conversational_shadow(question: NormalizedQuestion) -> bool:
+    return _fused_shadow_selector(question) != "summary_backbone"
+
+
 def _conversational_entry_to_retrieved_context_item(
     question: NormalizedQuestion,
     entry: Any,
