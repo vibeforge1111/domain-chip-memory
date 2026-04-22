@@ -7,6 +7,7 @@ from domain_chip_memory import providers
 from domain_chip_memory.answer_candidates import build_answer_candidate
 from domain_chip_memory.contracts import AnswerCandidate
 from domain_chip_memory.providers import (
+    CodexExecProvider,
     OpenAIChatCompletionsProvider,
     ProviderResponse,
     _expand_answer_from_context,
@@ -37,6 +38,62 @@ def test_get_provider_supports_openai_pattern(monkeypatch):
     provider = get_provider("openai:gpt-4.1-mini")
     assert isinstance(provider, OpenAIChatCompletionsProvider)
     assert provider.name == "openai:gpt-4.1-mini"
+
+
+def test_get_provider_supports_codex_pattern():
+    provider = get_provider("codex:gpt-5-codex")
+    assert isinstance(provider, CodexExecProvider)
+    assert provider.name == "codex:gpt-5-codex"
+
+
+def test_codex_provider_streams_prompt_over_stdin(monkeypatch, tmp_path):
+    captured: dict[str, object] = {}
+
+    class _FakeTemporaryDirectory:
+        def __init__(self, path: Path):
+            self._path = path
+
+        def __enter__(self) -> str:
+            return str(self._path)
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        output_target = Path(command[command.index("--output-last-message") + 1])
+        output_target.write_text("Jo", encoding="utf-8")
+        return providers.subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(providers.shutil, "which", lambda _: "C:\\tools\\codex.cmd")
+    monkeypatch.setattr(providers.subprocess, "run", fake_run)
+    monkeypatch.setattr(providers.tempfile, "TemporaryDirectory", lambda prefix="": _FakeTemporaryDirectory(tmp_path))
+
+    provider = CodexExecProvider(model="gpt-5-codex")
+    packet = BaselinePromptPacket(
+        benchmark_name="LoCoMo",
+        baseline_name="typed_graph_shadow",
+        sample_id="conv-42",
+        question_id="conv-42-qa-15",
+        question="What nickname does Nate use for Joanna?",
+        assembled_context='Relevant graph evidence:\n- alias binding: Nate calls Joanna "Jo". Evidence: "Hey Jo"',
+        retrieved_context_items=[],
+        metadata={"route": "typed_graph"},
+    )
+
+    response = provider.generate_answer(packet)
+
+    assert response.answer == "Jo"
+    assert captured["command"][-1] == "-"
+    assert captured["command"][:3] == ["C:\\tools\\codex.cmd", "exec", "--skip-git-repo-check"]
+    assert captured["kwargs"]["input"].startswith("You answer benchmark memory questions")
+    assert "What nickname does Nate use for Joanna?" in captured["kwargs"]["input"]
+    assert captured["kwargs"]["text"] is True
+    assert captured["kwargs"]["capture_output"] is True
+    assert captured["kwargs"]["timeout"] == provider.timeout_s
+    assert response.metadata["provider_type"] == "codex_exec"
+    assert response.metadata["model"] == "gpt-5-codex"
 
 
 def test_openai_provider_requires_model_if_not_in_name(monkeypatch):
@@ -1368,6 +1425,7 @@ def test_provider_contract_summary_lists_openai():
     payload = build_provider_contract_summary()
     names = [item.get("name") or item.get("name_pattern") for item in payload["providers"]]
     assert "heuristic_v1" in names
+    assert "codex[:<model>]" in names
     assert "openai:<model>" in names
     assert "minimax:<model>" in names
 

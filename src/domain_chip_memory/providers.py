@@ -3,9 +3,13 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
+import subprocess
+import tempfile
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Protocol
 from urllib import error, request
 
@@ -85,6 +89,85 @@ class HeuristicProvider:
                 "prompt_tokens": 0,
                 "completion_tokens": 0,
                 "total_tokens": 0,
+            },
+        )
+
+
+@dataclass(frozen=True)
+class CodexExecProvider:
+    model: str | None = None
+    provider_type: str = "codex_exec"
+    system_prompt: str = (
+        "You answer benchmark memory questions using only the supplied context. "
+        "Return the shortest exact answer possible. "
+        "Extract the answer span rather than copying the full supporting sentence. "
+        "If the answer is not supported by the context, return unknown."
+    )
+    final_instruction: str = "Return only the answer."
+    timeout_s: int = 180
+
+    @property
+    def name(self) -> str:
+        return f"codex:{self.model}" if self.model else "codex"
+
+    def _build_prompt(self, packet: BaselinePromptPacket) -> str:
+        return (
+            f"{self.system_prompt}\n\n"
+            f"Benchmark: {packet.benchmark_name}\n"
+            f"Baseline: {packet.baseline_name}\n"
+            f"Question ID: {packet.question_id}\n"
+            f"Question: {packet.question}\n\n"
+            f"Context:\n{packet.assembled_context}\n\n"
+            f"{self.final_instruction}"
+        )
+
+    def generate_answer(self, packet: BaselinePromptPacket) -> ProviderResponse:
+        prompt = self._build_prompt(packet)
+        started_at = time.perf_counter()
+        with tempfile.TemporaryDirectory(prefix="codex-benchmark-") as temp_dir:
+            output_path = Path(temp_dir) / "last_message.txt"
+            codex_executable = shutil.which("codex.cmd") or shutil.which("codex")
+            if not codex_executable:
+                raise RuntimeError("Codex CLI executable was not found on PATH.")
+            command = [
+                codex_executable,
+                "exec",
+                "--skip-git-repo-check",
+                "--ephemeral",
+                "-C",
+                temp_dir,
+                "--output-last-message",
+                str(output_path),
+            ]
+            if self.model:
+                command.extend(["-m", self.model])
+            command.append("-")
+            completed = subprocess.run(
+                command,
+                capture_output=True,
+                input=prompt,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=self.timeout_s,
+                check=False,
+            )
+            if completed.returncode != 0:
+                stderr = (completed.stderr or "").strip()
+                stdout = (completed.stdout or "").strip()
+                detail = stderr or stdout
+                raise RuntimeError(f"Codex exec provider failed with code {completed.returncode}: {detail[:1000]}")
+            answer = output_path.read_text(encoding="utf-8").strip() if output_path.exists() else ""
+        latency_ms = round((time.perf_counter() - started_at) * 1000, 2)
+        return ProviderResponse(
+            answer=answer,
+            metadata={
+                "provider_type": self.provider_type,
+                "model": self.model or "config_default",
+                "latency_ms": latency_ms,
+                "prompt_tokens": None,
+                "completion_tokens": None,
+                "total_tokens": None,
             },
         )
 
@@ -2007,6 +2090,11 @@ def get_provider(name: str) -> ModelProvider:
     normalized = normalized_name.lower()
     if normalized in {"heuristic", "heuristic_v1"}:
         return HeuristicProvider()
+    if normalized == "codex" or normalized.startswith("codex:"):
+        model = normalized_name.split(":", 1)[1].strip() if normalized.startswith("codex:") else None
+        if normalized.startswith("codex:") and not model:
+            raise ValueError("Provider name 'codex:<model>' must include a model id.")
+        return CodexExecProvider(model=model or None)
     if normalized == "openai" or normalized.startswith("openai:"):
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -2094,6 +2182,13 @@ def build_provider_contract_summary() -> dict[str, object]:
                 "name": "heuristic_v1",
                 "entrypoint": "HeuristicProvider.generate_answer",
                 "role": "local deterministic smoke-test provider for baseline and scorecard execution",
+            },
+            {
+                "name_pattern": "codex[:<model>]",
+                "entrypoint": "CodexExecProvider.generate_answer",
+                "role": "local Codex CLI provider through non-interactive `codex exec`",
+                "required_env": [],
+                "optional_env": [],
             },
             {
                 "name_pattern": "openai:<model>",
