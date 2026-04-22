@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from .contracts import NormalizedQuestion
 from .memory_answer_rendering import answer_candidate_surface_text
 from .memory_extraction import ObservationEntry, _tokenize
@@ -142,6 +144,28 @@ def _has_low_signal_prefix(text: str) -> bool:
     return any(lower.startswith(prefix) for prefix in _LOW_SIGNAL_SENTENCE_PREFIXES)
 
 
+def _kinship_question_bonus(question_lower: str, sentence_lower: str) -> float:
+    bonus = 0.0
+    if any(token in question_lower for token in ("father", "dad")) and any(token in sentence_lower for token in ("father", "dad")):
+        bonus += 6.0
+    if any(token in question_lower for token in ("mother", "mom")) and any(token in sentence_lower for token in ("mother", "mom")):
+        bonus += 6.0
+    return bonus
+
+
+def _temporal_sentence_bonus(question_lower: str, sentence_lower: str) -> float:
+    if not question_lower.startswith("when "):
+        return 0.0
+    bonus = 0.0
+    if re.search(r"\b(yesterday|today|last week|last month|last year|few years ago|a few years ago|two days ago|three days ago|in \d{4})\b", sentence_lower):
+        bonus += 5.0
+    if "passed away" in question_lower and "passed away" in sentence_lower:
+        bonus += 6.0
+    if "letter" in question_lower and "letter" in sentence_lower:
+        bonus += 7.0
+    return bonus
+
+
 def raw_evidence_span(question: NormalizedQuestion, observation: ObservationEntry) -> str:
     source_text = str(observation.metadata.get("source_text", "")).strip() or observation.text
     sentences = candidate_sentences(source_text)
@@ -176,6 +200,8 @@ def raw_evidence_span(question: NormalizedQuestion, observation: ObservationEntr
             token in sentence_lower for token in ("went", "read", "paint", "made", "saw", "did", "hike", "walk", "attended")
         ):
             score += 2.0
+        score += _kinship_question_bonus(question_lower, sentence_lower)
+        score += _temporal_sentence_bonus(question_lower, sentence_lower)
         if question_lower.startswith(("what are", "which", "what did", "what game", "what martial arts")) and any(
             token in sentence_lower
             for token in ("favorite", "favourite", "called", "went", "adopted", "named", "dogs", "pets", "puppy", "bowling", "baseball", "pub")

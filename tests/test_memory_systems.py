@@ -12683,8 +12683,10 @@ def test_summary_synthesis_locomo_conv48_social_memory_questions_recover_exact_l
         "conv-48-qa-6",
         "conv-48-qa-7",
         "conv-48-qa-9",
+        "conv-48-qa-10",
         "conv-48-qa-11",
         "conv-48-qa-12",
+        "conv-48-qa-13",
         "conv-48-qa-14",
         "conv-48-qa-15",
         "conv-48-qa-19",
@@ -12720,8 +12722,10 @@ def test_summary_synthesis_locomo_conv48_social_memory_questions_recover_exact_l
     assert "old photos" in answer_helped
     assert "roses and dahlias" in answer_helped
     assert "nature" in answer_helped
+    assert "answer_candidate: 25 january 2023" in packet_by_text["When did Deborah's father pass away?"].assembled_context.lower()
     assert "answer_candidate: in 1993" in packet_by_text["When was Deborah's parents' wedding?"].assembled_context.lower()
     assert "answer_candidate: yes" in packet_by_text["Is Deborah married?"].assembled_context.lower()
+    assert "answer_candidate: 26 january 2023" in packet_by_text["When did Deborah receive an appreciation letter from her community?"].assembled_context.lower()
     answer_places = packet_by_text["What places give Deborah peace?"].assembled_context.lower()
     assert "spot by the window" in answer_places
     assert "beach" in answer_places

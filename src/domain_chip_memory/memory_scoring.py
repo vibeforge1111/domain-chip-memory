@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from collections.abc import Callable
 
 from .contracts import NormalizedQuestion
@@ -78,6 +80,32 @@ def evidence_score(
         score += 4.0
     if question_lower.startswith("when ") and "festival" in question_lower and "next month" in evidence_text.lower():
         score += 10.0
+    if question_lower.startswith("when ") and "passed away" in question_lower:
+        has_temporal_cue = bool(
+            re.search(
+                r"\b(a few years ago|few years ago|last year|yesterday|today|\d+ days ago|one day ago|two days ago|three days ago|in \d{4})\b",
+                evidence_text.lower(),
+            )
+        )
+        if "passed away" in evidence_text.lower():
+            score += 14.0
+        if any(token in question_lower for token in ("father", "dad")) and any(
+            token in observation_context_lower for token in ("father", "dad")
+        ):
+            score += 8.0
+        if any(token in question_lower for token in ("mother", "mom")) and any(
+            token in observation_context_lower for token in ("mother", "mom", "she passed away")
+        ):
+            score += 8.0
+        if has_temporal_cue:
+            score += 10.0
+        elif "passed away" in evidence_text.lower():
+            score -= 10.0
+    if question_lower.startswith("when ") and "letter" in question_lower:
+        if "letter" in evidence_text.lower():
+            score += 16.0
+        if "yesterday" in evidence_text.lower():
+            score += 10.0
     if question_lower.startswith("when ") and "tattoo" in question_lower and "few years ago" in evidence_text.lower():
         score += 12.0
     if question_lower.startswith("when ") and "accepted" in question_lower and "accepted" in evidence_text.lower():

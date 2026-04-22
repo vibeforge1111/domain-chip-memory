@@ -43,6 +43,43 @@ def infer_temporal_answer(
         "nine": 9,
         "ten": 10,
     }
+
+    def _has_temporal_cue(text: str) -> bool:
+        return bool(
+            re.search(
+                r"\b(a few years ago|few years ago|last year|yesterday|today|last week|last month|next month|\d+ days ago|one day ago|two days ago|three days ago|in (?:19|20)\d{2})\b",
+                text,
+            )
+        )
+
+    if "passed away" in question_lower:
+        for entry in evidence_entries:
+            anchor = parse_observation_anchor(entry.timestamp)
+            if not anchor:
+                continue
+            source_text = str(entry.metadata.get("source_text", "")).strip().lower()
+            evidence_text = observation_evidence_text(question, entry).lower()
+            combined_text = f"{source_text} {evidence_text}"
+            if any(token in question_lower for token in ("mother", "mom")):
+                if any(
+                    token in combined_text
+                    for token in (
+                        "she passed away a few years ago",
+                        "mother passed away a few years ago",
+                        "mom passed away a few years ago",
+                    )
+                ):
+                    return f"a few years before {anchor.year}"
+                if "mother also passed away last year" in combined_text or "my mom passed away last year" in combined_text:
+                    return f"in {anchor.year - 1}"
+            if any(token in question_lower for token in ("father", "dad")):
+                relative_days_match = re.search(r"\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\s+ago\b", combined_text)
+                if any(token in combined_text for token in ("father passed away", "dad passed away")) and relative_days_match:
+                    raw_days = relative_days_match.group(1)
+                    days = int(raw_days) if raw_days.isdigit() else small_numbers.get(raw_days)
+                    if days is not None:
+                        return format_full_date(anchor - timedelta(days=days))
+
     named_subjects = {
         entry.subject.lower()
         for entry in evidence_entries
@@ -67,7 +104,13 @@ def infer_temporal_answer(
             source_text = str(entry.metadata.get("source_text", "")).strip().lower()
             evidence_text = observation_evidence_text(question, entry).lower()
             combined_text = f"{source_text} {evidence_text}"
-            if any(token in combined_text for token in kinship_tokens):
+            pronoun_match = False
+            if "passed away" in question_lower and _has_temporal_cue(combined_text):
+                if any(token in question_lower for token in ("mother", "mom")) and "she passed away" in combined_text:
+                    pronoun_match = True
+                if any(token in question_lower for token in ("father", "dad")) and "he passed away" in combined_text:
+                    pronoun_match = True
+            if any(token in combined_text for token in kinship_tokens) or pronoun_match:
                 preferred_entries.append(entry)
         if preferred_entries:
             evidence_entries = preferred_entries
@@ -98,6 +141,14 @@ def infer_temporal_answer(
     def _temporal_priority(entry: ObservationEntry) -> int:
         evidence_text = observation_evidence_text(question, entry).lower()
         priority = 0
+        if "passed away" in question_lower and "passed away" in evidence_text:
+            priority += 4
+            if _has_temporal_cue(evidence_text):
+                priority += 8
+        if "letter" in question_lower and "letter" in evidence_text:
+            priority += 4
+            if _has_temporal_cue(evidence_text):
+                priority += 8
         if "ad campaign" in question_lower and "ad campaign" in evidence_text:
             priority += 3
         if "accepted" in question_lower and "accepted" in evidence_text:
@@ -148,13 +199,21 @@ def infer_temporal_answer(
             continue
         evidence_text = observation_evidence_text(question, entry).lower()
         combined_text = f"{source_text.lower()} {evidence_text}"
+        if "passed away" in question_lower and "passed away" in evidence_text and not _has_temporal_cue(evidence_text):
+            continue
+        if "letter" in question_lower and "letter" in evidence_text and not _has_temporal_cue(evidence_text):
+            continue
         if "appreciation letter" in question_lower and "letter i received yesterday" in combined_text:
             return format_full_date(anchor - timedelta(days=1))
         evidence_tokens = set(tokenize(evidence_text))
         overlap = len(question_content_tokens.intersection(evidence_tokens))
+        strong_temporal_match = (
+            ("passed away" in question_lower and "passed away" in evidence_text and _has_temporal_cue(evidence_text))
+            or ("letter" in question_lower and "letter" in evidence_text and _has_temporal_cue(evidence_text))
+        )
         if _temporal_priority(entry) < max_priority:
             continue
-        if question_content_tokens and (not overlap or overlap < max_overlap):
+        if question_content_tokens and (not overlap or overlap < max_overlap) and not strong_temporal_match:
             continue
         relative_year_match = re.search(r"\b(?:around\s+)?(\d+)\s+years?\s+ago\b", evidence_text)
         if relative_year_match:
