@@ -53,6 +53,26 @@ class RelationshipFact:
 
 
 @dataclass(frozen=True)
+class AliasBinding:
+    binding_id: str
+    subject_entity_id: str
+    alias: str
+    canonical_name: str
+    provenance: ProvenanceSpan
+    metadata: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class CommitmentRecord:
+    commitment_id: str
+    subject_entity_id: str
+    trigger: str
+    time_anchor: TimeAnchor | None
+    provenance: ProvenanceSpan
+    metadata: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class TemporalMemoryEvent:
     event_id: str
     event_type: str
@@ -70,7 +90,9 @@ class TemporalMemoryEvent:
 class TypedTemporalGraphMemory:
     sample_id: str
     entities: tuple[PersonEntity, ...]
+    alias_bindings: tuple[AliasBinding, ...]
     relationship_facts: tuple[RelationshipFact, ...]
+    commitment_records: tuple[CommitmentRecord, ...]
     temporal_events: tuple[TemporalMemoryEvent, ...]
     metadata: JsonDict = field(default_factory=dict)
 
@@ -154,7 +176,9 @@ def _normalize_object_label(*, relation_type: str, object_label: str) -> str:
 def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> TypedTemporalGraphMemory:
     index_entries = build_conversational_index(sample)
     entities = _speaker_entities(sample)
+    alias_bindings: list[AliasBinding] = []
     relationship_facts: list[RelationshipFact] = []
+    commitment_records: list[CommitmentRecord] = []
     temporal_events: list[TemporalMemoryEvent] = []
 
     for entry in index_entries:
@@ -184,6 +208,36 @@ def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> Type
             )
             continue
 
+        if entry.predicate == "alias_binding":
+            canonical_name = str(entry.metadata.get("canonical_name", "")).strip()
+            alias = str(entry.metadata.get("alias", "")).strip()
+            if canonical_name:
+                _entity_for_label(entities, label=canonical_name, entity_kind="speaker_alias_target")
+            alias_bindings.append(
+                AliasBinding(
+                    binding_id=entry.entry_id,
+                    subject_entity_id=subject_entity.entity_id,
+                    alias=alias,
+                    canonical_name=canonical_name,
+                    provenance=provenance,
+                    metadata={},
+                )
+            )
+            continue
+
+        if entry.predicate == "commitment_event":
+            commitment_records.append(
+                CommitmentRecord(
+                    commitment_id=entry.entry_id,
+                    subject_entity_id=subject_entity.entity_id,
+                    trigger=str(entry.metadata.get("commitment_trigger", "")).strip(),
+                    time_anchor=_entry_time_anchor(entry),
+                    provenance=provenance,
+                    metadata={},
+                )
+            )
+            continue
+
         if entry.predicate not in {"loss_event", "gift_event", "support_event"}:
             continue
         if other_entity_label:
@@ -206,7 +260,9 @@ def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> Type
     return TypedTemporalGraphMemory(
         sample_id=sample.sample_id,
         entities=tuple(sorted(entities.values(), key=lambda entity: entity.entity_id)),
+        alias_bindings=tuple(alias_bindings),
         relationship_facts=tuple(relationship_facts),
+        commitment_records=tuple(commitment_records),
         temporal_events=tuple(temporal_events),
         metadata={"source": "conversational_index_typed_atoms"},
     )

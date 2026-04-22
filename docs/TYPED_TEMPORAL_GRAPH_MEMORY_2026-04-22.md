@@ -31,7 +31,9 @@ The conversational index already emits typed atoms:
 This layer promotes those atoms into a graph-shaped memory surface with:
 
 - entities
+- alias bindings
 - relationship facts
+- commitment records
 - temporal events
 - normalized time anchors
 - provenance spans
@@ -58,20 +60,20 @@ Key properties:
 Implemented:
 
 - speaker entities
+- alias bindings from conversational nickname/address patterns such as `Hey Jo`
 - relationship facts from `relationship_edge`
+- commitment records from future-plan language such as `I'm going to ... this month`
 - temporal events from `loss_event`, `gift_event`, `support_event`
 - helper filters for subject/event-family queries
 - normalization guard against obvious noisy object labels such as sentence-start verb bleed
 - eval-only graph retrieval over relationship facts and temporal events
+- eval-only graph retrieval over alias bindings and commitment records
 
 Not implemented yet:
 
-- alias binding
-- commitment records
 - negation records
 - reported speech
 - bi-temporal validity windows
-- graph retrieval integration
 
 ## Validation
 
@@ -81,12 +83,16 @@ Covered by [test_typed_temporal_graph_memory.py](/C:/Users/USER/Desktop/domain-c
 - `conv-48` preserves pendant gift provenance and year anchor
 - `conv-48` exposes support events and relationship filtering
 - `conv-49` avoids carrying a bogus `Got` entity into the graph sidecar
+- `conv-42` promotes nickname `Jo -> Joanna` into an alias binding
+- `conv-26` promotes `I'm going to a transgender conference this month` into a commitment record
 
 Covered by [test_typed_temporal_graph_retrieval.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_typed_temporal_graph_retrieval.py):
 
 - `conv-48` loss questions recover the normalized mother-loss anchor from graph events
 - `conv-48` support questions recover provenance spans from support events
 - `conv-49` graph retrieval does not surface the bogus `Got` object label
+- `conv-42` nickname questions recover alias-binding provenance
+- `conv-26` future-plan questions recover commitment provenance and normalized time
 
 ## Next Step
 
@@ -94,6 +100,6 @@ Use this sidecar as the substrate for:
 
 1. exact-span lane promotion
 2. temporal/relationship retrieval over graph facts
-3. later alias/commitment/privacy layers
+3. later negation/reported-speech/privacy layers
 
 Do not route runtime through it yet.

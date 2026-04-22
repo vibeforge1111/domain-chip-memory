@@ -86,3 +86,38 @@ def test_build_typed_temporal_graph_memory_captures_exact_fact_family_for_conv49
         and fact.object_label == "friend"
         for fact in graph.relationship_facts
     )
+
+
+def test_build_typed_temporal_graph_memory_promotes_alias_binding_for_conv42():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+
+    graph = build_typed_temporal_graph_memory(sample)
+
+    assert any(
+        binding.alias == "Jo"
+        and binding.canonical_name == "Joanna"
+        and "hey jo" in binding.provenance.source_span.lower()
+        for binding in graph.alias_bindings
+    )
+
+
+def test_build_typed_temporal_graph_memory_promotes_commitment_record_for_conv26():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-26"
+    )
+
+    graph = build_typed_temporal_graph_memory(sample)
+
+    assert any(
+        record.trigger == "i'm going to"
+        and record.time_anchor is not None
+        and record.time_anchor.normalized_expression == "this month"
+        and "transgender conference" in record.provenance.source_span.lower()
+        for record in graph.commitment_records
+    )

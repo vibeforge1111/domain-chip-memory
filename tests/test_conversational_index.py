@@ -108,6 +108,40 @@ def test_retrieve_conversational_entries_finds_typed_temporal_and_support_hits_f
     assert "flower garden" in support_text or "roses and dahlias" in support_text
 
 
+def test_build_conversational_index_extracts_alias_binding_for_conv42():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+
+    entries = build_conversational_index(sample)
+
+    assert any(
+        entry.predicate == "alias_binding"
+        and entry.metadata.get("alias") == "Jo"
+        and entry.metadata.get("canonical_name") == "Joanna"
+        for entry in entries
+    )
+
+
+def test_build_conversational_index_extracts_commitment_event_for_conv26():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-26"
+    )
+
+    entries = build_conversational_index(sample)
+
+    assert any(
+        entry.predicate == "commitment_event"
+        and entry.metadata.get("time_expression_raw") == "this month"
+        and "transgender conference" in str(entry.metadata.get("source_span", "")).lower()
+        for entry in entries
+    )
+
+
 def test_expected_answer_coverage_accepts_multi_item_family_answers():
     assert _expected_answer_coverage(
         "My mom was interested in art. My mom had a big passion for cooking. Reading was one of her hobbies. Travel was also her great passion.",

@@ -4,7 +4,13 @@ from dataclasses import dataclass
 
 from .contracts import NormalizedQuestion
 from .memory_extraction import _tokenize
-from .typed_temporal_graph_memory import RelationshipFact, TemporalMemoryEvent, TypedTemporalGraphMemory
+from .typed_temporal_graph_memory import (
+    AliasBinding,
+    CommitmentRecord,
+    RelationshipFact,
+    TemporalMemoryEvent,
+    TypedTemporalGraphMemory,
+)
 
 
 @dataclass(frozen=True)
@@ -41,6 +47,39 @@ def _relationship_fact_score(question: NormalizedQuestion, fact: RelationshipFac
     return score
 
 
+def _alias_binding_score(question: NormalizedQuestion, binding: AliasBinding) -> float:
+    question_lower = question.question.lower()
+    score = 0.0
+    if "nickname" in question_lower:
+        score += 12.0
+    if binding.canonical_name and binding.canonical_name.lower() in question_lower:
+        score += 10.0
+    if _subject_name_matches(question_lower, binding.subject_entity_id):
+        score += 6.0
+    if binding.alias and binding.alias.lower() in question_lower:
+        score += 2.0
+    return score
+
+
+def _commitment_record_score(question: NormalizedQuestion, record: CommitmentRecord) -> float:
+    question_lower = question.question.lower()
+    question_tokens = _question_tokens(question.question)
+    provenance_tokens = set(_tokenize(record.provenance.source_span))
+    score = 0.0
+    score += 2.0 * float(len(question_tokens.intersection(provenance_tokens)))
+    if _subject_name_matches(question_lower, record.subject_entity_id):
+        score += 6.0
+    if question_lower.startswith("when "):
+        score += 8.0
+    if record.time_anchor is not None:
+        score += 8.0
+        if record.time_anchor.normalized_expression and record.time_anchor.normalized_expression in question_lower:
+            score += 2.0
+    if any(token in question_lower for token in ("going to", "plan", "conference", "posted")):
+        score += 6.0
+    return score
+
+
 def _temporal_event_score(question: NormalizedQuestion, event: TemporalMemoryEvent) -> float:
     question_lower = question.question.lower()
     question_tokens = _question_tokens(question.question)
@@ -69,6 +108,25 @@ def retrieve_typed_temporal_graph_hits(
     limit: int = 6,
 ) -> list[TypedTemporalGraphHit]:
     hits: list[TypedTemporalGraphHit] = []
+    for binding in graph.alias_bindings:
+        score = _alias_binding_score(question, binding)
+        if score <= 0:
+            continue
+        hits.append(
+            TypedTemporalGraphHit(
+                hit_id=binding.binding_id,
+                hit_type="alias_binding",
+                score=score,
+                text=binding.provenance.source_span,
+                metadata={
+                    "subject_entity_id": binding.subject_entity_id,
+                    "alias": binding.alias,
+                    "canonical_name": binding.canonical_name,
+                    "session_id": binding.provenance.session_id,
+                    "turn_id": binding.provenance.turn_id,
+                },
+            )
+        )
     for fact in graph.relationship_facts:
         score = _relationship_fact_score(question, fact)
         if score <= 0:
@@ -85,6 +143,25 @@ def retrieve_typed_temporal_graph_hits(
                     "object_label": fact.object_label,
                     "session_id": fact.provenance.session_id,
                     "turn_id": fact.provenance.turn_id,
+                },
+            )
+        )
+    for record in graph.commitment_records:
+        score = _commitment_record_score(question, record)
+        if score <= 0:
+            continue
+        hits.append(
+            TypedTemporalGraphHit(
+                hit_id=record.commitment_id,
+                hit_type="commitment_record",
+                score=score,
+                text=record.provenance.source_span,
+                metadata={
+                    "subject_entity_id": record.subject_entity_id,
+                    "commitment_trigger": record.trigger,
+                    "time_normalized": record.time_anchor.normalized_expression if record.time_anchor else "",
+                    "session_id": record.provenance.session_id,
+                    "turn_id": record.provenance.turn_id,
                 },
             )
         )
