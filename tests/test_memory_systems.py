@@ -12636,6 +12636,39 @@ def test_summary_synthesis_locomo_conv49_typed_fact_and_count_questions_recover_
     assert "grilled chicken salad with avocado" in answer_19
 
 
+def test_summary_synthesis_locomo_conv42_temporal_anchor_questions_recover_older_event_grounding():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    subset = type(sample)(
+        benchmark_name=sample.benchmark_name,
+        sample_id=sample.sample_id,
+        sessions=sample.sessions,
+        questions=[
+            next(question for question in sample.questions if question.question_id == question_id)
+            for question_id in (
+                "conv-42-qa-3",
+                "conv-42-qa-4",
+                "conv-42-qa-8",
+                "conv-42-qa-9",
+                "conv-42-qa-10",
+            )
+        ],
+        metadata=sample.metadata,
+    )
+
+    _, packets = build_summary_synthesis_memory_packets([subset])
+    packet_by_id = {packet.question_id: packet for packet in packets}
+
+    assert "answer_candidate: 2019" in packet_by_id["conv-42-qa-3"].assembled_context.lower()
+    assert "answer_candidate: the week before 21 january 2022" in packet_by_id["conv-42-qa-4"].assembled_context.lower()
+    assert "answer_candidate: the friday before 23 january 2022" in packet_by_id["conv-42-qa-8"].assembled_context.lower()
+    assert "answer_candidate: 2019" in packet_by_id["conv-42-qa-9"].assembled_context.lower()
+    assert "answer_candidate: finished her screenplay and printed it" in packet_by_id["conv-42-qa-10"].assembled_context.lower()
+
+
 def test_longmemeval_factoid_and_abs_candidates_are_short_or_unknown():
     samples = load_longmemeval_json(Path("benchmark_data/official/LongMemEval/data/longmemeval_s_cleaned.json"))
     keep = {

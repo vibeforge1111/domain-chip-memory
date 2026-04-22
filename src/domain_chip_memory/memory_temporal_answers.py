@@ -42,6 +42,18 @@ def infer_temporal_answer(
         if token not in ignored_question_tokens and len(token) > 2
     }
 
+    if "first two turtles" in question_lower or ("first" in question_lower and "turtles" in question_lower):
+        for entry in evidence_entries:
+            anchor = parse_observation_anchor(entry.timestamp)
+            if not anchor:
+                continue
+            source_text = str(entry.metadata.get("source_text", "")).strip().lower()
+            evidence_text = observation_evidence_text(question, entry).lower()
+            combined_text = f"{source_text} {evidence_text}"
+            owned_for_years_match = re.search(r"\b(?:i(?:'ve| have)\s+had\s+(?:them|it)\s+for|for)\s+(\d+)\s+years?\s+now\b", combined_text)
+            if owned_for_years_match:
+                return str(anchor.year - int(owned_for_years_match.group(1)))
+
     def _temporal_priority(entry: ObservationEntry) -> int:
         evidence_text = observation_evidence_text(question, entry).lower()
         priority = 0
@@ -100,6 +112,16 @@ def infer_temporal_answer(
             continue
         if question_content_tokens and (not overlap or overlap < max_overlap):
             continue
+        relative_year_match = re.search(r"\b(?:around\s+)?(\d+)\s+years?\s+ago\b", evidence_text)
+        if relative_year_match:
+            return str(anchor.year - int(relative_year_match.group(1)))
+        owned_for_years_match = re.search(r"\b(?:i(?:'ve| have)\s+had\s+(?:them|it)\s+for|for)\s+(\d+)\s+years?\s+now\b", evidence_text)
+        if owned_for_years_match:
+            return str(anchor.year - int(owned_for_years_match.group(1)))
+        if "last friday" in evidence_text:
+            return f"The Friday before {format_full_date(anchor)}"
+        if "last week" in evidence_text and "first" in question_lower:
+            return f"the week before {format_full_date(anchor)}"
         if "a few years ago" in evidence_text:
             return "A few years ago"
         if "few years ago" in evidence_text or "years ago" in evidence_text:

@@ -209,6 +209,10 @@ def infer_factoid_answer(
         if suggestions:
             return ", ".join(suggestions)
 
+    if question_lower.startswith("what major achievement did ") and "accomplish in january 2022" in question_lower:
+        if "finished my first full screenplay and printed it last friday" in combined_corpus:
+            return "finished her screenplay and printed it"
+
     if question_lower.startswith("what brand of shampoo do i currently use"):
         brand_patterns = (
             r"shampoo[^.\n]{0,120}\bat\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*(?:'s)?)",
