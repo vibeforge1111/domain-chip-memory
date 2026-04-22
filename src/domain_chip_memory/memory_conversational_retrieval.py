@@ -180,6 +180,55 @@ def _entry_score(question: NormalizedQuestion, entry: ConversationalIndexEntry) 
     return score
 
 
+def _entity_link_search_terms(question: NormalizedQuestion) -> set[str]:
+    question_lower = question.question.lower()
+    terms = set(_question_subjects(question))
+    for metadata_key in ("speaker_a", "speaker_b"):
+        speaker_name = str(question.metadata.get(metadata_key, "")).strip().lower()
+        if speaker_name:
+            terms.add(speaker_name)
+    terms.update(token for token in re.findall(r"[a-z]+", question_lower) if len(token) >= 3)
+    return {term for term in terms if term}
+
+
+def _entity_linked_score(question: NormalizedQuestion, entry: ConversationalIndexEntry) -> float:
+    score = _entry_score(question, entry)
+    question_lower = question.question.lower()
+    search_terms = _entity_link_search_terms(question)
+    metadata_values = {
+        str(entry.subject).strip().lower(),
+        str(entry.metadata.get("speaker", "")).strip().lower(),
+        str(entry.metadata.get("alias", "")).strip().lower(),
+        str(entry.metadata.get("canonical_name", "")).strip().lower(),
+        str(entry.metadata.get("other_entity", "")).strip().lower(),
+        str(entry.metadata.get("relation_type", "")).strip().lower(),
+    }
+    metadata_values = {value for value in metadata_values if value}
+
+    overlap = sum(1 for term in search_terms if any(term == value or term in value for value in metadata_values))
+    score += 4.0 * float(overlap)
+
+    if entry.predicate == "alias_binding":
+        if "nickname" in question_lower or "call" in question_lower:
+            score += 28.0
+        else:
+            score -= 8.0
+        if "nickname" in question_lower or "call" in question_lower:
+            score += 20.0
+        canonical_name = str(entry.metadata.get("canonical_name", "")).strip().lower()
+        if canonical_name and canonical_name in question_lower:
+            score += 12.0
+    if entry.predicate == "relationship_mention":
+        score += 6.0
+        if any(token in question_lower for token in ("mother", "mom", "father", "dad", "friend", "partner")):
+            score += 10.0
+    if entry.predicate in {"reported_speech", "unknown_record", "negation_record"}:
+        score += 6.0
+    if entry.entry_type == "typed_atom":
+        score += 3.0
+    return score
+
+
 def retrieve_conversational_entries(
     question: NormalizedQuestion,
     entries: Iterable[ConversationalIndexEntry],
@@ -217,6 +266,43 @@ def retrieve_conversational_entries(
                 return selected[:limit]
     for entry in ranked:
         score = _entry_score(question, entry)
+        if score <= 0:
+            continue
+        if entry.entry_id not in seen_entry_ids:
+            selected.append(entry)
+            seen_entry_ids.add(entry.entry_id)
+        if entry.entry_type == "typed_atom":
+            supporting_turn = turn_by_turn_id.get(entry.turn_id)
+            if supporting_turn is not None and supporting_turn.entry_id not in seen_entry_ids:
+                selected.append(supporting_turn)
+                seen_entry_ids.add(supporting_turn.entry_id)
+        if len(selected) >= limit:
+            break
+    return selected[:limit]
+
+
+def retrieve_entity_linked_entries(
+    question: NormalizedQuestion,
+    entries: Iterable[ConversationalIndexEntry],
+    *,
+    limit: int = 6,
+) -> list[ConversationalIndexEntry]:
+    indexed_entries = list(entries)
+    turn_by_turn_id = {
+        entry.turn_id: entry
+        for entry in indexed_entries
+        if entry.entry_type == "turn"
+    }
+    ranked = sorted(
+        indexed_entries,
+        key=lambda entry: (_entity_linked_score(question, entry), entry.timestamp or "", entry.entry_id),
+        reverse=True,
+    )
+
+    selected: list[ConversationalIndexEntry] = []
+    seen_entry_ids: set[str] = set()
+    for entry in ranked:
+        score = _entity_linked_score(question, entry)
         if score <= 0:
             continue
         if entry.entry_id not in seen_entry_ids:

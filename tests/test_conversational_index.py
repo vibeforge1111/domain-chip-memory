@@ -4,6 +4,8 @@ from domain_chip_memory.loaders import load_locomo_json
 from domain_chip_memory.memory_conversational_index import build_conversational_index
 from domain_chip_memory.memory_conversational_retrieval import retrieve_conversational_entries
 from domain_chip_memory.memory_conversational_shadow_eval import (
+    build_entity_linked_hybrid_shadow_packets,
+    build_entity_linked_shadow_answer_eval,
     build_exact_turn_shadow_answer_eval,
     build_exact_turn_hybrid_shadow_packets,
     build_lexical_hybrid_shadow_packets,
@@ -658,6 +660,102 @@ def test_lexical_shadow_answer_eval_reports_summary_and_lexical_outputs():
     assert "summary_answer" in row
     assert "lexical_hybrid_answer" in row
     assert row["lexical_hybrid_item_count"] > 0
+
+
+def test_entity_linked_hybrid_shadow_packets_promote_alias_binding_candidates():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What nickname does Nate use for Joanna?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_entity_linked_hybrid_shadow_packets(subset, entity_limit=6)
+    packet = packets[0]
+
+    assert packet.baseline_name == "summary_synthesis_memory_entity_linked_shadow"
+    assert packet.metadata["entity_item_count"] > 0
+    assert any(item.strategy == "entity_linked_conversational_shadow" for item in packet.retrieved_context_items)
+    assert "answer_candidate: jo" in packet.assembled_context.lower()
+    assert packet.answer_candidates[0].text == "Jo"
+    assert packet.answer_candidates[0].metadata["source_kind"] == "entity_linked_conversational"
+
+
+def test_entity_linked_shadow_answer_eval_reports_summary_and_entity_outputs():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-42"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What nickname does Nate use for Joanna?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    report = build_entity_linked_shadow_answer_eval(subset, entity_limit=6, provider_name="heuristic")
+    row = report["rows"][0]
+
+    assert report["overall"]["provider_name"] == "heuristic_v1"
+    assert "summary_answer" in row
+    assert "entity_hybrid_answer" in row
+    assert row["entity_hybrid_item_count"] > 0
+
+
+def test_entity_linked_hybrid_shadow_packets_do_not_surface_alias_candidate_for_non_alias_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-50"
+    )
+    from domain_chip_memory.contracts import NormalizedQuestion
+
+    question = NormalizedQuestion(
+        question_id="synthetic-negation-conv50",
+        question="Had Calvin been to Boston before?",
+        category="1",
+        expected_answers=["No"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+        metadata={"synthetic_probe": "negation_record"},
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_entity_linked_hybrid_shadow_packets(subset, entity_limit=6)
+    packet = packets[0]
+
+    assert "answer_candidate: cal" not in packet.assembled_context.lower()
+    assert not any(candidate.text == "Cal" for candidate in packet.answer_candidates)
 
 
 def test_multi_shadow_answer_eval_reports_summary_exact_turn_and_graph_outputs():

@@ -7,7 +7,7 @@ from .answer_candidates import build_answer_candidate
 from .baselines import build_lexical_packets
 from .contracts import JsonDict, NormalizedBenchmarkSample, NormalizedQuestion
 from .memory_conversational_index import build_conversational_index
-from .memory_conversational_retrieval import _entry_score, retrieve_conversational_entries
+from .memory_conversational_retrieval import _entry_score, retrieve_conversational_entries, retrieve_entity_linked_entries
 from .memory_extraction import _tokenize
 from .packet_builders import build_summary_synthesis_memory_packets
 from .providers import get_provider
@@ -212,12 +212,14 @@ def _question_prefers_typed_graph_evidence(question: NormalizedQuestion) -> bool
 def _conversational_entry_to_retrieved_context_item(
     question: NormalizedQuestion,
     entry: Any,
+    *,
+    strategy: str = "exact_turn_conversational_shadow",
 ) -> RetrievedContextItem:
     return RetrievedContextItem(
         session_id=entry.session_id,
         turn_ids=[entry.turn_id],
         score=_entry_score(question, entry),
-        strategy="exact_turn_conversational_shadow",
+        strategy=strategy,
         text=f"conversational_evidence: {entry.text}",
         memory_role="evidence",
         metadata={
@@ -228,6 +230,69 @@ def _conversational_entry_to_retrieved_context_item(
             **entry.metadata,
         },
     )
+
+
+def _entry_answer_candidate_text(question: NormalizedQuestion, entry: Any) -> str:
+    question_lower = question.question.lower()
+    predicate = str(getattr(entry, "predicate", "")).strip().lower()
+    metadata = getattr(entry, "metadata", {}) or {}
+    if predicate == "alias_binding":
+        if "nickname" in question_lower or "call" in question_lower:
+            return str(metadata.get("alias", "")).strip()
+        return ""
+    if predicate == "reported_speech":
+        if question_lower.startswith("what did ") and any(token in question_lower for token in ("say", "said", "tell", "told")):
+            return str(metadata.get("source_span", "")).strip() or str(metadata.get("reported_content", "")).strip()
+        return ""
+    if predicate == "negation_record" and (
+        question_lower.startswith(("is ", "are ", "do ", "does ", "did ", "can ", "has ", "have ", "had "))
+        or " before" in question_lower
+        or "ever " in question_lower
+    ):
+        return "No"
+    if predicate == "unknown_record":
+        if question_lower.startswith(("is ", "are ", "do ", "does ", "did ", "can ", "has ", "have ", "had ")):
+            return "No"
+        return "unknown"
+    if predicate in {"relationship_mention", "loss_event", "gift_event", "support_event"} and question_lower.startswith(("who ", "what ", "when ")):
+        return str(metadata.get("source_span", "")).strip()
+    return ""
+
+
+def _entity_linked_answer_candidates(
+    question: NormalizedQuestion,
+    entries: list[Any],
+    summary_candidates: list[Any],
+) -> list[Any]:
+    merged_candidates: list[Any] = []
+    seen_text: set[str] = set()
+    for entry in entries:
+        answer_text = _entry_answer_candidate_text(question, entry)
+        if not answer_text:
+            continue
+        normalized = answer_text.strip().lower()
+        if not normalized or normalized in seen_text:
+            continue
+        seen_text.add(normalized)
+        merged_candidates.append(
+            build_answer_candidate(
+                question.question,
+                answer_text,
+                source="evidence_memory",
+                metadata={
+                    "source_kind": "entity_linked_conversational",
+                    "predicate": getattr(entry, "predicate", ""),
+                    "entry_id": getattr(entry, "entry_id", ""),
+                },
+            )
+        )
+    for candidate in summary_candidates:
+        normalized = candidate.text.strip().lower()
+        if not normalized or normalized in seen_text:
+            continue
+        seen_text.add(normalized)
+        merged_candidates.append(candidate)
+    return merged_candidates
 
 
 def _merge_retrieved_context_items(
@@ -473,6 +538,74 @@ def build_lexical_hybrid_shadow_packets(
     return shadow_manifest.to_dict(), hybrid_packets
 
 
+def build_entity_linked_hybrid_shadow_packets(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    entity_limit: int = 6,
+) -> tuple[JsonDict, list[BaselinePromptPacket]]:
+    manifest, summary_packets = build_summary_synthesis_memory_packets(samples)
+    packet_by_question_id = {packet.question_id: packet for packet in summary_packets}
+    hybrid_packets: list[BaselinePromptPacket] = []
+
+    for sample in samples:
+        index_entries = build_conversational_index(sample)
+        for question in sample.questions:
+            summary_packet = packet_by_question_id[question.question_id]
+            entity_entries = retrieve_entity_linked_entries(question, index_entries, limit=entity_limit)
+            entity_items = [
+                _conversational_entry_to_retrieved_context_item(
+                    question,
+                    entry,
+                    strategy="entity_linked_conversational_shadow",
+                )
+                for entry in entity_entries
+            ]
+            hybrid_retrieved_items, hybrid_context_blocks = _ordered_shadow_context_blocks(
+                shadow_items=entity_items,
+                summary_items=list(summary_packet.retrieved_context_items),
+                answer_candidate_text=summary_packet.answer_candidates[0].text if summary_packet.answer_candidates else None,
+            )
+            answer_candidates = _entity_linked_answer_candidates(
+                question,
+                entity_entries,
+                list(summary_packet.answer_candidates),
+            )
+            if answer_candidates:
+                hybrid_context_blocks.append(f"answer_candidate: {answer_candidates[0].text}")
+            hybrid_packets.append(
+                BaselinePromptPacket(
+                    benchmark_name=summary_packet.benchmark_name,
+                    baseline_name="summary_synthesis_memory_entity_linked_shadow",
+                    sample_id=summary_packet.sample_id,
+                    question_id=summary_packet.question_id,
+                    question=summary_packet.question,
+                    assembled_context="\n\n".join(hybrid_context_blocks),
+                    retrieved_context_items=hybrid_retrieved_items,
+                    metadata={
+                        **summary_packet.metadata,
+                        "route": "summary_synthesis_memory_entity_linked_shadow",
+                        "shadow_selector": "entity_linked_conversational_evidence",
+                        "entity_item_count": len(entity_items),
+                        "entity_limit": entity_limit,
+                    },
+                    answer_candidates=answer_candidates,
+                )
+            )
+
+    shadow_manifest = build_run_manifest(
+        samples,
+        baseline_name="summary_synthesis_memory_entity_linked_shadow",
+        run_id=str(manifest.get("run_id", "")),
+        benchmark_name=str(manifest.get("benchmark_name", "")),
+        metadata={
+            **dict(manifest.get("metadata", {})),
+            "shadow_selector": "entity_linked_conversational_evidence",
+            "entity_limit": entity_limit,
+        },
+    )
+    return shadow_manifest.to_dict(), hybrid_packets
+
+
 def build_typed_graph_hybrid_shadow_packets(
     samples: list[NormalizedBenchmarkSample],
     *,
@@ -676,6 +809,26 @@ def build_lexical_shadow_answer_eval(
         variant_label="lexical_hybrid",
         variant_item_count_field="lexical_hybrid_item_count",
         variant_packet_metadata_field="lexical_item_count",
+    )
+
+
+def build_entity_linked_shadow_answer_eval(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    entity_limit: int = 6,
+    provider_name: str = "heuristic",
+) -> JsonDict:
+    _, hybrid_packets = build_entity_linked_hybrid_shadow_packets(
+        samples,
+        entity_limit=entity_limit,
+    )
+    return _build_shadow_answer_eval(
+        samples,
+        provider_name=provider_name,
+        variant_packets=hybrid_packets,
+        variant_label="entity_hybrid",
+        variant_item_count_field="entity_hybrid_item_count",
+        variant_packet_metadata_field="entity_item_count",
     )
 
 

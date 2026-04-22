@@ -473,7 +473,7 @@ def _should_preserve_projected_answer_candidate(primary_answer_candidate: Any | 
     if str(getattr(primary_answer_candidate, "source", "")).strip().lower() != "evidence_memory":
         return False
     source_kind = str(getattr(primary_answer_candidate, "metadata", {}).get("source_kind", "")).strip().lower()
-    return source_kind == "typed_temporal_graph"
+    return source_kind in {"typed_temporal_graph", "entity_linked_conversational"}
 
 
 def _project_answer_to_primary_candidate(answer: str, primary_answer_candidate: Any | None) -> str:

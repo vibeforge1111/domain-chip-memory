@@ -37,7 +37,7 @@ Tasks:
 
 ## Phase 2: Retrieval Fusion
 
-Status: pending
+Status: in progress
 
 Problem:
 
@@ -46,8 +46,8 @@ Problem:
 
 Tasks:
 
-- [ ] add lexical / BM25 retrieval lane
-- [ ] add entity / alias boost lane
+- [x] add lexical / BM25 retrieval lane
+- [x] add entity / alias boost lane
 - [ ] define fusion policy across:
   - summary
   - exact-turn
