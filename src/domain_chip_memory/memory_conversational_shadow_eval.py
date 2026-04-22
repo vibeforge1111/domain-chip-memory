@@ -228,6 +228,8 @@ def _fused_shadow_selector(question: NormalizedQuestion) -> str:
         return "typed_graph_first"
     if _question_prefers_entity_linked_evidence(question):
         return "entity_linked_first"
+    if _question_prefers_exact_conversational_evidence(question):
+        return "exact_turn_first"
     if _question_prefers_typed_graph_evidence(question):
         return "typed_graph_first"
     return "summary_backbone"
@@ -707,9 +709,11 @@ def build_fused_conversational_hybrid_shadow_packets(
     graph_limit: int = 6,
 ) -> tuple[JsonDict, list[BaselinePromptPacket]]:
     manifest, summary_packets = build_summary_synthesis_memory_packets(samples)
+    _, exact_turn_packets = build_exact_turn_hybrid_shadow_packets(samples, conversational_limit=8)
     _, entity_packets = build_entity_linked_hybrid_shadow_packets(samples, entity_limit=entity_limit)
     _, graph_packets = build_typed_graph_hybrid_shadow_packets(samples, graph_limit=graph_limit)
     summary_by_question_id = {packet.question_id: packet for packet in summary_packets}
+    exact_turn_by_question_id = {packet.question_id: packet for packet in exact_turn_packets}
     entity_by_question_id = {packet.question_id: packet for packet in entity_packets}
     graph_by_question_id = {packet.question_id: packet for packet in graph_packets}
     fused_packets: list[BaselinePromptPacket] = []
@@ -717,11 +721,14 @@ def build_fused_conversational_hybrid_shadow_packets(
     for sample in samples:
         for question in sample.questions:
             summary_packet = summary_by_question_id[question.question_id]
+            exact_turn_packet = exact_turn_by_question_id[question.question_id]
             entity_packet = entity_by_question_id[question.question_id]
             graph_packet = graph_by_question_id[question.question_id]
             selector = _fused_shadow_selector(question)
             if selector == "entity_linked_first":
                 selected_packet = entity_packet
+            elif selector == "exact_turn_first":
+                selected_packet = exact_turn_packet
             elif selector == "typed_graph_first":
                 selected_packet = graph_packet
             else:
@@ -745,6 +752,7 @@ def build_fused_conversational_hybrid_shadow_packets(
                         "fused_selected_item_count": len(selected_packet.retrieved_context_items),
                         "entity_limit": entity_limit,
                         "graph_limit": graph_limit,
+                        "conversational_item_count": int(exact_turn_packet.metadata.get("conversational_item_count", 0)),
                         "entity_item_count": int(entity_packet.metadata.get("entity_item_count", 0)),
                         "graph_item_count": int(graph_packet.metadata.get("graph_item_count", 0)),
                     },
