@@ -62,6 +62,7 @@ Implemented:
 - temporal events from `loss_event`, `gift_event`, `support_event`
 - helper filters for subject/event-family queries
 - normalization guard against obvious noisy object labels such as sentence-start verb bleed
+- eval-only graph retrieval over relationship facts and temporal events
 
 Not implemented yet:
 
@@ -80,6 +81,12 @@ Covered by [test_typed_temporal_graph_memory.py](/C:/Users/USER/Desktop/domain-c
 - `conv-48` preserves pendant gift provenance and year anchor
 - `conv-48` exposes support events and relationship filtering
 - `conv-49` avoids carrying a bogus `Got` entity into the graph sidecar
+
+Covered by [test_typed_temporal_graph_retrieval.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_typed_temporal_graph_retrieval.py):
+
+- `conv-48` loss questions recover the normalized mother-loss anchor from graph events
+- `conv-48` support questions recover provenance spans from support events
+- `conv-49` graph retrieval does not surface the bogus `Got` object label
 
 ## Next Step
 
