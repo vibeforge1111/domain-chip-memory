@@ -848,6 +848,35 @@ def test_fused_conversational_hybrid_shadow_packets_route_temporal_questions_to_
     assert packet.metadata["graph_item_count"] > 0
 
 
+def test_fused_conversational_hybrid_shadow_packets_route_reported_speech_questions_to_graph_lane():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-43"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question_id == "conv-43-qa-137"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_fused_conversational_hybrid_shadow_packets(subset, entity_limit=6, graph_limit=4)
+    packet = packets[0]
+
+    assert packet.metadata["shadow_selector"] == "typed_graph_first"
+    assert packet.metadata["fused_variant_baseline"] == "summary_synthesis_memory_typed_graph_shadow"
+    assert packet.answer_candidates[0].text == "The doctor said it's not too serious."
+
+
 def test_fused_conversational_hybrid_shadow_packets_keep_summary_for_broad_synthesis_question():
     sample = next(
         record

@@ -213,8 +213,6 @@ def _question_prefers_entity_linked_evidence(question: NormalizedQuestion) -> bo
     question_lower = question.question.lower()
     if "nickname" in question_lower or "call" in question_lower:
         return True
-    if question_lower.startswith("what did ") and any(token in question_lower for token in ("say", "said", "tell", "told")):
-        return True
     if any(token in question_lower for token in ("remember", "know", "sure")):
         return True
     if any(token in question_lower for token in ("ever", "before")) and any(
@@ -222,6 +220,17 @@ def _question_prefers_entity_linked_evidence(question: NormalizedQuestion) -> bo
     ):
         return True
     return False
+
+
+def _fused_shadow_selector(question: NormalizedQuestion) -> str:
+    question_lower = question.question.lower()
+    if question_lower.startswith("what did ") and any(token in question_lower for token in ("say", "said", "tell", "told")):
+        return "typed_graph_first"
+    if _question_prefers_entity_linked_evidence(question):
+        return "entity_linked_first"
+    if _question_prefers_typed_graph_evidence(question):
+        return "typed_graph_first"
+    return "summary_backbone"
 
 
 def _conversational_entry_to_retrieved_context_item(
@@ -710,15 +719,13 @@ def build_fused_conversational_hybrid_shadow_packets(
             summary_packet = summary_by_question_id[question.question_id]
             entity_packet = entity_by_question_id[question.question_id]
             graph_packet = graph_by_question_id[question.question_id]
-            selector = "summary_backbone"
-            selected_packet = summary_packet
-
-            if _question_prefers_entity_linked_evidence(question):
-                selector = "entity_linked_first"
+            selector = _fused_shadow_selector(question)
+            if selector == "entity_linked_first":
                 selected_packet = entity_packet
-            elif _question_prefers_typed_graph_evidence(question):
-                selector = "typed_graph_first"
+            elif selector == "typed_graph_first":
                 selected_packet = graph_packet
+            else:
+                selected_packet = summary_packet
 
             fused_packets.append(
                 BaselinePromptPacket(
