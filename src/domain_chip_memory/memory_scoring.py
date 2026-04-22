@@ -28,7 +28,6 @@ def evidence_score(
     predicates = set(_question_predicates(question))
     question_lower = question.question.lower()
     death_question = "pass away" in question_lower or "passed away" in question_lower
-    gift_question = any(token in question_lower for token in ("pendant", "necklace", "gift", "symbolic"))
     evidence_text = observation_evidence_text(question, observation)
     observation_context_lower = observation.text.lower()
     evidence_tokens = set(_tokenize(evidence_text))
@@ -65,19 +64,11 @@ def evidence_score(
         if observation.predicate in predicates:
             score += 3.0
         relation_type = str(observation.metadata.get("relation_type", "")).lower()
-        if observation.predicate == "loss_event" and death_question and any(token in question_lower for token in ("mother", "mom")) and relation_type == "mother":
+        if observation.predicate in {"loss_event", "gift_event"} and any(token in question_lower for token in ("mother", "mom")) and relation_type == "mother":
             score += 8.0
-        if observation.predicate == "loss_event" and death_question and any(token in question_lower for token in ("father", "dad")) and relation_type == "father":
-            score += 8.0
-        if observation.predicate == "gift_event" and gift_question and any(token in question_lower for token in ("mother", "mom")) and relation_type == "mother":
-            score += 8.0
-        if observation.predicate == "gift_event" and gift_question and any(token in question_lower for token in ("father", "dad")) and relation_type == "father":
+        if observation.predicate in {"loss_event", "gift_event"} and any(token in question_lower for token in ("father", "dad")) and relation_type == "father":
             score += 8.0
         if question_lower.startswith("when ") and observation.predicate in {"loss_event", "gift_event"}:
-            score += 8.0
-        if observation.predicate == "support_event" and any(token in question_lower for token in ("support", "helped", "peace", "grieving")):
-            score += 8.0
-        if observation.predicate == "shared_activity" and any(token in question_lower for token in ("both", "share", "common", "interests")):
             score += 8.0
     if len(evidence_tokens) <= 8:
         score += 1.0

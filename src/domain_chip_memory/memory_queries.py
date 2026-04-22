@@ -108,10 +108,6 @@ def _question_predicates(question: NormalizedQuestion) -> list[str]:
         predicates.append("gift_event")
     if any(token in question_lower for token in ("grieving", "find peace", "helped", "supported")):
         predicates.append("support_event")
-    if any(phrase in question_lower for phrase in ("both have in common", "share in common", "shared interests", "interests do", "what do") ) and any(
-        token in question_lower for token in ("both", "share", "common", "interests")
-    ):
-        predicates.append("shared_activity")
     if any(phrase in question_lower for phrase in ("what is my name", "what's my name")):
         predicates.append("preferred_name")
     if any(
