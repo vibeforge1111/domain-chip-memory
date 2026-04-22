@@ -3,6 +3,10 @@ from pathlib import Path
 from domain_chip_memory.loaders import load_locomo_json
 from domain_chip_memory.memory_conversational_index import build_conversational_index
 from domain_chip_memory.memory_conversational_retrieval import retrieve_conversational_entries
+from domain_chip_memory.memory_conversational_shadow_eval import (
+    _expected_answer_coverage,
+    build_conversational_shadow_eval,
+)
 
 
 def test_build_conversational_index_keeps_full_turns_and_typed_social_atoms_for_conv48():
@@ -98,3 +102,39 @@ def test_retrieve_conversational_entries_finds_typed_temporal_and_support_hits_f
     assert "yoga" in support_text
     assert "old photo" in support_text or "old photos" in support_text or "last photo" in support_text
     assert "flower garden" in support_text or "roses and dahlias" in support_text
+
+
+def test_expected_answer_coverage_accepts_multi_item_family_answers():
+    assert _expected_answer_coverage(
+        "My mom was interested in art. My mom had a big passion for cooking. Reading was one of her hobbies. Travel was also her great passion.",
+        ["reading, traveling, art, cooking"],
+    )
+
+
+def test_conversational_shadow_eval_beats_summary_retrieval_on_conv48_family_hobby_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-48"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "What were Deborah's mother's hobbies?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    report = build_conversational_shadow_eval(subset, conversational_limit=8)
+    row = report["rows"][0]
+
+    assert row["summary_retrieval_covered"] is False
+    assert row["conversational_retrieval_covered"] is True
+    assert row["hybrid_retrieval_covered"] is True
