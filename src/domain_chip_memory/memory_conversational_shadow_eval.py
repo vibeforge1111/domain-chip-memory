@@ -33,6 +33,32 @@ _COVERAGE_STOPWORDS = {
     "with",
 }
 
+_KINSHIP_TOKENS = {
+    "mother",
+    "mom",
+    "father",
+    "dad",
+    "friend",
+    "friends",
+    "partner",
+    "husband",
+    "wife",
+    "sister",
+    "brother",
+    "family",
+}
+
+_SUPPORT_TOKENS = {
+    "grief",
+    "grieving",
+    "helped",
+    "peace",
+    "support",
+    "supported",
+    "comfort",
+    "comforting",
+}
+
 
 def _coverage_tokens(text: str) -> set[str]:
     return {
@@ -73,6 +99,21 @@ def _expected_answer_coverage(text: str, expected_answers: list[str]) -> bool:
     return False
 
 
+def _question_uses_conversational_hybrid(question: NormalizedQuestion) -> bool:
+    question_lower = question.question.lower()
+    if any(token in question_lower for token in _KINSHIP_TOKENS):
+        return True
+    if any(token in question_lower for token in _SUPPORT_TOKENS):
+        return True
+    if any(phrase in question_lower for phrase in ("both have in common", "shared interests", "share in common", "relationship")):
+        return True
+    if any(token in question_lower for token in ("hobby", "hobbies", "memory", "memories", "remember")) and any(
+        token in question_lower for token in _KINSHIP_TOKENS
+    ):
+        return True
+    return False
+
+
 def build_conversational_shadow_eval(
     samples: list[NormalizedBenchmarkSample],
     *,
@@ -85,6 +126,7 @@ def build_conversational_shadow_eval(
     summary_covered = 0
     conversational_covered = 0
     hybrid_covered = 0
+    gated_hybrid_covered = 0
     total = 0
     by_sample: dict[str, dict[str, int]] = {}
 
@@ -93,6 +135,7 @@ def build_conversational_shadow_eval(
         sample_summary_covered = 0
         sample_conversational_covered = 0
         sample_hybrid_covered = 0
+        sample_gated_hybrid_covered = 0
         sample_total = 0
         for question in sample.questions:
             packet = packet_by_question_id[question.question_id]
@@ -106,15 +149,20 @@ def build_conversational_shadow_eval(
             summary_has_coverage = _expected_answer_coverage(summary_text, question.expected_answers)
             conversational_has_coverage = _expected_answer_coverage(conversational_text, question.expected_answers)
             hybrid_has_coverage = summary_has_coverage or conversational_has_coverage
+            gated_hybrid_has_coverage = summary_has_coverage or (
+                _question_uses_conversational_hybrid(question) and conversational_has_coverage
+            )
             rows.append(
                 {
                     "sample_id": sample.sample_id,
                     "question_id": question.question_id,
                     "question": question.question,
                     "expected_answers": question.expected_answers,
+                    "question_uses_conversational_hybrid": _question_uses_conversational_hybrid(question),
                     "summary_retrieval_covered": summary_has_coverage,
                     "conversational_retrieval_covered": conversational_has_coverage,
                     "hybrid_retrieval_covered": hybrid_has_coverage,
+                    "gated_hybrid_retrieval_covered": gated_hybrid_has_coverage,
                     "summary_retrieval_text": summary_text,
                     "conversational_retrieval_text": conversational_text,
                 }
@@ -130,10 +178,14 @@ def build_conversational_shadow_eval(
             if hybrid_has_coverage:
                 sample_hybrid_covered += 1
                 hybrid_covered += 1
+            if gated_hybrid_has_coverage:
+                sample_gated_hybrid_covered += 1
+                gated_hybrid_covered += 1
         by_sample[sample.sample_id] = {
             "summary_covered": sample_summary_covered,
             "conversational_covered": sample_conversational_covered,
             "hybrid_covered": sample_hybrid_covered,
+            "gated_hybrid_covered": sample_gated_hybrid_covered,
             "total": sample_total,
         }
 
@@ -142,12 +194,15 @@ def build_conversational_shadow_eval(
             "summary_covered": summary_covered,
             "conversational_covered": conversational_covered,
             "hybrid_covered": hybrid_covered,
+            "gated_hybrid_covered": gated_hybrid_covered,
             "total": total,
             "summary_coverage_rate": round(summary_covered / total, 4) if total else 0.0,
             "conversational_coverage_rate": round(conversational_covered / total, 4) if total else 0.0,
             "hybrid_coverage_rate": round(hybrid_covered / total, 4) if total else 0.0,
+            "gated_hybrid_coverage_rate": round(gated_hybrid_covered / total, 4) if total else 0.0,
             "coverage_delta": conversational_covered - summary_covered,
             "hybrid_delta_vs_summary": hybrid_covered - summary_covered,
+            "gated_hybrid_delta_vs_summary": gated_hybrid_covered - summary_covered,
         },
         "by_sample": by_sample,
         "rows": rows,

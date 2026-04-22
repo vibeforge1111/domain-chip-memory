@@ -5,6 +5,7 @@ from domain_chip_memory.memory_conversational_index import build_conversational_
 from domain_chip_memory.memory_conversational_retrieval import retrieve_conversational_entries
 from domain_chip_memory.memory_conversational_shadow_eval import (
     _expected_answer_coverage,
+    _question_uses_conversational_hybrid,
     build_conversational_shadow_eval,
 )
 
@@ -135,6 +136,19 @@ def test_conversational_shadow_eval_beats_summary_retrieval_on_conv48_family_hob
     report = build_conversational_shadow_eval(subset, conversational_limit=8)
     row = report["rows"][0]
 
+    assert row["question_uses_conversational_hybrid"] is True
     assert row["summary_retrieval_covered"] is False
     assert row["conversational_retrieval_covered"] is True
     assert row["hybrid_retrieval_covered"] is True
+    assert row["gated_hybrid_retrieval_covered"] is True
+
+
+def test_question_uses_conversational_hybrid_stays_off_for_non_social_factoid():
+    question = next(
+        question
+        for sample in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        for question in sample.questions
+        if "eternal sunshine of the spotless mind" in question.question.lower()
+    )
+
+    assert _question_uses_conversational_hybrid(question) is False
