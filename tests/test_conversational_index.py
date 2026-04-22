@@ -4,6 +4,7 @@ from domain_chip_memory.loaders import load_locomo_json
 from domain_chip_memory.memory_conversational_index import build_conversational_index
 from domain_chip_memory.memory_conversational_retrieval import retrieve_conversational_entries
 from domain_chip_memory.memory_conversational_shadow_eval import (
+    build_exact_turn_shadow_answer_eval,
     build_exact_turn_hybrid_shadow_packets,
     _expected_answer_coverage,
     _question_prefers_exact_conversational_evidence,
@@ -239,3 +240,36 @@ def test_exact_turn_hybrid_shadow_packets_stay_summary_only_for_broad_synthesis_
     assert packet.metadata["conversational_item_count"] == 0
     assert all(item.strategy != "exact_turn_conversational_shadow" for item in packet.retrieved_context_items)
     assert "conversational_evidence:" not in packet.assembled_context.lower()
+
+
+def test_exact_turn_shadow_answer_eval_tracks_exact_fact_shadow_packets():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-49"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "How many Prius has Evan owned?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    report = build_exact_turn_shadow_answer_eval(subset, conversational_limit=8, provider_name="heuristic")
+    row = report["rows"][0]
+
+    assert report["overall"]["provider_name"] == "heuristic_v1"
+    assert row["question_prefers_exact_conversational_evidence"] is True
+    assert row["hybrid_conversational_item_count"] > 0
+    assert row["summary_answer"] == "two"
+    assert row["hybrid_answer"] == "two"
+    assert row["summary_correct"] is True
+    assert row["hybrid_correct"] is True

@@ -8,6 +8,8 @@ from .memory_conversational_index import build_conversational_index
 from .memory_conversational_retrieval import _entry_score, retrieve_conversational_entries
 from .memory_extraction import _tokenize
 from .packet_builders import build_summary_synthesis_memory_packets
+from .providers import get_provider
+from .runner import _build_prediction
 from .runs import BaselinePromptPacket, RetrievedContextItem, build_run_manifest
 from .scorecards import _normalize_answer
 
@@ -282,6 +284,100 @@ def build_exact_turn_hybrid_shadow_packets(
         },
     )
     return shadow_manifest.to_dict(), hybrid_packets
+
+
+def build_exact_turn_shadow_answer_eval(
+    samples: list[NormalizedBenchmarkSample],
+    *,
+    conversational_limit: int = 8,
+    provider_name: str = "heuristic",
+) -> JsonDict:
+    _, summary_packets = build_summary_synthesis_memory_packets(samples)
+    _, hybrid_packets = build_exact_turn_hybrid_shadow_packets(
+        samples,
+        conversational_limit=conversational_limit,
+    )
+    question_by_id = {
+        question.question_id: question
+        for sample in samples
+        for question in sample.questions
+    }
+    provider = get_provider(provider_name)
+    rows: list[JsonDict] = []
+    summary_correct = 0
+    hybrid_correct = 0
+    by_sample: dict[str, dict[str, int]] = {}
+
+    for summary_packet, hybrid_packet in zip(summary_packets, hybrid_packets, strict=True):
+        question = question_by_id[summary_packet.question_id]
+        summary_response = provider.generate_answer(summary_packet)
+        summary_prediction = _build_prediction(
+            summary_packet,
+            question=question,
+            provider=provider,
+            answer=summary_response.answer,
+            provider_metadata=summary_response.metadata,
+        )
+        hybrid_response = provider.generate_answer(hybrid_packet)
+        hybrid_prediction = _build_prediction(
+            hybrid_packet,
+            question=question,
+            provider=provider,
+            answer=hybrid_response.answer,
+            provider_metadata=hybrid_response.metadata,
+        )
+        sample_metrics = by_sample.setdefault(
+            summary_packet.sample_id,
+            {"summary_correct": 0, "hybrid_correct": 0, "improved": 0, "regressed": 0, "total": 0},
+        )
+        sample_metrics["total"] += 1
+        if summary_prediction.is_correct:
+            summary_correct += 1
+            sample_metrics["summary_correct"] += 1
+        if hybrid_prediction.is_correct:
+            hybrid_correct += 1
+            sample_metrics["hybrid_correct"] += 1
+        if not summary_prediction.is_correct and hybrid_prediction.is_correct:
+            sample_metrics["improved"] += 1
+        if summary_prediction.is_correct and not hybrid_prediction.is_correct:
+            sample_metrics["regressed"] += 1
+        rows.append(
+            {
+                "sample_id": summary_packet.sample_id,
+                "question_id": summary_packet.question_id,
+                "question": summary_packet.question,
+                "expected_answers": question.expected_answers,
+                "summary_answer": summary_prediction.predicted_answer,
+                "summary_correct": summary_prediction.is_correct,
+                "hybrid_answer": hybrid_prediction.predicted_answer,
+                "hybrid_correct": hybrid_prediction.is_correct,
+                "improved": (not summary_prediction.is_correct and hybrid_prediction.is_correct),
+                "regressed": (summary_prediction.is_correct and not hybrid_prediction.is_correct),
+                "question_prefers_exact_conversational_evidence": _question_prefers_exact_conversational_evidence(
+                    question
+                ),
+                "summary_retrieved_context_item_count": len(summary_packet.retrieved_context_items),
+                "hybrid_retrieved_context_item_count": len(hybrid_packet.retrieved_context_items),
+                "hybrid_conversational_item_count": int(hybrid_packet.metadata.get("conversational_item_count", 0)),
+            }
+        )
+
+    total = len(rows)
+    return {
+        "overall": {
+            "provider_name": provider.name,
+            "summary_correct": summary_correct,
+            "hybrid_correct": hybrid_correct,
+            "total": total,
+            "summary_accuracy": round(summary_correct / total, 4) if total else 0.0,
+            "hybrid_accuracy": round(hybrid_correct / total, 4) if total else 0.0,
+            "hybrid_delta_vs_summary": hybrid_correct - summary_correct,
+            "improved": sum(1 for row in rows if row["improved"]),
+            "regressed": sum(1 for row in rows if row["regressed"]),
+        },
+        "by_sample": by_sample,
+        "rows": rows,
+    }
 
 
 def build_conversational_shadow_eval(
