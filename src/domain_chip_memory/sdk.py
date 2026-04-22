@@ -9,6 +9,7 @@ from typing import Any
 
 from .contracts import JsonDict, MemoryRole, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn, RetentionClass
 from .memory_extraction import EventCalendarEntry, ObservationEntry
+from .memory_conversational_index import build_conversational_index
 from .memory_observation_runtime import build_event_calendar, build_observation_log
 from .memory_roles import canonical_memory_role, sdk_memory_role_contracts
 from .memory_retention import default_retention_class, sdk_retention_contracts, sdk_retention_defaults_by_role
@@ -688,6 +689,13 @@ class SparkMemorySDK:
             )
             observations = build_observation_log(single_turn_sample)
             events = build_event_calendar(single_turn_sample)
+            observations = self._merge_observations(
+                observations,
+                self._build_conversational_bridge_observations(
+                    session_id=session_id,
+                    turn=turn,
+                ),
+            )
 
         explicit_episodic_only_write = (
             manual_write
@@ -737,6 +745,145 @@ class SparkMemorySDK:
     def _next_session_id(self) -> str:
         self._session_counter += 1
         return f"sdk-session-{self._session_counter}"
+
+    def _build_conversational_bridge_observations(
+        self,
+        *,
+        session_id: str,
+        turn: NormalizedTurn,
+    ) -> list[ObservationEntry]:
+        bridge_sample = self._sample_for_sessions(
+            [
+                NormalizedSession(
+                    session_id=session_id,
+                    turns=[turn],
+                    timestamp=turn.timestamp,
+                    metadata={},
+                )
+            ]
+        )
+        entries = build_conversational_index(bridge_sample)
+        return self._conversational_bridge_observations_from_entries(entries, turn_metadata=turn.metadata)
+
+    def _conversational_bridge_observations_from_entries(
+        self,
+        entries: list[Any],
+        *,
+        turn_metadata: JsonDict,
+    ) -> list[ObservationEntry]:
+        observations: list[ObservationEntry] = []
+        for index, entry in enumerate(entries, start=1):
+            if entry.entry_type != "typed_atom":
+                continue
+            text = self._conversational_bridge_text(entry.predicate, entry.metadata)
+            if not text:
+                continue
+            value = self._conversational_bridge_value(entry.predicate, entry.metadata)
+            timestamp = str(entry.timestamp or "").strip() or None
+            observations.append(
+                ObservationEntry(
+                    observation_id=f"{entry.turn_id}:bridge:{entry.predicate}:{index}",
+                    subject=self._normalize_subject(entry.subject),
+                    predicate=self._normalize_predicate(entry.predicate),
+                    text=text,
+                    session_id=entry.session_id,
+                    turn_ids=[entry.turn_id],
+                    timestamp=timestamp,
+                    metadata={
+                        **dict(turn_metadata),
+                        **dict(entry.metadata),
+                        "memory_role": "structured_evidence",
+                        "write_operation": "auto",
+                        "value": value,
+                        "entity_key": f"{entry.predicate}:{value.lower()}",
+                        "created_at": timestamp,
+                        "document_time": timestamp,
+                        "valid_from": timestamp,
+                        "source_text": entry.text,
+                    },
+                )
+            )
+        return observations
+
+    def _runtime_bridge_observations(self) -> list[ObservationEntry]:
+        runtime_sample = self._runtime_sample()
+        if not runtime_sample.sessions:
+            return []
+        turn_metadata_by_id: dict[str, JsonDict] = {}
+        for session in runtime_sample.sessions:
+            for turn in session.turns:
+                turn_metadata_by_id[turn.turn_id] = dict(turn.metadata)
+        entries = build_conversational_index(runtime_sample)
+        observations: list[ObservationEntry] = []
+        for entry in entries:
+            if entry.entry_type != "typed_atom":
+                continue
+            observations.extend(
+                self._conversational_bridge_observations_from_entries(
+                    [entry],
+                    turn_metadata=turn_metadata_by_id.get(entry.turn_id, {}),
+                )
+            )
+        return observations
+
+    def _conversational_bridge_text(self, predicate: str, metadata: JsonDict) -> str:
+        source_span = _normalize_scalar(metadata.get("source_span"))
+        if predicate == "alias_binding":
+            alias = _normalize_scalar(metadata.get("alias"))
+            return alias or source_span
+        if predicate == "negation_record":
+            return f"No. {source_span}".strip()
+        if predicate == "unknown_record":
+            return f"unknown. {source_span}".strip()
+        if predicate == "reported_speech":
+            return source_span or _normalize_scalar(metadata.get("reported_content"))
+        if predicate == "relationship_edge":
+            relation_type = _normalize_scalar(metadata.get("relation_type"))
+            other_entity = _normalize_scalar(metadata.get("other_entity"))
+            return source_span or f"{other_entity} is {relation_type}".strip()
+        if predicate in {"support_event", "loss_event", "gift_event", "commitment_event"}:
+            return source_span
+        return ""
+
+    def _conversational_bridge_value(self, predicate: str, metadata: JsonDict) -> str:
+        if predicate == "alias_binding":
+            return _normalize_scalar(metadata.get("alias"))
+        if predicate == "negation_record":
+            return "No"
+        if predicate == "unknown_record":
+            return "unknown"
+        if predicate == "reported_speech":
+            return _normalize_scalar(metadata.get("reported_content")) or _normalize_scalar(metadata.get("source_span"))
+        if predicate == "relationship_edge":
+            return _normalize_scalar(metadata.get("relation_type"))
+        if predicate == "loss_event":
+            return (
+                _normalize_scalar(metadata.get("time_expression_raw"))
+                or _normalize_scalar(metadata.get("time_normalized"))
+                or _normalize_scalar(metadata.get("source_span"))
+            )
+        if predicate == "support_event":
+            return _normalize_scalar(metadata.get("source_span"))
+        if predicate == "gift_event":
+            return _normalize_scalar(metadata.get("item_type")) or _normalize_scalar(metadata.get("source_span"))
+        if predicate == "commitment_event":
+            return _normalize_scalar(metadata.get("source_span"))
+        return _normalize_scalar(metadata.get("source_span"))
+
+    def _merge_observations(
+        self,
+        observations: list[ObservationEntry],
+        bridge_observations: list[ObservationEntry],
+    ) -> list[ObservationEntry]:
+        merged: list[ObservationEntry] = []
+        seen_keys: set[tuple[str, str, str, str | None]] = set()
+        for entry in [*observations, *bridge_observations]:
+            key = (entry.subject, entry.predicate, entry.text, entry.timestamp)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            merged.append(entry)
+        return merged
 
     def _next_turn_id(self, session_id: str) -> str:
         for session in self._sessions:
@@ -792,10 +939,18 @@ class SparkMemorySDK:
 
     def _current_state_observations(self) -> list[ObservationEntry]:
         manual = self._manual_current_state_snapshot or self._manual_observations
-        return [*build_observation_log(self._runtime_sample()), *manual]
+        return [
+            *build_observation_log(self._runtime_sample()),
+            *self._runtime_bridge_observations(),
+            *manual,
+        ]
 
     def _observations(self) -> list[ObservationEntry]:
-        return [*build_observation_log(self._runtime_sample()), *self._manual_observations]
+        return [
+            *build_observation_log(self._runtime_sample()),
+            *self._runtime_bridge_observations(),
+            *self._manual_observations,
+        ]
 
     def _events(self) -> list[EventCalendarEntry]:
         return [*build_event_calendar(self._runtime_sample()), *self._manual_events]

@@ -140,21 +140,30 @@ def _extract_alias_binding(
     candidate_names: list[str],
 ) -> tuple[str, str, str] | None:
     greeting_match = re.match(r"^\s*(?:hey|hi)\s+([A-Za-z]+)\b", text, re.IGNORECASE)
-    if not greeting_match:
-        return None
-    alias = greeting_match.group(1).strip()
-    if len(alias) < 2:
-        return None
-    alias_lower = alias.lower()
-    for candidate in candidate_names:
-        candidate_clean = candidate.strip()
-        if not candidate_clean or candidate_clean.lower() == speaker_name.lower():
+    alias_matches: list[tuple[str, str]] = []
+    if greeting_match is not None:
+        alias_matches.append((greeting_match.group(1).strip(), greeting_match.group(0).strip()))
+    for pattern in (
+        re.compile(r"\b(?:you can )?call me\s+([A-Za-z]+)\b", re.IGNORECASE),
+        re.compile(r"\b(?:everyone|people)\s+calls?\s+me\s+([A-Za-z]+)\b", re.IGNORECASE),
+    ):
+        match = pattern.search(text)
+        if match is not None:
+            alias_matches.append((match.group(1).strip(), match.group(0).strip()))
+    for alias, source_span in alias_matches:
+        if len(alias) < 2:
             continue
-        candidate_lower = candidate_clean.lower()
-        if alias_lower == candidate_lower:
-            continue
-        if candidate_lower.startswith(alias_lower):
-            return alias, candidate_clean, greeting_match.group(0).strip()
+        alias_lower = alias.lower()
+        for candidate in candidate_names:
+            candidate_clean = candidate.strip()
+            if not candidate_clean or candidate_clean.lower() == speaker_name.lower():
+                continue
+            candidate_lower = candidate_clean.lower()
+            if alias_lower == candidate_lower:
+                continue
+            if candidate_lower.startswith(alias_lower):
+                return alias, candidate_clean, source_span
+        return alias, speaker_name.strip() or "user", source_span
     return None
 
 
@@ -231,6 +240,23 @@ def _extract_relationship_mentions(text: str) -> list[tuple[str, str, str]]:
                 continue
             seen.add(key)
             mentions.append(key)
+    named_relation_pattern = re.compile(
+        r"\b([A-Za-z]+)\s+is\s+my\s+(mother|mom|father|dad|sister|brother|friend|partner|project partner)\b",
+        re.IGNORECASE,
+    )
+    for match in named_relation_pattern.finditer(text):
+        named_entity = match.group(1).strip().title()
+        relation_surface = match.group(2).strip().lower()
+        relation_type = {
+            "mom": "mother",
+            "dad": "father",
+        }.get(relation_surface, relation_surface)
+        source_span = match.group(0).strip()
+        key = (relation_type, named_entity, source_span)
+        if key in seen:
+            continue
+        seen.add(key)
+        mentions.append(key)
     return mentions
 
 

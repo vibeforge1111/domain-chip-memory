@@ -121,7 +121,8 @@ Tasks:
 
 - [x] create Telegram-style multi-party memory probes
 - [x] include commitments, aliases, social graph, grief/support, negation, uncertainty
-- [ ] verify retrieval and answer quality on those probes
+- [ ] verify answer quality on those probes
+- [x] verify retrieval coverage on those probes
 
 ## Operating Rules
 

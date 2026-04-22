@@ -1354,6 +1354,149 @@ def test_shadow_ingest_evaluation_supports_historical_state_probes():
     assert evaluation.probe_results[0].matched_expected is True
 
 
+def test_shadow_ingest_evaluation_supports_alias_and_commitment_probes():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    ingest_result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="telegram-alias-commitment",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="Everyone calls me Jo in here.",
+                    timestamp="2026-04-01T09:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I'm going to send the investor memo next Friday.",
+                    timestamp="2026-04-03T10:00:00Z",
+                ),
+            ],
+        )
+    )
+    evaluation = adapter.evaluate_ingest(
+        ingest_result,
+        probes=[
+            SparkShadowProbe(
+                probe_id="p1",
+                probe_type="evidence",
+                subject="user",
+                predicate="alias_binding",
+                query="What nickname does the user use in this chat?",
+                expected_value="Jo",
+                min_results=1,
+            ),
+            SparkShadowProbe(
+                probe_id="p2",
+                probe_type="evidence",
+                subject="user",
+                predicate="commitment_event",
+                query="What is the user planning to send next Friday?",
+                expected_value="investor memo",
+                min_results=1,
+            ),
+        ],
+    )
+
+    assert ingest_result.accepted_writes == 2
+    assert all(result.hit for result in evaluation.probe_results)
+    assert all(result.matched_expected is True for result in evaluation.probe_results)
+
+
+def test_shadow_ingest_evaluation_supports_negation_unknown_reported_speech_and_relationship_probes():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    ingest_result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="telegram-conversational-bridge",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I've never been to Boston before.",
+                    timestamp="2026-04-05T11:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="I can't remember the name of that co-op game we talked about.",
+                    timestamp="2026-04-05T11:05:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m3",
+                    role="user",
+                    content="The doctor said it's not too serious, just rest for a few days.",
+                    timestamp="2026-04-07T08:30:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m4",
+                    role="user",
+                    content="Anna is my sister and Leo is my project partner.",
+                    timestamp="2026-04-10T13:00:00Z",
+                ),
+            ],
+        )
+    )
+    evaluation = adapter.evaluate_ingest(
+        ingest_result,
+        probes=[
+            SparkShadowProbe(
+                probe_id="p1",
+                probe_type="evidence",
+                subject="user",
+                predicate="negation_record",
+                query="Had the user been to Boston before?",
+                expected_value="No",
+                min_results=1,
+            ),
+            SparkShadowProbe(
+                probe_id="p2",
+                probe_type="evidence",
+                subject="user",
+                predicate="unknown_record",
+                query="What game can't the user remember?",
+                expected_value="unknown",
+                min_results=1,
+            ),
+            SparkShadowProbe(
+                probe_id="p3",
+                probe_type="evidence",
+                subject="user",
+                predicate="reported_speech",
+                query="What did the doctor say about the injury?",
+                expected_value="The doctor said it's not too serious",
+                min_results=1,
+            ),
+            SparkShadowProbe(
+                probe_id="p4",
+                probe_type="evidence",
+                subject="user",
+                predicate="relationship_edge",
+                query="Who is Anna to the user?",
+                expected_value="sister",
+                min_results=1,
+            ),
+            SparkShadowProbe(
+                probe_id="p5",
+                probe_type="evidence",
+                subject="user",
+                predicate="relationship_edge",
+                query="Who is Leo to the user?",
+                expected_value="project partner",
+                min_results=1,
+            ),
+        ],
+    )
+
+    assert ingest_result.accepted_writes == 4
+    assert all(result.hit for result in evaluation.probe_results)
+    assert all(result.matched_expected is True for result in evaluation.probe_results)
+
+
 def test_shadow_report_aggregates_multiple_evaluations():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)
