@@ -43,6 +43,7 @@ _COVERAGE_STOPWORDS = {
 _KINSHIP_TOKENS = {
     "mother",
     "mom",
+    "mum",
     "father",
     "dad",
     "friend",
@@ -61,6 +62,22 @@ _FAMILY_MEMBER_ORDER = {
     "sister": 2,
     "brother": 3,
 }
+
+_FAMILY_VISIT_OR_SHARED_TIME_TERMS = (
+    "visit",
+    "visited",
+    "came over",
+    "dropped by",
+    "spend time",
+    "spent time",
+    "hung out",
+)
+
+
+def _question_mentions_family_visit_or_shared_time(question_lower: str) -> bool:
+    return any(token in question_lower for token in _KINSHIP_TOKENS) and any(
+        token in question_lower for token in _FAMILY_VISIT_OR_SHARED_TIME_TERMS
+    )
 
 _SUPPORT_TOKENS = {
     "grief",
@@ -207,9 +224,7 @@ def _question_prefers_typed_graph_evidence(question: NormalizedQuestion) -> bool
         token in question_lower for token in ("going to", "conference", "pass away", "passed away")
     ):
         return True
-    if question_lower.startswith("when ") and "visit" in question_lower and any(
-        token in question_lower for token in ("mother", "mom", "father", "dad", "sister", "brother", "family")
-    ):
+    if question_lower.startswith("when ") and _question_mentions_family_visit_or_shared_time(question_lower):
         return True
     if any(token in question_lower for token in ("ever", "before")) and any(
         token in question_lower for token in ("tried", "been", "visited", "had")
@@ -230,9 +245,7 @@ def _question_prefers_entity_linked_evidence(question: NormalizedQuestion) -> bo
         token in question_lower for token in ("tried", "been", "visited", "had")
     ):
         return True
-    if question_lower.startswith(("who ", "which ")) and "visit" in question_lower and any(
-        token in question_lower for token in ("family member", "family members", "mother", "mom", "father", "dad", "sister", "brother")
-    ):
+    if question_lower.startswith(("who ", "which ")) and _question_mentions_family_visit_or_shared_time(question_lower):
         return True
     return False
 
@@ -245,8 +258,7 @@ def _fused_shadow_selector(question: NormalizedQuestion) -> str:
         return "entity_linked_first"
     if (
         question_lower.startswith("when ")
-        and "visit" in question_lower
-        and any(token in question_lower for token in ("mother", "mom", "father", "dad", "sister", "brother", "family"))
+        and _question_mentions_family_visit_or_shared_time(question_lower)
     ):
         return "typed_graph_first"
     if _question_prefers_exact_conversational_evidence(question):
@@ -287,6 +299,8 @@ def _entry_answer_candidate_text(question: NormalizedQuestion, entry: Any) -> st
     question_lower = question.question.lower()
     predicate = str(getattr(entry, "predicate", "")).strip().lower()
     metadata = getattr(entry, "metadata", {}) or {}
+    source_span = str(metadata.get("source_span", "")).strip()
+    time_normalized = str(metadata.get("time_normalized", "")).strip()
     if predicate == "alias_binding":
         if "nickname" in question_lower or "call" in question_lower:
             return str(metadata.get("alias", "")).strip()
@@ -310,14 +324,16 @@ def _entry_answer_candidate_text(question: NormalizedQuestion, entry: Any) -> st
         and question_lower.startswith("when ")
         and any(token in question_lower for token in ("mother", "mom", "father", "dad", "sister", "brother", "family"))
     ):
-        return str(metadata.get("time_normalized", "")).strip() or str(metadata.get("source_span", "")).strip()
+        return time_normalized or source_span
     if predicate == "visit_event" and question_lower.startswith(("who ", "which ")):
         relation_type = str(metadata.get("relation_type", "")).strip().lower()
         if relation_type in _FAMILY_MEMBER_ORDER:
             return relation_type
         return str(metadata.get("other_entity", "")).strip()
     if predicate in {"relationship_edge", "loss_event", "gift_event", "support_event"} and question_lower.startswith(("who ", "what ", "when ")):
-        return str(metadata.get("source_span", "")).strip()
+        if question_lower.startswith("when "):
+            return time_normalized
+        return source_span
     return ""
 
 
@@ -325,8 +341,7 @@ def _family_visit_answer_candidate_text(question: NormalizedQuestion, entries: l
     question_lower = question.question.lower()
     if not (
         question_lower.startswith(("who ", "which "))
-        and "visit" in question_lower
-        and any(token in question_lower for token in ("family member", "family members", "mother", "mom", "father", "dad", "sister", "brother"))
+        and _question_mentions_family_visit_or_shared_time(question_lower)
     ):
         return ""
     found: dict[str, int] = {}

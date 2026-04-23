@@ -17,9 +17,25 @@ _FUTURE_TIME_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_RELATION_ALIAS_TO_CANONICAL = {
+    "mom": "mother",
+    "mum": "mother",
+    "mother": "mother",
+    "dad": "father",
+    "father": "father",
+    "sister": "sister",
+    "brother": "brother",
+    "family": "family",
+    "friend": "friend",
+    "partner": "partner",
+    "project partner": "project partner",
+}
+
+_KINSHIP_SURFACE_PATTERN = r"mother|mom|mum|father|dad|sister|brother"
+
 _RELATIONSHIP_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("mother", re.compile(r"\b(?:my|her|his|our)\s+(?:mother|mom)\b", re.IGNORECASE)),
-    ("father", re.compile(r"\b(?:my|her|his|our)\s+(?:father|dad)\b", re.IGNORECASE)),
+    ("mother", re.compile(r"\b(?:my|her|his|our|their)\s+(?:mother|mom|mum)\b", re.IGNORECASE)),
+    ("father", re.compile(r"\b(?:my|her|his|our|their)\s+(?:father|dad)\b", re.IGNORECASE)),
     ("sister", re.compile(r"\b(?:my|her|his|our)\s+sister(?:\s+([A-Za-z]+))?\b", re.IGNORECASE)),
     ("brother", re.compile(r"\b(?:my|her|his|our)\s+brother(?:\s+([A-Za-z]+))?\b", re.IGNORECASE)),
     ("friend", re.compile(r"\b(?:my|her|his|our)\s+friend(?:\s+([A-Za-z]+))?\b", re.IGNORECASE)),
@@ -307,10 +323,15 @@ def _extract_unknown_record(text: str) -> tuple[str, str] | None:
 
 
 def _infer_relationship_context(text: str, lower: str) -> tuple[str, str]:
-    if any(token in lower for token in ("my mother", "my mom", "her mother", "her mom", "our mother", "our mom")):
-        return "mother", "mother"
-    if any(token in lower for token in ("my father", "my dad", "her father", "her dad", "our father", "our dad")):
-        return "father", "father"
+    kinship_match = re.search(
+        rf"\b(?:my|her|his|our|their)\s+({_KINSHIP_SURFACE_PATTERN})\b",
+        lower,
+        re.IGNORECASE,
+    )
+    if kinship_match:
+        relation_type = _RELATION_ALIAS_TO_CANONICAL.get(kinship_match.group(1).lower(), "")
+        if relation_type:
+            return relation_type, relation_type
     friend_match = re.search(r"\b(?:my|her|his|our)\s+friend\s+([A-Za-z]+)\b", text, re.IGNORECASE)
     if friend_match:
         return "friend", friend_match.group(1).strip().title()
@@ -337,16 +358,13 @@ def _extract_relationship_mentions(text: str) -> list[tuple[str, str, str]]:
             seen.add(key)
             mentions.append(key)
     named_relation_pattern = re.compile(
-        r"\b([A-Za-z]+)\s+is\s+my\s+(mother|mom|father|dad|sister|brother|friend|partner|project partner)\b",
+        r"\b([A-Za-z]+)\s+is\s+my\s+(mother|mom|mum|father|dad|sister|brother|friend|partner|project partner)\b",
         re.IGNORECASE,
     )
     for match in named_relation_pattern.finditer(text):
         named_entity = match.group(1).strip().title()
         relation_surface = match.group(2).strip().lower()
-        relation_type = {
-            "mom": "mother",
-            "dad": "father",
-        }.get(relation_surface, relation_surface)
+        relation_type = _RELATION_ALIAS_TO_CANONICAL.get(relation_surface, relation_surface)
         source_span = match.group(0).strip()
         key = (relation_type, named_entity, source_span)
         if key in seen:
@@ -365,19 +383,31 @@ def _visit_like_family_relations(
     other_entity: str,
 ) -> list[tuple[str, str, str]]:
     direct_visit_trigger = any(
-        trigger in lower for trigger in ("came to see me", "visited me", "visited him", "visited her")
+        trigger in lower
+        for trigger in (
+            "came to see me",
+            "came to see him",
+            "came to see her",
+            "came to see us",
+            "came over",
+            "dropped by",
+            "visited me",
+            "visited him",
+            "visited her",
+            "visited us",
+        )
     )
     shared_time_trigger = any(
         trigger in lower
-        for trigger in ("spent time with", "spending time with", "spend time with", "chilling together")
+        for trigger in ("spent time with", "spending time with", "spend time with", "hung out with", "chilling together")
     )
     explicit_family_visit_trigger = bool(
         re.search(
-            r"\b(?:my|her|his|our)\s+(?:mother|mom|father|dad|sister|brother)\s+visited\b",
+            rf"\b(?:my|her|his|our|their)\s+(?:{_KINSHIP_SURFACE_PATTERN})\s+(?:visited|came over|dropped by)\b",
             lower,
         )
         or re.search(
-            r"\bvisit(?:ed|ing)?\s+(?:my|her|his|our)\s+(?:mother|mom|father|dad|sister|brother)\b",
+            rf"\bvisit(?:ed|ing)?\s+(?:my|her|his|our|their)\s+(?:{_KINSHIP_SURFACE_PATTERN})\b",
             lower,
         )
     )

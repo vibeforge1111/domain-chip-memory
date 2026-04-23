@@ -1,5 +1,78 @@
 # Session Handoff 2026-04-23
 
+## Latest Continuation Checkpoint - 2026-04-24
+
+Continue from branch `feature/domain-chip-family-visit-memory`.
+
+The 2026-04-24 continuation closed the known `conv44-47` answer-surface regression and added the first kinship/shared-time hardening pass for Telegram-like memory questions.
+
+What changed in code:
+
+- exact/entity/graph answer candidates no longer promote non-temporal support or relationship spans for `when ...` questions when a normalized time is available
+- kinship aliases now normalize across `mom` / `mum` / `mother` and `dad` / `father`
+- family visit detection now covers `came over`, `dropped by`, and shared-time phrasing such as `spent time with`, `spend time with`, and `hung out`
+- family-member aggregation now works for questions like `Which family members did I spend time with recently?`, not just explicit `visited` wording
+
+Tracked files modified in this checkpoint:
+
+- `src/domain_chip_memory/memory_conversational_index.py`
+- `src/domain_chip_memory/memory_conversational_retrieval.py`
+- `src/domain_chip_memory/memory_conversational_shadow_eval.py`
+- `tests/test_conversational_index.py`
+
+Important benchmark/product evidence:
+
+- reconstructed `conv44+47` heuristic slice: summary `7/90`, exact-turn `9/90`, entity `9/90`, graph `8/90`, fused `11/90`, fused regressions vs summary `0`, fused improvements vs summary `4`
+- sensitive heuristic 6-probe after kinship hardening: summary `2/6`, exact-turn `4/6`, entity `5/6`, graph `4/6`, fused `6/6`
+- sensitive MiniMax 6-probe after kinship hardening: summary `2/6`, exact-turn `3/6`, entity `5/6`, graph `4/6`, fused `6/6`
+- Telegram shadow report after kinship hardening: accepted `14`, rejected `0`, skipped `2`, evidence `12/12`, expected evidence `12/12`, current state `1/1`, historical state `1/1`
+- live Telegram direct chat probe was completed through the canonical Builder bridge path on port `8788`; `localhost:8080` was confirmed to be legacy fallback/no listener, not the healthy memory runtime path for this session
+
+Builder/Telegram runtime follow-up:
+
+- canonical Telegram ingress remains `spark-telegram-bot`; do not start a second receiver
+- Builder memory substrate was healthy via `python -m spark_intelligence.cli memory status --home .tmp-home-live-telegram-real --json`
+- direct memory smoke through `domain_chip_memory` succeeded, which narrowed the live failure to Builder Telegram routing/classification rather than memory storage
+- `spark-intelligence-builder` now classifies recent family/shared-time messages into `profile.recent_family_members`
+- authorized Telegram shadow write/read now routes through memory:
+  - write response: `I'll remember you recently spent time with: mother, sister.`
+  - read response: `You recently spent time with mother, sister.`
+- a real Telegram Bot API outbound status ping succeeded after the routing fix; no duplicate receiver was started
+
+Artifacts from this checkpoint:
+
+- `artifacts/telegram_multi_party_probe_report_after_candidate_guard.json`
+- `artifacts/telegram_multi_party_probe_report_after_kinship_hardening.json`
+- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-sensitive-6probe-after-kinship-hardening.json`
+- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-minimax-sensitive-6probe-after-kinship-hardening.json`
+
+Verification commands that passed:
+
+```powershell
+python -m pytest tests/test_conversational_index.py -k "kinship_aliases or mom_question or family_shared_time or family_visit_members_for_conv47 or extracts_family_visit_events_for_conv47 or retrieve_conversational_entries_finds_full_family_hobby_turns_for_conv48" -q
+python -m pytest tests/test_conversational_index.py -k "exact_turn_hybrid_shadow_packets_add_conversational_evidence_for_exact_fact_question or exact_turn_hybrid_shadow_packets_promote_temporal_surface_for_conv47_trip_question or do_not_promote_non_temporal_support_span_for_when_question or fused_conversational_hybrid_shadow_packets or entity_linked_hybrid_shadow_packets" -q
+python -m pytest tests/test_typed_temporal_graph_memory.py tests/test_typed_temporal_graph_retrieval.py -q
+python -m pytest tests/test_memory_systems.py -k "summary_synthesis_locomo_conv48_social_memory_questions_recover_exact_lists_and_anchors or conv42_temporal_anchor_questions_recover_older_event_grounding or conv49_typed_fact_and_count_questions_recover_exact_answers or unseen_conv47_recovers_exact_supportable_answers" -q
+python -m pytest tests/test_providers.py -k "prefers_in_year_candidate_over_bare_year_for_when_question or preserves_matching_temporal_answer_candidate_for_when_question or expand_answer_from_context_preserves_multiline_beam_event_ordering_surface or expand_answer_from_context_preserves_beam_temporal_surface_with_dates" -q
+python -m pytest tests/test_memory_systems.py -k "longmemeval_preference_candidates_cover_151_175_single_session_lane or longmemeval_aggregate_candidates_cover_176_200_slice or longmemeval_summary_synthesis_candidates_cover_226_250_frontier_slice" -q
+python -m domain_chip_memory.cli validate-spark-shadow-replay docs/examples/spark_shadow/telegram_multi_party_probe_pack.json
+python -m domain_chip_memory.cli run-spark-shadow-report docs/examples/spark_shadow/telegram_multi_party_probe_pack.json --write artifacts\telegram_multi_party_probe_report_after_kinship_hardening.json
+```
+
+Builder verification commands that passed:
+
+```powershell
+python -m pytest tests/test_telegram_generic_memory.py -k "family_shared_time or generic_relationship_memory_before_provider_resolution or generic_plan_query" -q
+python -m pytest tests/test_memory_orchestrator.py -k "profile_fact" -q
+```
+
+Recommended next step:
+
+1. Keep this patch narrow and land it after review.
+2. Review and land the matching `spark-intelligence-builder` routing patch alongside this domain-chip-memory hardening.
+3. Add one or two more real Telegram write/read probes only after confirming they exercise the Builder bridge, not the legacy `8080` fallback.
+4. Then move to the next architecture slice: temporal validity windows for superseded facts.
+
 ## What Happened Today
 
 Today was a real architecture-and-product session, not just benchmark paperwork.

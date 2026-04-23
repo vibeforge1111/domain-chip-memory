@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from domain_chip_memory.contracts import NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn
 from domain_chip_memory.loaders import load_locomo_json
 from domain_chip_memory.memory_conversational_index import build_conversational_index
 from domain_chip_memory.memory_conversational_retrieval import retrieve_conversational_entries
@@ -227,6 +228,73 @@ def test_build_conversational_index_extracts_family_visit_events_for_conv47():
     )
 
 
+def test_build_conversational_index_normalizes_kinship_aliases_for_visit_events():
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="synthetic",
+        sample_id="telegram-kinship-aliases",
+        sessions=[
+            NormalizedSession(
+                session_id="telegram-chat",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="t1",
+                        speaker="user",
+                        text="My mom came over yesterday.",
+                        timestamp="2026-04-12T10:00:00Z",
+                    ),
+                    NormalizedTurn(
+                        turn_id="t2",
+                        speaker="user",
+                        text="Yesterday I spent time with my sister at the park.",
+                        timestamp="2026-04-12T10:05:00Z",
+                    ),
+                ],
+            )
+        ],
+        questions=[],
+    )
+
+    entries = build_conversational_index(sample)
+
+    assert any(
+        entry.predicate == "visit_event"
+        and entry.metadata.get("relation_type") == "mother"
+        and entry.metadata.get("time_normalized") == "April 11, 2026"
+        for entry in entries
+    )
+    assert any(
+        entry.predicate == "visit_event"
+        and entry.metadata.get("relation_type") == "sister"
+        and entry.metadata.get("time_normalized") == "April 11, 2026"
+        for entry in entries
+    )
+
+
+def test_retrieve_conversational_entries_matches_mom_question_to_mother_relation():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-48"
+    )
+    question = NormalizedQuestion(
+        question_id="synthetic-conv48-mom-loss",
+        question="When did Deborah's mom pass away?",
+        category="1",
+        expected_answers=["a few years before 2023"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+
+    hits = retrieve_conversational_entries(question, build_conversational_index(sample), limit=4)
+
+    assert any(
+        entry.predicate == "loss_event"
+        and entry.metadata.get("relation_type") == "mother"
+        and entry.metadata.get("time_normalized") == "a few years before 2023"
+        for entry in hits
+    )
+
+
 def test_expected_answer_coverage_accepts_multi_item_family_answers():
     assert _expected_answer_coverage(
         "My mom was interested in art. My mom had a big passion for cooking. Reading was one of her hobbies. Travel was also her great passion.",
@@ -392,6 +460,35 @@ def test_exact_turn_hybrid_shadow_packets_promote_temporal_surface_for_conv47_tr
     assert packet.answer_candidates
     assert packet.answer_candidates[0].text == "in 2021"
     assert packet.answer_candidates[0].source == "evidence_memory"
+
+
+def test_exact_turn_hybrid_shadow_packets_do_not_promote_non_temporal_support_span_for_when_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-44"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "When is Andrew planning to go to the beach with his girlfriend?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_exact_turn_hybrid_shadow_packets(subset, conversational_limit=4)
+    packet = packets[0]
+
+    assert packet.answer_candidates
+    assert packet.answer_candidates[0].text == "November 2023"
+    assert "answer_candidate: it's been a bit hectic" not in packet.assembled_context.lower()
 
 
 def test_exact_turn_shadow_answer_eval_tracks_exact_fact_shadow_packets():
@@ -866,6 +963,48 @@ def test_entity_linked_hybrid_shadow_packets_aggregate_family_visit_members_for_
     ]
 
     _, packets = build_entity_linked_hybrid_shadow_packets(subset, entity_limit=8)
+    packet = packets[0]
+
+    assert packet.answer_candidates[0].text == "mother, sister"
+    assert packet.answer_candidates[0].metadata["source_kind"] == "entity_linked_conversational_family_visit"
+    assert "answer_candidate: mother, sister" in packet.assembled_context.lower()
+
+
+def test_entity_linked_hybrid_shadow_packets_aggregate_family_shared_time_without_visit_word():
+    question = NormalizedQuestion(
+        question_id="synthetic-family-shared-time",
+        question="Which family members did I spend time with recently?",
+        category="1",
+        expected_answers=["mother, sister"],
+        evidence_session_ids=[],
+        evidence_turn_ids=[],
+    )
+    sample = NormalizedBenchmarkSample(
+        benchmark_name="synthetic",
+        sample_id="telegram-family-shared-time",
+        sessions=[
+            NormalizedSession(
+                session_id="telegram-chat",
+                turns=[
+                    NormalizedTurn(
+                        turn_id="t1",
+                        speaker="user",
+                        text="My mom came over yesterday.",
+                        timestamp="2026-04-12T10:00:00Z",
+                    ),
+                    NormalizedTurn(
+                        turn_id="t2",
+                        speaker="user",
+                        text="Yesterday I spent time with my sister at the park.",
+                        timestamp="2026-04-12T10:05:00Z",
+                    ),
+                ],
+            )
+        ],
+        questions=[question],
+    )
+
+    _, packets = build_entity_linked_hybrid_shadow_packets([sample], entity_limit=8)
     packet = packets[0]
 
     assert packet.answer_candidates[0].text == "mother, sister"

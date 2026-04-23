@@ -42,6 +42,21 @@ _SUPPORT_TOKENS = {
     "bali",
 }
 
+_RELATION_ALIASES = {
+    "mom": "mother",
+    "mum": "mother",
+    "mother": "mother",
+    "dad": "father",
+    "father": "father",
+    "sister": "sister",
+    "brother": "brother",
+    "family": "family",
+    "friend": "friend",
+    "partner": "partner",
+    "husband": "husband",
+    "wife": "wife",
+}
+
 
 def _is_pure_question_turn(text: str) -> bool:
     stripped = text.strip()
@@ -65,9 +80,9 @@ def _entry_search_text(entry: ConversationalIndexEntry) -> str:
 
 def _question_relation_tokens(question_lower: str) -> set[str]:
     relation_tokens: set[str] = set()
-    for token in ("mother", "mom", "father", "dad", "friend", "sister", "brother", "partner", "husband", "wife"):
+    for token, canonical in _RELATION_ALIASES.items():
         if token in question_lower:
-            relation_tokens.add(token)
+            relation_tokens.add(canonical)
     return relation_tokens
 
 
@@ -84,9 +99,13 @@ def _question_is_temporal_like(question_lower: str) -> bool:
 
 
 def _question_mentions_family_visit(question_lower: str) -> bool:
-    return ("visit" in question_lower or "visited" in question_lower) and any(
+    family_or_kinship = any(
         token in question_lower
         for token in ("family", "mother", "mom", "father", "dad", "sister", "brother")
+    )
+    return family_or_kinship and any(
+        token in question_lower
+        for token in ("visit", "visited", "came over", "dropped by", "spend time", "spent time", "hung out")
     )
 
 
@@ -202,6 +221,7 @@ def _entity_link_search_terms(question: NormalizedQuestion) -> set[str]:
         if speaker_name:
             terms.add(speaker_name)
     terms.update(token for token in re.findall(r"[a-z]+", question_lower) if len(token) >= 3)
+    terms.update(_question_relation_tokens(question_lower))
     return {term for term in terms if term}
 
 
