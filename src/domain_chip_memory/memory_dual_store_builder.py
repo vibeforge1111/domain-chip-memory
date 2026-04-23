@@ -8,7 +8,6 @@ from .memory_builder_sections import append_retrieved_entries, build_entry_metad
 from .memory_extraction import ObservationEntry
 from .runs import BaselinePromptPacket, RetrievedContextItem
 
-
 def build_dual_store_event_calendar_hybrid_packets(
     samples: list[NormalizedBenchmarkSample],
     *,

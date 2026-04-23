@@ -13,14 +13,18 @@ from .sdk import (
     build_sdk_maintenance_replay_contract_summary,
 )
 from .spark_shadow import (
+    build_telegram_shadow_adapter_contract_summary,
     SparkShadowIngestAdapter,
     SparkShadowIngestRequest,
     SparkShadowReport,
     SparkShadowProbe,
     SparkShadowTurn,
+    build_builder_shadow_adapter_contract_summary,
     build_shadow_report,
     build_shadow_ingest_contract_summary,
     build_shadow_replay_contract_summary,
+    normalize_builder_shadow_export_payload,
+    normalize_telegram_bot_export_payload,
     validate_shadow_replay_payload,
 )
 from .spark_integration import build_spark_integration_contract_summary
@@ -43,6 +47,10 @@ __all__ = [
     "SparkShadowIngestRequest",
     "SparkShadowProbe",
     "SparkShadowReport",
+    "normalize_builder_shadow_export_payload",
+    "normalize_telegram_bot_export_payload",
+    "build_builder_shadow_adapter_contract_summary",
+    "build_telegram_shadow_adapter_contract_summary",
     "build_shadow_report",
     "build_shadow_ingest_contract_summary",
     "build_shadow_replay_contract_summary",
