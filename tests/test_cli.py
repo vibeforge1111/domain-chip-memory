@@ -10647,7 +10647,9 @@ def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatc
 
     telegram_validation_payload = json.loads(telegram_validation_output.read_text(encoding="utf-8"))
     assert telegram_validation_payload["valid"] is True
-    assert telegram_validation_payload["conversation_count"] == 6
+    assert telegram_validation_payload["conversation_count"] == 7
+    assert telegram_validation_payload["turn_count"] == 16
+    assert telegram_validation_payload["probe_count"] == 14
 
     monkeypatch.setattr(
         sys,
@@ -10680,7 +10682,12 @@ def test_checked_in_spark_shadow_examples_run_via_cli(tmp_path: Path, monkeypatc
     cli.main()
 
     telegram_payload = json.loads(telegram_output.read_text(encoding="utf-8"))
-    assert telegram_payload["report"]["run_count"] == 6
+    assert telegram_payload["report"]["run_count"] == 7
+    telegram_probe_rows = {
+        row["probe_type"]: row for row in telegram_payload["report"]["summary"]["probe_rows"]
+    }
+    assert telegram_probe_rows["evidence"]["expected_matches"] == 12
+    assert telegram_probe_rows["evidence"]["expected_total"] == 12
 
     monkeypatch.setattr(
         sys,

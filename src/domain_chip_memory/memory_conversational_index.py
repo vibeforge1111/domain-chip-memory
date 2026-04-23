@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import date, timedelta
 
 from .contracts import NormalizedBenchmarkSample, NormalizedSession, NormalizedTurn
 
@@ -68,6 +69,52 @@ _UNKNOWN_CUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("dont_know", re.compile(r"\b(?:i\s+)?do(?:n't| not)\s+know\b", re.IGNORECASE)),
 )
 
+_FAMILY_RELATION_TYPES = {"mother", "father", "sister", "brother", "family"}
+
+_DAY_WORDS = {
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+}
+
+_RELATION_NAMED_ENTITY_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "at",
+    "for",
+    "from",
+    "in",
+    "of",
+    "on",
+    "the",
+    "to",
+    "with",
+    *_DAY_WORDS.keys(),
+}
+
+_MONTH_NUMBERS = {
+    "january": 1,
+    "february": 2,
+    "march": 3,
+    "april": 4,
+    "may": 5,
+    "june": 6,
+    "july": 7,
+    "august": 8,
+    "september": 9,
+    "october": 10,
+    "november": 11,
+    "december": 12,
+}
+
 
 @dataclass(frozen=True)
 class ConversationalIndexEntry:
@@ -120,13 +167,44 @@ def _anchor_year(timestamp: str | None) -> int | None:
     return int(match.group(1))
 
 
+def _anchor_date(timestamp: str | None) -> date | None:
+    if not timestamp:
+        return None
+    iso_match = re.match(r"\s*((?:19|20)\d{2})-(\d{2})-(\d{2})", timestamp)
+    if iso_match is not None:
+        return date(int(iso_match.group(1)), int(iso_match.group(2)), int(iso_match.group(3)))
+    match = re.search(
+        r"\b(\d{1,2})\s+"
+        r"(January|February|March|April|May|June|July|August|September|October|November|December)"
+        r",\s+((?:19|20)\d{2})\b",
+        timestamp,
+        re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    month = _MONTH_NUMBERS.get(match.group(2).lower())
+    if month is None:
+        return None
+    return date(int(match.group(3)), month, int(match.group(1)))
+
+
+def _format_month_day_year(anchor: date) -> str:
+    return f"{anchor.strftime('%B')} {anchor.day}, {anchor.year}"
+
+
 def _normalize_conversational_time_expression(expression: str, timestamp: str | None) -> str:
     normalized = expression.strip().lower()
     anchor_year = _anchor_year(timestamp)
-    if re.search(r"\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\s+ago\b", normalized):
-        return ""
-    if normalized in {"yesterday", "today"}:
-        return ""
+    anchor_day = _anchor_date(timestamp)
+    if anchor_day is not None and normalized in {"yesterday", "today"}:
+        offset = 1 if normalized == "yesterday" else 0
+        return _format_month_day_year(anchor_day - timedelta(days=offset))
+    days_ago_match = re.fullmatch(r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\s+ago", normalized)
+    if days_ago_match is not None and anchor_day is not None:
+        raw_count = days_ago_match.group(1)
+        day_count = int(raw_count) if raw_count.isdigit() else _DAY_WORDS.get(raw_count, 0)
+        if day_count > 0:
+            return _format_month_day_year(anchor_day - timedelta(days=day_count))
     if normalized in {"a few years ago", "few years ago"} and anchor_year is not None:
         return f"a few years before {anchor_year}"
     if normalized == "last year" and anchor_year is not None:
@@ -141,17 +219,17 @@ def _extract_alias_binding(
     candidate_names: list[str],
 ) -> tuple[str, str, str] | None:
     greeting_match = re.match(r"^\s*(?:hey|hi)\s+([A-Za-z]+)\b", text, re.IGNORECASE)
-    alias_matches: list[tuple[str, str]] = []
+    alias_matches: list[tuple[str, str, str]] = []
     if greeting_match is not None:
-        alias_matches.append((greeting_match.group(1).strip(), greeting_match.group(0).strip()))
+        alias_matches.append(("greeting", greeting_match.group(1).strip(), greeting_match.group(0).strip()))
     for pattern in (
         re.compile(r"\b(?:you can )?call me\s+([A-Za-z]+)\b", re.IGNORECASE),
         re.compile(r"\b(?:everyone|people)\s+calls?\s+me\s+([A-Za-z]+)\b", re.IGNORECASE),
     ):
         match = pattern.search(text)
         if match is not None:
-            alias_matches.append((match.group(1).strip(), match.group(0).strip()))
-    for alias, source_span in alias_matches:
+            alias_matches.append(("self_naming", match.group(1).strip(), match.group(0).strip()))
+    for alias_kind, alias, source_span in alias_matches:
         if len(alias) < 2:
             continue
         alias_lower = alias.lower()
@@ -164,6 +242,8 @@ def _extract_alias_binding(
                 continue
             if candidate_lower.startswith(alias_lower):
                 return alias, candidate_clean, source_span
+        if alias_kind == "greeting":
+            continue
         return alias, speaker_name.strip() or "user", source_span
     return None
 
@@ -248,6 +328,8 @@ def _extract_relationship_mentions(text: str) -> list[tuple[str, str, str]]:
                 named_entity = (match.group(1) or "").strip()
                 if named_entity and named_entity.isalpha():
                     named_entity = named_entity.title()
+                if named_entity.lower() in _RELATION_NAMED_ENTITY_STOPWORDS:
+                    named_entity = ""
             relation_surface = named_entity or relation_type
             key = (relation_type, relation_surface, source_span)
             if key in seen:
@@ -272,6 +354,53 @@ def _extract_relationship_mentions(text: str) -> list[tuple[str, str, str]]:
         seen.add(key)
         mentions.append(key)
     return mentions
+
+
+def _visit_like_family_relations(
+    text: str,
+    lower: str,
+    mentions: list[tuple[str, str, str]],
+    *,
+    relation_type: str,
+    other_entity: str,
+) -> list[tuple[str, str, str]]:
+    direct_visit_trigger = any(
+        trigger in lower for trigger in ("came to see me", "visited me", "visited him", "visited her")
+    )
+    shared_time_trigger = any(
+        trigger in lower
+        for trigger in ("spent time with", "spending time with", "spend time with", "chilling together")
+    )
+    explicit_family_visit_trigger = bool(
+        re.search(
+            r"\b(?:my|her|his|our)\s+(?:mother|mom|father|dad|sister|brother)\s+visited\b",
+            lower,
+        )
+        or re.search(
+            r"\bvisit(?:ed|ing)?\s+(?:my|her|his|our)\s+(?:mother|mom|father|dad|sister|brother)\b",
+            lower,
+        )
+    )
+    if not (direct_visit_trigger or shared_time_trigger or explicit_family_visit_trigger):
+        return []
+
+    relation_candidates: list[tuple[str, str, str]] = []
+    for mention_relation, mention_surface, _source_span in mentions:
+        if mention_relation in _FAMILY_RELATION_TYPES:
+            relation_candidates.append((mention_relation, mention_surface, text.strip()))
+
+    if relation_type in _FAMILY_RELATION_TYPES:
+        relation_candidates.append((relation_type, other_entity or relation_type, text.strip()))
+
+    seen: set[tuple[str, str]] = set()
+    deduped: list[tuple[str, str, str]] = []
+    for candidate_relation, candidate_surface, source_span in relation_candidates:
+        key = (candidate_relation, candidate_surface)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append((candidate_relation, candidate_surface, source_span))
+    return deduped
 
 
 def build_conversational_index(sample: NormalizedBenchmarkSample) -> list[ConversationalIndexEntry]:
@@ -307,7 +436,8 @@ def build_conversational_index(sample: NormalizedBenchmarkSample) -> list[Conver
             elif relation_type or other_entity:
                 recent_relation_by_speaker[speaker_key] = (relation_type, other_entity)
 
-            for mention_relation, mention_surface, source_span in _extract_relationship_mentions(text):
+            relationship_mentions = _extract_relationship_mentions(text)
+            for mention_relation, mention_surface, source_span in relationship_mentions:
                 recent_relation_by_speaker[speaker_key] = (mention_relation, mention_surface)
                 entries.append(
                     ConversationalIndexEntry(
@@ -324,6 +454,41 @@ def build_conversational_index(sample: NormalizedBenchmarkSample) -> list[Conver
                             "relation_type": mention_relation,
                             "other_entity": mention_surface if mention_surface != mention_relation else "",
                             "source_span": source_span,
+                        },
+                    )
+                )
+
+            for visit_relation, visit_surface, source_span in _visit_like_family_relations(
+                text,
+                lower,
+                relationship_mentions,
+                relation_type=relation_type,
+                other_entity=other_entity,
+            ):
+                time_match = _CONVERSATIONAL_TIME_PATTERN.search(lower)
+                time_expression_raw = time_match.group(1).lower() if time_match else ""
+                time_normalized = (
+                    _normalize_conversational_time_expression(time_expression_raw, timestamp)
+                    if time_expression_raw
+                    else ""
+                )
+                entries.append(
+                    ConversationalIndexEntry(
+                        entry_id=f"{turn.turn_id}:typed:visit_event:{len(entries)}",
+                        entry_type="typed_atom",
+                        subject=subject,
+                        predicate="visit_event",
+                        text=text,
+                        session_id=session.session_id,
+                        turn_id=turn.turn_id,
+                        timestamp=timestamp,
+                        metadata={
+                            "speaker": turn.speaker,
+                            "relation_type": visit_relation,
+                            "other_entity": visit_surface if visit_surface != visit_relation else "",
+                            "source_span": source_span,
+                            "time_expression_raw": time_expression_raw,
+                            "time_normalized": time_normalized,
                         },
                     )
                 )

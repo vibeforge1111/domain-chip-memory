@@ -217,6 +217,48 @@
       ]
     },
     {
+      "conversation_id": "telegram-family-visit",
+      "session_id": "telegram-chat-family-visit",
+      "metadata": {
+        "source": "telegram",
+        "scenario": "family_visit_memory"
+      },
+      "turns": [
+        {
+          "message_id": "m1",
+          "role": "user",
+          "content": "My mother came to see me with her friend two days ago.",
+          "timestamp": "2026-04-12T10:00:00Z"
+        },
+        {
+          "message_id": "m2",
+          "role": "user",
+          "content": "Yesterday I spent time with my sister and the kids at the park.",
+          "timestamp": "2026-04-12T10:05:00Z"
+        }
+      ],
+      "probes": [
+        {
+          "probe_id": "p11",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "visit_event",
+          "query": "When did the mother visit the user?",
+          "expected_value": "April 10, 2026",
+          "min_results": 1
+        },
+        {
+          "probe_id": "p12",
+          "probe_type": "evidence",
+          "subject": "user",
+          "predicate": "visit_event",
+          "query": "Which family members did the user spend time with recently?",
+          "expected_value": "sister",
+          "min_results": 1
+        }
+      ]
+    },
+    {
       "conversation_id": "telegram-multi-party-social",
       "session_id": "telegram-group-social",
       "metadata": {
@@ -245,7 +287,7 @@
       ],
       "probes": [
         {
-          "probe_id": "p11",
+          "probe_id": "p13",
           "probe_type": "evidence",
           "subject": "user",
           "predicate": "relationship_edge",
@@ -254,7 +296,7 @@
           "min_results": 1
         },
         {
-          "probe_id": "p12",
+          "probe_id": "p14",
           "probe_type": "evidence",
           "subject": "user",
           "predicate": "relationship_edge",

@@ -206,6 +206,29 @@ class SparkShadowIngestAdapter:
                     )
                 )
                 continue
+            if self._is_pre_write_non_memory_chat_turn(turn, normalized_role):
+                skipped_turns += 1
+                turn_traces.append(
+                    SparkShadowTurnTrace(
+                        message_id=turn.message_id,
+                        role=normalized_role,
+                        action="skipped_residue",
+                        session_id=session_id,
+                        turn_id=turn_id,
+                        accepted=False,
+                        unsupported_reason="non_memory_chat",
+                        trace={
+                            "operation": "shadow_ingest_turn",
+                            "status": "skipped_residue",
+                            "conversation_id": request.conversation_id,
+                            "message_id": turn.message_id,
+                            "role": normalized_role,
+                            "content": turn.content,
+                            "timestamp": turn.timestamp,
+                        },
+                    )
+                )
+                continue
             policy_decision, policy_row = self._promotion_policy_decision(
                 request.conversation_id,
                 dict(turn.metadata),
@@ -530,6 +553,19 @@ class SparkShadowIngestAdapter:
             "awesome",
             "sure",
         }
+
+    def _is_pre_write_non_memory_chat_turn(self, turn: SparkShadowTurn, normalized_role: str) -> bool:
+        if normalized_role not in self.writable_roles:
+            return False
+        metadata = dict(turn.metadata)
+        if self._has_structured_memory_hints(metadata):
+            return False
+        if self._is_onboarding_residue(metadata):
+            return True
+        normalized_text = self._normalize_residue_text(turn.content)
+        if not normalized_text:
+            return True
+        return self._looks_like_non_memory_topic_fragment(normalized_text)
 
     def _non_memory_chat_reason(
         self,
@@ -872,7 +908,13 @@ class SparkShadowIngestAdapter:
         matched_expected = None
         expected_value = str(probe.expected_value or "").strip().lower()
         if expected_value:
-            matched_expected = any(expected_value in item.text.lower() for item in result.items)
+            matched_expected = any(
+                expected_value in item.text.lower()
+                or expected_value in str(item.metadata.get("value", "")).strip().lower()
+                or expected_value in str(item.metadata.get("time_normalized", "")).strip().lower()
+                or expected_value in str(item.metadata.get("relation_type", "")).strip().lower()
+                for item in result.items
+            )
         memory_role = result.items[0].memory_role if result.items else "unknown"
         return SparkShadowProbeResult(
             probe_id=probe.probe_id,

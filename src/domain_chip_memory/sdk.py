@@ -842,7 +842,7 @@ class SparkMemorySDK:
             relation_type = _normalize_scalar(metadata.get("relation_type"))
             other_entity = _normalize_scalar(metadata.get("other_entity"))
             return source_span or f"{other_entity} is {relation_type}".strip()
-        if predicate in {"support_event", "loss_event", "gift_event", "commitment_event"}:
+        if predicate in {"support_event", "loss_event", "gift_event", "commitment_event", "visit_event"}:
             return source_span
         return ""
 
@@ -869,6 +869,12 @@ class SparkMemorySDK:
             return _normalize_scalar(metadata.get("item_type")) or _normalize_scalar(metadata.get("source_span"))
         if predicate == "commitment_event":
             return _normalize_scalar(metadata.get("source_span"))
+        if predicate == "visit_event":
+            return (
+                _normalize_scalar(metadata.get("time_normalized"))
+                or _normalize_scalar(metadata.get("time_expression_raw"))
+                or _normalize_scalar(metadata.get("source_span"))
+            )
         return _normalize_scalar(metadata.get("source_span"))
 
     def _merge_observations(
@@ -982,8 +988,9 @@ class SparkMemorySDK:
         limit: int,
     ) -> list[ObservationEntry]:
         query_tokens = _tokenize(query or "")
-        ranked: list[tuple[int, str, tuple[Any, ...], ObservationEntry]] = []
-        for entry in observations:
+        query_lower = str(query or "").lower()
+        ranked: list[tuple[int, str, tuple[Any, ...], str, int, ObservationEntry]] = []
+        for index, entry in enumerate(observations):
             if subject and entry.subject != subject:
                 continue
             if predicate and entry.predicate != predicate and state_deletion_target(entry) != predicate:
@@ -992,9 +999,23 @@ class SparkMemorySDK:
             if query_tokens and overlap == 0 and not (subject or predicate):
                 continue
             bridge_priority = int(entry.metadata.get("bridge_priority", 0)) if isinstance(entry.metadata, dict) else 0
-            ranked.append((overlap + bridge_priority, _timestamp_key(entry.timestamp), observation_id_sort_key(entry.observation_id), entry))
+            metadata_boost = 0
+            if isinstance(entry.metadata, dict):
+                relation_type = str(entry.metadata.get("relation_type", "")).strip().lower()
+                if relation_type and relation_type in query_lower:
+                    metadata_boost += 4
+            ranked.append(
+                (
+                    overlap + bridge_priority + metadata_boost,
+                    _timestamp_key(entry.timestamp),
+                    observation_id_sort_key(entry.observation_id),
+                    entry.observation_id,
+                    index,
+                    entry,
+                )
+            )
         ranked.sort(reverse=True)
-        return [entry for _, _, _, entry in ranked[:limit]]
+        return [entry for _, _, _, _, _, entry in ranked[:limit]]
 
     def _rank_events(
         self,

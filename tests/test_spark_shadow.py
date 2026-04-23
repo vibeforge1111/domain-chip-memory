@@ -1553,6 +1553,58 @@ def test_shadow_ingest_evaluation_supports_relative_time_mail_and_clean_location
     assert all(result.matched_expected is True for result in evaluation.probe_results)
 
 
+def test_shadow_ingest_evaluation_supports_family_visit_events_with_iso_relative_dates():
+    sdk = SparkMemorySDK()
+    adapter = SparkShadowIngestAdapter(sdk=sdk)
+
+    ingest_result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="telegram-family-visit-memory",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="My mother came to see me with her friend two days ago.",
+                    timestamp="2026-04-12T10:00:00Z",
+                ),
+                SparkShadowTurn(
+                    message_id="m2",
+                    role="user",
+                    content="Yesterday I spent time with my sister and the kids at the park.",
+                    timestamp="2026-04-12T10:05:00Z",
+                ),
+            ],
+        )
+    )
+    evaluation = adapter.evaluate_ingest(
+        ingest_result,
+        probes=[
+            SparkShadowProbe(
+                probe_id="p1",
+                probe_type="evidence",
+                subject="user",
+                predicate="visit_event",
+                query="When did the mother visit the user?",
+                expected_value="April 10, 2026",
+                min_results=1,
+            ),
+            SparkShadowProbe(
+                probe_id="p2",
+                probe_type="evidence",
+                subject="user",
+                predicate="visit_event",
+                query="Which family member did the user spend time with at the park?",
+                expected_value="sister",
+                min_results=1,
+            ),
+        ],
+    )
+
+    assert ingest_result.accepted_writes == 2
+    assert all(result.hit for result in evaluation.probe_results)
+    assert all(result.matched_expected is True for result in evaluation.probe_results)
+
+
 def test_shadow_ingest_supports_followup_grief_and_planned_group_activity_turns():
     sdk = SparkMemorySDK()
     adapter = SparkShadowIngestAdapter(sdk=sdk)

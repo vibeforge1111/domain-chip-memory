@@ -313,7 +313,7 @@ def build_typed_temporal_graph_memory(sample: NormalizedBenchmarkSample) -> Type
             )
             continue
 
-        if entry.predicate not in {"loss_event", "gift_event", "support_event"}:
+        if entry.predicate not in {"loss_event", "gift_event", "support_event", "visit_event"}:
             continue
         if other_entity_label:
             _entity_for_label(entities, label=other_entity_label, entity_kind="relationship_target")

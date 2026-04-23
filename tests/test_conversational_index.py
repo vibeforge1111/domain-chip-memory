@@ -203,6 +203,30 @@ def test_build_conversational_index_extracts_unknown_record_for_conv47_memory_ga
     )
 
 
+def test_build_conversational_index_extracts_family_visit_events_for_conv47():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-47"
+    )
+
+    entries = build_conversational_index(sample)
+
+    assert any(
+        entry.predicate == "visit_event"
+        and entry.metadata.get("relation_type") == "sister"
+        and entry.metadata.get("time_normalized") == "July 21, 2022"
+        for entry in entries
+    )
+    assert any(
+        entry.predicate == "visit_event"
+        and entry.metadata.get("relation_type") == "mother"
+        and entry.metadata.get("time_expression_raw") == "two days ago"
+        and entry.metadata.get("time_normalized") == "October 19, 2022"
+        for entry in entries
+    )
+
+
 def test_expected_answer_coverage_accepts_multi_item_family_answers():
     assert _expected_answer_coverage(
         "My mom was interested in art. My mom had a big passion for cooking. Reading was one of her hobbies. Travel was also her great passion.",
@@ -820,6 +844,35 @@ def test_entity_linked_hybrid_shadow_packets_surface_reported_speech_candidate_f
     assert packet.answer_candidates[0].text == "The doctor said it's not too serious."
 
 
+def test_entity_linked_hybrid_shadow_packets_aggregate_family_visit_members_for_conv47():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-47"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "Which of James's family members have visited him in the last year?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_entity_linked_hybrid_shadow_packets(subset, entity_limit=8)
+    packet = packets[0]
+
+    assert packet.answer_candidates[0].text == "mother, sister"
+    assert packet.answer_candidates[0].metadata["source_kind"] == "entity_linked_conversational_family_visit"
+    assert "answer_candidate: mother, sister" in packet.assembled_context.lower()
+
+
 def test_fused_conversational_hybrid_shadow_packets_route_alias_questions_to_entity_lane():
     sample = next(
         record
@@ -906,6 +959,35 @@ def test_fused_conversational_hybrid_shadow_packets_route_reported_speech_questi
     assert packet.metadata["shadow_selector"] == "typed_graph_first"
     assert packet.metadata["fused_variant_baseline"] == "summary_synthesis_memory_typed_graph_shadow"
     assert packet.answer_candidates[0].text == "The doctor said it's not too serious."
+
+
+def test_fused_conversational_hybrid_shadow_packets_route_family_visit_when_questions_to_graph_lane():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-47"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "When did James' mother and her friend visit him?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_fused_conversational_hybrid_shadow_packets(subset, entity_limit=8, graph_limit=6)
+    packet = packets[0]
+
+    assert packet.metadata["shadow_selector"] == "typed_graph_first"
+    assert packet.metadata["fused_variant_baseline"] == "summary_synthesis_memory_typed_graph_shadow"
+    assert packet.answer_candidates[0].text == "October 19, 2022"
 
 
 def test_fused_conversational_hybrid_shadow_packets_route_exact_temporal_questions_to_exact_turn_lane():

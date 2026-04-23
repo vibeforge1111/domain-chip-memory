@@ -156,6 +156,8 @@ def _temporal_event_score(question: NormalizedQuestion, event: TemporalMemoryEve
         score += 12.0
     if "pass away" in question_lower and event.event_type == "loss_event":
         score += 10.0
+    if ("visit" in question_lower or "visited" in question_lower) and event.event_type == "visit_event":
+        score += 12.0
     if any(token in question_lower for token in ("peace", "support", "grieving", "comfort")) and event.event_type == "support_event":
         score += 8.0
     if event.item_type and event.item_type in question_lower:

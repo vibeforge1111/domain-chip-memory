@@ -58,6 +58,7 @@ def _entry_search_text(entry: ConversationalIndexEntry) -> str:
         str(entry.metadata.get("time_expression_raw", "")),
         str(entry.metadata.get("item_type", "")),
         str(entry.metadata.get("support_kind", "")),
+        "family visit" if entry.predicate == "visit_event" else "",
     ]
     return " ".join(part for part in parts if part).strip()
 
@@ -80,6 +81,13 @@ def _question_is_support_like(question_lower: str) -> bool:
 
 def _question_is_temporal_like(question_lower: str) -> bool:
     return question_lower.startswith("when ")
+
+
+def _question_mentions_family_visit(question_lower: str) -> bool:
+    return ("visit" in question_lower or "visited" in question_lower) and any(
+        token in question_lower
+        for token in ("family", "mother", "mom", "father", "dad", "sister", "brother")
+    )
 
 
 def _coverage_labels(question: NormalizedQuestion, entry: ConversationalIndexEntry) -> set[str]:
@@ -143,12 +151,18 @@ def _entry_score(question: NormalizedQuestion, entry: ConversationalIndexEntry) 
             score += 4.0
 
     if _question_is_temporal_like(question_lower):
-        if entry.predicate in {"loss_event", "gift_event"}:
+        if entry.predicate in {"loss_event", "gift_event", "visit_event"}:
             score += 12.0
         if str(entry.metadata.get("time_normalized", "")).strip():
             score += 10.0
         if re.search(r"\b(last year|yesterday|a few years ago|few years ago|in (?:19|20)\d{2})\b", entry_lower):
             score += 8.0
+
+    if _question_mentions_family_visit(question_lower):
+        if entry.predicate == "visit_event":
+            score += 14.0
+        if entry.metadata.get("relation_type") in {"mother", "father", "sister", "brother", "family"}:
+            score += 6.0
 
     if _question_is_hobby_like(question_lower):
         hobby_overlap = len(_HOBBY_TOKENS.intersection(entry_tokens))
@@ -225,6 +239,10 @@ def _entity_linked_score(question: NormalizedQuestion, entry: ConversationalInde
             score += 10.0
     if entry.predicate in {"reported_speech", "unknown_record", "negation_record"}:
         score += 6.0
+    if entry.predicate == "visit_event":
+        score += 8.0
+        if _question_mentions_family_visit(question_lower):
+            score += 10.0
     if entry.predicate == "reported_speech":
         source_span = str(entry.metadata.get("source_span", "")).strip().lower()
         reported_content = str(entry.metadata.get("reported_content", "")).strip().lower()
