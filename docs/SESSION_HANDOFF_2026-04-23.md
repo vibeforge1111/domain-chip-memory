@@ -212,6 +212,16 @@ Current interpretation:
 - `conv41-43` and `conv48-50` support the new direction
 - `conv44-47` is the drag chunk and should be inspected before any runtime promotion
 
+Specific `conv44-47` diagnosis:
+
+- there is exactly one fused-vs-summary regression in this chunk
+- `conv-47-qa-14` `When did James visit Italy?`
+  - `summary`: `in 2021` and scored correct
+  - `fused`: `2021` and scored false
+  - selector: `exact_turn_first`
+- this looks like a temporal answer-surface normalization issue, not a broader retrieval failure
+- the next targeted fix should be a narrow exact-turn temporal normalization adjustment, followed by a rerun of `conv-47-qa-14` and then the `conv44-47` chunk
+
 Artifacts now on disk:
 
 - `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv41-43-0521738.json`
