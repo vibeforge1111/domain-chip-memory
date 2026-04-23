@@ -339,6 +339,37 @@ def test_exact_turn_hybrid_shadow_packets_stay_summary_only_for_broad_synthesis_
     assert "conversational_evidence:" not in packet.assembled_context.lower()
 
 
+def test_exact_turn_hybrid_shadow_packets_promote_temporal_surface_for_conv47_trip_question():
+    sample = next(
+        record
+        for record in load_locomo_json(Path("benchmark_data/official/LoCoMo/data/locomo10.json"))
+        if record.sample_id == "conv-47"
+    )
+    question = next(
+        question
+        for question in sample.questions
+        if question.question == "When did James visit Italy?"
+    )
+    subset = [
+        type(sample)(
+            benchmark_name=sample.benchmark_name,
+            sample_id=sample.sample_id,
+            sessions=sample.sessions,
+            questions=[question],
+            metadata=sample.metadata,
+        )
+    ]
+
+    _, packets = build_exact_turn_hybrid_shadow_packets(subset, conversational_limit=8)
+    packet = packets[0]
+
+    assert packet.metadata["conversational_item_count"] > 0
+    assert "answer_candidate: in 2021" in packet.assembled_context.lower()
+    assert packet.answer_candidates
+    assert packet.answer_candidates[0].text == "in 2021"
+    assert packet.answer_candidates[0].source == "evidence_memory"
+
+
 def test_exact_turn_shadow_answer_eval_tracks_exact_fact_shadow_packets():
     sample = next(
         record

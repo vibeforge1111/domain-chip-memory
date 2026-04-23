@@ -220,7 +220,13 @@ Specific `conv44-47` diagnosis:
   - `fused`: `2021` and scored false
   - selector: `exact_turn_first`
 - this looks like a temporal answer-surface normalization issue, not a broader retrieval failure
-- the next targeted fix should be a narrow exact-turn temporal normalization adjustment, followed by a rerun of `conv-47-qa-14` and then the `conv44-47` chunk
+- a narrow fix has now landed:
+  - exact-turn shadow packets now promote evidence-derived answer candidates only for `when ...` questions
+  - provider coverage now includes a locked regression test for preferring `in 2021` over bare `2021`
+  - targeted tests passed:
+    - `tests/test_conversational_index.py -k "exact_turn_hybrid_shadow_packets_add_conversational_evidence_for_exact_fact_question or exact_turn_hybrid_shadow_packets_promote_temporal_surface_for_conv47_trip_question"`
+    - `tests/test_providers.py -k "prefers_in_year_candidate_over_bare_year_for_when_question or preserves_matching_temporal_answer_candidate_for_when_question"`
+- the next targeted rerun should be `conv-47-qa-14`, then the `conv44-47` chunk
 
 Artifacts now on disk:
 

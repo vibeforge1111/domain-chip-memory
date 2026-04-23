@@ -1083,6 +1083,21 @@ def test_expand_answer_preserves_matching_temporal_answer_candidate_for_when_que
     assert rescued == "29 January 2023"
 
 
+def test_expand_answer_prefers_in_year_candidate_over_bare_year_for_when_question():
+    rescued = providers._expand_answer_from_context(
+        "When did James visit Italy?",
+        "2021",
+        "\n".join(
+            [
+                "conversational_evidence: James mentioned he visited Italy in 2021 during his backpacking trip.",
+                "answer_candidate: in 2021",
+            ]
+        ),
+    )
+
+    assert rescued == "in 2021"
+
+
 def test_expand_answer_uses_single_token_entity_candidate_for_unknown_which_question():
     rescued = providers._expand_answer_from_context(
         "Which city have both Jean and John visited?",

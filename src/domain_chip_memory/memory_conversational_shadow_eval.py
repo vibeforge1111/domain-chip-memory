@@ -325,6 +325,42 @@ def _entity_linked_answer_candidates(
     return merged_candidates
 
 
+def _exact_turn_answer_candidates(
+    question: NormalizedQuestion,
+    entries: list[Any],
+    summary_candidates: list[Any],
+) -> list[Any]:
+    merged_candidates: list[Any] = []
+    seen_text: set[str] = set()
+    for entry in entries:
+        answer_text = _entry_answer_candidate_text(question, entry)
+        if not answer_text:
+            continue
+        normalized = answer_text.strip().lower()
+        if not normalized or normalized in seen_text:
+            continue
+        seen_text.add(normalized)
+        merged_candidates.append(
+            build_answer_candidate(
+                question.question,
+                answer_text,
+                source="evidence_memory",
+                metadata={
+                    "source_kind": "exact_turn_conversational",
+                    "predicate": getattr(entry, "predicate", ""),
+                    "entry_id": getattr(entry, "entry_id", ""),
+                },
+            )
+        )
+    for candidate in summary_candidates:
+        normalized = candidate.text.strip().lower()
+        if not normalized or normalized in seen_text:
+            continue
+        seen_text.add(normalized)
+        merged_candidates.append(candidate)
+    return merged_candidates
+
+
 def _merge_retrieved_context_items(
     summary_items: list[RetrievedContextItem],
     conversational_items: list[RetrievedContextItem],
@@ -461,6 +497,7 @@ def build_exact_turn_hybrid_shadow_packets(
             summary_packet = packet_by_question_id[question.question_id]
             hybrid_retrieved_items = list(summary_packet.retrieved_context_items)
             conversational_retrieved_items: list[RetrievedContextItem] = []
+            conversational_hits: list[Any] = []
             if _question_prefers_exact_conversational_evidence(question):
                 conversational_hits = retrieve_conversational_entries(
                     question,
@@ -476,6 +513,19 @@ def build_exact_turn_hybrid_shadow_packets(
                 summary_items=list(summary_packet.retrieved_context_items),
                 answer_candidate_text=summary_packet.answer_candidates[0].text if summary_packet.answer_candidates else None,
             )
+            answer_candidates = list(summary_packet.answer_candidates)
+            if question.question.lower().startswith("when "):
+                answer_candidates = _exact_turn_answer_candidates(
+                    question,
+                    conversational_hits,
+                    list(summary_packet.answer_candidates),
+                )
+            if (
+                question.question.lower().startswith("when ")
+                and answer_candidates
+                and getattr(answer_candidates[0], "source", "") == "evidence_memory"
+            ):
+                hybrid_context_blocks.append(f"answer_candidate: {answer_candidates[0].text}")
             hybrid_packets.append(
                 BaselinePromptPacket(
                     benchmark_name=summary_packet.benchmark_name,
@@ -492,7 +542,7 @@ def build_exact_turn_hybrid_shadow_packets(
                         "conversational_limit": conversational_limit,
                         "conversational_item_count": len(conversational_retrieved_items),
                     },
-                    answer_candidates=summary_packet.answer_candidates,
+                    answer_candidates=answer_candidates,
                 )
             )
 
