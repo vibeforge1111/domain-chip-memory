@@ -176,9 +176,50 @@ The main gaps are now:
 
 ### 1. Wider benchmark evidence
 
+The chunked heuristic fused-family LoCoMo scoreboard is now complete:
+
+- `conv41-43`
+  - `summary`: `14/148`
+  - `exact-turn`: `21/148`
+  - `entity`: `14/148`
+  - `graph`: `13/148`
+  - `fused`: `21/148`
+- `conv44-47`
+  - `summary`: `7/90`
+  - `exact-turn`: `6/90`
+  - `entity`: `7/90`
+  - `graph`: `7/90`
+  - `fused`: `6/90`
+- `conv48-50`
+  - `summary`: `29/162`
+  - `exact-turn`: `34/162`
+  - `entity`: `14/162`
+  - `graph`: `28/162`
+  - `fused`: `33/162`
+
+Aggregate across the widened fused-family slice:
+
+- `summary`: `50/400`
+- `exact-turn`: `61/400`
+- `entity`: `35/400`
+- `graph`: `48/400`
+- `fused`: `60/400`
+
+Current interpretation:
+
+- `exact-turn` is the best heuristic lane on this widened slice
+- `fused` is close behind but not yet better overall
+- `conv41-43` and `conv48-50` support the new direction
+- `conv44-47` is the drag chunk and should be inspected before any runtime promotion
+
+Artifacts now on disk:
+
+- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv41-43-0521738.json`
+- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv44-47-0521738.json`
+- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv48-50-0521738.json`
+
 We still need:
 
-- widened fused-family LoCoMo chunk artifacts
 - real-provider reruns on the chunks that matter
 - broader BEAM / LongMemEval regression checks
 
@@ -224,12 +265,11 @@ Not:
 
 ## Recommended Restart Order For Tomorrow
 
-1. Check whether session `22149` is still alive.
-2. Check whether any of the three fused heuristic chunk artifacts were written.
-3. If artifacts exist, summarize them first before spawning anything new.
-4. If `22149` is dead and no artifacts exist, rerun the chunk plan in smaller or more isolated form rather than one large batch.
-5. If the heuristic chunks look sane, run the best chunk(s) with a real provider.
-6. After that, rerun broader BEAM / LongMemEval regression lanes.
+1. Read the three completed chunk artifacts first.
+2. Inspect `conv44-47` failure families before changing routing again.
+3. Run the best chunk(s) with a real provider.
+4. After that, rerun broader BEAM / LongMemEval regression lanes.
+5. Only then decide whether fused routing deserves promotion or whether `exact-turn` should remain the main non-summary lane.
 
 ## Exact Commands To Resume With
 
