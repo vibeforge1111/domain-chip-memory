@@ -286,6 +286,7 @@ Builder `main` was advanced and pushed through the next benchmark-plus-runtime s
 - `4f34627 Add Telegram preference memory probes`
 - `fc31b21 Cover favorite food Telegram memory phrase`
 - `250e286 Route Telegram memory deletes before instruction shortcircuit`
+- `d89e550 Cover active state Telegram memory deletes`
 
 What changed in Builder:
 
@@ -294,13 +295,14 @@ What changed in Builder:
 - added concise profile-fact answers for favorite color and favorite food
 - added preference and current-plan lifecycle cases to the `telegram_generic_profile_lifecycle` benchmark pack
 - fixed the Telegram gateway path so governed generic-memory deletes such as `Forget my favorite color.` and `Forget my current plan.` route to Builder memory before the older saved-instruction short-circuit
+- added gateway-level coverage for active-state deletes before the saved-instruction short-circuit: current plan and current commitment
 
 Verification completed:
 
 ```powershell
 # spark-intelligence-builder
 python -m pytest tests/test_gateway_ask_telegram.py -q
-# 7 passed, 3 warnings
+# 8 passed, 9 warnings, 2 subtests passed
 
 python -m pytest tests/test_telegram_generic_memory.py -k "family_shared_time or plan_and_commitment_queries or plan_correction_history_and_deletion or preference_update_query_and_deletion or favorite_food_preference_phrase" -q
 # 6 passed, 72 deselected
@@ -310,6 +312,9 @@ python -m pytest tests/test_memory_regression.py -q
 
 python -m spark_intelligence.cli memory run-telegram-regression --benchmark-pack telegram_generic_profile_lifecycle --case-id favorite_color_write --case-id favorite_color_query --case-id favorite_color_delete --case-id favorite_color_query_after_delete --case-id favorite_food_write --case-id favorite_food_query --case-id favorite_food_delete --case-id generic_plan_write --case-id generic_plan_overwrite --case-id generic_plan_current_query_after_overwrite --case-id generic_plan_history_query_after_overwrite --case-id generic_plan_delete --case-id generic_plan_current_query_after_delete
 # focused temp-home run: 13 matched, 0 mismatched
+
+python -m spark_intelligence.cli memory run-telegram-regression --benchmark-pack telegram_generic_profile_lifecycle --case-id generic_commitment_write --case-id generic_commitment_overwrite --case-id generic_commitment_current_query_after_overwrite --case-id generic_commitment_history_query_after_overwrite --case-id generic_commitment_delete --case-id generic_commitment_current_query_after_delete --case-id generic_commitment_history_query_after_delete --case-id generic_commitment_event_history_query_after_delete
+# focused temp-home run: 8 matched, 0 mismatched
 ```
 
 Runtime status observed after the push:
@@ -318,9 +323,15 @@ Runtime status observed after the push:
 - `domain-chip-memory/main` was aligned with `origin/main`, aside from existing untracked artifact noise.
 - `spark-telegram-bot` remained on `codex/telegram-runtime-origin-2026-04-24`, aligned with its remote branch, with only untracked `PROJECT.md`.
 - Long-polling bot process was still listening on `127.0.0.1:8788` as PID `8276` (`node dist/index.js`).
+- Real Telegram favorite-color write was confirmed through long polling:
+  - route: `memory_generic_observation_update`
+  - predicate: `profile.favorite_color`
+  - runtime labels: `request_id=telegram:*`, `simulation=false`, `origin_surface=telegram_runtime`
+  - bot reply: `I'll remember that your favorite color is bright green.`
+- Local recall against the same live Builder home returned: `Your favorite color is bright green.`
 
 Next recommended step:
 
-1. Ask the user to send the live Telegram probes for favorite color, favorite food, current plan overwrite/history, and deletion now that the gateway delete ordering bug is fixed.
+1. Ask the user to send the live Telegram probes for favorite food, current plan overwrite/history, commitment overwrite/history, and deletion now that the gateway delete ordering bug is fixed.
 2. If live probes pass, update this handoff with the real Telegram replies.
 3. Then move to commitment/correction/deletion coverage in the benchmark pack, or push the clean `spark-telegram-bot` runtime-origin branch as a PR if the GitHub app/remote path is available.
