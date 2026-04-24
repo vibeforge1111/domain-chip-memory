@@ -341,9 +341,15 @@ Runtime status observed after the push:
   - previous-plan query routed as `memory_profile_fact_history_query` and returned the superseded plan
   - delete routed as `memory_generic_observation_delete`, predicate `profile.current_plan`
   - post-delete query routed as `memory_profile_fact_query`, value not found
+- Real Telegram current-commitment lifecycle was confirmed through long polling:
+  - initial and overwrite writes routed as `memory_generic_observation_update`, predicate `profile.current_commitment`
+  - current query routed as `memory_profile_fact_query` and returned the newer commitment
+  - previous-commitment query routed as `memory_profile_fact_history_query` and returned the superseded commitment
+  - delete routed as `memory_generic_observation_delete`, predicate `profile.current_commitment`
+  - post-delete query routed as `memory_profile_fact_query`, value not found
 
 Next recommended step:
 
-1. Ask the user to send the live Telegram probes for commitment overwrite/history/deletion now that favorite food and current plan are confirmed.
-2. If live probes pass, update this handoff with the real Telegram replies.
-3. Then move to commitment/correction/deletion coverage in the benchmark pack, or push the clean `spark-telegram-bot` runtime-origin branch as a PR if the GitHub app/remote path is available.
+1. The live Telegram preference/plan/commitment lifecycle lane is complete and confirmed.
+2. Next engineering step: package a repeatable live-probe checklist or runner so these scenarios can be replayed after memory-routing changes.
+3. Or push/create a PR for the clean `spark-telegram-bot` runtime-origin branch if the GitHub app/remote path is available.
