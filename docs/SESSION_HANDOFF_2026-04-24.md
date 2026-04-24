@@ -28,7 +28,8 @@ Important nuance:
 - current receiver is long polling
 - `localhost:8080` is legacy fallback/no-listener noise for this session
 - the real memory path is the Builder bridge on the running Telegram bot process
-- `spark-telegram-bot` invokes Builder through the `gateway simulate-telegram-update` CLI internally, so Builder request IDs may appear as `sim:*` even for real Telegram bridge calls
+- `spark-telegram-bot` invokes Builder through the `gateway simulate-telegram-update` CLI internally
+- since the runtime-origin cleanup, real bot bridge calls should now appear as `request_id=telegram:*`, `simulation=false`, and `origin_surface=telegram_runtime`
 
 ## Repos Involved
 
@@ -276,3 +277,50 @@ Next recommended step:
 
 1. Decide whether to push `spark-telegram-bot/main` with all six local commits or split the observability bridge commit onto a clean branch.
 2. If keeping momentum in memory quality, start the next benchmark-plus-live probe slice: preference memory, current plan memory, commitment memory, correction/supersession, and deletion/forgetting.
+
+## Continuation Update - 2026-04-24 Later
+
+Builder `main` was advanced and pushed through the next benchmark-plus-runtime slice:
+
+- `8b5d10c Add Telegram plan memory regression probes`
+- `4f34627 Add Telegram preference memory probes`
+- `fc31b21 Cover favorite food Telegram memory phrase`
+- `250e286 Route Telegram memory deletes before instruction shortcircuit`
+
+What changed in Builder:
+
+- added direct tests for current-plan, commitment, correction/history, deletion, favorite-color, and favorite-food memory behavior
+- added `preferences` generic memory packs for `profile.favorite_color` and `profile.favorite_food`
+- added concise profile-fact answers for favorite color and favorite food
+- added preference and current-plan lifecycle cases to the `telegram_generic_profile_lifecycle` benchmark pack
+- fixed the Telegram gateway path so governed generic-memory deletes such as `Forget my favorite color.` and `Forget my current plan.` route to Builder memory before the older saved-instruction short-circuit
+
+Verification completed:
+
+```powershell
+# spark-intelligence-builder
+python -m pytest tests/test_gateway_ask_telegram.py -q
+# 7 passed, 3 warnings
+
+python -m pytest tests/test_telegram_generic_memory.py -k "family_shared_time or plan_and_commitment_queries or plan_correction_history_and_deletion or preference_update_query_and_deletion or favorite_food_preference_phrase" -q
+# 6 passed, 72 deselected
+
+python -m pytest tests/test_memory_regression.py -q
+# 8 passed
+
+python -m spark_intelligence.cli memory run-telegram-regression --benchmark-pack telegram_generic_profile_lifecycle --case-id favorite_color_write --case-id favorite_color_query --case-id favorite_color_delete --case-id favorite_color_query_after_delete --case-id favorite_food_write --case-id favorite_food_query --case-id favorite_food_delete --case-id generic_plan_write --case-id generic_plan_overwrite --case-id generic_plan_current_query_after_overwrite --case-id generic_plan_history_query_after_overwrite --case-id generic_plan_delete --case-id generic_plan_current_query_after_delete
+# focused temp-home run: 13 matched, 0 mismatched
+```
+
+Runtime status observed after the push:
+
+- Builder `main` was clean and aligned with `origin/main`, aside from existing untracked local noise.
+- `domain-chip-memory/main` was aligned with `origin/main`, aside from existing untracked artifact noise.
+- `spark-telegram-bot` remained on `codex/telegram-runtime-origin-2026-04-24`, aligned with its remote branch, with only untracked `PROJECT.md`.
+- Long-polling bot process was still listening on `127.0.0.1:8788` as PID `8276` (`node dist/index.js`).
+
+Next recommended step:
+
+1. Ask the user to send the live Telegram probes for favorite color, favorite food, current plan overwrite/history, and deletion now that the gateway delete ordering bug is fixed.
+2. If live probes pass, update this handoff with the real Telegram replies.
+3. Then move to commitment/correction/deletion coverage in the benchmark pack, or push the clean `spark-telegram-bot` runtime-origin branch as a PR if the GitHub app/remote path is available.
