@@ -1,342 +1,156 @@
 # domain-chip-memory
 
-`domain-chip-memory` is a Spark-style domain chip lab for one narrow goal:
+`domain-chip-memory` is Spark's default memory domain chip. It is a benchmark-first lab for building, testing, and promoting better long-term memory behavior without stuffing memory-engine experiments into the Spark runtime core.
 
-- build a benchmark-first agent memory system that can beat the strongest systems on `BEAM`, `LongMemEval`, `LoCoMo`, and `GoodAI LTM Benchmark`
+Use this repo when you want to understand or improve Spark memory. Use `spark-intelligence-builder` when you want to operate the runtime. Use `spark-telegram-bot` when you want Telegram ingress. Use `spawner-ui` when you want mission execution.
 
-Shadow benchmark:
+## Where It Fits
 
-- keep `ConvoMem` as a regression guardrail for short-history and full-context-competitive slices
+```mermaid
+flowchart LR
+  Builder["spark-intelligence-builder"] --> Chip["domain-chip-memory"]
+  Researcher["spark-researcher"] --> Chip
+  Chip --> Packets["watchtower packets<br/>strategy packets<br/>benchmark scorecards"]
+  Chip --> Eval["memory evals<br/>LongMemEval / LoCoMo / BEAM plans"]
+  CLI["spark-cli"] --> Manifest["spark.toml<br/>install and healthcheck"]
+```
 
-This repo is not framed as a generic memory SDK yet.
-It is a research instrument and operating scaffold for memory-system design, benchmarking, mutation, and promotion.
+In the Spark starter stack:
 
-In the Spark launch stack, this repo is installed as the default memory/domain chip. Builder can activate it for memory behavior, Researcher can use it for memory packet and chip-authoring work, and Spark CLI can healthcheck it through its `spark.toml` manifest. It does not own Telegram ingress, Spawner mission control, or live LLM keys.
+- Spark CLI installs this repo as a core module.
+- Builder activates it as the default memory chip when discoverable.
+- Researcher can use it for memory-packet and chip-authoring workflows.
+- The chip does not own Telegram tokens, LLM secrets, Spawner missions, or user ingress.
 
-## Why this chip exists
+## What This Repo Owns
 
-The current public landscape is good enough that hand-wavy memory architecture is no longer useful.
+- Memory architecture experiments and benchmark scaffolding.
+- Watchtower packets and mutation suggestions.
+- Evaluation contracts for memory behavior.
+- Spark KB validation and build helpers.
+- Domain-chip manifests and templates for memory work.
 
-What matters now:
+## What This Repo Does Not Own
 
-- benchmark-native ingestion and retrieval
-- explicit handling of time, contradictions, and fact updates
-- apples-to-apples evaluation against the public benchmark stack
-- repeatable mutation loops instead of one-off prompt tinkering
-- attribution discipline when borrowing from MIT and Apache 2.0 codebases
+- Live Telegram bot receiving.
+- Runtime identity/session state.
+- Cloud provider secrets.
+- Spawner mission execution.
+- A production memory platform API. This is still a research and promotion scaffold.
 
-This chip exists to govern that work honestly.
-
-## Current status
-
-Current status: `exploratory`
-
-Current cross-repo runtime decision as of 2026-04-11:
-
-<!-- AUTO_BUILDER_BASELINE_README_START -->
-- active runtime architecture: `summary_synthesis_memory + heuristic_v1`
-- active Builder challenger: `dual_store_event_calendar_hybrid + heuristic_v1`
-- latest head-to-head offline `ProductMemory` comparison: tied at `1156/1266`
-- latest clean live Builder full validation root: `$SPARK_HOME/artifacts/memory-validation-runs/20260412-023241`
-- latest clean live Builder full-run pointer: `$SPARK_HOME/artifacts/memory-validation-runs/latest-full-run.json`
-- chip-side baseline freshness: `clean`
-- chip baseline commit from Builder run: `26fe26582f4188c2abad64d9f7f6b5ca7b09d0e9`
-- current chip commit: `26fe26582f4188c2abad64d9f7f6b5ca7b09d0e9`
-- latest clean live Builder soak: `14/14, 0 failed`
-- latest live whole-suite aggregate: `92/92` for `summary_synthesis_memory` vs `89/92` for `dual_store_event_calendar_hybrid`
-- latest live selector-pack aggregate: `64/64` for `summary_synthesis_memory` vs `61/64` for `dual_store_event_calendar_hybrid`
-- latest clean live Builder regression: `34/34` with KB coverage `38/38` current-state and `38/38` evidence hits
-- latest clean live Builder timings: benchmark `13.543s`, regression `23.724s`, soak `339.130s`, total `376.594s`
-- Builder runtime is therefore pinned to `summary_synthesis_memory`
-<!-- AUTO_BUILDER_BASELINE_README_END -->
-
-That cross-repo runtime block is refreshed from Builder's `latest-full-run.json` via `scripts/render_builder_baseline_docs.py`. Builder's full validation wrapper now invokes that sync automatically when both repos are present side by side.
-
-Current most complete measured path as of 2026-04-03:
-
-- `summary_synthesis_memory + heuristic_v1`
-- bounded real reruns over the remaining `LongMemEval_s` samples `201-500`: `300/300` (`1.00`)
-- contiguous measured `LongMemEval_s` coverage through sample `500`: `500/500` (`1.00`)
-- this now clears the currently pinned public `LongMemEval_s` threshold on the same official dataset surface
-
-Historical internal lead as of 2026-03-24:
-
-- `observational_temporal_memory + MiniMax-M2.7`
-- real rerun on March 23, 2026 over the first 25 `LongMemEval_s` samples: `25/25` (`1.00`)
-- real rerun on March 23, 2026 over the first 50 `LongMemEval_s` samples: `50/50` (`1.00`)
-- real rerun on March 24, 2026 over `LongMemEval_s` samples `51-75`: `25/25` (`1.00`)
-- real rerun on March 24, 2026 over `LongMemEval_s` samples `76-100`: `25/25` (`1.00`)
-- real rerun on March 24, 2026 over `LongMemEval_s` samples `101-125`: `25/25` (`1.00`)
-- real rerun on March 24, 2026 over `LongMemEval_s` samples `126-150`: `25/25` (`1.00`)
-- real rerun on March 25, 2026 over `LongMemEval_s` samples `151-175`: `25/25` (`1.00`)
-- real rerun on March 25, 2026 over `LongMemEval_s` samples `176-200`: `25/25` (`1.00`)
-  - category split on the same artifact: `multi-session` `13/13` (`1.00`), `single-session-preference` `12/12` (`1.00`)
-- contiguous measured `LongMemEval_s` coverage through sample `200`: `200/200` (`1.00`)
-- real rerun on March 23, 2026 over the first 25 `LoCoMo` `conv-26` questions: `24/25` (`0.96`)
-  - audited scorecard view on the same artifact: `24/24` (`1.00`) after excluding the one known benchmark inconsistency
-- real rerun on March 24, 2026 over the next 25 `LoCoMo` `conv-26` questions (`q26-50`): `25/25` (`1.00`)
-  - audited scorecard view on the same artifact: `25/25` (`1.00`) with no exclusions
-- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q51-75`): `25/25` (`1.00`)
-  - audited scorecard view on the same artifact: `25/25` (`1.00`) with no exclusions
-- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q76-100`): `25/25` (`1.00`)
-  - audited scorecard view on the same artifact: `25/25` (`1.00`) with no exclusions
-- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q101-125`): `25/25` (`1.00`)
-  - progression on the same slice: baseline `1/25` -> rerun `23/25` -> rerun `25/25`
-  - audited scorecard view on the source-of-truth artifact: `25/25` (`1.00`) with no exclusions
-- real rerun on March 24, 2026 over the next bounded `LoCoMo` `conv-26` questions (`q126-150`): `25/25` (`1.00`)
-  - progression on the same slice: baseline `3/25` -> rerun `23/25` -> rerun `24/25` -> rerun `25/25`
-  - audited scorecard view on the source-of-truth artifact: `25/25` (`1.00`) with no exclusions
-- bounded `LoCoMo` same-provider ladder on the same first-25 `conv-26` slice:
-  - `observational_temporal_memory`: `24/25` raw, `24/24` audited
-  - `dual_store_event_calendar_hybrid`: `23/25` raw, `23/24` audited
-  - `beam_temporal_atom_router`: `6/25` raw, `6/24` audited
-- MiniMax operating notes and default guardrails now live in `docs/MINIMAX_OPERATIONAL_NOTES_2026-03-23.md`
-
-Current MiniMax frontier on that `LoCoMo` slice is now explicit:
-
-- MiniMax is working well when the packet already contains the exact answer-bearing turn or structured predicate
-- MiniMax is no longer the limiting factor on the current bounded `LoCoMo` slice once benchmark inconsistencies are excluded
-- scorecards now annotate these known issue classes directly in `known_issue_summary` and expose `audited_overall` so future reruns do not look like generic model regressions
-- the only remaining miss on the first bounded `24/25` run is:
-  - `conv-26-qa-6`: likely benchmark inconsistency, with context pointing to `Saturday` while gold expects `Sunday`
-- the adjacent `q26-50` slice is now clean on a real rerun:
-  - `25/25` raw
-  - `25/25` audited
-- the adjacent `q51-75` slice is now also clean on a real rerun:
-  - `25/25` raw
-  - `25/25` audited
-- the adjacent `q76-100` slice is now also clean on a real rerun:
-  - `25/25` raw
-  - `25/25` audited
-- the adjacent `q101-125` slice is now also clean on a real rerun:
-  - `25/25` raw
-  - `25/25` audited
-- the adjacent `q126-150` slice is now also clean on a real rerun:
-  - `25/25` raw
-  - `25/25` audited
-- the newest MiniMax-specific lesson is explicit:
-  - object/meaning questions close cleanly once the packet surfaces exact structured predicates
-  - MiniMax compaction must preserve `answer_candidate` lines or the model can drift back to nearby but wrong abstractions like `it` or `mental health`
-  - on the sixth bounded `LoCoMo` slice, the last real misses were answer-shape drift, not evidence gaps:
-    - possessive/location normalization like `in my slipper` -> `In Melanie's slipper`
-    - punctuation normalization like `Read a book and paint` -> `Read a book and paint.`
-
-The repo now has the standard Spark domain-chip scaffold:
-
-- project manifest
-- chip manifest
-- researcher config
-- benchmark and research lanes
-- docs for architecture, strategy, and autoloops
-- schemas and templates
-- a small Python package for watchtower packets and mutation suggestions
-- a local evaluator for readiness scoring
-
-It now contains a benchmark substrate, baseline packet builders, local deterministic execution, file loaders, and an env-gated OpenAI provider path for bounded real benchmark runs.
-It does **not** yet contain full official benchmark reproduction across the whole stack or a production-grade memory engine.
-
-## Docs
-
-Start here instead of scanning the repo manually:
-
-- docs index: `docs/README.md`
-- research index: `research/README.md`
-- research-to-build map: `docs/RESEARCH_TO_BUILD_MAP_2026-03-25.md`
-
-Most important current execution docs:
-
-- current Spark/Builder handoff: `docs/NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md`
-- current benchmark + KB checkpoint: `docs/CURRENT_STATUS_BENCHMARKS_AND_KB_2026-04-09.md`
-- honest current-state assessment: `docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md`
-- implementation plan: `docs/IMPLEMENTATION_PLAN.md`
-- current test and validation plan: `docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md`
-- frontier status: `docs/FRONTIER_STATUS_2026-03-28.md`
-- BEAM official reproduction plan: `docs/BEAM_OFFICIAL_REPRODUCTION_PLAN_2026-03-29.md`
-- memory architecture evolution plan: `docs/MEMORY_ARCHITECTURE_EVOLUTION_PLAN_2026-03-25.md`
-- unified memory system program: `docs/UNIFIED_MEMORY_SYSTEM_PROGRAM_2026-03-25.md`
-- spark memory sdk implementation path: `docs/SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md`
-
-Repo structure surfaces:
-
-- benchmark-grounded summary: `research/benchmark_grounded/benchmark_summary.json`
-- schemas: `schemas/`
-- templates: `templates/`
-
-## Quick start
+## Quick Start
 
 Install editable:
 
-```powershell
-pip install -e .
+```bash
+git clone https://github.com/vibeforge1111/domain-chip-memory
+cd domain-chip-memory
+python -m pip install -e .
 ```
 
-Fill in provider credentials in `.env` or copy from `.env.example`. Do not commit `.env`; the CLI loads it automatically for local benchmark/provider runs.
+Run the local evaluator:
 
-Run the local chip evaluator:
-
-```powershell
+```bash
 python evaluate_chip.py
 ```
 
-Build the watchtower summary:
+Generate the main operator packets:
 
-```powershell
+```bash
 python -m domain_chip_memory.cli watchtower --write
-```
-
-Build the strategy packet:
-
-```powershell
 python -m domain_chip_memory.cli packets --write
 ```
 
-See the current benchmark target ledger:
+Check the Spark installer health path:
 
-```powershell
+```bash
+python -m domain_chip_memory.cli watchtower
+```
+
+## Agent Operating Guide
+
+If you are an LLM agent reading this repo:
+
+1. Start with this README, then [docs/README.md](./docs/README.md).
+2. Treat benchmark/eval claims as evidence-bound. Do not promote a memory strategy from a single offline score.
+3. Use the CLI commands below instead of editing generated scorecards by hand.
+4. Do not add API keys, chat transcripts, or private memory artifacts to committed docs.
+5. Keep launch integration changes in `spark.toml` and documented contracts.
+6. If changing memory behavior, also update the relevant validation or benchmark doc.
+
+## Common Commands
+
+```bash
 python -m domain_chip_memory.cli benchmark-targets
-```
-
-Inspect the normalized benchmark substrate contracts:
-
-```powershell
 python -m domain_chip_memory.cli benchmark-contracts
-```
-
-Inspect the baseline packet and manifest contracts:
-
-```powershell
 python -m domain_chip_memory.cli baseline-contracts
-```
-
-Inspect the scorecard contracts and canonical benchmark config lock:
-
-```powershell
 python -m domain_chip_memory.cli scorecard-contracts
 python -m domain_chip_memory.cli canonical-configs
-```
-
-Inspect loader, provider, and runner contracts:
-
-```powershell
 python -m domain_chip_memory.cli loader-contracts
 python -m domain_chip_memory.cli provider-contracts
 python -m domain_chip_memory.cli runner-contracts
 python -m domain_chip_memory.cli memory-system-contracts
 ```
 
-Build a real Spark KB vault from a snapshot file or scaffold the demo vault:
+Spark KB example smoke:
 
-```powershell
-python -m domain_chip_memory.cli validate-spark-kb-inputs path\\to\\snapshot.json --repo-source-manifest path\\to\\repo_sources.json --filed-output-manifest path\\to\\filed_outputs.json
-python -m domain_chip_memory.cli build-spark-kb path\\to\\snapshot.json path\\to\\vault --repo-source path\\to\\README.md --repo-source-manifest path\\to\\repo_sources.json --filed-output-file path\\to\\answer.json --filed-output-manifest path\\to\\filed_outputs.json
-python -m domain_chip_memory.cli demo-spark-kb path\\to\\demo_vault
-python -m domain_chip_memory.cli spark-kb-health-check path\\to\\vault
+```bash
+python docs/examples/spark_kb/run_smoke.py
+python -m domain_chip_memory.cli spark-kb-health-check tmp/spark_kb_example
 ```
 
-Manifest entries are resolved relative to the manifest file location.
-`validate-spark-kb-inputs` now gives a preflight report for snapshot shape, manifest resolution, missing files, and filed-output payload parsing.
-`spark-kb-health-check` now also validates repo-source pages against `raw/repos/` copies and checks that filed query pages still contain their expected sections.
-`build-spark-kb` compile results now expose both `repo_source_count` and `filed_output_count`.
-There is now a checked-in example bundle under `docs/examples/spark_kb/` for validator and compiler smoke checks.
-That bundle is described in `docs/examples/spark_kb/README.md`.
-There is also a checked-in invalid validator fixture under `docs/examples/spark_kb_invalid/`.
-The full examples directory is indexed in `docs/examples/README.md`.
-The top-level shortcut for the checked-in example wrappers is `docs/examples/run_smokes.py`.
-The invalid bundle now has a matching `docs/examples/spark_kb_invalid/run_validate_failure.py` shortcut.
-The same checked-in example smoke path is now wired into `.github/workflows/example-smokes.yml`.
+Provider-backed bounded benchmark smoke, only after setting the relevant provider key locally:
 
-```powershell
-python docs\examples\spark_kb\run_smoke.py
-python -m domain_chip_memory.cli validate-spark-kb-inputs docs\examples\spark_kb\snapshot.json --repo-source-manifest docs\examples\spark_kb\manifests\repo_sources.json --filed-output-manifest docs\examples\spark_kb\manifests\filed_outputs.json
-python -m domain_chip_memory.cli build-spark-kb docs\examples\spark_kb\snapshot.json tmp\spark_kb_example --repo-source-manifest docs\examples\spark_kb\manifests\repo_sources.json --filed-output-manifest docs\examples\spark_kb\manifests\filed_outputs.json
-python -m domain_chip_memory.cli spark-kb-health-check tmp\spark_kb_example
+```bash
+python -m domain_chip_memory.cli run-longmemeval-baseline path/to/longmemeval_s_cleaned.json --baseline beam_temporal_atom_router --provider openai:gpt-4.1-mini --limit 1
 ```
 
-Run a bounded real-provider smoke test once `OPENAI_API_KEY` is set:
+## Eval Results And Current Status
 
-```powershell
-python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline beam_temporal_atom_router --provider openai:gpt-4.1-mini --limit 1
-python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline beam_temporal_atom_router --provider minimax:YOUR_MINIMAX_MODEL --limit 1
+The detailed benchmark/eval ledger is intentionally not kept in the top-level README. It changes often, and a long score dump makes it harder for users and agents to understand how to use the chip.
+
+Start here instead:
+
+- [docs/README.md](./docs/README.md) - docs index
+- [research/README.md](./research/README.md) - research index
+- [docs/CURRENT_STATUS_BENCHMARKS_AND_KB_2026-04-09.md](./docs/CURRENT_STATUS_BENCHMARKS_AND_KB_2026-04-09.md) - current benchmark and KB checkpoint
+- [docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md](./docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md) - honest current-state assessment
+- [docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md](./docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md) - validation plan
+- [docs/FRONTIER_STATUS_2026-03-28.md](./docs/FRONTIER_STATUS_2026-03-28.md) - frontier status
+
+Current launch-level status:
+
+- Status: exploratory, installed by default in the Spark starter stack.
+- Purpose: benchmark-grounded long-term memory research and chip behavior.
+- Promotion rule: offline evals are not enough; memory changes should stay green across relevant Builder/runtime validation before being treated as launch behavior.
+
+## Spark KB Flow
+
+```mermaid
+flowchart TD
+  Snapshot["Conversation or project snapshot"] --> Validate["validate-spark-kb-inputs"]
+  Sources["repo_sources.json"] --> Validate
+  Outputs["filed_outputs.json"] --> Validate
+  Validate --> Build["build-spark-kb"]
+  Build --> Vault["Spark KB vault"]
+  Vault --> Health["spark-kb-health-check"]
 ```
 
-Run local demo scorecards:
+Example:
 
-```powershell
-python -m domain_chip_memory.cli demo-scorecards
+```bash
+python -m domain_chip_memory.cli validate-spark-kb-inputs docs/examples/spark_kb/snapshot.json --repo-source-manifest docs/examples/spark_kb/manifests/repo_sources.json --filed-output-manifest docs/examples/spark_kb/manifests/filed_outputs.json
+python -m domain_chip_memory.cli build-spark-kb docs/examples/spark_kb/snapshot.json tmp/spark_kb_example --repo-source-manifest docs/examples/spark_kb/manifests/repo_sources.json --filed-output-manifest docs/examples/spark_kb/manifests/filed_outputs.json
+python -m domain_chip_memory.cli spark-kb-health-check tmp/spark_kb_example
 ```
 
-Run the first candidate memory system on local benchmark files:
+## Security Notes
 
-```powershell
-python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline beam_temporal_atom_router --provider heuristic_v1 --limit 10
-python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline observational_temporal_memory --provider heuristic_v1 --limit 10
-python -m domain_chip_memory.cli run-longmemeval-baseline path\\to\\longmemeval_s_cleaned.json --baseline dual_store_event_calendar_hybrid --provider heuristic_v1 --limit 10
-```
+- Do not commit `.env`, provider keys, private memory dumps, private Telegram exports, or user chat transcripts.
+- Prefer tiny provider-backed smokes over large secret-bearing benchmark runs in public examples.
+- Keep third-party benchmark/code attribution in the relevant docs.
+- Use ignored local temp directories for generated KB vaults and scorecards unless the artifact is intentionally public.
 
-Run a first official-public `BEAM` smoke lane once you have an unpacked upstream chats directory:
+## License
 
-```powershell
-python -m domain_chip_memory.cli run-beam-public-baseline path\\to\\chats --chat-size 128K --baseline observational_temporal_memory --provider heuristic_v1 --limit 1 --upstream-commit 3e12035532eb85768f1a7cd779832b650c4b2ef9
-```
-
-Export those results into upstream-style answer files and summarize upstream evaluation output:
-
-```powershell
-python -m domain_chip_memory.cli export-beam-public-answers artifacts\\benchmark_runs\\beam_public_scorecard.json artifacts\\beam_results --result-file-name domain_chip_memory_answers.json
-python -m domain_chip_memory.cli run-beam-official-evaluation path\\to\\beam_upstream_repo artifacts\\beam_results --chat-size 128K --result-file-name domain_chip_memory_answers.json --dry-run
-python -m domain_chip_memory.cli summarize-beam-evaluation path\\to\\evaluation-domain_chip_memory_answers.json
-```
-
-Generate compact comparison artifacts across all current systems:
-
-```powershell
-python -m domain_chip_memory.cli compare-longmemeval-local path\\to\\longmemeval_s_cleaned.json --provider heuristic_v1 --write artifacts\\benchmark_runs\\longmemeval_s_system_comparison.json
-python -m domain_chip_memory.cli compare-locomo-local path\\to\\locomo10.json --provider heuristic_v1 --write artifacts\\benchmark_runs\\locomo10_system_comparison.json
-python -m domain_chip_memory.cli compare-goodai-local path\\to\\benchmark-v3-32k.yml path\\to\\definitions --provider heuristic_v1 --write artifacts\\benchmark_runs\\goodai_32k_system_comparison.json
-```
-
-Generate bounded mutation suggestions:
-
-```powershell
-python -m domain_chip_memory.cli suggest
-```
-
-Run tests:
-
-```powershell
-python -m pytest
-```
-
-## What is different about this chip
-
-Unlike the other domain chips, this one is not centered on a business lane or a content lane.
-It is centered on a **benchmark suite**.
-
-The operating unit is:
-
-1. benchmark slice
-2. failure trace
-3. mutation packet
-4. re-run
-5. promotion or rollback
-
-That means the chip should eventually own:
-
-- benchmark adapters
-- baseline runners
-- retrieval traces
-- answer-policy variants
-- per-category scorecards
-- regression gates
-
-## Standard
-
-Keep these evidence classes separate:
-
-- `research_grounded`
-- `benchmark_grounded`
-- `exploratory_frontier`
-- `realworld_validated`
-
-Do not promote a memory doctrine because it sounds elegant.
-Promote it only if it improves benchmark behavior, survives contradiction review, and keeps attribution honest.
+See the repository license file.
