@@ -10,6 +10,41 @@
     "packets",
     "watchtower"
   ],
+  "task_topics": [
+    "agent_memory",
+    "memory_benchmarks",
+    "telegram_memory",
+    "longmemeval",
+    "locomo",
+    "convomem",
+    "memory_retrieval",
+    "memory_evaluation",
+    "knowledge_updates",
+    "forgetting"
+  ],
+  "task_keywords": [
+    "memory",
+    "remember",
+    "forget",
+    "recall",
+    "benchmark",
+    "LongMemEval",
+    "LoCoMo",
+    "ConvoMem",
+    "Telegram memory",
+    "profile facts",
+    "current plan",
+    "commitment",
+    "retrieval",
+    "temporal grounding",
+    "supersession",
+    "deletion"
+  ],
+  "combine_with": [
+    "spark-intelligence-builder",
+    "domain-chip-spark-ops-critic",
+    "startup-yc"
+  ],
   "commands": {
     "evaluate": [
       "python",
@@ -54,11 +89,43 @@
       "description": "Track benchmark coverage, public-leader targets, and missing research controls."
     }
   },
-  "io_protocol": {
+  "io_protocol": "spark-hook-io.v1",
+  "io_contract": {
     "input": "benchmark_run_manifest.json",
     "output": "benchmark_scorecard.json",
     "schemas_dir": "schemas/",
     "artifacts_dir": "artifacts/"
+  },
+  "onboarding": {
+    "role": "Benchmark-first memory substrate and evaluation chip for Spark profile facts, Telegram memory, temporal grounding, supersession, and forgetting.",
+    "surfaces": [
+      "builder",
+      "cli",
+      "telegram"
+    ],
+    "permissions": [
+      "local_repo_read",
+      "benchmark_artifacts",
+      "memory_evaluation"
+    ],
+    "harnesses": [
+      "memory.lifecycle",
+      "telegram.memory",
+      "benchmark.regression"
+    ],
+    "health_checks": [
+      "evaluate",
+      "watchtower"
+    ],
+    "example_intents": [
+      "Evaluate Spark memory behavior.",
+      "Build memory benchmark packets.",
+      "Check whether a Telegram memory regression is covered."
+    ],
+    "limitations": [
+      "Does not own Telegram ingress.",
+      "Runs as a Builder-attached chip and memory substrate, not as a standalone daemon."
+    ]
   },
   "frontier": {
     "enabled": true,
@@ -104,4 +171,3 @@
     "web_search": true
   }
 }
-

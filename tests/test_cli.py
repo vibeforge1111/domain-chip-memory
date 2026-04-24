@@ -53,6 +53,39 @@ def test_watchtower_detects_docs(tmp_path: Path):
     assert payload["docs_ready"]["missing_count"] == 0
 
 
+def test_spark_chip_manifest_uses_supported_hook_protocol():
+    manifest_path = Path(__file__).resolve().parents[1] / "spark-chip.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    assert manifest["io_protocol"] == "spark-hook-io.v1"
+    assert manifest["io_contract"]["input"] == "benchmark_run_manifest.json"
+    assert "agent_memory" in manifest["task_topics"]
+    assert "memory" in [keyword.lower() for keyword in manifest["task_keywords"]]
+
+
+def test_evaluate_accepts_standard_spark_hook_io(tmp_path: Path, monkeypatch):
+    input_path = tmp_path / "input.json"
+    output_path = tmp_path / "output.json"
+    input_path.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "evaluate",
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    cli.main()
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["result"]["benchmark_family"] == "agent_memory"
+
+
 def test_adapter_contract_summary_has_official_adapters():
     payload = build_adapter_contract_summary()
     assert payload["official_benchmark_adapters"]

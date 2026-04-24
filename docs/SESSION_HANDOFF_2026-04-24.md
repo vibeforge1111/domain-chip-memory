@@ -404,3 +404,43 @@ Next recommended step:
 1. Use the new Builder probe runner after any memory-routing or Telegram bridge change.
 2. Start the next memory quality slice: temporal validity windows for superseded facts, using both benchmark probes and live Telegram usage.
 3. Or land/publish the clean `spark-telegram-bot` runtime-origin branch if that repo needs to be brought fully into `main`.
+
+## Continuation Update - 2026-04-24 Installer/Chip Contract
+
+Checked whether Spark Intelligence Builder's installer/attachment system can install and use `domain-chip-memory` correctly.
+
+Findings:
+
+- Builder already discovers `domain-chip-memory` as a configured chip root in `.tmp-home-live-telegram-real`.
+- `bootstrap telegram-agent --chip-root ... --activate-chip domain-chip-memory --guide` can list and activate the chip in a fresh home.
+- The chip was visible but not runnable through `attachments run-hook` because `spark-chip.json` used an object-shaped `io_protocol`; Builder only accepts `spark-hook-io.v1`.
+- After fixing `io_protocol`, Builder reached the chip CLI but the chip's hook subcommands did not accept the standard `--input` / `--output` arguments.
+
+What changed:
+
+- added top-level `spark.toml` so the repo has Spark Installer Standard v1 module metadata
+- changed `spark-chip.json` to `io_protocol: spark-hook-io.v1`
+- preserved the old IO detail under `io_contract`
+- added task topics, task keywords, combine-with hints, and onboarding metadata
+- taught `evaluate`, `watchtower`, `packets`, and `suggest` to accept Builder's standard hook IO args and write `{"result": ...}` to the requested output path
+- added tests covering the supported hook protocol and `evaluate --input --output`
+
+Verification completed:
+
+```powershell
+# domain-chip-memory
+python -m json.tool spark-chip.json > $null
+python -c "import tomllib; tomllib.load(open('spark.toml','rb')); print('metadata ok')"
+python -m domain_chip_memory.cli benchmark-contracts
+python -m pytest tests/test_cli.py -k "spark_chip_manifest_uses_supported_hook_protocol or evaluate_accepts_standard_spark_hook_io" -q
+git diff --check
+
+# spark-intelligence-builder against the live Builder home
+python -m spark_intelligence.cli attachments run-hook evaluate --chip-key domain-chip-memory --payload-json "{}" --home .tmp-home-live-telegram-real --json
+python -m spark_intelligence.cli attachments run-hook watchtower --chip-key domain-chip-memory --payload-json "{}" --home .tmp-home-live-telegram-real --json
+python -m spark_intelligence.cli attachments run-hook packets --chip-key domain-chip-memory --payload-json "{}" --home .tmp-home-live-telegram-real --json
+python -m spark_intelligence.cli attachments run-hook suggest --chip-key domain-chip-memory --payload-json "{}" --home .tmp-home-live-telegram-real --json
+python -m spark_intelligence.cli bootstrap telegram-agent --home .tmp-home-installer-memory-check --chip-root C:\Users\USER\Desktop\domain-chip-memory --activate-chip domain-chip-memory --guide --json
+```
+
+All four Builder hook executions returned `ok=true`, and the disposable bootstrap guide listed and activated `domain-chip-memory`. The disposable home was removed afterward.

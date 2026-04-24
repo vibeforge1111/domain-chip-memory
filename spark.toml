@@ -1,0 +1,65 @@
+[module]
+name = "domain-chip-memory"
+version = "0.1.0"
+kind = "chip-pack"
+plane = "runtime"
+description = "Benchmark-first Spark domain chip and memory substrate for agent memory evaluation."
+homepage = "https://github.com/vibeforge1111/domain-chip-memory"
+license = "UNLICENSED"
+
+[runtime]
+kind = "python"
+version = ">=3.10"
+package_manager = "pip"
+
+[install.dev]
+commands = ["python -m pip install -e ."]
+
+[provides]
+capabilities = [
+  "spark.domain_chip",
+  "spark.memory.substrate",
+  "spark.memory.benchmarks",
+  "spark.memory.telegram_checks",
+]
+
+[needs]
+modules = ["spark-intelligence-builder"]
+capabilities = ["spark.runtime"]
+secrets = []
+
+[claims]
+secrets = []
+ports = []
+routes = []
+
+[healthcheck]
+command = "python -m domain_chip_memory.cli benchmark-contracts"
+timeout_seconds = 20
+success_hint = "Domain chip memory contracts are readable."
+failure_hint = "Install the repo in editable mode, then rerun the benchmark contract check."
+
+[entrypoints]
+cli = "python -m domain_chip_memory.cli"
+
+[config]
+format = "none"
+installer_owned = false
+
+[paths]
+home = "~/.spark/modules/domain-chip-memory"
+state = "~/.spark/state/domain-chip-memory"
+logs = "~/.spark/logs/domain-chip-memory"
+
+[profiles.telegram_starter]
+role = "builder-attached-memory-chip"
+owns = [
+  "spark.memory.substrate",
+  "spark.memory.benchmarks",
+  "spark.memory.telegram_checks",
+]
+does_not_own = [
+  "telegram.ingress",
+  "telegram.bot_token",
+  "spark.runtime",
+]

@@ -76,6 +76,17 @@ def _print(payload: dict | list[dict]) -> None:
     print(json.dumps(payload, indent=2))
 
 
+def _add_hook_io_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--input", help="Spark hook input JSON path.")
+    parser.add_argument("--output", help="Spark hook output JSON path.")
+
+
+def _write_hook_output(args: argparse.Namespace, payload: dict | list[dict]) -> None:
+    output = getattr(args, "output", None)
+    if output:
+        _write_json(Path(output), {"result": payload})
+
+
 def _load_beam_official_eval_exports() -> dict[str, object]:
     from .beam_official_eval import (
         _summarize_beam_evaluation_payload,
@@ -10501,15 +10512,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="domain_chip_memory.cli")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("evaluate", help="Build the benchmark scorecard.")
+    evaluate_parser = subparsers.add_parser("evaluate", help="Build the benchmark scorecard.")
+    _add_hook_io_args(evaluate_parser)
 
     watchtower_parser = subparsers.add_parser("watchtower", help="Build the watchtower summary.")
     watchtower_parser.add_argument("--write", action="store_true")
+    _add_hook_io_args(watchtower_parser)
 
     packets_parser = subparsers.add_parser("packets", help="Build the memory strategy packet.")
     packets_parser.add_argument("--write", action="store_true")
+    _add_hook_io_args(packets_parser)
 
-    subparsers.add_parser("suggest", help="List bounded mutation suggestions.")
+    suggest_parser = subparsers.add_parser("suggest", help="List bounded mutation suggestions.")
+    _add_hook_io_args(suggest_parser)
     subparsers.add_parser("benchmark-targets", help="List the public benchmark target ledger.")
     subparsers.add_parser("benchmark-contracts", help="Show normalized benchmark contract and adapter summary.")
     subparsers.add_parser("baseline-contracts", help="Show baseline run manifest and baseline packet summary.")
@@ -11152,13 +11167,16 @@ def main() -> None:
     root = Path.cwd()
 
     if args.command == "evaluate":
-        _print(build_benchmark_scorecard())
+        payload = build_benchmark_scorecard()
+        _write_hook_output(args, payload)
+        _print(payload)
         return
 
     if args.command == "watchtower":
         payload = build_watchtower_summary(root)
         if args.write:
             _write_json(root / "artifacts" / "watchtower_summary.json", payload)
+        _write_hook_output(args, payload)
         _print(payload)
         return
 
@@ -11166,11 +11184,14 @@ def main() -> None:
         payload = build_strategy_packet()
         if args.write:
             _write_json(root / "artifacts" / "memory_system_strategy_packet.json", payload)
+        _write_hook_output(args, payload)
         _print(payload)
         return
 
     if args.command == "suggest":
-        _print(suggest_mutations())
+        payload = suggest_mutations()
+        _write_hook_output(args, payload)
+        _print(payload)
         return
 
     if args.command == "benchmark-targets":
