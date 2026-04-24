@@ -229,3 +229,50 @@ Then expand to:
 - commitment memory
 - correction/supersession memory
 - deletion/forgetting behavior
+
+## Continuation Update - 2026-04-24
+
+The two coordinated memory/runtime branches were fast-forwarded into `main` and pushed:
+
+- `domain-chip-memory` `main`: `e33a575 Harden kinship memory retrieval`
+- `spark-intelligence-builder` `main`: `edb013b Route Telegram family memory through Builder`
+
+The live Telegram long-polling bot was restarted and verified on `127.0.0.1:8788`. The active runtime process after the observability update was PID `8276`.
+
+The observability cleanup was implemented in Builder and the Telegram bot bridge:
+
+- Builder commit `6aab498 Label bridged Telegram traffic as runtime origin` was pushed to `spark-intelligence-builder/main`.
+- `gateway simulate-telegram-update` now accepts `--origin simulation|telegram-runtime`.
+- Runtime-origin bridge calls now emit `request_id=telegram:<update_id>`, `simulation=false`, and `origin_surface=telegram_runtime`.
+- Default synthetic simulation calls still emit `request_id=sim:<update_id>`, `simulation=true`, and `origin_surface=simulation_cli`.
+- `spark-telegram-bot` commit `3ef3b6b Mark Builder bridge calls as Telegram runtime` was created locally and the live bot was rebuilt/restarted from it.
+- The bot commit was not pushed because `spark-telegram-bot/main` already had five older local commits ahead of `origin/main`; pushing would publish all six together.
+
+Verification completed after the continuation:
+
+```powershell
+# spark-intelligence-builder
+python -m pytest tests/test_observability_filters.py -q
+# 5 passed, 2 warnings
+
+python -m pytest tests/test_telegram_generic_memory.py -k "family_shared_time or generic_relationship_memory_before_provider_resolution or generic_plan_query" -q
+# 4 passed, 70 deselected
+
+# spark-telegram-bot
+npm run build
+# passed
+```
+
+Live runtime-origin probe result:
+
+```text
+Which family members did I spend time with recently?
+-> You recently spent time with mother, sister.
+```
+
+Builder trace confirmed the latest runtime-origin probe used `request_id=telegram:*`, `simulation=false`, and `origin_surface=telegram_runtime`.
+
+Next recommended step:
+
+1. Decide whether to push `spark-telegram-bot/main` with all six local commits or split the observability bridge commit onto a clean branch.
+2. If keeping momentum in memory quality, start the next benchmark-plus-live probe slice: preference memory, current plan memory, commitment memory, correction/supersession, and deletion/forgetting.
