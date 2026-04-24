@@ -353,3 +353,54 @@ Next recommended step:
 1. The live Telegram preference/plan/commitment lifecycle lane is complete and confirmed.
 2. Next engineering step: package a repeatable live-probe checklist or runner so these scenarios can be replayed after memory-routing changes.
 3. Or push/create a PR for the clean `spark-telegram-bot` runtime-origin branch if the GitHub app/remote path is available.
+
+## Continuation Update - 2026-04-24 Probe Runner
+
+Builder `main` was advanced and pushed with:
+
+- `985e60c Add live Telegram memory probe verifier`
+
+What changed in Builder:
+
+- added `scripts/run_live_telegram_memory_probe.ps1`
+- added `scenario-packs/telegram-live-memory-lifecycle.txt`
+- documented the live probe in `README.md` beside the existing Telegram runtime verification commands
+
+The new verifier is intentionally for real long-polling Telegram checks, not shadow-mode simulation. It prints the exact prompts to send to the live Spark Telegram bot, then verifies the resulting Builder traces are real runtime traces with:
+
+```text
+simulation=false
+origin_surface=telegram_runtime
+request_id=telegram:*
+```
+
+Current probe coverage:
+
+- favorite color write
+- favorite food write, current query, delete, and post-delete abstention
+- current plan write, overwrite, current query, previous query, delete, and post-delete abstention
+- current commitment write, overwrite, current query, previous query, delete, and post-delete abstention
+
+Verification completed:
+
+```powershell
+# spark-intelligence-builder
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_live_telegram_memory_probe.ps1 -SparkHome .tmp-home-live-telegram-real -PrintPromptsOnly
+# printed the 17 live Telegram prompts
+
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_live_telegram_memory_probe.ps1 -SparkHome .tmp-home-live-telegram-real -Limit 40
+# PASS matched 17/17 real Telegram runtime traces
+```
+
+Runtime status after the push:
+
+- `spark-intelligence-builder/main` is aligned with `origin/main` at `985e60c`, aside from existing unrelated untracked local noise.
+- `domain-chip-memory/main` is aligned with `origin/main` before this handoff update, aside from existing untracked artifact noise.
+- `spark-telegram-bot` remains on `codex/telegram-runtime-origin-2026-04-24`, aligned with its remote branch, with only untracked `PROJECT.md`.
+- Long-polling bot process was still listening on `127.0.0.1:8788` as PID `8276` (`node dist/index.js`).
+
+Next recommended step:
+
+1. Use the new Builder probe runner after any memory-routing or Telegram bridge change.
+2. Start the next memory quality slice: temporal validity windows for superseded facts, using both benchmark probes and live Telegram usage.
+3. Or land/publish the clean `spark-telegram-bot` runtime-origin branch if that repo needs to be brought fully into `main`.
