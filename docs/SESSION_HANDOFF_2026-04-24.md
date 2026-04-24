@@ -329,9 +329,21 @@ Runtime status observed after the push:
   - runtime labels: `request_id=telegram:*`, `simulation=false`, `origin_surface=telegram_runtime`
   - bot reply: `I'll remember that your favorite color is bright green.`
 - Local recall against the same live Builder home returned: `Your favorite color is bright green.`
+- Real Telegram favorite-food lifecycle was confirmed through long polling:
+  - write route: `memory_generic_observation_update`, predicate `profile.favorite_food`
+  - query route: `memory_profile_fact_query`, value found
+  - delete route: `memory_generic_observation_delete`, predicate `profile.favorite_food`
+  - post-delete query route: `memory_profile_fact_query`, value not found
+  - bot replies matched the expected write, recall, forget, and abstention responses
+- Real Telegram current-plan lifecycle was confirmed through long polling:
+  - initial and overwrite writes routed as `memory_generic_observation_update`, predicate `profile.current_plan`
+  - current query routed as `memory_profile_fact_query` and returned the newer plan
+  - previous-plan query routed as `memory_profile_fact_history_query` and returned the superseded plan
+  - delete routed as `memory_generic_observation_delete`, predicate `profile.current_plan`
+  - post-delete query routed as `memory_profile_fact_query`, value not found
 
 Next recommended step:
 
-1. Ask the user to send the live Telegram probes for favorite food, current plan overwrite/history, commitment overwrite/history, and deletion now that the gateway delete ordering bug is fixed.
+1. Ask the user to send the live Telegram probes for commitment overwrite/history/deletion now that favorite food and current plan are confirmed.
 2. If live probes pass, update this handoff with the real Telegram replies.
 3. Then move to commitment/correction/deletion coverage in the benchmark pack, or push the clean `spark-telegram-bot` runtime-origin branch as a PR if the GitHub app/remote path is available.
