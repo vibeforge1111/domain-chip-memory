@@ -6244,8 +6244,10 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
         "What is my startup?",
         "You created Seedify.",
     ]
-    assert len(probes) == 2
+    assert len(probes) == 4
     assert [probe["probe_type"] for probe in probes] == [
+        "current_state",
+        "evidence",
         "current_state",
         "evidence",
     ]
@@ -6258,10 +6260,10 @@ def test_run_spark_builder_state_telegram_intake_cli_reads_bridge_native_builder
     assert payload["summary"]["reference_turns"] == 3
     assert payload["summary"]["reference_turn_count"] == 3
     probe_rows = {row["probe_type"]: row for row in payload["shadow_report"]["summary"]["probe_rows"]}
-    assert probe_rows["current_state"]["total"] == 1
-    assert probe_rows["current_state"]["hits"] == 1
-    assert probe_rows["evidence"]["total"] == 1
-    assert probe_rows["evidence"]["hits"] == 1
+    assert probe_rows["current_state"]["total"] == 2
+    assert probe_rows["current_state"]["hits"] == 2
+    assert probe_rows["evidence"]["total"] == 2
+    assert probe_rows["evidence"]["hits"] == 2
     assert payload["turn_audit"]["summary"]["rejected_user_turn_count"] == 0
     assert payload["turn_audit"]["summary"]["reference_turn_count"] == 3
     assert payload["summary"]["kb_valid"] is True

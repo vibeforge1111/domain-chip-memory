@@ -85,7 +85,16 @@ def should_use_current_state_exact_value(
     question_lower = question.question.lower()
     if not is_current_state_question(question):
         return False
-    if _is_profile_memory_query(question):
+    exact_location_profile_query = any(
+        phrase in question_lower
+        for phrase in (
+            "where do i live now",
+            "where do i live",
+            "what city do i live in",
+            "which city do i live in",
+        )
+    )
+    if _is_profile_memory_query(question) and not exact_location_profile_query:
         return False
     if is_dated_state_question(question) or is_relative_state_question(question):
         return False

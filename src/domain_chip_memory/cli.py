@@ -3501,9 +3501,14 @@ def _normalize_builder_telegram_state_db(
                 or (conversation.get("metadata", {}) or {}).get("chat_id")
                 or ""
             )
-            final_values = session_values.get(session_key, {})
+            metadata = conversation.get("metadata", {})
+            metadata_dict = metadata if isinstance(metadata, dict) else {}
+            human_key = str(metadata_dict.get("human_id") or "").strip()
+            final_values = {
+                **human_values.get(human_key, {}),
+                **session_values.get(session_key, {}),
+            }
             reconciled_probes: list[dict[str, object]] = []
-            seen_lookup_probe_keys: set[tuple[str, str, str, str]] = set()
             for probe in conversation.get("probes", []):
                 if not isinstance(probe, dict):
                     continue
@@ -3522,16 +3527,6 @@ def _normalize_builder_telegram_state_db(
                         continue
                     if effective_predicate:
                         normalized_probe["predicate"] = effective_predicate
-                    dedupe_key = (
-                        probe_type,
-                        str(normalized_probe.get("subject") or "").strip(),
-                        str(normalized_probe.get("predicate") or "").strip(),
-                        str(normalized_probe.get("expected_value") or "").strip(),
-                    )
-                    if all(dedupe_key):
-                        if dedupe_key in seen_lookup_probe_keys:
-                            continue
-                        seen_lookup_probe_keys.add(dedupe_key)
                 reconciled_probes.append(normalized_probe)
             conversation["probes"] = reconciled_probes
 
