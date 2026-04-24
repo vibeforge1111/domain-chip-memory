@@ -11,6 +11,8 @@ Shadow benchmark:
 This repo is not framed as a generic memory SDK yet.
 It is a research instrument and operating scaffold for memory-system design, benchmarking, mutation, and promotion.
 
+In the Spark launch stack, this repo is installed as the default memory/domain chip. Builder can activate it for memory behavior, Researcher can use it for memory packet and chip-authoring work, and Spark CLI can healthcheck it through its `spark.toml` manifest. It does not own Telegram ingress, Spawner mission control, or live LLM keys.
+
 ## Why this chip exists
 
 The current public landscape is good enough that hand-wavy memory architecture is no longer useful.
@@ -168,7 +170,7 @@ Install editable:
 pip install -e .
 ```
 
-Fill in provider credentials in [.env](/C:/Users/USER/Desktop/domain-chip-memory/.env) or copy from [.env.example](/C:/Users/USER/Desktop/domain-chip-memory/.env.example). The CLI now loads `.env` automatically.
+Fill in provider credentials in `.env` or copy from `.env.example`. Do not commit `.env`; the CLI loads it automatically for local benchmark/provider runs.
 
 Run the local chip evaluator:
 
