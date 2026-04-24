@@ -4,8 +4,17 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.*
+!.env.example
 benchmark_data/
 *.egg-info/
 research/realworld_validated/feedback_*.json
 artifacts/generated/
+artifacts/*.json
+artifacts/benchmark_runs/
+artifacts/live_builder_state_audit*/
 _tmp_*/
+state/
+logs/
+*.db
+*.sqlite
