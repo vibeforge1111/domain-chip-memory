@@ -12,15 +12,15 @@ Operational rule:
 
 Canonical Telegram owner:
 
-- repo: `C:\Users\USER\Desktop\spark-telegram-bot`
-- inspect `C:\Users\USER\Desktop\spark-telegram-bot\.env` before any Telegram-adjacent test
-- do not assume webhook or polling mode from stale docs; verify the current env posture
+- repo: `spark-telegram-bot`
+- inspect the supported gateway status/config output before any Telegram-adjacent test
+- do not assume webhook or polling mode from stale docs; verify the current launch posture
 
 Before running any Telegram-adjacent memory test or integration:
 
-1. inspect `spark-telegram-bot/.env`
+1. inspect the gateway status/config output without copying secret values
 2. confirm only one `spark-telegram-bot` process is running
-3. confirm Telegram `getWebhookInfo`
+3. confirm Telegram ownership through the supported bot healthcheck
 4. if webhook is active, do not start polling
 5. if polling is active, do not start any second receiver
 
