@@ -37,8 +37,8 @@ Current cross-repo runtime decision as of 2026-04-11:
 - active runtime architecture: `summary_synthesis_memory + heuristic_v1`
 - active Builder challenger: `dual_store_event_calendar_hybrid + heuristic_v1`
 - latest head-to-head offline `ProductMemory` comparison: tied at `1156/1266`
-- latest clean live Builder full validation root: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-023241`
-- latest clean live Builder full-run pointer: `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\latest-full-run.json`
+- latest clean live Builder full validation root: `$SPARK_HOME/artifacts/memory-validation-runs/20260412-023241`
+- latest clean live Builder full-run pointer: `$SPARK_HOME/artifacts/memory-validation-runs/latest-full-run.json`
 - chip-side baseline freshness: `clean`
 - chip baseline commit from Builder run: `26fe26582f4188c2abad64d9f7f6b5ca7b09d0e9`
 - current chip commit: `26fe26582f4188c2abad64d9f7f6b5ca7b09d0e9`

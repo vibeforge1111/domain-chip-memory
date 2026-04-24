@@ -172,7 +172,7 @@ python -m domain_chip_memory.cli runner-contracts
 python -m domain_chip_memory.cli memory-system-contracts
 ```
 
-The CLI now loads [.env](/C:/Users/USER/Desktop/domain-chip-memory/.env) automatically, so provider credentials can live there instead of being exported manually.
+The CLI now loads [.env](/<domain-chip-memory>/.env) automatically, so provider credentials can live there instead of being exported manually.
 
 To run a bounded real-provider smoke test once `OPENAI_API_KEY` is available:
 

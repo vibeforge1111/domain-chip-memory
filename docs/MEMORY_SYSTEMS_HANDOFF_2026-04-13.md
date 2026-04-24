@@ -3,9 +3,9 @@
 This is the restart document for tomorrow's work on the Spark memory system.
 It is intentionally cross-repo because today's work spanned:
 
-- `C:\Users\USER\Desktop\domain-chip-memory`
-- `C:\Users\USER\Desktop\spark-agent-harness`
-- `C:\Users\USER\Desktop\spark-tui-lab`
+- `<workspace>\\domain-chip-memory`
+- `<workspace>\\spark-agent-harness`
+- `<workspace>\\spark-tui-lab`
 
 The goal is that tomorrow can start from this file alone without needing to
 reconstruct the memory story from chat history.
@@ -43,7 +43,7 @@ That is the highest-value continuation item for tomorrow.
 
 Path:
 
-- `C:\Users\USER\Desktop\domain-chip-memory`
+- `<workspace>\\domain-chip-memory`
 
 Current HEAD:
 
@@ -51,8 +51,8 @@ Current HEAD:
 
 Relevant docs already in repo:
 
-- [NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md](C:/Users/USER/Desktop/domain-chip-memory/docs/NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md)
-- [SPARK_GOVERNED_RELEASE_EXTRA_WORK_2026-04-12.md](C:/Users/USER/Desktop/domain-chip-memory/docs/SPARK_GOVERNED_RELEASE_EXTRA_WORK_2026-04-12.md)
+- [NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md](<domain-chip-memory>/docs/NEXT_PHASE_SPARK_MEMORY_KB_BENCHMARK_PROGRAM_2026-04-10.md)
+- [SPARK_GOVERNED_RELEASE_EXTRA_WORK_2026-04-12.md](<domain-chip-memory>/docs/SPARK_GOVERNED_RELEASE_EXTRA_WORK_2026-04-12.md)
 
 Important note:
 
@@ -70,7 +70,7 @@ Important note:
 
 Path:
 
-- `C:\Users\USER\Desktop\spark-agent-harness`
+- `<workspace>\\spark-agent-harness`
 
 Current HEAD:
 
@@ -106,7 +106,7 @@ Latest memory-specific commits in this repo:
 
 Path:
 
-- `C:\Users\USER\Desktop\spark-tui-lab`
+- `<workspace>\\spark-tui-lab`
 
 Current HEAD:
 
@@ -378,8 +378,8 @@ This is not ambiguous anymore. It is the main next task.
 
 ### Things explicitly not touched today
 
-- `C:\Users\USER\.spark-intelligence\state.db`
-- `C:\Users\USER\.spark-intelligence` live config/state beyond safe cache/log cleanup discussion
+- `$SPARK_HOME\state.db`
+- `$SPARK_HOME` live config/state beyond safe cache/log cleanup discussion
 - any `spark-intelligence*` Desktop repo deletion
 
 ---
@@ -403,10 +403,10 @@ Approximate reclaimed space:
 
 Deleted Desktop directories:
 
-- `C:\Users\USER\Desktop\mind`
-- `C:\Users\USER\Desktop\the-mind`
-- `C:\Users\USER\Desktop\vibeship-mind`
-- `C:\Users\USER\Desktop\vibeship-mind-terrarium`
+- `<workspace>\\mind`
+- `<workspace>\\the-mind`
+- `<workspace>\\vibeship-mind`
+- `<workspace>\\vibeship-mind-terrarium`
 
 Approximate reclaimed space:
 
@@ -485,10 +485,10 @@ Potential follow-on:
 
 Still large on disk:
 
-- `C:\Users\USER\.codex\worktrees` about `7.5 GB`
-- `C:\Users\USER\.codex\sessions` about `2.67 GB`
-- `C:\Users\USER\.codex\log` about `0.81 GB`
-- `C:\Users\USER\.spark-intelligence\artifacts` about `0.67 GB`
+- `<codex-home>\\worktrees` about `7.5 GB`
+- `<codex-home>\\sessions` about `2.67 GB`
+- `<codex-home>\\log` about `0.81 GB`
+- `$SPARK_HOME\artifacts` about `0.67 GB`
 
 Do not clean those blindly. Treat them as a separate cleanup session.
 
@@ -499,7 +499,7 @@ Do not clean those blindly. Treat them as a separate cleanup session.
 ### Fresh harness on a clean port
 
 ```powershell
-Set-Location 'C:\Users\USER\Desktop\spark-agent-harness'
+Set-Location '<workspace>\\spark-agent-harness'
 python scripts/serve.py --port 8013
 ```
 
@@ -508,7 +508,7 @@ python scripts/serve.py --port 8013
 ```powershell
 $env:SPARK_HARNESS_URL='http://127.0.0.1:8013'
 $env:PYTHONIOENCODING='utf-8'
-Set-Location 'C:\Users\USER\Desktop\spark-tui-lab'
+Set-Location '<workspace>\\spark-tui-lab'
 .\.venv\Scripts\python.exe -m spark_tui.cli dashboard
 ```
 

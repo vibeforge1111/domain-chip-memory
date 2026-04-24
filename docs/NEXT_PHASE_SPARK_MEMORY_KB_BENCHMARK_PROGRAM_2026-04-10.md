@@ -11,8 +11,8 @@ Current honest state:
 
 <!-- AUTO_BUILDER_BASELINE_NEXT_PHASE_START -->
 - the latest offline `ProductMemory` comparison between `summary_synthesis_memory` and `dual_store_event_calendar_hybrid` is tied at `1156/1266`
-- the latest clean live Builder full validation root is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\20260412-023241`
-- the latest clean live Builder full-run pointer is `C:\Users\USER\.spark-intelligence\artifacts\memory-validation-runs\latest-full-run.json`
+- the latest clean live Builder full validation root is `$SPARK_HOME\artifacts\memory-validation-runs\20260412-023241`
+- the latest clean live Builder full-run pointer is `$SPARK_HOME\artifacts\memory-validation-runs\latest-full-run.json`
 - the chip-side freshness against that Builder baseline is `clean`
 - the latest clean live Builder soak is fully green at `14/14`, `0` failed
 - that live Builder soak still favors `summary_synthesis_memory` at `92/92` overall and `64/64` on selector packs
@@ -29,8 +29,8 @@ Important boundary:
 
 The first restart step from the checklist below has now been re-confirmed against the real Builder home:
 
-- `python -m domain_chip_memory.cli run-spark-builder-state-telegram-intake C:\Users\USER\.spark-intelligence tmp\state_telegram_restart_check_limit100_v2 --limit 100 --write tmp\state_telegram_restart_check_limit100_v2.json`
-- source path: `C:\Users\USER\.spark-intelligence\state.db`
+- `python -m domain_chip_memory.cli run-spark-builder-state-telegram-intake $SPARK_HOME tmp\state_telegram_restart_check_limit100_v2 --limit 100 --write tmp\state_telegram_restart_check_limit100_v2.json`
+- source path: `$SPARK_HOME\state.db`
 - processed `28` conversations with `121` accepted writes, `0` rejected writes, `0` skipped turns, and `380` reference turns
 - compiled KB health stayed clean with `valid: true`
 

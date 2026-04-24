@@ -4,12 +4,12 @@ Status: next-start
 
 ## Read First
 
-1. [Memory System Honest Assessment](/C:/Users/USER/Desktop/domain-chip-memory/docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
-2. [Implementation Plan](/C:/Users/USER/Desktop/domain-chip-memory/docs/IMPLEMENTATION_PLAN.md)
-3. [Current Test And Validation Plan](/C:/Users/USER/Desktop/domain-chip-memory/docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
-4. [BEAM Official Reproduction Plan](/C:/Users/USER/Desktop/domain-chip-memory/docs/BEAM_OFFICIAL_REPRODUCTION_PLAN_2026-03-29.md)
-5. [BEAM Implementation Gap Map](/C:/Users/USER/Desktop/domain-chip-memory/docs/BEAM_IMPLEMENTATION_GAP_MAP_2026-03-29.md)
-6. [Session Log 2026-03-29](/C:/Users/USER/Desktop/domain-chip-memory/docs/SESSION_LOG_2026-03-29.md)
+1. [Memory System Honest Assessment](/<domain-chip-memory>/docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
+2. [Implementation Plan](/<domain-chip-memory>/docs/IMPLEMENTATION_PLAN.md)
+3. [Current Test And Validation Plan](/<domain-chip-memory>/docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
+4. [BEAM Official Reproduction Plan](/<domain-chip-memory>/docs/BEAM_OFFICIAL_REPRODUCTION_PLAN_2026-03-29.md)
+5. [BEAM Implementation Gap Map](/<domain-chip-memory>/docs/BEAM_IMPLEMENTATION_GAP_MAP_2026-03-29.md)
+6. [Session Log 2026-03-29](/<domain-chip-memory>/docs/SESSION_LOG_2026-03-29.md)
 
 ## First Goal
 

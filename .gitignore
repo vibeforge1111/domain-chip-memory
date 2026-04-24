@@ -12,6 +12,7 @@ research/realworld_validated/feedback_*.json
 artifacts/generated/
 artifacts/*.json
 artifacts/benchmark_runs/
+artifacts/beam_public_results/
 artifacts/live_builder_state_audit*/
 _tmp_*/
 state/

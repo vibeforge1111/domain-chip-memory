@@ -76,7 +76,7 @@ Failure signature this should fix:
 
 Implementation surface:
 
-- write path in [src/domain_chip_memory/memory_systems.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/memory_systems.py)
+- write path in [src/domain_chip_memory/memory_systems.py](/<domain-chip-memory>/src/domain_chip_memory/memory_systems.py)
 - packet assembly logic for observational and hybrid systems
 
 Main regression risk:
@@ -114,7 +114,7 @@ Failure signature this should fix:
 
 Implementation surface:
 
-- retrieval ranking code in [src/domain_chip_memory/memory_systems.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/memory_systems.py)
+- retrieval ranking code in [src/domain_chip_memory/memory_systems.py](/<domain-chip-memory>/src/domain_chip_memory/memory_systems.py)
 - optional question difficulty or low-confidence routing
 
 Main regression risk:
@@ -154,8 +154,8 @@ Failure signature this should fix:
 
 Implementation surface:
 
-- packet formatting in [src/domain_chip_memory/memory_systems.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/memory_systems.py)
-- compaction and preservation logic in [src/domain_chip_memory/providers.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/providers.py)
+- packet formatting in [src/domain_chip_memory/memory_systems.py](/<domain-chip-memory>/src/domain_chip_memory/memory_systems.py)
+- compaction and preservation logic in [src/domain_chip_memory/providers.py](/<domain-chip-memory>/src/domain_chip_memory/providers.py)
 
 Main regression risk:
 
@@ -196,7 +196,7 @@ Failure signature this should fix:
 
 Implementation surface:
 
-- new maintenance pipeline under [src/domain_chip_memory](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory)
+- new maintenance pipeline under [src/domain_chip_memory](/<domain-chip-memory>/src/domain_chip_memory)
 - likely new artifact contracts for before/after memory topology snapshots
 
 Main regression risk:

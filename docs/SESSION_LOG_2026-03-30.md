@@ -26,13 +26,13 @@ By splitting mixed-source contradiction claims into separate negated and affirma
 
 The current leader artifact is:
 
-- [official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json](/C:/Users/USER/Desktop/domain-chip-memory/artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json)
+- [official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json](/<domain-chip-memory>/artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json)
 
 The current leading code path is centered in:
 
-- [memory_answer_runtime.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/memory_answer_runtime.py)
-- [test_memory_systems.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_memory_systems.py)
-- [ARCHITECTURE_VARIATION_LOOP_2026-03-29.md](/C:/Users/USER/Desktop/domain-chip-memory/docs/ARCHITECTURE_VARIATION_LOOP_2026-03-29.md)
+- [memory_answer_runtime.py](/<domain-chip-memory>/src/domain_chip_memory/memory_answer_runtime.py)
+- [test_memory_systems.py](/<domain-chip-memory>/tests/test_memory_systems.py)
+- [ARCHITECTURE_VARIATION_LOOP_2026-03-29.md](/<domain-chip-memory>/docs/ARCHITECTURE_VARIATION_LOOP_2026-03-29.md)
 
 ## What We Have Been Aiming For
 

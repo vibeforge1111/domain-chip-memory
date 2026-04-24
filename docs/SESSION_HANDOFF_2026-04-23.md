@@ -43,8 +43,8 @@ Artifacts from this checkpoint:
 
 - `artifacts/telegram_multi_party_probe_report_after_candidate_guard.json`
 - `artifacts/telegram_multi_party_probe_report_after_kinship_hardening.json`
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-sensitive-6probe-after-kinship-hardening.json`
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-minimax-sensitive-6probe-after-kinship-hardening.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-heuristic-sensitive-6probe-after-kinship-hardening.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-minimax-sensitive-6probe-after-kinship-hardening.json`
 
 Verification commands that passed:
 
@@ -213,9 +213,9 @@ Intended chunk order:
 
 Expected artifact names:
 
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv41-43-0521738.json`
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv44-47-0521738.json`
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv48-50-0521738.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-heuristic-conv41-43-0521738.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-heuristic-conv44-47-0521738.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-heuristic-conv48-50-0521738.json`
 
 At the stop point of this handoff:
 
@@ -303,9 +303,9 @@ Specific `conv44-47` diagnosis:
 
 Artifacts now on disk:
 
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv41-43-0521738.json`
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv44-47-0521738.json`
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv48-50-0521738.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-heuristic-conv41-43-0521738.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-heuristic-conv44-47-0521738.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-heuristic-conv48-50-0521738.json`
 
 We still need:
 
@@ -365,13 +365,13 @@ Not:
 Heuristic chunk pattern:
 
 ```powershell
-python -m domain_chip_memory.cli run-locomo-multi-shadow-eval benchmark_data/official/LoCoMo/data/locomo10.json --provider heuristic_v1 --sample-id conv-41 --sample-id conv-42 --sample-id conv-43 --category 1 --category 2 --category 3 --exclude-missing-gold --fused-family-only --conversational-limit 4 --graph-limit 4 --write C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-conv41-43-0521738.json
+python -m domain_chip_memory.cli run-locomo-multi-shadow-eval benchmark_data/official/LoCoMo/data/locomo10.json --provider heuristic_v1 --sample-id conv-41 --sample-id conv-42 --sample-id conv-43 --category 1 --category 2 --category 3 --exclude-missing-gold --fused-family-only --conversational-limit 4 --graph-limit 4 --write $SPARK_HOME\artifacts\locomo-unseen-slice\fused-heuristic-conv41-43-0521738.json
 ```
 
 Real-provider rerun pattern:
 
 ```powershell
-python -m domain_chip_memory.cli run-locomo-multi-shadow-eval benchmark_data/official/LoCoMo/data/locomo10.json --provider minimax:MiniMax-M2.7 --sample-id conv-41 --sample-id conv-42 --sample-id conv-43 --category 1 --category 2 --category 3 --exclude-missing-gold --fused-family-only --conversational-limit 4 --graph-limit 4 --write C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-minimax-conv41-43-0521738.json
+python -m domain_chip_memory.cli run-locomo-multi-shadow-eval benchmark_data/official/LoCoMo/data/locomo10.json --provider minimax:MiniMax-M2.7 --sample-id conv-41 --sample-id conv-42 --sample-id conv-43 --category 1 --category 2 --category 3 --exclude-missing-gold --fused-family-only --conversational-limit 4 --graph-limit 4 --write $SPARK_HOME\artifacts\locomo-unseen-slice\fused-minimax-conv41-43-0521738.json
 ```
 
 Focused regression lanes already known-good today:

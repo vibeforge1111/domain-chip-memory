@@ -35,15 +35,15 @@ Important nuance:
 
 Primary repo:
 
-- `C:\Users\USER\Desktop\domain-chip-memory`
+- `<workspace>\\domain-chip-memory`
 
 Runtime/Telegram adapter repo:
 
-- `C:\Users\USER\Desktop\spark-intelligence-builder`
+- `<workspace>\\spark-intelligence-builder`
 
 Telegram ingress owner:
 
-- `C:\Users\USER\Desktop\spark-telegram-bot`
+- `<workspace>\\spark-telegram-bot`
 
 Do not start a second Telegram receiver unless intentionally replacing the current one.
 
@@ -81,12 +81,12 @@ Artifacts:
 
 - `artifacts/telegram_multi_party_probe_report_after_candidate_guard.json`
 - `artifacts/telegram_multi_party_probe_report_after_kinship_hardening.json`
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-heuristic-sensitive-6probe-after-kinship-hardening.json`
-- `C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\fused-minimax-sensitive-6probe-after-kinship-hardening.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-heuristic-sensitive-6probe-after-kinship-hardening.json`
+- `$SPARK_HOME\artifacts\locomo-unseen-slice\fused-minimax-sensitive-6probe-after-kinship-hardening.json`
 
 ## Builder Changes
 
-Tracked files modified in `C:\Users\USER\Desktop\spark-intelligence-builder`:
+Tracked files modified in `<workspace>\\spark-intelligence-builder`:
 
 - `src/spark_intelligence/memory/generic_observations.py`
 - `src/spark_intelligence/memory/profile_facts.py`
@@ -440,7 +440,7 @@ python -m spark_intelligence.cli attachments run-hook evaluate --chip-key domain
 python -m spark_intelligence.cli attachments run-hook watchtower --chip-key domain-chip-memory --payload-json "{}" --home .tmp-home-live-telegram-real --json
 python -m spark_intelligence.cli attachments run-hook packets --chip-key domain-chip-memory --payload-json "{}" --home .tmp-home-live-telegram-real --json
 python -m spark_intelligence.cli attachments run-hook suggest --chip-key domain-chip-memory --payload-json "{}" --home .tmp-home-live-telegram-real --json
-python -m spark_intelligence.cli bootstrap telegram-agent --home .tmp-home-installer-memory-check --chip-root C:\Users\USER\Desktop\domain-chip-memory --activate-chip domain-chip-memory --guide --json
+python -m spark_intelligence.cli bootstrap telegram-agent --home .tmp-home-installer-memory-check --chip-root <workspace>\\domain-chip-memory --activate-chip domain-chip-memory --guide --json
 ```
 
 All four Builder hook executions returned `ok=true`, and the disposable bootstrap guide listed and activated `domain-chip-memory`. The disposable home was removed afterward.

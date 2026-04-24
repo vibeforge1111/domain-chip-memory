@@ -12,16 +12,16 @@ This file answers one practical question:
 
 What we already have:
 
-- `BEAMAdapter.normalize_instance` in [adapters.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/adapters.py)
-- `load_beam_json` in [loaders.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/loaders.py)
-- `load_beam_public_dir` in [loaders.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/loaders.py)
-- `run-beam-baseline` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
-- `run-beam-public-baseline` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
-- `export-beam-public-answers` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
-- `run-beam-official-evaluation` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
-- `summarize-beam-evaluation` in [cli.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
-- `BEAM` scorecard handling in [scorecards.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/scorecards.py)
-- local regression tests in [tests/test_adapters.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_adapters.py) and [tests/test_cli.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_cli.py)
+- `BEAMAdapter.normalize_instance` in [adapters.py](/<domain-chip-memory>/src/domain_chip_memory/adapters.py)
+- `load_beam_json` in [loaders.py](/<domain-chip-memory>/src/domain_chip_memory/loaders.py)
+- `load_beam_public_dir` in [loaders.py](/<domain-chip-memory>/src/domain_chip_memory/loaders.py)
+- `run-beam-baseline` in [cli.py](/<domain-chip-memory>/src/domain_chip_memory/cli.py)
+- `run-beam-public-baseline` in [cli.py](/<domain-chip-memory>/src/domain_chip_memory/cli.py)
+- `export-beam-public-answers` in [cli.py](/<domain-chip-memory>/src/domain_chip_memory/cli.py)
+- `run-beam-official-evaluation` in [cli.py](/<domain-chip-memory>/src/domain_chip_memory/cli.py)
+- `summarize-beam-evaluation` in [cli.py](/<domain-chip-memory>/src/domain_chip_memory/cli.py)
+- `BEAM` scorecard handling in [scorecards.py](/<domain-chip-memory>/src/domain_chip_memory/scorecards.py)
+- local regression tests in [tests/test_adapters.py](/<domain-chip-memory>/tests/test_adapters.py) and [tests/test_cli.py](/<domain-chip-memory>/tests/test_cli.py)
 
 What that support actually means:
 

@@ -43,7 +43,7 @@ This layer promotes those atoms into a graph-shaped memory surface with:
 
 ## Data Model
 
-Main types in [typed_temporal_graph_memory.py](/C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/typed_temporal_graph_memory.py):
+Main types in [typed_temporal_graph_memory.py](/<domain-chip-memory>/src/domain_chip_memory/typed_temporal_graph_memory.py):
 
 - `PersonEntity`
 - `RelationshipFact`
@@ -83,7 +83,7 @@ Not implemented yet:
 
 ## Validation
 
-Covered by [test_typed_temporal_graph_memory.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_typed_temporal_graph_memory.py):
+Covered by [test_typed_temporal_graph_memory.py](/<domain-chip-memory>/tests/test_typed_temporal_graph_memory.py):
 
 - `conv-48` preserves mother-loss provenance and normalized time
 - `conv-48` preserves pendant gift provenance and year anchor
@@ -95,7 +95,7 @@ Covered by [test_typed_temporal_graph_memory.py](/C:/Users/USER/Desktop/domain-c
 - Tim injury turns promote reported speech such as `The doctor said it's not too serious`
 - conv-47 memory-gap turns promote unknown records such as `I can't remember such a game`
 
-Covered by [test_typed_temporal_graph_retrieval.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_typed_temporal_graph_retrieval.py):
+Covered by [test_typed_temporal_graph_retrieval.py](/<domain-chip-memory>/tests/test_typed_temporal_graph_retrieval.py):
 
 - `conv-48` loss questions recover the normalized mother-loss anchor from graph events
 - `conv-48` support questions recover provenance spans from support events
@@ -106,7 +106,7 @@ Covered by [test_typed_temporal_graph_retrieval.py](/C:/Users/USER/Desktop/domai
 - Boston history questions recover negation provenance
 - memory-gap questions recover unknown-record provenance
 
-Covered by [test_conversational_index.py](/C:/Users/USER/Desktop/domain-chip-memory/tests/test_conversational_index.py):
+Covered by [test_conversational_index.py](/<domain-chip-memory>/tests/test_conversational_index.py):
 
 - graph-hybrid shadow packets add alias-binding evidence for `conv-42`
 - graph-hybrid shadow packets stay off for broad synthesis questions
@@ -117,7 +117,7 @@ Covered by [test_conversational_index.py](/C:/Users/USER/Desktop/domain-chip-mem
 The repo now has a direct CLI entry point for real-provider comparison:
 
 ```powershell
-python -m domain_chip_memory.cli run-locomo-multi-shadow-eval benchmark_data/official/LoCoMo/data/locomo10.json --provider openai:<model> --sample-id conv-41 --sample-id conv-42 --sample-id conv-43 --sample-id conv-44 --sample-id conv-47 --sample-id conv-48 --sample-id conv-49 --sample-id conv-50 --category 1 --category 2 --category 3 --exclude-missing-gold --write C:\Users\USER\.spark-intelligence\artifacts\locomo-unseen-slice\real-provider-multi-shadow.json
+python -m domain_chip_memory.cli run-locomo-multi-shadow-eval benchmark_data/official/LoCoMo/data/locomo10.json --provider openai:<model> --sample-id conv-41 --sample-id conv-42 --sample-id conv-43 --sample-id conv-44 --sample-id conv-47 --sample-id conv-48 --sample-id conv-49 --sample-id conv-50 --category 1 --category 2 --category 3 --exclude-missing-gold --write $SPARK_HOME\artifacts\locomo-unseen-slice\real-provider-multi-shadow.json
 ```
 
 That command compares:

@@ -23,7 +23,7 @@ integration work.
 
 Path:
 
-- `C:\Users\USER\Desktop\domain-chip-memory`
+- `<workspace>\\domain-chip-memory`
 
 Current HEAD before this handoff doc commit:
 
@@ -110,7 +110,7 @@ correctly.
 
 A new explicit integration helper was added:
 
-- [builder_read_adapter.py](C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/builder_read_adapter.py)
+- [builder_read_adapter.py](<domain-chip-memory>/src/domain_chip_memory/builder_read_adapter.py)
 
 This gives Builder a canonical way to:
 
@@ -128,11 +128,11 @@ This is the most important handoff artifact for the next session.
 
 Live replay artifact used repeatedly during this session:
 
-- `C:\Users\USER\Desktop\domain-chip-memory\artifacts\live_builder_state_audit_backfill\builder_state_backfill.json`
+- `<domain-chip-memory>\\artifacts\live_builder_state_audit_backfill\builder_state_backfill.json`
 
 Real Builder source:
 
-- `C:\Users\USER\.spark-intelligence\state.db`
+- `$SPARK_HOME\state.db`
 
 Current live failure-taxonomy state from the replay:
 
@@ -185,17 +185,17 @@ That is the narrow continuation target.
 
 Open these first:
 
-- [builder_read_adapter.py](C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/builder_read_adapter.py)
-- [sdk.py](C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/sdk.py)
-- [cli.py](C:/Users/USER/Desktop/domain-chip-memory/src/domain_chip_memory/cli.py)
-- [test_builder_read_adapter.py](C:/Users/USER/Desktop/domain-chip-memory/tests/test_builder_read_adapter.py)
-- [test_sdk_read_materialization.py](C:/Users/USER/Desktop/domain-chip-memory/tests/test_sdk_read_materialization.py)
-- [builder_state_backfill.json](C:/Users/USER/Desktop/domain-chip-memory/artifacts/live_builder_state_audit_backfill/builder_state_backfill.json)
+- [builder_read_adapter.py](<domain-chip-memory>/src/domain_chip_memory/builder_read_adapter.py)
+- [sdk.py](<domain-chip-memory>/src/domain_chip_memory/sdk.py)
+- [cli.py](<domain-chip-memory>/src/domain_chip_memory/cli.py)
+- [test_builder_read_adapter.py](<domain-chip-memory>/tests/test_builder_read_adapter.py)
+- [test_sdk_read_materialization.py](<domain-chip-memory>/tests/test_sdk_read_materialization.py)
+- [builder_state_backfill.json](<domain-chip-memory>/artifacts/live_builder_state_audit_backfill/builder_state_backfill.json)
 
 If cross-checking the older integration story, also open:
 
-- `C:\Users\USER\Desktop\spark-agent-harness\HANDOFF_2026-04-13_RUNTIME_REALIGNMENT.md`
-- `C:\Users\USER\Desktop\spark-agent-harness\REALIGNMENT_STATUS.md`
+- `<workspace>\\spark-agent-harness\HANDOFF_2026-04-13_RUNTIME_REALIGNMENT.md`
+- `<workspace>\\spark-agent-harness\REALIGNMENT_STATUS.md`
 
 ---
 
@@ -227,7 +227,7 @@ Commands already used successfully in this lane:
 python -m pytest tests\test_cli.py -k "normalizes_bare_telegram_human_ids or splits_shared_memory_retrieval_sessions_by_human or flags_supported_identity_reads_as_read_gap or supported_fact_explanations_as_read_gap or reads_memory_read_only_builder_state_db"
 python -m pytest tests\test_sdk_read_materialization.py
 python -m pytest tests\test_builder_read_adapter.py tests\test_sdk_read_materialization.py
-python -m domain_chip_memory.cli run-spark-builder-state-telegram-intake "C:\Users\USER\.spark-intelligence" "C:\Users\USER\Desktop\domain-chip-memory\artifacts\live_builder_state_audit_backfill" --limit 25 --write "C:\Users\USER\Desktop\domain-chip-memory\artifacts\live_builder_state_audit_backfill\builder_state_backfill.json"
+python -m domain_chip_memory.cli run-spark-builder-state-telegram-intake "$SPARK_HOME" "<domain-chip-memory>\\artifacts\live_builder_state_audit_backfill" --limit 25 --write "<domain-chip-memory>\\artifacts\live_builder_state_audit_backfill\builder_state_backfill.json"
 ```
 
 ---

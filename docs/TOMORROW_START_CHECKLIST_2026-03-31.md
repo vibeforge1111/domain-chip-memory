@@ -4,11 +4,11 @@ Status: next-start
 
 ## Read First
 
-1. [Session Log 2026-03-30](/C:/Users/USER/Desktop/domain-chip-memory/docs/SESSION_LOG_2026-03-30.md)
-2. [Architecture Variation Loop 2026-03-29](/C:/Users/USER/Desktop/domain-chip-memory/docs/ARCHITECTURE_VARIATION_LOOP_2026-03-29.md)
-3. [Memory System Honest Assessment](/C:/Users/USER/Desktop/domain-chip-memory/docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
-4. [Current Test And Validation Plan](/C:/Users/USER/Desktop/domain-chip-memory/docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
-5. [Implementation Plan](/C:/Users/USER/Desktop/domain-chip-memory/docs/IMPLEMENTATION_PLAN.md)
+1. [Session Log 2026-03-30](/<domain-chip-memory>/docs/SESSION_LOG_2026-03-30.md)
+2. [Architecture Variation Loop 2026-03-29](/<domain-chip-memory>/docs/ARCHITECTURE_VARIATION_LOOP_2026-03-29.md)
+3. [Memory System Honest Assessment](/<domain-chip-memory>/docs/MEMORY_SYSTEM_HONEST_ASSESSMENT_2026-03-29.md)
+4. [Current Test And Validation Plan](/<domain-chip-memory>/docs/CURRENT_TEST_AND_VALIDATION_PLAN_2026-03-29.md)
+5. [Implementation Plan](/<domain-chip-memory>/docs/IMPLEMENTATION_PLAN.md)
 
 ## First Goal
 
@@ -23,7 +23,7 @@ Move the current `summary_synthesis_memory` leader on the same public `BEAM` fir
 
 Current leader:
 
-- [official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json](/C:/Users/USER/Desktop/domain-chip-memory/artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json)
+- [official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json](/<domain-chip-memory>/artifacts/benchmark_runs/official_beam_128k_summary_synthesis_memory_heuristic_v1_first3_v24_scorecard.json)
 
 Current headline score:
 

@@ -308,8 +308,8 @@ Immediate next build steps:
 
 ## Sources
 
-- [PRD.md](/C:/Users/USER/Desktop/domain-chip-memory/docs/PRD.md)
-- [FIRST_VERSION_RESEARCH_LOCK.md](/C:/Users/USER/Desktop/domain-chip-memory/docs/FIRST_VERSION_RESEARCH_LOCK.md)
-- [COMBINATION_SEARCH_PROGRAM.md](/C:/Users/USER/Desktop/domain-chip-memory/docs/COMBINATION_SEARCH_PROGRAM.md)
-- [BENCHMARK_AUTOLOOP_PROGRAM.md](/C:/Users/USER/Desktop/domain-chip-memory/docs/BENCHMARK_AUTOLOOP_PROGRAM.md)
-- [FRONTIER_MEMORY_SYSTEMS_COMPARATIVE_ANALYSIS_2026-03-22.md](/C:/Users/USER/Desktop/domain-chip-memory/docs/FRONTIER_MEMORY_SYSTEMS_COMPARATIVE_ANALYSIS_2026-03-22.md)
+- [PRD.md](/<domain-chip-memory>/docs/PRD.md)
+- [FIRST_VERSION_RESEARCH_LOCK.md](/<domain-chip-memory>/docs/FIRST_VERSION_RESEARCH_LOCK.md)
+- [COMBINATION_SEARCH_PROGRAM.md](/<domain-chip-memory>/docs/COMBINATION_SEARCH_PROGRAM.md)
+- [BENCHMARK_AUTOLOOP_PROGRAM.md](/<domain-chip-memory>/docs/BENCHMARK_AUTOLOOP_PROGRAM.md)
+- [FRONTIER_MEMORY_SYSTEMS_COMPARATIVE_ANALYSIS_2026-03-22.md](/<domain-chip-memory>/docs/FRONTIER_MEMORY_SYSTEMS_COMPARATIVE_ANALYSIS_2026-03-22.md)
