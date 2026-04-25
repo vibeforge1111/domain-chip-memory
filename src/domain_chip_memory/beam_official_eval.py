@@ -15,8 +15,6 @@ from pathlib import Path
 from functools import partial
 from typing import Any
 
-from langchain_openai import ChatOpenAI
-
 from .providers import DEFAULT_MINIMAX_BASE_URL, DEFAULT_OPENAI_BASE_URL
 
 
@@ -37,6 +35,18 @@ _BEAM_OPENAI_COMPATIBLE_SINGLE_JUDGE_CATEGORIES = {
     "contradiction_resolution",
     "information_extraction",
 }
+
+
+def _load_chat_openai() -> Any:
+    try:
+        from langchain_openai import ChatOpenAI
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "BEAM official upstream evaluation requires the optional `langchain-openai` package. "
+            "Install it with `python -m pip install langchain-openai` before running "
+            "`run-beam-official-evaluation`."
+        ) from exc
+    return ChatOpenAI
 
 
 def _official_chat_size_dir(scale: str) -> str:
@@ -800,7 +810,8 @@ def _run_openai_compatible_evaluation_worker(
             compute_metrics_module.SentenceTransformer,
             local_files_only=True,
         )
-        judge_llm = ChatOpenAI(
+        chat_openai = _load_chat_openai()
+        judge_llm = chat_openai(
             model=judge_config["model"],
             openai_api_key=judge_config["api_key"],
             openai_api_base=judge_config["base_url"],

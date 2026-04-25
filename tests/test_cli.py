@@ -25,6 +25,24 @@ from domain_chip_memory.spark_kb import scaffold_spark_knowledge_base
 from domain_chip_memory.watchtower import build_watchtower_summary
 
 
+def test_beam_official_eval_import_is_not_blocked_by_optional_langchain_openai():
+    sentinel = object()
+    original = sys.modules.get("langchain_openai", sentinel)
+    sys.modules["langchain_openai"] = None
+    try:
+        try:
+            beam_official_eval._load_chat_openai()
+        except RuntimeError as exc:
+            assert "requires the optional `langchain-openai` package" in str(exc)
+        else:
+            raise AssertionError("_load_chat_openai should explain missing langchain-openai")
+    finally:
+        if original is sentinel:
+            sys.modules.pop("langchain_openai", None)
+        else:
+            sys.modules["langchain_openai"] = original
+
+
 def test_strategy_packet_shape():
     packet = build_strategy_packet()
     assert packet["packet_type"] == "memory_system_strategy_packet"
@@ -17542,7 +17560,7 @@ def test_run_openai_compatible_evaluation_worker_sets_request_timeout_and_retrie
             return FakeRunEvaluationModule()
         return original_import_module(name)
 
-    monkeypatch.setattr(beam_official_eval, "ChatOpenAI", FakeChatOpenAI)
+    monkeypatch.setattr(beam_official_eval, "_load_chat_openai", lambda: FakeChatOpenAI)
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
     beam_official_eval._run_openai_compatible_evaluation_worker(
