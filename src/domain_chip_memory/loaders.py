@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import re
 from pathlib import Path
@@ -10,6 +12,79 @@ from .contracts import NormalizedBenchmarkConfig, NormalizedBenchmarkSample
 
 def _load_json(path: Path) -> object:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def chip_manifest_sha256(path: str | Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def sign_chip_manifest(path: str | Path, *, signing_key: str) -> str:
+    if not signing_key:
+        raise ValueError("signing_key is required to sign a chip manifest.")
+    return hmac.new(
+        signing_key.encode("utf-8"),
+        Path(path).read_bytes(),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def verify_chip_manifest(
+    path: str | Path,
+    *,
+    checksum_path: str | Path | None = None,
+    expected_sha256: str | None = None,
+    expected_signature: str | None = None,
+    signing_key: str | None = None,
+) -> dict[str, object]:
+    manifest_path = Path(path)
+    expected_digest = (expected_sha256 or "").strip().lower()
+    if not expected_digest:
+        digest_path = Path(checksum_path) if checksum_path else manifest_path.with_suffix(manifest_path.suffix + ".sha256")
+        if digest_path.exists():
+            expected_digest = digest_path.read_text(encoding="utf-8").split()[0].strip().lower()
+    actual_digest = chip_manifest_sha256(manifest_path)
+    if expected_digest and not hmac.compare_digest(actual_digest, expected_digest):
+        raise ValueError(f"Chip manifest checksum mismatch for {manifest_path}.")
+
+    signature_verified = False
+    if expected_signature or signing_key:
+        if not expected_signature or not signing_key:
+            raise ValueError("Both expected_signature and signing_key are required for signed chip verification.")
+        actual_signature = sign_chip_manifest(manifest_path, signing_key=signing_key)
+        if not hmac.compare_digest(actual_signature, expected_signature.strip().lower()):
+            raise ValueError(f"Chip manifest signature mismatch for {manifest_path}.")
+        signature_verified = True
+
+    if not expected_digest and not signature_verified:
+        raise ValueError(f"Chip manifest has no checksum or signature proof: {manifest_path}.")
+    return {
+        "sha256": actual_digest,
+        "checksum_verified": bool(expected_digest),
+        "signature_verified": signature_verified,
+    }
+
+
+def load_chip_manifest(
+    path: str | Path = "spark-chip.json",
+    *,
+    require_integrity: bool = True,
+    checksum_path: str | Path | None = None,
+    expected_sha256: str | None = None,
+    expected_signature: str | None = None,
+    signing_key: str | None = None,
+) -> dict[str, object]:
+    if require_integrity:
+        verify_chip_manifest(
+            path,
+            checksum_path=checksum_path,
+            expected_sha256=expected_sha256,
+            expected_signature=expected_signature,
+            signing_key=signing_key,
+        )
+    payload = _load_json(Path(path))
+    if not isinstance(payload, dict):
+        raise ValueError("Chip manifest must be a JSON object.")
+    return payload
 
 
 def load_longmemeval_json(path: str | Path, *, limit: int | None = None) -> list[NormalizedBenchmarkSample]:

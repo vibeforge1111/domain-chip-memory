@@ -3,11 +3,15 @@ from pathlib import Path
 
 from domain_chip_memory.loaders import (
     build_loader_contract_summary,
+    chip_manifest_sha256,
     load_beam_json,
+    load_chip_manifest,
     load_goodai_config,
     load_goodai_definitions,
     load_locomo_json,
     load_longmemeval_json,
+    sign_chip_manifest,
+    verify_chip_manifest,
 )
 from domain_chip_memory.providers import ProviderResponse, build_provider_contract_summary, get_provider
 from domain_chip_memory.responders import heuristic_response
@@ -50,6 +54,46 @@ def test_longmemeval_loader_and_runner(tmp_path: Path):
 
     assert samples[0].benchmark_name == "LongMemEval"
     assert scorecard["overall"]["total"] == 1
+
+
+def test_load_chip_manifest_verifies_checksum(tmp_path: Path):
+    manifest = tmp_path / "spark-chip.json"
+    manifest.write_text(json.dumps({"chip_name": "test-chip"}), encoding="utf-8")
+    checksum = tmp_path / "spark-chip.json.sha256"
+    checksum.write_text(f"{chip_manifest_sha256(manifest)}  spark-chip.json\n", encoding="utf-8")
+
+    payload = load_chip_manifest(manifest)
+    proof = verify_chip_manifest(manifest)
+
+    assert payload["chip_name"] == "test-chip"
+    assert proof["checksum_verified"] is True
+
+
+def test_load_chip_manifest_rejects_checksum_mismatch(tmp_path: Path):
+    manifest = tmp_path / "spark-chip.json"
+    manifest.write_text(json.dumps({"chip_name": "test-chip"}), encoding="utf-8")
+    (tmp_path / "spark-chip.json.sha256").write_text("0" * 64 + "  spark-chip.json\n", encoding="utf-8")
+
+    try:
+        load_chip_manifest(manifest)
+    except ValueError as exc:
+        assert "checksum mismatch" in str(exc)
+    else:
+        raise AssertionError("expected checksum mismatch")
+
+
+def test_verify_chip_manifest_supports_keyed_signature(tmp_path: Path):
+    manifest = tmp_path / "spark-chip.json"
+    manifest.write_text(json.dumps({"chip_name": "test-chip"}), encoding="utf-8")
+    signature = sign_chip_manifest(manifest, signing_key="test-signing-key")
+
+    proof = verify_chip_manifest(
+        manifest,
+        expected_signature=signature,
+        signing_key="test-signing-key",
+    )
+
+    assert proof["signature_verified"] is True
 
 
 def test_locomo_loader(tmp_path: Path):
