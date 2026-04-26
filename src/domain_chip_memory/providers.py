@@ -41,6 +41,14 @@ from .runs import BaselinePromptPacket
 
 DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
 DEFAULT_MINIMAX_BASE_URL = "https://api.minimax.io/v1"
+ALLOWED_CODEX_MODELS = {
+    "gpt-5-codex",
+    "gpt-5.3-codex",
+    "gpt-5.3-codex-spark",
+    "gpt-5.4",
+    "gpt-5.4-mini",
+    "gpt-5.5",
+}
 _PROFILE_COUNTRY_VALUES = {
     "uae",
     "united arab emirates",
@@ -106,6 +114,11 @@ class CodexExecProvider:
     )
     final_instruction: str = "Return only the answer."
     timeout_s: int = 180
+
+    def __post_init__(self) -> None:
+        if self.model and self.model not in ALLOWED_CODEX_MODELS:
+            allowed = ", ".join(sorted(ALLOWED_CODEX_MODELS))
+            raise ValueError(f"Unsupported Codex model '{self.model}'. Allowed models: {allowed}.")
 
     @property
     def name(self) -> str:

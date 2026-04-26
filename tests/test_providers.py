@@ -47,6 +47,14 @@ def test_get_provider_supports_codex_pattern():
     assert provider.name == "codex:gpt-5-codex"
 
 
+def test_codex_provider_rejects_unapproved_model_names():
+    with pytest.raises(ValueError, match="Unsupported Codex model"):
+        get_provider("codex:../../bad")
+
+    with pytest.raises(ValueError, match="Unsupported Codex model"):
+        CodexExecProvider(model="--dangerous-flag")
+
+
 def test_codex_provider_streams_prompt_over_stdin(monkeypatch, tmp_path):
     captured: dict[str, object] = {}
 
