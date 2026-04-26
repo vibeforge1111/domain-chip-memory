@@ -161,7 +161,8 @@ def test_memory_context_fence_escapes_closing_tags():
     assert fenced.count("<memory_context>") == 1
     assert fenced.count("</memory_context>") == 1
     assert "<\\/memory_context>" in fenced
-    assert "ignore previous instructions" in fenced
+    assert "ignore previous instructions" not in fenced
+    assert "[blocked stored prompt-injection content: instruction-override]" in fenced
 
 
 def test_baseline_prompt_packet_to_dict_includes_answer_candidate_metadata():
