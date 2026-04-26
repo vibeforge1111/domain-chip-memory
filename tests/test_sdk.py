@@ -20,6 +20,16 @@ def test_sdk_contract_summary_exposes_runtime_surface():
     assert "get_current_state" in payload["read_methods"]
 
 
+def test_sdk_instance_stores_request_scoped_runtime_configuration():
+    sdk = SparkMemorySDK(
+        runtime_memory_architecture="typed_temporal_graph",
+        runtime_memory_provider="codex:gpt-5-codex",
+    )
+
+    assert sdk.runtime_memory_architecture == "typed_temporal_graph"
+    assert sdk.runtime_memory_provider == "codex:gpt-5-codex"
+
+
 def test_sdk_write_and_get_current_state():
     sdk = SparkMemorySDK()
     first_write = sdk.write_observation(

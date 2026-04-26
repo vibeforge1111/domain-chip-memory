@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-import os
 import re
 from typing import Any
 
@@ -62,16 +61,12 @@ SDK_LIFECYCLE_FIELDS: tuple[str, ...] = (
 )
 
 
-def _runtime_memory_architecture() -> str:
-    return _normalize_scalar(
-        os.environ.get("SPARK_MEMORY_RUNTIME_ARCHITECTURE") or DEFAULT_RUNTIME_MEMORY_ARCHITECTURE
-    )
+def _runtime_memory_architecture(value: str | None = None) -> str:
+    return _normalize_scalar(value) or DEFAULT_RUNTIME_MEMORY_ARCHITECTURE
 
 
-def _runtime_memory_provider() -> str:
-    return _normalize_scalar(
-        os.environ.get("SPARK_MEMORY_RUNTIME_PROVIDER") or DEFAULT_RUNTIME_MEMORY_PROVIDER
-    )
+def _runtime_memory_provider(value: str | None = None) -> str:
+    return _normalize_scalar(value) or DEFAULT_RUNTIME_MEMORY_PROVIDER
 
 
 @dataclass(frozen=True)
@@ -203,7 +198,14 @@ class MemoryMaintenanceResult:
 
 
 class SparkMemorySDK:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        runtime_memory_architecture: str | None = None,
+        runtime_memory_provider: str | None = None,
+    ) -> None:
+        self.runtime_memory_architecture = _runtime_memory_architecture(runtime_memory_architecture)
+        self.runtime_memory_provider = _runtime_memory_provider(runtime_memory_provider)
         self._sessions: list[NormalizedSession] = []
         self._session_counter = 0
         self._manual_observations: list[ObservationEntry] = []
@@ -1548,11 +1550,15 @@ class SparkMemorySDK:
         }
 
 
-def build_sdk_contract_summary() -> dict[str, Any]:
+def build_sdk_contract_summary(
+    *,
+    runtime_memory_architecture: str | None = None,
+    runtime_memory_provider: str | None = None,
+) -> dict[str, Any]:
     return {
         "runtime_class": "SparkMemorySDK",
-        "runtime_memory_architecture": _runtime_memory_architecture(),
-        "runtime_memory_provider": _runtime_memory_provider(),
+        "runtime_memory_architecture": _runtime_memory_architecture(runtime_memory_architecture),
+        "runtime_memory_provider": _runtime_memory_provider(runtime_memory_provider),
         "memory_roles": sdk_memory_role_contracts(),
         "retention_classes": sdk_retention_contracts(),
         "retention_defaults_by_memory_role": sdk_retention_defaults_by_role(),
