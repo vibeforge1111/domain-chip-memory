@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -711,7 +712,13 @@ class SparkMemorySDK:
             for entry in observations
         ]
         event_records = [self._event_record(entry) for entry in events]
+        purge_result: JsonDict = {}
         if accepted:
+            if manual_write and operation == "purge":
+                subject = self._normalize_subject(request.subject or "")
+                predicate = self._normalize_predicate(request.predicate or "")
+                value = _normalize_scalar(request.value)
+                purge_result = self._purge_memory_records(subject=subject, predicate=predicate, value=value)
             self._upsert_session(session_id, turn, request.timestamp)
             if manual_write:
                 self._manual_observations.extend(observations)
@@ -741,6 +748,7 @@ class SparkMemorySDK:
                 "retention_classes": self._unique_retention_classes([*observation_records, *event_records]),
                 "primary_retention_class": self._primary_retention_class([*observation_records, *event_records]),
                 "lifecycle_fields_present": self._lifecycle_fields_present_for_items([*observation_records, *event_records]),
+                **purge_result,
             },
         )
 
@@ -1058,7 +1066,7 @@ class SparkMemorySDK:
 
     def _unsupported_operation_reason(self, operation: str, *, write_kind: str) -> str | None:
         supported_by_kind = {
-            "observation": {"auto", "create", "update", "delete"},
+            "observation": {"auto", "create", "update", "delete", "purge"},
             "event": {"auto", "event"},
         }
         if operation in supported_by_kind.get(write_kind, set()):
@@ -1113,7 +1121,9 @@ class SparkMemorySDK:
             }
         if write_operation in {"create", "update"} and not value:
             return {"unsupported_reason": "value_required", "observations": [], "events": []}
-        if write_operation == "delete":
+        if write_operation in {"delete", "purge"}:
+            purge_digest = self._purge_digest(subject=subject, predicate=predicate, value=value) if write_operation == "purge" else None
+            deleted_value = value if write_operation == "delete" else ""
             return {
                 "unsupported_reason": None,
                 "observations": [
@@ -1135,8 +1145,9 @@ class SparkMemorySDK:
                             **dict(request.metadata),
                             **self._request_contract_metadata(request, write_operation=write_operation),
                             "target_predicate": predicate,
-                            "deleted_value": value,
+                            "deleted_value": deleted_value,
                             "write_operation": write_operation,
+                            **({"cryptographic_purge": True, "purge_digest": purge_digest} if purge_digest else {}),
                         },
                     )
                 ],
@@ -1187,9 +1198,74 @@ class SparkMemorySDK:
         value_text = _normalize_scalar(value)
         if write_kind == "event":
             return f"event {predicate_text} for {subject_text}: {value_text}"
+        if write_operation == "purge":
+            return f"purge {predicate_text} for {subject_text}"
         if write_operation == "delete":
             return f"delete {predicate_text} for {subject_text}: {value_text}".strip(" :")
         return f"{subject_text} {predicate_text} {value_text}".strip()
+
+    def _purge_digest(self, *, subject: str, predicate: str, value: str) -> str:
+        payload = "\x1f".join(["domain-chip-memory-purge-v1", subject, predicate, value])
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    def _memory_entry_matches_purge(self, entry: ObservationEntry | EventCalendarEntry, *, subject: str, predicate: str, value: str) -> bool:
+        entry_predicate = state_deletion_target(entry) if isinstance(entry, ObservationEntry) else entry.predicate
+        if entry.subject != subject or entry_predicate != predicate:
+            return False
+        if not value:
+            return True
+        metadata_value = _normalize_scalar(entry.metadata.get("value") if isinstance(entry.metadata, dict) else "")
+        deleted_value = _normalize_scalar(entry.metadata.get("deleted_value") if isinstance(entry.metadata, dict) else "")
+        text = _normalize_scalar(entry.text)
+        lowered_value = value.lower()
+        return (
+            metadata_value.lower() == lowered_value
+            or deleted_value.lower() == lowered_value
+            or lowered_value in text.lower()
+        )
+
+    def _purge_memory_records(self, *, subject: str, predicate: str, value: str) -> JsonDict:
+        observations_before = len(self._manual_observations)
+        events_before = len(self._manual_events)
+        matching_turn_ids: set[str] = set()
+
+        for entry in [*self._observations(), *self._events()]:
+            if self._memory_entry_matches_purge(entry, subject=subject, predicate=predicate, value=value):
+                matching_turn_ids.update(entry.turn_ids)
+
+        self._manual_observations = [
+            entry for entry in self._manual_observations
+            if not self._memory_entry_matches_purge(entry, subject=subject, predicate=predicate, value=value)
+        ]
+        self._manual_events = [
+            entry for entry in self._manual_events
+            if not self._memory_entry_matches_purge(entry, subject=subject, predicate=predicate, value=value)
+        ]
+        sessions_removed = 0
+        if matching_turn_ids:
+            next_sessions: list[NormalizedSession] = []
+            for session in self._sessions:
+                kept_turns = [turn for turn in session.turns if turn.turn_id not in matching_turn_ids]
+                sessions_removed += len(session.turns) - len(kept_turns)
+                if kept_turns:
+                    next_sessions.append(
+                        NormalizedSession(
+                            session_id=session.session_id,
+                            turns=kept_turns,
+                            timestamp=session.timestamp,
+                            metadata=session.metadata,
+                        )
+                    )
+            self._sessions = next_sessions
+        self._manual_current_state_snapshot = []
+        return {
+            "purge": {
+                "status": "completed",
+                "observation_records_removed": observations_before - len(self._manual_observations),
+                "event_records_removed": events_before - len(self._manual_events),
+                "session_turns_removed": sessions_removed,
+            }
+        }
 
     def _request_contract_metadata(
         self,
@@ -1214,7 +1290,7 @@ class SparkMemorySDK:
             metadata["conflicts_with"] = [str(item).strip() for item in request.conflicts_with if str(item).strip()]
         if request.deleted_at:
             metadata["deleted_at"] = request.deleted_at
-        elif write_operation == "delete" and request.timestamp:
+        elif write_operation in {"delete", "purge"} and request.timestamp:
             metadata["deleted_at"] = request.timestamp
         if request.timestamp:
             metadata.setdefault("created_at", request.timestamp)
@@ -1576,7 +1652,7 @@ def build_sdk_contract_summary(
         ],
         "write_methods": ["write_observation", "write_event"],
         "write_operations": {
-            "write_observation": ["auto", "create", "update", "delete"],
+            "write_observation": ["auto", "create", "update", "delete", "purge"],
             "write_event": ["auto", "event"],
         },
         "maintenance_methods": ["reconsolidate_manual_memory"],
@@ -1684,7 +1760,7 @@ def build_sdk_maintenance_replay_contract_summary() -> dict[str, Any]:
             "event",
         ],
         "supported_operations": {
-            "observation": ["auto", "create", "update", "delete"],
+            "observation": ["auto", "create", "update", "delete", "purge"],
             "event": ["auto", "event"],
         },
         "maintenance_method": "reconsolidate_manual_memory",

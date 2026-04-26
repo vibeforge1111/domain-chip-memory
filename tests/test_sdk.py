@@ -15,7 +15,7 @@ def test_sdk_contract_summary_exposes_runtime_surface():
 
     assert payload["runtime_class"] == "SparkMemorySDK"
     assert "write_observation" in payload["write_methods"]
-    assert payload["write_operations"]["write_observation"] == ["auto", "create", "update", "delete"]
+    assert payload["write_operations"]["write_observation"] == ["auto", "create", "update", "delete", "purge"]
     assert payload["maintenance_methods"] == ["reconsolidate_manual_memory"]
     assert "get_current_state" in payload["read_methods"]
 
@@ -357,6 +357,41 @@ def test_sdk_supports_explicit_update_and_delete_operations():
     assert current_state.memory_role == "state_deletion"
     assert historical_state.found is True
     assert historical_state.value == "Dubai"
+
+
+def test_sdk_purge_removes_matching_plaintext_and_keeps_redacted_tombstone():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="I live in Dubai.",
+            timestamp="2025-01-01T09:00:00Z",
+        )
+    )
+
+    purge_result = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="purge",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-02-01T09:00:00Z",
+        )
+    )
+    snapshot = sdk.export_knowledge_base_snapshot()
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+    serialized_snapshot = str(snapshot)
+
+    assert purge_result.accepted is True
+    assert purge_result.trace["purge"]["session_turns_removed"] == 1
+    assert purge_result.observations[0].text == "purge location for user"
+    assert purge_result.observations[0].metadata["cryptographic_purge"] is True
+    assert len(purge_result.observations[0].metadata["purge_digest"]) == 64
+    assert purge_result.observations[0].metadata["deleted_value"] == ""
+    assert current_state.found is False
+    assert current_state.memory_role == "state_deletion"
+    assert "I live in Dubai." not in serialized_snapshot
+    assert "'deleted_value': 'Dubai'" not in serialized_snapshot
 
 
 def test_sdk_supports_explicit_event_write_operation():
