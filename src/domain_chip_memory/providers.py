@@ -20,6 +20,7 @@ from .provider_context_ranking import compact_context as _compact_context_impl
 from .provider_context_ranking import rank_answer_candidate_entries as _rank_answer_candidate_entries_impl
 from .provider_context_text import QUESTION_STOPWORDS
 from .provider_context_text import question_tokens as _question_tokens_impl
+from .prompt_boundaries import fenced_memory_context
 from .provider_rescue_actions import did_action_yes_answer as _did_action_yes_answer
 from .provider_rescue_identity import identity_and_community_rescue as _identity_and_community_rescue
 from .provider_rescue_lifestyle import lifestyle_rescue as _lifestyle_rescue
@@ -111,13 +112,14 @@ class CodexExecProvider:
         return f"codex:{self.model}" if self.model else "codex"
 
     def _build_prompt(self, packet: BaselinePromptPacket) -> str:
+        context = fenced_memory_context(packet.assembled_context)
         return (
             f"{self.system_prompt}\n\n"
             f"Benchmark: {packet.benchmark_name}\n"
             f"Baseline: {packet.baseline_name}\n"
             f"Question ID: {packet.question_id}\n"
             f"Question: {packet.question}\n\n"
-            f"Context:\n{packet.assembled_context}\n\n"
+            f"Context:\n{context}\n\n"
             f"{self.final_instruction}"
         )
 
@@ -1981,7 +1983,7 @@ class OpenAIChatCompletionsProvider:
         *,
         image_urls: list[str] | None = None,
     ) -> list[dict[str, Any]]:
-        context = self.prepare_context(packet)
+        context = fenced_memory_context(self.prepare_context(packet))
         if self.include_packet_metadata:
             user_content = (
                 f"Benchmark: {packet.benchmark_name}\n"
