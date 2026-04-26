@@ -1,0 +1,8 @@
+title = "domain-chip-memory gitleaks allowlist"
+
+[allowlist]
+description = "Historical benchmark corpora contain redacted placeholders and password-discussion text, not live Spark credentials."
+paths = [
+  '''artifacts/benchmark_runs/longmemeval_offset100_limit25_source\.json''',
+  '''artifacts/benchmark_runs/longmemeval_offset250_limit25_source\.json''',
+]
