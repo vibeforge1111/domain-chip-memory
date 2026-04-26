@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Protocol
 from urllib import error, request
+from urllib.parse import urlparse
 
 from .answer_candidates import context_primary_answer_candidate_text, looks_like_current_state_question
 from .contracts import JsonDict
@@ -41,6 +42,10 @@ from .runs import BaselinePromptPacket
 
 DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
 DEFAULT_MINIMAX_BASE_URL = "https://api.minimax.io/v1"
+ALLOWED_PROVIDER_BASE_URL_HOSTS = {
+    "openai": {"api.openai.com"},
+    "minimax": {"api.minimax.io"},
+}
 ALLOWED_CODEX_MODELS = {
     "gpt-5-codex",
     "gpt-5.3-codex",
@@ -49,6 +54,25 @@ ALLOWED_CODEX_MODELS = {
     "gpt-5.4-mini",
     "gpt-5.5",
 }
+
+
+def validate_provider_base_url(provider: str, base_url: str) -> str:
+    value = str(base_url or "").strip().rstrip("/")
+    if not value:
+        raise ValueError(f"{provider} base URL must not be empty.")
+    parsed = urlparse(value)
+    host = (parsed.hostname or "").lower()
+    allowed_hosts = ALLOWED_PROVIDER_BASE_URL_HOSTS.get(provider, set())
+    if parsed.scheme != "https":
+        raise ValueError(f"{provider} base URL must use https.")
+    if not host or host not in allowed_hosts:
+        allowed = ", ".join(sorted(allowed_hosts))
+        raise ValueError(f"{provider} base URL host must be one of: {allowed}.")
+    if parsed.username or parsed.password:
+        raise ValueError(f"{provider} base URL must not include credentials.")
+    if parsed.query or parsed.fragment:
+        raise ValueError(f"{provider} base URL must not include query strings or fragments.")
+    return value
 _PROFILE_COUNTRY_VALUES = {
     "uae",
     "united arab emirates",
@@ -2132,6 +2156,7 @@ def get_provider(name: str) -> ModelProvider:
             or os.getenv("OPENAI_BASE_URL")
             or DEFAULT_OPENAI_BASE_URL
         )
+        base_url = validate_provider_base_url("openai", base_url)
         return OpenAIChatCompletionsProvider(
             model=model,
             api_key=api_key,
@@ -2161,6 +2186,7 @@ def get_provider(name: str) -> ModelProvider:
             or os.getenv("MINIMAX_BASE_URL")
             or DEFAULT_MINIMAX_BASE_URL
         )
+        base_url = validate_provider_base_url("minimax", base_url)
         return OpenAIChatCompletionsProvider(
             model=model,
             api_key=api_key,

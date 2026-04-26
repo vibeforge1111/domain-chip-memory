@@ -13,6 +13,7 @@ from domain_chip_memory.providers import (
     _expand_answer_from_context,
     build_provider_contract_summary,
     get_provider,
+    validate_provider_base_url,
 )
 from domain_chip_memory.prompt_boundaries import fenced_memory_context
 from domain_chip_memory.responders import heuristic_response
@@ -39,6 +40,22 @@ def test_get_provider_supports_openai_pattern(monkeypatch):
     provider = get_provider("openai:gpt-4.1-mini")
     assert isinstance(provider, OpenAIChatCompletionsProvider)
     assert provider.name == "openai:gpt-4.1-mini"
+
+
+def test_provider_base_url_validation_rejects_hostile_overrides(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://evil.example/v1")
+
+    with pytest.raises(ValueError, match="openai base URL host"):
+        get_provider("openai:gpt-4.1-mini")
+
+
+def test_provider_base_url_validation_requires_https_and_no_credentials():
+    assert validate_provider_base_url("minimax", "https://api.minimax.io/v1/") == "https://api.minimax.io/v1"
+    with pytest.raises(ValueError, match="must use https"):
+        validate_provider_base_url("minimax", "http://api.minimax.io/v1")
+    with pytest.raises(ValueError, match="must not include credentials"):
+        validate_provider_base_url("openai", "https://user:pass@api.openai.com/v1")
 
 
 def test_get_provider_supports_codex_pattern():
