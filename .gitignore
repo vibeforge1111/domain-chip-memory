@@ -3,9 +3,23 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Local environment and secret material.
 .env
 .env.*
+*.env
+*.env.*
+*.secret
+*.secrets
+secrets*.json
+*.credentials.json
+*.pem
+*.key
+*.p12
+*.pfx
 !.env.example
+!.env.sample
+!.env.template
 benchmark_data/
 *.egg-info/
 research/realworld_validated/feedback_*.json
