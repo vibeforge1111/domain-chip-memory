@@ -128,7 +128,7 @@ Goal: stop treating natural user facts as test-specific profile slots.
 - [x] Project latest active named-object value through entity-scoped current state.
 - [x] Let open recall consider `entity.*` current-state records.
 - [x] Add tests for broader current value, unrelated entity isolation, and entity-scoped deletion markers.
-- [ ] Add historical previous-value tests for generic entity attributes.
+- [x] Add historical previous-value tests for generic entity attributes.
 
 Acceptance:
 
@@ -370,8 +370,8 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Build Phase 1:
+Build Phase 2:
 
-> Add generic entity-state writes in Builder, backed by the SDK `entity_key` current/historical state reads.
+> Add the Builder `hybrid_memory_retrieve` adapter behind the existing memory kernel contract, with traceable source lanes and authority-aware rank fusion.
 
 This is the next real integration step before another Telegram test loop.
