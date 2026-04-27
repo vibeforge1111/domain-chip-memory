@@ -327,6 +327,33 @@ Acceptance:
 6. Telegram acceptance pass.
 7. Diagnostics and operator polish.
 
+## Fast Integration Protocol
+
+The purpose of the architecture decision is to avoid re-litigating the whole memory system on every small failure. Each integration step should move through this fast path:
+
+1. Use the selected architecture unless new evidence beats it:
+   - backbone: `summary_synthesis_memory`
+   - challenger: `dual_store_event_calendar_hybrid`
+   - sidecar: `typed_temporal_graph`
+2. Plug behind an existing contract first:
+   - SDK request/response contract
+   - Builder memory kernel contract
+   - capsule compiler contract
+   - retrieval trace contract
+3. Add narrow contract tests for the new plug.
+4. Run a short regression slice only:
+   - touched unit tests
+   - one source-swamp/stale-current check
+   - one open-ended recall check
+5. Run Telegram only as acceptance, not discovery.
+6. Promote only if the trace proves:
+   - current state kept authority
+   - stale/advisory sources stayed advisory
+   - provenance survived
+   - answer context used the intended memory lane
+
+Do not spend hours on broad testing before the contract-level plug exists. Broad benchmarks are for promotion gates, not for deciding every wiring step.
+
 ## Stop Conditions
 
 Do not promote a memory layer if:
