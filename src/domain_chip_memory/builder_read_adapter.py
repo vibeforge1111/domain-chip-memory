@@ -18,6 +18,7 @@ class BuilderMemoryReadRequest:
     method: str
     subject: str
     predicate: str | None = None
+    entity_key: str | None = None
     predicate_prefix: str | None = None
     query: str | None = None
     question: str | None = None
@@ -39,6 +40,7 @@ def execute_builder_memory_read(
                 CurrentStateRequest(
                     subject=request.subject,
                     predicate=str(request.predicate or ""),
+                    entity_key=request.entity_key,
                 )
             ),
         )
@@ -50,6 +52,7 @@ def execute_builder_memory_read(
                     subject=request.subject,
                     predicate=str(request.predicate or ""),
                     as_of=str(request.as_of or ""),
+                    entity_key=request.entity_key,
                 )
             ),
         )
@@ -103,6 +106,7 @@ def execute_builder_memory_read(
                 "operation": method or "memory_read",
                 "subject": request.subject,
                 "predicate": request.predicate,
+                "entity_key": request.entity_key,
                 "predicate_prefix": request.predicate_prefix,
                 "query": request.query,
                 "question": request.question,

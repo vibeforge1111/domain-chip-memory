@@ -5,7 +5,9 @@ def test_sdk_contract_summary_declares_runtime_memory_architecture() -> None:
     payload = build_sdk_contract_summary()
 
     assert payload["runtime_class"] == "SparkMemorySDK"
-    assert payload["runtime_memory_architecture"] == "dual_store_event_calendar_hybrid"
+    assert payload["runtime_memory_architecture"] == "summary_synthesis_memory"
+    assert payload["runtime_architecture_selection"]["active_leader"] == "summary_synthesis_memory"
+    assert payload["runtime_architecture_selection"]["strong_challenger"] == "dual_store_event_calendar_hybrid"
     assert payload["runtime_memory_provider"] == "heuristic_v1"
 
 
@@ -28,5 +30,5 @@ def test_sdk_contract_summary_ignores_ambient_runtime_env(monkeypatch) -> None:
 
     payload = build_sdk_contract_summary()
 
-    assert payload["runtime_memory_architecture"] == "dual_store_event_calendar_hybrid"
+    assert payload["runtime_memory_architecture"] == "summary_synthesis_memory"
     assert payload["runtime_memory_provider"] == "heuristic_v1"

@@ -49,7 +49,7 @@ def _is_identity_summary_query(query: str | None) -> bool:
     return normalized in {"who am i", "what do you know about me"}
 
 
-DEFAULT_RUNTIME_MEMORY_ARCHITECTURE = "dual_store_event_calendar_hybrid"
+DEFAULT_RUNTIME_MEMORY_ARCHITECTURE = "summary_synthesis_memory"
 DEFAULT_RUNTIME_MEMORY_PROVIDER = "heuristic_v1"
 SDK_LIFECYCLE_FIELDS: tuple[str, ...] = (
     "created_at",
@@ -97,6 +97,7 @@ class MemoryWriteRequest:
 class CurrentStateRequest:
     subject: str
     predicate: str
+    entity_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -104,6 +105,7 @@ class HistoricalStateRequest:
     subject: str
     predicate: str
     as_of: str
+    entity_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -237,11 +239,13 @@ class SparkMemorySDK:
         subject = self._normalize_subject(request.subject)
         predicate = self._normalize_predicate(request.predicate)
         observations = self._current_state_observations()
+        entity_key = _normalize_scalar(request.entity_key) or None
         reflected = build_current_state_view(observations)
         matches = [
             entry
             for entry in reflected
             if entry.subject == subject and entry.predicate == predicate
+            and self._entity_key_matches(entry, predicate=predicate, entity_key=entity_key)
         ]
         if matches:
             selected = sorted(matches, key=entry_sort_key)[-1]
@@ -259,10 +263,21 @@ class SparkMemorySDK:
                     memory_role="current_state",
                     provenance_roles=["current_state"],
                     provenance_items=[self._observation_record(selected, memory_role="current_state")],
+                    extra_trace={"entity_key": entity_key} if entity_key else None,
                 ),
             )
-        if has_active_state_deletion(observations, subject=subject, predicate=predicate):
-            deletion_entries = self._deletion_entries(observations, subject=subject, predicate=predicate)
+        if self._has_active_state_deletion(
+            observations,
+            subject=subject,
+            predicate=predicate,
+            entity_key=entity_key,
+        ):
+            deletion_entries = self._deletion_entries(
+                observations,
+                subject=subject,
+                predicate=predicate,
+                entity_key=entity_key,
+            )
             return MemoryLookupResult(
                 found=False,
                 value=None,
@@ -277,6 +292,7 @@ class SparkMemorySDK:
                     memory_role="state_deletion",
                     provenance_roles=["state_deletion"] if deletion_entries else [],
                     provenance_items=[self._observation_record(deletion_entries[-1], memory_role="state_deletion")] if deletion_entries else [],
+                    extra_trace={"entity_key": entity_key} if entity_key else None,
                 ),
             )
         return MemoryLookupResult(
@@ -293,6 +309,7 @@ class SparkMemorySDK:
                     memory_role="unknown",
                     provenance_roles=[],
                     provenance_items=[],
+                    extra_trace={"entity_key": entity_key} if entity_key else None,
                 ),
             )
 
@@ -315,6 +332,7 @@ class SparkMemorySDK:
             )
         subject = self._normalize_subject(request.subject)
         predicate = self._normalize_predicate(request.predicate)
+        entity_key = _normalize_scalar(request.entity_key) or None
         observations = [
             entry
             for entry in self._observations()
@@ -325,6 +343,7 @@ class SparkMemorySDK:
             entry
             for entry in reflected
             if entry.subject == subject and entry.predicate == predicate
+            and self._entity_key_matches(entry, predicate=predicate, entity_key=entity_key)
         ]
         if matches:
             selected = sorted(matches, key=entry_sort_key)[-1]
@@ -342,11 +361,24 @@ class SparkMemorySDK:
                     memory_role="structured_evidence",
                     provenance_roles=["structured_evidence"],
                     provenance_items=[self._observation_record(selected, memory_role="structured_evidence")],
-                    extra_trace={"as_of": request.as_of},
+                    extra_trace={
+                        "as_of": request.as_of,
+                        **({"entity_key": entity_key} if entity_key else {}),
+                    },
                 ),
             )
-        if has_active_state_deletion(observations, subject=subject, predicate=predicate):
-            deletion_entries = self._deletion_entries(observations, subject=subject, predicate=predicate)
+        if self._has_active_state_deletion(
+            observations,
+            subject=subject,
+            predicate=predicate,
+            entity_key=entity_key,
+        ):
+            deletion_entries = self._deletion_entries(
+                observations,
+                subject=subject,
+                predicate=predicate,
+                entity_key=entity_key,
+            )
             return MemoryLookupResult(
                 found=False,
                 value=None,
@@ -361,7 +393,10 @@ class SparkMemorySDK:
                     memory_role="state_deletion",
                     provenance_roles=["state_deletion"] if deletion_entries else [],
                     provenance_items=[self._observation_record(deletion_entries[-1], memory_role="state_deletion")] if deletion_entries else [],
-                    extra_trace={"as_of": request.as_of},
+                    extra_trace={
+                        "as_of": request.as_of,
+                        **({"entity_key": entity_key} if entity_key else {}),
+                    },
                 ),
             )
         return MemoryLookupResult(
@@ -378,7 +413,10 @@ class SparkMemorySDK:
                     memory_role="unknown",
                     provenance_roles=[],
                     provenance_items=[],
-                    extra_trace={"as_of": request.as_of},
+                    extra_trace={
+                        "as_of": request.as_of,
+                        **({"entity_key": entity_key} if entity_key else {}),
+                    },
                 ),
             )
 
@@ -1008,15 +1046,55 @@ class SparkMemorySDK:
         *,
         subject: str,
         predicate: str,
+        entity_key: str | None = None,
     ) -> list[ObservationEntry]:
         return sorted(
             [
                 entry
                 for entry in observations
                 if entry.subject == subject and state_deletion_target(entry) == predicate
+                and self._entity_key_matches(entry, predicate=predicate, entity_key=entity_key)
             ],
             key=lambda entry: (_timestamp_key(entry.timestamp), observation_id_sort_key(entry.observation_id)),
         )
+
+    def _entity_key_matches(
+        self,
+        entry: ObservationEntry,
+        *,
+        predicate: str,
+        entity_key: str | None,
+    ) -> bool:
+        if not entity_key:
+            return True
+        return active_state_entity_key(entry, predicate=predicate) == entity_key
+
+    def _has_active_state_deletion(
+        self,
+        observations: list[ObservationEntry],
+        *,
+        subject: str,
+        predicate: str,
+        entity_key: str | None = None,
+    ) -> bool:
+        deleted = False
+        for observation in sorted(observations, key=entry_sort_key):
+            if observation.subject != subject:
+                continue
+            if state_deletion_target(observation) == predicate and self._entity_key_matches(
+                observation,
+                predicate=predicate,
+                entity_key=entity_key,
+            ):
+                deleted = True
+                continue
+            if observation.predicate == predicate and self._entity_key_matches(
+                observation,
+                predicate=predicate,
+                entity_key=entity_key,
+            ):
+                deleted = False
+        return deleted
 
     def _rank_observations(
         self,
@@ -1826,6 +1904,16 @@ def build_sdk_contract_summary(
         "runtime_class": "SparkMemorySDK",
         "runtime_memory_architecture": _runtime_memory_architecture(runtime_memory_architecture),
         "runtime_memory_provider": _runtime_memory_provider(runtime_memory_provider),
+        "runtime_architecture_selection": {
+            "active_leader": "summary_synthesis_memory",
+            "strong_challenger": "dual_store_event_calendar_hybrid",
+            "sidecars": ["typed_temporal_graph"],
+            "selection_basis": [
+                "live_builder_soak",
+                "external_benchmark_matrix",
+                "temporal_conflict_gauntlet",
+            ],
+        },
         "memory_roles": sdk_memory_role_contracts(),
         "retention_classes": sdk_retention_contracts(),
         "retention_defaults_by_memory_role": sdk_retention_defaults_by_role(),

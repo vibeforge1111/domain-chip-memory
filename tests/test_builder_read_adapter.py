@@ -89,3 +89,54 @@ def test_builder_read_adapter_preserves_invalid_lookup_abstention():
 
     assert payload["event_type"] == "memory_read_abstained"
     assert payload["facts"]["reason"] == "predicate_required"
+
+
+def test_builder_read_adapter_passes_entity_key_to_temporal_state_reads():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="The tiny desk plant is named Mira.",
+            operation="update",
+            subject="human:telegram:12345",
+            predicate="entity.name",
+            value="Mira",
+            timestamp="2026-04-27T10:00:00Z",
+            metadata={"entity_key": "named-object:tiny-desk-plant"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="The tiny desk plant is named Sol.",
+            operation="update",
+            subject="human:telegram:12345",
+            predicate="entity.name",
+            value="Sol",
+            timestamp="2026-04-27T11:00:00Z",
+            metadata={"entity_key": "named-object:tiny-desk-plant"},
+        )
+    )
+
+    current_payload = execute_builder_memory_read(
+        sdk,
+        BuilderMemoryReadRequest(
+            method="get_current_state",
+            subject="telegram:12345",
+            predicate="entity.name",
+            entity_key="named-object:tiny-desk-plant",
+        ),
+    )
+    historical_payload = execute_builder_memory_read(
+        sdk,
+        BuilderMemoryReadRequest(
+            method="get_historical_state",
+            subject="telegram:12345",
+            predicate="entity.name",
+            entity_key="named-object:tiny-desk-plant",
+            as_of="2026-04-27T10:30:00Z",
+        ),
+    )
+
+    assert current_payload["event_type"] == "memory_read_succeeded"
+    assert current_payload["facts"]["retrieval_trace"]["entity_key"] == "named-object:tiny-desk-plant"
+    assert historical_payload["event_type"] == "memory_read_succeeded"
+    assert historical_payload["facts"]["retrieval_trace"]["entity_key"] == "named-object:tiny-desk-plant"

@@ -21,6 +21,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
 - [Spark Memory Knowledge Base Layer 2026-04-08](SPARK_MEMORY_KNOWLEDGE_BASE_LAYER_2026-04-08.md)
 - [Persistent Memory Runtime Bridge 2026-04-27](PERSISTENT_MEMORY_RUNTIME_BRIDGE_2026-04-27.md)
+- [SOTA Memory Architecture Promotion 2026-04-27](SOTA_MEMORY_ARCHITECTURE_PROMOTION_2026-04-27.md)
 - [Research To Build Map](RESEARCH_TO_BUILD_MAP_2026-03-25.md)
 - [README](README.md)
 
@@ -58,6 +59,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 - [Spark Memory SDK Implementation Path](SPARK_MEMORY_SDK_IMPLEMENTATION_PATH_2026-03-27.md)
 - [Spark Memory Knowledge Base Layer 2026-04-08](SPARK_MEMORY_KNOWLEDGE_BASE_LAYER_2026-04-08.md)
 - [Persistent Memory Runtime Bridge 2026-04-27](PERSISTENT_MEMORY_RUNTIME_BRIDGE_2026-04-27.md)
+- [SOTA Memory Architecture Promotion 2026-04-27](SOTA_MEMORY_ARCHITECTURE_PROMOTION_2026-04-27.md)
 - [Current Status, Remaining Work, And Next Benchmarks 2026-04-09](CURRENT_STATUS_BENCHMARKS_AND_KB_2026-04-09.md)
 - [Spark Memory Integration Outlook](SPARK_MEMORY_INTEGRATION_OUTLOOK_2026-03-27.md)
 - [SDK Maintenance Replay Examples](SDK_MAINTENANCE_REPLAY_EXAMPLES_2026-03-27.md)
