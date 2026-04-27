@@ -38,6 +38,7 @@ def active_state_entity_key(observation: "ObservationEntry", *, predicate: str |
 def build_current_state_view(observations: list["ObservationEntry"]) -> list["ObservationEntry"]:
     latest_by_key: dict[tuple[str, str, str], ObservationEntry] = {}
     deleted_after_by_predicate: dict[tuple[str, str], tuple[str, str]] = {}
+    deleted_after_by_key: dict[tuple[str, str, str], tuple[str, str]] = {}
     passthrough: list[ObservationEntry] = []
     for observation in sorted(observations, key=entry_sort_key):
         if observation.predicate == "raw_turn":
@@ -45,19 +46,31 @@ def build_current_state_view(observations: list["ObservationEntry"]) -> list["Ob
             continue
         deletion_target = state_deletion_target(observation)
         if deletion_target:
-            deleted_after_by_predicate[(observation.subject, deletion_target)] = entry_sort_key(observation)
+            deletion_key = (
+                active_state_entity_key(observation, predicate=deletion_target)
+                if deletion_target.startswith("entity.") or deletion_target.startswith("profile.current_")
+                else ""
+            )
+            if deletion_key:
+                deleted_after_by_key[(observation.subject, deletion_target, deletion_key)] = entry_sort_key(observation)
+            else:
+                deleted_after_by_predicate[(observation.subject, deletion_target)] = entry_sort_key(observation)
             for key, current in list(latest_by_key.items()):
-                if key[:2] == (observation.subject, deletion_target) and entry_sort_key(current) <= entry_sort_key(observation):
+                if (
+                    key[:2] == (observation.subject, deletion_target)
+                    and (not deletion_key or key[2] == deletion_key)
+                    and entry_sort_key(current) <= entry_sort_key(observation)
+                ):
                     del latest_by_key[key]
-            continue
-        deleted_after = deleted_after_by_predicate.get((observation.subject, observation.predicate))
-        if deleted_after is not None and entry_sort_key(observation) <= deleted_after:
             continue
         key = (
             observation.subject,
             observation.predicate,
             active_state_entity_key(observation),
         )
+        deleted_after = deleted_after_by_key.get(key) or deleted_after_by_predicate.get((observation.subject, observation.predicate))
+        if deleted_after is not None and entry_sort_key(observation) <= deleted_after:
+            continue
         current = latest_by_key.get(key)
         if current is None or entry_sort_key(observation) >= entry_sort_key(current):
             latest_by_key[key] = observation
@@ -72,15 +85,20 @@ def has_active_state_deletion(
     *,
     subject: str,
     predicate: str,
+    entity_key: str | None = None,
 ) -> bool:
     deleted = False
     for observation in sorted(observations, key=entry_sort_key):
         if observation.subject != subject:
             continue
-        if state_deletion_target(observation) == predicate:
+        if state_deletion_target(observation) == predicate and (
+            not entity_key or active_state_entity_key(observation, predicate=predicate) == entity_key
+        ):
             deleted = True
             continue
-        if observation.predicate == predicate:
+        if observation.predicate == predicate and (
+            not entity_key or active_state_entity_key(observation, predicate=predicate) == entity_key
+        ):
             deleted = False
     return deleted
 

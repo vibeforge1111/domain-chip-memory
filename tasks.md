@@ -127,7 +127,8 @@ Goal: stop treating natural user facts as test-specific profile slots.
 - [x] Keep the original profile/evidence observation append-only while adding the entity projection.
 - [x] Project latest active named-object value through entity-scoped current state.
 - [x] Let open recall consider `entity.*` current-state records.
-- [ ] Add tests for broader current value, previous value, unrelated entity isolation, and deletion markers.
+- [x] Add tests for broader current value, unrelated entity isolation, and entity-scoped deletion markers.
+- [ ] Add historical previous-value tests for generic entity attributes.
 
 Acceptance:
 

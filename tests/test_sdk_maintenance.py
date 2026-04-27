@@ -9,5 +9,5 @@ def test_sdk_maintenance_replay_contract_summary_exposes_file_shape():
         "predicate",
     ]
     assert payload["supported_write_kinds"] == ["observation", "event"]
-    assert payload["supported_operations"]["observation"] == ["auto", "create", "update", "delete"]
+    assert payload["supported_operations"]["observation"] == ["auto", "create", "update", "delete", "purge"]
     assert payload["maintenance_method"] == "reconsolidate_manual_memory"

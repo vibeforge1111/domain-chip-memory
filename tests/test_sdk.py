@@ -126,6 +126,81 @@ def test_sdk_get_current_state_respects_deletion():
     assert result.provenance[0].memory_role == "state_deletion"
 
 
+def test_sdk_entity_scoped_deletion_does_not_delete_unrelated_entity_state():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="the tiny desk plant is on the kitchen shelf",
+            operation="update",
+            subject="human:test",
+            predicate="entity.location",
+            value="the kitchen shelf",
+            timestamp="2026-04-28T09:00:00Z",
+            retention_class="active_state",
+            metadata={
+                "memory_role": "current_state",
+                "entity_key": "named-object:tiny-desk-plant",
+                "entity_label": "tiny desk plant",
+                "entity_attribute": "location",
+            },
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="the office plant is on the balcony",
+            operation="update",
+            subject="human:test",
+            predicate="entity.location",
+            value="the balcony",
+            timestamp="2026-04-28T09:01:00Z",
+            retention_class="active_state",
+            metadata={
+                "memory_role": "current_state",
+                "entity_key": "named-object:office-plant",
+                "entity_label": "office plant",
+                "entity_attribute": "location",
+            },
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="delete entity.location for human:test",
+            operation="delete",
+            subject="human:test",
+            predicate="entity.location",
+            timestamp="2026-04-28T09:02:00Z",
+            retention_class="active_state",
+            deleted_at="2026-04-28T09:02:00Z",
+            metadata={
+                "memory_role": "current_state",
+                "entity_key": "named-object:tiny-desk-plant",
+                "entity_label": "tiny desk plant",
+                "entity_attribute": "location",
+            },
+        )
+    )
+
+    desk = sdk.get_current_state(
+        CurrentStateRequest(
+            subject="human:test",
+            predicate="entity.location",
+            entity_key="named-object:tiny-desk-plant",
+        )
+    )
+    office = sdk.get_current_state(
+        CurrentStateRequest(
+            subject="human:test",
+            predicate="entity.location",
+            entity_key="named-object:office-plant",
+        )
+    )
+
+    assert desk.found is False
+    assert desk.memory_role == "state_deletion"
+    assert office.found is True
+    assert office.value == "the balcony"
+
+
 def test_sdk_get_historical_state_uses_as_of_cutoff():
     sdk = SparkMemorySDK()
     sdk.write_observation(

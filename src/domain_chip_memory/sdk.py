@@ -1422,15 +1422,32 @@ class SparkMemorySDK:
             entry for entry in build_current_state_view(observations) if entry.predicate != "raw_turn"
         ]
         deletion_targets = {
-            (entry.subject, state_deletion_target(entry))
+            (
+                entry.subject,
+                state_deletion_target(entry),
+                active_state_entity_key(entry, predicate=state_deletion_target(entry))
+                if state_deletion_target(entry).startswith("entity.")
+                or state_deletion_target(entry).startswith("profile.current_")
+                else "",
+            )
             for entry in observations
             if entry.predicate == "state_deletion" and state_deletion_target(entry)
         }
         active_deletions: list[ObservationEntry] = []
-        for subject, predicate in sorted(deletion_targets):
-            if not has_active_state_deletion(observations, subject=subject, predicate=predicate):
+        for subject, predicate, entity_key in sorted(deletion_targets):
+            if not has_active_state_deletion(
+                observations,
+                subject=subject,
+                predicate=predicate,
+                entity_key=entity_key or None,
+            ):
                 continue
-            deletion_entries = self._deletion_entries(observations, subject=subject, predicate=predicate)
+            deletion_entries = self._deletion_entries(
+                observations,
+                subject=subject,
+                predicate=predicate,
+                entity_key=entity_key or None,
+            )
             if deletion_entries:
                 active_deletions.append(deletion_entries[-1])
         return sorted(
