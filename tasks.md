@@ -1,6 +1,6 @@
 # Spark Persistent Memory Integration Tasks
 
-Last updated: 2026-04-27
+Last updated: 2026-04-28
 
 This file is the build checklist for turning `domain-chip-memory` into Spark's live persistent memory system. It decides the architecture, names the remaining integration work, and defines the acceptance gates before we go back to heavy Telegram testing.
 
@@ -108,8 +108,8 @@ Carried-forward operating rules:
 
 Goal: stop treating natural user facts as test-specific profile slots.
 
-- [ ] Add a generic entity-state extractor in Builder.
-- [ ] Capture facts like `the tiny desk plant is named Sol` as:
+- [x] Add a generic entity-state extractor in Builder for named-object facts.
+- [x] Capture facts like `the tiny desk plant is named Sol` as:
   - `subject = human:<id>`
   - `predicate = entity.name`
   - `value = Sol`
@@ -123,9 +123,9 @@ Goal: stop treating natural user facts as test-specific profile slots.
   - deadline
   - relation
   - active project
-- [ ] Keep the original evidence observation append-only.
-- [ ] Project latest active value through current-state maintenance.
-- [ ] Add tests for current value, previous value, unrelated entity isolation, and deletion markers.
+- [x] Keep the original profile/evidence observation append-only while adding the entity projection.
+- [x] Project latest active named-object value through entity-scoped current state.
+- [ ] Add tests for broader current value, previous value, unrelated entity isolation, and deletion markers.
 
 Acceptance:
 
