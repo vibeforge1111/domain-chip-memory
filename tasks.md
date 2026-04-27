@@ -141,23 +141,23 @@ Acceptance:
 
 Goal: make Builder use the full domain-chip read surface instead of narrow deterministic routes.
 
-- [ ] Add a `hybrid_memory_retrieve` adapter in Builder.
+- [x] Add a `hybrid_memory_retrieve` adapter in Builder.
 - [ ] Query these lanes in parallel or deterministic sequence:
-  - `get_current_state`
-  - `get_historical_state`
-  - `retrieve_evidence`
-  - `retrieve_events`
-  - typed temporal graph sidecar
+  - [x] `get_current_state`
+  - [x] `get_historical_state` when an `as_of` is supplied
+  - [x] `retrieve_evidence`
+  - [x] `retrieve_events`
+  - [ ] typed temporal graph sidecar
   - lexical/entity query over recent raw turns
 - [ ] Score evidence with:
-  - source authority
-  - query intent match
-  - entity match
-  - recency where relevant
-  - temporal validity
-  - provenance quality
-  - stale/superseded penalty
-- [ ] Add rank-fusion trace fields:
+  - [x] source authority
+  - [x] query intent match
+  - [x] entity match
+  - [ ] recency where relevant
+  - [ ] temporal validity
+  - [x] provenance quality
+  - [x] stale/superseded penalty
+- [x] Add rank-fusion trace fields:
   - candidate source
   - candidate score
   - reason selected
