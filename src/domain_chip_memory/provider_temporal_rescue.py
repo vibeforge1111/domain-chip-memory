@@ -76,12 +76,6 @@ def extract_count_answer(question: str, answer: str, payloads: list[str]) -> str
         if "once or twice a year" in joined_payloads or "twice a year" in joined_payloads:
             return "2"
 
-    direct_match = re.search(r"\b(\d+|" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r")\b", answer, re.IGNORECASE)
-    if direct_match:
-        raw = direct_match.group(1)
-        lower_raw = raw.lower()
-        return raw if raw.isdigit() else str(COUNT_WORD_TO_INT.get(lower_raw, raw))
-
     object_match = re.search(
         r"how many\s+(.+?)(?:\s+(?:do|did|have|has|are|were|was|can|should)\b|[?])",
         question_lower,
@@ -91,6 +85,21 @@ def extract_count_answer(question: str, answer: str, payloads: list[str]) -> str
         r"\b(\d+|" + "|".join(sorted(COUNT_WORDS, key=len, reverse=True)) + r")\b",
         re.IGNORECASE,
     )
+
+    direct_match = count_pattern.search(answer)
+    if direct_match:
+        raw = direct_match.group(1)
+        if raw.isdigit():
+            return raw
+        for payload in payloads:
+            if object_tokens and not object_tokens.intersection(set(question_tokens(payload))):
+                continue
+            payload_match = count_pattern.search(payload)
+            if payload_match and payload_match.end() < len(payload) and payload[payload_match.end()] == ":":
+                payload_match = None
+            if payload_match and payload_match.group(1).isdigit():
+                return payload_match.group(1)
+        return raw
 
     for payload in payloads:
         if object_tokens and not object_tokens.intersection(set(question_tokens(payload))):

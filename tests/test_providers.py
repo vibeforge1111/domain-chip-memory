@@ -5400,6 +5400,14 @@ def test_expand_answer_from_context_preserves_single_session_numeric_candidate()
     ) == "4"
 
 
+def test_expand_answer_from_context_preserves_direct_count_word_surface():
+    assert _expand_answer_from_context(
+        "How many Prius has Evan owned?",
+        "two",
+        "conversational_evidence: I've had two Prius cars over the years.",
+    ) == "two"
+
+
 def test_expand_answer_from_context_preserves_single_session_ratio_candidate():
     assert _expand_answer_from_context(
         "I remember you told me to dilute tea tree oil with a carrier oil before applying it to my skin. Can you remind me what the recommended ratio is?",

@@ -66,6 +66,26 @@ _CONVERSATIONAL_TIME_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_PROFILE_COUNTRY_VALUES = {
+    "uae",
+    "united arab emirates",
+    "canada",
+    "united states",
+    "usa",
+    "united kingdom",
+    "uk",
+    "australia",
+    "brazil",
+    "china",
+    "france",
+    "germany",
+    "india",
+    "italy",
+    "japan",
+    "mexico",
+    "spain",
+}
+
 
 def _normalize_profile_location_value(value: str) -> str:
     normalized = _normalize_value(value)
@@ -1053,6 +1073,8 @@ def _extract_atoms_from_turn(
             value = _normalize_value(match.group(1))
             if atom_predicate == "location":
                 value = _normalize_profile_location_value(value)
+                if value.lower() in _PROFILE_COUNTRY_VALUES:
+                    atom_predicate = "home_country"
             if atom_predicate == "research_topic":
                 value = _normalize_value(re.split(r"[-\u2013\u2014\ufffd]", value, maxsplit=1)[0])
             if atom_predicate == "book_read":
