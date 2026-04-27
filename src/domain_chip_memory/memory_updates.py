@@ -28,6 +28,13 @@ def state_deletion_target(observation: "ObservationEntry") -> str:
     return str(observation.metadata.get("target_predicate", "")).strip()
 
 
+def active_state_entity_key(observation: "ObservationEntry", *, predicate: str | None = None) -> str:
+    resolved_predicate = str(predicate or observation.predicate or "").strip()
+    if resolved_predicate.startswith("profile.current_"):
+        return resolved_predicate
+    return str(observation.metadata.get("entity_key", "")).strip()
+
+
 def build_current_state_view(observations: list["ObservationEntry"]) -> list["ObservationEntry"]:
     latest_by_key: dict[tuple[str, str, str], ObservationEntry] = {}
     deleted_after_by_predicate: dict[tuple[str, str], tuple[str, str]] = {}
@@ -49,7 +56,7 @@ def build_current_state_view(observations: list["ObservationEntry"]) -> list["Ob
         key = (
             observation.subject,
             observation.predicate,
-            str(observation.metadata.get("entity_key", "")),
+            active_state_entity_key(observation),
         )
         current = latest_by_key.get(key)
         if current is None or entry_sort_key(observation) >= entry_sort_key(current):

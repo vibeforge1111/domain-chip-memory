@@ -573,6 +573,11 @@ def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():
     assert maintenance.active_state_superseded_count == 1
     assert maintenance.active_state_archived_count == 1
     assert maintenance.active_state_still_current_count == 2
+    assert maintenance.audit_samples["archived"][0]["predicate"] == "current_focus"
+    assert maintenance.audit_samples["archived"][0]["value"] == "SDK bridge"
+    assert maintenance.audit_samples["deleted"][0]["predicate"] == "current_focus"
+    assert maintenance.audit_samples["deleted"][0]["action"] == "deleted"
+    assert maintenance.audit_samples["still_current"][0]["predicate"] in {"current_focus", "location"}
     assert observations_by_id[first_location.observations[0].observation_id].metadata[
         "active_state_maintenance_action"
     ] == "superseded"
@@ -585,6 +590,50 @@ def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():
     assert observations_by_id[delete_focus.observations[0].observation_id].metadata[
         "active_state_maintenance_action"
     ] == "still_current"
+
+
+def test_sdk_reconsolidate_treats_profile_current_predicate_as_single_slot_without_entity_key():
+    sdk = SparkMemorySDK()
+    first_focus = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="profile.current_focus",
+            value="old focus",
+            timestamp="2025-01-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state"},
+        )
+    )
+    latest_focus = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="profile.current_focus",
+            value="new focus",
+            timestamp="2025-02-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state"},
+        )
+    )
+
+    maintenance = sdk.reconsolidate_manual_memory(now="2025-04-02T09:00:00Z")
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="profile.current_focus"))
+    observations_by_id = {entry.observation_id: entry for entry in sdk._manual_observations}
+
+    assert current_state.found is True
+    assert current_state.value == "new focus"
+    assert maintenance.active_state_superseded_count == 1
+    assert maintenance.active_state_still_current_count == 1
+    assert observations_by_id[first_focus.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "superseded"
+    assert observations_by_id[latest_focus.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "still_current"
+    assert latest_focus.observations[0].metadata["entity_key"] == "profile.current_focus"
 
 
 def test_sdk_explain_answer_returns_trace_and_support():

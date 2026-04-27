@@ -14,6 +14,7 @@ from .memory_observation_runtime import build_event_calendar, build_observation_
 from .memory_roles import canonical_memory_role, sdk_memory_role_contracts
 from .memory_retention import default_retention_class, sdk_retention_contracts, sdk_retention_defaults_by_role
 from .memory_updates import (
+    active_state_entity_key,
     build_current_state_view,
     entry_sort_key,
     has_active_state_deletion,
@@ -199,6 +200,7 @@ class MemoryMaintenanceResult:
     active_state_stale_preserved_count: int = 0
     active_state_superseded_count: int = 0
     active_state_archived_count: int = 0
+    audit_samples: JsonDict = field(default_factory=dict)
     trace: JsonDict = field(default_factory=dict)
 
 
@@ -537,6 +539,7 @@ class SparkMemorySDK:
             for entry in self._manual_observations
             if entry.metadata.get("active_state_maintenance_action")
         )
+        audit_samples = self._active_state_maintenance_audit_samples(self._manual_observations)
         return MemoryMaintenanceResult(
             manual_observations_before=len(self._manual_observations),
             manual_observations_after=len(snapshot),
@@ -547,6 +550,7 @@ class SparkMemorySDK:
             active_state_stale_preserved_count=maintenance_counts.get("stale_preserved", 0),
             active_state_superseded_count=maintenance_counts.get("superseded", 0),
             active_state_archived_count=maintenance_counts.get("archived", 0),
+            audit_samples=audit_samples,
             trace={
                 "operation": "reconsolidate_manual_memory",
                 "status": "ok",
@@ -1180,7 +1184,12 @@ class SparkMemorySDK:
                 "events": [],
             }
         metadata = dict(request.metadata)
-        entity_key = _normalize_scalar(metadata.get("entity_key")) or value.lower()
+        entity_key = _normalize_scalar(metadata.get("entity_key")) or self._default_observation_entity_key(
+            predicate=predicate,
+            value=value,
+            retention_class=request.retention_class,
+            memory_role=_normalize_scalar(metadata.get("memory_role")),
+        )
         return {
             "unsupported_reason": None,
             "observations": [
@@ -1412,6 +1421,53 @@ class SparkMemorySDK:
             maintained.append(replace(entry, metadata=metadata))
         return maintained
 
+    def _active_state_maintenance_audit_samples(
+        self,
+        observations: list[ObservationEntry],
+        *,
+        limit_per_bucket: int = 3,
+    ) -> JsonDict:
+        buckets = {
+            "archived": [],
+            "deleted": [],
+            "still_current": [],
+        }
+        for entry in sorted(
+            observations,
+            key=lambda item: (_timestamp_key(item.timestamp), observation_id_sort_key(item.observation_id)),
+            reverse=True,
+        ):
+            action = str(entry.metadata.get("active_state_maintenance_action") or "").strip()
+            if action == "archived":
+                bucket = "archived"
+            elif action == "still_current":
+                bucket = "deleted" if entry.predicate == "state_deletion" else "still_current"
+            else:
+                continue
+            if len(buckets[bucket]) >= limit_per_bucket:
+                continue
+            buckets[bucket].append(self._active_state_maintenance_sample(entry, action=action))
+            if all(len(items) >= limit_per_bucket for items in buckets.values()):
+                break
+        return buckets
+
+    def _active_state_maintenance_sample(self, entry: ObservationEntry, *, action: str) -> JsonDict:
+        target_predicate = state_deletion_target(entry) or entry.predicate
+        value = _normalize_scalar(
+            entry.metadata.get("deleted_value")
+            or entry.metadata.get("value")
+            or entry.text
+        )
+        return {
+            "observation_id": entry.observation_id,
+            "subject": entry.subject,
+            "predicate": target_predicate,
+            "value": value,
+            "timestamp": entry.timestamp,
+            "action": "deleted" if entry.predicate == "state_deletion" else action,
+            "reason": _normalize_scalar(entry.metadata.get("active_state_maintenance_reason")),
+        }
+
     def _is_active_state_observation(self, entry: ObservationEntry) -> bool:
         metadata = entry.metadata if isinstance(entry.metadata, dict) else {}
         if entry.predicate == "state_deletion":
@@ -1421,11 +1477,28 @@ class SparkMemorySDK:
         return self._observation_memory_role(entry) in {"current_state", "state_deletion"}
 
     def _active_state_entry_key(self, entry: ObservationEntry) -> tuple[str, str, str]:
+        predicate = state_deletion_target(entry) or entry.predicate
         return (
             entry.subject,
-            state_deletion_target(entry) or entry.predicate,
-            str(entry.metadata.get("entity_key", "")),
+            predicate,
+            active_state_entity_key(entry, predicate=predicate),
         )
+
+    def _default_observation_entity_key(
+        self,
+        *,
+        predicate: str,
+        value: str,
+        retention_class: RetentionClass | None,
+        memory_role: MemoryRole | None,
+    ) -> str:
+        if predicate.startswith("profile.current_"):
+            return predicate
+        if retention_class == "active_state" and predicate.startswith("telegram.summary.latest_"):
+            return predicate
+        if memory_role == "current_state" and predicate.startswith("profile.current_"):
+            return predicate
+        return value.lower()
 
     def _active_state_revalidation_due(self, entry: ObservationEntry, maintained_at: str) -> bool:
         metadata = entry.metadata if isinstance(entry.metadata, dict) else {}
