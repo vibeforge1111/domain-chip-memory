@@ -33,6 +33,25 @@ Relevant idea: evaluate multiple long-term abilities across timestamped sessions
 
 Spark implication: Builder should continue using LongMemEval for regression, but we should not overfit to one high headline score. The Phase A decision showed `summary_synthesis_memory` strong on LongMemEval but still weak on LoCoMo.
 
+### gbrain-evals / BrainBench
+
+Source: https://github.com/garrytan/gbrain-evals
+
+Relevant implementation pattern:
+
+- It is an eval harness for personal knowledge-agent stacks, not primarily a memory engine.
+- It scores multiple adapters side by side: graph-backed gbrain, grep-only, vector RAG, and graph-disabled variants.
+- Its BrainBench categories cover relational retrieval, link-type accuracy, identity resolution, temporal queries, provenance, auto-link precision, latency, skill behavior compliance, end-to-end workflows, robustness/adversarial cases, multimodal ingest, and MCP operation contracts.
+- It includes sealed qrels, randomized query order, judge-version pinning, tolerance bands, and scorecard artifacts.
+- Newer runners add conceptual recall, where vector retrieval should help, and source-swamp resistance, where curated source pages must beat noisy chat dumps containing the same phrases.
+
+Spark comparison:
+
+- This is exactly the kind of evaluation shape Spark is missing. LongMemEval and LoCoMo tell us whether memory works on known public benchmark distributions; BrainBench-style Cats tell us whether our own knowledge-agent stack behaves correctly under operational pressure.
+- The source-swamp category maps directly to Spark's old workflow-state problem: the answer should not prefer noisy recent/chat residue over curated current-state or authoritative source records.
+- The MCP contract category maps directly to Spark's tool and connector boundary: remote operations need stricter validation, caps, and no silent corruption.
+- The adapter interface is useful: we could score `domain-chip-memory` against simple baselines instead of only measuring absolute benchmark numbers.
+
 ### EMem
 
 Source: https://github.com/KevinSRR/EMem
@@ -331,6 +350,10 @@ The capsule should be short by default and expandable on demand.
 8. Diagnostic/system memory remains separate from user intent memory.
 9. LoCoMo unseen slice improves without regressing LongMemEval.
 10. Answer explanation names source classes and abstains when evidence is insufficient.
+11. BrainBench-style graph ablation: graph/typed-relational retrieval must beat grep-only and vector-only on relationship queries.
+12. BrainBench-style conceptual recall: semantic/vector retrieval must beat exact-match retrieval on paraphrase and vocabulary-substitution queries.
+13. Source-swamp resistance: authoritative curated/current-state sources must outrank noisy chat/workflow residue containing the same phrase.
+14. MCP/tool contract: invalid, remote, injection, huge, and path-like inputs must be rejected or capped without silent corruption.
 
 ## Next Commit-Worthy Slice
 
@@ -345,4 +368,3 @@ Build `MemoryKernelAdapter` in Builder and back it with the existing `domain-chi
 - `ignored_stale_records`
 
 That gives us one place to add hybrid retrieval, temporal invalidation, and graph expansion without repeatedly patching Telegram-specific routes.
-
