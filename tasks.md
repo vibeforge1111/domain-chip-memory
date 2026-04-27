@@ -115,16 +115,18 @@ Goal: stop treating natural user facts as test-specific profile slots.
   - `value = Sol`
   - `entity_key = named-object:tiny-desk-plant`
   - provenance = source session, turn, timestamp, raw text
-- [ ] Support more attributes beyond names:
+- [x] Support more attributes beyond names:
   - status
   - location
   - owner
-  - preference
   - deadline
   - relation
+- [ ] Extend entity attributes further:
+  - preference
   - active project
 - [x] Keep the original profile/evidence observation append-only while adding the entity projection.
 - [x] Project latest active named-object value through entity-scoped current state.
+- [x] Let open recall consider `entity.*` current-state records.
 - [ ] Add tests for broader current value, previous value, unrelated entity isolation, and deletion markers.
 
 Acceptance:
