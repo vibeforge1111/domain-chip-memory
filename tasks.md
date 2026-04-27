@@ -1,147 +1,347 @@
-# Tasks
+# Spark Persistent Memory Integration Tasks
 
-Date: 2026-04-22
+Last updated: 2026-04-27
 
-This file tracks the active conversational-memory hardening program for Spark.
+This file is the build checklist for turning `domain-chip-memory` into Spark's live persistent memory system. It decides the architecture, names the remaining integration work, and defines the acceptance gates before we go back to heavy Telegram testing.
 
-Primary goal:
+## Architecture Decision
 
-- make conversational / Telegram-style memory genuinely strong, not benchmark-patched
+Spark Persistent Memory v1 is:
 
-Success bar:
+```text
+Telegram / Spark runtime
+  -> Builder memory gate
+  -> SparkMemorySDK
+  -> append-only evidence log
+  -> current-state projection
+  -> entity-state temporal layer
+  -> typed temporal graph sidecar
+  -> hybrid retrieval and rank fusion
+  -> capsule compiler v2
+  -> final answer with source explanation
+```
 
-- LoCoMo improves materially on unseen slices
-- no regression on BEAM / LongMemEval
-- the same architecture changes help real multi-party chat memory, not just benchmark packs
+Chosen backbone:
 
-## Current Program
+- Active runtime leader: `summary_synthesis_memory + heuristic_v1`
+- Strong challenger kept in eval: `dual_store_event_calendar_hybrid + heuristic_v1`
+- Additive sidecar: `typed_temporal_graph`
+- Runtime principle: append first, project current state second, resolve conflicts at retrieval time.
 
-## Phase 1: Typed Answer Projection
+This means we are not replacing the proven leader with a new graph system wholesale. We are promoting a layered architecture:
 
-Status: completed
+- `summary_synthesis_memory` remains the answer/context backbone.
+- Current-state reads handle exact active facts like focus, plan, profile, and active task.
+- Entity-state reads handle mutable named entities and attributes with `entity_key`.
+- Typed temporal graph handles relationships, aliases, event ordering, negation, reported speech, and provenance-heavy recall.
+- Hybrid retrieval fuses current state, historical state, evidence, events, lexical/entity hits, and graph sidecar hits.
+- Capsule compiler v2 decides what survives into the actual Telegram answer context.
 
-Problem:
+## Authority Order
 
-- typed graph retrieval often finds the right fact
-- providers still see raw support text like `Hey Jo` instead of a clean answer value like `Jo`
+When sources conflict, Spark should use this order:
 
-Tasks:
+1. Explicit current state
+2. Entity-scoped current state
+3. Historical state, only for historical questions
+4. Recent conversation
+5. Retrieved evidence and events
+6. Typed temporal graph sidecar
+7. Diagnostics and maintenance summaries, only when relevant
+8. Workflow state and mission residue, advisory only
 
-- [x] add typed graph sidecar for alias / commitment / negation / reported speech / unknown / temporal events
-- [x] add eval-only typed graph retrieval
-- [x] project typed graph hits into normalized answer candidates
-- [x] verify alias questions return normalized alias values, not support spans
-- [x] verify reported-speech questions return reported content, not full support sentences
-- [x] verify negation / unknown questions surface `No` / `unknown` cleanly
-- [x] rerun targeted real-provider probes after projection
+Clean diagnostics never close a user focus by themselves. Maintenance success never means user-level work is done unless the user explicitly closes it.
 
-## Phase 2: Retrieval Fusion
+## SOTA Patterns We Are Importing
 
-Status: in progress
+- Graphiti/Zep: temporal context graph, validity windows, provenance episodes, hybrid retrieval.
+- Mem0: fast single-pass extraction, entity linking, multi-signal retrieval, rerank/fusion.
+- Letta/MemGPT: memory hierarchy, context-window rebuilding, explicit memory operations.
+- SmartSearch: rank/fusion and token-budget selection matter more than merely retrieving more.
+- SGMem/event-centric memory: fine-grained evidence units reduce fragmentation.
+- APEX-MEM: append-only history plus retrieval-time conflict resolution.
+- Hindsight/gbrain-evals: source-swamp, temporal, identity, provenance, and adapter-contract tests.
 
-Problem:
+## Existing Domain-Chip Progress Folded In
 
-- current shadow lanes are mostly summary vs exact-turn vs typed-graph
-- stronger systems fuse semantic + lexical + symbolic/entity signals
+The previous `tasks.md` program is not discarded. It is now treated as already-built substrate for this full integration plan.
 
-Tasks:
+Completed or partially completed:
 
-- [x] add lexical / BM25 retrieval lane
-- [x] add entity / alias boost lane
-- [x] define fusion policy across:
-  - summary
-  - exact-turn
-  - typed-graph
-  - lexical
-  - entity-linked
-- [ ] run shadow retrieval coverage comparison on unseen LoCoMo slice
-- [ ] run shadow answer comparison with real providers
+- [x] Typed graph sidecar for aliases, commitments, negation, reported speech, unknown records, and temporal events.
+- [x] Eval-only typed graph retrieval.
+- [x] Typed answer projection so graph hits can become normalized answer candidates.
+- [x] Telegram-style multi-party probe pack for commitments, aliases, social graph, grief/support, negation, uncertainty, reported speech, and relative time.
+- [x] Lexical/BM25 retrieval lane.
+- [x] Entity/alias boost lane.
+- [x] Fusion policy draft across summary, exact-turn, typed-graph, lexical, and entity-linked lanes.
 
-## Phase 3: Entity Linking Hardening
+Still carried forward:
 
-Status: pending
+- [ ] Run shadow retrieval coverage comparison on unseen LoCoMo slices.
+- [ ] Run shadow answer comparison with real providers.
+- [ ] Strengthen alias binding beyond greeting-only cases.
+- [ ] Normalize kinship references such as `mom`, `mother`, `her mother`, and `my mom`.
+- [ ] Add longer-range person resolution across sessions.
+- [ ] Add validity-window handling for mutable facts.
+- [ ] Preserve superseded facts instead of flattening them into one current answer.
+- [ ] Build cross-event summary lane over typed conversational events.
 
-Problem:
+Carried-forward operating rules:
 
-- conversational questions rely on alias resolution, kinship resolution, and pronoun carryover
+- Keep `summary_synthesis_memory` as the backbone.
+- Prefer additive layers over rewrites.
+- Do not promote runtime behavior from a single offline score.
+- Only promote a new memory layer after real-provider and live-regression evidence.
 
-Tasks:
+## Phase 0: Architecture Contract
 
-- [ ] strengthen alias binding resolution beyond greeting-only cases
-- [ ] normalize family / kinship references across `mom`, `mother`, `her mother`, `my mom`
-- [ ] add longer-range person resolution across sessions
-- [ ] add tests for unseen social-reference questions
+- [x] Select active architecture leader: `summary_synthesis_memory + heuristic_v1`.
+- [x] Keep `dual_store_event_calendar_hybrid` as challenger, not runtime default.
+- [x] Promote `typed_temporal_graph` as additive sidecar.
+- [x] Update SDK contract default to selected leader.
+- [x] Add SDK `entity_key` support to current and historical state reads.
+- [x] Add Builder pass-through for entity-scoped state reads.
+- [x] Document the selected architecture and SOTA mapping.
 
-## Phase 4: Temporal Validity
+## Phase 1: Generic Entity-State Writes
 
-Status: pending
+Goal: stop treating natural user facts as test-specific profile slots.
 
-Problem:
+- [ ] Add a generic entity-state extractor in Builder.
+- [ ] Capture facts like `the tiny desk plant is named Sol` as:
+  - `subject = human:<id>`
+  - `predicate = entity.name`
+  - `value = Sol`
+  - `entity_key = named-object:tiny-desk-plant`
+  - provenance = source session, turn, timestamp, raw text
+- [ ] Support more attributes beyond names:
+  - status
+  - location
+  - owner
+  - preference
+  - deadline
+  - relation
+  - active project
+- [ ] Keep the original evidence observation append-only.
+- [ ] Project latest active value through current-state maintenance.
+- [ ] Add tests for current value, previous value, unrelated entity isolation, and deletion markers.
 
-- current temporal normalization is useful but shallow
-- we do not yet model fact validity windows strongly enough
+Acceptance:
 
-Tasks:
+- Current question returns the newest value.
+- Historical question returns the previous value.
+- Another entity using the same predicate does not collide.
+- Source explanation can name the entity-state source.
 
-- [ ] add valid-from / valid-until style temporal fact handling
-- [ ] preserve superseded facts instead of flattening into one current answer
-- [ ] improve historical queries over older relative-time expressions
-- [ ] verify no regression on LongMemEval / BEAM temporal slices
+## Phase 2: Hybrid Retrieval Adapter
 
-## Phase 5: Cross-Event Synthesis
+Goal: make Builder use the full domain-chip read surface instead of narrow deterministic routes.
 
-Status: pending
+- [ ] Add a `hybrid_memory_retrieve` adapter in Builder.
+- [ ] Query these lanes in parallel or deterministic sequence:
+  - `get_current_state`
+  - `get_historical_state`
+  - `retrieve_evidence`
+  - `retrieve_events`
+  - typed temporal graph sidecar
+  - lexical/entity query over recent raw turns
+- [ ] Score evidence with:
+  - source authority
+  - query intent match
+  - entity match
+  - recency where relevant
+  - temporal validity
+  - provenance quality
+  - stale/superseded penalty
+- [ ] Add rank-fusion trace fields:
+  - candidate source
+  - candidate score
+  - reason selected
+  - reason discarded
+  - survived_context_budget
+- [ ] Add score-adaptive truncation so decisive evidence is not retrieved then lost before answer generation.
 
-Problem:
+Acceptance:
 
-- summary memory is still useful, but it should be synthesized from related event clusters rather than standing alone
+- Open-ended questions use memory without exact helper phrases.
+- Current-state facts outrank stale workflow residue.
+- Broad "what should we do next?" answers from active focus, plan, and relevant evidence, not old diagnostics handoff text.
 
-Tasks:
+## Phase 3: Capsule Compiler v2
 
-- [ ] build cross-event summary lane over typed conversational events
-- [ ] keep it separate from raw episode memory
-- [ ] compare event-summary hybrid against current summary-only lane
+Goal: compile one compact, source-aware Telegram context packet per turn.
 
-## Evaluation Gates
+- [ ] Define capsule sections:
+  - active current state
+  - entity state
+  - recent conversation
+  - relevant evidence
+  - relevant events
+  - graph sidecar hits
+  - diagnostics only if relevant
+  - workflow residue only as advisory
+- [ ] Add source authority labels to every section.
+- [ ] Add conflict notes when stale and current facts both exist.
+- [ ] Add a hard budget per section.
+- [ ] Add a final context budget allocator.
+- [ ] Ensure every answer can explain which section it used.
 
-These gates must hold before any runtime promotion:
+Acceptance:
 
-- [ ] targeted LoCoMo alias / relation / temporal probes improve
-- [ ] unseen LoCoMo slice improves with real providers
-- [ ] BEAM regression stays clean
-- [ ] LongMemEval regression stays clean
-- [x] Telegram multi-party probe pack stays clean on aliases / commitments / negation / uncertainty / reported speech / grief-support / relative time
-- [ ] no benchmark-only heuristics added without a production-memory justification
+- New conversation turns preserve focus, plan, diagnostics, and maintenance summaries without collapsing them into done.
+- Clean diagnostics do not auto-close user-level focus.
+- Old workflow state never outranks current state.
 
-## Real-World Validation
+## Phase 4: Typed Temporal Graph Runtime Bridge
 
-The benchmark is not enough. We also need production-shaped checks.
+Goal: stop leaving the graph layer in eval-only mode.
 
-Tasks:
+- [ ] Define graph sidecar runtime contract:
+  - input: evidence/event records
+  - output: ranked graph hits with provenance
+  - no direct final answer generation
+- [ ] Promote existing graph capabilities:
+  - alias binding
+  - relationship facts
+  - commitment records
+  - negation records
+  - reported speech records
+  - temporal events
+  - unknown records
+- [ ] Add Builder bridge for graph sidecar retrieval.
+- [ ] Add source explanation labels for graph hits.
+- [ ] Keep graph sidecar additive until live eval beats or ties current path.
 
-- [x] create Telegram-style multi-party memory probes
-- [x] include commitments, aliases, social graph, grief/support, negation, uncertainty
-- [x] verify answer quality on those probes
-- [x] verify retrieval coverage on those probes
+Acceptance:
 
-## Operating Rules
+- Relationship, alias, negation, and event-ordering questions get graph evidence.
+- Graph evidence does not override current state unless the query asks for historical/relational context.
 
-- do not replace `summary_synthesis_memory`
-- do not overfit to single LoCoMo conversations
-- prefer additive layers over rewrites
-- commit in small checkpoints
-- only promote runtime after real-provider evidence is clearly better
+## Phase 5: Memory Hygiene And Consolidation
 
-## Current Fusion Direction
+Goal: preserve history while keeping active context clean.
 
-- lexical is a weak fallback lane, not a primary conversational-memory strategy
-- entity-linked conversational retrieval is the current best shadow lane for:
-  - alias / nickname questions
-  - negation / before / ever questions
-  - uncertainty / memory-gap questions
-  - reported-speech slot filling
-- typed-graph remains important for:
-  - relation/social graph facts
-  - temporal event anchoring
-  - structured social-memory retrieval beyond plain entity matching
-- summary remains the backbone for broad synthesis, not exact slot filling
+- [ ] Keep append-only evidence as ground truth.
+- [ ] Make maintenance update projections, not erase meaning.
+- [ ] Keep archived/superseded records recoverable.
+- [ ] Add sample audits for:
+  - archived
+  - superseded
+  - deletion markers
+  - still-current
+- [ ] Add strategic-value review gates for memories the system cannot judge.
+
+Acceptance:
+
+- Maintenance can reduce active footprint without losing historical recall.
+- Deleted and archived samples are inspectable.
+- User can ask what changed and why.
+
+## Phase 6: Evaluation Harness
+
+Goal: evaluate persistent memory quality before we rely on Telegram vibes.
+
+- [ ] Add gbrain/BrainBench-style test categories:
+  - source-swamp resistance
+  - identity resolution
+  - current vs stale conflict
+  - historical value recall
+  - provenance explanation
+  - open-ended synthesis
+  - noisy workflow residue
+  - maintenance safety
+- [ ] Add LoCoMo/LongMemEval style local slices for:
+  - temporal reasoning
+  - multi-session reasoning
+  - knowledge updates
+  - abstention
+  - event ordering
+- [ ] Compare:
+  - current runtime
+  - current runtime plus entity-state
+  - current runtime plus graph sidecar
+  - full hybrid retrieval
+- [ ] Publish scorecards under artifacts, not docs.
+
+Acceptance:
+
+- Full hybrid path beats or ties current runtime on selected live-regression packs.
+- No regression on current focus/plan, diagnostics, and maintenance routes.
+- Source-swamp pack blocks promotion if stale residue wins.
+
+## Phase 7: Telegram Acceptance Tests
+
+Goal: test real user experience after the architecture is wired.
+
+- [ ] Natural recall:
+  - seed a normal fact
+  - distract for 3 to 5 turns
+  - ask naturally
+- [ ] Stale conflict:
+  - set old value
+  - replace with new value
+  - ask current and previous
+- [ ] Source explanation:
+  - ask why it answered that way
+  - confirm source class and route
+- [ ] Open-ended next action:
+  - ask without route words like diagnostics/status/checklist
+  - confirm it reasons from active focus and plan
+- [ ] New conversation survival:
+  - confirm focus, plan, latest diagnostics, and maintenance summary survive correctly
+- [ ] Restart behavior:
+  - confirm code changes require restart only when process-loaded code changes
+  - confirm memory data changes do not require restart
+
+Acceptance:
+
+- Spark feels continuous across turns.
+- It remembers useful facts without becoming noisy.
+- It handles corrected facts naturally.
+- It explains sources without over-answering.
+- It stops looping on old diagnostics when the active focus has moved.
+
+## Phase 8: Launch Readiness
+
+- [ ] Add `spark-intelligence diagnostics scan` checks for memory architecture alignment.
+- [ ] Add doctor check for SDK runtime architecture mismatch.
+- [ ] Add startup log line showing active memory architecture and sidecars.
+- [ ] Add operator command to inspect capsule source mix.
+- [ ] Add one-command memory quality smoke.
+- [ ] Add rollback switch to disable hybrid retrieval and graph sidecar separately.
+
+Acceptance:
+
+- We can inspect what memory architecture is live.
+- We can disable risky sidecars without disabling core memory.
+- Diagnostics catches stale runtime contracts.
+
+## Build Order
+
+1. Generic entity-state writes.
+2. Hybrid retrieval adapter.
+3. Capsule compiler v2.
+4. Typed temporal graph runtime bridge.
+5. Evaluation harness expansion.
+6. Telegram acceptance pass.
+7. Diagnostics and operator polish.
+
+## Stop Conditions
+
+Do not promote a memory layer if:
+
+- it lacks provenance;
+- it makes stale workflow residue outrank current state;
+- it deletes history instead of superseding or archiving it;
+- it improves one scripted Telegram test but fails source-swamp or open-ended recall;
+- it cannot explain which source class it used;
+- it increases context volume without measured answer-quality gain.
+
+## Current Next Task
+
+Build Phase 1:
+
+> Add generic entity-state writes in Builder, backed by the SDK `entity_key` current/historical state reads.
+
+This is the next real integration step before another Telegram test loop.

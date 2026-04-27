@@ -71,7 +71,7 @@ python -m domain_chip_memory.cli watchtower
 
 If you are an LLM agent reading this repo:
 
-1. Start with this README, then [docs/README.md](./docs/README.md).
+1. Start with this README, then [tasks.md](./tasks.md), then [docs/README.md](./docs/README.md).
 2. Treat benchmark/eval claims as evidence-bound. Do not promote a memory strategy from a single offline score.
 3. Use the CLI commands below instead of editing generated scorecards by hand.
 4. Do not add API keys, chat transcripts, or private memory artifacts to committed docs.
@@ -111,6 +111,7 @@ The detailed benchmark/eval ledger is intentionally not kept in the top-level RE
 
 Start here instead:
 
+- [tasks.md](./tasks.md) - selected architecture and integration checklist
 - [docs/README.md](./docs/README.md) - docs index
 - [research/README.md](./research/README.md) - research index
 - [docs/CURRENT_STATUS_BENCHMARKS_AND_KB_2026-04-09.md](./docs/CURRENT_STATUS_BENCHMARKS_AND_KB_2026-04-09.md) - current benchmark and KB checkpoint
