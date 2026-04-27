@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 import re
 from typing import Any
@@ -195,6 +195,10 @@ class MemoryMaintenanceResult:
     current_state_snapshot_count: int
     active_deletion_count: int
     manual_events_count: int
+    active_state_still_current_count: int = 0
+    active_state_stale_preserved_count: int = 0
+    active_state_superseded_count: int = 0
+    active_state_archived_count: int = 0
     trace: JsonDict = field(default_factory=dict)
 
 
@@ -517,19 +521,41 @@ class SparkMemorySDK:
             ),
         )
 
-    def reconsolidate_manual_memory(self) -> MemoryMaintenanceResult:
+    def reconsolidate_manual_memory(self, *, now: str | None = None) -> MemoryMaintenanceResult:
+        raw_snapshot = self._build_manual_current_state_snapshot(self._manual_observations)
+        maintained_at = now or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        self._manual_observations = self._annotate_active_state_maintenance(
+            self._manual_observations,
+            snapshot=raw_snapshot,
+            maintained_at=maintained_at,
+        )
         snapshot = self._build_manual_current_state_snapshot(self._manual_observations)
         self._manual_current_state_snapshot = snapshot
         active_deletions = sum(1 for entry in snapshot if entry.predicate == "state_deletion")
+        maintenance_counts = Counter(
+            str(entry.metadata.get("active_state_maintenance_action") or "")
+            for entry in self._manual_observations
+            if entry.metadata.get("active_state_maintenance_action")
+        )
         return MemoryMaintenanceResult(
             manual_observations_before=len(self._manual_observations),
             manual_observations_after=len(snapshot),
             current_state_snapshot_count=len(snapshot),
             active_deletion_count=active_deletions,
             manual_events_count=len(self._manual_events),
+            active_state_still_current_count=maintenance_counts.get("still_current", 0),
+            active_state_stale_preserved_count=maintenance_counts.get("stale_preserved", 0),
+            active_state_superseded_count=maintenance_counts.get("superseded", 0),
+            active_state_archived_count=maintenance_counts.get("archived", 0),
             trace={
                 "operation": "reconsolidate_manual_memory",
                 "status": "ok",
+                "active_state_maintenance": {
+                    "still_current": maintenance_counts.get("still_current", 0),
+                    "stale_preserved": maintenance_counts.get("stale_preserved", 0),
+                    "superseded": maintenance_counts.get("superseded", 0),
+                    "archived": maintenance_counts.get("archived", 0),
+                },
             },
         )
 
@@ -1324,6 +1350,98 @@ class SparkMemorySDK:
             [*current_entries, *active_deletions],
             key=lambda entry: (_timestamp_key(entry.timestamp), entry.observation_id),
         )
+
+    def _annotate_active_state_maintenance(
+        self,
+        observations: list[ObservationEntry],
+        *,
+        snapshot: list[ObservationEntry],
+        maintained_at: str,
+    ) -> list[ObservationEntry]:
+        if not observations:
+            return []
+        current_observation_ids = {entry.observation_id for entry in snapshot}
+        current_keys = {
+            self._active_state_entry_key(entry)
+            for entry in snapshot
+            if entry.predicate != "state_deletion"
+        }
+        later_deletions_by_target: dict[tuple[str, str], list[ObservationEntry]] = {}
+        later_updates_by_key: dict[tuple[str, str, str], list[ObservationEntry]] = {}
+        for entry in observations:
+            target = state_deletion_target(entry)
+            if target:
+                later_deletions_by_target.setdefault((entry.subject, target), []).append(entry)
+                continue
+            if self._is_active_state_observation(entry):
+                later_updates_by_key.setdefault(self._active_state_entry_key(entry), []).append(entry)
+
+        maintained: list[ObservationEntry] = []
+        for entry in observations:
+            if not self._is_active_state_observation(entry):
+                maintained.append(entry)
+                continue
+            action = "still_current"
+            reason = "current_snapshot"
+            if entry.observation_id in current_observation_ids:
+                if entry.predicate != "state_deletion" and self._active_state_revalidation_due(entry, maintained_at):
+                    action = "stale_preserved"
+                    reason = "past_revalidate_at"
+            else:
+                target_predicate = state_deletion_target(entry) or entry.predicate
+                deletion_after = any(
+                    entry_sort_key(deletion) > entry_sort_key(entry)
+                    for deletion in later_deletions_by_target.get((entry.subject, target_predicate), [])
+                )
+                if deletion_after:
+                    action = "archived"
+                    reason = "deleted_by_later_state_deletion"
+                elif any(
+                    entry_sort_key(update) > entry_sort_key(entry)
+                    for update in later_updates_by_key.get(self._active_state_entry_key(entry), [])
+                ):
+                    action = "superseded"
+                    reason = "replaced_by_newer_current_state"
+                elif self._active_state_entry_key(entry) not in current_keys:
+                    action = "superseded"
+                    reason = "compacted_out_of_current_snapshot"
+            metadata = dict(entry.metadata)
+            metadata["active_state_maintenance_action"] = action
+            metadata["active_state_maintenance_at"] = maintained_at
+            metadata["active_state_maintenance_reason"] = reason
+            maintained.append(replace(entry, metadata=metadata))
+        return maintained
+
+    def _is_active_state_observation(self, entry: ObservationEntry) -> bool:
+        metadata = entry.metadata if isinstance(entry.metadata, dict) else {}
+        if entry.predicate == "state_deletion":
+            return True
+        if str(metadata.get("retention_class") or "").strip() == "active_state":
+            return True
+        return self._observation_memory_role(entry) in {"current_state", "state_deletion"}
+
+    def _active_state_entry_key(self, entry: ObservationEntry) -> tuple[str, str, str]:
+        return (
+            entry.subject,
+            state_deletion_target(entry) or entry.predicate,
+            str(entry.metadata.get("entity_key", "")),
+        )
+
+    def _active_state_revalidation_due(self, entry: ObservationEntry, maintained_at: str) -> bool:
+        metadata = entry.metadata if isinstance(entry.metadata, dict) else {}
+        revalidate_at = str(metadata.get("revalidate_at") or "").strip()
+        if not revalidate_at:
+            return False
+        try:
+            due_at = datetime.fromisoformat(revalidate_at.replace("Z", "+00:00"))
+            now = datetime.fromisoformat(maintained_at.replace("Z", "+00:00"))
+        except ValueError:
+            return False
+        if due_at.tzinfo is None:
+            due_at = due_at.replace(tzinfo=timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        return due_at <= now
 
     def _write_has_supported_memory(
         self,

@@ -493,6 +493,100 @@ def test_sdk_reconsolidates_manual_memory_into_current_state_snapshot():
     assert historical_state.value == "Dubai"
 
 
+def test_sdk_reconsolidate_marks_stale_active_state_as_preserved():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="current_plan",
+            value="finish the SDK bridge",
+            timestamp="2025-01-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "revalidate_at": "2025-01-31T09:00:00Z"},
+        )
+    )
+
+    maintenance = sdk.reconsolidate_manual_memory(now="2025-04-01T09:00:00Z")
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="current_plan"))
+
+    assert maintenance.active_state_stale_preserved_count == 1
+    assert maintenance.trace["active_state_maintenance"]["stale_preserved"] == 1
+    assert current_state.found is True
+    assert current_state.provenance[0].metadata["active_state_maintenance_action"] == "stale_preserved"
+    assert current_state.provenance[0].metadata["active_state_maintenance_reason"] == "past_revalidate_at"
+
+
+def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():
+    sdk = SparkMemorySDK()
+    first_location = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="London",
+            timestamp="2025-01-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "entity_key": "primary"},
+        )
+    )
+    current_location = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "entity_key": "primary"},
+        )
+    )
+    first_focus = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="current_focus",
+            value="SDK bridge",
+            timestamp="2025-02-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "entity_key": "primary"},
+        )
+    )
+    delete_focus = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="delete",
+            subject="user",
+            predicate="current_focus",
+            timestamp="2025-04-01T09:00:00Z",
+            retention_class="active_state",
+        )
+    )
+
+    maintenance = sdk.reconsolidate_manual_memory(now="2025-04-02T09:00:00Z")
+    observations_by_id = {entry.observation_id: entry for entry in sdk._manual_observations}
+
+    assert maintenance.active_state_superseded_count == 1
+    assert maintenance.active_state_archived_count == 1
+    assert maintenance.active_state_still_current_count == 2
+    assert observations_by_id[first_location.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "superseded"
+    assert observations_by_id[current_location.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "still_current"
+    assert observations_by_id[first_focus.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "archived"
+    assert observations_by_id[delete_focus.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "still_current"
+
+
 def test_sdk_explain_answer_returns_trace_and_support():
     sdk = SparkMemorySDK()
     sdk.write_observation(
