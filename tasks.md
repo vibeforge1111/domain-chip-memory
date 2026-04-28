@@ -400,9 +400,9 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Build the next acceptance harness layer:
+Build the next live acceptance loop layer:
 
-> Add a repeatable Telegram memory-quality acceptance pack that asserts gate status, source explanation, current-state priority, stale/current conflict handling, and open-ended recall across live-style turns.
+> Run the Telegram memory-quality acceptance pack against the local Tester/Spark AGI bot path, inspect failures, and only then promote the memory stack beyond trace-only gates.
 
 This is the next real integration step before another Telegram test loop or broad benchmark run.
 
@@ -423,4 +423,5 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add live recent-conversation retrieval lane or adapter.
 - [x] Add source-swamp and capsule source-mix promotion gates.
 - [x] Surface promotion-gate status in operator/Telegram diagnostics.
-- [ ] Add Telegram memory-quality acceptance pack backed by promotion-gate assertions.
+- [x] Add Telegram memory-quality acceptance pack backed by promotion-gate assertions.
+- [ ] Run local Telegram acceptance loop and triage any failed memory-quality lanes.
