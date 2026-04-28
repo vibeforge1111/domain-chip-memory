@@ -187,7 +187,7 @@ Goal: make Builder use the full domain-chip read surface instead of narrow deter
   - reason selected
   - reason discarded
   - survived_context_budget
-- [ ] Add score-adaptive truncation so decisive evidence is not retrieved then lost before answer generation.
+- [x] Add score-adaptive truncation so decisive evidence is not retrieved then lost before answer generation.
 
 Acceptance:
 
@@ -199,20 +199,22 @@ Acceptance:
 
 Goal: compile one compact, source-aware Telegram context packet per turn.
 
-- [ ] Define capsule sections:
+- [x] Define initial hybrid-memory capsule sections:
   - active current state
-  - entity state
-  - recent conversation
+  - historical state
   - relevant evidence
   - relevant events
+  - compiled project knowledge
   - graph sidecar hits
-  - diagnostics only if relevant
-  - workflow residue only as advisory
-- [ ] Add source authority labels to every section.
-- [ ] Add conflict notes when stale and current facts both exist.
-- [ ] Add a hard budget per section.
-- [ ] Add a final context budget allocator.
-- [ ] Ensure every answer can explain which section it used.
+  - supporting context
+- [ ] Add explicit entity-state and recent-conversation sections when those lanes are live.
+- [ ] Add diagnostics-only-if-relevant section.
+- [ ] Keep workflow residue advisory only through source authority and stale penalties.
+- [x] Add source authority labels to every section.
+- [x] Add conflict notes when stale and current facts both exist.
+- [x] Add a hard budget per section.
+- [x] Add a final context budget allocator.
+- [x] Ensure hybrid-memory answers can explain which section they used.
 
 Acceptance:
 
@@ -398,9 +400,9 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Build the next answer-context layer:
+Build the next capsule completion layer:
 
-> Finish capsule compiler v2 and score-adaptive truncation so the new memory lanes become a compact, source-aware Telegram context packet instead of extra retrieval noise.
+> Add explicit entity-state, recent-conversation, and diagnostics-only-if-relevant capsule sections, then wire a compact capsule source-mix inspector for operators.
 
 This is the next real integration step before another Telegram test loop or broad benchmark run.
 
@@ -415,3 +417,6 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add Graphiti shadow retrieval lane to `hybrid_memory_retrieve`.
 - [x] Add Obsidian / LLM-wiki packet reader source.
 - [x] Add Mem0 shadow adapter.
+- [x] Add initial hybrid-memory context packet with source labels and score-adaptive budgets.
+- [ ] Add explicit entity-state / recent-conversation / diagnostics capsule sections.
+- [ ] Add operator capsule source-mix inspector.
