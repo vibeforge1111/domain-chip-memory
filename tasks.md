@@ -112,6 +112,8 @@ Current system inspection and installer plan: `docs/SPARK_MEMORY_SYSTEM_INSPECTI
 
 Current memory lanes and quality gates map: `docs/MEMORY_LANES_AND_QUALITY_GATES_2026-04-28.md`.
 
+Current pre-implementation docs/license checklist: `docs/PRE_IMPLEMENTATION_DOCS_AND_LICENSE_CHECKLIST_2026-04-28.md`.
+
 Runtime decision:
 
 - Keep `domain-chip-memory` as Spark's memory authority/control plane.
@@ -246,6 +248,7 @@ Goal: stop requiring explicit `for later` commands and make natural conversation
 
 - [ ] Use `docs/SPARK_MEMORY_CONNECTION_PLAN_2026-04-28.md` as the build contract for connecting capture, salience, authority ledger, Graphiti, procedural memory, Mem0 shadowing, retrieval, and capsule v2.
 - [ ] Use `docs/MEMORY_LANES_AND_QUALITY_GATES_2026-04-28.md` as the human-readable lane and gate contract.
+- [ ] Use `docs/PRE_IMPLEMENTATION_DOCS_AND_LICENSE_CHECKLIST_2026-04-28.md` before adding dependencies, sidecars, installer profiles, or copied OSS code.
 - [ ] Add a Builder-side `memory.salience` gate before writes.
 - [ ] Score each candidate on:
   - explicitness
@@ -561,15 +564,19 @@ Acceptance:
 ## Build Order
 
 1. Lock the OSS-sidecar architecture and prune map.
-2. Generate repo inventory and classify keep/freeze/delete candidates.
-3. Add a `MemorySidecarAdapter` contract.
-4. Add a Graphiti-compatible sidecar behind a disabled feature flag.
-5. Feed evidence/events into the sidecar in shadow mode.
-6. Wire Graphiti shadow retrieval into Builder hybrid memory.
-7. Finish capsule compiler v2 and score-adaptive truncation.
-8. Add gbrain/BrainBench-style promotion gates.
-9. Run Telegram acceptance after runtime wiring, not as discovery.
-10. Diagnostics and operator polish.
+2. Complete the pre-implementation docs/license gate:
+   - choose project license or keep license-pending explicit
+   - add/update `THIRD_PARTY_NOTICES.md`
+   - add adoption record before Graphiti, Mem0, Hindsight, Cognee, or copied OSS code
+3. Generate repo inventory and classify keep/freeze/delete candidates.
+4. Add a `MemorySidecarAdapter` contract.
+5. Add a Graphiti-compatible sidecar behind a disabled feature flag.
+6. Feed evidence/events into the sidecar in shadow mode.
+7. Wire Graphiti shadow retrieval into Builder hybrid memory.
+8. Finish capsule compiler v2 and score-adaptive truncation.
+9. Add gbrain/BrainBench-style promotion gates.
+10. Run Telegram acceptance after runtime wiring, not as discovery.
+11. Diagnostics and operator polish.
 
 ## Fast Integration Protocol
 
@@ -613,15 +620,16 @@ Do not promote a memory layer if:
 
 Move from acceptance probing into integration:
 
-1. Add the Builder-side salience gate before durable writes.
-2. Add authoritative identity-correction supersession before broader sidecar work.
-3. Make quality gates populate real memory-write ledgers.
-4. Add optional sidecar dependency groups in `domain-chip-memory`, keeping default install light.
-5. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
-6. Implement the Graphiti live adapter behind a disabled feature flag.
-7. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
-8. Add episodic consolidation and pending-task recovery as the next continuity layer.
-9. Add local repo/module/capability indexing before more build automation.
+1. Complete the docs/license gate in `docs/PRE_IMPLEMENTATION_DOCS_AND_LICENSE_CHECKLIST_2026-04-28.md`.
+2. Add the Builder-side salience gate before durable writes.
+3. Add authoritative identity-correction supersession before broader sidecar work.
+4. Make quality gates populate real memory-write ledgers.
+5. Add optional sidecar dependency groups in `domain-chip-memory`, keeping default install light.
+6. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
+7. Implement the Graphiti live adapter behind a disabled feature flag.
+8. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
+9. Add episodic consolidation and pending-task recovery as the next continuity layer.
+10. Add local repo/module/capability indexing before more build automation.
 
 The already-green Telegram acceptance loop remains the fast human-facing gate, not the main discovery path. The entity-state fixes for current/previous values, attribute isolation, source explanations, and workflow-like attributes are accepted substrate. The next layer must plug behind the same current-state authority, stale-conflict, and source-mix promotion checks.
 

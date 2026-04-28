@@ -154,4 +154,6 @@ python -m domain_chip_memory.cli spark-kb-health-check tmp/spark_kb_example
 
 ## License
 
-See the repository license file.
+License file is pending. Do not treat this repository as open-source licensed until a `LICENSE` file is added.
+
+Third-party borrowing, dependency, and attribution rules are tracked in [docs/OPEN_SOURCE_ATTRIBUTION_PLAN.md](./docs/OPEN_SOURCE_ATTRIBUTION_PLAN.md) and [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).

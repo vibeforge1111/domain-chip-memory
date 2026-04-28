@@ -77,6 +77,7 @@ The goal is to keep one honest current-state path and treat older handoff notes 
 
 - [Research Sourcing Doctrine](RESEARCH_SOURCING_DOCTRINE_2026-03-24.md)
 - [Open Source Attribution Plan](OPEN_SOURCE_ATTRIBUTION_PLAN.md)
+- [Pre-Implementation Docs And License Checklist 2026-04-28](PRE_IMPLEMENTATION_DOCS_AND_LICENSE_CHECKLIST_2026-04-28.md)
 - [First Version Research Lock](FIRST_VERSION_RESEARCH_LOCK.md)
 - [Execution Program And PRD Gap](EXECUTION_PROGRAM_AND_PRD_GAP_2026-03-22.md)
 - [Frontier Memory Systems Comparative Analysis](FRONTIER_MEMORY_SYSTEMS_COMPARATIVE_ANALYSIS_2026-03-22.md)

@@ -7,6 +7,22 @@ Status: active
 
 This repo is allowed to learn from and selectively reuse open-source memory systems and benchmark tooling, but it must keep attribution explicit and license boundaries visible.
 
+## Current implementation status
+
+- No Graphiti, Mem0, Hindsight, Cognee, MemMachine, or Generative Agents runtime dependency is currently declared in `pyproject.toml`.
+- No vendored source code from those systems is recorded in this repo for the current Spark memory-sidecar plan.
+- Current use is architecture study, benchmarking study, adapter planning, and attribution planning unless a later adoption record says otherwise.
+- `THIRD_PARTY_NOTICES.md` is the top-level notice surface for future dependency, sidecar, benchmark, or vendored-code adoption.
+
+Use exact distinction language:
+
+- `inspired by` means no code copied.
+- `adapter for` means Spark-owned integration code calls another package or service.
+- `runtime dependency on` means the package is installed and imported in Spark code.
+- `sidecar service` means an external process or database is managed beside Spark.
+- `vendored from` means source code was copied and needs file-level attribution.
+- `benchmark-only` means the code or data is not part of product runtime.
+
 ## Source registry
 
 | Source | License | Planned use | Boundary |
@@ -36,3 +52,29 @@ This repo is allowed to learn from and selectively reuse open-source memory syst
 4. Never promote a doctrine based only on a vendor README claim.
 5. Prefer dependency/adapter integration over vendoring source.
 6. When vendoring source, preserve SPDX/header/NOTICE text and record upstream commit.
+7. Do not add Graphiti, Mem0, Hindsight, Cognee, or similar systems to default install without a dependency adoption record.
+8. Keep optional telemetry disabled by default in Spark-managed local launches.
+9. Do not add GPL/AGPL/copyleft runtime dependencies or non-commercial datasets to product runtime without explicit owner approval.
+
+## Dependency adoption record template
+
+```text
+Name:
+Source URL:
+License:
+Upstream version/tag/commit:
+Borrow mode:
+Local owner module:
+Install surface:
+Default enabled:
+Feature flag:
+State path:
+Telemetry:
+Fallback if unavailable:
+Code copied:
+Headers/SPDX preserved:
+NOTICE update:
+Tests:
+Reason:
+Known risks:
+```
