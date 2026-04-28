@@ -101,6 +101,8 @@ Current architecture diagrams: `docs/MEMORY_STACK_DIAGRAMS_2026-04-28.md`.
 
 Current OSS borrowing plan: `docs/OSS_MEMORY_BORROWING_PLAN_2026-04-28.md`.
 
+Current system connection plan: `docs/SPARK_MEMORY_CONNECTION_PLAN_2026-04-28.md`.
+
 Runtime decision:
 
 - Keep `domain-chip-memory` as Spark's memory authority/control plane.
@@ -233,6 +235,7 @@ Acceptance:
 
 Goal: stop requiring explicit `for later` commands and make natural conversation memory-worthy only when it earns promotion.
 
+- [ ] Use `docs/SPARK_MEMORY_CONNECTION_PLAN_2026-04-28.md` as the build contract for connecting capture, salience, authority ledger, Graphiti, procedural memory, Mem0 shadowing, retrieval, and capsule v2.
 - [ ] Add a Builder-side `memory.salience` gate before writes.
 - [ ] Score each candidate on:
   - explicitness
