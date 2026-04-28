@@ -162,6 +162,7 @@ Goal: stop treating natural user facts as test-specific profile slots.
 - [x] Route exact entity current recall through direct `get_current_state(subject, predicate, entity_key)` before broad retrieval.
 - [x] Preserve matching provenance metadata, including location prepositions, in direct current-state projection records.
 - [x] Route entity history questions through current-state anchoring plus direct `get_historical_state` before event fallback.
+- [x] Add broad entity-state summary recall for project/workflow questions such as `what do you know about the GTM launch?`.
 
 Acceptance:
 
@@ -173,6 +174,7 @@ Acceptance:
 - Entity recalls, including location, use `read_method=get_current_state` with `record_count=1` and preserved location prepositions.
 - Entity history source explanations show `read_method=get_historical_state` when direct historical state answers.
 - Workflow entity recalls cover building and operating scenarios such as launch blockers, startup priorities, investor-update decisions, sprint next actions, and campaign metrics.
+- Broad entity summary recalls gather multiple current entity attributes, name the `memory_entity_state_summary_query` route, and do not collapse to a single blocker/metric/owner field.
 
 ## Phase 2: Hybrid Retrieval Adapter
 
