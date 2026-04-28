@@ -402,7 +402,7 @@ Do not promote a memory layer if:
 
 Build the next capsule completion layer:
 
-> Add explicit entity-state, recent-conversation, and diagnostics-only-if-relevant capsule sections so the packet fully matches the architecture contract.
+> Add a live recent-conversation retrieval lane or adapter so the capsule's recent-conversation section has real candidates instead of only section support.
 
 This is the next real integration step before another Telegram test loop or broad benchmark run.
 
@@ -418,5 +418,6 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add Obsidian / LLM-wiki packet reader source.
 - [x] Add Mem0 shadow adapter.
 - [x] Add initial hybrid-memory context packet with source labels and score-adaptive budgets.
-- [ ] Add explicit entity-state / recent-conversation / diagnostics capsule sections.
+- [x] Add explicit entity-state / recent-conversation / diagnostics capsule sections.
 - [x] Add operator capsule source-mix inspector.
+- [ ] Add live recent-conversation retrieval lane or adapter.
