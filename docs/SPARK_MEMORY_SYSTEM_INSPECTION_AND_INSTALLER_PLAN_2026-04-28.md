@@ -47,8 +47,13 @@ These items are now P0/P1 because they determine whether Spark feels continuous 
 | Larger context memory | P0 | Capsule compiler v2 + retrieval budget manager | Support 200k+ total available memory context through external packets and selective assembly, not by dumping 200k tokens into every Telegram reply. |
 | Repo resolution | P0 | Local environment index + target confirmation gate | Maintain a live map of known repos, module ownership, installer state, dirty worktrees, active targets, and capability permissions. |
 | Computer traversal | P1 | Local project index + operator capability state | Spark should know what it can inspect through Spawner/Codex/local tools and should not underclaim or hallucinate filesystem access. |
+| Human-readable memory lanes | P0 | Lane map + quality gates | Every memory should belong to a named lane with authority, owner, write rule, recall rule, and source explanation. |
+| Authoritative identity correction | P0 | Identity lane + supersession gate | Name corrections immediately override older identity facts and mark older values stale/historical. |
+| Quality-gated memory writes | P0 | Policy/quarantine/delivery/salience ledgers | Bad memory, bad claims, failed deliveries, and unsupported assertions are blocked or quarantined before they become memory. |
 
 The 200k+ target means "Spark can search, rank, and assemble from a large external context reservoir." The per-answer packet should stay compact unless the user asks for a deep reconstruction.
+
+Human-readable lane contract: `docs/MEMORY_LANES_AND_QUALITY_GATES_2026-04-28.md`.
 
 ## Dependency Decision
 
@@ -119,43 +124,51 @@ Hindsight-style memory owns procedural lessons, not user/profile facts.
    - Add a deterministic policy module before durable writes.
    - Promotion bands: `drop`, `scratchpad`, `raw_episode`, `structured_evidence`, `current_state_candidate`, `current_state_confirmed`.
    - Store `salience_score`, `confidence`, `promotion_stage`, `why_saved`, `decay_after`, and `source_route`.
+   - Attach a human-readable `memory_lane` to every accepted or rejected candidate.
+   - Populate policy/quarantine/salience ledgers for rejected candidates too.
 
-2. Domain optional extras
+2. Identity correction supersession
+   - Promote direct identity corrections to current identity state immediately.
+   - Mark prior identity facts stale/superseded.
+   - Preserve prior identity facts for historical recall only.
+   - Store `why_saved=identity_correction_supersession`.
+
+3. Domain optional extras
    - Add optional dependency groups in `domain-chip-memory`.
    - Keep default `dependencies = []` or equally light.
    - Add attribution/notice docs for Apache-2.0 and MIT dependencies.
 
-3. Graphiti live adapter
+4. Graphiti live adapter
    - Implement behind feature flag.
    - Prefer Kuzu first if local embedded behavior is stable enough; otherwise FalkorDB/Neo4j as a managed service dependency.
    - Export Spark evidence/entity events as episodes.
    - Return graph hits as supporting candidates with provenance and validity windows.
 
-4. Spark CLI installer profile
+5. Spark CLI installer profile
    - Add a registry entry for the sidecar module or an optional memory bundle.
    - Add generated env for sidecar config under `.spark/state`.
    - Add `spark status` and `spark verify` visibility.
    - Add rollback switches to disable sidecar retrieval without disabling core memory.
 
-5. Mem0 shadow comparator
+6. Mem0 shadow comparator
    - Add after Graphiti live adapter is stable.
    - Run scorecards only; no authoritative answers from Mem0.
 
-6. Hindsight procedural lane
+7. Hindsight procedural lane
    - Add as a separate service/adapter for repeated operational mistakes.
    - Feed wrong target builds, stale repo context, timeouts, failed tool calls, and bad self-review as experiences.
 
-7. Episodic consolidation lane
+8. Episodic consolidation lane
    - Add session/day/project summary writers.
    - Preserve "what changed", "what was decided", "what remains open", "what Spark promised", "repos touched", and "artifacts created".
    - Feed summaries into the authority ledger, Graphiti episodes, and Obsidian/wiki packets.
 
-8. Context reservoir and capsule v2
+9. Context reservoir and capsule v2
    - Keep a large searchable context reservoir with a 200k+ target budget for deep reconstruction.
    - Compile small answer packets by default.
    - Add an explicit deep-context mode for "what did we build today?", "recover this project", and "show the whole thread of work".
 
-9. Repo and capability index
+10. Repo and capability index
    - Index known local Spark repos and installed modules.
    - Track ownership boundaries, dirty state, active target, installer provenance, and capability state.
    - Require target confirmation before file-writing missions when repo evidence is ambiguous.

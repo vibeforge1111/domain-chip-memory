@@ -110,6 +110,8 @@ Current system connection plan: `docs/SPARK_MEMORY_CONNECTION_PLAN_2026-04-28.md
 
 Current system inspection and installer plan: `docs/SPARK_MEMORY_SYSTEM_INSPECTION_AND_INSTALLER_PLAN_2026-04-28.md`.
 
+Current memory lanes and quality gates map: `docs/MEMORY_LANES_AND_QUALITY_GATES_2026-04-28.md`.
+
 Runtime decision:
 
 - Keep `domain-chip-memory` as Spark's memory authority/control plane.
@@ -243,6 +245,7 @@ Acceptance:
 Goal: stop requiring explicit `for later` commands and make natural conversation memory-worthy only when it earns promotion.
 
 - [ ] Use `docs/SPARK_MEMORY_CONNECTION_PLAN_2026-04-28.md` as the build contract for connecting capture, salience, authority ledger, Graphiti, procedural memory, Mem0 shadowing, retrieval, and capsule v2.
+- [ ] Use `docs/MEMORY_LANES_AND_QUALITY_GATES_2026-04-28.md` as the human-readable lane and gate contract.
 - [ ] Add a Builder-side `memory.salience` gate before writes.
 - [ ] Score each candidate on:
   - explicitness
@@ -270,6 +273,10 @@ Goal: stop requiring explicit `for later` commands and make natural conversation
   - `why_saved`
 - [ ] Treat explicit phrases such as `for later`, `remember`, and `current X is` as high-confidence signals, not the only path.
 - [ ] Make identity corrections immediate authoritative supersessions.
+  - [ ] Detect `identity_correction` from phrases such as `I'm not X, I'm Y`, `Actually my name is Y`, and `call me Y`.
+  - [ ] Promote direct name corrections to `profile.preferred_name` current state.
+  - [ ] Mark older identity values stale/superseded while preserving historical recall.
+  - [ ] Store `why_saved=identity_correction_supersession` and source provenance.
 - [ ] Route uncertain claims and brainstorming to scratchpad/episode unless repeated or confirmed.
 - [ ] Promote repeated medium-salience facts into current state after confirmation.
 - [ ] Add quality-gate ledgers:
@@ -277,6 +284,13 @@ Goal: stop requiring explicit `for later` commands and make natural conversation
   - quarantine records
   - delivery registry records
   - bad-claim/bad-memory rejection reasons
+- [ ] Make quality gates live in memory writes, not only outbound security:
+  - source/provenance gate
+  - privacy/security gate
+  - target-scope gate
+  - claim-quality gate
+  - lane-classification gate
+  - authority/supersession gate
 
 Acceptance:
 
@@ -285,6 +299,8 @@ Acceptance:
 - Corrections supersede stale identity/project facts immediately.
 - Source explanation can say why a memory was saved and why it was recalled.
 - Blocked/not-promotable rows shrink as real candidates get correctly promoted or dropped.
+- Identity corrections are not stored only as raw episodic text.
+- Quality-gate, quarantine, delivery, salience, and supersession ledgers are populated by real memory decisions.
 
 ## Phase 2: Hybrid Retrieval Adapter
 
@@ -426,6 +442,7 @@ Goal: make Spark remember work, interruptions, and project flow rather than isol
   - last verified evidence
   - next retry step
 - [ ] Add source labels for episodic and procedural recalls.
+- [ ] Store procedural lessons for bad memory, bad claims, failed deliveries, stale target context, and wrong build targets.
 - [ ] Add "what did we build today?" and "resume what timed out" acceptance probes.
 
 Acceptance:
@@ -597,12 +614,14 @@ Do not promote a memory layer if:
 Move from acceptance probing into integration:
 
 1. Add the Builder-side salience gate before durable writes.
-2. Add optional sidecar dependency groups in `domain-chip-memory`, keeping default install light.
-3. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
-4. Implement the Graphiti live adapter behind a disabled feature flag.
-5. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
-6. Add episodic consolidation and pending-task recovery as the next continuity layer.
-7. Add local repo/module/capability indexing before more build automation.
+2. Add authoritative identity-correction supersession before broader sidecar work.
+3. Make quality gates populate real memory-write ledgers.
+4. Add optional sidecar dependency groups in `domain-chip-memory`, keeping default install light.
+5. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
+6. Implement the Graphiti live adapter behind a disabled feature flag.
+7. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
+8. Add episodic consolidation and pending-task recovery as the next continuity layer.
+9. Add local repo/module/capability indexing before more build automation.
 
 The already-green Telegram acceptance loop remains the fast human-facing gate, not the main discovery path. The entity-state fixes for current/previous values, attribute isolation, source explanations, and workflow-like attributes are accepted substrate. The next layer must plug behind the same current-state authority, stale-conflict, and source-mix promotion checks.
 
