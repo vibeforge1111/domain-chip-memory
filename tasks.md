@@ -153,6 +153,7 @@ Goal: stop treating natural user facts as test-specific profile slots.
 - [x] Add tests for broader current value, unrelated entity isolation, and entity-scoped deletion markers.
 - [x] Add historical previous-value tests for generic entity attributes.
 - [x] Make current entity-state recall source explanations route- and attribute-aware, not just history explanations.
+- [x] Separate decisive entity-state support records from wider candidate packets in recall traces.
 
 Acceptance:
 
@@ -160,6 +161,7 @@ Acceptance:
 - Historical question returns the previous value.
 - Another entity using the same predicate does not collide.
 - Source explanation can name the entity-state source, route, and attribute for current and historical reads.
+- Exact entity recall traces show `retrieved_roles=entity_state` and a decisive `record_count`, while preserving broader `candidate_record_count`.
 
 ## Phase 2: Hybrid Retrieval Adapter
 
