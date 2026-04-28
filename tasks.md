@@ -402,7 +402,7 @@ Do not promote a memory layer if:
 
 Build the next capsule completion layer:
 
-> Add explicit entity-state, recent-conversation, and diagnostics-only-if-relevant capsule sections, then wire a compact capsule source-mix inspector for operators.
+> Add explicit entity-state, recent-conversation, and diagnostics-only-if-relevant capsule sections so the packet fully matches the architecture contract.
 
 This is the next real integration step before another Telegram test loop or broad benchmark run.
 
@@ -419,4 +419,4 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add Mem0 shadow adapter.
 - [x] Add initial hybrid-memory context packet with source labels and score-adaptive budgets.
 - [ ] Add explicit entity-state / recent-conversation / diagnostics capsule sections.
-- [ ] Add operator capsule source-mix inspector.
+- [x] Add operator capsule source-mix inspector.
