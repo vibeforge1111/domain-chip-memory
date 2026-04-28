@@ -98,6 +98,58 @@ Before adding a dependency/service:
    - start as shadow/prototype
    - test on wrong-build-target, stale-repo-context, timeout-recovery, and bad-self-review cases
 
+## Salience Borrowing Sources
+
+Spark should not invent salience from scratch. The first implementation should borrow the scoring shape from permissive agent-memory projects and adapt it to Spark's operating-system workflow.
+
+| Source | License | Borrowed Idea | Spark Adaptation |
+| --- | --- | --- | --- |
+| `joonspk-research/generative_agents` | Apache-2.0 | Memory stream ranking by recency, importance, and relevance; reflection when important memories accumulate | Base salience score: `importance + relevance + recency`, with Spark-specific weights |
+| `joonspk-research/genagents` | MIT | Memory/reflection API shape from later generative-agent simulation work | Use as API inspiration only; no runtime dependency needed |
+| `MemaryAI/MemaryAI` | MIT | Entity frequency and recency tracking for importance | Add `mention_count`, `last_referenced_at`, and entity recurrence boosts |
+| `mem0ai/mem0` | Apache-2.0 | Single-pass extraction, deduplication, entity linking, multi-signal retrieval | Compare Spark salience/extraction against Mem0 in shadow mode |
+| `vectorize-io/hindsight` | MIT | Learn from corrections, failed actions, and repeated mistakes | Feed failure/correction experiences into procedural memory, not durable user facts |
+| `getzep/graphiti` | Apache-2.0 | Temporal provenance, entity relationships, validity windows | Use graph provenance and temporal validity as retrieval gates, not direct salience authority |
+
+Initial Spark salience formula:
+
+```text
+salience =
+  explicitness_signal
+  + active_task_relevance
+  + entity_importance
+  + decision_action_signal
+  + correction_signal
+  + recurrence_signal
+  + source_authority
+  - uncertainty_penalty
+  - small_talk_penalty
+  - privacy_or_sensitivity_penalty
+```
+
+Initial promotion bands:
+
+- `drop`: not useful or unsafe to store.
+- `scratchpad`: useful only inside this active conversation.
+- `raw_episode`: meaningful event, but not yet a durable fact.
+- `structured_evidence`: useful support/provenance, not current truth.
+- `current_state_candidate`: plausible current fact that needs confirmation or recurrence.
+- `current_state_confirmed`: explicit or repeated enough to become active typed state.
+
+Spark-specific rule:
+
+- `for later`, `remember`, and direct `current X is` language can bypass to high explicitness, but should still pass privacy/safety and target-scope checks.
+- Corrections such as `Actually, Cem...` or `No, the target repo is spawner-ui` should become authoritative supersession candidates immediately.
+- Build/tool failures should not become user facts; they should become Hindsight/procedural experiences.
+
+Salience operator:
+
+- The Builder memory kernel should own the final salience decision before any memory is promoted.
+- Telegram, Spawner, diagnostics, and Codex can submit candidate memory events, but they should not directly promote durable memory.
+- LLM extraction can propose facts, entities, and importance rationales, but a deterministic policy gate should choose the promotion band.
+- Graphiti should enrich entity/time/provenance context; Hindsight-style procedural memory should enrich correction/failure lessons.
+- Every promoted item must record `why_saved`, `source_route`, `promotion_stage`, and whether it came from explicit user intent, repeated recurrence, active task relevance, or correction/supersession.
+
 ## Non-Negotiable Spark Contracts
 
 - Current state beats graph and episodic memory for active facts.
