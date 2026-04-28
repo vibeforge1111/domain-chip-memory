@@ -68,6 +68,8 @@ Current decision doc: `docs/OPEN_SOURCE_MEMORY_STACK_AND_PRUNE_PLAN_2026-04-28.m
 
 Current prune inventory: `docs/PRUNE_INVENTORY_2026-04-28.md`.
 
+Current architecture diagrams: `docs/MEMORY_STACK_DIAGRAMS_2026-04-28.md`.
+
 Runtime decision:
 
 - Keep `domain-chip-memory` as Spark's memory authority/control plane.
