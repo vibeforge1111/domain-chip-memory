@@ -147,6 +147,11 @@ Goal: stop treating natural user facts as test-specific profile slots.
 - [x] Extend entity attributes further:
   - preference
   - active project
+  - blocker
+  - priority
+  - decision
+  - next action
+  - metric
 - [x] Keep the original profile/evidence observation append-only while adding the entity projection.
 - [x] Project latest active named-object value through entity-scoped current state.
 - [x] Let open recall consider `entity.*` current-state records.
@@ -167,6 +172,7 @@ Acceptance:
 - Exact entity recall traces show `retrieved_roles=entity_state` and a decisive `record_count`, while preserving broader `candidate_record_count`.
 - Entity recalls, including location, use `read_method=get_current_state` with `record_count=1` and preserved location prepositions.
 - Entity history source explanations show `read_method=get_historical_state` when direct historical state answers.
+- Workflow entity recalls cover building and operating scenarios such as launch blockers, startup priorities, investor-update decisions, sprint next actions, and campaign metrics.
 
 ## Phase 2: Hybrid Retrieval Adapter
 
