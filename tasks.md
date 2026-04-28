@@ -62,6 +62,27 @@ Clean diagnostics never close a user focus by themselves. Maintenance success ne
 - APEX-MEM: append-only history plus retrieval-time conflict resolution.
 - Hindsight/gbrain-evals: source-swamp, temporal, identity, provenance, and adapter-contract tests.
 
+## Open Source Stack And Pruning Decision
+
+Current decision doc: `docs/OPEN_SOURCE_MEMORY_STACK_AND_PRUNE_PLAN_2026-04-28.md`.
+
+Current prune inventory: `docs/PRUNE_INVENTORY_2026-04-28.md`.
+
+Runtime decision:
+
+- Keep `domain-chip-memory` as Spark's memory authority/control plane.
+- Adopt a Graphiti-compatible temporal graph as the first serious sidecar.
+- Use Mem0 only as a shadow baseline or extraction/search inspiration until it proves value behind our authority rules.
+- Use Cognee later only for connector/document graph-RAG needs.
+- Use gbrain/BrainBench-style evals to decide promotion, not as runtime memory.
+
+Pruning decision:
+
+- Keep the active runtime path and SDK contracts.
+- Freeze old architecture variants as challengers or regression oracles.
+- Delete or archive only after dependency checks prove files are unused.
+- Do not delete append-only evidence, migration/replay utilities, or tests that encode known Telegram failures.
+
 ## Existing Domain-Chip Progress Folded In
 
 The previous `tasks.md` program is not discarded. It is now treated as already-built substrate for this full integration plan.
@@ -322,13 +343,15 @@ Acceptance:
 
 ## Build Order
 
-1. Generic entity-state writes.
-2. Hybrid retrieval adapter.
-3. Capsule compiler v2.
-4. Typed temporal graph runtime bridge.
-5. Evaluation harness expansion.
-6. Telegram acceptance pass.
-7. Diagnostics and operator polish.
+1. Lock the OSS-sidecar architecture and prune map.
+2. Generate repo inventory and classify keep/freeze/delete candidates.
+3. Add a `MemorySidecarAdapter` contract.
+4. Add a Graphiti-compatible sidecar behind a disabled feature flag.
+5. Feed evidence/events into the sidecar in shadow mode.
+6. Finish capsule compiler v2 and score-adaptive truncation.
+7. Add gbrain/BrainBench-style promotion gates.
+8. Run Telegram acceptance after runtime wiring, not as discovery.
+9. Diagnostics and operator polish.
 
 ## Fast Integration Protocol
 
@@ -370,8 +393,8 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Build Phase 2:
+Build the OSS sidecar/pruning foundation:
 
-> Add the Builder `hybrid_memory_retrieve` adapter behind the existing memory kernel contract, with traceable source lanes and authority-aware rank fusion.
+> Add a dependency-safe prune inventory and `MemorySidecarAdapter` contract so Graphiti-compatible retrieval can be wired in shadow mode without adding another uncontrolled memory system.
 
-This is the next real integration step before another Telegram test loop.
+This is the next real integration step before another Telegram test loop or broad benchmark run.
