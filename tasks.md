@@ -414,6 +414,10 @@ The follow-up live pass exposed the runtime artifact shape too: SDK records can 
 
 The history recall path is now source-explainable too: `Why did you answer that?` after `Where was the desk plant before?` reports the `memory_entity_state_history_query` route and entity-state history evidence instead of falling back to the generic context-capsule diagnostics explanation.
 
+The latest supervised owner test exposed a second entity-state routing bug: `Actually, Maya owns the launch checklist.` was acknowledged conversationally but stored through the broad `profile.current_owner` path, so `Who owns the launch checklist?` still returned Omar and historical owner recall only saw one entity event. Builder now prioritizes parsed entity-state owner corrections before generic owner/profile packs, so `Omar -> Maya` is a proper `entity.owner` conflict with current and previous owner recall.
+
+The source explanation for entity-state history is now attribute-aware too. `Why did you answer that?` after an owner-history answer reports `entity-scoped owner history` instead of the old hardcoded `location history` wording.
+
 ## Current Build Progress
 
 - [x] Add OSS memory stack decision.
@@ -442,4 +446,8 @@ The history recall path is now source-explainable too: `Why did you answer that?
 - [x] Extend Telegram acceptance with two-entity location isolation and stale/current location history.
 - [x] Fix live SDK artifact filtering for metadata-backed `memory_role=current_state` entity records.
 - [x] Add route-specific source explanations for entity-state history and open memory recall.
+- [x] Fix entity-owner corrections so `Actually, Maya owns the launch checklist` updates `entity.owner`, not `profile.current_owner`.
+- [x] Add owner conflict regression for current owner, previous owner, and unrelated owner isolation.
+- [x] Make entity-state history source explanations attribute-aware for owner/location/etc.
+- [x] Add owner conflict sequence to the CLI Telegram acceptance pack.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
