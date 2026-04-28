@@ -400,9 +400,9 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Build the next promotion-gate layer:
+Build the next acceptance/reporting layer:
 
-> Add gbrain/BrainBench-style promotion gates for source-swamp resistance, stale/current conflict, recent-conversation noise, and capsule source-mix stability before another Telegram acceptance loop.
+> Surface hybrid packet promotion-gate status in operator/Telegram diagnostics so source-swamp, stale/current, recent-conversation noise, and source-mix issues are visible before acceptance.
 
 This is the next real integration step before another Telegram test loop or broad benchmark run.
 
@@ -421,4 +421,5 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add explicit entity-state / recent-conversation / diagnostics capsule sections.
 - [x] Add operator capsule source-mix inspector.
 - [x] Add live recent-conversation retrieval lane or adapter.
-- [ ] Add source-swamp and capsule source-mix promotion gates.
+- [x] Add source-swamp and capsule source-mix promotion gates.
+- [ ] Surface promotion-gate status in operator/Telegram diagnostics.
