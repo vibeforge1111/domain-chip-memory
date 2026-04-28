@@ -620,16 +620,15 @@ Do not promote a memory layer if:
 
 Move from acceptance probing into integration:
 
-1. Complete the docs/license gate in `docs/PRE_IMPLEMENTATION_DOCS_AND_LICENSE_CHECKLIST_2026-04-28.md`.
-2. Add the Builder-side salience gate before durable writes.
-3. Add authoritative identity-correction supersession before broader sidecar work.
-4. Make quality gates populate real memory-write ledgers.
-5. Add optional sidecar dependency groups in `domain-chip-memory`, keeping default install light.
-6. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
-7. Implement the Graphiti live adapter behind a disabled feature flag.
-8. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
-9. Add episodic consolidation and pending-task recovery as the next continuity layer.
-10. Add local repo/module/capability indexing before more build automation.
+1. Extend the Builder-side salience gate beyond profile/current-state writes into generic candidate memory writes.
+2. Add authoritative identity-correction supersession before broader sidecar work.
+3. Make quality gates populate real memory-write ledgers across profile, entity, episodic, and procedural writes.
+4. Add optional sidecar dependency groups in `domain-chip-memory`, keeping default install light.
+5. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
+6. Implement the Graphiti live adapter behind a disabled feature flag.
+7. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
+8. Add episodic consolidation and pending-task recovery as the next continuity layer.
+9. Add local repo/module/capability indexing before more build automation.
 
 The already-green Telegram acceptance loop remains the fast human-facing gate, not the main discovery path. The entity-state fixes for current/previous values, attribute isolation, source explanations, and workflow-like attributes are accepted substrate. The next layer must plug behind the same current-state authority, stale-conflict, and source-mix promotion checks.
 
@@ -669,4 +668,10 @@ Implementation starts in `spark-intelligence-builder` with `memory.salience`, th
 - [x] Add owner conflict sequence to the CLI Telegram acceptance pack.
 - [x] Add status/deadline/relation/preference/project entity-state parsing, current recall, and previous-value recall.
 - [x] Extend CLI Telegram acceptance from owner/location into broader mutable entity attributes.
+- [x] Complete the docs/license gate before external memory sidecar integration.
+- [x] Add Builder-side `memory.salience` gate for profile/current-state writes.
+- [x] Add salience metadata on accepted profile writes: score, confidence, promotion stage, and why-saved rationale.
+- [x] Populate memory lane records for accepted profile writes through keepability and promotion disposition.
+- [x] Block secret-like durable profile writes through the salience policy gate before SDK write.
+- [x] Treat identity corrections as high-salience supersession writes.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
