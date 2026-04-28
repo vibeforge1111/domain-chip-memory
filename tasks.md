@@ -412,6 +412,8 @@ The next supervised Telegram pass exposed an attribute-collision bug: `Where is 
 
 The follow-up live pass exposed the runtime artifact shape too: SDK records can store `memory_role` under metadata instead of top-level. Builder now accepts metadata-backed current-state roles during open recall, so live entity-location records survive filtering.
 
+The history recall path is now source-explainable too: `Why did you answer that?` after `Where was the desk plant before?` reports the `memory_entity_state_history_query` route and entity-state history evidence instead of falling back to the generic context-capsule diagnostics explanation.
+
 ## Current Build Progress
 
 - [x] Add OSS memory stack decision.
@@ -439,4 +441,5 @@ The follow-up live pass exposed the runtime artifact shape too: SDK records can 
 - [x] Add entity-attribute recall gates so location questions cannot be answered from name memories.
 - [x] Extend Telegram acceptance with two-entity location isolation and stale/current location history.
 - [x] Fix live SDK artifact filtering for metadata-backed `memory_role=current_state` entity records.
+- [x] Add route-specific source explanations for entity-state history and open memory recall.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
