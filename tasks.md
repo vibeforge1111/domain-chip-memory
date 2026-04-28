@@ -400,9 +400,9 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Build the next capsule completion layer:
+Build the next promotion-gate layer:
 
-> Add a live recent-conversation retrieval lane or adapter so the capsule's recent-conversation section has real candidates instead of only section support.
+> Add gbrain/BrainBench-style promotion gates for source-swamp resistance, stale/current conflict, recent-conversation noise, and capsule source-mix stability before another Telegram acceptance loop.
 
 This is the next real integration step before another Telegram test loop or broad benchmark run.
 
@@ -420,4 +420,5 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add initial hybrid-memory context packet with source labels and score-adaptive budgets.
 - [x] Add explicit entity-state / recent-conversation / diagnostics capsule sections.
 - [x] Add operator capsule source-mix inspector.
-- [ ] Add live recent-conversation retrieval lane or adapter.
+- [x] Add live recent-conversation retrieval lane or adapter.
+- [ ] Add source-swamp and capsule source-mix promotion gates.
