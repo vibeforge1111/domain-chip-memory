@@ -144,7 +144,7 @@ Goal: stop treating natural user facts as test-specific profile slots.
   - owner
   - deadline
   - relation
-- [ ] Extend entity attributes further:
+- [x] Extend entity attributes further:
   - preference
   - active project
 - [x] Keep the original profile/evidence observation append-only while adding the entity projection.
@@ -418,6 +418,8 @@ The latest supervised owner test exposed a second entity-state routing bug: `Act
 
 The source explanation for entity-state history is now attribute-aware too. `Why did you answer that?` after an owner-history answer reports `entity-scoped owner history` instead of the old hardcoded `location history` wording.
 
+Entity-state coverage now includes the broader mutable attributes we wanted for real workflows: `status`, `deadline`, `relation`, `preference`, and `project`. These all use the same current-state projection, stale/current supersession, previous-value recall, and fast Telegram acceptance path as plant location and checklist ownership.
+
 ## Current Build Progress
 
 - [x] Add OSS memory stack decision.
@@ -450,4 +452,6 @@ The source explanation for entity-state history is now attribute-aware too. `Why
 - [x] Add owner conflict regression for current owner, previous owner, and unrelated owner isolation.
 - [x] Make entity-state history source explanations attribute-aware for owner/location/etc.
 - [x] Add owner conflict sequence to the CLI Telegram acceptance pack.
+- [x] Add status/deadline/relation/preference/project entity-state parsing, current recall, and previous-value recall.
+- [x] Extend CLI Telegram acceptance from owner/location into broader mutable entity attributes.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
