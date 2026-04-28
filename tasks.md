@@ -80,6 +80,11 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [ ] Self-review is not grounded: build quality ratings must inspect target repo, diff, tests, route, and demo state before answering.
 - [ ] Source attribution is still uneven: answers must distinguish current capsule, older memory, raw episode, inference, and unverified claims.
 - [ ] Memory-quality dashboard is standalone: migrate useful pieces into `spawner-ui` and wire them to real ledgers.
+- [ ] Episodic recall is missing: Spark needs session/day/project summaries for "what did we build today?" and "what else do you remember?".
+- [ ] Source-aware recall needs to be universal: answers should say whether memory came from current state, older memory, raw episode, graph sidecar, inference, diagnostics, or workflow residue.
+- [ ] Context memory is too small for real work: live Builder capsule code currently defaults to a 5,000-character rendered capsule, 3 recent same-session turn pairs, and 260-character compacted turns in `src/spark_intelligence/context/capsule.py`.
+- [ ] Context reservoir target should support 200k+ available memory context through retrieval and packet assembly, while keeping per-answer Telegram packets compact.
+- [ ] Repo resolution is not strong enough: Spark needs a local repo/module/capability index so it knows where things live and what it can inspect before building or answering.
 
 ## SOTA Patterns We Are Importing
 
@@ -330,6 +335,9 @@ Goal: compile one compact, source-aware Telegram context packet per turn.
   - graph sidecar hits
   - supporting context
 - [ ] Add explicit entity-state and recent-conversation sections when those lanes are live.
+- [ ] Add episodic summary sections for session/day/project recall.
+- [ ] Add a large-context reservoir interface targeting 200k+ available context for deep reconstruction, separate from the compact per-answer packet.
+- [ ] Increase same-session continuity beyond the current 3 recent turn pairs / 260-character compaction by retrieving ranked recent spans and summaries.
 - [ ] Add diagnostics-only-if-relevant section.
 - [ ] Keep workflow residue advisory only through source authority and stale penalties.
 - [x] Add source authority labels to every section.
@@ -343,6 +351,8 @@ Acceptance:
 - New conversation turns preserve focus, plan, diagnostics, and maintenance summaries without collapsing them into done.
 - Clean diagnostics do not auto-close user-level focus.
 - Old workflow state never outranks current state.
+- Spark can answer "what did we build today?" from episodic summaries.
+- Spark can enter a deep-context mode without flooding normal replies.
 
 ## Phase 4: Typed Temporal Graph Runtime Bridge
 
@@ -395,6 +405,34 @@ Acceptance:
 - Graph evidence does not override current state unless the query asks for historical/relational context.
 - Graphiti facts can explain their episode provenance and validity window.
 - Graphiti improves broad project/workflow recall without flooding the capsule.
+
+## Phase 4.5: Episodic And Procedural Continuity
+
+Goal: make Spark remember work, interruptions, and project flow rather than isolated facts.
+
+- [ ] Add session summary writer:
+  - what changed
+  - decisions made
+  - open questions
+  - repos touched
+  - artifacts created
+  - promises Spark made
+- [ ] Add daily/project summary writer.
+- [ ] Add pending-task ledger:
+  - original request
+  - target repo/component
+  - active command or mission id
+  - timeout/interruption point
+  - last verified evidence
+  - next retry step
+- [ ] Add source labels for episodic and procedural recalls.
+- [ ] Add "what did we build today?" and "resume what timed out" acceptance probes.
+
+Acceptance:
+
+- Spark can recover after a timeout without asking "what happened?"
+- Spark can summarize a day's build work from durable summaries, not raw transcript dumps.
+- Spark can distinguish facts, episodes, procedural lessons, and inferences.
 
 ## Phase 5: Memory Hygiene And Consolidation
 
@@ -492,6 +530,8 @@ Acceptance:
 - [ ] Add doctor check for SDK runtime architecture mismatch.
 - [ ] Add startup log line showing active memory architecture and sidecars.
 - [ ] Add operator command to inspect capsule source mix.
+- [ ] Add operator command to inspect context reservoir budget and selected packet contents.
+- [ ] Add repo/module/capability index visibility to `spark status`, `spark verify`, and diagnostics.
 - [ ] Add one-command memory quality smoke.
 - [ ] Add rollback switch to disable hybrid retrieval and graph sidecar separately.
 
@@ -561,6 +601,8 @@ Move from acceptance probing into integration:
 3. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
 4. Implement the Graphiti live adapter behind a disabled feature flag.
 5. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
+6. Add episodic consolidation and pending-task recovery as the next continuity layer.
+7. Add local repo/module/capability indexing before more build automation.
 
 The already-green Telegram acceptance loop remains the fast human-facing gate, not the main discovery path. The entity-state fixes for current/previous values, attribute isolation, source explanations, and workflow-like attributes are accepted substrate. The next layer must plug behind the same current-state authority, stale-conflict, and source-mix promotion checks.
 
