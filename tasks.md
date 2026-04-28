@@ -400,11 +400,11 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Promote the acceptance-pack signal into the next runtime gate:
+Run the real Spark AGI/Tester Telegram memory loop:
 
-> Move memory-quality promotion gates from trace-only reporting toward blocking acceptance criteria, then run the real Spark AGI/Tester Telegram loop as the human-facing smoke.
+> Use the same memory-quality scenarios against the supervised Telegram bot path, confirm the answers match the local acceptance pack, and inspect any divergence before broader benchmark work.
 
-The local simulated Telegram acceptance loop is green. It caught and verified a real routing conflict where `scheduled memory cleanup` was being treated as a scheduler request instead of a current-plan update. The next step is promotion discipline: make these gates harder to bypass before broad Telegram or benchmark work.
+The local simulated Telegram acceptance loop is green and promotion gates now run as blocking acceptance criteria. If a packet has warn/fail gates, the acceptance run fails even when scripted reply text matches.
 
 ## Current Build Progress
 
@@ -425,5 +425,5 @@ The local simulated Telegram acceptance loop is green. It caught and verified a 
 - [x] Surface promotion-gate status in operator/Telegram diagnostics.
 - [x] Add Telegram memory-quality acceptance pack backed by promotion-gate assertions.
 - [x] Run local Telegram acceptance loop and triage failed memory-quality lanes.
-- [ ] Promote memory-quality gate failures from trace-only reporting into blocking acceptance criteria.
+- [x] Promote memory-quality gate failures from trace-only reporting into blocking acceptance criteria.
 - [ ] Run the real Spark AGI/Tester Telegram loop after gate promotion.
