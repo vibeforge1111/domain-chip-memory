@@ -406,6 +406,8 @@ Promote the next memory layer only after the already-green acceptance loop stays
 
 The local simulated Telegram acceptance loop is green, promotion gates now run as blocking acceptance criteria, and the supervised Spark AGI/Tester pass confirmed focus, plan, open-ended next-step recall, source explanation, and the `Mira` plant recall. The live pass exposed one gate-calibration issue: a clean current-state answer could still show `source_mix_stability: warn` when supporting evidence was concentrated. That has been converted into an authority-anchored pass condition while keeping supporting-only packets blocked by warning gates.
 
+The acceptance pack now also covers mutable entity memory: seed the plant as `Mira`, update it to `Sol`, recall the current name, and recall the previous name. This gives us one quick gate for current entity projection plus historical supersession, not just profile focus/plan memory.
+
 ## Current Build Progress
 
 - [x] Add OSS memory stack decision.
@@ -429,4 +431,5 @@ The local simulated Telegram acceptance loop is green, promotion gates now run a
 - [x] Export supervised Spark AGI/Tester Telegram acceptance prompt pack.
 - [x] Run the real Spark AGI/Tester Telegram loop after gate promotion.
 - [x] Calibrate source-mix stability so clean current-state authority plus supporting evidence passes while supporting-only packets still warn.
+- [x] Extend Telegram acceptance with mutable entity conflict recall: `Mira` -> `Sol` -> previous name.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
