@@ -100,16 +100,25 @@ Before adding a dependency/service:
 
 ## Salience Borrowing Sources
 
-Spark should not invent salience from scratch. The first implementation should borrow the scoring shape from permissive agent-memory projects and adapt it to Spark's operating-system workflow.
+Spark should not invent salience from scratch. The first implementation should borrow the scoring shape from mature permissive agent-memory projects and adapt it to Spark's operating-system workflow.
+
+Primary salience sources:
 
 | Source | License | Borrowed Idea | Spark Adaptation |
 | --- | --- | --- | --- |
 | `joonspk-research/generative_agents` | Apache-2.0 | Memory stream ranking by recency, importance, and relevance; reflection when important memories accumulate | Base salience score: `importance + relevance + recency`, with Spark-specific weights |
-| `joonspk-research/genagents` | MIT | Memory/reflection API shape from later generative-agent simulation work | Use as API inspiration only; no runtime dependency needed |
-| `MemaryAI/MemaryAI` | MIT | Entity frequency and recency tracking for importance | Add `mention_count`, `last_referenced_at`, and entity recurrence boosts |
 | `mem0ai/mem0` | Apache-2.0 | Single-pass extraction, deduplication, entity linking, multi-signal retrieval | Compare Spark salience/extraction against Mem0 in shadow mode |
 | `vectorize-io/hindsight` | MIT | Learn from corrections, failed actions, and repeated mistakes | Feed failure/correction experiences into procedural memory, not durable user facts |
 | `getzep/graphiti` | Apache-2.0 | Temporal provenance, entity relationships, validity windows | Use graph provenance and temporal validity as retrieval gates, not direct salience authority |
+
+Reference-only sources:
+
+These are permissively licensed, but should not be copied or treated as authority until they pass code-quality, activity, star/community, and architecture review.
+
+| Source | License | Possible Use | Risk Control |
+| --- | --- | --- | --- |
+| `joonspk-research/genagents` | MIT | Memory/reflection API shape from later generative-agent simulation work | Ideas only; no runtime dependency; verify maturity before copying code |
+| `MemaryAI/MemaryAI` | MIT | Entity frequency and recency tracking for importance | Ideas only; implement recurrence counters ourselves unless deeper review says otherwise |
 
 Initial Spark salience formula:
 
