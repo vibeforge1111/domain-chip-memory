@@ -4,6 +4,143 @@ Last updated: 2026-04-28
 
 This file is the build checklist for turning `domain-chip-memory` into Spark's live persistent memory system. It decides the architecture, names the remaining integration work, and defines the acceptance gates before we go back to heavy Telegram testing.
 
+## Task System Rules
+
+This file is the operating system for the memory build. Every memory change should map to a line here before or immediately after implementation.
+
+Rules:
+
+1. Work from the Active Execution Queue first.
+2. Commit often, with one meaningful slice per commit when possible.
+3. Keep `domain-chip-memory` as the architecture/control-plane tracker.
+4. Implement runtime behavior in the owning repo:
+   - `spark-intelligence-builder`: memory write/read logic, capsule, ledgers, diagnostics.
+   - `domain-chip-memory`: chip contracts, sidecar adapters, eval harnesses, docs.
+   - `spark-cli`: installer and local dependency profiles.
+   - `spawner-ui`: memory-quality dashboard and operator UI.
+   - `spark-telegram-bot`: Telegram ingress/restart/runtime wiring only.
+5. Do not add an external dependency, copied source, or sidecar without the pre-implementation license checklist and adoption record.
+6. Tests should be contract-first, then Telegram acceptance. Telegram is a final human-facing gate, not the discovery loop.
+
+## Definition Of Done
+
+Spark persistent memory is "great working memory" only when all of these are true:
+
+- Natural conversation can create useful memory without requiring `for later`.
+- Explicit save commands still work, but they are not the main UX.
+- Current-state facts, entity-state facts, episodes, beliefs, procedural lessons, diagnostics, and workflow residue are separate lanes.
+- Identity corrections and target-repo corrections become authoritative supersessions immediately.
+- Weak, speculative, emotional, private, or noisy statements stay scratchpad/raw episode or get dropped.
+- Every memory write has salience, confidence, promotion stage, why-saved, source route, and gate outcome.
+- Every memory answer can name the source class and whether it used current state, older memory, raw episode, graph sidecar, inference, diagnostics, or workflow residue.
+- Episodic summaries answer "what did we build today?", "what changed?", and "what is still open?" without raw transcript dumps.
+- Timeout/task recovery resumes from a pending-task ledger.
+- Repo resolution knows what project/component Spark is touching before build missions.
+- Graphiti/Hindsight/Mem0 are optional, licensed, observable sidecars or comparators; they never replace Spark's authority order.
+- Maintenance compresses active memory without destroying historical recall.
+- The memory-quality dashboard is inside `spawner-ui` and wired to real ledgers.
+- Diagnostics show active architecture, sidecars, source mix, context budget, quality gates, and stale/advisory source drift.
+
+## Active Execution Queue
+
+Work in this order unless a production break interrupts it:
+
+### Track A: Write Discipline And Salience
+
+- [x] Add docs/license gate before external sidecar integration.
+- [x] Add Builder-side `memory.salience` gate for profile/current-state writes.
+- [x] Mark preferred-name corrections as authoritative identity supersessions.
+- [ ] Extend salience to generic memory candidates: current-state, structured evidence, raw episode, belief, and drop.
+- [ ] Add salience metadata to structured evidence, raw episode, belief, and memory-candidate assessment events.
+- [ ] Add live quality-gate records for rejected memory candidates, not only secret-like profile writes.
+- [ ] Reduce blocked/not-promotable memory-lane rows by routing candidates into the correct lane or explicit drop reason.
+
+### Track B: Authoritative State And Supersession
+
+- [x] Entity-state current and previous recall works for owner/location/status/deadline/relation/preference/project/blocker/priority/decision/next action/metric.
+- [x] Entity summary recall answers broad questions like "what do you know about the GTM launch?".
+- [x] Preferred-name corrections are entity-keyed current identity writes.
+- [ ] Add current-state supersession metadata for target repo, active project, current task, runtime capability, and user identity.
+- [ ] Preserve superseded values for historical questions without letting them answer current questions.
+- [ ] Add explicit closure markers for focus/plan so clean diagnostics never imply user-level closure.
+
+### Track C: Episodic And Semantic Continuity
+
+- [ ] Add session summary writer: what changed, decisions, open questions, repos touched, artifacts created, promises made.
+- [ ] Add daily/project summary writer.
+- [ ] Add semantic consolidation beyond archive/delete/supersede.
+- [ ] Increase same-session continuity beyond 3 turn pairs / 260-char compaction.
+- [ ] Add large-context reservoir targeting 200k+ reconstructable context, separate from compact Telegram packet.
+- [ ] Add "what did we build today?" and "what else do you remember?" source-aware routes.
+
+### Track D: Timeout, Task, And Workflow Recovery
+
+- [ ] Add pending-task ledger: original request, target repo/component, command/mission id, timeout point, last evidence, next retry.
+- [ ] Store failed target resolution, wrong build target, bad self-review, and timeout patterns as procedural lessons.
+- [ ] Resume after timeout without asking "what happened?".
+- [ ] Inject runtime capability state so Spark does not underclaim local file/Spawner/Codex access.
+
+### Track E: Repo Resolution And Builder Safety
+
+- [ ] Add local repo/module/capability index.
+- [ ] Add hard target-repo confirmation gate before builds and file-writing missions.
+- [ ] Add stale Spawner payload detection and drift warning.
+- [ ] Ground build-quality self-review in target repo, diff, tests, route, and demo state.
+
+### Track F: Retrieval, Capsule, And Source Attribution
+
+- [x] Hybrid retrieval uses current state, historical state, evidence, events, recent conversation, wiki packets, and shadow graph lane.
+- [x] Capsule source-mix promotion gates exist.
+- [ ] Make source-aware recall universal for all memory answers.
+- [ ] Add graph sidecar hits with validity windows and provenance as advisory candidates.
+- [ ] Add explicit context packet sections for episodic summary, procedural lesson, pending task, repo capability, and graph sidecar.
+- [ ] Add operator command to inspect context reservoir budget and selected packet contents.
+
+### Track G: OSS Sidecars And Installer
+
+- [x] Decide hybrid OSS stack: Graphiti first, Mem0 shadow, Hindsight procedural, Cognee deferred.
+- [x] Add third-party notice scaffold and adoption checklist.
+- [ ] Add optional dependency groups in `domain-chip-memory`, default install light.
+- [ ] Add Graphiti adoption record before dependency/import.
+- [ ] Add Graphiti live adapter behind disabled feature flag.
+- [ ] Add Spark CLI memory-sidecar installer profile for Graphiti.
+- [ ] Add Mem0 shadow comparator only after salience/retrieval contracts are stable.
+- [ ] Add Hindsight/procedural sidecar prototype for corrections, failed tools, timeouts, and repeated mistakes.
+- [ ] Add status/verify/diagnostics visibility for each sidecar and its fallback mode.
+
+### Track H: Memory Lanes, Quality Gates, And Dashboard
+
+- [x] Memory lane and quality-gate architecture documented.
+- [ ] Populate policy gate, quarantine, delivery registry, and memory lane records from real memory decisions.
+- [ ] Make memory lanes human-readable.
+- [ ] Add operator inspect commands for lane decisions, blocked candidates, salience reasons, and promotion outcomes.
+- [ ] Migrate memory-quality dashboard into `spawner-ui`.
+- [ ] Wire dashboard to actual ledgers, not standalone mock state.
+
+### Track I: Evaluation Harness
+
+- [ ] Add gbrain/BrainBench-style source-swamp, identity, temporal, provenance, and adapter-contract tests.
+- [ ] Add LoCoMo/LongMemEval-style local slices for temporal reasoning, multi-session reasoning, updates, abstention, event ordering.
+- [ ] Compare current runtime, entity-state runtime, graph sidecar shadow, and full hybrid path.
+- [ ] Publish scorecards under artifacts, not docs.
+- [ ] Block promotion if stale/advisory sources outrank current state.
+
+### Track J: Telegram Acceptance
+
+- [x] Current and previous entity-state facts pass supervised Telegram tests.
+- [x] Source explanations identify entity-state current/history routes.
+- [ ] Re-run short Spark AGI/Tester source-explanation check after deployment.
+- [ ] Test natural memory without `for later`.
+- [ ] Test stale/current conflicts across project, identity, repo, task, preference, and startup workflow scenarios.
+- [ ] Test broad workflow recall: project building, startup ops, marketing/content, investor updates, operating-system handoffs.
+- [ ] Test restart behavior: code changes require restart, memory data changes do not.
+
+## Current Commit Checkpoints
+
+- `domain-chip-memory`: `2ecc980` tracks identity supersession progress.
+- `spark-intelligence-builder`: `e620387` makes preferred-name corrections authoritative.
+- Next commit target: generic salience and memory-candidate lane metadata in `spark-intelligence-builder`.
+
 ## Architecture Decision
 
 Spark Persistent Memory v1 is:
