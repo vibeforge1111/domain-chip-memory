@@ -621,14 +621,13 @@ Do not promote a memory layer if:
 Move from acceptance probing into integration:
 
 1. Extend the Builder-side salience gate beyond profile/current-state writes into generic candidate memory writes.
-2. Add authoritative identity-correction supersession before broader sidecar work.
-3. Make quality gates populate real memory-write ledgers across profile, entity, episodic, and procedural writes.
-4. Add optional sidecar dependency groups in `domain-chip-memory`, keeping default install light.
-5. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
-6. Implement the Graphiti live adapter behind a disabled feature flag.
-7. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
-8. Add episodic consolidation and pending-task recovery as the next continuity layer.
-9. Add local repo/module/capability indexing before more build automation.
+2. Make quality gates populate real memory-write ledgers across profile, entity, episodic, and procedural writes.
+3. Add optional sidecar dependency groups in `domain-chip-memory`, keeping default install light.
+4. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
+5. Implement the Graphiti live adapter behind a disabled feature flag.
+6. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
+7. Add episodic consolidation and pending-task recovery as the next continuity layer.
+8. Add local repo/module/capability indexing before more build automation.
 
 The already-green Telegram acceptance loop remains the fast human-facing gate, not the main discovery path. The entity-state fixes for current/previous values, attribute isolation, source explanations, and workflow-like attributes are accepted substrate. The next layer must plug behind the same current-state authority, stale-conflict, and source-mix promotion checks.
 
@@ -674,4 +673,5 @@ Implementation starts in `spark-intelligence-builder` with `memory.salience`, th
 - [x] Populate memory lane records for accepted profile writes through keepability and promotion disposition.
 - [x] Block secret-like durable profile writes through the salience policy gate before SDK write.
 - [x] Treat identity corrections as high-salience supersession writes.
+- [x] Make preferred-name corrections entity-keyed authoritative current identity writes.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
