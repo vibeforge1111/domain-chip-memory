@@ -402,9 +402,9 @@ Do not promote a memory layer if:
 
 Run the real Spark AGI/Tester Telegram memory loop:
 
-> Use the same memory-quality scenarios against the supervised Telegram bot path, confirm the answers match the local acceptance pack, and inspect any divergence before broader benchmark work.
+> Send the exported supervised acceptance prompts to Spark AGI/Tester in Telegram, capture the exact replies, and compare divergence against the local blocking acceptance artifact before broader benchmark work.
 
-The local simulated Telegram acceptance loop is green and promotion gates now run as blocking acceptance criteria. If a packet has warn/fail gates, the acceptance run fails even when scripted reply text matches.
+The local simulated Telegram acceptance loop is green, promotion gates now run as blocking acceptance criteria, and the supervised operator prompt pack has been exported for the human-facing Telegram pass.
 
 ## Current Build Progress
 
@@ -426,4 +426,5 @@ The local simulated Telegram acceptance loop is green and promotion gates now ru
 - [x] Add Telegram memory-quality acceptance pack backed by promotion-gate assertions.
 - [x] Run local Telegram acceptance loop and triage failed memory-quality lanes.
 - [x] Promote memory-quality gate failures from trace-only reporting into blocking acceptance criteria.
+- [x] Export supervised Spark AGI/Tester Telegram acceptance prompt pack.
 - [ ] Run the real Spark AGI/Tester Telegram loop after gate promotion.
