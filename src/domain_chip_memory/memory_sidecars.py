@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Any, Protocol
 
 from .contracts import JsonDict
 
@@ -348,6 +348,79 @@ def build_default_memory_sidecars(
     }
 
 
+def memory_record_to_sidecar_episode(
+    record: Any,
+    *,
+    source_class: str | None = None,
+) -> MemorySidecarEpisode:
+    metadata = dict(getattr(record, "metadata", {}) or {})
+    lifecycle = dict(getattr(record, "lifecycle", {}) or {})
+    observation_id = str(getattr(record, "observation_id", "") or "").strip()
+    event_id = str(getattr(record, "event_id", "") or "").strip()
+    session_id = str(getattr(record, "session_id", "") or "").strip()
+    turn_ids = [str(item).strip() for item in getattr(record, "turn_ids", []) if str(item).strip()]
+    source_record_id = (
+        observation_id
+        or event_id
+        or _fallback_record_id(session_id=session_id, turn_ids=turn_ids)
+    )
+    memory_role = str(getattr(record, "memory_role", "") or "").strip() or "unknown"
+    return MemorySidecarEpisode(
+        source_record_id=source_record_id,
+        source_class=source_class or _sidecar_source_class(memory_role),
+        text=str(getattr(record, "text", "") or "").strip(),
+        subject=str(getattr(record, "subject", "") or "").strip() or None,
+        predicate=str(getattr(record, "predicate", "") or "").strip() or None,
+        session_id=session_id or None,
+        turn_ids=turn_ids,
+        timestamp=str(getattr(record, "timestamp", "") or "").strip() or None,
+        entity_keys=_episode_entity_keys(metadata),
+        lifecycle=lifecycle,
+        metadata={
+            **metadata,
+            "memory_role": memory_role,
+            "observation_id": observation_id or None,
+            "event_id": event_id or None,
+            "retention_class": getattr(record, "retention_class", None),
+            "sidecar_episode_export": True,
+        },
+    )
+
+
+def memory_records_to_sidecar_episodes(records: list[Any]) -> list[MemorySidecarEpisode]:
+    return [memory_record_to_sidecar_episode(record) for record in records]
+
+
+def _fallback_record_id(*, session_id: str, turn_ids: list[str]) -> str:
+    if session_id and turn_ids:
+        return f"{session_id}:{','.join(turn_ids)}"
+    if session_id:
+        return session_id
+    if turn_ids:
+        return ",".join(turn_ids)
+    return "unknown-record"
+
+
+def _sidecar_source_class(memory_role: str) -> str:
+    if memory_role == "event":
+        return "retrieved_events"
+    if memory_role == "current_state":
+        return "current_state"
+    if memory_role == "state_deletion":
+        return "state_deletion"
+    if memory_role == "episodic":
+        return "recent_conversation"
+    return "retrieved_evidence"
+
+
+def _episode_entity_keys(metadata: JsonDict) -> list[str]:
+    entity_keys = metadata.get("entity_keys")
+    if isinstance(entity_keys, list):
+        return [str(item).strip() for item in entity_keys if str(item).strip()]
+    entity_key = str(metadata.get("entity_key") or "").strip()
+    return [entity_key] if entity_key else []
+
+
 def _record_id(item: JsonDict) -> str:
     for key in ("source_record_id", "observation_id", "event_id", "id"):
         value = str(item.get(key) or "").strip()
@@ -376,6 +449,10 @@ def build_memory_sidecar_contract_summary() -> JsonDict:
             "explain",
             "health",
             "shadow_compare",
+        ],
+        "episode_export_methods": [
+            "memory_record_to_sidecar_episode",
+            "memory_records_to_sidecar_episodes",
         ],
         "adapter_implementations": [
             "DisabledMemorySidecarAdapter",

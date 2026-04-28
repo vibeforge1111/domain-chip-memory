@@ -4,10 +4,14 @@ from domain_chip_memory import (
     MemorySidecarEpisode,
     MemorySidecarHit,
     MemorySidecarRetrievalRequest,
+    SparkMemorySDK,
     build_default_memory_sidecars,
     build_memory_sidecar_contract_summary,
     build_sdk_contract_summary,
+    memory_record_to_sidecar_episode,
+    memory_records_to_sidecar_episodes,
 )
+from domain_chip_memory.sdk import EventRetrievalRequest, EvidenceRetrievalRequest, MemoryWriteRequest
 
 
 def test_memory_sidecar_contract_declares_authority_boundaries() -> None:
@@ -19,6 +23,7 @@ def test_memory_sidecar_contract_declares_authority_boundaries() -> None:
     assert payload["runtime_sidecars"]["mem0_shadow"]["mode"] == "shadow_baseline"
     assert payload["runtime_sidecars"]["cognee_optional"]["mode"] == "deferred"
     assert "GraphitiCompatibleMemorySidecarAdapter" in payload["adapter_implementations"]
+    assert "memory_record_to_sidecar_episode" in payload["episode_export_methods"]
     assert "source_swamp_resistance" in payload["promotion_gates"]
 
 
@@ -146,3 +151,80 @@ def test_default_sidecars_keep_graphiti_feature_flag_off_by_default() -> None:
 
     assert graphiti.health().status == "disabled"
     assert mem0.health().status == "disabled"
+
+
+def test_memory_record_to_sidecar_episode_preserves_evidence_provenance() -> None:
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="human:telegram:12345",
+            predicate="entity.name",
+            value="Sol",
+            timestamp="2026-04-28T10:00:00Z",
+            metadata={
+                "entity_key": "named-object:tiny-desk-plant",
+                "source_surface": "telegram",
+            },
+        )
+    )
+    record = sdk.retrieve_evidence(
+        EvidenceRetrievalRequest(subject="human:telegram:12345", predicate="entity.name")
+    ).items[0]
+
+    episode = memory_record_to_sidecar_episode(record)
+
+    assert episode.source_record_id == record.observation_id
+    assert episode.source_class == "retrieved_evidence"
+    assert episode.subject == "human:telegram:12345"
+    assert episode.predicate == "entity.name"
+    assert episode.entity_keys == ["named-object:tiny-desk-plant"]
+    assert episode.lifecycle["valid_from"] == "2026-04-28T10:00:00Z"
+    assert episode.metadata["memory_role"] == "structured_evidence"
+    assert episode.metadata["sidecar_episode_export"] is True
+
+
+def test_memory_record_to_sidecar_episode_maps_event_records() -> None:
+    sdk = SparkMemorySDK()
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="human:telegram:12345",
+            predicate="diagnostics.scan",
+            value="clean",
+            timestamp="2026-04-28T10:01:00Z",
+            event_time="2026-04-28T10:01:00Z",
+        )
+    )
+    record = sdk.retrieve_events(EventRetrievalRequest(subject="human:telegram:12345", limit=1)).items[0]
+
+    episode = memory_record_to_sidecar_episode(record)
+
+    assert episode.source_record_id == record.event_id
+    assert episode.source_class == "retrieved_events"
+    assert episode.metadata["memory_role"] == "event"
+    assert episode.lifecycle["event_time"] == "2026-04-28T10:01:00Z"
+
+
+def test_memory_records_to_sidecar_episodes_batch_exports_records() -> None:
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="human:telegram:12345",
+            predicate="profile.current_focus",
+            value="persistent memory quality evaluation",
+            timestamp="2026-04-28T10:02:00Z",
+            metadata={"memory_role": "current_state"},
+        )
+    )
+    records = sdk.retrieve_evidence(EvidenceRetrievalRequest(subject="human:telegram:12345", limit=5)).items
+
+    episodes = memory_records_to_sidecar_episodes(records)
+
+    assert len(episodes) == 1
+    assert episodes[0].text
+    assert episodes[0].source_record_id == records[0].observation_id

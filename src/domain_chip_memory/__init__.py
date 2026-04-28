@@ -41,6 +41,8 @@ from .memory_sidecars import (
     MemorySidecarUpsertResult,
     build_default_memory_sidecars,
     build_memory_sidecar_contract_summary,
+    memory_record_to_sidecar_episode,
+    memory_records_to_sidecar_episodes,
 )
 
 __all__ = [
@@ -83,5 +85,7 @@ __all__ = [
     "MemorySidecarUpsertResult",
     "build_default_memory_sidecars",
     "build_memory_sidecar_contract_summary",
+    "memory_record_to_sidecar_episode",
+    "memory_records_to_sidecar_episodes",
 ]
 __version__ = "0.1.0"

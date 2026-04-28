@@ -408,7 +408,7 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add architecture diagrams.
 - [x] Add `MemorySidecarAdapter` contract and disabled no-op adapter.
 - [x] Add Graphiti-compatible adapter stub behind a disabled feature flag.
-- [ ] Add evidence/event episode export into sidecar contract shape.
+- [x] Add evidence/event episode export into sidecar contract shape.
 - [ ] Add Graphiti shadow retrieval lane to `hybrid_memory_retrieve`.
 - [ ] Add Obsidian / LLM-wiki packet reader source.
 - [ ] Add Mem0 shadow adapter.
