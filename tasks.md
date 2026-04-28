@@ -120,6 +120,7 @@ Work in this order unless a production break interrupts it:
 ### Track I: Evaluation Harness
 
 - [ ] Add gbrain/BrainBench-style source-swamp, identity, temporal, provenance, and adapter-contract tests.
+- [x] Add curated Builder memory unit-test batches so architecture slices can run contract-first before Telegram acceptance.
 - [ ] Add LoCoMo/LongMemEval-style local slices for temporal reasoning, multi-session reasoning, updates, abstention, event ordering.
 - [ ] Compare current runtime, entity-state runtime, graph sidecar shadow, and full hybrid path.
 - [ ] Publish scorecards under artifacts, not docs.
@@ -138,8 +139,9 @@ Work in this order unless a production break interrupts it:
 ## Current Commit Checkpoints
 
 - `domain-chip-memory`: `732ab81` tracks memory lane cleanup progress.
-- `spark-intelligence-builder`: `92a4adc` adds deterministic session summaries for episodic continuity.
+- `spark-intelligence-builder`: `162514b` adds curated memory test batches for contract-first validation.
 - Next commit target: daily/project summary writer for semantic continuity in `spark-intelligence-builder`.
+- Current fast validation command: `python scripts/run_memory_test_batch.py --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
 
@@ -812,4 +814,5 @@ Implementation starts in `spark-intelligence-builder` with `memory.salience`, th
 - [x] Treat identity corrections as high-salience supersession writes.
 - [x] Make preferred-name corrections entity-keyed authoritative current identity writes.
 - [x] Add deterministic session summary writer for episodic continuity.
+- [x] Add curated memory unit-test batches: `fast-contract`, `telegram-memory-unit`, `architecture-promotion`, `diagnostics-ledgers`, and `full-memory-local`.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
