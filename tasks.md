@@ -400,11 +400,11 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Run the real Spark AGI/Tester Telegram memory loop:
+Promote the next memory layer only after the already-green acceptance loop stays green:
 
-> Send the exported supervised acceptance prompts to Spark AGI/Tester in Telegram, capture the exact replies, and compare divergence against the local blocking acceptance artifact before broader benchmark work.
+> Keep the Spark AGI/Tester Telegram acceptance pack as the quick human-facing gate, then wire the next runtime memory layer behind the same current-state authority, stale-conflict, and source-mix promotion checks.
 
-The local simulated Telegram acceptance loop is green, promotion gates now run as blocking acceptance criteria, and the supervised operator prompt pack has been exported for the human-facing Telegram pass.
+The local simulated Telegram acceptance loop is green, promotion gates now run as blocking acceptance criteria, and the supervised Spark AGI/Tester pass confirmed focus, plan, open-ended next-step recall, source explanation, and the `Mira` plant recall. The live pass exposed one gate-calibration issue: a clean current-state answer could still show `source_mix_stability: warn` when supporting evidence was concentrated. That has been converted into an authority-anchored pass condition while keeping supporting-only packets blocked by warning gates.
 
 ## Current Build Progress
 
@@ -427,4 +427,6 @@ The local simulated Telegram acceptance loop is green, promotion gates now run a
 - [x] Run local Telegram acceptance loop and triage failed memory-quality lanes.
 - [x] Promote memory-quality gate failures from trace-only reporting into blocking acceptance criteria.
 - [x] Export supervised Spark AGI/Tester Telegram acceptance prompt pack.
-- [ ] Run the real Spark AGI/Tester Telegram loop after gate promotion.
+- [x] Run the real Spark AGI/Tester Telegram loop after gate promotion.
+- [x] Calibrate source-mix stability so clean current-state authority plus supporting evidence passes while supporting-only packets still warn.
+- [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
