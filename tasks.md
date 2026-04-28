@@ -103,6 +103,8 @@ Current OSS borrowing plan: `docs/OSS_MEMORY_BORROWING_PLAN_2026-04-28.md`.
 
 Current system connection plan: `docs/SPARK_MEMORY_CONNECTION_PLAN_2026-04-28.md`.
 
+Current system inspection and installer plan: `docs/SPARK_MEMORY_SYSTEM_INSPECTION_AND_INSTALLER_PLAN_2026-04-28.md`.
+
 Runtime decision:
 
 - Keep `domain-chip-memory` as Spark's memory authority/control plane.
@@ -552,25 +554,17 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Promote the next memory layer only after the already-green acceptance loop stays green:
+Move from acceptance probing into integration:
 
-> Keep the Spark AGI/Tester Telegram acceptance pack as the quick human-facing gate, then wire the next runtime memory layer behind the same current-state authority, stale-conflict, and source-mix promotion checks.
+1. Add the Builder-side salience gate before durable writes.
+2. Add optional sidecar dependency groups in `domain-chip-memory`, keeping default install light.
+3. Add a Spark CLI memory-sidecar installer profile or bundle for Graphiti first.
+4. Implement the Graphiti live adapter behind a disabled feature flag.
+5. Add status/verify/diagnostics visibility for active memory architecture and sidecars.
 
-The local simulated Telegram acceptance loop is green, promotion gates now run as blocking acceptance criteria, and the supervised Spark AGI/Tester pass confirmed focus, plan, open-ended next-step recall, source explanation, and the `Mira` plant recall. The live pass exposed one gate-calibration issue: a clean current-state answer could still show `source_mix_stability: warn` when supporting evidence was concentrated. That has been converted into an authority-anchored pass condition while keeping supporting-only packets blocked by warning gates.
+The already-green Telegram acceptance loop remains the fast human-facing gate, not the main discovery path. The entity-state fixes for current/previous values, attribute isolation, source explanations, and workflow-like attributes are accepted substrate. The next layer must plug behind the same current-state authority, stale-conflict, and source-mix promotion checks.
 
-The acceptance pack now also covers mutable entity memory: seed the plant as `Mira`, update it to `Sol`, recall the current name, and recall the previous name. This gives us one quick gate for current entity projection plus historical supersession, not just profile focus/plan memory.
-
-The next supervised Telegram pass exposed an attribute-collision bug: `Where is the desk plant?` was answered from `entity.name=Sol` instead of `entity.location`. The Builder fix now gates open recall by requested entity attribute, keeps shorthand name recall from hijacking `where` questions, and extends acceptance with two-entity location isolation plus stale/current location history.
-
-The follow-up live pass exposed the runtime artifact shape too: SDK records can store `memory_role` under metadata instead of top-level. Builder now accepts metadata-backed current-state roles during open recall, so live entity-location records survive filtering.
-
-The history recall path is now source-explainable too: `Why did you answer that?` after `Where was the desk plant before?` reports the `memory_entity_state_history_query` route and entity-state history evidence instead of falling back to the generic context-capsule diagnostics explanation.
-
-The latest supervised owner test exposed a second entity-state routing bug: `Actually, Maya owns the launch checklist.` was acknowledged conversationally but stored through the broad `profile.current_owner` path, so `Who owns the launch checklist?` still returned Omar and historical owner recall only saw one entity event. Builder now prioritizes parsed entity-state owner corrections before generic owner/profile packs, so `Omar -> Maya` is a proper `entity.owner` conflict with current and previous owner recall.
-
-The source explanation for entity-state history is now attribute-aware too. `Why did you answer that?` after an owner-history answer reports `entity-scoped owner history` instead of the old hardcoded `location history` wording.
-
-Entity-state coverage now includes the broader mutable attributes we wanted for real workflows: `status`, `deadline`, `relation`, `preference`, and `project`. These all use the same current-state projection, stale/current supersession, previous-value recall, and fast Telegram acceptance path as plant location and checklist ownership.
+Implementation starts in `spark-intelligence-builder` with `memory.salience`, then moves to `domain-chip-memory` optional extras and `spark-cli` installer wiring.
 
 ## Current Build Progress
 
