@@ -170,7 +170,8 @@ Goal: make Builder use the full domain-chip read surface instead of narrow deter
   - [x] `get_historical_state` when an `as_of` is supplied
   - [x] `retrieve_evidence`
   - [x] `retrieve_events`
-  - [ ] typed temporal graph sidecar
+  - [x] typed temporal graph sidecar shadow lane
+  - [ ] typed temporal graph sidecar live backend hits
   - lexical/entity query over recent raw turns
 - [ ] Score evidence with:
   - [x] source authority
@@ -235,7 +236,8 @@ Goal: stop leaving the graph layer in eval-only mode.
   - reported speech records
   - temporal events
   - unknown records
-- [ ] Add Builder bridge for graph sidecar retrieval.
+- [x] Add Builder shadow bridge for graph sidecar retrieval.
+- [ ] Add Builder live backend bridge for graph sidecar retrieval.
 - [ ] Add source explanation labels for graph hits.
 - [ ] Keep graph sidecar additive until live eval beats or ties current path.
 
@@ -350,10 +352,11 @@ Acceptance:
 3. Add a `MemorySidecarAdapter` contract.
 4. Add a Graphiti-compatible sidecar behind a disabled feature flag.
 5. Feed evidence/events into the sidecar in shadow mode.
-6. Finish capsule compiler v2 and score-adaptive truncation.
-7. Add gbrain/BrainBench-style promotion gates.
-8. Run Telegram acceptance after runtime wiring, not as discovery.
-9. Diagnostics and operator polish.
+6. Wire Graphiti shadow retrieval into Builder hybrid memory.
+7. Finish capsule compiler v2 and score-adaptive truncation.
+8. Add gbrain/BrainBench-style promotion gates.
+9. Run Telegram acceptance after runtime wiring, not as discovery.
+10. Diagnostics and operator polish.
 
 ## Fast Integration Protocol
 
@@ -395,9 +398,9 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Build the OSS sidecar/pruning foundation:
+Build the next memory context layer:
 
-> Add a dependency-safe prune inventory and `MemorySidecarAdapter` contract so Graphiti-compatible retrieval can be wired in shadow mode without adding another uncontrolled memory system.
+> Add the Obsidian / LLM-wiki packet reader source so Spark can retrieve compiled project knowledge, architecture decisions, and handoffs without treating workflow residue as authority.
 
 This is the next real integration step before another Telegram test loop or broad benchmark run.
 
@@ -409,6 +412,6 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add `MemorySidecarAdapter` contract and disabled no-op adapter.
 - [x] Add Graphiti-compatible adapter stub behind a disabled feature flag.
 - [x] Add evidence/event episode export into sidecar contract shape.
-- [ ] Add Graphiti shadow retrieval lane to `hybrid_memory_retrieve`.
+- [x] Add Graphiti shadow retrieval lane to `hybrid_memory_retrieve`.
 - [ ] Add Obsidian / LLM-wiki packet reader source.
 - [ ] Add Mem0 shadow adapter.
