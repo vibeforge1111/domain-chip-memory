@@ -1,8 +1,10 @@
 from domain_chip_memory import (
     DisabledMemorySidecarAdapter,
+    GraphitiCompatibleMemorySidecarAdapter,
     MemorySidecarEpisode,
     MemorySidecarHit,
     MemorySidecarRetrievalRequest,
+    build_default_memory_sidecars,
     build_memory_sidecar_contract_summary,
     build_sdk_contract_summary,
 )
@@ -16,6 +18,7 @@ def test_memory_sidecar_contract_declares_authority_boundaries() -> None:
     assert payload["runtime_sidecars"]["graphiti_temporal_graph"]["first_runtime_candidate"] is True
     assert payload["runtime_sidecars"]["mem0_shadow"]["mode"] == "shadow_baseline"
     assert payload["runtime_sidecars"]["cognee_optional"]["mode"] == "deferred"
+    assert "GraphitiCompatibleMemorySidecarAdapter" in payload["adapter_implementations"]
     assert "source_swamp_resistance" in payload["promotion_gates"]
 
 
@@ -93,3 +96,53 @@ def test_sidecar_shadow_compare_reports_missing_and_sidecar_only_ids() -> None:
     assert comparison.overlap_record_ids == ["shared-1"]
     assert comparison.missing_from_sidecar_record_ids == ["local-1"]
     assert comparison.sidecar_only_record_ids == ["sidecar-1"]
+
+
+def test_graphiti_compatible_adapter_prepares_episode_payload_without_persisting() -> None:
+    adapter = GraphitiCompatibleMemorySidecarAdapter(enabled=True, mode="shadow")
+    episode = MemorySidecarEpisode(
+        source_record_id="obs-plant-sol",
+        source_class="current_state",
+        text="The tiny desk plant is named Sol.",
+        subject="human:telegram:12345",
+        predicate="entity.name",
+        session_id="session-1",
+        turn_ids=["turn-1"],
+        timestamp="2026-04-28T10:00:00Z",
+        entity_keys=["named-object:tiny-desk-plant"],
+        lifecycle={"valid_from": "2026-04-28T10:00:00Z"},
+    )
+
+    result = adapter.upsert_episode(episode)
+
+    assert result.status == "prepared"
+    assert result.trace["persisted"] is False
+    payload = result.trace["graphiti_episode"]
+    assert payload["group_id"] == "spark-memory"
+    assert payload["episode_body"] == "The tiny desk plant is named Sol."
+    assert payload["metadata"]["source_record_id"] == "obs-plant-sol"
+    assert payload["metadata"]["entity_keys"] == ["named-object:tiny-desk-plant"]
+    assert payload["metadata"]["authority"] == "supporting"
+
+
+def test_graphiti_compatible_adapter_default_is_disabled() -> None:
+    adapter = GraphitiCompatibleMemorySidecarAdapter()
+
+    health = adapter.health()
+    retrieval = adapter.retrieve(MemorySidecarRetrievalRequest(query="plant name", top_k=2))
+
+    assert health.enabled is False
+    assert health.status == "disabled"
+    assert retrieval.hits == []
+    assert retrieval.trace["status"] == "disabled"
+    assert retrieval.trace["query_payload"]["num_results"] == 2
+
+
+def test_default_sidecars_keep_graphiti_feature_flag_off_by_default() -> None:
+    sidecars = build_default_memory_sidecars()
+
+    graphiti = sidecars["graphiti_temporal_graph"]
+    mem0 = sidecars["mem0_shadow"]
+
+    assert graphiti.health().status == "disabled"
+    assert mem0.health().status == "disabled"

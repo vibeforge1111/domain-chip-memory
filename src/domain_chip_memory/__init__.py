@@ -31,6 +31,7 @@ from .spark_integration import build_spark_integration_contract_summary
 from .spark_kb import build_spark_kb_contract_summary, build_spark_kb_health_report, scaffold_spark_knowledge_base
 from .memory_sidecars import (
     DisabledMemorySidecarAdapter,
+    GraphitiCompatibleMemorySidecarAdapter,
     MemorySidecarEpisode,
     MemorySidecarHealthResult,
     MemorySidecarHit,
@@ -38,6 +39,7 @@ from .memory_sidecars import (
     MemorySidecarRetrievalResult,
     MemorySidecarShadowComparison,
     MemorySidecarUpsertResult,
+    build_default_memory_sidecars,
     build_memory_sidecar_contract_summary,
 )
 
@@ -71,6 +73,7 @@ __all__ = [
     "build_spark_kb_health_report",
     "scaffold_spark_knowledge_base",
     "DisabledMemorySidecarAdapter",
+    "GraphitiCompatibleMemorySidecarAdapter",
     "MemorySidecarEpisode",
     "MemorySidecarHealthResult",
     "MemorySidecarHit",
@@ -78,6 +81,7 @@ __all__ = [
     "MemorySidecarRetrievalResult",
     "MemorySidecarShadowComparison",
     "MemorySidecarUpsertResult",
+    "build_default_memory_sidecars",
     "build_memory_sidecar_contract_summary",
 ]
 __version__ = "0.1.0"

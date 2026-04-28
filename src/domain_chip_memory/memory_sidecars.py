@@ -208,6 +208,146 @@ class DisabledMemorySidecarAdapter:
         )
 
 
+@dataclass
+class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
+    sidecar_name: str = "graphiti_temporal_graph"
+    mode: str = "disabled"
+    enabled: bool = False
+    group_id: str = "spark-memory"
+
+    def upsert_episode(self, episode: MemorySidecarEpisode) -> MemorySidecarUpsertResult:
+        payload = self.graphiti_episode_payload(episode)
+        if not self.enabled:
+            return MemorySidecarUpsertResult(
+                sidecar_name=self.sidecar_name,
+                status="disabled",
+                sidecar_ids=[],
+                trace={
+                    "operation": "graphiti_upsert_episode",
+                    "sidecar_name": self.sidecar_name,
+                    "mode": self.mode,
+                    "persisted": False,
+                    "graphiti_episode": payload,
+                },
+            )
+        return MemorySidecarUpsertResult(
+            sidecar_name=self.sidecar_name,
+            status="prepared",
+            sidecar_ids=[],
+            trace={
+                "operation": "graphiti_upsert_episode",
+                "sidecar_name": self.sidecar_name,
+                "mode": self.mode,
+                "persisted": False,
+                "backend_configured": False,
+                "graphiti_episode": payload,
+            },
+        )
+
+    def retrieve(self, request: MemorySidecarRetrievalRequest) -> MemorySidecarRetrievalResult:
+        query_payload = self.graphiti_query_payload(request)
+        if not self.enabled:
+            return MemorySidecarRetrievalResult(
+                sidecar_name=self.sidecar_name,
+                hits=[],
+                trace={
+                    "operation": "graphiti_retrieve",
+                    "sidecar_name": self.sidecar_name,
+                    "mode": self.mode,
+                    "status": "disabled",
+                    "query_payload": query_payload,
+                },
+            )
+        return MemorySidecarRetrievalResult(
+            sidecar_name=self.sidecar_name,
+            hits=[],
+            trace={
+                "operation": "graphiti_retrieve",
+                "sidecar_name": self.sidecar_name,
+                "mode": self.mode,
+                "status": "prepared",
+                "backend_configured": False,
+                "query_payload": query_payload,
+            },
+        )
+
+    def health(self) -> MemorySidecarHealthResult:
+        if not self.enabled:
+            return MemorySidecarHealthResult(
+                sidecar_name=self.sidecar_name,
+                status="disabled",
+                enabled=False,
+                mode=self.mode,
+                details={
+                    "runtime_effect": "none",
+                    "authority": "not_authoritative",
+                    "backend": "not_configured",
+                },
+            )
+        return MemorySidecarHealthResult(
+            sidecar_name=self.sidecar_name,
+            status="stub_ready",
+            enabled=True,
+            mode=self.mode,
+            details={
+                "runtime_effect": "shadow_contract_only",
+                "authority": "not_authoritative",
+                "backend": "not_configured",
+            },
+        )
+
+    def graphiti_episode_payload(self, episode: MemorySidecarEpisode) -> JsonDict:
+        return {
+            "group_id": self.group_id,
+            "name": episode.source_record_id,
+            "episode_body": episode.text,
+            "source_description": episode.source_class,
+            "reference_time": episode.timestamp,
+            "metadata": {
+                **dict(episode.metadata),
+                "source_record_id": episode.source_record_id,
+                "source_class": episode.source_class,
+                "subject": episode.subject,
+                "predicate": episode.predicate,
+                "session_id": episode.session_id,
+                "turn_ids": list(episode.turn_ids),
+                "entity_keys": list(episode.entity_keys),
+                "lifecycle": dict(episode.lifecycle),
+                "authority": "supporting",
+            },
+        }
+
+    def graphiti_query_payload(self, request: MemorySidecarRetrievalRequest) -> JsonDict:
+        return {
+            "group_id": self.group_id,
+            "query": request.query,
+            "num_results": request.top_k,
+            "scope": request.scope,
+            "filters": {
+                "subject": request.subject,
+                "entity_keys": list(request.entity_keys),
+                "time_window": dict(request.time_window),
+            },
+        }
+
+
+def build_default_memory_sidecars(
+    *,
+    enable_graphiti: bool = False,
+    enable_mem0_shadow: bool = False,
+) -> dict[str, MemorySidecarAdapter]:
+    return {
+        "graphiti_temporal_graph": GraphitiCompatibleMemorySidecarAdapter(
+            mode="shadow" if enable_graphiti else "disabled",
+            enabled=enable_graphiti,
+        ),
+        "mem0_shadow": DisabledMemorySidecarAdapter(
+            sidecar_name="mem0_shadow",
+            mode="shadow" if enable_mem0_shadow else "disabled",
+        ),
+    }
+
+
 def _record_id(item: JsonDict) -> str:
     for key in ("source_record_id", "observation_id", "event_id", "id"):
         value = str(item.get(key) or "").strip()
@@ -236,6 +376,10 @@ def build_memory_sidecar_contract_summary() -> JsonDict:
             "explain",
             "health",
             "shadow_compare",
+        ],
+        "adapter_implementations": [
+            "DisabledMemorySidecarAdapter",
+            "GraphitiCompatibleMemorySidecarAdapter",
         ],
         "runtime_sidecars": {
             "graphiti_temporal_graph": {
