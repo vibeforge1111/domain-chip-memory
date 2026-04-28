@@ -398,9 +398,9 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Build the next comparison layer:
+Build the next answer-context layer:
 
-> Add the Mem0 shadow adapter so Spark can compare OSS personal-memory extraction/retrieval against the domain-chip authority path without giving it runtime authority.
+> Finish capsule compiler v2 and score-adaptive truncation so the new memory lanes become a compact, source-aware Telegram context packet instead of extra retrieval noise.
 
 This is the next real integration step before another Telegram test loop or broad benchmark run.
 
@@ -414,4 +414,4 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add evidence/event episode export into sidecar contract shape.
 - [x] Add Graphiti shadow retrieval lane to `hybrid_memory_retrieve`.
 - [x] Add Obsidian / LLM-wiki packet reader source.
-- [ ] Add Mem0 shadow adapter.
+- [x] Add Mem0 shadow adapter.

@@ -4,6 +4,7 @@ from domain_chip_memory import (
     MemorySidecarEpisode,
     MemorySidecarHit,
     MemorySidecarRetrievalRequest,
+    Mem0ShadowMemorySidecarAdapter,
     SparkMemorySDK,
     WIKI_PACKET_SOURCE_CLASS,
     build_default_memory_sidecars,
@@ -27,6 +28,7 @@ def test_memory_sidecar_contract_declares_authority_boundaries() -> None:
     assert payload["runtime_sidecars"]["mem0_shadow"]["mode"] == "shadow_baseline"
     assert payload["runtime_sidecars"]["cognee_optional"]["mode"] == "deferred"
     assert "GraphitiCompatibleMemorySidecarAdapter" in payload["adapter_implementations"]
+    assert "Mem0ShadowMemorySidecarAdapter" in payload["adapter_implementations"]
     assert "ObsidianLlmWikiPacketReader" in payload["adapter_implementations"]
     assert payload["wiki_packet_reader_contract"]["authority"] == "supporting_not_authoritative"
     assert "memory_record_to_sidecar_episode" in payload["episode_export_methods"]
@@ -157,6 +159,38 @@ def test_default_sidecars_keep_graphiti_feature_flag_off_by_default() -> None:
 
     assert graphiti.health().status == "disabled"
     assert mem0.health().status == "disabled"
+
+
+def test_mem0_shadow_adapter_prepares_memory_payload_without_persisting() -> None:
+    adapter = Mem0ShadowMemorySidecarAdapter(enabled=True, mode="shadow", user_id="human:telegram:12345")
+    episode = MemorySidecarEpisode(
+        source_record_id="obs-plant-sol",
+        source_class="current_state",
+        text="The tiny desk plant is named Sol.",
+        subject="human:telegram:12345",
+        predicate="entity.name",
+        session_id="session-1",
+        turn_ids=["turn-1"],
+        entity_keys=["named-object:tiny-desk-plant"],
+    )
+
+    upsert = adapter.upsert_episode(episode)
+    retrieval = adapter.retrieve(
+        MemorySidecarRetrievalRequest(
+            query="What is the plant named?",
+            subject="human:telegram:12345",
+            entity_keys=["named-object:tiny-desk-plant"],
+            top_k=3,
+        )
+    )
+
+    assert upsert.status == "prepared"
+    assert upsert.trace["persisted"] is False
+    assert upsert.trace["mem0_memory"]["user_id"] == "human:telegram:12345"
+    assert upsert.trace["mem0_memory"]["metadata"]["authority"] == "shadow_not_authoritative"
+    assert retrieval.trace["status"] == "prepared"
+    assert retrieval.trace["query_payload"]["limit"] == 3
+    assert retrieval.hits == []
 
 
 def test_memory_record_to_sidecar_episode_preserves_evidence_provenance() -> None:

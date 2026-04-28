@@ -331,6 +331,126 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
         }
 
 
+@dataclass
+class Mem0ShadowMemorySidecarAdapter(DisabledMemorySidecarAdapter):
+    sidecar_name: str = "mem0_shadow"
+    mode: str = "disabled"
+    enabled: bool = False
+    user_id: str = "spark-memory"
+
+    def upsert_episode(self, episode: MemorySidecarEpisode) -> MemorySidecarUpsertResult:
+        payload = self.mem0_memory_payload(episode)
+        if not self.enabled:
+            return MemorySidecarUpsertResult(
+                sidecar_name=self.sidecar_name,
+                status="disabled",
+                sidecar_ids=[],
+                trace={
+                    "operation": "mem0_add_memory",
+                    "sidecar_name": self.sidecar_name,
+                    "mode": self.mode,
+                    "persisted": False,
+                    "mem0_memory": payload,
+                },
+            )
+        return MemorySidecarUpsertResult(
+            sidecar_name=self.sidecar_name,
+            status="prepared",
+            sidecar_ids=[],
+            trace={
+                "operation": "mem0_add_memory",
+                "sidecar_name": self.sidecar_name,
+                "mode": self.mode,
+                "persisted": False,
+                "backend_configured": False,
+                "mem0_memory": payload,
+            },
+        )
+
+    def retrieve(self, request: MemorySidecarRetrievalRequest) -> MemorySidecarRetrievalResult:
+        payload = self.mem0_query_payload(request)
+        if not self.enabled:
+            return MemorySidecarRetrievalResult(
+                sidecar_name=self.sidecar_name,
+                hits=[],
+                trace={
+                    "operation": "mem0_search_memory",
+                    "sidecar_name": self.sidecar_name,
+                    "mode": self.mode,
+                    "status": "disabled",
+                    "query_payload": payload,
+                },
+            )
+        return MemorySidecarRetrievalResult(
+            sidecar_name=self.sidecar_name,
+            hits=[],
+            trace={
+                "operation": "mem0_search_memory",
+                "sidecar_name": self.sidecar_name,
+                "mode": self.mode,
+                "status": "prepared",
+                "backend_configured": False,
+                "query_payload": payload,
+            },
+        )
+
+    def health(self) -> MemorySidecarHealthResult:
+        if not self.enabled:
+            return MemorySidecarHealthResult(
+                sidecar_name=self.sidecar_name,
+                status="disabled",
+                enabled=False,
+                mode=self.mode,
+                details={
+                    "runtime_effect": "none",
+                    "authority": "not_authoritative",
+                    "backend": "not_configured",
+                },
+            )
+        return MemorySidecarHealthResult(
+            sidecar_name=self.sidecar_name,
+            status="stub_ready",
+            enabled=True,
+            mode=self.mode,
+            details={
+                "runtime_effect": "shadow_contract_only",
+                "authority": "not_authoritative",
+                "backend": "not_configured",
+            },
+        )
+
+    def mem0_memory_payload(self, episode: MemorySidecarEpisode) -> JsonDict:
+        return {
+            "messages": [{"role": "user", "content": episode.text}],
+            "user_id": self.user_id,
+            "metadata": {
+                **dict(episode.metadata),
+                "source_record_id": episode.source_record_id,
+                "source_class": episode.source_class,
+                "subject": episode.subject,
+                "predicate": episode.predicate,
+                "session_id": episode.session_id,
+                "turn_ids": list(episode.turn_ids),
+                "entity_keys": list(episode.entity_keys),
+                "lifecycle": dict(episode.lifecycle),
+                "authority": "shadow_not_authoritative",
+            },
+        }
+
+    def mem0_query_payload(self, request: MemorySidecarRetrievalRequest) -> JsonDict:
+        return {
+            "query": request.query,
+            "user_id": self.user_id,
+            "limit": request.top_k,
+            "filters": {
+                "subject": request.subject,
+                "scope": request.scope,
+                "entity_keys": list(request.entity_keys),
+                "time_window": dict(request.time_window),
+            },
+        }
+
+
 def build_default_memory_sidecars(
     *,
     enable_graphiti: bool = False,
@@ -341,9 +461,9 @@ def build_default_memory_sidecars(
             mode="shadow" if enable_graphiti else "disabled",
             enabled=enable_graphiti,
         ),
-        "mem0_shadow": DisabledMemorySidecarAdapter(
-            sidecar_name="mem0_shadow",
+        "mem0_shadow": Mem0ShadowMemorySidecarAdapter(
             mode="shadow" if enable_mem0_shadow else "disabled",
+            enabled=enable_mem0_shadow,
         ),
     }
 
@@ -459,6 +579,7 @@ def build_memory_sidecar_contract_summary() -> JsonDict:
         "adapter_implementations": [
             "DisabledMemorySidecarAdapter",
             "GraphitiCompatibleMemorySidecarAdapter",
+            "Mem0ShadowMemorySidecarAdapter",
             "ObsidianLlmWikiPacketReader",
         ],
         "wiki_packet_reader_contract": build_wiki_packet_reader_contract_summary(),
