@@ -114,6 +114,21 @@ Open-source borrowing policy:
 - Borrow architecture patterns freely, but do not let external systems replace Spark's authority order or source explanation contract.
 - Disable optional telemetry by default for local Spark installs unless the operator explicitly opts in.
 
+Candidate OSS components to evaluate:
+
+- Graphiti / Zep OSS core (Apache-2.0): temporal graph sidecar, entity/relationship history, validity windows, episode provenance, hybrid graph/keyword/semantic retrieval.
+- Hindsight (MIT): learned experience/procedural memory, reflection over failures/corrections, memory that improves agent behavior instead of only recalling facts.
+- MemMachine (Apache-2.0): multi-layer working/profile/episodic design and ground-truth-preserving retrieval ideas.
+- Mem0 OSS (Apache-2.0): extraction/entity-linking/retrieval scoring baseline, useful as a shadow comparator rather than the authority layer.
+- Letta/MemGPT concepts: memory hierarchy, self-editing memory, context-window management; borrow patterns unless a clean OSS component fits.
+- LongMem-style/MCP memory tools (license to verify per repo): candidate for external recall API patterns and smoke comparisons.
+
+Evaluation rule:
+
+- Use existing OSS where it cleanly provides a layer: graph, learned experience, profile/episodic storage, eval harness, or tooling.
+- Keep Spark-owned contracts for target repo binding, source attribution, salience gates, authority order, and Telegram UX.
+- Add new systems behind feature flags and scorecards before making them runtime-default.
+
 Pruning decision:
 
 - Keep the active runtime path and SDK contracts.
