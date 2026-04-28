@@ -1,6 +1,6 @@
 # Spark Persistent Memory Integration Tasks
 
-Last updated: 2026-04-28
+Last updated: 2026-04-29
 
 This file is the build checklist for turning `domain-chip-memory` into Spark's live persistent memory system. It decides the architecture, names the remaining integration work, and defines the acceptance gates before we go back to heavy Telegram testing.
 
@@ -66,7 +66,7 @@ Work in this order unless a production break interrupts it:
 
 ### Track C: Episodic And Semantic Continuity
 
-- [ ] Add session summary writer: what changed, decisions, open questions, repos touched, artifacts created, promises made.
+- [x] Add session summary writer: what changed, decisions, open questions, repos touched, artifacts created, promises made.
 - [ ] Add daily/project summary writer.
 - [ ] Add semantic consolidation beyond archive/delete/supersede.
 - [ ] Increase same-session continuity beyond 3 turn pairs / 260-char compaction.
@@ -137,9 +137,9 @@ Work in this order unless a production break interrupts it:
 
 ## Current Commit Checkpoints
 
-- `domain-chip-memory`: `2ecc980` tracks identity supersession progress.
-- `spark-intelligence-builder`: `fdd2fcc` makes memory lanes explicit and human readable.
-- Next commit target: session summary writer for episodic continuity in `spark-intelligence-builder`.
+- `domain-chip-memory`: `732ab81` tracks memory lane cleanup progress.
+- `spark-intelligence-builder`: `92a4adc` adds deterministic session summaries for episodic continuity.
+- Next commit target: daily/project summary writer for semantic continuity in `spark-intelligence-builder`.
 
 ## Architecture Decision
 
@@ -566,7 +566,7 @@ Acceptance:
 
 Goal: make Spark remember work, interruptions, and project flow rather than isolated facts.
 
-- [ ] Add session summary writer:
+- [x] Add session summary writer:
   - what changed
   - decisions made
   - open questions
@@ -811,4 +811,5 @@ Implementation starts in `spark-intelligence-builder` with `memory.salience`, th
 - [x] Block secret-like durable profile writes through the salience policy gate before SDK write.
 - [x] Treat identity corrections as high-salience supersession writes.
 - [x] Make preferred-name corrections entity-keyed authoritative current identity writes.
+- [x] Add deterministic session summary writer for episodic continuity.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
