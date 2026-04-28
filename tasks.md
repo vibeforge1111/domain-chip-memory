@@ -156,6 +156,7 @@ Goal: stop treating natural user facts as test-specific profile slots.
 - [x] Separate decisive entity-state support records from wider candidate packets in recall traces.
 - [x] Route exact entity current recall through direct `get_current_state(subject, predicate, entity_key)` before broad retrieval.
 - [x] Preserve matching provenance metadata, including location prepositions, in direct current-state projection records.
+- [x] Route entity history questions through current-state anchoring plus direct `get_historical_state` before event fallback.
 
 Acceptance:
 
@@ -165,6 +166,7 @@ Acceptance:
 - Source explanation can name the entity-state source, route, and attribute for current and historical reads.
 - Exact entity recall traces show `retrieved_roles=entity_state` and a decisive `record_count`, while preserving broader `candidate_record_count`.
 - Entity recalls, including location, use `read_method=get_current_state` with `record_count=1` and preserved location prepositions.
+- Entity history source explanations show `read_method=get_historical_state` when direct historical state answers.
 
 ## Phase 2: Hybrid Retrieval Adapter
 
@@ -330,6 +332,12 @@ Goal: test real user experience after the architecture is wired.
 - [ ] Restart behavior:
   - confirm code changes require restart only when process-loaded code changes
   - confirm memory data changes do not require restart
+- [ ] Workflow scenario expansion:
+  - project building: owners, blockers, dependencies, decisions, status changes
+  - startup operations: assumptions, risks, GTM motions, investor updates, hiring asks
+  - marketing/content: campaign goals, audience hypotheses, channel learnings, performance notes
+  - operating-system use: task handoffs, artifact locations, preferences, recurring constraints
+  - keep the same authority order and query lanes instead of adding route-specific shortcuts
 
 Acceptance:
 
