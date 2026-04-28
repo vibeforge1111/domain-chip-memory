@@ -29,6 +29,17 @@ from .spark_shadow import (
 )
 from .spark_integration import build_spark_integration_contract_summary
 from .spark_kb import build_spark_kb_contract_summary, build_spark_kb_health_report, scaffold_spark_knowledge_base
+from .memory_sidecars import (
+    DisabledMemorySidecarAdapter,
+    MemorySidecarEpisode,
+    MemorySidecarHealthResult,
+    MemorySidecarHit,
+    MemorySidecarRetrievalRequest,
+    MemorySidecarRetrievalResult,
+    MemorySidecarShadowComparison,
+    MemorySidecarUpsertResult,
+    build_memory_sidecar_contract_summary,
+)
 
 __all__ = [
     "__version__",
@@ -59,5 +70,14 @@ __all__ = [
     "build_spark_kb_contract_summary",
     "build_spark_kb_health_report",
     "scaffold_spark_knowledge_base",
+    "DisabledMemorySidecarAdapter",
+    "MemorySidecarEpisode",
+    "MemorySidecarHealthResult",
+    "MemorySidecarHit",
+    "MemorySidecarRetrievalRequest",
+    "MemorySidecarRetrievalResult",
+    "MemorySidecarShadowComparison",
+    "MemorySidecarUpsertResult",
+    "build_memory_sidecar_contract_summary",
 ]
 __version__ = "0.1.0"

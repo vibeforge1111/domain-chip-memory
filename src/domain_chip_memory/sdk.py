@@ -1924,11 +1924,17 @@ def build_sdk_contract_summary(
         "runtime_architecture_selection": {
             "active_leader": "summary_synthesis_memory",
             "strong_challenger": "dual_store_event_calendar_hybrid",
-            "sidecars": ["typed_temporal_graph"],
+            "sidecars": [
+                "graphiti_temporal_graph",
+                "obsidian_llm_wiki_packets",
+                "mem0_shadow",
+            ],
+            "deferred_sidecars": ["cognee_optional"],
             "selection_basis": [
                 "live_builder_soak",
                 "external_benchmark_matrix",
                 "temporal_conflict_gauntlet",
+                "oss_memory_stack_prune_plan_2026_04_28",
             ],
         },
         "memory_roles": sdk_memory_role_contracts(),
@@ -1953,6 +1959,16 @@ def build_sdk_contract_summary(
         },
         "maintenance_methods": ["reconsolidate_manual_memory"],
         "export_methods": ["export_knowledge_base_snapshot"],
+        "sidecar_contract": {
+            "contract_name": "MemorySidecarAdapter",
+            "sidecar_authority": "supporting_or_shadow_until_promoted",
+            "runtime_sidecars": [
+                "graphiti_temporal_graph",
+                "obsidian_llm_wiki_packets",
+                "mem0_shadow",
+            ],
+            "deferred_sidecars": ["cognee_optional"],
+        },
         "read_methods": [
             "get_current_state",
             "get_historical_state",
