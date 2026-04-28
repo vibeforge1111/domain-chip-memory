@@ -410,6 +410,8 @@ The acceptance pack now also covers mutable entity memory: seed the plant as `Mi
 
 The next supervised Telegram pass exposed an attribute-collision bug: `Where is the desk plant?` was answered from `entity.name=Sol` instead of `entity.location`. The Builder fix now gates open recall by requested entity attribute, keeps shorthand name recall from hijacking `where` questions, and extends acceptance with two-entity location isolation plus stale/current location history.
 
+The follow-up live pass exposed the runtime artifact shape too: SDK records can store `memory_role` under metadata instead of top-level. Builder now accepts metadata-backed current-state roles during open recall, so live entity-location records survive filtering.
+
 ## Current Build Progress
 
 - [x] Add OSS memory stack decision.
@@ -436,4 +438,5 @@ The next supervised Telegram pass exposed an attribute-collision bug: `Where is 
 - [x] Extend Telegram acceptance with mutable entity conflict recall: `Mira` -> `Sol` -> previous name.
 - [x] Add entity-attribute recall gates so location questions cannot be answered from name memories.
 - [x] Extend Telegram acceptance with two-entity location isolation and stale/current location history.
+- [x] Fix live SDK artifact filtering for metadata-backed `memory_role=current_state` entity records.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
