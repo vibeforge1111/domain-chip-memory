@@ -5,11 +5,15 @@ from domain_chip_memory import (
     MemorySidecarHit,
     MemorySidecarRetrievalRequest,
     SparkMemorySDK,
+    WIKI_PACKET_SOURCE_CLASS,
     build_default_memory_sidecars,
     build_memory_sidecar_contract_summary,
+    build_wiki_packet_reader_contract_summary,
     build_sdk_contract_summary,
     memory_record_to_sidecar_episode,
     memory_records_to_sidecar_episodes,
+    read_markdown_knowledge_packets,
+    retrieve_markdown_knowledge_packets,
 )
 from domain_chip_memory.sdk import EventRetrievalRequest, EvidenceRetrievalRequest, MemoryWriteRequest
 
@@ -23,6 +27,8 @@ def test_memory_sidecar_contract_declares_authority_boundaries() -> None:
     assert payload["runtime_sidecars"]["mem0_shadow"]["mode"] == "shadow_baseline"
     assert payload["runtime_sidecars"]["cognee_optional"]["mode"] == "deferred"
     assert "GraphitiCompatibleMemorySidecarAdapter" in payload["adapter_implementations"]
+    assert "ObsidianLlmWikiPacketReader" in payload["adapter_implementations"]
+    assert payload["wiki_packet_reader_contract"]["authority"] == "supporting_not_authoritative"
     assert "memory_record_to_sidecar_episode" in payload["episode_export_methods"]
     assert "source_swamp_resistance" in payload["promotion_gates"]
 
@@ -228,3 +234,56 @@ def test_memory_records_to_sidecar_episodes_batch_exports_records() -> None:
     assert len(episodes) == 1
     assert episodes[0].text
     assert episodes[0].source_record_id == records[0].observation_id
+
+
+def test_wiki_packet_reader_loads_obsidian_markdown_with_provenance(tmp_path) -> None:
+    note = tmp_path / "memory-architecture.md"
+    note.write_text(
+        """---
+title: Persistent Memory Architecture
+tags: memory, spark
+---
+# Persistent Memory Architecture
+
+Current state outranks workflow residue.
+Graphiti is a temporal graph sidecar.
+""",
+        encoding="utf-8",
+    )
+
+    packets = read_markdown_knowledge_packets([tmp_path])
+
+    assert len(packets) == 1
+    assert packets[0].title == "Persistent Memory Architecture"
+    assert packets[0].source_class == WIKI_PACKET_SOURCE_CLASS
+    assert packets[0].metadata["file_name"] == "memory-architecture.md"
+    assert "memory" in packets[0].tags
+
+
+def test_wiki_packet_retrieval_scores_relevant_packets_without_authority(tmp_path) -> None:
+    (tmp_path / "architecture.md").write_text(
+        "# Spark Memory Stack\n\nCurrent state wins over old workflow_state.",
+        encoding="utf-8",
+    )
+    (tmp_path / "unrelated.md").write_text("# Gardening\n\nWater the desk plant weekly.", encoding="utf-8")
+
+    result = retrieve_markdown_knowledge_packets(
+        paths=[tmp_path],
+        query="Why should current_state outrank workflow_state?",
+        top_k=2,
+    )
+
+    assert result.trace["source_class"] == WIKI_PACKET_SOURCE_CLASS
+    assert result.trace["packet_count"] == 2
+    assert len(result.hits) == 1
+    assert result.hits[0].title == "Spark Memory Stack"
+    assert result.hits[0].metadata["authority"] == "supporting_not_authoritative"
+    assert result.hits[0].provenance["source_path"].endswith("architecture.md")
+
+
+def test_wiki_packet_contract_keeps_packets_supporting_only() -> None:
+    contract = build_wiki_packet_reader_contract_summary()
+
+    assert contract["source_class"] == WIKI_PACKET_SOURCE_CLASS
+    assert contract["authority"] == "supporting_not_authoritative"
+    assert "Wiki packets cannot override current_state for mutable user facts." in contract["non_override_rules"]

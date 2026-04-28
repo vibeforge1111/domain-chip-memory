@@ -398,9 +398,9 @@ Do not promote a memory layer if:
 
 ## Current Next Task
 
-Build the next memory context layer:
+Build the next comparison layer:
 
-> Add the Obsidian / LLM-wiki packet reader source so Spark can retrieve compiled project knowledge, architecture decisions, and handoffs without treating workflow residue as authority.
+> Add the Mem0 shadow adapter so Spark can compare OSS personal-memory extraction/retrieval against the domain-chip authority path without giving it runtime authority.
 
 This is the next real integration step before another Telegram test loop or broad benchmark run.
 
@@ -413,5 +413,5 @@ This is the next real integration step before another Telegram test loop or broa
 - [x] Add Graphiti-compatible adapter stub behind a disabled feature flag.
 - [x] Add evidence/event episode export into sidecar contract shape.
 - [x] Add Graphiti shadow retrieval lane to `hybrid_memory_retrieve`.
-- [ ] Add Obsidian / LLM-wiki packet reader source.
+- [x] Add Obsidian / LLM-wiki packet reader source.
 - [ ] Add Mem0 shadow adapter.

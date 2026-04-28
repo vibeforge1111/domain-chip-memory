@@ -44,6 +44,15 @@ from .memory_sidecars import (
     memory_record_to_sidecar_episode,
     memory_records_to_sidecar_episodes,
 )
+from .wiki_packets import (
+    MarkdownKnowledgePacket,
+    WIKI_PACKET_SOURCE_CLASS,
+    WikiPacketHit,
+    WikiPacketRetrievalResult,
+    build_wiki_packet_reader_contract_summary,
+    read_markdown_knowledge_packets,
+    retrieve_markdown_knowledge_packets,
+)
 
 __all__ = [
     "__version__",
@@ -87,5 +96,12 @@ __all__ = [
     "build_memory_sidecar_contract_summary",
     "memory_record_to_sidecar_episode",
     "memory_records_to_sidecar_episodes",
+    "MarkdownKnowledgePacket",
+    "WIKI_PACKET_SOURCE_CLASS",
+    "WikiPacketHit",
+    "WikiPacketRetrievalResult",
+    "build_wiki_packet_reader_contract_summary",
+    "read_markdown_knowledge_packets",
+    "retrieve_markdown_knowledge_packets",
 ]
 __version__ = "0.1.0"

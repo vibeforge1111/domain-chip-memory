@@ -430,6 +430,8 @@ def _record_id(item: JsonDict) -> str:
 
 
 def build_memory_sidecar_contract_summary() -> JsonDict:
+    from .wiki_packets import build_wiki_packet_reader_contract_summary
+
     return {
         "contract_name": "MemorySidecarAdapter",
         "authority_policy": {
@@ -457,7 +459,9 @@ def build_memory_sidecar_contract_summary() -> JsonDict:
         "adapter_implementations": [
             "DisabledMemorySidecarAdapter",
             "GraphitiCompatibleMemorySidecarAdapter",
+            "ObsidianLlmWikiPacketReader",
         ],
+        "wiki_packet_reader_contract": build_wiki_packet_reader_contract_summary(),
         "runtime_sidecars": {
             "graphiti_temporal_graph": {
                 "mode": "shadow_then_limited_runtime",
