@@ -53,7 +53,7 @@ Work in this order unless a production break interrupts it:
 - [x] Extend salience to generic memory candidates: current-state, structured evidence, raw episode, belief, and drop.
 - [x] Add salience metadata to structured evidence, raw episode, belief, and memory-candidate assessment events.
 - [x] Add live quality-gate records for rejected memory candidates, not only secret-like profile writes.
-- [ ] Reduce blocked/not-promotable memory-lane rows by routing candidates into the correct lane or explicit drop reason.
+- [x] Reduce blocked/not-promotable memory-lane rows by routing candidates into the correct lane or explicit drop reason.
 
 ### Track B: Authoritative State And Supersession
 
@@ -138,8 +138,8 @@ Work in this order unless a production break interrupts it:
 ## Current Commit Checkpoints
 
 - `domain-chip-memory`: `2ecc980` tracks identity supersession progress.
-- `spark-intelligence-builder`: `2ac3c3f` records policy gates for rejected memory candidates.
-- Next commit target: memory-lane cleanup for blocked/not-promotable rows in `spark-intelligence-builder`.
+- `spark-intelligence-builder`: `fdd2fcc` makes memory lanes explicit and human readable.
+- Next commit target: session summary writer for episodic continuity in `spark-intelligence-builder`.
 
 ## Architecture Decision
 
