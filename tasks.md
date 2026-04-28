@@ -152,13 +152,14 @@ Goal: stop treating natural user facts as test-specific profile slots.
 - [x] Let open recall consider `entity.*` current-state records.
 - [x] Add tests for broader current value, unrelated entity isolation, and entity-scoped deletion markers.
 - [x] Add historical previous-value tests for generic entity attributes.
+- [x] Make current entity-state recall source explanations route- and attribute-aware, not just history explanations.
 
 Acceptance:
 
 - Current question returns the newest value.
 - Historical question returns the previous value.
 - Another entity using the same predicate does not collide.
-- Source explanation can name the entity-state source.
+- Source explanation can name the entity-state source, route, and attribute for current and historical reads.
 
 ## Phase 2: Hybrid Retrieval Adapter
 
