@@ -154,6 +154,7 @@ Goal: stop treating natural user facts as test-specific profile slots.
 - [x] Add historical previous-value tests for generic entity attributes.
 - [x] Make current entity-state recall source explanations route- and attribute-aware, not just history explanations.
 - [x] Separate decisive entity-state support records from wider candidate packets in recall traces.
+- [x] Route exact non-location entity current recall through direct `get_current_state(subject, predicate, entity_key)` before broad retrieval.
 
 Acceptance:
 
@@ -162,6 +163,7 @@ Acceptance:
 - Another entity using the same predicate does not collide.
 - Source explanation can name the entity-state source, route, and attribute for current and historical reads.
 - Exact entity recall traces show `retrieved_roles=entity_state` and a decisive `record_count`, while preserving broader `candidate_record_count`.
+- Non-location entity recalls use `read_method=get_current_state`; location recall remains on metadata-rich fallback until current-state projections preserve location prepositions.
 
 ## Phase 2: Hybrid Retrieval Adapter
 
@@ -175,7 +177,8 @@ Goal: make Builder use the full domain-chip read surface instead of narrow deter
   - [x] `retrieve_events`
   - [x] typed temporal graph sidecar shadow lane
   - [ ] typed temporal graph sidecar live backend hits
-  - lexical/entity query over recent raw turns
+  - [ ] lexical/entity query over recent raw turns
+  - [ ] preserve location preposition metadata in direct current-state projections so location recall can use direct reads too
 - [ ] Score evidence with:
   - [x] source authority
   - [x] query intent match
