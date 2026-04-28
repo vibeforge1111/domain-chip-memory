@@ -52,6 +52,35 @@ When sources conflict, Spark should use this order:
 
 Clean diagnostics never close a user focus by themselves. Maintenance success never means user-level work is done unless the user explicitly closes it.
 
+## Five-Layer Memory Target
+
+Spark memory should behave as a hierarchy, not as a pile of saved snippets:
+
+1. Working scratchpad: active conversation state. It vanishes unless promoted.
+2. Salient facts: discrete, typed, timestamped, queryable slots such as owner, blocker, deadline, identity, preference, and current focus.
+3. Episodic trace: compressed records of what changed, what was decided, what was left open, and what Spark promised.
+4. Decay and promotion: every natural memory starts with confidence and salience; repetition, correction, explicit confirmation, and task relevance promote it. Unused or weak memories decay.
+5. Retrieval gating: active focus, target repo, project, task, and source authority decide what is recalled. Similarity alone is not enough.
+
+`For later` remains an explicit high-confidence save signal, but it is not the product experience we are building toward. Normal conversation must pass through salience scoring and promotion gates before becoming durable memory.
+
+## Live Gap Register
+
+These are the current production-quality gaps surfaced through Telegram, Spawner, and Codex testing:
+
+- [ ] Wrong build target: `/memory-quality` was requested inside `spawner-ui`, but a standalone `spark-memory-quality-dashboard` was built instead.
+- [ ] Stale target context: Spawner payloads can point at old repos such as `vibeship-spark-intelligence`; every build needs a hard target-repo confirmation gate.
+- [ ] Episodic memory too thin: the live capsule keeps too little same-session flow, so Spark recalls isolated facts but loses the actual work narrative.
+- [ ] Identity corrections are not authoritative enough: name corrections must become high-priority identity supersessions, not raw episodic text.
+- [ ] Quality gates exist but are empty: policy gates, quarantine records, and delivery registry need live writes.
+- [ ] Memory lane is mostly blocked/not-promotable: observations are accumulating without enough useful promotion into durable memory.
+- [ ] No semantic daily consolidation: maintenance compresses lifecycle state, but does not yet produce rich daily/project summaries.
+- [ ] Timeouts lose task continuity: Spark needs a pending-task ledger with original request, active component, mission id, timeout point, and next retry.
+- [ ] Runtime capability state is inconsistent: Spark should know whether it can inspect local files, Spawner, Codex, and repos before answering.
+- [ ] Self-review is not grounded: build quality ratings must inspect target repo, diff, tests, route, and demo state before answering.
+- [ ] Source attribution is still uneven: answers must distinguish current capsule, older memory, raw episode, inference, and unverified claims.
+- [ ] Memory-quality dashboard is standalone: migrate useful pieces into `spawner-ui` and wire them to real ledgers.
+
 ## SOTA Patterns We Are Importing
 
 - Graphiti/Zep: temporal context graph, validity windows, provenance episodes, hybrid retrieval.
@@ -73,10 +102,17 @@ Current architecture diagrams: `docs/MEMORY_STACK_DIAGRAMS_2026-04-28.md`.
 Runtime decision:
 
 - Keep `domain-chip-memory` as Spark's memory authority/control plane.
-- Adopt a Graphiti-compatible temporal graph as the first serious sidecar.
+- Adopt Graphiti as the first serious temporal graph sidecar.
 - Use Mem0 only as a shadow baseline or extraction/search inspiration until it proves value behind our authority rules.
 - Use Cognee later only for connector/document graph-RAG needs.
 - Use gbrain/BrainBench-style evals to decide promotion, not as runtime memory.
+
+Open-source borrowing policy:
+
+- Prefer permissive OSS that is MIT, Apache-2.0, BSD, or similarly business-compatible.
+- Graphiti is Apache-2.0, not MIT; it is approved as a sidecar dependency if license notices and telemetry settings are handled correctly.
+- Borrow architecture patterns freely, but do not let external systems replace Spark's authority order or source explanation contract.
+- Disable optional telemetry by default for local Spark installs unless the operator explicitly opts in.
 
 Pruning decision:
 
@@ -176,6 +212,53 @@ Acceptance:
 - Workflow entity recalls cover building and operating scenarios such as launch blockers, startup priorities, investor-update decisions, sprint next actions, and campaign metrics.
 - Broad entity summary recalls gather multiple current entity attributes, name the `memory_entity_state_summary_query` route, and do not collapse to a single blocker/metric/owner field.
 
+## Phase 1.5: Salience, Promotion, And Write Discipline
+
+Goal: stop requiring explicit `for later` commands and make natural conversation memory-worthy only when it earns promotion.
+
+- [ ] Add a Builder-side `memory.salience` gate before writes.
+- [ ] Score each candidate on:
+  - explicitness
+  - active focus/project relevance
+  - entity importance
+  - decision/action/owner/blocker/status signal
+  - correction or supersession signal
+  - repetition or confirmation
+  - user preference/identity sensitivity
+  - small-talk/emotional/noise risk
+- [ ] Emit one of:
+  - `drop`
+  - `scratchpad`
+  - `raw_episode`
+  - `structured_evidence`
+  - `current_state_candidate`
+  - `current_state_confirmed`
+- [ ] Store salience metadata:
+  - `salience_score`
+  - `confidence`
+  - `promotion_stage`
+  - `mention_count`
+  - `last_referenced_at`
+  - `decay_after`
+  - `why_saved`
+- [ ] Treat explicit phrases such as `for later`, `remember`, and `current X is` as high-confidence signals, not the only path.
+- [ ] Make identity corrections immediate authoritative supersessions.
+- [ ] Route uncertain claims and brainstorming to scratchpad/episode unless repeated or confirmed.
+- [ ] Promote repeated medium-salience facts into current state after confirmation.
+- [ ] Add quality-gate ledgers:
+  - policy gate records
+  - quarantine records
+  - delivery registry records
+  - bad-claim/bad-memory rejection reasons
+
+Acceptance:
+
+- Spark can save an important natural statement without `for later`.
+- Spark does not save ordinary small talk as durable memory.
+- Corrections supersede stale identity/project facts immediately.
+- Source explanation can say why a memory was saved and why it was recalled.
+- Blocked/not-promotable rows shrink as real candidates get correctly promoted or dropped.
+
 ## Phase 2: Hybrid Retrieval Adapter
 
 Goal: make Builder use the full domain-chip read surface instead of narrow deterministic routes.
@@ -241,12 +324,30 @@ Acceptance:
 
 ## Phase 4: Typed Temporal Graph Runtime Bridge
 
-Goal: stop leaving the graph layer in eval-only mode.
+Goal: stop leaving the graph layer in eval-only mode and use Graphiti for the real temporal graph sidecar.
 
 - [ ] Define graph sidecar runtime contract:
   - input: evidence/event records
   - output: ranked graph hits with provenance
   - no direct final answer generation
+- [ ] Add Graphiti as a runtime sidecar behind `domain-chip-memory`, not as the primary memory authority.
+- [ ] Choose local backend path:
+  - [ ] Kuzu for simplest embedded/local dev path if compatible with current Graphiti support.
+  - [ ] FalkorDB or Neo4j for richer graph operations if local service management is acceptable.
+- [ ] Disable Graphiti telemetry by default in Spark-managed launches.
+- [ ] Map Spark memory records to Graphiti episodes:
+  - [ ] raw Telegram turn
+  - [ ] structured evidence
+  - [ ] entity-state change
+  - [ ] decision/action/owner/blocker events
+  - [ ] tool/build/mission events
+- [ ] Map Graphiti outputs back to Spark candidates:
+  - [ ] entity
+  - [ ] relationship
+  - [ ] temporal fact
+  - [ ] validity window
+  - [ ] episode provenance
+  - [ ] confidence/source score
 - [ ] Promote existing graph capabilities:
   - alias binding
   - relationship facts
@@ -259,11 +360,19 @@ Goal: stop leaving the graph layer in eval-only mode.
 - [ ] Add Builder live backend bridge for graph sidecar retrieval.
 - [ ] Add source explanation labels for graph hits.
 - [ ] Keep graph sidecar additive until live eval beats or ties current path.
+- [ ] Add graph-sidecar acceptance probes for:
+  - same entity across aliases
+  - previous/current conflict with validity windows
+  - owner/decision/action relationships
+  - project-to-task dependencies
+  - "what changed today?" and "why do you think that?" provenance
 
 Acceptance:
 
 - Relationship, alias, negation, and event-ordering questions get graph evidence.
 - Graph evidence does not override current state unless the query asks for historical/relational context.
+- Graphiti facts can explain their episode provenance and validity window.
+- Graphiti improves broad project/workflow recall without flooding the capsule.
 
 ## Phase 5: Memory Hygiene And Consolidation
 
