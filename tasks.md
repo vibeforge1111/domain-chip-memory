@@ -408,6 +408,8 @@ The local simulated Telegram acceptance loop is green, promotion gates now run a
 
 The acceptance pack now also covers mutable entity memory: seed the plant as `Mira`, update it to `Sol`, recall the current name, and recall the previous name. This gives us one quick gate for current entity projection plus historical supersession, not just profile focus/plan memory.
 
+The next supervised Telegram pass exposed an attribute-collision bug: `Where is the desk plant?` was answered from `entity.name=Sol` instead of `entity.location`. The Builder fix now gates open recall by requested entity attribute, keeps shorthand name recall from hijacking `where` questions, and extends acceptance with two-entity location isolation plus stale/current location history.
+
 ## Current Build Progress
 
 - [x] Add OSS memory stack decision.
@@ -432,4 +434,6 @@ The acceptance pack now also covers mutable entity memory: seed the plant as `Mi
 - [x] Run the real Spark AGI/Tester Telegram loop after gate promotion.
 - [x] Calibrate source-mix stability so clean current-state authority plus supporting evidence passes while supporting-only packets still warn.
 - [x] Extend Telegram acceptance with mutable entity conflict recall: `Mira` -> `Sol` -> previous name.
+- [x] Add entity-attribute recall gates so location questions cannot be answered from name memories.
+- [x] Extend Telegram acceptance with two-entity location isolation and stale/current location history.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
