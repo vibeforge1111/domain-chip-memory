@@ -50,8 +50,8 @@ Work in this order unless a production break interrupts it:
 - [x] Add docs/license gate before external sidecar integration.
 - [x] Add Builder-side `memory.salience` gate for profile/current-state writes.
 - [x] Mark preferred-name corrections as authoritative identity supersessions.
-- [ ] Extend salience to generic memory candidates: current-state, structured evidence, raw episode, belief, and drop.
-- [ ] Add salience metadata to structured evidence, raw episode, belief, and memory-candidate assessment events.
+- [x] Extend salience to generic memory candidates: current-state, structured evidence, raw episode, belief, and drop.
+- [x] Add salience metadata to structured evidence, raw episode, belief, and memory-candidate assessment events.
 - [ ] Add live quality-gate records for rejected memory candidates, not only secret-like profile writes.
 - [ ] Reduce blocked/not-promotable memory-lane rows by routing candidates into the correct lane or explicit drop reason.
 
@@ -138,8 +138,8 @@ Work in this order unless a production break interrupts it:
 ## Current Commit Checkpoints
 
 - `domain-chip-memory`: `2ecc980` tracks identity supersession progress.
-- `spark-intelligence-builder`: `e620387` makes preferred-name corrections authoritative.
-- Next commit target: generic salience and memory-candidate lane metadata in `spark-intelligence-builder`.
+- `spark-intelligence-builder`: `c111449` adds salience metadata to generic memory candidates.
+- Next commit target: live quality-gate records for rejected generic memory candidates in `spark-intelligence-builder`.
 
 ## Architecture Decision
 
