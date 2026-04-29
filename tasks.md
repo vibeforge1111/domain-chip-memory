@@ -101,10 +101,10 @@ Work in this order unless a production break interrupts it:
 
 - [x] Decide hybrid OSS stack: Graphiti first, Mem0 shadow, Hindsight procedural, Cognee deferred.
 - [x] Add third-party notice scaffold and adoption checklist.
-- [ ] Add optional dependency groups in `domain-chip-memory`, default install light.
+- [x] Add optional dependency groups in `domain-chip-memory`, default install light.
 - [x] Add Graphiti adoption record before dependency/import.
 - [x] Add Graphiti live adapter behind disabled feature flag.
-- [ ] Add Spark CLI memory-sidecar installer profile for Graphiti.
+- [x] Add Spark CLI memory-sidecar installer profile for Graphiti.
 - [ ] Add Mem0 shadow comparator only after salience/retrieval contracts are stable.
 - [ ] Add Hindsight/procedural sidecar prototype for corrections, failed tools, timeouts, and repeated mistakes.
 - [ ] Add status/verify/diagnostics visibility for each sidecar and its fallback mode.
@@ -148,8 +148,9 @@ Work in this order unless a production break interrupts it:
 
 ## Current Commit Checkpoints
 
-- `domain-chip-memory`: this task tracker records the grounded build-quality review checkpoint.
-- `spark-intelligence-builder`: `d94abe1` routes build-quality review questions through target repo, git diff/status, test, route, and demo evidence before allowing a rating.
+- `domain-chip-memory`: `aa86b3b` fixes live Graphiti/Kuzu sidecar database path handling and keeps directory-style paths backward-compatible.
+- `spark-cli`: `a1fbcbb` adds the Graphiti/Kuzu setup profile, installs the optional chip extra on opt-in, and pins the fixed memory chip.
+- `spark-intelligence-builder`: `e80cd62` wires Graphiti live sidecar config into hybrid retrieval as non-authoritative supporting evidence.
 - Next commit target: make source-aware recall universal for memory answers and add explicit context packet sections for episodic summary, procedural lesson, pending task, repo capability, and graph sidecar.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
