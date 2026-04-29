@@ -77,7 +77,7 @@ Work in this order unless a production break interrupts it:
 
 - [x] Add pending-task ledger: original request, target repo/component, command/mission id, timeout point, last evidence, next retry.
 - [x] Store failed target resolution, wrong build target, bad self-review, and timeout patterns as procedural lessons.
-- [ ] Resume after timeout without asking "what happened?".
+- [x] Resume after timeout without asking "what happened?" by injecting pending tasks and procedural lessons into capsule/context packets.
 - [ ] Inject runtime capability state so Spark does not underclaim local file/Spawner/Codex access.
 
 ### Track E: Repo Resolution And Builder Safety
@@ -138,9 +138,9 @@ Work in this order unless a production break interrupts it:
 
 ## Current Commit Checkpoints
 
-- `domain-chip-memory`: `732ab81` tracks memory lane cleanup progress.
-- `spark-intelligence-builder`: `d013bfa` adds procedural memory lessons for target drift, wrong build targets, self-review gaps, and timeouts.
-- Next commit target: resume after timeout by injecting pending tasks and procedural lessons into context/capsule assembly.
+- `domain-chip-memory`: this task tracker records the recovery context injection checkpoint.
+- `spark-intelligence-builder`: `39aabc9` injects pending tasks and procedural lessons into context capsules and hybrid memory packets for timeout/workflow recovery.
+- Next commit target: inject runtime capability state so Spark does not underclaim local file, Spawner, Codex, or repo-inspection access.
 - Current fast validation command: `python scripts/run_memory_test_batch.py --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -817,5 +817,6 @@ Implementation starts in `spark-intelligence-builder` with `memory.salience`, th
 - [x] Add daily/project summary writer for semantic continuity.
 - [x] Add pending-task ledger for timeout and workflow recovery.
 - [x] Add procedural lesson ledger for target drift, wrong build targets, self-review gaps, and timeout recovery.
+- [x] Inject pending tasks and procedural lessons into context capsules and hybrid memory packets for resume/retry continuity.
 - [x] Add curated memory unit-test batches: `fast-contract`, `telegram-memory-unit`, `architecture-promotion`, `diagnostics-ledgers`, and `full-memory-local`.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
