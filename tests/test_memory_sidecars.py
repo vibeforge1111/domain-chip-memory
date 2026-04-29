@@ -18,7 +18,7 @@ from domain_chip_memory import (
     read_markdown_knowledge_packets,
     retrieve_markdown_knowledge_packets,
 )
-from domain_chip_memory.memory_sidecars import _graphiti_kuzu_db_path
+from domain_chip_memory.memory_sidecars import _HashEmbedder, _LexicalCrossEncoder, _graphiti_kuzu_db_path, _run_maybe_async
 from domain_chip_memory.sdk import EventRetrievalRequest, EvidenceRetrievalRequest, MemoryWriteRequest
 
 
@@ -224,6 +224,47 @@ def test_graphiti_kuzu_db_path_uses_database_file_inside_directory(tmp_path) -> 
     resolved = _graphiti_kuzu_db_path(str(db_dir))
 
     assert resolved == str(db_dir / "graphiti.kuzu")
+
+
+def test_graphiti_provider_config_uses_spark_llm_without_leaking_secret() -> None:
+    sidecars = build_default_memory_sidecars(
+        enable_graphiti=True,
+        graphiti_backend="kuzu",
+        graphiti_db_path=":memory:",
+        graphiti_llm_api_key_env="ZAI_API_KEY",
+        graphiti_llm_api_key="secret-test-key",
+        graphiti_llm_base_url="https://api.z.ai/api/coding/paas/v4/",
+        graphiti_llm_model="glm-5.1",
+        graphiti_auto_build_indices=True,
+    )
+    adapter = sidecars["graphiti_temporal_graph"]
+
+    assert isinstance(adapter, GraphitiCompatibleMemorySidecarAdapter)
+    trace = adapter._llm_provider_trace()
+    assert trace["model"] == "glm-5.1"
+    assert trace["base_url_configured"] is True
+    assert trace["api_key_env"] == "ZAI_API_KEY"
+    assert trace["api_key_configured"] is True
+    assert "secret-test-key" not in str(trace)
+    assert adapter.auto_build_indices is True
+
+
+def test_graphiti_local_embedder_and_reranker_are_deterministic() -> None:
+    embedder = _HashEmbedder()
+    ranker = _LexicalCrossEncoder()
+
+    first = _run_maybe_async(embedder.create("GTM launch blocker is creator approvals"))
+    second = _run_maybe_async(embedder.create("GTM launch blocker is creator approvals"))
+    ranked = _run_maybe_async(
+        ranker.rank(
+            "GTM launch blocker",
+            ["creator approvals block the GTM launch", "desk plant is on the windowsill"],
+        )
+    )
+
+    assert first == second
+    assert len(first) == embedder.dimensions
+    assert ranked[0][0] == "creator approvals block the GTM launch"
 
 
 def test_default_sidecars_keep_graphiti_feature_flag_off_by_default() -> None:

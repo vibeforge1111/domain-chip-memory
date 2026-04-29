@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import math
 import os
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -223,8 +226,14 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
     neo4j_uri: str | None = None
     neo4j_user: str | None = None
     neo4j_password: str | None = None
+    llm_api_key_env: str | None = None
+    llm_api_key: str | None = None
+    llm_base_url: str | None = None
+    llm_model: str | None = None
+    llm_small_model: str | None = None
     telemetry_disabled: bool = True
     auto_build_indices: bool = False
+    call_timeout_seconds: float = 8.0
     client: Any | None = None
     client_factory: Callable[["GraphitiCompatibleMemorySidecarAdapter"], Any] | None = None
     _client_initialized: bool = False
@@ -258,6 +267,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                     "backend_configured": False,
                     "backend_status": client_status,
                     "backend": self.backend or "not_configured",
+                    "llm_provider": self._llm_provider_trace(),
                     "error": client_or_error if isinstance(client_or_error, str) else None,
                     "graphiti_episode": payload,
                 },
@@ -276,6 +286,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                     "persisted": False,
                     "backend_configured": True,
                     "backend": self.backend or "injected_client",
+                    "llm_provider": self._llm_provider_trace(),
                     "error": exc.__class__.__name__,
                     "graphiti_episode": payload,
                 },
@@ -291,6 +302,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                 "persisted": True,
                 "backend_configured": True,
                 "backend": self.backend or "injected_client",
+                "llm_provider": self._llm_provider_trace(),
                 "graphiti_episode": payload,
             },
         )
@@ -322,6 +334,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                     "backend_configured": False,
                     "backend_status": client_status,
                     "backend": self.backend or "not_configured",
+                    "llm_provider": self._llm_provider_trace(),
                     "error": client_or_error if isinstance(client_or_error, str) else None,
                     "query_payload": query_payload,
                 },
@@ -340,6 +353,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                     "status": "error",
                     "backend_configured": True,
                     "backend": self.backend or "injected_client",
+                    "llm_provider": self._llm_provider_trace(),
                     "error": exc.__class__.__name__,
                     "query_payload": query_payload,
                 },
@@ -354,6 +368,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                 "status": "ok",
                 "backend_configured": True,
                 "backend": self.backend or "injected_client",
+                "llm_provider": self._llm_provider_trace(),
                 "hit_count": len(hits),
                 "query_payload": query_payload,
             },
@@ -383,6 +398,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                     "runtime_effect": "shadow_live_backend",
                     "authority": "not_authoritative",
                     "backend": self.backend or "injected_client",
+                    "llm_provider": self._llm_provider_trace(),
                     "telemetry_disabled": self.telemetry_disabled,
                     "auto_build_indices": self.auto_build_indices,
                 },
@@ -398,6 +414,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                 "backend": self.backend or "not_configured",
                 "backend_status": client_status,
                 "error": client_or_error if isinstance(client_or_error, str) else None,
+                "llm_provider": self._llm_provider_trace(),
                 "telemetry_disabled": self.telemetry_disabled,
             },
         )
@@ -472,10 +489,13 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
         from graphiti_core.driver.kuzu_driver import KuzuDriver
 
         driver = KuzuDriver(db=_graphiti_kuzu_db_path(self.db_path or os.environ.get("KUZU_DB") or ":memory:"))
+        if hasattr(driver, "with_database"):
+            driver = driver.with_database(self.group_id)
+        client_kwargs = self._graphiti_client_kwargs()
         try:
-            return Graphiti(graph_driver=driver)
+            return Graphiti(graph_driver=driver, **client_kwargs)
         except TypeError:
-            return Graphiti(driver=driver)
+            return Graphiti(driver=driver, **client_kwargs)
 
     def _create_neo4j_client(self) -> Any:
         from graphiti_core import Graphiti
@@ -485,7 +505,42 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
         password = self.neo4j_password or os.environ.get("NEO4J_PASSWORD")
         if not uri or not user or not password:
             raise ValueError("neo4j_config_incomplete")
-        return Graphiti(uri, user, password)
+        return Graphiti(uri, user, password, **self._graphiti_client_kwargs())
+
+    def _graphiti_client_kwargs(self) -> JsonDict:
+        kwargs: JsonDict = {
+            "embedder": _graphiti_hash_embedder(),
+            "cross_encoder": _graphiti_lexical_cross_encoder(),
+        }
+        api_key = self.llm_api_key or _read_optional_env(self.llm_api_key_env) or _read_optional_env("OPENAI_API_KEY")
+        if not api_key or not (self.llm_base_url or self.llm_model):
+            return kwargs
+        from graphiti_core.llm_client.config import LLMConfig
+        from graphiti_core.llm_client.openai_generic_client import OpenAIGenericClient
+
+        kwargs["llm_client"] = OpenAIGenericClient(
+            LLMConfig(
+                api_key=api_key,
+                model=self.llm_model,
+                small_model=self.llm_small_model or self.llm_model,
+                base_url=self.llm_base_url,
+                max_tokens=4096,
+            ),
+            max_tokens=4096,
+        )
+        return kwargs
+
+    def _llm_provider_trace(self) -> JsonDict:
+        configured_key = bool(self.llm_api_key or _read_optional_env(self.llm_api_key_env) or _read_optional_env("OPENAI_API_KEY"))
+        return {
+            "model": self.llm_model,
+            "small_model": self.llm_small_model or self.llm_model,
+            "base_url_configured": bool(self.llm_base_url),
+            "api_key_env": self.llm_api_key_env,
+            "api_key_configured": configured_key,
+            "embedder": "local_hash",
+            "cross_encoder": "local_lexical",
+        }
 
     def _add_episode_to_graphiti(self, client: Any, payload: JsonDict) -> str | None:
         result = _run_maybe_async(
@@ -496,15 +551,16 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                 source_description=payload["source_description"],
                 reference_time=_parse_graphiti_reference_time(payload.get("reference_time")),
                 group_id=payload["group_id"],
-            )
+            ),
+            timeout_seconds=self.call_timeout_seconds,
         )
         return str(getattr(result, "uuid", "") or payload["name"] or "")
 
     def _search_graphiti(self, client: Any, request: MemorySidecarRetrievalRequest) -> list[Any]:
         try:
-            result = _run_maybe_async(client.search(request.query, num_results=request.top_k))
+            result = _run_maybe_async(client.search(request.query, num_results=request.top_k), timeout_seconds=self.call_timeout_seconds)
         except TypeError:
-            result = _run_maybe_async(client.search(request.query))
+            result = _run_maybe_async(client.search(request.query), timeout_seconds=self.call_timeout_seconds)
         if result is None:
             return []
         if isinstance(result, list):
@@ -683,6 +739,13 @@ def build_default_memory_sidecars(
     graphiti_backend: str | None = None,
     graphiti_db_path: str | None = None,
     graphiti_group_id: str = "spark-memory",
+    graphiti_llm_api_key_env: str | None = None,
+    graphiti_llm_api_key: str | None = None,
+    graphiti_llm_base_url: str | None = None,
+    graphiti_llm_model: str | None = None,
+    graphiti_llm_small_model: str | None = None,
+    graphiti_auto_build_indices: bool = False,
+    graphiti_call_timeout_seconds: float = 8.0,
     graphiti_client: Any | None = None,
     graphiti_client_factory: Callable[[GraphitiCompatibleMemorySidecarAdapter], Any] | None = None,
 ) -> dict[str, MemorySidecarAdapter]:
@@ -693,6 +756,13 @@ def build_default_memory_sidecars(
             backend=graphiti_backend,
             db_path=graphiti_db_path,
             group_id=graphiti_group_id,
+            llm_api_key_env=graphiti_llm_api_key_env,
+            llm_api_key=graphiti_llm_api_key,
+            llm_base_url=graphiti_llm_base_url,
+            llm_model=graphiti_llm_model,
+            llm_small_model=graphiti_llm_small_model,
+            auto_build_indices=graphiti_auto_build_indices,
+            call_timeout_seconds=graphiti_call_timeout_seconds,
             client=graphiti_client,
             client_factory=graphiti_client_factory,
         ),
@@ -784,12 +854,87 @@ def _record_id(item: JsonDict) -> str:
     return str(item)
 
 
-def _run_maybe_async(value: Any) -> Any:
+class _HashEmbedder:
+    dimensions = 1024
+
+    async def create(self, input_data: Any) -> list[float]:
+        if isinstance(input_data, str):
+            text = input_data
+        elif isinstance(input_data, list) and all(isinstance(item, str) for item in input_data):
+            text = "\n".join(input_data)
+        else:
+            text = " ".join(str(item) for item in input_data) if input_data is not None else ""
+        return _hash_embedding(text, dimensions=self.dimensions)
+
+    async def create_batch(self, input_data_list: list[str]) -> list[list[float]]:
+        return [_hash_embedding(text, dimensions=self.dimensions) for text in input_data_list]
+
+
+class _LexicalCrossEncoder:
+    async def rank(self, query: str, passages: list[str]) -> list[tuple[str, float]]:
+        query_tokens = set(_tokenize_for_retrieval(query))
+        ranked: list[tuple[str, float]] = []
+        for passage in passages:
+            passage_tokens = set(_tokenize_for_retrieval(passage))
+            if not query_tokens or not passage_tokens:
+                score = 0.0
+            else:
+                score = len(query_tokens & passage_tokens) / math.sqrt(len(query_tokens) * len(passage_tokens))
+            ranked.append((passage, score))
+        return sorted(ranked, key=lambda item: item[1], reverse=True)
+
+
+def _graphiti_hash_embedder() -> Any:
+    from graphiti_core.embedder.client import EmbedderClient
+
+    class _GraphitiHashEmbedder(_HashEmbedder, EmbedderClient):
+        pass
+
+    return _GraphitiHashEmbedder()
+
+
+def _graphiti_lexical_cross_encoder() -> Any:
+    from graphiti_core.cross_encoder.client import CrossEncoderClient
+
+    class _GraphitiLexicalCrossEncoder(_LexicalCrossEncoder, CrossEncoderClient):
+        pass
+
+    return _GraphitiLexicalCrossEncoder()
+
+
+def _hash_embedding(text: str, *, dimensions: int) -> list[float]:
+    vector = [0.0] * dimensions
+    tokens = _tokenize_for_retrieval(text)
+    for token in tokens:
+        digest = hashlib.sha256(token.encode("utf-8")).digest()
+        index = int.from_bytes(digest[:4], "big") % dimensions
+        sign = 1.0 if digest[4] % 2 == 0 else -1.0
+        vector[index] += sign
+    norm = math.sqrt(sum(value * value for value in vector))
+    if norm <= 0:
+        return vector
+    return [value / norm for value in vector]
+
+
+def _tokenize_for_retrieval(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", str(text).lower())
+
+
+def _read_optional_env(name: str | None) -> str | None:
+    if not name:
+        return None
+    value = os.environ.get(str(name).strip())
+    return value.strip() if value and value.strip() else None
+
+
+def _run_maybe_async(value: Any, *, timeout_seconds: float | None = None) -> Any:
     if not hasattr(value, "__await__"):
         return value
     try:
         asyncio.get_running_loop()
     except RuntimeError:
+        if timeout_seconds and timeout_seconds > 0:
+            return asyncio.run(asyncio.wait_for(value, timeout=timeout_seconds))
         return asyncio.run(value)
     raise RuntimeError("graphiti_async_call_requires_sync_context")
 
