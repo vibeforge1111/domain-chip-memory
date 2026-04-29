@@ -84,7 +84,7 @@ Work in this order unless a production break interrupts it:
 
 - [x] Add local repo/module/capability index.
 - [x] Add hard target-repo confirmation gate before builds and file-writing missions.
-- [ ] Add stale Spawner payload detection and drift warning.
+- [x] Add stale Spawner payload detection and drift warning.
 - [ ] Ground build-quality self-review in target repo, diff, tests, route, and demo state.
 
 ### Track F: Retrieval, Capsule, And Source Attribution
@@ -138,10 +138,10 @@ Work in this order unless a production break interrupts it:
 
 ## Current Commit Checkpoints
 
-- `domain-chip-memory`: this task tracker records the recovery context injection checkpoint.
-- `spark-intelligence-builder`: `301e8cc` gates Mission Control plans on target-repo confirmation for build/file-writing tasks.
-- Next commit target: add stale Spawner payload detection and drift warning.
-- Current fast validation command: `python scripts/run_memory_test_batch.py --batch fast-contract -- --maxfail=1`.
+- `domain-chip-memory`: this task tracker records the stale Spawner payload drift checkpoint.
+- `spark-intelligence-builder`: `0e9ecb4` detects stale Spawner payload repo references and surfaces Mission Control drift warnings.
+- Next commit target: ground build-quality self-review in target repo, diff, tests, route, and demo state.
+- Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
 
@@ -208,7 +208,7 @@ Spark memory should behave as a hierarchy, not as a pile of saved snippets:
 These are the current production-quality gaps surfaced through Telegram, Spawner, and Codex testing:
 
 - [ ] Wrong build target: `/memory-quality` was requested inside `spawner-ui`, but a standalone `spark-memory-quality-dashboard` was built instead.
-- [ ] Stale target context: Spawner payloads can point at old repos such as `vibeship-spark-intelligence`; every build needs a hard target-repo confirmation gate.
+- [x] Stale target context: Spawner payloads can point at old repos such as `vibeship-spark-intelligence`; Mission Control now detects stale payload drift and build plans require target-repo confirmation.
 - [ ] Episodic memory too thin: the live capsule keeps too little same-session flow, so Spark recalls isolated facts but loses the actual work narrative.
 - [ ] Identity corrections are not authoritative enough: name corrections must become high-priority identity supersessions, not raw episodic text.
 - [ ] Quality gates exist but are empty: policy gates, quarantine records, and delivery registry need live writes.
@@ -223,7 +223,7 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [ ] Source-aware recall needs to be universal: answers should say whether memory came from current state, older memory, raw episode, graph sidecar, inference, diagnostics, or workflow residue.
 - [ ] Context memory is too small for real work: live Builder capsule code currently defaults to a 5,000-character rendered capsule, 3 recent same-session turn pairs, and 260-character compacted turns in `src/spark_intelligence/context/capsule.py`.
 - [ ] Context reservoir target should support 200k+ available memory context through retrieval and packet assembly, while keeping per-answer Telegram packets compact.
-- [ ] Repo resolution is not strong enough: Spark needs a local repo/module/capability index so it knows where things live and what it can inspect before building or answering.
+- [x] Repo resolution is not strong enough: Spark now has a local repo/module/capability index plus build-target confirmation and stale Spawner payload drift warnings.
 
 ## SOTA Patterns We Are Importing
 
