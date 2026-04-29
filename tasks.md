@@ -17,7 +17,8 @@ Rules:
    - `spark-intelligence-builder`: memory write/read logic, capsule, ledgers, diagnostics.
    - `domain-chip-memory`: chip contracts, sidecar adapters, eval harnesses, docs.
    - `spark-cli`: installer and local dependency profiles.
-   - `spawner-ui`: memory-quality dashboard and operator UI.
+   - `spark-memory-quality-dashboard`: standalone memory-quality and architecture-readiness operator UI.
+   - `spawner-ui`: Mission Control, Kanban, Canvas, and Spawner operator surfaces.
    - `spark-telegram-bot`: Telegram ingress/restart/runtime wiring only.
 5. Do not add an external dependency, copied source, or sidecar without the pre-implementation license checklist and adoption record.
 6. Tests should be contract-first, then Telegram acceptance. Telegram is a final human-facing gate, not the discovery loop.
@@ -38,7 +39,7 @@ Spark persistent memory is "great working memory" only when all of these are tru
 - Repo resolution knows what project/component Spark is touching before build missions.
 - Graphiti/Hindsight/Mem0 are optional, licensed, observable sidecars or comparators; they never replace Spark's authority order.
 - Maintenance compresses active memory without destroying historical recall.
-- The memory-quality dashboard is inside `spawner-ui` and wired to real ledgers.
+- The standalone `spark-memory-quality-dashboard` is wired to real Builder/domain-chip ledgers and linked from operator surfaces where useful.
 - Diagnostics show active architecture, sidecars, source mix, context budget, quality gates, and stale/advisory source drift.
 
 ## Active Execution Queue
@@ -114,8 +115,10 @@ Work in this order unless a production break interrupts it:
 - [ ] Populate policy gate, quarantine, delivery registry, and memory lane records from real memory decisions.
 - [ ] Make memory lanes human-readable.
 - [ ] Add operator inspect commands for lane decisions, blocked candidates, salience reasons, and promotion outcomes.
-- [ ] Migrate memory-quality dashboard into `spawner-ui`.
-- [ ] Wire dashboard to actual ledgers, not standalone mock state.
+- [x] Keep memory-quality dashboard in standalone `spark-memory-quality-dashboard` repo.
+- [x] Add first architecture-readiness dashboard slice and route/test/demo evidence.
+- [ ] Wire dashboard to actual Builder/domain-chip ledgers, not static architecture state/sample recall data.
+- [ ] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
 
 ### Track I: Evaluation Harness
 
@@ -218,7 +221,8 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [ ] Runtime capability state is inconsistent: Spark should know whether it can inspect local files, Spawner, Codex, and repos before answering.
 - [x] Self-review is not grounded: build quality ratings now route through local target repo, git status/diff, test evidence, route evidence, and demo evidence before answering.
 - [ ] Source attribution is still uneven: answers must distinguish current capsule, older memory, raw episode, inference, and unverified claims.
-- [ ] Memory-quality dashboard is standalone: migrate useful pieces into `spawner-ui` and wire them to real ledgers.
+- [x] Memory-quality dashboard target corrected: standalone repo is now explicit and Builder discovers it.
+- [ ] Memory-quality dashboard still needs live ledger wiring: replace static architecture state/sample recall data with Builder/domain-chip feeds.
 - [ ] Episodic recall is missing: Spark needs session/day/project summaries for "what did we build today?" and "what else do you remember?".
 - [ ] Source-aware recall needs to be universal: answers should say whether memory came from current state, older memory, raw episode, graph sidecar, inference, diagnostics, or workflow residue.
 - [ ] Context memory is too small for real work: live Builder capsule code currently defaults to a 5,000-character rendered capsule, 3 recent same-session turn pairs, and 260-character compacted turns in `src/spark_intelligence/context/capsule.py`.
