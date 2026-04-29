@@ -117,7 +117,9 @@ Work in this order unless a production break interrupts it:
 - [ ] Add operator inspect commands for lane decisions, blocked candidates, salience reasons, and promotion outcomes.
 - [x] Keep memory-quality dashboard in standalone `spark-memory-quality-dashboard` repo.
 - [x] Add first architecture-readiness dashboard slice and route/test/demo evidence.
+- [x] Align dashboard visual language with Spark Swarm/spawner-ui operator artstyle.
 - [x] Add local Builder state export feeding dashboard recall events, memory lanes, policy gates, quarantine, delivery, and pending-task counts.
+- [x] Add route/source trace map export for routing decisions, source-aware coverage, source-explanation links, and remaining integration gaps.
 - [x] Wire dashboard to domain-chip health history and benchmark scorecard summaries.
 - [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
 - [x] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
@@ -225,6 +227,7 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [ ] Source attribution is still uneven: answers must distinguish current capsule, older memory, raw episode, inference, and unverified claims.
 - [x] Memory-quality dashboard target corrected: standalone repo is now explicit and Builder discovers it.
 - [x] Memory-quality dashboard can load exported Builder ledger counts and live recall events from the local Spark state DB.
+- [x] Memory-quality dashboard can map operator traces, source classes, route decisions, and source-explanation links from exported Builder state.
 - [x] Memory-quality dashboard can load domain-chip score history and benchmark scorecard summaries.
 - [ ] Memory-quality dashboard still needs richer live Builder ledger feeds beyond exported snapshots.
 - [x] Memory-quality dashboard has operator launch wiring from Spark/Telegram with URL, refresh command, test/demo evidence, and source explanation.
