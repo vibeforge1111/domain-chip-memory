@@ -18,6 +18,7 @@ from domain_chip_memory import (
     read_markdown_knowledge_packets,
     retrieve_markdown_knowledge_packets,
 )
+from domain_chip_memory.memory_sidecars import _graphiti_kuzu_db_path
 from domain_chip_memory.sdk import EventRetrievalRequest, EvidenceRetrievalRequest, MemoryWriteRequest
 
 
@@ -214,6 +215,15 @@ def test_graphiti_compatible_adapter_uses_injected_live_backend_without_becoming
     assert retrieval.hits[0].metadata["authority"] == "supporting_not_authoritative"
     assert health.status == "ok"
     assert health.details["authority"] == "not_authoritative"
+
+
+def test_graphiti_kuzu_db_path_uses_database_file_inside_directory(tmp_path) -> None:
+    db_dir = tmp_path / "graphiti" / "kuzu"
+    db_dir.mkdir(parents=True)
+
+    resolved = _graphiti_kuzu_db_path(str(db_dir))
+
+    assert resolved == str(db_dir / "graphiti.kuzu")
 
 
 def test_default_sidecars_keep_graphiti_feature_flag_off_by_default() -> None:

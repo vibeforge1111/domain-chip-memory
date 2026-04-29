@@ -4,6 +4,7 @@ import asyncio
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable, Protocol
 
 from .contracts import JsonDict
@@ -470,7 +471,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
         from graphiti_core import Graphiti
         from graphiti_core.driver.kuzu_driver import KuzuDriver
 
-        driver = KuzuDriver(db=self.db_path or os.environ.get("KUZU_DB") or ":memory:")
+        driver = KuzuDriver(db=_graphiti_kuzu_db_path(self.db_path or os.environ.get("KUZU_DB") or ":memory:"))
         try:
             return Graphiti(graph_driver=driver)
         except TypeError:
@@ -791,6 +792,18 @@ def _run_maybe_async(value: Any) -> Any:
     except RuntimeError:
         return asyncio.run(value)
     raise RuntimeError("graphiti_async_call_requires_sync_context")
+
+
+def _graphiti_kuzu_db_path(raw_path: str) -> str:
+    if raw_path == ":memory:":
+        return raw_path
+    path = Path(raw_path).expanduser()
+    if path.exists() and path.is_dir():
+        path = path / "graphiti.kuzu"
+    elif not path.suffix:
+        path = path / "graphiti.kuzu"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return str(path)
 
 
 def _graphiti_episode_type() -> Any:
