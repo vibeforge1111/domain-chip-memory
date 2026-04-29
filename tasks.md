@@ -78,7 +78,7 @@ Work in this order unless a production break interrupts it:
 - [x] Add pending-task ledger: original request, target repo/component, command/mission id, timeout point, last evidence, next retry.
 - [x] Store failed target resolution, wrong build target, bad self-review, and timeout patterns as procedural lessons.
 - [x] Resume after timeout without asking "what happened?" by injecting pending tasks and procedural lessons into capsule/context packets.
-- [ ] Inject runtime capability state so Spark does not underclaim local file/Spawner/Codex access.
+- [x] Inject runtime capability state so Spark does not underclaim local file/Spawner/Codex access.
 
 ### Track E: Repo Resolution And Builder Safety
 
@@ -139,8 +139,8 @@ Work in this order unless a production break interrupts it:
 ## Current Commit Checkpoints
 
 - `domain-chip-memory`: this task tracker records the recovery context injection checkpoint.
-- `spark-intelligence-builder`: `39aabc9` injects pending tasks and procedural lessons into context capsules and hybrid memory packets for timeout/workflow recovery.
-- Next commit target: inject runtime capability state so Spark does not underclaim local file, Spawner, Codex, or repo-inspection access.
+- `spark-intelligence-builder`: `5720bf7` injects runtime capability state into context capsules and System Registry for local work, Spawner, Codex-supervised work, and repo inspection.
+- Next commit target: add local repo/module/capability index before more build automation.
 - Current fast validation command: `python scripts/run_memory_test_batch.py --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -818,5 +818,6 @@ Implementation starts in `spark-intelligence-builder` with `memory.salience`, th
 - [x] Add pending-task ledger for timeout and workflow recovery.
 - [x] Add procedural lesson ledger for target drift, wrong build targets, self-review gaps, and timeout recovery.
 - [x] Inject pending tasks and procedural lessons into context capsules and hybrid memory packets for resume/retry continuity.
+- [x] Inject runtime capability state into the context capsule so Spark can name local work, Spawner, Codex-supervised work, and repo-inspection routes without underclaiming.
 - [x] Add curated memory unit-test batches: `fast-contract`, `telegram-memory-unit`, `architecture-promotion`, `diagnostics-ledgers`, and `full-memory-local`.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
