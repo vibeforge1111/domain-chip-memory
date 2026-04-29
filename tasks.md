@@ -123,6 +123,7 @@ Work in this order unless a production break interrupts it:
 - [x] Add watch-mode dashboard exporter and polling refresh for local live-feed operation.
 - [x] Add context packet budget and memory read feed into dashboard tracing.
 - [x] Add salience, policy-gate, lane-decision, and promotion-reason feed from Builder ledgers.
+- [x] Add sampled salience lane audits showing promoted, blocked, raw-episode, and policy-block rows.
 - [x] Wire dashboard to domain-chip health history and benchmark scorecard summaries.
 - [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
 - [x] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
@@ -151,7 +152,11 @@ Work in this order unless a production break interrupts it:
 - `domain-chip-memory`: `aa86b3b` fixes live Graphiti/Kuzu sidecar database path handling and keeps directory-style paths backward-compatible.
 - `spark-cli`: `a1fbcbb` adds the Graphiti/Kuzu setup profile, installs the optional chip extra on opt-in, and pins the fixed memory chip.
 - `spark-intelligence-builder`: `e80cd62` wires Graphiti live sidecar config into hybrid retrieval as non-authoritative supporting evidence.
-- Next commit target: make source-aware recall universal for memory answers and add explicit context packet sections for episodic summary, procedural lesson, pending task, repo capability, and graph sidecar.
+- `domain-chip-memory`: `5e902e3` directly upserts structured Graphiti/Kuzu facts without relying on LLM extraction.
+- `spark-intelligence-builder`: `ca8be57` prioritizes entity state for Graphiti shadow exports.
+- `spark-intelligence-builder`: `d9ad5d0` gates Telegram memory writes with salience metadata.
+- `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
+- Next commit target: make source-aware recall universal for graph hits/raw episodes and add richer episodic/procedural/pending-task packet sections.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -540,22 +545,22 @@ Goal: stop leaving the graph layer in eval-only mode and use Graphiti for the re
   - output: ranked graph hits with provenance
   - no direct final answer generation
 - [x] Add Graphiti as a runtime sidecar behind `domain-chip-memory`, not as the primary memory authority.
-- [ ] Choose local backend path:
-  - [ ] Kuzu for simplest embedded/local dev path if compatible with current Graphiti support.
+- [x] Choose local backend path:
+  - [x] Kuzu for simplest embedded/local dev path if compatible with current Graphiti support.
   - [ ] FalkorDB or Neo4j for richer graph operations if local service management is acceptable.
 - [x] Disable Graphiti telemetry by default in Spark-managed launches.
 - [ ] Map Spark memory records to Graphiti episodes:
   - [ ] raw Telegram turn
-  - [ ] structured evidence
-  - [ ] entity-state change
-  - [ ] decision/action/owner/blocker events
+  - [x] structured evidence
+  - [x] entity-state change
+  - [x] decision/action/owner/blocker events
   - [ ] tool/build/mission events
 - [ ] Map Graphiti outputs back to Spark candidates:
-  - [ ] entity
+  - [x] entity
   - [ ] relationship
   - [ ] temporal fact
   - [ ] validity window
-  - [ ] episode provenance
+  - [x] episode provenance
   - [ ] confidence/source score
 - [ ] Promote existing graph capabilities:
   - alias binding

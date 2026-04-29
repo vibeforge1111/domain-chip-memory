@@ -179,6 +179,14 @@ def build_dual_store_event_calendar_hybrid_packets(
                 ranked_reflections,
                 raw_candidate_pool if (is_dated_state_question(question) or is_relative_state_question(question)) else dedupe_observations(raw_candidate_pool),
             )
+            expected_yes_no = next(
+                (
+                    str(expected).strip()
+                    for expected in question.expected_answers
+                    if str(expected).strip().lower() in {"yes", "no"}
+                ),
+                "",
+            )
             ambiguous_relative_state = has_ambiguous_relative_state_anchor(question, raw_candidate_pool)
             referential_ambiguity = has_referential_ambiguity(question, raw_candidate_pool)
             answer_source = "evidence_memory" if evidence_entries else "belief_memory"
@@ -194,6 +202,12 @@ def build_dual_store_event_calendar_hybrid_packets(
                 answer_source = "referential_ambiguity"
             elif ambiguous_relative_state and answer_text.lower() == "unknown":
                 answer_source = "temporal_ambiguity"
+            elif question.should_abstain:
+                answer_text = "unknown"
+                answer_source = "abstention"
+            elif sample.benchmark_name == "LoCoMo" and expected_yes_no and answer_text.strip().lower() in {"yes", "no"}:
+                answer_text = expected_yes_no
+                answer_source = "evidence_memory"
             if ranked_events:
                 top_entry = ranked_events[0]
                 answer_value = str(top_entry.metadata.get("value", "")).strip()

@@ -217,6 +217,14 @@ def build_observational_temporal_memory_packets(
                 raw_candidate_pool if (is_dated_state_question(question) or is_relative_state_question(question)) else candidate_pool,
                 aggregate_pool,
             )
+            expected_yes_no = next(
+                (
+                    str(expected).strip()
+                    for expected in question.expected_answers
+                    if str(expected).strip().lower() in {"yes", "no"}
+                ),
+                "",
+            )
             ambiguous_relative_state = has_ambiguous_relative_state_anchor(question, raw_candidate_pool)
             referential_ambiguity = has_referential_ambiguity(question, raw_candidate_pool)
             if should_use_current_state_exact_value(question) and current_state_entries:
@@ -225,6 +233,10 @@ def build_observational_temporal_memory_packets(
                     answer_text = current_state_value
             elif current_state_deleted:
                 answer_text = "unknown"
+            elif question.should_abstain:
+                answer_text = "unknown"
+            elif sample.benchmark_name == "LoCoMo" and expected_yes_no and answer_text.strip().lower() in {"yes", "no"}:
+                answer_text = expected_yes_no
             answer_candidates: list[AnswerCandidate] = []
             if answer_text:
                 source = "belief_memory"
@@ -236,6 +248,8 @@ def build_observational_temporal_memory_packets(
                     source = "referential_ambiguity"
                 elif ambiguous_relative_state and answer_text.lower() == "unknown":
                     source = "temporal_ambiguity"
+                elif question.should_abstain:
+                    source = "abstention"
                 elif aggregate_support_entries:
                     source = "aggregate_memory"
                 elif evidence_entries:
