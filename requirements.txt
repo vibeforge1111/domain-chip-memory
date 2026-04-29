@@ -1,0 +1,3 @@
+# domain-chip-memory has no external runtime dependencies.
+# This file is intentionally present so installers and security audits can
+# distinguish a dependency-free package from an unpackaged one.
