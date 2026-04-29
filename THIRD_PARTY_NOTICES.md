@@ -4,9 +4,33 @@ Status: active
 
 This repository currently has no default runtime dependencies in `pyproject.toml` and no recorded vendored third-party source code.
 
+Default install:
+
+- No external memory-system package is installed by default.
+- No benchmark dataset is vendored in this repository.
+- No third-party source files from Graphiti, Mem0, Hindsight, Cognee, LongMemEval, LoCoMo, or related systems are copied into the product runtime.
+
+Optional install surface:
+
+| Source | Local surface | License status | Default enabled | Notes |
+|---|---|---|---|---|
+| Graphiti / Zep OSS core | `domain-chip-memory[graphiti-kuzu]`, `domain-chip-memory[graphiti-neo4j]` | Apache-2.0 | No | Optional temporal graph sidecar adapter. Spark-owned code calls public package APIs; no Graphiti source is vendored. |
+
+Research, benchmark, and inspiration surfaces:
+
+| Source | License recorded | Current Spark use | Shipping boundary |
+|---|---|---|---|
+| Mem0 OSS | Apache-2.0 | Planned shadow comparator / extraction-retrieval baseline | Not installed by default; no source copied. |
+| Hindsight | MIT | Planned procedural/experience memory sidecar or adapter | Not installed by default; no source copied. |
+| Generative Agents | Apache-2.0 | Salience/reflection pattern inspiration | Pattern inspiration only. |
+| Cognee | Deferred; re-verify before adoption | Possible document/connector graph-RAG lane | Not adopted. Do not ship until license/runtime surface is re-verified. |
+| LongMemEval | MIT | Benchmark adapter and evaluation structure | Dataset is not vendored; keep benchmark use separate from product runtime. |
+| LoCoMo | CC BY-NC 4.0 | Benchmark adapter and evaluation structure | Non-commercial benchmark/data lane only unless legal approval changes the boundary. |
+
 Adoption records:
 
 - `docs/GRAPHITI_ADOPTION_RECORD_2026-04-29.md`: Graphiti / Zep OSS core, Apache-2.0, optional disabled-by-default temporal graph sidecar adapter.
+- `docs/OPEN_SOURCE_ATTRIBUTION_PLAN.md`: broader registry for memory-system inspiration, benchmark-only sources, and future adoption boundaries.
 
 Before adding an external memory system, benchmark harness, copied source file, or service sidecar, update this file or a linked adoption record with:
 
