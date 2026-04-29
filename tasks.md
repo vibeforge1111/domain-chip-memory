@@ -85,7 +85,7 @@ Work in this order unless a production break interrupts it:
 - [x] Add local repo/module/capability index.
 - [x] Add hard target-repo confirmation gate before builds and file-writing missions.
 - [x] Add stale Spawner payload detection and drift warning.
-- [ ] Ground build-quality self-review in target repo, diff, tests, route, and demo state.
+- [x] Ground build-quality self-review in target repo, diff, tests, route, and demo state.
 
 ### Track F: Retrieval, Capsule, And Source Attribution
 
@@ -138,9 +138,9 @@ Work in this order unless a production break interrupts it:
 
 ## Current Commit Checkpoints
 
-- `domain-chip-memory`: this task tracker records the stale Spawner payload drift checkpoint.
-- `spark-intelligence-builder`: `0e9ecb4` detects stale Spawner payload repo references and surfaces Mission Control drift warnings.
-- Next commit target: ground build-quality self-review in target repo, diff, tests, route, and demo state.
+- `domain-chip-memory`: this task tracker records the grounded build-quality review checkpoint.
+- `spark-intelligence-builder`: `d94abe1` routes build-quality review questions through target repo, git diff/status, test, route, and demo evidence before allowing a rating.
+- Next commit target: make source-aware recall universal for memory answers and add explicit context packet sections for episodic summary, procedural lesson, pending task, repo capability, and graph sidecar.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -207,7 +207,7 @@ Spark memory should behave as a hierarchy, not as a pile of saved snippets:
 
 These are the current production-quality gaps surfaced through Telegram, Spawner, and Codex testing:
 
-- [ ] Wrong build target: `/memory-quality` was requested inside `spawner-ui`, but a standalone `spark-memory-quality-dashboard` was built instead.
+- [x] Wrong build target: `/memory-quality` was requested inside `spawner-ui`, but a standalone `spark-memory-quality-dashboard` was built instead; target confirmation and build-review evidence now force repo binding before build/review work.
 - [x] Stale target context: Spawner payloads can point at old repos such as `vibeship-spark-intelligence`; Mission Control now detects stale payload drift and build plans require target-repo confirmation.
 - [ ] Episodic memory too thin: the live capsule keeps too little same-session flow, so Spark recalls isolated facts but loses the actual work narrative.
 - [ ] Identity corrections are not authoritative enough: name corrections must become high-priority identity supersessions, not raw episodic text.
@@ -216,7 +216,7 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [ ] No semantic daily consolidation: maintenance compresses lifecycle state, but does not yet produce rich daily/project summaries.
 - [ ] Timeouts lose task continuity: Spark needs a pending-task ledger with original request, active component, mission id, timeout point, and next retry.
 - [ ] Runtime capability state is inconsistent: Spark should know whether it can inspect local files, Spawner, Codex, and repos before answering.
-- [ ] Self-review is not grounded: build quality ratings must inspect target repo, diff, tests, route, and demo state before answering.
+- [x] Self-review is not grounded: build quality ratings now route through local target repo, git status/diff, test evidence, route evidence, and demo evidence before answering.
 - [ ] Source attribution is still uneven: answers must distinguish current capsule, older memory, raw episode, inference, and unverified claims.
 - [ ] Memory-quality dashboard is standalone: migrate useful pieces into `spawner-ui` and wire them to real ledgers.
 - [ ] Episodic recall is missing: Spark needs session/day/project summaries for "what did we build today?" and "what else do you remember?".
