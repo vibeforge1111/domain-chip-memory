@@ -565,6 +565,7 @@ Goal: stop leaving the graph layer in eval-only mode and use Graphiti for the re
   - temporal events
   - unknown records
 - [x] Add Builder shadow bridge for graph sidecar retrieval.
+- [x] Emit live Builder memory-route shadow telemetry for the Graphiti/typed-temporal lane.
 - [x] Add dashboard operator visibility for Graphiti/typed-temporal shadow lane contract, artifacts, live lane events, and missing instrumentation.
 - [ ] Add Builder live backend bridge for graph sidecar retrieval.
 - [ ] Add source explanation labels for graph hits.
