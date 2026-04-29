@@ -118,7 +118,8 @@ Work in this order unless a production break interrupts it:
 - [x] Keep memory-quality dashboard in standalone `spark-memory-quality-dashboard` repo.
 - [x] Add first architecture-readiness dashboard slice and route/test/demo evidence.
 - [x] Add local Builder state export feeding dashboard recall events, memory lanes, policy gates, quarantine, delivery, and pending-task counts.
-- [ ] Wire dashboard to domain-chip benchmark scorecards and richer Builder ledgers, not only exported local state snapshots.
+- [x] Wire dashboard to domain-chip health history and benchmark scorecard summaries.
+- [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
 - [ ] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
 
 ### Track I: Evaluation Harness
@@ -224,7 +225,8 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [ ] Source attribution is still uneven: answers must distinguish current capsule, older memory, raw episode, inference, and unverified claims.
 - [x] Memory-quality dashboard target corrected: standalone repo is now explicit and Builder discovers it.
 - [x] Memory-quality dashboard can load exported Builder ledger counts and live recall events from the local Spark state DB.
-- [ ] Memory-quality dashboard still needs domain-chip scorecard wiring and richer live ledger feeds.
+- [x] Memory-quality dashboard can load domain-chip score history and benchmark scorecard summaries.
+- [ ] Memory-quality dashboard still needs richer live Builder ledger feeds and operator launch wiring.
 - [ ] Episodic recall is missing: Spark needs session/day/project summaries for "what did we build today?" and "what else do you remember?".
 - [ ] Source-aware recall needs to be universal: answers should say whether memory came from current state, older memory, raw episode, graph sidecar, inference, diagnostics, or workflow residue.
 - [ ] Context memory is too small for real work: live Builder capsule code currently defaults to a 5,000-character rendered capsule, 3 recent same-session turn pairs, and 260-character compacted turns in `src/spark_intelligence/context/capsule.py`.
