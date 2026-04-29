@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from domain_chip_memory import (
     DisabledMemorySidecarAdapter,
     GraphitiCompatibleMemorySidecarAdapter,
@@ -149,6 +151,69 @@ def test_graphiti_compatible_adapter_default_is_disabled() -> None:
     assert retrieval.hits == []
     assert retrieval.trace["status"] == "disabled"
     assert retrieval.trace["query_payload"]["num_results"] == 2
+
+
+def test_graphiti_compatible_adapter_uses_injected_live_backend_without_becoming_authority() -> None:
+    class FakeGraphitiClient:
+        def __init__(self) -> None:
+            self.added = []
+
+        def add_episode(self, **payload):
+            self.added.append(payload)
+            return SimpleNamespace(uuid="episode-1")
+
+        def search(self, query: str, num_results: int = 10):
+            return [
+                SimpleNamespace(
+                    uuid="edge-1",
+                    fact="The GTM launch depends on creator approvals.",
+                    score=0.82,
+                    valid_at="2026-04-29T10:00:00Z",
+                    invalid_at=None,
+                )
+            ][:num_results]
+
+    client = FakeGraphitiClient()
+    adapter = GraphitiCompatibleMemorySidecarAdapter(
+        enabled=True,
+        mode="shadow",
+        backend="kuzu",
+        db_path=":memory:",
+        client=client,
+    )
+    episode = MemorySidecarEpisode(
+        source_record_id="obs-gtm-blocker",
+        source_class="current_state",
+        text="The GTM launch blocker is creator approvals.",
+        subject="human:telegram:12345",
+        predicate="entity.blocker",
+        entity_keys=["named-object:gtm-launch"],
+        timestamp="2026-04-29T10:00:00Z",
+    )
+
+    upsert = adapter.upsert_episode(episode)
+    retrieval = adapter.retrieve(
+        MemorySidecarRetrievalRequest(
+            query="What is blocking the GTM launch?",
+            subject="human:telegram:12345",
+            scope="entity.blocker",
+            entity_keys=["named-object:gtm-launch"],
+            top_k=3,
+        )
+    )
+    health = adapter.health()
+
+    assert upsert.status == "persisted"
+    assert upsert.trace["backend_configured"] is True
+    assert client.added[0]["group_id"] == "spark-memory"
+    assert retrieval.trace["status"] == "ok"
+    assert retrieval.trace["backend_configured"] is True
+    assert retrieval.hits[0].source_class == "graphiti_temporal_graph"
+    assert retrieval.hits[0].provenance["source"] == "graphiti"
+    assert retrieval.hits[0].validity["valid_at"] == "2026-04-29T10:00:00Z"
+    assert retrieval.hits[0].metadata["authority"] == "supporting_not_authoritative"
+    assert health.status == "ok"
+    assert health.details["authority"] == "not_authoritative"
 
 
 def test_default_sidecars_keep_graphiti_feature_flag_off_by_default() -> None:

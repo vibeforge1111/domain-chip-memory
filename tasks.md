@@ -102,8 +102,8 @@ Work in this order unless a production break interrupts it:
 - [x] Decide hybrid OSS stack: Graphiti first, Mem0 shadow, Hindsight procedural, Cognee deferred.
 - [x] Add third-party notice scaffold and adoption checklist.
 - [ ] Add optional dependency groups in `domain-chip-memory`, default install light.
-- [ ] Add Graphiti adoption record before dependency/import.
-- [ ] Add Graphiti live adapter behind disabled feature flag.
+- [x] Add Graphiti adoption record before dependency/import.
+- [x] Add Graphiti live adapter behind disabled feature flag.
 - [ ] Add Spark CLI memory-sidecar installer profile for Graphiti.
 - [ ] Add Mem0 shadow comparator only after salience/retrieval contracts are stable.
 - [ ] Add Hindsight/procedural sidecar prototype for corrections, failed tools, timeouts, and repeated mistakes.
@@ -538,11 +538,11 @@ Goal: stop leaving the graph layer in eval-only mode and use Graphiti for the re
   - input: evidence/event records
   - output: ranked graph hits with provenance
   - no direct final answer generation
-- [ ] Add Graphiti as a runtime sidecar behind `domain-chip-memory`, not as the primary memory authority.
+- [x] Add Graphiti as a runtime sidecar behind `domain-chip-memory`, not as the primary memory authority.
 - [ ] Choose local backend path:
   - [ ] Kuzu for simplest embedded/local dev path if compatible with current Graphiti support.
   - [ ] FalkorDB or Neo4j for richer graph operations if local service management is acceptable.
-- [ ] Disable Graphiti telemetry by default in Spark-managed launches.
+- [x] Disable Graphiti telemetry by default in Spark-managed launches.
 - [ ] Map Spark memory records to Graphiti episodes:
   - [ ] raw Telegram turn
   - [ ] structured evidence
@@ -567,7 +567,7 @@ Goal: stop leaving the graph layer in eval-only mode and use Graphiti for the re
 - [x] Add Builder shadow bridge for graph sidecar retrieval.
 - [x] Emit live Builder memory-route shadow telemetry for the Graphiti/typed-temporal lane.
 - [x] Add dashboard operator visibility for Graphiti/typed-temporal shadow lane contract, artifacts, live lane events, and missing instrumentation.
-- [ ] Add Builder live backend bridge for graph sidecar retrieval.
+- [x] Add Builder live backend bridge for graph sidecar retrieval.
 - [ ] Add source explanation labels for graph hits.
 - [ ] Keep graph sidecar additive until live eval beats or ties current path.
 - [ ] Add graph-sidecar acceptance probes for:

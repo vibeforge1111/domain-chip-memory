@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import asyncio
+import os
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from datetime import datetime, timezone
+from typing import Any, Callable, Protocol
 
 from .contracts import JsonDict
 
@@ -214,6 +217,16 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
     mode: str = "disabled"
     enabled: bool = False
     group_id: str = "spark-memory"
+    backend: str | None = None
+    db_path: str | None = None
+    neo4j_uri: str | None = None
+    neo4j_user: str | None = None
+    neo4j_password: str | None = None
+    telemetry_disabled: bool = True
+    auto_build_indices: bool = False
+    client: Any | None = None
+    client_factory: Callable[["GraphitiCompatibleMemorySidecarAdapter"], Any] | None = None
+    _client_initialized: bool = False
 
     def upsert_episode(self, episode: MemorySidecarEpisode) -> MemorySidecarUpsertResult:
         payload = self.graphiti_episode_payload(episode)
@@ -230,16 +243,53 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                     "graphiti_episode": payload,
                 },
             )
+        client_status, client_or_error = self._get_live_client()
+        if client_status != "ready":
+            return MemorySidecarUpsertResult(
+                sidecar_name=self.sidecar_name,
+                status="prepared",
+                sidecar_ids=[],
+                trace={
+                    "operation": "graphiti_upsert_episode",
+                    "sidecar_name": self.sidecar_name,
+                    "mode": self.mode,
+                    "persisted": False,
+                    "backend_configured": False,
+                    "backend_status": client_status,
+                    "backend": self.backend or "not_configured",
+                    "error": client_or_error if isinstance(client_or_error, str) else None,
+                    "graphiti_episode": payload,
+                },
+            )
+        try:
+            sidecar_id = self._add_episode_to_graphiti(client_or_error, payload)
+        except Exception as exc:
+            return MemorySidecarUpsertResult(
+                sidecar_name=self.sidecar_name,
+                status="error",
+                sidecar_ids=[],
+                trace={
+                    "operation": "graphiti_upsert_episode",
+                    "sidecar_name": self.sidecar_name,
+                    "mode": self.mode,
+                    "persisted": False,
+                    "backend_configured": True,
+                    "backend": self.backend or "injected_client",
+                    "error": exc.__class__.__name__,
+                    "graphiti_episode": payload,
+                },
+            )
         return MemorySidecarUpsertResult(
             sidecar_name=self.sidecar_name,
-            status="prepared",
-            sidecar_ids=[],
+            status="persisted",
+            sidecar_ids=[sidecar_id] if sidecar_id else [episode.source_record_id],
             trace={
                 "operation": "graphiti_upsert_episode",
                 "sidecar_name": self.sidecar_name,
                 "mode": self.mode,
-                "persisted": False,
-                "backend_configured": False,
+                "persisted": True,
+                "backend_configured": True,
+                "backend": self.backend or "injected_client",
                 "graphiti_episode": payload,
             },
         )
@@ -258,15 +308,52 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                     "query_payload": query_payload,
                 },
             )
+        client_status, client_or_error = self._get_live_client()
+        if client_status != "ready":
+            return MemorySidecarRetrievalResult(
+                sidecar_name=self.sidecar_name,
+                hits=[],
+                trace={
+                    "operation": "graphiti_retrieve",
+                    "sidecar_name": self.sidecar_name,
+                    "mode": self.mode,
+                    "status": "prepared",
+                    "backend_configured": False,
+                    "backend_status": client_status,
+                    "backend": self.backend or "not_configured",
+                    "error": client_or_error if isinstance(client_or_error, str) else None,
+                    "query_payload": query_payload,
+                },
+            )
+        try:
+            raw_results = self._search_graphiti(client_or_error, request)
+            hits = [self._graphiti_result_to_hit(result, request, index) for index, result in enumerate(raw_results)]
+        except Exception as exc:
+            return MemorySidecarRetrievalResult(
+                sidecar_name=self.sidecar_name,
+                hits=[],
+                trace={
+                    "operation": "graphiti_retrieve",
+                    "sidecar_name": self.sidecar_name,
+                    "mode": self.mode,
+                    "status": "error",
+                    "backend_configured": True,
+                    "backend": self.backend or "injected_client",
+                    "error": exc.__class__.__name__,
+                    "query_payload": query_payload,
+                },
+            )
         return MemorySidecarRetrievalResult(
             sidecar_name=self.sidecar_name,
-            hits=[],
+            hits=hits,
             trace={
                 "operation": "graphiti_retrieve",
                 "sidecar_name": self.sidecar_name,
                 "mode": self.mode,
-                "status": "prepared",
-                "backend_configured": False,
+                "status": "ok",
+                "backend_configured": True,
+                "backend": self.backend or "injected_client",
+                "hit_count": len(hits),
                 "query_payload": query_payload,
             },
         )
@@ -284,6 +371,21 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                     "backend": "not_configured",
                 },
             )
+        client_status, client_or_error = self._get_live_client()
+        if client_status == "ready":
+            return MemorySidecarHealthResult(
+                sidecar_name=self.sidecar_name,
+                status="ok",
+                enabled=True,
+                mode=self.mode,
+                details={
+                    "runtime_effect": "shadow_live_backend",
+                    "authority": "not_authoritative",
+                    "backend": self.backend or "injected_client",
+                    "telemetry_disabled": self.telemetry_disabled,
+                    "auto_build_indices": self.auto_build_indices,
+                },
+            )
         return MemorySidecarHealthResult(
             sidecar_name=self.sidecar_name,
             status="stub_ready",
@@ -292,7 +394,10 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
             details={
                 "runtime_effect": "shadow_contract_only",
                 "authority": "not_authoritative",
-                "backend": "not_configured",
+                "backend": self.backend or "not_configured",
+                "backend_status": client_status,
+                "error": client_or_error if isinstance(client_or_error, str) else None,
+                "telemetry_disabled": self.telemetry_disabled,
             },
         )
 
@@ -329,6 +434,125 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                 "time_window": dict(request.time_window),
             },
         }
+
+    def _get_live_client(self) -> tuple[str, Any]:
+        if self.telemetry_disabled:
+            os.environ.setdefault("GRAPHITI_TELEMETRY_ENABLED", "false")
+            os.environ.setdefault("ZEP_TELEMETRY_DISABLED", "true")
+        if self.client is not None:
+            return "ready", self.client
+        if self.client_factory is not None:
+            try:
+                self.client = self.client_factory(self)
+                return "ready", self.client
+            except Exception as exc:
+                return "client_factory_error", exc.__class__.__name__
+        backend = str(self.backend or "").strip().lower()
+        if not backend:
+            return "not_configured", "backend_not_configured"
+        try:
+            if backend == "kuzu":
+                self.client = self._create_kuzu_client()
+            elif backend == "neo4j":
+                self.client = self._create_neo4j_client()
+            else:
+                return "unsupported_backend", backend
+            if self.auto_build_indices and not self._client_initialized and hasattr(self.client, "build_indices_and_constraints"):
+                _run_maybe_async(self.client.build_indices_and_constraints())
+                self._client_initialized = True
+            return "ready", self.client
+        except ImportError as exc:
+            return "missing_dependency", exc.__class__.__name__
+        except Exception as exc:
+            return "client_init_error", exc.__class__.__name__
+
+    def _create_kuzu_client(self) -> Any:
+        from graphiti_core import Graphiti
+        from graphiti_core.driver.kuzu_driver import KuzuDriver
+
+        driver = KuzuDriver(db=self.db_path or os.environ.get("KUZU_DB") or ":memory:")
+        try:
+            return Graphiti(graph_driver=driver)
+        except TypeError:
+            return Graphiti(driver=driver)
+
+    def _create_neo4j_client(self) -> Any:
+        from graphiti_core import Graphiti
+
+        uri = self.neo4j_uri or os.environ.get("NEO4J_URI")
+        user = self.neo4j_user or os.environ.get("NEO4J_USER")
+        password = self.neo4j_password or os.environ.get("NEO4J_PASSWORD")
+        if not uri or not user or not password:
+            raise ValueError("neo4j_config_incomplete")
+        return Graphiti(uri, user, password)
+
+    def _add_episode_to_graphiti(self, client: Any, payload: JsonDict) -> str | None:
+        result = _run_maybe_async(
+            client.add_episode(
+                name=payload["name"],
+                episode_body=payload["episode_body"],
+                source=_graphiti_episode_type(),
+                source_description=payload["source_description"],
+                reference_time=_parse_graphiti_reference_time(payload.get("reference_time")),
+                group_id=payload["group_id"],
+            )
+        )
+        return str(getattr(result, "uuid", "") or payload["name"] or "")
+
+    def _search_graphiti(self, client: Any, request: MemorySidecarRetrievalRequest) -> list[Any]:
+        try:
+            result = _run_maybe_async(client.search(request.query, num_results=request.top_k))
+        except TypeError:
+            result = _run_maybe_async(client.search(request.query))
+        if result is None:
+            return []
+        if isinstance(result, list):
+            return result[: request.top_k]
+        edges = getattr(result, "edges", None)
+        if isinstance(edges, list):
+            return edges[: request.top_k]
+        return list(result)[: request.top_k]
+
+    def _graphiti_result_to_hit(
+        self,
+        result: Any,
+        request: MemorySidecarRetrievalRequest,
+        index: int,
+    ) -> MemorySidecarHit:
+        uuid = str(_get_attr_or_item(result, "uuid") or _get_attr_or_item(result, "id") or f"graphiti-hit-{index}")
+        text = str(
+            _get_attr_or_item(result, "fact")
+            or _get_attr_or_item(result, "text")
+            or _get_attr_or_item(result, "content")
+            or ""
+        ).strip()
+        score = _coerce_float(_get_attr_or_item(result, "score"), default=max(0.1, 1.0 - (index * 0.08)))
+        return MemorySidecarHit(
+            sidecar_name=self.sidecar_name,
+            source_class="graphiti_temporal_graph",
+            source_record_id=uuid,
+            text=text,
+            score=score,
+            provenance={
+                "source": "graphiti",
+                "uuid": uuid,
+                "group_id": self.group_id,
+                "query": request.query,
+                "rank": index + 1,
+            },
+            validity={
+                "valid_at": _stringify_optional(_get_attr_or_item(result, "valid_at")),
+                "invalid_at": _stringify_optional(_get_attr_or_item(result, "invalid_at")),
+            },
+            confidence=score,
+            entity_keys=list(request.entity_keys),
+            reason_selected="graphiti_live_shadow_hit",
+            metadata={
+                "authority": "supporting_not_authoritative",
+                "sidecar_live_backend": True,
+                "scope": request.scope,
+            },
+        )
 
 
 @dataclass
@@ -455,11 +679,21 @@ def build_default_memory_sidecars(
     *,
     enable_graphiti: bool = False,
     enable_mem0_shadow: bool = False,
+    graphiti_backend: str | None = None,
+    graphiti_db_path: str | None = None,
+    graphiti_group_id: str = "spark-memory",
+    graphiti_client: Any | None = None,
+    graphiti_client_factory: Callable[[GraphitiCompatibleMemorySidecarAdapter], Any] | None = None,
 ) -> dict[str, MemorySidecarAdapter]:
     return {
         "graphiti_temporal_graph": GraphitiCompatibleMemorySidecarAdapter(
             mode="shadow" if enable_graphiti else "disabled",
             enabled=enable_graphiti,
+            backend=graphiti_backend,
+            db_path=graphiti_db_path,
+            group_id=graphiti_group_id,
+            client=graphiti_client,
+            client_factory=graphiti_client_factory,
         ),
         "mem0_shadow": Mem0ShadowMemorySidecarAdapter(
             mode="shadow" if enable_mem0_shadow else "disabled",
@@ -547,6 +781,61 @@ def _record_id(item: JsonDict) -> str:
         if value:
             return value
     return str(item)
+
+
+def _run_maybe_async(value: Any) -> Any:
+    if not hasattr(value, "__await__"):
+        return value
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(value)
+    raise RuntimeError("graphiti_async_call_requires_sync_context")
+
+
+def _graphiti_episode_type() -> Any:
+    try:
+        from graphiti_core.nodes import EpisodeType
+
+        return EpisodeType.text
+    except Exception:
+        return "text"
+
+
+def _parse_graphiti_reference_time(value: Any) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str) and value.strip():
+        normalized = value.strip().replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(normalized)
+            if parsed.tzinfo is None:
+                return parsed.replace(tzinfo=timezone.utc)
+            return parsed
+        except ValueError:
+            pass
+    return datetime.now(timezone.utc)
+
+
+def _get_attr_or_item(value: Any, key: str) -> Any:
+    if isinstance(value, dict):
+        return value.get(key)
+    return getattr(value, key, None)
+
+
+def _coerce_float(value: Any, *, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _stringify_optional(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
 
 
 def build_memory_sidecar_contract_summary() -> JsonDict:
