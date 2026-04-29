@@ -534,7 +534,7 @@ Acceptance:
 
 Goal: stop leaving the graph layer in eval-only mode and use Graphiti for the real temporal graph sidecar.
 
-- [ ] Define graph sidecar runtime contract:
+- [x] Define graph sidecar runtime contract:
   - input: evidence/event records
   - output: ranked graph hits with provenance
   - no direct final answer generation
@@ -565,6 +565,7 @@ Goal: stop leaving the graph layer in eval-only mode and use Graphiti for the re
   - temporal events
   - unknown records
 - [x] Add Builder shadow bridge for graph sidecar retrieval.
+- [x] Add dashboard operator visibility for Graphiti/typed-temporal shadow lane contract, artifacts, live lane events, and missing instrumentation.
 - [ ] Add Builder live backend bridge for graph sidecar retrieval.
 - [ ] Add source explanation labels for graph hits.
 - [ ] Keep graph sidecar additive until live eval beats or ties current path.
