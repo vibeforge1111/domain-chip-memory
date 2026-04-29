@@ -122,6 +122,7 @@ Work in this order unless a production break interrupts it:
 - [x] Add route/source trace map export for routing decisions, source-aware coverage, source-explanation links, and remaining integration gaps.
 - [x] Add watch-mode dashboard exporter and polling refresh for local live-feed operation.
 - [x] Add context packet budget and memory read feed into dashboard tracing.
+- [x] Add salience, policy-gate, lane-decision, and promotion-reason feed from Builder ledgers.
 - [x] Wire dashboard to domain-chip health history and benchmark scorecard summaries.
 - [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
 - [x] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
@@ -231,6 +232,7 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [x] Memory-quality dashboard can load exported Builder ledger counts and live recall events from the local Spark state DB.
 - [x] Memory-quality dashboard can map operator traces, source classes, route decisions, and source-explanation links from exported Builder state.
 - [x] Memory-quality dashboard can show context capsule packet budget and memory read role/method feed.
+- [x] Memory-quality dashboard can show salience scores, policy gate reasons, lane decisions, and promotion dispositions.
 - [x] Memory-quality dashboard supports local watch-mode export plus browser polling/refresh.
 - [x] Memory-quality dashboard can load domain-chip score history and benchmark scorecard summaries.
 - [ ] Memory-quality dashboard still needs richer live Builder ledger feeds beyond exported snapshots.
