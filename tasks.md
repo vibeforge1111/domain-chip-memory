@@ -75,7 +75,7 @@ Work in this order unless a production break interrupts it:
 
 ### Track D: Timeout, Task, And Workflow Recovery
 
-- [ ] Add pending-task ledger: original request, target repo/component, command/mission id, timeout point, last evidence, next retry.
+- [x] Add pending-task ledger: original request, target repo/component, command/mission id, timeout point, last evidence, next retry.
 - [ ] Store failed target resolution, wrong build target, bad self-review, and timeout patterns as procedural lessons.
 - [ ] Resume after timeout without asking "what happened?".
 - [ ] Inject runtime capability state so Spark does not underclaim local file/Spawner/Codex access.
@@ -139,8 +139,8 @@ Work in this order unless a production break interrupts it:
 ## Current Commit Checkpoints
 
 - `domain-chip-memory`: `732ab81` tracks memory lane cleanup progress.
-- `spark-intelligence-builder`: `614515c` adds daily and project memory summaries for semantic continuity.
-- Next commit target: pending-task ledger for timeout and workflow recovery in `spark-intelligence-builder`.
+- `spark-intelligence-builder`: `a8dd6b4` adds pending-task recovery ledger for timeout/workflow continuity.
+- Next commit target: procedural lessons for failed target resolution, wrong build targets, bad self-review, and timeouts in `spark-intelligence-builder`.
 - Current fast validation command: `python scripts/run_memory_test_batch.py --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -576,7 +576,7 @@ Goal: make Spark remember work, interruptions, and project flow rather than isol
   - artifacts created
   - promises Spark made
 - [x] Add daily/project summary writer.
-- [ ] Add pending-task ledger:
+- [x] Add pending-task ledger:
   - original request
   - target repo/component
   - active command or mission id
@@ -815,5 +815,6 @@ Implementation starts in `spark-intelligence-builder` with `memory.salience`, th
 - [x] Make preferred-name corrections entity-keyed authoritative current identity writes.
 - [x] Add deterministic session summary writer for episodic continuity.
 - [x] Add daily/project summary writer for semantic continuity.
+- [x] Add pending-task ledger for timeout and workflow recovery.
 - [x] Add curated memory unit-test batches: `fast-contract`, `telegram-memory-unit`, `architecture-promotion`, `diagnostics-ledgers`, and `full-memory-local`.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
