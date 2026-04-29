@@ -82,7 +82,7 @@ Work in this order unless a production break interrupts it:
 
 ### Track E: Repo Resolution And Builder Safety
 
-- [ ] Add local repo/module/capability index.
+- [x] Add local repo/module/capability index.
 - [ ] Add hard target-repo confirmation gate before builds and file-writing missions.
 - [ ] Add stale Spawner payload detection and drift warning.
 - [ ] Ground build-quality self-review in target repo, diff, tests, route, and demo state.
@@ -139,8 +139,8 @@ Work in this order unless a production break interrupts it:
 ## Current Commit Checkpoints
 
 - `domain-chip-memory`: this task tracker records the recovery context injection checkpoint.
-- `spark-intelligence-builder`: `5720bf7` injects runtime capability state into context capsules and System Registry for local work, Spawner, Codex-supervised work, and repo inspection.
-- Next commit target: add local repo/module/capability index before more build automation.
+- `spark-intelligence-builder`: `9df29b5` adds a local project index and surfaces repo/module/capability evidence through System Registry and context capsules.
+- Next commit target: add hard target-repo confirmation gate before builds and file-writing missions.
 - Current fast validation command: `python scripts/run_memory_test_batch.py --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -819,5 +819,6 @@ Implementation starts in `spark-intelligence-builder` with `memory.salience`, th
 - [x] Add procedural lesson ledger for target drift, wrong build targets, self-review gaps, and timeout recovery.
 - [x] Inject pending tasks and procedural lessons into context capsules and hybrid memory packets for resume/retry continuity.
 - [x] Inject runtime capability state into the context capsule so Spark can name local work, Spawner, Codex-supervised work, and repo-inspection routes without underclaiming.
+- [x] Add local repo/module/capability index and expose repo evidence in System Registry and context capsules.
 - [x] Add curated memory unit-test batches: `fast-contract`, `telegram-memory-unit`, `architecture-promotion`, `diagnostics-ledgers`, and `full-memory-local`.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
