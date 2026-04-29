@@ -120,7 +120,7 @@ Work in this order unless a production break interrupts it:
 - [x] Add local Builder state export feeding dashboard recall events, memory lanes, policy gates, quarantine, delivery, and pending-task counts.
 - [x] Wire dashboard to domain-chip health history and benchmark scorecard summaries.
 - [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
-- [ ] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
+- [x] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
 
 ### Track I: Evaluation Harness
 
@@ -226,7 +226,8 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [x] Memory-quality dashboard target corrected: standalone repo is now explicit and Builder discovers it.
 - [x] Memory-quality dashboard can load exported Builder ledger counts and live recall events from the local Spark state DB.
 - [x] Memory-quality dashboard can load domain-chip score history and benchmark scorecard summaries.
-- [ ] Memory-quality dashboard still needs richer live Builder ledger feeds and operator launch wiring.
+- [ ] Memory-quality dashboard still needs richer live Builder ledger feeds beyond exported snapshots.
+- [x] Memory-quality dashboard has operator launch wiring from Spark/Telegram with URL, refresh command, test/demo evidence, and source explanation.
 - [ ] Episodic recall is missing: Spark needs session/day/project summaries for "what did we build today?" and "what else do you remember?".
 - [ ] Source-aware recall needs to be universal: answers should say whether memory came from current state, older memory, raw episode, graph sidecar, inference, diagnostics, or workflow residue.
 - [ ] Context memory is too small for real work: live Builder capsule code currently defaults to a 5,000-character rendered capsule, 3 recent same-session turn pairs, and 260-character compacted turns in `src/spark_intelligence/context/capsule.py`.
