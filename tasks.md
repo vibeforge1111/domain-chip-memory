@@ -117,7 +117,8 @@ Work in this order unless a production break interrupts it:
 - [ ] Add operator inspect commands for lane decisions, blocked candidates, salience reasons, and promotion outcomes.
 - [x] Keep memory-quality dashboard in standalone `spark-memory-quality-dashboard` repo.
 - [x] Add first architecture-readiness dashboard slice and route/test/demo evidence.
-- [ ] Wire dashboard to actual Builder/domain-chip ledgers, not static architecture state/sample recall data.
+- [x] Add local Builder state export feeding dashboard recall events, memory lanes, policy gates, quarantine, delivery, and pending-task counts.
+- [ ] Wire dashboard to domain-chip benchmark scorecards and richer Builder ledgers, not only exported local state snapshots.
 - [ ] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
 
 ### Track I: Evaluation Harness
@@ -222,7 +223,8 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [x] Self-review is not grounded: build quality ratings now route through local target repo, git status/diff, test evidence, route evidence, and demo evidence before answering.
 - [ ] Source attribution is still uneven: answers must distinguish current capsule, older memory, raw episode, inference, and unverified claims.
 - [x] Memory-quality dashboard target corrected: standalone repo is now explicit and Builder discovers it.
-- [ ] Memory-quality dashboard still needs live ledger wiring: replace static architecture state/sample recall data with Builder/domain-chip feeds.
+- [x] Memory-quality dashboard can load exported Builder ledger counts and live recall events from the local Spark state DB.
+- [ ] Memory-quality dashboard still needs domain-chip scorecard wiring and richer live ledger feeds.
 - [ ] Episodic recall is missing: Spark needs session/day/project summaries for "what did we build today?" and "what else do you remember?".
 - [ ] Source-aware recall needs to be universal: answers should say whether memory came from current state, older memory, raw episode, graph sidecar, inference, diagnostics, or workflow residue.
 - [ ] Context memory is too small for real work: live Builder capsule code currently defaults to a 5,000-character rendered capsule, 3 recent same-session turn pairs, and 260-character compacted turns in `src/spark_intelligence/context/capsule.py`.
