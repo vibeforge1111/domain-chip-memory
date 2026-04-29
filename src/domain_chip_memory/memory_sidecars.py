@@ -477,6 +477,8 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
                 return "unsupported_backend", backend
             if self.auto_build_indices and not self._client_initialized and hasattr(self.client, "build_indices_and_constraints"):
                 _run_maybe_async(self.client.build_indices_and_constraints())
+                if backend == "kuzu":
+                    self._build_kuzu_fulltext_indices(self.client)
                 self._client_initialized = True
             return "ready", self.client
         except ImportError as exc:
@@ -507,6 +509,39 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
             raise ValueError("neo4j_config_incomplete")
         return Graphiti(uri, user, password, **self._graphiti_client_kwargs())
 
+    def _build_kuzu_fulltext_indices(self, client: Any) -> None:
+        from graphiti_core.driver.driver import GraphProvider
+        from graphiti_core.graph_queries import get_fulltext_indices
+
+        driver = getattr(client, "driver", None)
+        if driver is None or not hasattr(driver, "execute_query"):
+            return
+        marker_path = self._kuzu_fulltext_index_marker_path()
+        if marker_path is not None and marker_path.exists():
+            return
+        for query in get_fulltext_indices(GraphProvider.KUZU):
+            try:
+                _run_maybe_async(driver.execute_query(query), timeout_seconds=self.call_timeout_seconds)
+            except Exception:
+                continue
+        if marker_path is not None:
+            try:
+                marker_path.parent.mkdir(parents=True, exist_ok=True)
+                marker_path.write_text("built\n", encoding="utf-8")
+            except Exception:
+                pass
+
+    def _kuzu_fulltext_index_marker_path(self) -> Path | None:
+        if str(self.backend or "").strip().lower() != "kuzu":
+            return None
+        db_path = self.db_path or os.environ.get("KUZU_DB")
+        if not db_path or db_path == ":memory:":
+            return None
+        path = Path(db_path)
+        marker_dir = path.parent if path.suffix else path
+        digest = hashlib.sha1(f"{self.group_id}:{path.name}".encode("utf-8")).hexdigest()[:12]
+        return marker_dir / f".spark_graphiti_fts_indices_built_{digest}"
+
     def _graphiti_client_kwargs(self) -> JsonDict:
         kwargs: JsonDict = {
             "embedder": _graphiti_hash_embedder(),
@@ -514,6 +549,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
         }
         api_key = self.llm_api_key or _read_optional_env(self.llm_api_key_env) or _read_optional_env("OPENAI_API_KEY")
         if not api_key or not (self.llm_base_url or self.llm_model):
+            kwargs["llm_client"] = _graphiti_unavailable_llm_client()
             return kwargs
         from graphiti_core.llm_client.config import LLMConfig
         from graphiti_core.llm_client.openai_generic_client import OpenAIGenericClient
@@ -543,6 +579,8 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
         }
 
     def _add_episode_to_graphiti(self, client: Any, payload: JsonDict) -> str | None:
+        if self._can_direct_upsert_structured_fact(payload):
+            return self._direct_upsert_structured_fact(client, payload)
         result = _run_maybe_async(
             client.add_episode(
                 name=payload["name"],
@@ -556,9 +594,121 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
         )
         return str(getattr(result, "uuid", "") or payload["name"] or "")
 
+    def _can_direct_upsert_structured_fact(self, payload: JsonDict) -> bool:
+        metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+        predicate = str(metadata.get("predicate") or "").strip()
+        value = str(metadata.get("value") or metadata.get("normalized_value") or "").strip()
+        source_class = str(metadata.get("source_class") or payload.get("source_description") or "").strip()
+        if not predicate or predicate == "raw_turn" or not value:
+            return False
+        return source_class in {
+            "current_state",
+            "retrieved_evidence",
+            "retrieved_events",
+            "entity_current_state",
+            "historical_state",
+        }
+
+    def _direct_upsert_structured_fact(self, client: Any, payload: JsonDict) -> str:
+        return str(
+            _run_maybe_async(
+                self._direct_upsert_structured_fact_async(client, payload),
+                timeout_seconds=self.call_timeout_seconds,
+            )
+        )
+
+    async def _direct_upsert_structured_fact_async(self, client: Any, payload: JsonDict) -> str:
+        from graphiti_core.edges import EntityEdge, EpisodicEdge, create_entity_edge_embeddings
+        from graphiti_core.nodes import EntityNode, EpisodeType, EpisodicNode, create_entity_node_embeddings
+        from graphiti_core.utils.datetime_utils import utc_now
+
+        metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+        group_id = str(payload.get("group_id") or self.group_id)
+        episode_uuid = _stable_graphiti_id("episode", group_id, str(payload.get("name") or "unknown"))
+        source_key = _structured_fact_source_key(metadata)
+        target_value = str(metadata.get("value") or metadata.get("normalized_value") or "").strip()
+        predicate = str(metadata.get("predicate") or "").strip()
+        reference_time = _parse_graphiti_reference_time(payload.get("reference_time"))
+        now = utc_now()
+
+        source_node = EntityNode(
+            uuid=_stable_graphiti_id("entity", group_id, source_key),
+            name=_humanize_graphiti_entity_name(source_key),
+            group_id=group_id,
+            labels=["Entity"],
+            summary="Spark structured memory entity.",
+            created_at=now,
+            attributes={"spark_entity_key": source_key, "authority": "supporting_not_authoritative"},
+        )
+        target_node = EntityNode(
+            uuid=_stable_graphiti_id("value", group_id, predicate, target_value),
+            name=target_value,
+            group_id=group_id,
+            labels=["Entity", "Value"],
+            summary=f"Current value for {predicate}.",
+            created_at=now,
+            attributes={"spark_predicate": predicate, "authority": "supporting_not_authoritative"},
+        )
+        edge = EntityEdge(
+            uuid=_stable_graphiti_id("edge", group_id, source_key, predicate, target_value),
+            source_node_uuid=source_node.uuid,
+            target_node_uuid=target_node.uuid,
+            name=predicate,
+            fact=str(payload.get("episode_body") or "").strip() or f"{source_node.name} {predicate} {target_value}.",
+            group_id=group_id,
+            episodes=[episode_uuid],
+            created_at=now,
+            valid_at=reference_time,
+            reference_time=reference_time,
+            attributes={
+                "source_record_id": metadata.get("source_record_id"),
+                "source_class": metadata.get("source_class"),
+                "predicate": predicate,
+                "value": target_value,
+                "authority": "supporting_not_authoritative",
+            },
+        )
+        episode = EpisodicNode(
+            uuid=episode_uuid,
+            name=str(payload.get("name") or episode_uuid),
+            group_id=group_id,
+            labels=[],
+            source=EpisodeType.text,
+            content=str(payload.get("episode_body") or ""),
+            source_description=str(payload.get("source_description") or "spark_structured_memory"),
+            created_at=now,
+            valid_at=reference_time,
+            entity_edges=[edge.uuid],
+        )
+        mention_source = EpisodicEdge(
+            source_node_uuid=episode.uuid,
+            target_node_uuid=source_node.uuid,
+            group_id=group_id,
+            created_at=now,
+        )
+        mention_target = EpisodicEdge(
+            source_node_uuid=episode.uuid,
+            target_node_uuid=target_node.uuid,
+            group_id=group_id,
+            created_at=now,
+        )
+
+        await create_entity_node_embeddings(client.embedder, [source_node, target_node])
+        await create_entity_edge_embeddings(client.embedder, [edge])
+        await source_node.save(client.driver)
+        await target_node.save(client.driver)
+        await edge.save(client.driver)
+        await episode.save(client.driver)
+        await mention_source.save(client.driver)
+        await mention_target.save(client.driver)
+        return edge.uuid
+
     def _search_graphiti(self, client: Any, request: MemorySidecarRetrievalRequest) -> list[Any]:
         try:
-            result = _run_maybe_async(client.search(request.query, num_results=request.top_k), timeout_seconds=self.call_timeout_seconds)
+            result = _run_maybe_async(
+                client.search(request.query, group_ids=[self.group_id], num_results=request.top_k),
+                timeout_seconds=self.call_timeout_seconds,
+            )
         except TypeError:
             result = _run_maybe_async(client.search(request.query), timeout_seconds=self.call_timeout_seconds)
         if result is None:
@@ -902,6 +1052,26 @@ def _graphiti_lexical_cross_encoder() -> Any:
     return _GraphitiLexicalCrossEncoder()
 
 
+def _graphiti_unavailable_llm_client() -> Any:
+    from graphiti_core.llm_client import LLMClient
+    from graphiti_core.llm_client.config import LLMConfig, ModelSize
+    from graphiti_core.llm_client.client import DEFAULT_MAX_TOKENS
+    from graphiti_core.prompts.models import Message
+    from pydantic import BaseModel
+
+    class _GraphitiUnavailableLLMClient(LLMClient):
+        async def _generate_response(
+            self,
+            messages: list[Message],
+            response_model: type[BaseModel] | None = None,
+            max_tokens: int = DEFAULT_MAX_TOKENS,
+            model_size: ModelSize = ModelSize.medium,
+        ) -> dict[str, Any]:
+            raise RuntimeError("graphiti_llm_not_configured_for_unstructured_extraction")
+
+    return _GraphitiUnavailableLLMClient(LLMConfig(model="spark-structured-only"))
+
+
 def _hash_embedding(text: str, *, dimensions: int) -> list[float]:
     vector = [0.0] * dimensions
     tokens = _tokenize_for_retrieval(text)
@@ -925,6 +1095,31 @@ def _read_optional_env(name: str | None) -> str | None:
         return None
     value = os.environ.get(str(name).strip())
     return value.strip() if value and value.strip() else None
+
+
+def _stable_graphiti_id(*parts: str) -> str:
+    text = "::".join(str(part) for part in parts)
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()
+
+
+def _structured_fact_source_key(metadata: JsonDict) -> str:
+    entity_keys = metadata.get("entity_keys")
+    if isinstance(entity_keys, list):
+        for item in entity_keys:
+            text = str(item or "").strip()
+            if text:
+                return text
+    entity_key = str(metadata.get("entity_key") or "").strip()
+    if entity_key:
+        return entity_key
+    return str(metadata.get("subject") or metadata.get("source_record_id") or "unknown-entity").strip()
+
+
+def _humanize_graphiti_entity_name(value: str) -> str:
+    text = str(value or "").strip()
+    if ":" in text:
+        text = text.rsplit(":", 1)[-1]
+    return text.replace("-", " ").replace("_", " ").strip() or value
 
 
 def _run_maybe_async(value: Any, *, timeout_seconds: float | None = None) -> Any:

@@ -267,6 +267,46 @@ def test_graphiti_local_embedder_and_reranker_are_deterministic() -> None:
     assert ranked[0][0] == "creator approvals block the GTM launch"
 
 
+def test_graphiti_kuzu_direct_structured_upsert_avoids_llm_extraction(tmp_path) -> None:
+    bootstrap_adapter = GraphitiCompatibleMemorySidecarAdapter(
+        enabled=True,
+        mode="shadow",
+        backend="kuzu",
+        db_path=str(tmp_path / "graphiti.kuzu"),
+        auto_build_indices=True,
+        call_timeout_seconds=8.0,
+    )
+    client = bootstrap_adapter._create_kuzu_client()
+    bootstrap_adapter._build_kuzu_fulltext_indices(client)
+    adapter = GraphitiCompatibleMemorySidecarAdapter(
+        enabled=True,
+        mode="shadow",
+        backend="kuzu",
+        client=client,
+        call_timeout_seconds=8.0,
+    )
+    episode = MemorySidecarEpisode(
+        source_record_id="obs-gtm-status",
+        source_class="current_state",
+        text="The GTM launch status is ready.",
+        subject="human:test",
+        predicate="entity.status",
+        timestamp="2026-04-29T13:20:00Z",
+        entity_keys=["named-object:gtm-launch"],
+        metadata={"value": "ready", "entity_key": "named-object:gtm-launch"},
+    )
+
+    upsert = adapter.upsert_episode(episode)
+    retrieval = adapter.retrieve(MemorySidecarRetrievalRequest(query="GTM launch ready", top_k=3))
+
+    assert upsert.status == "persisted"
+    assert upsert.trace["persisted"] is True
+    assert upsert.sidecar_ids
+    assert retrieval.trace["status"] == "ok"
+    assert retrieval.trace["backend_configured"] is True
+    assert retrieval.hits
+
+
 def test_default_sidecars_keep_graphiti_feature_flag_off_by_default() -> None:
     sidecars = build_default_memory_sidecars()
 
