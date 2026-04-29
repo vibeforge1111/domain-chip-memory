@@ -67,7 +67,7 @@ Work in this order unless a production break interrupts it:
 ### Track C: Episodic And Semantic Continuity
 
 - [x] Add session summary writer: what changed, decisions, open questions, repos touched, artifacts created, promises made.
-- [ ] Add daily/project summary writer.
+- [x] Add daily/project summary writer.
 - [ ] Add semantic consolidation beyond archive/delete/supersede.
 - [ ] Increase same-session continuity beyond 3 turn pairs / 260-char compaction.
 - [ ] Add large-context reservoir targeting 200k+ reconstructable context, separate from compact Telegram packet.
@@ -139,8 +139,8 @@ Work in this order unless a production break interrupts it:
 ## Current Commit Checkpoints
 
 - `domain-chip-memory`: `732ab81` tracks memory lane cleanup progress.
-- `spark-intelligence-builder`: `162514b` adds curated memory test batches for contract-first validation.
-- Next commit target: daily/project summary writer for semantic continuity in `spark-intelligence-builder`.
+- `spark-intelligence-builder`: `614515c` adds daily and project memory summaries for semantic continuity.
+- Next commit target: pending-task ledger for timeout and workflow recovery in `spark-intelligence-builder`.
 - Current fast validation command: `python scripts/run_memory_test_batch.py --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -575,7 +575,7 @@ Goal: make Spark remember work, interruptions, and project flow rather than isol
   - repos touched
   - artifacts created
   - promises Spark made
-- [ ] Add daily/project summary writer.
+- [x] Add daily/project summary writer.
 - [ ] Add pending-task ledger:
   - original request
   - target repo/component
@@ -814,5 +814,6 @@ Implementation starts in `spark-intelligence-builder` with `memory.salience`, th
 - [x] Treat identity corrections as high-salience supersession writes.
 - [x] Make preferred-name corrections entity-keyed authoritative current identity writes.
 - [x] Add deterministic session summary writer for episodic continuity.
+- [x] Add daily/project summary writer for semantic continuity.
 - [x] Add curated memory unit-test batches: `fast-contract`, `telegram-memory-unit`, `architecture-promotion`, `diagnostics-ledgers`, and `full-memory-local`.
 - [ ] Re-run the short Spark AGI/Tester source-explanation check after deploying the source-mix calibration.
