@@ -128,6 +128,8 @@ Work in this order unless a production break interrupts it:
 - [x] Add salience, policy-gate, lane-decision, and promotion-reason feed from Builder ledgers.
 - [x] Add sampled salience lane audits showing promoted, blocked, raw-episode, and policy-block rows.
 - [x] Wire dashboard to domain-chip health history and benchmark scorecard summaries.
+- [x] Export typed archive lifecycle transition records from Builder and render them in dashboard lifecycle trace cards.
+  - 2026-05-01: Builder emits `memory_lifecycle_transition` for structured evidence, raw episodes, and beliefs when archive tombstones are accepted; dashboard exports `lifecycleTransitions` and renders recent source text, role, reason, destination, and trace id.
 - [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
 - [x] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
 
@@ -167,7 +169,7 @@ Work in this order unless a production break interrupts it:
 - `spark-memory-quality-dashboard`: `2e4d32c` adds a human-readable memory lifecycle trace panel for accepted, episodic, blocked, context packet, and decay/export gaps.
 - `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
 - `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
-- Next commit target: export typed lifecycle transition records for decay, archive, compaction, supersession, resurrection, and salience deltas; then extend episodic recall from daily/project to session-specific scopes.
+- Next commit target: extend lifecycle transitions beyond archive into decay, compaction, supersession, resurrection, and salience deltas; then extend episodic recall from daily/project to session-specific scopes.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
