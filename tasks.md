@@ -76,6 +76,8 @@ Work in this order unless a production break interrupts it:
 - [x] Add "what did we build today?" and "what else do you remember?" source-aware routes.
   - 2026-05-01: Builder daily episodic recall route landed (`cb6ddd1`) for "what changed today?", "what did we build/work on today?", "what is still open today?", "what did we promise today?", and "what else do you remember today?".
   - 2026-05-01: Builder project episodic recall route landed (`68664b0`) for "what changed in/for <project> today?", "what happened with <project> today?", and project-scoped open/build recall.
+- [x] Add session-scoped episodic recall for the current Telegram conversation.
+  - 2026-05-01: Builder now answers "what happened/worked/changed in this chat/conversation/session?" from the current session event ledger and explains the session episodic route on "why did you answer that?".
 
 ### Track D: Timeout, Task, And Workflow Recovery
 
@@ -175,7 +177,7 @@ Work in this order unless a production break interrupts it:
 - `spark-memory-quality-dashboard`: `2e4d32c` adds a human-readable memory lifecycle trace panel for accepted, episodic, blocked, context packet, and decay/export gaps.
 - `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
 - `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
-- Next commit target: extend lifecycle transitions into resurrection and decay score deltas; then extend episodic recall from daily/project to session-specific scopes.
+- Next commit target: extend lifecycle transitions into resurrection and decay score deltas; then expand source-aware recall coverage beyond the currently routed memory answers.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
