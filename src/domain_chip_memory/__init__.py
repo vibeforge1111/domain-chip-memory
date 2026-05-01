@@ -9,6 +9,7 @@ from .sdk import (
     MemoryMaintenanceResult,
     MemoryWriteRequest,
     SparkMemorySDK,
+    build_dashboard_movement_export_contract_summary,
     build_sdk_contract_summary,
     build_sdk_maintenance_replay_contract_summary,
 )
@@ -65,6 +66,7 @@ __all__ = [
     "EvidenceRetrievalRequest",
     "EventRetrievalRequest",
     "AnswerExplanationRequest",
+    "build_dashboard_movement_export_contract_summary",
     "build_sdk_contract_summary",
     "build_sdk_maintenance_replay_contract_summary",
     "SparkShadowIngestAdapter",

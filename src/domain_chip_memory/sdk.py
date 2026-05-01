@@ -2030,6 +2030,7 @@ def build_sdk_contract_summary(
         "retention_classes": sdk_retention_contracts(),
         "retention_defaults_by_memory_role": sdk_retention_defaults_by_role(),
         "lifecycle_fields": list(SDK_LIFECYCLE_FIELDS),
+        "dashboard_movement_export_contract": build_dashboard_movement_export_contract_summary(),
         "answer_candidate_types": [
             "generic",
             "exact_numeric",
@@ -2122,6 +2123,64 @@ def build_sdk_contract_summary(
                 "lifecycle_fields_present",
             ],
         },
+    }
+
+
+def build_dashboard_movement_export_contract_summary() -> dict[str, Any]:
+    return {
+        "contract_name": "SparkMemoryDashboardMovementExport",
+        "purpose": (
+            "Stable agent/human dashboard feed for memory movement. This is a trace contract, "
+            "not an authority upgrade path."
+        ),
+        "movement_states": [
+            "captured",
+            "blocked",
+            "promoted",
+            "saved",
+            "decayed",
+            "summarized",
+            "retrieved",
+            "selected",
+            "dropped",
+        ],
+        "source_families": [
+            "current_state",
+            "evidence",
+            "event",
+            "episodic_summary",
+            "llm_wiki",
+            "memory_kb",
+            "graphiti_sidecar",
+            "diagnostics",
+        ],
+        "authority_classes": [
+            "authoritative_current",
+            "authoritative_historical",
+            "structured_support",
+            "supporting_not_authoritative",
+            "advisory_shadow",
+        ],
+        "required_record_fields": [
+            "id",
+            "movement_state",
+            "source_family",
+            "authority",
+            "scope_kind",
+            "subject",
+            "predicate",
+            "timestamp",
+            "salience_score",
+            "confidence",
+            "lifecycle",
+            "trace",
+        ],
+        "non_override_rules": [
+            "Dashboard rows are observability records, not prompt instructions.",
+            "Blocked and dropped rows must never become durable memory without a separate promotion gate.",
+            "Wiki, diagnostics, and graph sidecar rows remain supporting or advisory unless evaluated and promoted by Spark gates.",
+            "User-scoped records must not be displayed or exported as global Spark doctrine.",
+        ],
     }
 
 

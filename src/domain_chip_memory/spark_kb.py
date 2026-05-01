@@ -140,22 +140,53 @@ def _markdown_frontmatter(
     summary: str,
     generated_at: str,
     tags: list[str],
+    authority: str = "supporting_not_authoritative",
+    owner_system: str = "domain-chip-memory",
+    wiki_family: str | None = None,
+    source_of_truth: str = "SparkMemorySDK",
+    scope_kind: str = "governed_memory",
+    freshness: str = "snapshot_generated",
 ) -> str:
     tag_text = ", ".join(tags)
+    family = wiki_family or _wiki_family_for_page_type(page_type)
     return "\n".join(
         [
             "---",
             f"title: {_yaml_scalar(title)}",
             f"date_created: {generated_at[:10]}",
             f"date_modified: {generated_at[:10]}",
+            f"generated_at: {_yaml_scalar(generated_at)}",
             f"summary: {_yaml_scalar(summary)}",
             f"tags: [{tag_text}]",
             f"type: {page_type}",
             "status: generated",
+            f"authority: {authority}",
+            f"owner_system: {owner_system}",
+            f"wiki_family: {family}",
+            f"scope_kind: {scope_kind}",
+            f"source_of_truth: {source_of_truth}",
+            f"freshness: {freshness}",
             "---",
             "",
         ]
     )
+
+
+def _wiki_family_for_page_type(page_type: str) -> str:
+    normalized = str(page_type or "").strip().lower().replace("-", "_")
+    if normalized == "current_state":
+        return "memory_kb_current_state"
+    if normalized == "evidence":
+        return "memory_kb_evidence"
+    if normalized == "event":
+        return "memory_kb_event"
+    if normalized == "synthesis":
+        return "memory_kb_synthesis"
+    if normalized == "output":
+        return "memory_kb_output"
+    if normalized == "source":
+        return "memory_kb_source"
+    return "memory_kb_index"
 
 
 def _render_record_details(record: dict[str, Any]) -> str:

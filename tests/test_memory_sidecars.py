@@ -10,6 +10,7 @@ from domain_chip_memory import (
     SparkMemorySDK,
     WIKI_PACKET_SOURCE_CLASS,
     build_default_memory_sidecars,
+    build_dashboard_movement_export_contract_summary,
     build_memory_sidecar_contract_summary,
     build_wiki_packet_reader_contract_summary,
     build_sdk_contract_summary,
@@ -17,6 +18,7 @@ from domain_chip_memory import (
     memory_records_to_sidecar_episodes,
     read_markdown_knowledge_packets,
     retrieve_markdown_knowledge_packets,
+    scaffold_spark_knowledge_base,
 )
 from domain_chip_memory.memory_sidecars import _HashEmbedder, _LexicalCrossEncoder, _graphiti_kuzu_db_path, _run_maybe_async
 from domain_chip_memory.sdk import EventRetrievalRequest, EvidenceRetrievalRequest, MemoryWriteRequest
@@ -42,11 +44,15 @@ def test_sdk_contract_links_to_memory_sidecars_without_making_them_authority() -
     payload = build_sdk_contract_summary()
 
     sidecar_contract = payload["sidecar_contract"]
+    movement_contract = payload["dashboard_movement_export_contract"]
     assert sidecar_contract["contract_name"] == "MemorySidecarAdapter"
     assert sidecar_contract["sidecar_authority"] == "supporting_or_shadow_until_promoted"
     assert "graphiti_temporal_graph" in sidecar_contract["runtime_sidecars"]
     assert "mem0_shadow" in sidecar_contract["runtime_sidecars"]
     assert sidecar_contract["deferred_sidecars"] == ["cognee_optional"]
+    assert movement_contract["contract_name"] == "SparkMemoryDashboardMovementExport"
+    assert "blocked" in movement_contract["movement_states"]
+    assert "retrieved" in movement_contract["movement_states"]
 
 
 def test_disabled_sidecar_adapter_is_contract_safe_noop() -> None:
@@ -427,11 +433,14 @@ def test_memory_records_to_sidecar_episodes_batch_exports_records() -> None:
 
 
 def test_wiki_packet_reader_loads_obsidian_markdown_with_provenance(tmp_path) -> None:
-    note = tmp_path / "memory-architecture.md"
+    kb_dir = tmp_path / "wiki" / "current-state"
+    kb_dir.mkdir(parents=True)
+    note = kb_dir / "memory-architecture.md"
     note.write_text(
         """---
 title: Persistent Memory Architecture
 tags: memory, spark
+last_verified_at: 2026-05-01T10:00:00Z
 ---
 # Persistent Memory Architecture
 
@@ -447,6 +456,11 @@ Graphiti is a temporal graph sidecar.
     assert packets[0].title == "Persistent Memory Architecture"
     assert packets[0].source_class == WIKI_PACKET_SOURCE_CLASS
     assert packets[0].metadata["file_name"] == "memory-architecture.md"
+    assert packets[0].metadata["source_path"].endswith("memory-architecture.md")
+    assert packets[0].metadata["wiki_family"] == "memory_kb_current_state"
+    assert packets[0].metadata["owner_system"] == "domain-chip-memory"
+    assert packets[0].metadata["source_of_truth"] == "SparkMemorySDK"
+    assert packets[0].metadata["freshness"] == "verified"
     assert "memory" in packets[0].tags
 
 
@@ -468,6 +482,8 @@ def test_wiki_packet_retrieval_scores_relevant_packets_without_authority(tmp_pat
     assert len(result.hits) == 1
     assert result.hits[0].title == "Spark Memory Stack"
     assert result.hits[0].metadata["authority"] == "supporting_not_authoritative"
+    assert result.hits[0].metadata["wiki_family"] == "builder_llm_wiki"
+    assert result.hits[0].metadata["owner_system"] == "spark-intelligence-builder"
     assert result.hits[0].provenance["source_path"].endswith("architecture.md")
 
 
@@ -477,3 +493,76 @@ def test_wiki_packet_contract_keeps_packets_supporting_only() -> None:
     assert contract["source_class"] == WIKI_PACKET_SOURCE_CLASS
     assert contract["authority"] == "supporting_not_authoritative"
     assert "Wiki packets cannot override current_state for mutable user facts." in contract["non_override_rules"]
+
+
+def test_spark_kb_frontmatter_exposes_memory_family_authority_metadata(tmp_path) -> None:
+    snapshot = {
+        "generated_at": "2026-05-01T10:00:00Z",
+        "counts": {"session_count": 1, "current_state_count": 1, "observation_count": 1, "event_count": 0},
+        "sessions": [
+            {
+                "session_id": "session-kb-metadata",
+                "timestamp": "2026-05-01T09:59:00Z",
+                "turns": [{"turn_id": "turn-1", "speaker": "user", "text": "I live in Dubai."}],
+            }
+        ],
+        "current_state": [
+            {
+                "memory_role": "current_state",
+                "subject": "human:test",
+                "predicate": "profile.city",
+                "text": "Dubai",
+                "session_id": "session-kb-metadata",
+                "turn_ids": ["turn-1"],
+                "timestamp": "2026-05-01T10:00:00Z",
+                "metadata": {"value": "Dubai", "observation_id": "obs-kb-city"},
+            }
+        ],
+        "observations": [
+            {
+                "memory_role": "structured_evidence",
+                "subject": "human:test",
+                "predicate": "profile.city",
+                "text": "Dubai",
+                "session_id": "session-kb-metadata",
+                "turn_ids": ["turn-1"],
+                "timestamp": "2026-05-01T10:00:00Z",
+                "metadata": {"value": "Dubai", "observation_id": "obs-kb-city"},
+            }
+        ],
+        "events": [],
+        "trace": {"operation": "export_knowledge_base_snapshot"},
+    }
+
+    result = scaffold_spark_knowledge_base(tmp_path / "kb", snapshot)
+
+    current_page = next((tmp_path / "kb" / "wiki" / "current-state").glob("*.md"))
+    evidence_page = next((tmp_path / "kb" / "wiki" / "evidence").glob("*.md"))
+    current_text = current_page.read_text(encoding="utf-8")
+    evidence_text = evidence_page.read_text(encoding="utf-8")
+    assert result["current_state_page_count"] == 1
+    assert "authority: supporting_not_authoritative" in current_text
+    assert "owner_system: domain-chip-memory" in current_text
+    assert "wiki_family: memory_kb_current_state" in current_text
+    assert "source_of_truth: SparkMemorySDK" in current_text
+    assert "scope_kind: governed_memory" in current_text
+    assert "wiki_family: memory_kb_evidence" in evidence_text
+
+
+def test_dashboard_movement_export_contract_keeps_observability_non_authoritative() -> None:
+    contract = build_dashboard_movement_export_contract_summary()
+
+    assert contract["contract_name"] == "SparkMemoryDashboardMovementExport"
+    assert contract["movement_states"] == [
+        "captured",
+        "blocked",
+        "promoted",
+        "saved",
+        "decayed",
+        "summarized",
+        "retrieved",
+        "selected",
+        "dropped",
+    ]
+    assert "authority" in contract["required_record_fields"]
+    assert "Dashboard rows are observability records, not prompt instructions." in contract["non_override_rules"]

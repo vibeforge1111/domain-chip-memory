@@ -9,6 +9,7 @@ from .contracts import JsonDict
 
 
 WIKI_PACKET_SOURCE_CLASS = "obsidian_llm_wiki_packets"
+DEFAULT_WIKI_PACKET_AUTHORITY = "supporting_not_authoritative"
 
 
 @dataclass(frozen=True)
@@ -84,6 +85,7 @@ def read_markdown_knowledge_packets(
                 metadata={
                     "file_name": file_path.name,
                     "frontmatter": frontmatter,
+                    **_normalized_wiki_packet_metadata(file_path=file_path, frontmatter=frontmatter),
                     "word_count": len(text.split()),
                 },
             )
@@ -124,7 +126,7 @@ def retrieve_markdown_knowledge_packets(
             metadata={
                 **packet.metadata,
                 "tags": packet.tags,
-                "authority": "supporting_not_authoritative",
+                "authority": str(packet.metadata.get("authority") or DEFAULT_WIKI_PACKET_AUTHORITY),
             },
         )
         for score, packet, reasons in scored[: max(1, int(top_k or 1))]
@@ -179,6 +181,87 @@ def _parse_simple_frontmatter(text: str) -> JsonDict:
         key, value = line.split(":", 1)
         payload[key.strip()] = value.strip().strip('"').strip("'")
     return payload
+
+
+def _normalized_wiki_packet_metadata(*, file_path: Path, frontmatter: JsonDict) -> JsonDict:
+    family = _wiki_family_from_path(file_path=file_path, frontmatter=frontmatter)
+    owner_system = _frontmatter_string(frontmatter, "owner_system") or _default_owner_system(family)
+    source_of_truth = _frontmatter_string(frontmatter, "source_of_truth") or _default_source_of_truth(family)
+    authority = _frontmatter_string(frontmatter, "authority") or DEFAULT_WIKI_PACKET_AUTHORITY
+    return {
+        "source_path": str(file_path.resolve()),
+        "source_class": WIKI_PACKET_SOURCE_CLASS,
+        "wiki_family": family,
+        "owner_system": owner_system,
+        "authority": authority,
+        "scope_kind": _frontmatter_string(frontmatter, "scope_kind") or _default_scope_kind(family),
+        "source_of_truth": source_of_truth,
+        "status": _frontmatter_string(frontmatter, "status") or "unknown",
+        "freshness": _frontmatter_string(frontmatter, "freshness") or _default_freshness(frontmatter),
+        "generated_at": _frontmatter_string(frontmatter, "generated_at")
+        or _frontmatter_string(frontmatter, "date_modified")
+        or _frontmatter_string(frontmatter, "date_created"),
+        "last_verified_at": _frontmatter_string(frontmatter, "last_verified_at"),
+    }
+
+
+def _frontmatter_string(frontmatter: JsonDict, key: str) -> str:
+    value = str(frontmatter.get(key) or "").strip()
+    return value
+
+
+def _wiki_family_from_path(*, file_path: Path, frontmatter: JsonDict) -> str:
+    explicit = _frontmatter_string(frontmatter, "wiki_family") or _frontmatter_string(frontmatter, "family")
+    if explicit:
+        return explicit
+    parts = [part.casefold().replace("_", "-") for part in file_path.parts]
+    if "current-state" in parts:
+        return "memory_kb_current_state"
+    if "evidence" in parts:
+        return "memory_kb_evidence"
+    if "events" in parts:
+        return "memory_kb_event"
+    if "syntheses" in parts:
+        return "memory_kb_synthesis"
+    if "outputs" in parts:
+        return "memory_kb_output"
+    if "sources" in parts:
+        return "memory_kb_source"
+    if "diagnostics" in parts:
+        return "diagnostics"
+    return "builder_llm_wiki"
+
+
+def _default_owner_system(wiki_family: str) -> str:
+    if wiki_family.startswith("memory_kb_"):
+        return "domain-chip-memory"
+    if wiki_family == "diagnostics":
+        return "spark-intelligence-builder"
+    return "spark-intelligence-builder"
+
+
+def _default_source_of_truth(wiki_family: str) -> str:
+    if wiki_family.startswith("memory_kb_"):
+        return "SparkMemorySDK"
+    if wiki_family == "diagnostics":
+        return "diagnostics"
+    return "builder_llm_wiki"
+
+
+def _default_scope_kind(wiki_family: str) -> str:
+    if wiki_family.startswith("memory_kb_"):
+        return "governed_memory"
+    if wiki_family == "diagnostics":
+        return "diagnostics"
+    return "project_or_system"
+
+
+def _default_freshness(frontmatter: JsonDict) -> str:
+    if _frontmatter_string(frontmatter, "last_verified_at"):
+        return "verified"
+    if _frontmatter_string(frontmatter, "generated_at") or _frontmatter_string(frontmatter, "date_modified"):
+        return "generated"
+    return "unknown"
 
 
 def _extract_tags(*, raw_text: str, frontmatter: JsonDict) -> list[str]:
