@@ -134,6 +134,8 @@ Work in this order unless a production break interrupts it:
   - 2026-05-01: Builder emits belief supersession transitions with old/new values and maintenance aggregate transitions for deletion, stale-preserved, superseded, and archived counts; dashboard carries old value, new value, and transition count fields.
 - [x] Export typed episodic compaction transitions for session, day, and project summaries.
   - 2026-05-01: session/day/project summary writers emit `memory_lifecycle_transition` rows with source event counts, source session counts, destination predicates, and source event ids so the dashboard can show what raw work was compacted into durable episodic summaries.
+- [x] Export typed salience keep/block transitions with scores and reasons.
+  - 2026-05-01: Builder emits salience lifecycle transitions when memory candidates are promoted, captured, or blocked; dashboard lifecycle cards now show salience score, promotion stage, keepability, why-saved, and reason tags.
 - [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
 - [x] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
 
@@ -173,7 +175,7 @@ Work in this order unless a production break interrupts it:
 - `spark-memory-quality-dashboard`: `2e4d32c` adds a human-readable memory lifecycle trace panel for accepted, episodic, blocked, context packet, and decay/export gaps.
 - `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
 - `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
-- Next commit target: extend lifecycle transitions into resurrection and salience deltas; then extend episodic recall from daily/project to session-specific scopes.
+- Next commit target: extend lifecycle transitions into resurrection and decay score deltas; then extend episodic recall from daily/project to session-specific scopes.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
