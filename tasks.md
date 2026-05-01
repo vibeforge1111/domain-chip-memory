@@ -98,6 +98,7 @@ Work in this order unless a production break interrupts it:
 - [x] Hybrid retrieval uses current state, historical state, evidence, events, recent conversation, wiki packets, and shadow graph lane.
 - [x] Capsule source-mix promotion gates exist.
 - [ ] Make source-aware recall universal for all memory answers.
+  - 2026-05-01: Builder now explains `memory_current_focus_plan_query` as a first-class current-state focus/plan route instead of falling back to generic context-capsule source copy (`e0d5139`).
 - [ ] Add graph sidecar hits with validity windows and provenance as advisory candidates.
 - [ ] Add explicit context packet sections for episodic summary, procedural lesson, pending task, repo capability, and graph sidecar.
 - [ ] Add operator command to inspect context reservoir budget and selected packet contents.
@@ -184,6 +185,7 @@ Work in this order unless a production break interrupts it:
 - `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
 - `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
 - `spark-memory-quality-dashboard`: pending commit adds a non-mutating lifecycle replay export for dashboard QA.
+- `spark-intelligence-builder`: `e0d5139` explains the current focus/plan memory route in source-debug replies.
 - Next commit target: expand source-aware recall coverage beyond the currently routed memory answers and generate live lifecycle rows for dashboard review.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
