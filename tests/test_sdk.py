@@ -591,6 +591,7 @@ def test_sdk_reconsolidate_marks_stale_active_state_as_preserved():
     assert maintenance.audit_samples["stale_preserved"][0]["predicate"] == "current_plan"
     assert maintenance.audit_samples["stale_preserved"][0]["revalidate_at"] == "2025-01-31T09:00:00Z"
     assert maintenance.audit_samples["stale_preserved"][0]["revalidation_lag_days"] == 60
+    assert maintenance.audit_samples["stale_preserved"][0]["decay_score_delta"] == -0.3333
     assert current_state.found is True
     assert current_state.provenance[0].metadata["active_state_maintenance_action"] == "stale_preserved"
     assert current_state.provenance[0].metadata["active_state_maintenance_reason"] == "past_revalidate_at"
@@ -717,6 +718,54 @@ def test_sdk_reconsolidate_treats_profile_current_predicate_as_single_slot_witho
         "active_state_maintenance_action"
     ] == "still_current"
     assert latest_focus.observations[0].metadata["entity_key"] == "profile.current_focus"
+
+
+def test_sdk_reconsolidate_marks_deleted_state_resurrected_by_newer_current_state():
+    sdk = SparkMemorySDK()
+    deleted_location = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="delete",
+            subject="user",
+            predicate="location",
+            timestamp="2025-02-01T09:00:00Z",
+            retention_class="active_state",
+        )
+    )
+    current_location = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="location",
+            value="Tokyo",
+            timestamp="2025-03-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "entity_key": "primary"},
+        )
+    )
+
+    maintenance = sdk.reconsolidate_manual_memory(now="2025-04-02T09:00:00Z")
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+    observations_by_id = {entry.observation_id: entry for entry in sdk._manual_observations}
+
+    assert current_state.found is True
+    assert current_state.value == "Tokyo"
+    assert maintenance.active_state_resurrected_count == 1
+    assert maintenance.trace["active_state_maintenance"]["resurrected"] == 1
+    assert maintenance.audit_samples["resurrected"][0]["predicate"] == "location"
+    assert maintenance.audit_samples["resurrected"][0]["action"] == "resurrected"
+    assert maintenance.audit_samples["resurrected"][0]["replacement_value"] == "Tokyo"
+    assert (
+        maintenance.audit_samples["resurrected"][0]["replacement_observation_id"]
+        == current_location.observations[0].observation_id
+    )
+    assert observations_by_id[deleted_location.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "resurrected"
+    assert observations_by_id[current_location.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "still_current"
 
 
 def test_sdk_explain_answer_returns_trace_and_support():

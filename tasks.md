@@ -140,6 +140,8 @@ Work in this order unless a production break interrupts it:
   - 2026-05-01: Builder emits salience lifecycle transitions when memory candidates are promoted, captured, or blocked; dashboard lifecycle cards now show salience score, promotion stage, keepability, why-saved, and reason tags.
 - [x] Export reviewable maintenance audit samples for stale-preserved, superseded, archived, deleted, and still-current memory movement.
   - 2026-05-01: SDK maintenance now returns typed audit samples with revalidation lag, replacement pointers, deletion pointers, salience, and confidence; Builder carries sample buckets/counts into lifecycle transitions; dashboard lifecycle cards render reviewable examples in plain language.
+- [x] Add resurrection transitions and decay score deltas to lifecycle maintenance traces.
+  - 2026-05-01: deletion tombstones superseded by newer current-state writes are classified as `resurrected`; stale-preserved rows now carry `decay_score_delta`; Builder emits `resurrection` lifecycle transitions and dashboard audit examples render decay deltas.
 - [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
 - [x] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
 
@@ -179,7 +181,7 @@ Work in this order unless a production break interrupts it:
 - `spark-memory-quality-dashboard`: `2e4d32c` adds a human-readable memory lifecycle trace panel for accepted, episodic, blocked, context packet, and decay/export gaps.
 - `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
 - `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
-- Next commit target: add resurrection transitions and fuller decay score deltas; then expand source-aware recall coverage beyond the currently routed memory answers.
+- Next commit target: expand source-aware recall coverage beyond the currently routed memory answers and generate live lifecycle rows for dashboard review.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
