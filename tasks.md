@@ -1,6 +1,6 @@
 # Spark Persistent Memory Integration Tasks
 
-Last updated: 2026-04-29
+Last updated: 2026-05-01
 
 This file is the build checklist for turning `domain-chip-memory` into Spark's live persistent memory system. It decides the architecture, names the remaining integration work, and defines the acceptance gates before we go back to heavy Telegram testing.
 
@@ -62,6 +62,7 @@ Work in this order unless a production break interrupts it:
 - [x] Entity summary recall answers broad questions like "what do you know about the GTM launch?".
 - [x] Preferred-name corrections are entity-keyed current identity writes.
 - [ ] Add current-state supersession metadata for target repo, active project, current task, runtime capability, and user identity.
+  - 2026-05-01: user identity correction parsing and salience are fixed in Builder (`ad3e264`); remaining work is broader supersession metadata and deployed Telegram acceptance.
 - [ ] Preserve superseded values for historical questions without letting them answer current questions.
 - [ ] Add explicit closure markers for focus/plan so clean diagnostics never imply user-level closure.
 
@@ -149,14 +150,19 @@ Work in this order unless a production break interrupts it:
 
 ## Current Commit Checkpoints
 
-- `domain-chip-memory`: `aa86b3b` fixes live Graphiti/Kuzu sidecar database path handling and keeps directory-style paths backward-compatible.
+- `domain-chip-memory`: `9a78f4b` clarifies third-party memory notices.
+- `domain-chip-memory`: `659b7b5` documents the memory readiness checkpoint.
 - `spark-cli`: `a1fbcbb` adds the Graphiti/Kuzu setup profile, installs the optional chip extra on opt-in, and pins the fixed memory chip.
+- `spark-intelligence-builder`: `ad3e264` promotes identity name corrections authoritatively.
+- `spark-intelligence-builder`: `85d9110` separates gateway readiness from advisory doctor checks.
 - `spark-intelligence-builder`: `e80cd62` wires Graphiti live sidecar config into hybrid retrieval as non-authoritative supporting evidence.
 - `domain-chip-memory`: `5e902e3` directly upserts structured Graphiti/Kuzu facts without relying on LLM extraction.
 - `spark-intelligence-builder`: `ca8be57` prioritizes entity state for Graphiti shadow exports.
 - `spark-intelligence-builder`: `d9ad5d0` gates Telegram memory writes with salience metadata.
+- `spark-memory-quality-dashboard`: `57ce4a1` paginates human memory dashboard traces.
+- `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
 - `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
-- Next commit target: make source-aware recall universal for graph hits/raw episodes and add richer episodic/procedural/pending-task packet sections.
+- Next commit target: add source-aware episodic/day/project recall, accepted-memory dashboard visibility, and a memory-review "good/bad/ugly" loop.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -226,7 +232,7 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [x] Wrong build target: `/memory-quality` was requested inside `spawner-ui`, but a standalone `spark-memory-quality-dashboard` was built instead; target confirmation and build-review evidence now force repo binding before build/review work.
 - [x] Stale target context: Spawner payloads can point at old repos such as `vibeship-spark-intelligence`; Mission Control now detects stale payload drift and build plans require target-repo confirmation.
 - [ ] Episodic memory too thin: the live capsule keeps too little same-session flow, so Spark recalls isolated facts but loses the actual work narrative.
-- [ ] Identity corrections are not authoritative enough: name corrections must become high-priority identity supersessions, not raw episodic text.
+- [x] Identity corrections are not authoritative enough: name corrections now become high-priority identity supersessions instead of raw episodic text in Builder (`ad3e264`); deploy/restart acceptance remains tracked under Telegram tests.
 - [ ] Quality gates exist but are empty: policy gates, quarantine records, and delivery registry need live writes.
 - [ ] Memory lane is mostly blocked/not-promotable: observations are accumulating without enough useful promotion into durable memory.
 - [ ] No semantic daily consolidation: maintenance compresses lifecycle state, but does not yet produce rich daily/project summaries.
@@ -276,6 +282,8 @@ Current system inspection and installer plan: `docs/SPARK_MEMORY_SYSTEM_INSPECTI
 Current memory lanes and quality gates map: `docs/MEMORY_LANES_AND_QUALITY_GATES_2026-04-28.md`.
 
 Current pre-implementation docs/license checklist: `docs/PRE_IMPLEMENTATION_DOCS_AND_LICENSE_CHECKLIST_2026-04-28.md`.
+
+Current good/bad improvement ledger: `docs/TODAY_MEMORY_IMPROVEMENT_LEDGER_2026-05-01.md`.
 
 Runtime decision:
 
