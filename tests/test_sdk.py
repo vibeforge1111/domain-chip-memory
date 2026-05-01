@@ -588,6 +588,9 @@ def test_sdk_reconsolidate_marks_stale_active_state_as_preserved():
 
     assert maintenance.active_state_stale_preserved_count == 1
     assert maintenance.trace["active_state_maintenance"]["stale_preserved"] == 1
+    assert maintenance.audit_samples["stale_preserved"][0]["predicate"] == "current_plan"
+    assert maintenance.audit_samples["stale_preserved"][0]["revalidate_at"] == "2025-01-31T09:00:00Z"
+    assert maintenance.audit_samples["stale_preserved"][0]["revalidation_lag_days"] == 60
     assert current_state.found is True
     assert current_state.provenance[0].metadata["active_state_maintenance_action"] == "stale_preserved"
     assert current_state.provenance[0].metadata["active_state_maintenance_reason"] == "past_revalidate_at"
@@ -650,6 +653,11 @@ def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():
     assert maintenance.active_state_still_current_count == 2
     assert maintenance.audit_samples["archived"][0]["predicate"] == "current_focus"
     assert maintenance.audit_samples["archived"][0]["value"] == "SDK bridge"
+    assert maintenance.audit_samples["archived"][0]["deletion_observation_id"] == delete_focus.observations[0].observation_id
+    assert maintenance.audit_samples["superseded"][0]["predicate"] == "location"
+    assert maintenance.audit_samples["superseded"][0]["value"] == "London"
+    assert maintenance.audit_samples["superseded"][0]["replacement_value"] == "Dubai"
+    assert maintenance.audit_samples["superseded"][0]["replacement_observation_id"] == current_location.observations[0].observation_id
     assert maintenance.audit_samples["deleted"][0]["predicate"] == "current_focus"
     assert maintenance.audit_samples["deleted"][0]["action"] == "deleted"
     assert maintenance.audit_samples["still_current"][0]["predicate"] in {"current_focus", "location"}

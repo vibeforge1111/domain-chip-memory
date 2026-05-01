@@ -1487,32 +1487,63 @@ class SparkMemorySDK:
                 continue
             action = "still_current"
             reason = "current_snapshot"
+            replacement: ObservationEntry | None = None
+            deletion_replacement: ObservationEntry | None = None
             if entry.observation_id in current_observation_ids:
                 if entry.predicate != "state_deletion" and self._active_state_revalidation_due(entry, maintained_at):
                     action = "stale_preserved"
                     reason = "past_revalidate_at"
             else:
                 target_predicate = state_deletion_target(entry) or entry.predicate
-                deletion_after = any(
-                    entry_sort_key(deletion) > entry_sort_key(entry)
-                    for deletion in later_deletions_by_target.get((entry.subject, target_predicate), [])
+                deletion_replacement = next(
+                    (
+                        deletion
+                        for deletion in sorted(
+                            later_deletions_by_target.get((entry.subject, target_predicate), []),
+                            key=entry_sort_key,
+                        )
+                        if entry_sort_key(deletion) > entry_sort_key(entry)
+                    ),
+                    None,
                 )
-                if deletion_after:
+                if deletion_replacement is not None:
                     action = "archived"
                     reason = "deleted_by_later_state_deletion"
-                elif any(
-                    entry_sort_key(update) > entry_sort_key(entry)
-                    for update in later_updates_by_key.get(self._active_state_entry_key(entry), [])
-                ):
+                else:
+                    replacement = next(
+                        (
+                            update
+                            for update in sorted(
+                                later_updates_by_key.get(self._active_state_entry_key(entry), []),
+                                key=entry_sort_key,
+                            )
+                            if entry_sort_key(update) > entry_sort_key(entry)
+                        ),
+                        None,
+                    )
+                if deletion_replacement is None and replacement is not None:
                     action = "superseded"
                     reason = "replaced_by_newer_current_state"
-                elif self._active_state_entry_key(entry) not in current_keys:
+                elif deletion_replacement is None and self._active_state_entry_key(entry) not in current_keys:
                     action = "superseded"
                     reason = "compacted_out_of_current_snapshot"
             metadata = dict(entry.metadata)
             metadata["active_state_maintenance_action"] = action
             metadata["active_state_maintenance_at"] = maintained_at
             metadata["active_state_maintenance_reason"] = reason
+            if replacement is not None:
+                metadata["active_state_replacement_observation_id"] = replacement.observation_id
+                metadata["active_state_replacement_value"] = _normalize_scalar(
+                    replacement.metadata.get("value") or replacement.text
+                )
+                metadata["active_state_replacement_timestamp"] = replacement.timestamp
+            if deletion_replacement is not None:
+                metadata["active_state_deletion_observation_id"] = deletion_replacement.observation_id
+                metadata["active_state_deletion_timestamp"] = deletion_replacement.timestamp
+            if action == "stale_preserved":
+                lag_days = self._active_state_revalidation_lag_days(entry, maintained_at)
+                if lag_days is not None:
+                    metadata["active_state_revalidation_lag_days"] = lag_days
             maintained.append(replace(entry, metadata=metadata))
         return maintained
 
@@ -1525,6 +1556,8 @@ class SparkMemorySDK:
         buckets = {
             "archived": [],
             "deleted": [],
+            "stale_preserved": [],
+            "superseded": [],
             "still_current": [],
         }
         for entry in sorted(
@@ -1535,6 +1568,10 @@ class SparkMemorySDK:
             action = str(entry.metadata.get("active_state_maintenance_action") or "").strip()
             if action == "archived":
                 bucket = "archived"
+            elif action == "stale_preserved":
+                bucket = "stale_preserved"
+            elif action == "superseded":
+                bucket = "superseded"
             elif action == "still_current":
                 bucket = "deleted" if entry.predicate == "state_deletion" else "still_current"
             else:
@@ -1561,6 +1598,18 @@ class SparkMemorySDK:
             "timestamp": entry.timestamp,
             "action": "deleted" if entry.predicate == "state_deletion" else action,
             "reason": _normalize_scalar(entry.metadata.get("active_state_maintenance_reason")),
+            "salience_score": entry.metadata.get("salience_score"),
+            "confidence": entry.metadata.get("confidence"),
+            "revalidate_at": _normalize_scalar(entry.metadata.get("revalidate_at")),
+            "maintenance_at": _normalize_scalar(entry.metadata.get("active_state_maintenance_at")),
+            "revalidation_lag_days": entry.metadata.get("active_state_revalidation_lag_days"),
+            "replacement_observation_id": _normalize_scalar(
+                entry.metadata.get("active_state_replacement_observation_id")
+            ),
+            "replacement_value": _normalize_scalar(entry.metadata.get("active_state_replacement_value")),
+            "replacement_timestamp": _normalize_scalar(entry.metadata.get("active_state_replacement_timestamp")),
+            "deletion_observation_id": _normalize_scalar(entry.metadata.get("active_state_deletion_observation_id")),
+            "deletion_timestamp": _normalize_scalar(entry.metadata.get("active_state_deletion_timestamp")),
         }
 
     def _is_active_state_observation(self, entry: ObservationEntry) -> bool:
@@ -1610,6 +1659,22 @@ class SparkMemorySDK:
         if now.tzinfo is None:
             now = now.replace(tzinfo=timezone.utc)
         return due_at <= now
+
+    def _active_state_revalidation_lag_days(self, entry: ObservationEntry, maintained_at: str) -> int | None:
+        metadata = entry.metadata if isinstance(entry.metadata, dict) else {}
+        revalidate_at = str(metadata.get("revalidate_at") or "").strip()
+        if not revalidate_at:
+            return None
+        try:
+            due_at = datetime.fromisoformat(revalidate_at.replace("Z", "+00:00"))
+            now = datetime.fromisoformat(maintained_at.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if due_at.tzinfo is None:
+            due_at = due_at.replace(tzinfo=timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        return max(0, (now - due_at).days)
 
     def _write_has_supported_memory(
         self,
