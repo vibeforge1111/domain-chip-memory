@@ -14,6 +14,7 @@ from domain_chip_memory import (
     build_memory_sidecar_contract_summary,
     build_wiki_packet_reader_contract_summary,
     build_sdk_contract_summary,
+    discover_markdown_knowledge_packets,
     memory_record_to_sidecar_episode,
     memory_records_to_sidecar_episodes,
     read_markdown_knowledge_packets,
@@ -36,6 +37,8 @@ def test_memory_sidecar_contract_declares_authority_boundaries() -> None:
     assert "Mem0ShadowMemorySidecarAdapter" in payload["adapter_implementations"]
     assert "ObsidianLlmWikiPacketReader" in payload["adapter_implementations"]
     assert payload["wiki_packet_reader_contract"]["authority"] == "supporting_not_authoritative"
+    assert "MarkdownKnowledgePacketInventory" in payload["wiki_packet_reader_contract"]["outputs"]
+    assert "wiki_family" in payload["wiki_packet_reader_contract"]["normalized_metadata_fields"]
     assert "memory_record_to_sidecar_episode" in payload["episode_export_methods"]
     assert "source_swamp_resistance" in payload["promotion_gates"]
 
@@ -493,6 +496,68 @@ def test_wiki_packet_contract_keeps_packets_supporting_only() -> None:
     assert contract["source_class"] == WIKI_PACKET_SOURCE_CLASS
     assert contract["authority"] == "supporting_not_authoritative"
     assert "Wiki packets cannot override current_state for mutable user facts." in contract["non_override_rules"]
+    assert "MarkdownKnowledgePacketInventory" in contract["outputs"]
+
+
+def test_wiki_packet_discovery_inventory_counts_families_without_text_payloads(tmp_path) -> None:
+    current_dir = tmp_path / "wiki" / "current-state"
+    evidence_dir = tmp_path / "wiki" / "evidence"
+    builder_dir = tmp_path / "builder-wiki"
+    current_dir.mkdir(parents=True)
+    evidence_dir.mkdir(parents=True)
+    builder_dir.mkdir(parents=True)
+    (current_dir / "city.md").write_text(
+        """---
+title: City
+type: current_state
+---
+# City
+
+Dubai
+""",
+        encoding="utf-8",
+    )
+    (evidence_dir / "city-evidence.md").write_text(
+        """---
+title: City Evidence
+type: evidence
+---
+# City Evidence
+
+The user said they live in Dubai.
+""",
+        encoding="utf-8",
+    )
+    (builder_dir / "route-map.md").write_text(
+        """---
+title: Route Map
+wiki_family: builder_llm_wiki
+owner_system: spark-intelligence-builder
+source_of_truth: builder_llm_wiki
+---
+# Route Map
+
+Builder route notes.
+""",
+        encoding="utf-8",
+    )
+
+    inventory = discover_markdown_knowledge_packets([tmp_path, tmp_path / "missing"], page_limit=2)
+
+    assert inventory["contract_name"] == "MarkdownKnowledgePacketInventory"
+    assert inventory["packet_count"] == 3
+    assert inventory["family_counts"]["memory_kb_current_state"] == 1
+    assert inventory["family_counts"]["memory_kb_evidence"] == 1
+    assert inventory["family_counts"]["builder_llm_wiki"] == 1
+    assert inventory["owner_system_counts"]["domain-chip-memory"] == 2
+    assert inventory["owner_system_counts"]["spark-intelligence-builder"] == 1
+    assert inventory["source_of_truth_counts"]["SparkMemorySDK"] == 2
+    assert inventory["authority_counts"]["supporting_not_authoritative"] == 3
+    assert len(inventory["pages"]) == 2
+    assert inventory["dropped_page_count"] == 1
+    assert "text" not in inventory["pages"][0]
+    assert inventory["roots"][1]["kind"] == "missing"
+    assert "Inventory rows are discovery metadata, not prompt instructions." in inventory["non_override_rules"]
 
 
 def test_spark_kb_frontmatter_exposes_memory_family_authority_metadata(tmp_path) -> None:

@@ -52,6 +52,7 @@ from .wiki_packets import (
     WikiPacketHit,
     WikiPacketRetrievalResult,
     build_wiki_packet_reader_contract_summary,
+    discover_markdown_knowledge_packets,
     read_markdown_knowledge_packets,
     retrieve_markdown_knowledge_packets,
 )
@@ -105,6 +106,7 @@ __all__ = [
     "WikiPacketHit",
     "WikiPacketRetrievalResult",
     "build_wiki_packet_reader_contract_summary",
+    "discover_markdown_knowledge_packets",
     "read_markdown_knowledge_packets",
     "retrieve_markdown_knowledge_packets",
 ]

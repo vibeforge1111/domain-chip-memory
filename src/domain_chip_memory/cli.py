@@ -65,6 +65,7 @@ from .spark_integration import build_spark_integration_contract_summary
 from .spark_kb import build_spark_kb_contract_summary, build_spark_kb_health_report, scaffold_spark_knowledge_base
 from .watchtower import build_watchtower_summary
 from .contracts import NormalizedBenchmarkSample
+from .wiki_packets import discover_markdown_knowledge_packets
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -10638,6 +10639,14 @@ def main() -> None:
     spark_kb_health = subparsers.add_parser("spark-kb-health-check", help="Run health checks over a scaffolded Spark KB vault.")
     spark_kb_health.add_argument("output_dir")
     spark_kb_health.add_argument("--write")
+    discover_markdown_packets = subparsers.add_parser(
+        "discover-markdown-knowledge-packets",
+        help="Inventory markdown wiki/KB packet families without returning page text.",
+    )
+    discover_markdown_packets.add_argument("paths", nargs="+")
+    discover_markdown_packets.add_argument("--max-file-bytes", type=int, default=200_000)
+    discover_markdown_packets.add_argument("--page-limit", type=int, default=200)
+    discover_markdown_packets.add_argument("--write")
     run_sdk_maintenance = subparsers.add_parser("run-sdk-maintenance-report", help="Replay explicit SDK writes from JSON and emit a maintenance report.")
     run_sdk_maintenance.add_argument("data_file")
     run_sdk_maintenance.add_argument("--write")
@@ -11455,6 +11464,17 @@ def main() -> None:
 
     if args.command == "spark-kb-health-check":
         payload = build_spark_kb_health_report(args.output_dir)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "discover-markdown-knowledge-packets":
+        payload = discover_markdown_knowledge_packets(
+            args.paths,
+            max_file_bytes=args.max_file_bytes,
+            page_limit=args.page_limit,
+        )
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)

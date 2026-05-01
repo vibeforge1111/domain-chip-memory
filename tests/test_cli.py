@@ -527,6 +527,74 @@ def test_spark_kb_health_check_command_runs_on_demo_vault(tmp_path: Path, monkey
     assert written["trace"]["operation"] == "spark_kb_health_check"
 
 
+def test_discover_markdown_knowledge_packets_command_exports_inventory(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    current_dir = tmp_path / "wiki" / "current-state"
+    builder_dir = tmp_path / "builder-wiki"
+    inventory_file = tmp_path / "artifacts" / "markdown_packet_inventory.json"
+    current_dir.mkdir(parents=True)
+    builder_dir.mkdir(parents=True)
+    (current_dir / "user-location.md").write_text(
+        """---
+title: User Location
+type: current_state
+authority: supporting_not_authoritative
+---
+
+# User Location
+
+The current-state API remains authoritative for mutable user facts.
+""",
+        encoding="utf-8",
+    )
+    (builder_dir / "self-status.md").write_text(
+        """---
+title: Self Status
+owner_system: spark-intelligence-builder
+source_of_truth: builder_llm_wiki
+---
+
+# Self Status
+
+Builder wiki packet for source-labeled synthesis support.
+""",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain_chip_memory.cli",
+            "discover-markdown-knowledge-packets",
+            str(tmp_path),
+            str(tmp_path / "missing"),
+            "--page-limit",
+            "1",
+            "--write",
+            str(inventory_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    written = json.loads(inventory_file.read_text(encoding="utf-8"))
+    assert payload == written
+    assert payload["contract_name"] == "MarkdownKnowledgePacketInventory"
+    assert payload["packet_count"] == 2
+    assert payload["family_counts"]["memory_kb_current_state"] == 1
+    assert payload["family_counts"]["builder_llm_wiki"] == 1
+    assert payload["owner_system_counts"]["domain-chip-memory"] == 1
+    assert payload["owner_system_counts"]["spark-intelligence-builder"] == 1
+    assert payload["authority_counts"]["supporting_not_authoritative"] == 2
+    assert len(payload["pages"]) == 1
+    assert payload["dropped_page_count"] == 1
+    assert "text" not in payload["pages"][0]
+    assert payload["roots"][1]["kind"] == "missing"
+
+
 def test_demo_spark_kb_can_ingest_explicit_repo_source(tmp_path: Path, monkeypatch):
     captured: dict[str, object] = {}
     output_dir = tmp_path / "spark_kb_vault"
