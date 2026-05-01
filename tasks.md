@@ -164,9 +164,10 @@ Work in this order unless a production break interrupts it:
 - `spark-intelligence-builder`: `ca8be57` prioritizes entity state for Graphiti shadow exports.
 - `spark-intelligence-builder`: `d9ad5d0` gates Telegram memory writes with salience metadata.
 - `spark-memory-quality-dashboard`: `57ce4a1` paginates human memory dashboard traces.
+- `spark-memory-quality-dashboard`: `2e4d32c` adds a human-readable memory lifecycle trace panel for accepted, episodic, blocked, context packet, and decay/export gaps.
 - `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
 - `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
-- Next commit target: add accepted-memory dashboard visibility and the memory-review "good/bad/ugly" loop, then extend episodic recall from daily/project to session-specific scopes.
+- Next commit target: export typed lifecycle transition records for decay, archive, compaction, supersession, resurrection, and salience deltas; then extend episodic recall from daily/project to session-specific scopes.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -249,6 +250,7 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [x] Memory-quality dashboard can map operator traces, source classes, route decisions, and source-explanation links from exported Builder state.
 - [x] Memory-quality dashboard can show context capsule packet budget and memory read role/method feed.
 - [x] Memory-quality dashboard can show salience scores, policy gate reasons, lane decisions, and promotion dispositions.
+- [x] Memory-quality dashboard can show a readable lifecycle trace panel for what is traceable now, context compaction, decay/archive visibility, and missing instrumentation.
 - [x] Memory-quality dashboard supports local watch-mode export plus browser polling/refresh.
 - [x] Memory-quality dashboard can load domain-chip score history and benchmark scorecard summaries.
 - [ ] Memory-quality dashboard still needs richer live Builder ledger feeds beyond exported snapshots.
