@@ -142,6 +142,8 @@ Work in this order unless a production break interrupts it:
   - 2026-05-01: SDK maintenance now returns typed audit samples with revalidation lag, replacement pointers, deletion pointers, salience, and confidence; Builder carries sample buckets/counts into lifecycle transitions; dashboard lifecycle cards render reviewable examples in plain language.
 - [x] Add resurrection transitions and decay score deltas to lifecycle maintenance traces.
   - 2026-05-01: deletion tombstones superseded by newer current-state writes are classified as `resurrected`; stale-preserved rows now carry `decay_score_delta`; Builder emits `resurrection` lifecycle transitions and dashboard audit examples render decay deltas.
+- [x] Add non-mutating lifecycle replay export for dashboard QA.
+  - 2026-05-01: `spark-memory-quality-dashboard` can run `npm run export:spark:lifecycle-replay` to inject clearly marked promotion, supersession, stale-preserved, blocked, and resurrection examples into dashboard JSON without mutating live Spark memory.
 - [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
 - [x] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
 
@@ -181,6 +183,7 @@ Work in this order unless a production break interrupts it:
 - `spark-memory-quality-dashboard`: `2e4d32c` adds a human-readable memory lifecycle trace panel for accepted, episodic, blocked, context packet, and decay/export gaps.
 - `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
 - `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
+- `spark-memory-quality-dashboard`: pending commit adds a non-mutating lifecycle replay export for dashboard QA.
 - Next commit target: expand source-aware recall coverage beyond the currently routed memory answers and generate live lifecycle rows for dashboard review.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
