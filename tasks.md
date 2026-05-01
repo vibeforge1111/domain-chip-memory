@@ -75,6 +75,7 @@ Work in this order unless a production break interrupts it:
 - [ ] Add large-context reservoir targeting 200k+ reconstructable context, separate from compact Telegram packet.
 - [x] Add "what did we build today?" and "what else do you remember?" source-aware routes.
   - 2026-05-01: Builder daily episodic recall route landed (`cb6ddd1`) for "what changed today?", "what did we build/work on today?", "what is still open today?", "what did we promise today?", and "what else do you remember today?".
+  - 2026-05-01: Builder project episodic recall route landed (`68664b0`) for "what changed in/for <project> today?", "what happened with <project> today?", and project-scoped open/build recall.
 
 ### Track D: Timeout, Task, And Workflow Recovery
 
@@ -155,6 +156,7 @@ Work in this order unless a production break interrupts it:
 - `domain-chip-memory`: `659b7b5` documents the memory readiness checkpoint.
 - `spark-cli`: `a1fbcbb` adds the Graphiti/Kuzu setup profile, installs the optional chip extra on opt-in, and pins the fixed memory chip.
 - `spark-intelligence-builder`: `ad3e264` promotes identity name corrections authoritatively.
+- `spark-intelligence-builder`: `68664b0` adds source-aware project episodic memory recall.
 - `spark-intelligence-builder`: `cb6ddd1` adds source-aware daily episodic memory recall.
 - `spark-intelligence-builder`: `85d9110` separates gateway readiness from advisory doctor checks.
 - `spark-intelligence-builder`: `e80cd62` wires Graphiti live sidecar config into hybrid retrieval as non-authoritative supporting evidence.
@@ -164,7 +166,7 @@ Work in this order unless a production break interrupts it:
 - `spark-memory-quality-dashboard`: `57ce4a1` paginates human memory dashboard traces.
 - `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
 - `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
-- Next commit target: add accepted-memory dashboard visibility and the memory-review "good/bad/ugly" loop, then extend episodic recall from daily to project/session scopes.
+- Next commit target: add accepted-memory dashboard visibility and the memory-review "good/bad/ugly" loop, then extend episodic recall from daily/project to session-specific scopes.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -251,7 +253,7 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [x] Memory-quality dashboard can load domain-chip score history and benchmark scorecard summaries.
 - [ ] Memory-quality dashboard still needs richer live Builder ledger feeds beyond exported snapshots.
 - [x] Memory-quality dashboard has operator launch wiring from Spark/Telegram with URL, refresh command, test/demo evidence, and source explanation.
-- [ ] Episodic recall is incomplete: Builder now answers daily narrative questions from the event ledger (`cb6ddd1`), but project/session-specific summaries and richer semantic consolidation still need to be wired into natural recall.
+- [ ] Episodic recall is incomplete: Builder now answers daily and project narrative questions from the event ledger (`cb6ddd1`, `68664b0`), but session-specific summaries and richer semantic consolidation still need to be wired into natural recall.
 - [ ] Source-aware recall needs to be universal: answers should say whether memory came from current state, older memory, raw episode, graph sidecar, inference, diagnostics, or workflow residue.
 - [ ] Context memory is too small for real work: live Builder capsule code currently defaults to a 5,000-character rendered capsule, 3 recent same-session turn pairs, and 260-character compacted turns in `src/spark_intelligence/context/capsule.py`.
 - [ ] Context reservoir target should support 200k+ available memory context through retrieval and packet assembly, while keeping per-answer Telegram packets compact.
