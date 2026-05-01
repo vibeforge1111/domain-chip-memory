@@ -597,6 +597,108 @@ def test_sdk_reconsolidate_marks_stale_active_state_as_preserved():
     assert current_state.provenance[0].metadata["active_state_maintenance_reason"] == "past_revalidate_at"
 
 
+def test_sdk_exports_dashboard_movement_feed_for_writes_reads_and_maintenance():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="London",
+            timestamp="2025-01-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "entity_key": "primary"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "entity_key": "primary"},
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="move",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="nickname",
+            timestamp="2025-04-01T09:00:00Z",
+        )
+    )
+    sdk.retrieve_evidence(EvidenceRetrievalRequest(subject="user", predicate="location", limit=2))
+    sdk.retrieve_events(EventRetrievalRequest(subject="user", predicate="move", limit=1))
+    sdk.reconsolidate_manual_memory(now="2025-04-02T09:00:00Z")
+
+    movement = sdk.export_knowledge_base_snapshot()["dashboard_movement"]
+    rows = movement["rows"]
+    states = set(movement["movement_counts"])
+    required_fields = {
+        "id",
+        "movement_state",
+        "source_family",
+        "authority",
+        "scope_kind",
+        "subject",
+        "predicate",
+        "timestamp",
+        "salience_score",
+        "confidence",
+        "lifecycle",
+        "trace",
+    }
+
+    assert movement["contract_name"] == "SparkMemoryDashboardMovementExport"
+    assert movement["authority"] == "observability_non_authoritative"
+    assert {
+        "captured",
+        "saved",
+        "blocked",
+        "dropped",
+        "retrieved",
+        "promoted",
+        "selected",
+        "summarized",
+        "decayed",
+    }.issubset(states)
+    assert all(required_fields.issubset(row) for row in rows)
+    assert any(
+        row["movement_state"] == "blocked"
+        and row["trace"]["reason"] == "value_required"
+        and row["trace"]["persisted"] is False
+        for row in rows
+    )
+    assert any(
+        row["movement_state"] == "decayed"
+        and row["trace"]["maintenance_action"] == "superseded"
+        and row["trace"]["maintenance_reason"] == "replaced_by_newer_current_state"
+        for row in rows
+    )
+    assert any(
+        row["movement_state"] == "selected"
+        and row["source_family"] == "current_state"
+        and row["authority"] == "authoritative_current"
+        for row in rows
+    )
+    assert "Dashboard rows are observability records, not prompt instructions." in movement["non_override_rules"]
+
+
 def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():
     sdk = SparkMemorySDK()
     first_location = sdk.write_observation(

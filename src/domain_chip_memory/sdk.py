@@ -61,6 +61,17 @@ SDK_LIFECYCLE_FIELDS: tuple[str, ...] = (
     "conflicts_with",
     "deleted_at",
 )
+DASHBOARD_MOVEMENT_STATES: tuple[str, ...] = (
+    "captured",
+    "blocked",
+    "promoted",
+    "saved",
+    "decayed",
+    "summarized",
+    "retrieved",
+    "selected",
+    "dropped",
+)
 
 
 def _runtime_memory_architecture(value: str | None = None) -> str:
@@ -221,6 +232,8 @@ class SparkMemorySDK:
         self._manual_observations: list[ObservationEntry] = []
         self._manual_events: list[EventCalendarEntry] = []
         self._manual_current_state_snapshot: list[ObservationEntry] = []
+        self._dashboard_movement_events: list[JsonDict] = []
+        self._dashboard_movement_counter = 0
 
     def write_observation(self, request: MemoryWriteRequest) -> MemoryWriteResult:
         return self._write(request, write_kind="observation")
@@ -453,6 +466,17 @@ class SparkMemorySDK:
                 limit=request.limit,
             )
         ]
+        for item in items:
+            self._append_record_dashboard_movement(
+                movement_state="retrieved",
+                record=item,
+                trace={
+                    "operation": "retrieve_evidence",
+                    "query": request.query,
+                    "limit": request.limit,
+                    "query_intent": query_intent,
+                },
+            )
         return MemoryRetrievalResult(
             items=items,
             trace=self._retrieval_trace(
@@ -488,6 +512,16 @@ class SparkMemorySDK:
                 limit=request.limit,
             )
         ]
+        for item in items:
+            self._append_record_dashboard_movement(
+                movement_state="retrieved",
+                record=item,
+                trace={
+                    "operation": "retrieve_events",
+                    "query": request.query,
+                    "limit": request.limit,
+                },
+            )
         return MemoryRetrievalResult(
             items=items,
             trace=self._retrieval_trace(
@@ -579,6 +613,18 @@ class SparkMemorySDK:
             if entry.metadata.get("active_state_maintenance_action")
         )
         audit_samples = self._active_state_maintenance_audit_samples(self._manual_observations)
+        for entry in self._manual_observations:
+            action = str(entry.metadata.get("active_state_maintenance_action") or "").strip()
+            if action in {"archived", "stale_preserved", "superseded"}:
+                self._append_record_dashboard_movement(
+                    movement_state="decayed",
+                    record=self._observation_record(entry, memory_role=self._observation_memory_role(entry)),
+                    trace={
+                        "operation": "reconsolidate_manual_memory",
+                        "maintenance_action": action,
+                        "maintenance_reason": _normalize_scalar(entry.metadata.get("active_state_maintenance_reason")),
+                    },
+                )
         return MemoryMaintenanceResult(
             manual_observations_before=len(self._manual_observations),
             manual_observations_after=len(snapshot),
@@ -614,6 +660,11 @@ class SparkMemorySDK:
             for entry in self._observations()
         ]
         event_records = [self._event_record(entry) for entry in self._events()]
+        dashboard_movement = self._build_dashboard_movement_export(
+            current_state_records=current_state_records,
+            observation_records=observation_records,
+            event_records=event_records,
+        )
         role_contracts = sdk_memory_role_contracts()
         return {
             "runtime_class": "SparkMemorySDK",
@@ -643,6 +694,7 @@ class SparkMemorySDK:
             "current_state": [self._retrieved_record_dict(record) for record in current_state_records],
             "observations": [self._retrieved_record_dict(record) for record in observation_records],
             "events": [self._retrieved_record_dict(record) for record in event_records],
+            "dashboard_movement": dashboard_movement,
             "trace": {
                 "operation": "export_knowledge_base_snapshot",
                 "source_of_truth": "SparkMemorySDK",
@@ -656,6 +708,20 @@ class SparkMemorySDK:
         turn_id = request.turn_id or self._next_turn_id(session_id)
 
         if operation == "auto" and not cleaned_text:
+            self._append_request_dashboard_movement(
+                movement_state="blocked",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason="empty_text",
+            )
+            self._append_request_dashboard_movement(
+                movement_state="dropped",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason="empty_text",
+            )
             return MemoryWriteResult(
                 session_id=session_id,
                 turn_id=turn_id,
@@ -677,6 +743,20 @@ class SparkMemorySDK:
 
         invalid_operation_reason = self._unsupported_operation_reason(operation, write_kind=write_kind)
         if invalid_operation_reason:
+            self._append_request_dashboard_movement(
+                movement_state="blocked",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason=invalid_operation_reason,
+            )
+            self._append_request_dashboard_movement(
+                movement_state="dropped",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason=invalid_operation_reason,
+            )
             return MemoryWriteResult(
                 session_id=session_id,
                 turn_id=turn_id,
@@ -709,6 +789,20 @@ class SparkMemorySDK:
                 turn_id=turn_id,
             )
             if explicit_memory["unsupported_reason"] is not None:
+                self._append_request_dashboard_movement(
+                    movement_state="blocked",
+                    request=request,
+                    write_kind=write_kind,
+                    write_operation=operation,
+                    reason=str(explicit_memory["unsupported_reason"]),
+                )
+                self._append_request_dashboard_movement(
+                    movement_state="dropped",
+                    request=request,
+                    write_kind=write_kind,
+                    write_operation=operation,
+                    reason=str(explicit_memory["unsupported_reason"]),
+                )
                 return MemoryWriteResult(
                     session_id=session_id,
                     turn_id=turn_id,
@@ -795,6 +889,62 @@ class SparkMemorySDK:
                 self._manual_observations.extend(observations)
                 self._manual_events.extend(events)
                 self._manual_current_state_snapshot = []
+            for record in [*observation_records, *event_records]:
+                self._append_record_dashboard_movement(
+                    movement_state="captured",
+                    record=record,
+                    trace={
+                        "operation": "write_memory",
+                        "write_kind": write_kind,
+                        "write_operation": operation,
+                    },
+                )
+                self._append_record_dashboard_movement(
+                    movement_state="saved",
+                    record=record,
+                    trace={
+                        "operation": "write_memory",
+                        "write_kind": write_kind,
+                        "write_operation": operation,
+                    },
+                )
+                if record.memory_role in {"current_state", "state_deletion"} or record.retention_class == "active_state":
+                    self._append_record_dashboard_movement(
+                        movement_state="promoted",
+                        record=record,
+                        trace={
+                            "operation": "write_memory",
+                            "write_kind": write_kind,
+                            "write_operation": operation,
+                            "promotion_target": "current_state",
+                        },
+                    )
+                if operation == "purge" and purge_result.get("purge"):
+                    self._append_record_dashboard_movement(
+                        movement_state="dropped",
+                        record=record,
+                        trace={
+                            "operation": "write_memory",
+                            "write_kind": write_kind,
+                            "write_operation": operation,
+                            "purge": purge_result.get("purge"),
+                        },
+                    )
+        else:
+            self._append_request_dashboard_movement(
+                movement_state="blocked",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason="no_structured_memory_extracted",
+            )
+            self._append_request_dashboard_movement(
+                movement_state="dropped",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason="no_structured_memory_extracted",
+            )
         return MemoryWriteResult(
             session_id=session_id,
             turn_id=turn_id,
@@ -2000,6 +2150,275 @@ class SparkMemorySDK:
             "metadata": dict(record.metadata),
         }
 
+    def _build_dashboard_movement_export(
+        self,
+        *,
+        current_state_records: list[RetrievedMemoryRecord],
+        observation_records: list[RetrievedMemoryRecord],
+        event_records: list[RetrievedMemoryRecord],
+    ) -> JsonDict:
+        rows = [dict(row) for row in self._dashboard_movement_events]
+        rows.extend(
+            self._record_dashboard_movement_row(
+                movement_state="promoted",
+                record=record,
+                row_id=f"snapshot:promoted:{self._record_movement_id(record)}",
+                trace={
+                    "operation": "export_knowledge_base_snapshot",
+                    "promotion_target": "current_state",
+                    "derived_from_snapshot": True,
+                },
+            )
+            for record in current_state_records
+        )
+        rows.extend(
+            self._record_dashboard_movement_row(
+                movement_state="selected",
+                record=record,
+                row_id=f"snapshot:selected:{self._record_movement_id(record)}",
+                trace={
+                    "operation": "export_knowledge_base_snapshot",
+                    "selection_surface": "current_state_view",
+                    "derived_from_snapshot": True,
+                },
+            )
+            for record in current_state_records
+        )
+        rows.extend(
+            self._session_dashboard_movement_row(session, index=index)
+            for index, session in enumerate(self._sessions, start=1)
+            if session.turns
+        )
+        movement_counts = Counter(str(row.get("movement_state") or "unknown") for row in rows)
+        source_family_counts = Counter(str(row.get("source_family") or "unknown") for row in rows)
+        authority_counts = Counter(str(row.get("authority") or "unknown") for row in rows)
+        contract = build_dashboard_movement_export_contract_summary()
+        return {
+            "contract_name": "SparkMemoryDashboardMovementExport",
+            "authority": "observability_non_authoritative",
+            "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            "movement_states": list(DASHBOARD_MOVEMENT_STATES),
+            "row_count": len(rows),
+            "movement_counts": dict(sorted(movement_counts.items())),
+            "source_family_counts": dict(sorted(source_family_counts.items())),
+            "authority_counts": dict(sorted(authority_counts.items())),
+            "record_counts": {
+                "current_state": len(current_state_records),
+                "observations": len(observation_records),
+                "events": len(event_records),
+                "sessions": len(self._sessions),
+            },
+            "rows": rows,
+            "non_override_rules": list(contract["non_override_rules"]),
+        }
+
+    def _append_record_dashboard_movement(
+        self,
+        *,
+        movement_state: str,
+        record: RetrievedMemoryRecord,
+        trace: JsonDict,
+    ) -> None:
+        self._dashboard_movement_events.append(
+            self._record_dashboard_movement_row(
+                movement_state=movement_state,
+                record=record,
+                row_id=self._next_dashboard_movement_id(),
+                trace=trace,
+            )
+        )
+
+    def _append_request_dashboard_movement(
+        self,
+        *,
+        movement_state: str,
+        request: MemoryWriteRequest,
+        write_kind: str,
+        write_operation: str,
+        reason: str,
+    ) -> None:
+        subject = self._normalize_subject(request.subject or "")
+        predicate = self._normalize_predicate(request.predicate or "")
+        self._dashboard_movement_events.append(
+            self._dashboard_movement_row(
+                row_id=self._next_dashboard_movement_id(),
+                movement_state=movement_state,
+                source_family="event" if write_kind == "event" else "evidence",
+                authority="supporting_not_authoritative",
+                scope_kind=self._movement_scope_kind(subject),
+                subject=subject,
+                predicate=predicate,
+                timestamp=request.timestamp,
+                salience_score=0.0,
+                confidence=0.0,
+                lifecycle={},
+                trace={
+                    "operation": "write_memory",
+                    "status": "unsupported_write",
+                    "reason": reason,
+                    "write_kind": write_kind,
+                    "write_operation": write_operation,
+                    "persisted": False,
+                    "source_of_truth": "SparkMemorySDK",
+                },
+            )
+        )
+
+    def _record_dashboard_movement_row(
+        self,
+        *,
+        movement_state: str,
+        record: RetrievedMemoryRecord,
+        row_id: str,
+        trace: JsonDict,
+    ) -> JsonDict:
+        record_id = self._record_movement_id(record)
+        row_trace = {
+            "source_of_truth": "SparkMemorySDK",
+            "record_id": record_id,
+            "memory_role": record.memory_role,
+            "observation_id": record.observation_id,
+            "event_id": record.event_id,
+            "session_id": record.session_id,
+            "turn_ids": list(record.turn_ids),
+            **dict(trace),
+        }
+        return self._dashboard_movement_row(
+            row_id=row_id,
+            movement_state=movement_state,
+            source_family=self._movement_source_family(record.memory_role),
+            authority=self._movement_authority(record.memory_role),
+            scope_kind=self._movement_scope_kind(record.subject),
+            subject=record.subject,
+            predicate=record.predicate,
+            timestamp=record.timestamp,
+            salience_score=self._movement_salience(record),
+            confidence=self._movement_confidence(record),
+            lifecycle=dict(record.lifecycle),
+            trace=row_trace,
+        )
+
+    def _session_dashboard_movement_row(self, session: NormalizedSession, *, index: int) -> JsonDict:
+        first_turn = session.turns[0]
+        last_turn = session.turns[-1]
+        return self._dashboard_movement_row(
+            row_id=f"snapshot:summarized:{session.session_id}:{index}",
+            movement_state="summarized",
+            source_family="episodic_summary",
+            authority="supporting_not_authoritative",
+            scope_kind="session_scoped",
+            subject=str(session.metadata.get("subject") or "session"),
+            predicate="session.summary",
+            timestamp=session.timestamp or last_turn.timestamp or first_turn.timestamp,
+            salience_score=0.5,
+            confidence=0.8,
+            lifecycle={
+                "created_at": first_turn.timestamp or session.timestamp,
+                "document_time": session.timestamp or last_turn.timestamp or first_turn.timestamp,
+            },
+            trace={
+                "operation": "export_knowledge_base_snapshot",
+                "source_of_truth": "SparkMemorySDK",
+                "session_id": session.session_id,
+                "turn_count": len(session.turns),
+                "derived_from_snapshot": True,
+            },
+        )
+
+    def _dashboard_movement_row(
+        self,
+        *,
+        row_id: str,
+        movement_state: str,
+        source_family: str,
+        authority: str,
+        scope_kind: str,
+        subject: str,
+        predicate: str,
+        timestamp: str | None,
+        salience_score: float,
+        confidence: float,
+        lifecycle: JsonDict,
+        trace: JsonDict,
+    ) -> JsonDict:
+        return {
+            "id": row_id,
+            "movement_state": movement_state if movement_state in DASHBOARD_MOVEMENT_STATES else "dropped",
+            "source_family": source_family,
+            "authority": authority,
+            "scope_kind": scope_kind,
+            "subject": subject,
+            "predicate": predicate,
+            "timestamp": timestamp,
+            "salience_score": salience_score,
+            "confidence": confidence,
+            "lifecycle": dict(lifecycle),
+            "trace": dict(trace),
+        }
+
+    def _next_dashboard_movement_id(self) -> str:
+        self._dashboard_movement_counter += 1
+        return f"sdk-movement-{self._dashboard_movement_counter}"
+
+    def _record_movement_id(self, record: RetrievedMemoryRecord) -> str:
+        explicit_id = record.observation_id or record.event_id
+        if explicit_id:
+            return explicit_id
+        payload = "\x1f".join(
+            [record.session_id, ",".join(record.turn_ids), record.memory_role, record.subject, record.predicate]
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+    def _movement_source_family(self, memory_role: MemoryRole) -> str:
+        if memory_role in {"current_state", "state_deletion"}:
+            return "current_state"
+        if memory_role == "event":
+            return "event"
+        if memory_role == "episodic":
+            return "episodic_summary"
+        return "evidence"
+
+    def _movement_authority(self, memory_role: MemoryRole) -> str:
+        if memory_role in {"current_state", "state_deletion"}:
+            return "authoritative_current"
+        if memory_role == "event":
+            return "authoritative_historical"
+        if memory_role == "episodic":
+            return "supporting_not_authoritative"
+        return "structured_support"
+
+    def _movement_scope_kind(self, subject: str) -> str:
+        normalized = _normalize_human_subject(subject)
+        if normalized == "user" or normalized.startswith("human:"):
+            return "user_scoped"
+        if normalized == "session":
+            return "session_scoped"
+        return "system_scoped"
+
+    def _movement_salience(self, record: RetrievedMemoryRecord) -> float:
+        explicit = self._movement_float(record.metadata.get("salience_score"))
+        if explicit is not None:
+            return explicit
+        if record.memory_role in {"current_state", "state_deletion"} or record.retention_class == "active_state":
+            return 1.0
+        if record.memory_role == "event":
+            return 0.75
+        if record.memory_role == "episodic":
+            return 0.4
+        return 0.65
+
+    def _movement_confidence(self, record: RetrievedMemoryRecord) -> float:
+        explicit = self._movement_float(record.metadata.get("confidence"))
+        return explicit if explicit is not None else 1.0
+
+    def _movement_float(self, value: Any) -> float | None:
+        try:
+            if value is None or value == "":
+                return None
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
 
 def build_sdk_contract_summary(
     *,
@@ -2133,17 +2552,7 @@ def build_dashboard_movement_export_contract_summary() -> dict[str, Any]:
             "Stable agent/human dashboard feed for memory movement. This is a trace contract, "
             "not an authority upgrade path."
         ),
-        "movement_states": [
-            "captured",
-            "blocked",
-            "promoted",
-            "saved",
-            "decayed",
-            "summarized",
-            "retrieved",
-            "selected",
-            "dropped",
-        ],
+        "movement_states": list(DASHBOARD_MOVEMENT_STATES),
         "source_families": [
             "current_state",
             "evidence",
