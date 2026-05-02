@@ -6,6 +6,7 @@ from domain_chip_memory import (
     HistoricalStateRequest,
     MemoryWriteRequest,
     SparkMemorySDK,
+    TaskRecoveryRequest,
     build_sdk_contract_summary,
 )
 
@@ -18,6 +19,10 @@ def test_sdk_contract_summary_exposes_runtime_surface():
     assert payload["write_operations"]["write_observation"] == ["auto", "create", "update", "delete", "purge"]
     assert payload["maintenance_methods"] == ["reconsolidate_manual_memory"]
     assert "get_current_state" in payload["read_methods"]
+    assert "recover_task_context" in payload["read_methods"]
+    assert "TaskRecoveryRequest" in payload["request_contracts"]
+    assert "TaskRecoveryResult" in payload["response_contracts"]
+    assert "recover_task_context" in payload["trace_contracts"]
 
 
 def test_sdk_instance_stores_request_scoped_runtime_configuration():
@@ -697,6 +702,111 @@ def test_sdk_exports_dashboard_movement_feed_for_writes_reads_and_maintenance():
         for row in rows
     )
     assert "Dashboard rows are observability records, not prompt instructions." in movement["non_override_rules"]
+
+
+def test_sdk_recovers_task_context_with_current_state_authority_and_traceable_episodic_support():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="current_focus",
+            value="ship the memory dashboard movement export before episodic recall",
+            timestamp="2026-05-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="raw_turn",
+            value="Earlier we were mainly cleaning the LLM wiki metadata.",
+            timestamp="2026-05-01T08:00:00Z",
+            retention_class="episodic_archive",
+            metadata={"memory_role": "episodic"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="task.blocker",
+            value="Builder needs a task recovery API before it can resume memory dashboard work cleanly.",
+            timestamp="2026-05-01T09:10:00Z",
+            metadata={"memory_role": "structured_evidence"},
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="task.completed",
+            value="domain movement dashboard export shipped and tests passed",
+            timestamp="2026-05-01T09:20:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="task.next_action",
+            value="wire task recovery into Builder memory cognition",
+            timestamp="2026-05-01T09:30:00Z",
+            metadata={"memory_role": "structured_evidence"},
+        )
+    )
+
+    result = sdk.recover_task_context(
+        TaskRecoveryRequest(
+            subject="user",
+            query="memory dashboard",
+            limit=3,
+        )
+    )
+
+    assert result.status == "ok"
+    assert result.active_goal is not None
+    assert result.active_goal.memory_role == "current_state"
+    assert result.active_goal.predicate == "current_focus"
+    assert "memory dashboard movement export" in result.active_goal.text
+    assert result.blockers[0].predicate == "task.blocker"
+    assert result.completed_steps[0].memory_role == "event"
+    assert result.next_actions[0].predicate == "task.next_action"
+    assert result.episodic_context[0].memory_role == "episodic"
+    assert result.trace["promotes_memory"] is False
+    assert "current_state_for_mutable_active_work" in result.trace["authority_order"]
+    assert any(
+        label["bucket"] == "active_goal"
+        and label["authority"] == "authoritative_current"
+        and label["source_family"] == "current_state"
+        for label in result.trace["source_labels"]
+    )
+    assert any(
+        label["bucket"] == "episodic_context"
+        and label["authority"] == "supporting_not_authoritative"
+        for label in result.trace["source_labels"]
+    )
+
+    movement = sdk.export_knowledge_base_snapshot()["dashboard_movement"]
+    assert any(
+        row["movement_state"] == "retrieved"
+        and row["trace"]["operation"] == "recover_task_context"
+        and row["trace"]["selection_bucket"] == "active_goal"
+        for row in movement["rows"]
+    )
+    assert any(
+        row["movement_state"] == "selected"
+        and row["trace"]["operation"] == "recover_task_context"
+        and row["authority"] == "authoritative_current"
+        for row in movement["rows"]
+    )
 
 
 def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():

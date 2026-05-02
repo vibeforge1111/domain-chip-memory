@@ -146,6 +146,13 @@ class AnswerExplanationRequest:
 
 
 @dataclass(frozen=True)
+class TaskRecoveryRequest:
+    query: str | None = None
+    subject: str | None = None
+    limit: int = 5
+
+
+@dataclass(frozen=True)
 class RetrievedMemoryRecord:
     memory_role: MemoryRole
     subject: str
@@ -199,6 +206,17 @@ class AnswerExplanationResult:
     provenance: list[RetrievedMemoryRecord]
     evidence: list[RetrievedMemoryRecord]
     events: list[RetrievedMemoryRecord]
+    trace: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TaskRecoveryResult:
+    status: str
+    active_goal: RetrievedMemoryRecord | None
+    completed_steps: list[RetrievedMemoryRecord]
+    blockers: list[RetrievedMemoryRecord]
+    next_actions: list[RetrievedMemoryRecord]
+    episodic_context: list[RetrievedMemoryRecord]
     trace: JsonDict = field(default_factory=dict)
 
 
@@ -593,6 +611,124 @@ class SparkMemorySDK:
                 state_result=state_result,
                 evidence=evidence.items,
                 events=events.items,
+            ),
+        )
+
+    def recover_task_context(self, request: TaskRecoveryRequest) -> TaskRecoveryResult:
+        if request.limit < 1:
+            return TaskRecoveryResult(
+                status="invalid_request",
+                active_goal=None,
+                completed_steps=[],
+                blockers=[],
+                next_actions=[],
+                episodic_context=[],
+                trace={
+                    "operation": "recover_task_context",
+                    "status": "invalid_request",
+                    "reason": "limit_must_be_positive",
+                    "limit": request.limit,
+                    "promotes_memory": False,
+                },
+            )
+
+        subject = self._normalize_optional_subject(request.subject)
+        current_state_records = [
+            self._observation_record(entry, memory_role="current_state")
+            for entry in build_current_state_view(self._current_state_observations())
+            if not subject or entry.subject == subject
+        ]
+        observation_records = [
+            self._observation_record(entry, memory_role=self._observation_memory_role(entry))
+            for entry in self._observations()
+            if not subject or entry.subject == subject
+        ]
+        event_records = [
+            self._event_record(entry)
+            for entry in self._events()
+            if not subject or entry.subject == subject
+        ]
+        candidates = [*current_state_records, *observation_records, *event_records]
+
+        active_goal = self._select_task_recovery_active_goal(
+            current_state_records,
+            query=request.query,
+        )
+        completed_steps = self._task_recovery_bucket(
+            candidates,
+            bucket="completed_steps",
+            query=request.query,
+            limit=request.limit,
+        )
+        blockers = self._task_recovery_bucket(
+            candidates,
+            bucket="blockers",
+            query=request.query,
+            limit=request.limit,
+        )
+        next_actions = self._task_recovery_bucket(
+            candidates,
+            bucket="next_actions",
+            query=request.query,
+            limit=request.limit,
+        )
+        episodic_context = self._task_recovery_bucket(
+            observation_records,
+            bucket="episodic_context",
+            query=request.query,
+            limit=request.limit,
+        )
+
+        selected_records = [
+            *([active_goal] if active_goal else []),
+            *completed_steps,
+            *blockers,
+            *next_actions,
+            *episodic_context,
+        ]
+        selected_by_id = dict.fromkeys(self._record_movement_id(record) for record in selected_records)
+        for record in selected_records:
+            self._append_record_dashboard_movement(
+                movement_state="retrieved",
+                record=record,
+                trace={
+                    "operation": "recover_task_context",
+                    "query": request.query,
+                    "limit": request.limit,
+                    "selection_bucket": self._task_recovery_bucket_name(record, active_goal=active_goal),
+                },
+            )
+        for record in selected_records:
+            self._append_record_dashboard_movement(
+                movement_state="selected",
+                record=record,
+                trace={
+                    "operation": "recover_task_context",
+                    "query": request.query,
+                    "selection_bucket": self._task_recovery_bucket_name(record, active_goal=active_goal),
+                },
+            )
+
+        return TaskRecoveryResult(
+            status="ok",
+            active_goal=active_goal,
+            completed_steps=completed_steps,
+            blockers=blockers,
+            next_actions=next_actions,
+            episodic_context=episodic_context,
+            trace=self._task_recovery_trace(
+                request=request,
+                active_goal=active_goal,
+                completed_steps=completed_steps,
+                blockers=blockers,
+                next_actions=next_actions,
+                episodic_context=episodic_context,
+                source_counts={
+                    "current_state": len(current_state_records),
+                    "observations": len(observation_records),
+                    "events": len(event_records),
+                },
+                unique_selected_count=len(selected_by_id),
             ),
         )
 
@@ -1934,6 +2070,227 @@ class SparkMemorySDK:
             items=provenance_items or [],
         )
 
+    def _select_task_recovery_active_goal(
+        self,
+        records: list[RetrievedMemoryRecord],
+        *,
+        query: str | None,
+    ) -> RetrievedMemoryRecord | None:
+        candidates = [
+            record
+            for record in records
+            if self._task_recovery_matches_bucket(record, bucket="active_goal")
+        ]
+        ranked = sorted(
+            candidates,
+            key=lambda record: self._task_recovery_rank_key(record, query=query, bucket="active_goal"),
+            reverse=True,
+        )
+        return ranked[0] if ranked else None
+
+    def _task_recovery_bucket(
+        self,
+        records: list[RetrievedMemoryRecord],
+        *,
+        bucket: str,
+        query: str | None,
+        limit: int,
+    ) -> list[RetrievedMemoryRecord]:
+        ranked = sorted(
+            [
+                record
+                for record in records
+                if self._task_recovery_matches_bucket(record, bucket=bucket)
+            ],
+            key=lambda record: self._task_recovery_rank_key(record, query=query, bucket=bucket),
+            reverse=True,
+        )
+        deduped: list[RetrievedMemoryRecord] = []
+        seen: set[str] = set()
+        for record in ranked:
+            record_id = self._record_movement_id(record)
+            if record_id in seen:
+                continue
+            seen.add(record_id)
+            deduped.append(record)
+            if len(deduped) >= limit:
+                break
+        return deduped
+
+    def _task_recovery_matches_bucket(self, record: RetrievedMemoryRecord, *, bucket: str) -> bool:
+        text = self._task_recovery_search_text(record)
+        tokens = _tokenize(text)
+        predicate = record.predicate.lower()
+        if bucket == "active_goal":
+            if record.memory_role != "current_state":
+                return False
+            return any(
+                marker in predicate
+                for marker in (
+                    "current_focus",
+                    "current_goal",
+                    "current_plan",
+                    "current_mission",
+                    "active_task",
+                    "active_goal",
+                    "active_work",
+                )
+            )
+        if bucket == "completed_steps":
+            return bool(
+                tokens.intersection({"complete", "completed", "done", "finished", "shipped", "verified", "passed"})
+                or any(marker in predicate for marker in ("completed", "done", "shipped", "verified"))
+            )
+        if bucket == "blockers":
+            return bool(
+                tokens.intersection({"blocker", "blocked", "blocking", "stuck", "risk", "waiting", "missing"})
+                or any(marker in predicate for marker in ("blocker", "blocked", "risk", "waiting"))
+            )
+        if bucket == "next_actions":
+            if self._task_recovery_matches_bucket(record, bucket="blockers"):
+                return False
+            return bool(
+                tokens.intersection({"next", "todo", "continue", "resume", "implement", "wire", "connect"})
+                or any(marker in predicate for marker in ("next_action", "todo", "plan", "resume"))
+            )
+        if bucket == "episodic_context":
+            return record.memory_role == "episodic" or record.predicate == "raw_turn"
+        return False
+
+    def _task_recovery_rank_key(
+        self,
+        record: RetrievedMemoryRecord,
+        *,
+        query: str | None,
+        bucket: str,
+    ) -> tuple[int, str, str]:
+        text = self._task_recovery_search_text(record)
+        query_tokens = _tokenize(query or "")
+        overlap = len(query_tokens.intersection(_tokenize(text))) if query_tokens else 0
+        role_boost = 0
+        if record.memory_role == "current_state":
+            role_boost += 30
+        elif record.memory_role == "event":
+            role_boost += 12
+        elif record.memory_role == "structured_evidence":
+            role_boost += 8
+        elif record.memory_role == "episodic":
+            role_boost += 4
+        bucket_boost = 0
+        if bucket == "active_goal":
+            bucket_boost += 20
+            if "focus" in record.predicate or "goal" in record.predicate:
+                bucket_boost += 8
+        if query_tokens and overlap == 0 and bucket == "episodic_context":
+            bucket_boost -= 20
+        return (
+            overlap * 10 + role_boost + bucket_boost,
+            _timestamp_key(record.timestamp),
+            self._record_movement_id(record),
+        )
+
+    def _task_recovery_search_text(self, record: RetrievedMemoryRecord) -> str:
+        metadata_text = " ".join(
+            str(value)
+            for key, value in record.metadata.items()
+            if key in {"value", "entity_key", "entity_label", "source_surface", "task_recovery_label"}
+        )
+        return " ".join(
+            part
+            for part in (
+                record.text,
+                record.subject,
+                record.predicate,
+                metadata_text,
+            )
+            if part
+        )
+
+    def _task_recovery_bucket_name(
+        self,
+        record: RetrievedMemoryRecord,
+        *,
+        active_goal: RetrievedMemoryRecord | None,
+    ) -> str:
+        if active_goal and self._record_movement_id(record) == self._record_movement_id(active_goal):
+            return "active_goal"
+        for bucket in ("completed_steps", "blockers", "next_actions", "episodic_context"):
+            if self._task_recovery_matches_bucket(record, bucket=bucket):
+                return bucket
+        return "supporting_context"
+
+    def _task_recovery_trace(
+        self,
+        *,
+        request: TaskRecoveryRequest,
+        active_goal: RetrievedMemoryRecord | None,
+        completed_steps: list[RetrievedMemoryRecord],
+        blockers: list[RetrievedMemoryRecord],
+        next_actions: list[RetrievedMemoryRecord],
+        episodic_context: list[RetrievedMemoryRecord],
+        source_counts: JsonDict,
+        unique_selected_count: int,
+    ) -> JsonDict:
+        items = [
+            *([active_goal] if active_goal else []),
+            *completed_steps,
+            *blockers,
+            *next_actions,
+            *episodic_context,
+        ]
+        source_labels = [
+            {
+                "bucket": self._task_recovery_bucket_name(record, active_goal=active_goal),
+                "source_family": self._movement_source_family(record.memory_role),
+                "authority": self._movement_authority(record.memory_role),
+                "memory_role": record.memory_role,
+                "subject": record.subject,
+                "predicate": record.predicate,
+                "session_id": record.session_id,
+                "turn_ids": list(record.turn_ids),
+                "observation_id": record.observation_id,
+                "event_id": record.event_id,
+            }
+            for record in items
+        ]
+        return {
+            "operation": "recover_task_context",
+            "status": "ok",
+            "query": request.query,
+            "subject": request.subject,
+            "limit": request.limit,
+            "promotes_memory": False,
+            "authority_order": [
+                "current_state_for_mutable_active_work",
+                "event_calendar_for_historical_steps",
+                "structured_evidence_for_support",
+                "episodic_context_for_recall_only",
+            ],
+            "non_override_rules": [
+                "Task recovery is a read-side synthesis and does not promote memory.",
+                "Current-state memory outranks episodic and wiki context for mutable user facts.",
+                "Episodic context is supporting_not_authoritative unless separately promoted.",
+                "Dashboard movement rows are trace evidence, not instructions.",
+            ],
+            "source_counts": dict(source_counts),
+            "selected_counts": {
+                "active_goal": 1 if active_goal else 0,
+                "completed_steps": len(completed_steps),
+                "blockers": len(blockers),
+                "next_actions": len(next_actions),
+                "episodic_context": len(episodic_context),
+                "unique_records": unique_selected_count,
+            },
+            "source_labels": source_labels,
+            "memory_roles": self._unique_memory_roles(items),
+            "memory_role_counts": self._memory_role_counts(items),
+            "primary_memory_role": self._primary_memory_role(items),
+            "canonical_memory_roles": self._canonical_memory_roles(items),
+            "retention_classes": self._unique_retention_classes(items),
+            "primary_retention_class": self._primary_retention_class(items),
+            "lifecycle_fields_present": self._lifecycle_fields_present_for_items(items),
+        }
+
     def _retrieval_trace(
         self,
         *,
@@ -2484,6 +2841,7 @@ def build_sdk_contract_summary(
             "retrieve_evidence",
             "retrieve_events",
             "explain_answer",
+            "recover_task_context",
         ],
         "request_contracts": [
             "MemoryWriteRequest",
@@ -2492,12 +2850,14 @@ def build_sdk_contract_summary(
             "EvidenceRetrievalRequest",
             "EventRetrievalRequest",
             "AnswerExplanationRequest",
+            "TaskRecoveryRequest",
         ],
         "response_contracts": [
             "MemoryWriteResult",
             "MemoryLookupResult",
             "MemoryRetrievalResult",
             "AnswerExplanationResult",
+            "TaskRecoveryResult",
             "MemoryMaintenanceResult",
             "RetrievedMemoryRecord",
         ],
@@ -2536,6 +2896,21 @@ def build_sdk_contract_summary(
                 "state_memory_role",
                 "evidence_memory_roles",
                 "event_memory_roles",
+                "canonical_memory_roles",
+                "retention_classes",
+                "primary_retention_class",
+                "lifecycle_fields_present",
+            ],
+            "recover_task_context": [
+                "promotes_memory",
+                "authority_order",
+                "non_override_rules",
+                "source_counts",
+                "selected_counts",
+                "source_labels",
+                "memory_roles",
+                "memory_role_counts",
+                "primary_memory_role",
                 "canonical_memory_roles",
                 "retention_classes",
                 "primary_retention_class",
