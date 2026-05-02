@@ -153,6 +153,15 @@ class TaskRecoveryRequest:
 
 
 @dataclass(frozen=True)
+class EpisodicRecallRequest:
+    query: str | None = None
+    subject: str | None = None
+    since: str | None = None
+    until: str | None = None
+    limit: int = 5
+
+
+@dataclass(frozen=True)
 class RetrievedMemoryRecord:
     memory_role: MemoryRole
     subject: str
@@ -217,6 +226,17 @@ class TaskRecoveryResult:
     blockers: list[RetrievedMemoryRecord]
     next_actions: list[RetrievedMemoryRecord]
     episodic_context: list[RetrievedMemoryRecord]
+    trace: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class EpisodicRecallResult:
+    status: str
+    current_state: list[RetrievedMemoryRecord]
+    session_summaries: list[RetrievedMemoryRecord]
+    matching_turns: list[RetrievedMemoryRecord]
+    evidence: list[RetrievedMemoryRecord]
+    events: list[RetrievedMemoryRecord]
     trace: JsonDict = field(default_factory=dict)
 
 
@@ -732,6 +752,130 @@ class SparkMemorySDK:
             ),
         )
 
+    def recall_episodic_context(self, request: EpisodicRecallRequest) -> EpisodicRecallResult:
+        if request.limit < 1:
+            return EpisodicRecallResult(
+                status="invalid_request",
+                current_state=[],
+                session_summaries=[],
+                matching_turns=[],
+                evidence=[],
+                events=[],
+                trace={
+                    "operation": "recall_episodic_context",
+                    "status": "invalid_request",
+                    "reason": "limit_must_be_positive",
+                    "limit": request.limit,
+                    "promotes_memory": False,
+                },
+            )
+
+        subject = self._normalize_optional_subject(request.subject)
+        sessions = self._episodic_sessions_in_window(subject=subject, since=request.since, until=request.until)
+        current_state = [
+            self._observation_record(entry, memory_role="current_state")
+            for entry in self._rank_observations(
+                build_current_state_view(self._current_state_observations()),
+                query=request.query,
+                subject=subject,
+                predicate=None,
+                limit=request.limit,
+            )
+        ]
+        session_summaries = self._rank_episodic_records(
+            [self._session_summary_record(session) for session in sessions if session.turns],
+            query=request.query,
+            limit=request.limit,
+        )
+        matching_turns = self._rank_episodic_records(
+            [
+                self._session_turn_record(session, turn)
+                for session in sessions
+                for turn in session.turns
+                if str(turn.text or "").strip()
+            ],
+            query=request.query,
+            limit=request.limit,
+        )
+        evidence = [
+            self._observation_record(entry, memory_role=self._observation_memory_role(entry))
+            for entry in self._rank_observations(
+                self._observations(),
+                query=request.query,
+                subject=subject,
+                predicate=None,
+                limit=request.limit,
+            )
+        ]
+        events = [
+            self._event_record(entry)
+            for entry in self._rank_events(
+                self._events(),
+                query=request.query,
+                subject=subject,
+                predicate=None,
+                limit=request.limit,
+            )
+        ]
+
+        selected_records = [*current_state, *session_summaries, *matching_turns, *evidence, *events]
+        selected_by_id = dict.fromkeys(self._record_movement_id(record) for record in selected_records)
+        for record in selected_records:
+            self._append_record_dashboard_movement(
+                movement_state="retrieved",
+                record=record,
+                trace={
+                    "operation": "recall_episodic_context",
+                    "query": request.query,
+                    "limit": request.limit,
+                    "selection_bucket": self._episodic_recall_bucket_name(record),
+                },
+            )
+            self._append_record_dashboard_movement(
+                movement_state="selected",
+                record=record,
+                trace={
+                    "operation": "recall_episodic_context",
+                    "query": request.query,
+                    "selection_bucket": self._episodic_recall_bucket_name(record),
+                },
+            )
+
+        for record in session_summaries:
+            self._append_record_dashboard_movement(
+                movement_state="summarized",
+                record=record,
+                trace={
+                    "operation": "recall_episodic_context",
+                    "query": request.query,
+                    "selection_bucket": "session_summaries",
+                },
+            )
+
+        return EpisodicRecallResult(
+            status="ok",
+            current_state=current_state,
+            session_summaries=session_summaries,
+            matching_turns=matching_turns,
+            evidence=evidence,
+            events=events,
+            trace=self._episodic_recall_trace(
+                request=request,
+                current_state=current_state,
+                session_summaries=session_summaries,
+                matching_turns=matching_turns,
+                evidence=evidence,
+                events=events,
+                source_counts={
+                    "sessions": len(sessions),
+                    "current_state": len(current_state),
+                    "observations": len(self._observations()),
+                    "events": len(self._events()),
+                },
+                unique_selected_count=len(selected_by_id),
+            ),
+        )
+
     def reconsolidate_manual_memory(self, *, now: str | None = None) -> MemoryMaintenanceResult:
         raw_snapshot = self._build_manual_current_state_snapshot(self._manual_observations)
         maintained_at = now or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -916,6 +1060,9 @@ class SparkMemorySDK:
         events: list[EventCalendarEntry] = []
         manual_write = operation != "auto"
         turn_metadata = dict(request.metadata)
+        normalized_turn_subject = self._normalize_optional_subject(request.subject)
+        if normalized_turn_subject:
+            turn_metadata.setdefault("subject", normalized_turn_subject)
         if manual_write:
             explicit_memory = self._explicit_memory_entries(
                 request,
@@ -2291,6 +2438,224 @@ class SparkMemorySDK:
             "lifecycle_fields_present": self._lifecycle_fields_present_for_items(items),
         }
 
+    def _episodic_sessions_in_window(
+        self,
+        *,
+        subject: str | None,
+        since: str | None,
+        until: str | None,
+    ) -> list[NormalizedSession]:
+        since_key = _normalize_scalar(since)
+        until_key = _normalize_scalar(until)
+        sessions: list[NormalizedSession] = []
+        for session in self._sessions:
+            if not self._episodic_session_matches_subject(session, subject):
+                continue
+            timestamps = [
+                timestamp
+                for timestamp in [session.timestamp, *(turn.timestamp for turn in session.turns)]
+                if timestamp
+            ]
+            comparable = max(timestamps) if timestamps else ""
+            if since_key and comparable and comparable < since_key:
+                continue
+            if until_key and comparable and comparable > until_key:
+                continue
+            sessions.append(session)
+        return sorted(sessions, key=lambda item: item.timestamp or "", reverse=True)
+
+    def _episodic_session_matches_subject(self, session: NormalizedSession, subject: str | None) -> bool:
+        if subject is None:
+            return True
+        session_subject = self._normalize_optional_subject(str(session.metadata.get("subject") or ""))
+        turn_subjects = [
+            self._normalize_optional_subject(str(turn.metadata.get("subject") or ""))
+            for turn in session.turns
+        ]
+        candidates = [item for item in [session_subject, *turn_subjects] if item]
+        if candidates:
+            return subject in candidates
+        if subject == "user":
+            return any(_normalize_scalar(turn.speaker).lower() in {"user", "speaker_a", "speaker_b"} for turn in session.turns)
+        return False
+
+    def _session_summary_record(self, session: NormalizedSession) -> RetrievedMemoryRecord:
+        first_turn = session.turns[0]
+        last_turn = session.turns[-1]
+        timestamp = session.timestamp or last_turn.timestamp or first_turn.timestamp
+        subject = (
+            self._normalize_optional_subject(str(session.metadata.get("subject") or ""))
+            or self._normalize_optional_subject(str(first_turn.metadata.get("subject") or ""))
+            or "session"
+        )
+        turn_fragments = [
+            f"{turn.speaker}: {_normalize_scalar(turn.text)[:180]}"
+            for turn in session.turns[:6]
+            if _normalize_scalar(turn.text)
+        ]
+        text = f"Session {session.session_id}: " + " | ".join(turn_fragments)
+        return RetrievedMemoryRecord(
+            memory_role="episodic",
+            subject=subject,
+            predicate="session.summary",
+            text=text[:900],
+            session_id=session.session_id,
+            turn_ids=[turn.turn_id for turn in session.turns],
+            timestamp=timestamp,
+            retention_class="episodic_archive",
+            lifecycle={
+                "created_at": first_turn.timestamp or session.timestamp,
+                "document_time": timestamp,
+            },
+            metadata={
+                **dict(session.metadata),
+                "source_class": "episodic_session_summary",
+                "summary_kind": "extractive_session_summary",
+                "turn_count": len(session.turns),
+            },
+        )
+
+    def _session_turn_record(self, session: NormalizedSession, turn: NormalizedTurn) -> RetrievedMemoryRecord:
+        speaker = _normalize_scalar(turn.speaker).lower() or "unknown"
+        subject = (
+            self._normalize_optional_subject(str(turn.metadata.get("subject") or ""))
+            or ("user" if speaker in {"user", "speaker_a", "speaker_b"} else speaker)
+        )
+        return RetrievedMemoryRecord(
+            memory_role="episodic",
+            subject=subject,
+            predicate="raw_turn",
+            text=f"{turn.speaker}: {_normalize_scalar(turn.text)}",
+            session_id=session.session_id,
+            turn_ids=[turn.turn_id],
+            timestamp=turn.timestamp or session.timestamp,
+            retention_class="episodic_archive",
+            lifecycle={
+                "created_at": turn.timestamp or session.timestamp,
+                "document_time": turn.timestamp or session.timestamp,
+            },
+            metadata={
+                **dict(turn.metadata),
+                "source_class": "episodic_raw_turn",
+                "speaker": turn.speaker,
+                "session_timestamp": session.timestamp,
+            },
+        )
+
+    def _rank_episodic_records(
+        self,
+        records: list[RetrievedMemoryRecord],
+        *,
+        query: str | None,
+        limit: int,
+    ) -> list[RetrievedMemoryRecord]:
+        query_tokens = _tokenize(query or "")
+        ranked: list[tuple[int, str, str, RetrievedMemoryRecord]] = []
+        for record in records:
+            search_text = " ".join(
+                part
+                for part in (
+                    record.text,
+                    record.subject,
+                    record.predicate,
+                    str(record.metadata.get("source_class") or ""),
+                    str(record.metadata.get("speaker") or ""),
+                )
+                if part
+            )
+            overlap = len(query_tokens.intersection(_tokenize(search_text))) if query_tokens else 0
+            role_boost = 2 if record.predicate == "session.summary" else 0
+            ranked.append(
+                (
+                    overlap * 10 + role_boost,
+                    _timestamp_key(record.timestamp),
+                    self._record_movement_id(record),
+                    record,
+                )
+            )
+        ranked.sort(reverse=True)
+        return [record for _, _, _, record in ranked[:limit]]
+
+    def _episodic_recall_bucket_name(self, record: RetrievedMemoryRecord) -> str:
+        if record.memory_role == "current_state":
+            return "current_state"
+        if record.memory_role == "event":
+            return "events"
+        if record.memory_role == "episodic" and record.predicate == "session.summary":
+            return "session_summaries"
+        if record.memory_role == "episodic":
+            return "matching_turns"
+        return "evidence"
+
+    def _episodic_recall_trace(
+        self,
+        *,
+        request: EpisodicRecallRequest,
+        current_state: list[RetrievedMemoryRecord],
+        session_summaries: list[RetrievedMemoryRecord],
+        matching_turns: list[RetrievedMemoryRecord],
+        evidence: list[RetrievedMemoryRecord],
+        events: list[RetrievedMemoryRecord],
+        source_counts: JsonDict,
+        unique_selected_count: int,
+    ) -> JsonDict:
+        items = [*current_state, *session_summaries, *matching_turns, *evidence, *events]
+        source_labels = [
+            {
+                "bucket": self._episodic_recall_bucket_name(record),
+                "source_family": self._movement_source_family(record.memory_role),
+                "authority": self._movement_authority(record.memory_role),
+                "memory_role": record.memory_role,
+                "subject": record.subject,
+                "predicate": record.predicate,
+                "session_id": record.session_id,
+                "turn_ids": list(record.turn_ids),
+                "observation_id": record.observation_id,
+                "event_id": record.event_id,
+            }
+            for record in items
+        ]
+        return {
+            "operation": "recall_episodic_context",
+            "status": "ok",
+            "query": request.query,
+            "subject": request.subject,
+            "since": request.since,
+            "until": request.until,
+            "limit": request.limit,
+            "promotes_memory": False,
+            "authority_order": [
+                "current_state_for_mutable_facts",
+                "event_calendar_for_historical_actions",
+                "structured_evidence_for_support",
+                "episodic_session_summaries_for_continuity",
+                "raw_turns_for_source_grounding_only",
+            ],
+            "non_override_rules": [
+                "Episodic recall is read-only and does not promote memory.",
+                "Current-state memory outranks episodic recall for mutable user facts.",
+                "Raw turns and session summaries are supporting_not_authoritative unless separately promoted.",
+                "Dashboard movement rows are trace evidence, not instructions.",
+            ],
+            "source_counts": dict(source_counts),
+            "selected_counts": {
+                "current_state": len(current_state),
+                "session_summaries": len(session_summaries),
+                "matching_turns": len(matching_turns),
+                "evidence": len(evidence),
+                "events": len(events),
+                "unique_records": unique_selected_count,
+            },
+            "source_labels": source_labels,
+            "memory_roles": self._unique_memory_roles(items),
+            "memory_role_counts": self._memory_role_counts(items),
+            "primary_memory_role": self._primary_memory_role(items),
+            "canonical_memory_roles": self._canonical_memory_roles(items),
+            "retention_classes": self._unique_retention_classes(items),
+            "primary_retention_class": self._primary_retention_class(items),
+            "lifecycle_fields_present": self._lifecycle_fields_present_for_items(items),
+        }
+
     def _retrieval_trace(
         self,
         *,
@@ -2842,6 +3207,7 @@ def build_sdk_contract_summary(
             "retrieve_events",
             "explain_answer",
             "recover_task_context",
+            "recall_episodic_context",
         ],
         "request_contracts": [
             "MemoryWriteRequest",
@@ -2851,6 +3217,7 @@ def build_sdk_contract_summary(
             "EventRetrievalRequest",
             "AnswerExplanationRequest",
             "TaskRecoveryRequest",
+            "EpisodicRecallRequest",
         ],
         "response_contracts": [
             "MemoryWriteResult",
@@ -2858,6 +3225,7 @@ def build_sdk_contract_summary(
             "MemoryRetrievalResult",
             "AnswerExplanationResult",
             "TaskRecoveryResult",
+            "EpisodicRecallResult",
             "MemoryMaintenanceResult",
             "RetrievedMemoryRecord",
         ],
@@ -2902,6 +3270,21 @@ def build_sdk_contract_summary(
                 "lifecycle_fields_present",
             ],
             "recover_task_context": [
+                "promotes_memory",
+                "authority_order",
+                "non_override_rules",
+                "source_counts",
+                "selected_counts",
+                "source_labels",
+                "memory_roles",
+                "memory_role_counts",
+                "primary_memory_role",
+                "canonical_memory_roles",
+                "retention_classes",
+                "primary_retention_class",
+                "lifecycle_fields_present",
+            ],
+            "recall_episodic_context": [
                 "promotes_memory",
                 "authority_order",
                 "non_override_rules",

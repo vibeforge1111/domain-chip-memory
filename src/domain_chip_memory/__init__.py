@@ -3,6 +3,8 @@
 from .sdk import (
     AnswerExplanationRequest,
     CurrentStateRequest,
+    EpisodicRecallRequest,
+    EpisodicRecallResult,
     EventRetrievalRequest,
     EvidenceRetrievalRequest,
     HistoricalStateRequest,
@@ -65,6 +67,8 @@ __all__ = [
     "MemoryWriteRequest",
     "MemoryMaintenanceResult",
     "CurrentStateRequest",
+    "EpisodicRecallRequest",
+    "EpisodicRecallResult",
     "HistoricalStateRequest",
     "EvidenceRetrievalRequest",
     "EventRetrievalRequest",

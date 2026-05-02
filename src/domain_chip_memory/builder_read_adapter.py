@@ -6,6 +6,7 @@ from typing import Any
 from .sdk import (
     AnswerExplanationRequest,
     CurrentStateRequest,
+    EpisodicRecallRequest,
     EventRetrievalRequest,
     EvidenceRetrievalRequest,
     HistoricalStateRequest,
@@ -23,6 +24,8 @@ class BuilderMemoryReadRequest:
     query: str | None = None
     question: str | None = None
     as_of: str | None = None
+    since: str | None = None
+    until: str | None = None
     limit: int = 5
     evidence_limit: int = 3
     event_limit: int = 3
@@ -80,6 +83,19 @@ def execute_builder_memory_read(
                 )
             ),
         )
+    if method == "recall_episodic_context":
+        return _materialize_episodic_recall_result(
+            method=method,
+            result=sdk.recall_episodic_context(
+                EpisodicRecallRequest(
+                    query=request.query or request.question,
+                    subject=request.subject,
+                    since=request.since,
+                    until=request.until,
+                    limit=request.limit,
+                )
+            ),
+        )
     if method == "explain_answer":
         return _materialize_explanation_result(
             method=method,
@@ -111,6 +127,8 @@ def execute_builder_memory_read(
                 "query": request.query,
                 "question": request.question,
                 "as_of": request.as_of,
+                "since": request.since,
+                "until": request.until,
             },
         },
     }
@@ -194,6 +212,42 @@ def _materialize_explanation_result(*, method: str, result: Any) -> dict[str, An
             "summary": "Spark memory read completed.",
             "facts": facts,
         }
+    return {
+        "event_type": "memory_read_abstained",
+        "summary": "Spark memory read abstained.",
+        "facts": facts,
+    }
+
+
+def _materialize_episodic_recall_result(*, method: str, result: Any) -> dict[str, Any]:
+    records = []
+    for bucket in ("current_state", "session_summaries", "matching_turns", "evidence", "events"):
+        for item in getattr(result, bucket):
+            record = _retrieved_record_dict(item)
+            record["episodic_recall_bucket"] = bucket
+            records.append(record)
+
+    first_role = records[0]["memory_role"] if records else "unknown"
+    facts = {
+        "memory_role": first_role,
+        "memory_roles": list((result.trace or {}).get("memory_roles") or []),
+        "primary_memory_role": str((result.trace or {}).get("primary_memory_role") or first_role),
+        "canonical_memory_roles": list((result.trace or {}).get("canonical_memory_roles") or []),
+        "method": method,
+        "status": result.status,
+        "record_count": len(records),
+        "records": records,
+        "retrieval_trace": dict(result.trace),
+    }
+    if records and result.status == "ok":
+        return {
+            "event_type": "memory_read_succeeded",
+            "summary": "Spark memory read completed.",
+            "facts": facts,
+        }
+    reason = str((result.trace or {}).get("reason") or result.status or "").strip() or None
+    if reason:
+        facts["reason"] = reason
     return {
         "event_type": "memory_read_abstained",
         "summary": "Spark memory read abstained.",

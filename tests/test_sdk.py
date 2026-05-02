@@ -1,6 +1,7 @@
 from domain_chip_memory import (
     AnswerExplanationRequest,
     CurrentStateRequest,
+    EpisodicRecallRequest,
     EventRetrievalRequest,
     EvidenceRetrievalRequest,
     HistoricalStateRequest,
@@ -20,9 +21,13 @@ def test_sdk_contract_summary_exposes_runtime_surface():
     assert payload["maintenance_methods"] == ["reconsolidate_manual_memory"]
     assert "get_current_state" in payload["read_methods"]
     assert "recover_task_context" in payload["read_methods"]
+    assert "recall_episodic_context" in payload["read_methods"]
     assert "TaskRecoveryRequest" in payload["request_contracts"]
+    assert "EpisodicRecallRequest" in payload["request_contracts"]
     assert "TaskRecoveryResult" in payload["response_contracts"]
+    assert "EpisodicRecallResult" in payload["response_contracts"]
     assert "recover_task_context" in payload["trace_contracts"]
+    assert "recall_episodic_context" in payload["trace_contracts"]
 
 
 def test_sdk_instance_stores_request_scoped_runtime_configuration():
@@ -734,6 +739,21 @@ def test_sdk_recovers_task_context_with_current_state_authority_and_traceable_ep
         MemoryWriteRequest(
             text="",
             operation="create",
+            subject="other-user",
+            predicate="raw_turn",
+            value="Other user also discussed episodic recall, but this should stay separate.",
+            speaker="user",
+            timestamp="2026-05-01T08:45:00Z",
+            session_id="other-day",
+            turn_id="other-day:u1",
+            retention_class="episodic_archive",
+            metadata={"memory_role": "episodic"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
             subject="user",
             predicate="task.blocker",
             value="Builder needs a task recovery API before it can resume memory dashboard work cleanly.",
@@ -805,6 +825,103 @@ def test_sdk_recovers_task_context_with_current_state_authority_and_traceable_ep
         row["movement_state"] == "selected"
         and row["trace"]["operation"] == "recover_task_context"
         and row["authority"] == "authoritative_current"
+        for row in movement["rows"]
+    )
+
+
+def test_sdk_recalls_episodic_context_as_source_labeled_read_only_memory():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="current_focus",
+            value="ship the Spark memory dashboard movement export",
+            timestamp="2026-05-01T08:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="raw_turn",
+            value="Today we reviewed the memory dashboard, fixed movement trace rows, and planned episodic recall.",
+            speaker="user",
+            timestamp="2026-05-01T08:30:00Z",
+            session_id="spark-day",
+            turn_id="spark-day:u1",
+            retention_class="episodic_archive",
+            metadata={"memory_role": "episodic"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="task.note",
+            value="dashboard movement export now shows captured, blocked, promoted, saved, decayed, summarized, and retrieved rows",
+            timestamp="2026-05-01T09:00:00Z",
+            metadata={"memory_role": "structured_evidence"},
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="task.completed",
+            value="Builder task recovery context was wired into self-awareness",
+            timestamp="2026-05-01T10:00:00Z",
+        )
+    )
+
+    result = sdk.recall_episodic_context(
+        EpisodicRecallRequest(
+            subject="user",
+            query="what did we do today for memory dashboard movement and episodic recall?",
+            since="2026-05-01T00:00:00Z",
+            limit=3,
+        )
+    )
+
+    assert result.status == "ok"
+    assert result.current_state[0].memory_role == "current_state"
+    assert result.session_summaries[0].predicate == "session.summary"
+    assert result.matching_turns[0].predicate == "raw_turn"
+    assert any("episodic recall" in record.text for record in result.matching_turns)
+    assert not any("Other user" in record.text for record in result.matching_turns)
+    assert any(record.memory_role == "structured_evidence" for record in result.evidence)
+    assert result.events[0].memory_role == "event"
+    assert result.trace["promotes_memory"] is False
+    assert "current_state_for_mutable_facts" in result.trace["authority_order"]
+    assert any(
+        label["bucket"] == "matching_turns"
+        and label["authority"] == "supporting_not_authoritative"
+        and label["source_family"] == "episodic_summary"
+        for label in result.trace["source_labels"]
+    )
+    assert any(
+        label["bucket"] == "events"
+        and label["authority"] == "authoritative_historical"
+        for label in result.trace["source_labels"]
+    )
+
+    movement = sdk.export_knowledge_base_snapshot()["dashboard_movement"]
+    assert any(
+        row["movement_state"] == "summarized"
+        and row["trace"]["operation"] == "recall_episodic_context"
+        and row["trace"]["selection_bucket"] == "session_summaries"
+        for row in movement["rows"]
+    )
+    assert any(
+        row["movement_state"] == "selected"
+        and row["trace"]["operation"] == "recall_episodic_context"
+        and row["authority"] == "supporting_not_authoritative"
         for row in movement["rows"]
     )
 

@@ -75,6 +75,91 @@ def test_builder_read_adapter_materializes_identity_evidence_success():
     assert payload["facts"]["retrieval_trace"]["query_intent"] == "profile_identity_summary"
 
 
+def test_builder_read_adapter_materializes_source_aware_episodic_recall():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="current_focus",
+            value="finish source-aware episodic recall",
+            timestamp="2026-05-01T08:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="raw_turn",
+            value="We planned episodic recall for Spark memory continuity.",
+            speaker="user",
+            timestamp="2026-05-01T08:30:00Z",
+            session_id="spark-day",
+            turn_id="spark-day:u1",
+            retention_class="episodic_archive",
+            metadata={"memory_role": "episodic"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="other-user",
+            predicate="raw_turn",
+            value="Other user planned a separate episodic recall path.",
+            speaker="user",
+            timestamp="2026-05-01T08:45:00Z",
+            session_id="other-day",
+            turn_id="other-day:u1",
+            retention_class="episodic_archive",
+            metadata={"memory_role": "episodic"},
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="task.completed",
+            value="Task recovery was connected to self-awareness.",
+            timestamp="2026-05-01T09:00:00Z",
+        )
+    )
+
+    payload = execute_builder_memory_read(
+        sdk,
+        BuilderMemoryReadRequest(
+            method="recall_episodic_context",
+            subject="user",
+            query="what did we do for episodic recall?",
+            since="2026-05-01T00:00:00Z",
+            limit=3,
+        ),
+    )
+
+    assert payload["event_type"] == "memory_read_succeeded"
+    assert payload["facts"]["retrieval_trace"]["promotes_memory"] is False
+    assert "current_state_for_mutable_facts" in payload["facts"]["retrieval_trace"]["authority_order"]
+    buckets = {record["episodic_recall_bucket"] for record in payload["facts"]["records"]}
+    assert {"current_state", "session_summaries", "matching_turns", "events"} <= buckets
+    assert any(
+        record["episodic_recall_bucket"] == "matching_turns"
+        and record["memory_role"] == "episodic"
+        and "episodic recall" in record["text"]
+        for record in payload["facts"]["records"]
+    )
+    assert not any("Other user" in record["text"] for record in payload["facts"]["records"])
+    assert any(
+        label["bucket"] == "matching_turns"
+        and label["authority"] == "supporting_not_authoritative"
+        for label in payload["facts"]["retrieval_trace"]["source_labels"]
+    )
+
+
 def test_builder_read_adapter_preserves_invalid_lookup_abstention():
     sdk = SparkMemorySDK()
 
