@@ -301,12 +301,21 @@ class SparkMemorySDK:
         ]
         if matches:
             selected = sorted(matches, key=entry_sort_key)[-1]
+            selected_record = self._observation_record(selected, memory_role="current_state")
+            self._append_record_dashboard_movement(
+                movement_state="retrieved",
+                record=selected_record,
+                trace={
+                    "operation": "get_current_state",
+                    "entity_key": entity_key,
+                },
+            )
             return MemoryLookupResult(
                 found=True,
                 value=str(selected.metadata.get("value", "")).strip() or None,
                 text=selected.text,
                 memory_role="current_state",
-                provenance=[self._observation_record(selected, memory_role="current_state")],
+                provenance=[selected_record],
                 trace=self._lookup_trace(
                     operation="get_current_state",
                     subject=subject,
@@ -314,7 +323,7 @@ class SparkMemorySDK:
                     observation_count=len(observations),
                     memory_role="current_state",
                     provenance_roles=["current_state"],
-                    provenance_items=[self._observation_record(selected, memory_role="current_state")],
+                    provenance_items=[selected_record],
                     extra_trace={"entity_key": entity_key} if entity_key else None,
                 ),
             )
