@@ -61,6 +61,17 @@ SDK_LIFECYCLE_FIELDS: tuple[str, ...] = (
     "conflicts_with",
     "deleted_at",
 )
+DASHBOARD_MOVEMENT_STATES: tuple[str, ...] = (
+    "captured",
+    "blocked",
+    "promoted",
+    "saved",
+    "decayed",
+    "summarized",
+    "retrieved",
+    "selected",
+    "dropped",
+)
 
 
 def _runtime_memory_architecture(value: str | None = None) -> str:
@@ -135,6 +146,22 @@ class AnswerExplanationRequest:
 
 
 @dataclass(frozen=True)
+class TaskRecoveryRequest:
+    query: str | None = None
+    subject: str | None = None
+    limit: int = 5
+
+
+@dataclass(frozen=True)
+class EpisodicRecallRequest:
+    query: str | None = None
+    subject: str | None = None
+    since: str | None = None
+    until: str | None = None
+    limit: int = 5
+
+
+@dataclass(frozen=True)
 class RetrievedMemoryRecord:
     memory_role: MemoryRole
     subject: str
@@ -192,6 +219,28 @@ class AnswerExplanationResult:
 
 
 @dataclass(frozen=True)
+class TaskRecoveryResult:
+    status: str
+    active_goal: RetrievedMemoryRecord | None
+    completed_steps: list[RetrievedMemoryRecord]
+    blockers: list[RetrievedMemoryRecord]
+    next_actions: list[RetrievedMemoryRecord]
+    episodic_context: list[RetrievedMemoryRecord]
+    trace: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class EpisodicRecallResult:
+    status: str
+    current_state: list[RetrievedMemoryRecord]
+    session_summaries: list[RetrievedMemoryRecord]
+    matching_turns: list[RetrievedMemoryRecord]
+    evidence: list[RetrievedMemoryRecord]
+    events: list[RetrievedMemoryRecord]
+    trace: JsonDict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class MemoryMaintenanceResult:
     manual_observations_before: int
     manual_observations_after: int
@@ -202,6 +251,7 @@ class MemoryMaintenanceResult:
     active_state_stale_preserved_count: int = 0
     active_state_superseded_count: int = 0
     active_state_archived_count: int = 0
+    active_state_resurrected_count: int = 0
     audit_samples: JsonDict = field(default_factory=dict)
     trace: JsonDict = field(default_factory=dict)
 
@@ -220,6 +270,8 @@ class SparkMemorySDK:
         self._manual_observations: list[ObservationEntry] = []
         self._manual_events: list[EventCalendarEntry] = []
         self._manual_current_state_snapshot: list[ObservationEntry] = []
+        self._dashboard_movement_events: list[JsonDict] = []
+        self._dashboard_movement_counter = 0
 
     def write_observation(self, request: MemoryWriteRequest) -> MemoryWriteResult:
         return self._write(request, write_kind="observation")
@@ -452,6 +504,17 @@ class SparkMemorySDK:
                 limit=request.limit,
             )
         ]
+        for item in items:
+            self._append_record_dashboard_movement(
+                movement_state="retrieved",
+                record=item,
+                trace={
+                    "operation": "retrieve_evidence",
+                    "query": request.query,
+                    "limit": request.limit,
+                    "query_intent": query_intent,
+                },
+            )
         return MemoryRetrievalResult(
             items=items,
             trace=self._retrieval_trace(
@@ -487,6 +550,16 @@ class SparkMemorySDK:
                 limit=request.limit,
             )
         ]
+        for item in items:
+            self._append_record_dashboard_movement(
+                movement_state="retrieved",
+                record=item,
+                trace={
+                    "operation": "retrieve_events",
+                    "query": request.query,
+                    "limit": request.limit,
+                },
+            )
         return MemoryRetrievalResult(
             items=items,
             trace=self._retrieval_trace(
@@ -561,6 +634,248 @@ class SparkMemorySDK:
             ),
         )
 
+    def recover_task_context(self, request: TaskRecoveryRequest) -> TaskRecoveryResult:
+        if request.limit < 1:
+            return TaskRecoveryResult(
+                status="invalid_request",
+                active_goal=None,
+                completed_steps=[],
+                blockers=[],
+                next_actions=[],
+                episodic_context=[],
+                trace={
+                    "operation": "recover_task_context",
+                    "status": "invalid_request",
+                    "reason": "limit_must_be_positive",
+                    "limit": request.limit,
+                    "promotes_memory": False,
+                },
+            )
+
+        subject = self._normalize_optional_subject(request.subject)
+        current_state_records = [
+            self._observation_record(entry, memory_role="current_state")
+            for entry in build_current_state_view(self._current_state_observations())
+            if not subject or entry.subject == subject
+        ]
+        observation_records = [
+            self._observation_record(entry, memory_role=self._observation_memory_role(entry))
+            for entry in self._observations()
+            if not subject or entry.subject == subject
+        ]
+        event_records = [
+            self._event_record(entry)
+            for entry in self._events()
+            if not subject or entry.subject == subject
+        ]
+        candidates = [*current_state_records, *observation_records, *event_records]
+
+        active_goal = self._select_task_recovery_active_goal(
+            current_state_records,
+            query=request.query,
+        )
+        completed_steps = self._task_recovery_bucket(
+            candidates,
+            bucket="completed_steps",
+            query=request.query,
+            limit=request.limit,
+        )
+        blockers = self._task_recovery_bucket(
+            candidates,
+            bucket="blockers",
+            query=request.query,
+            limit=request.limit,
+        )
+        next_actions = self._task_recovery_bucket(
+            candidates,
+            bucket="next_actions",
+            query=request.query,
+            limit=request.limit,
+        )
+        episodic_context = self._task_recovery_bucket(
+            observation_records,
+            bucket="episodic_context",
+            query=request.query,
+            limit=request.limit,
+        )
+
+        selected_records = [
+            *([active_goal] if active_goal else []),
+            *completed_steps,
+            *blockers,
+            *next_actions,
+            *episodic_context,
+        ]
+        selected_by_id = dict.fromkeys(self._record_movement_id(record) for record in selected_records)
+        for record in selected_records:
+            self._append_record_dashboard_movement(
+                movement_state="retrieved",
+                record=record,
+                trace={
+                    "operation": "recover_task_context",
+                    "query": request.query,
+                    "limit": request.limit,
+                    "selection_bucket": self._task_recovery_bucket_name(record, active_goal=active_goal),
+                },
+            )
+        for record in selected_records:
+            self._append_record_dashboard_movement(
+                movement_state="selected",
+                record=record,
+                trace={
+                    "operation": "recover_task_context",
+                    "query": request.query,
+                    "selection_bucket": self._task_recovery_bucket_name(record, active_goal=active_goal),
+                },
+            )
+
+        return TaskRecoveryResult(
+            status="ok",
+            active_goal=active_goal,
+            completed_steps=completed_steps,
+            blockers=blockers,
+            next_actions=next_actions,
+            episodic_context=episodic_context,
+            trace=self._task_recovery_trace(
+                request=request,
+                active_goal=active_goal,
+                completed_steps=completed_steps,
+                blockers=blockers,
+                next_actions=next_actions,
+                episodic_context=episodic_context,
+                source_counts={
+                    "current_state": len(current_state_records),
+                    "observations": len(observation_records),
+                    "events": len(event_records),
+                },
+                unique_selected_count=len(selected_by_id),
+            ),
+        )
+
+    def recall_episodic_context(self, request: EpisodicRecallRequest) -> EpisodicRecallResult:
+        if request.limit < 1:
+            return EpisodicRecallResult(
+                status="invalid_request",
+                current_state=[],
+                session_summaries=[],
+                matching_turns=[],
+                evidence=[],
+                events=[],
+                trace={
+                    "operation": "recall_episodic_context",
+                    "status": "invalid_request",
+                    "reason": "limit_must_be_positive",
+                    "limit": request.limit,
+                    "promotes_memory": False,
+                },
+            )
+
+        subject = self._normalize_optional_subject(request.subject)
+        sessions = self._episodic_sessions_in_window(subject=subject, since=request.since, until=request.until)
+        current_state = [
+            self._observation_record(entry, memory_role="current_state")
+            for entry in self._rank_observations(
+                build_current_state_view(self._current_state_observations()),
+                query=request.query,
+                subject=subject,
+                predicate=None,
+                limit=request.limit,
+            )
+        ]
+        session_summaries = self._rank_episodic_records(
+            [self._session_summary_record(session) for session in sessions if session.turns],
+            query=request.query,
+            limit=request.limit,
+        )
+        matching_turns = self._rank_episodic_records(
+            [
+                self._session_turn_record(session, turn)
+                for session in sessions
+                for turn in session.turns
+                if str(turn.text or "").strip()
+            ],
+            query=request.query,
+            limit=request.limit,
+        )
+        evidence = [
+            self._observation_record(entry, memory_role=self._observation_memory_role(entry))
+            for entry in self._rank_observations(
+                self._observations(),
+                query=request.query,
+                subject=subject,
+                predicate=None,
+                limit=request.limit,
+            )
+        ]
+        events = [
+            self._event_record(entry)
+            for entry in self._rank_events(
+                self._events(),
+                query=request.query,
+                subject=subject,
+                predicate=None,
+                limit=request.limit,
+            )
+        ]
+
+        selected_records = [*current_state, *session_summaries, *matching_turns, *evidence, *events]
+        selected_by_id = dict.fromkeys(self._record_movement_id(record) for record in selected_records)
+        for record in selected_records:
+            self._append_record_dashboard_movement(
+                movement_state="retrieved",
+                record=record,
+                trace={
+                    "operation": "recall_episodic_context",
+                    "query": request.query,
+                    "limit": request.limit,
+                    "selection_bucket": self._episodic_recall_bucket_name(record),
+                },
+            )
+            self._append_record_dashboard_movement(
+                movement_state="selected",
+                record=record,
+                trace={
+                    "operation": "recall_episodic_context",
+                    "query": request.query,
+                    "selection_bucket": self._episodic_recall_bucket_name(record),
+                },
+            )
+
+        for record in session_summaries:
+            self._append_record_dashboard_movement(
+                movement_state="summarized",
+                record=record,
+                trace={
+                    "operation": "recall_episodic_context",
+                    "query": request.query,
+                    "selection_bucket": "session_summaries",
+                },
+            )
+
+        return EpisodicRecallResult(
+            status="ok",
+            current_state=current_state,
+            session_summaries=session_summaries,
+            matching_turns=matching_turns,
+            evidence=evidence,
+            events=events,
+            trace=self._episodic_recall_trace(
+                request=request,
+                current_state=current_state,
+                session_summaries=session_summaries,
+                matching_turns=matching_turns,
+                evidence=evidence,
+                events=events,
+                source_counts={
+                    "sessions": len(sessions),
+                    "current_state": len(current_state),
+                    "observations": len(self._observations()),
+                    "events": len(self._events()),
+                },
+                unique_selected_count=len(selected_by_id),
+            ),
+        )
+
     def reconsolidate_manual_memory(self, *, now: str | None = None) -> MemoryMaintenanceResult:
         raw_snapshot = self._build_manual_current_state_snapshot(self._manual_observations)
         maintained_at = now or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -578,6 +893,18 @@ class SparkMemorySDK:
             if entry.metadata.get("active_state_maintenance_action")
         )
         audit_samples = self._active_state_maintenance_audit_samples(self._manual_observations)
+        for entry in self._manual_observations:
+            action = str(entry.metadata.get("active_state_maintenance_action") or "").strip()
+            if action in {"archived", "stale_preserved", "superseded"}:
+                self._append_record_dashboard_movement(
+                    movement_state="decayed",
+                    record=self._observation_record(entry, memory_role=self._observation_memory_role(entry)),
+                    trace={
+                        "operation": "reconsolidate_manual_memory",
+                        "maintenance_action": action,
+                        "maintenance_reason": _normalize_scalar(entry.metadata.get("active_state_maintenance_reason")),
+                    },
+                )
         return MemoryMaintenanceResult(
             manual_observations_before=len(self._manual_observations),
             manual_observations_after=len(snapshot),
@@ -588,6 +915,7 @@ class SparkMemorySDK:
             active_state_stale_preserved_count=maintenance_counts.get("stale_preserved", 0),
             active_state_superseded_count=maintenance_counts.get("superseded", 0),
             active_state_archived_count=maintenance_counts.get("archived", 0),
+            active_state_resurrected_count=maintenance_counts.get("resurrected", 0),
             audit_samples=audit_samples,
             trace={
                 "operation": "reconsolidate_manual_memory",
@@ -597,6 +925,7 @@ class SparkMemorySDK:
                     "stale_preserved": maintenance_counts.get("stale_preserved", 0),
                     "superseded": maintenance_counts.get("superseded", 0),
                     "archived": maintenance_counts.get("archived", 0),
+                    "resurrected": maintenance_counts.get("resurrected", 0),
                 },
             },
         )
@@ -611,6 +940,11 @@ class SparkMemorySDK:
             for entry in self._observations()
         ]
         event_records = [self._event_record(entry) for entry in self._events()]
+        dashboard_movement = self._build_dashboard_movement_export(
+            current_state_records=current_state_records,
+            observation_records=observation_records,
+            event_records=event_records,
+        )
         role_contracts = sdk_memory_role_contracts()
         return {
             "runtime_class": "SparkMemorySDK",
@@ -640,6 +974,7 @@ class SparkMemorySDK:
             "current_state": [self._retrieved_record_dict(record) for record in current_state_records],
             "observations": [self._retrieved_record_dict(record) for record in observation_records],
             "events": [self._retrieved_record_dict(record) for record in event_records],
+            "dashboard_movement": dashboard_movement,
             "trace": {
                 "operation": "export_knowledge_base_snapshot",
                 "source_of_truth": "SparkMemorySDK",
@@ -653,6 +988,20 @@ class SparkMemorySDK:
         turn_id = request.turn_id or self._next_turn_id(session_id)
 
         if operation == "auto" and not cleaned_text:
+            self._append_request_dashboard_movement(
+                movement_state="blocked",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason="empty_text",
+            )
+            self._append_request_dashboard_movement(
+                movement_state="dropped",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason="empty_text",
+            )
             return MemoryWriteResult(
                 session_id=session_id,
                 turn_id=turn_id,
@@ -674,6 +1023,20 @@ class SparkMemorySDK:
 
         invalid_operation_reason = self._unsupported_operation_reason(operation, write_kind=write_kind)
         if invalid_operation_reason:
+            self._append_request_dashboard_movement(
+                movement_state="blocked",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason=invalid_operation_reason,
+            )
+            self._append_request_dashboard_movement(
+                movement_state="dropped",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason=invalid_operation_reason,
+            )
             return MemoryWriteResult(
                 session_id=session_id,
                 turn_id=turn_id,
@@ -697,6 +1060,9 @@ class SparkMemorySDK:
         events: list[EventCalendarEntry] = []
         manual_write = operation != "auto"
         turn_metadata = dict(request.metadata)
+        normalized_turn_subject = self._normalize_optional_subject(request.subject)
+        if normalized_turn_subject:
+            turn_metadata.setdefault("subject", normalized_turn_subject)
         if manual_write:
             explicit_memory = self._explicit_memory_entries(
                 request,
@@ -706,6 +1072,20 @@ class SparkMemorySDK:
                 turn_id=turn_id,
             )
             if explicit_memory["unsupported_reason"] is not None:
+                self._append_request_dashboard_movement(
+                    movement_state="blocked",
+                    request=request,
+                    write_kind=write_kind,
+                    write_operation=operation,
+                    reason=str(explicit_memory["unsupported_reason"]),
+                )
+                self._append_request_dashboard_movement(
+                    movement_state="dropped",
+                    request=request,
+                    write_kind=write_kind,
+                    write_operation=operation,
+                    reason=str(explicit_memory["unsupported_reason"]),
+                )
                 return MemoryWriteResult(
                     session_id=session_id,
                     turn_id=turn_id,
@@ -792,6 +1172,62 @@ class SparkMemorySDK:
                 self._manual_observations.extend(observations)
                 self._manual_events.extend(events)
                 self._manual_current_state_snapshot = []
+            for record in [*observation_records, *event_records]:
+                self._append_record_dashboard_movement(
+                    movement_state="captured",
+                    record=record,
+                    trace={
+                        "operation": "write_memory",
+                        "write_kind": write_kind,
+                        "write_operation": operation,
+                    },
+                )
+                self._append_record_dashboard_movement(
+                    movement_state="saved",
+                    record=record,
+                    trace={
+                        "operation": "write_memory",
+                        "write_kind": write_kind,
+                        "write_operation": operation,
+                    },
+                )
+                if record.memory_role in {"current_state", "state_deletion"} or record.retention_class == "active_state":
+                    self._append_record_dashboard_movement(
+                        movement_state="promoted",
+                        record=record,
+                        trace={
+                            "operation": "write_memory",
+                            "write_kind": write_kind,
+                            "write_operation": operation,
+                            "promotion_target": "current_state",
+                        },
+                    )
+                if operation == "purge" and purge_result.get("purge"):
+                    self._append_record_dashboard_movement(
+                        movement_state="dropped",
+                        record=record,
+                        trace={
+                            "operation": "write_memory",
+                            "write_kind": write_kind,
+                            "write_operation": operation,
+                            "purge": purge_result.get("purge"),
+                        },
+                    )
+        else:
+            self._append_request_dashboard_movement(
+                movement_state="blocked",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason="no_structured_memory_extracted",
+            )
+            self._append_request_dashboard_movement(
+                movement_state="dropped",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason="no_structured_memory_extracted",
+            )
         return MemoryWriteResult(
             session_id=session_id,
             turn_id=turn_id,
@@ -1472,6 +1908,7 @@ class SparkMemorySDK:
         }
         later_deletions_by_target: dict[tuple[str, str], list[ObservationEntry]] = {}
         later_updates_by_key: dict[tuple[str, str, str], list[ObservationEntry]] = {}
+        later_updates_by_target: dict[tuple[str, str], list[ObservationEntry]] = {}
         for entry in observations:
             target = state_deletion_target(entry)
             if target:
@@ -1479,6 +1916,7 @@ class SparkMemorySDK:
                 continue
             if self._is_active_state_observation(entry):
                 later_updates_by_key.setdefault(self._active_state_entry_key(entry), []).append(entry)
+                later_updates_by_target.setdefault((entry.subject, entry.predicate), []).append(entry)
 
         maintained: list[ObservationEntry] = []
         for entry in observations:
@@ -1487,32 +1925,73 @@ class SparkMemorySDK:
                 continue
             action = "still_current"
             reason = "current_snapshot"
+            replacement: ObservationEntry | None = None
+            deletion_replacement: ObservationEntry | None = None
             if entry.observation_id in current_observation_ids:
                 if entry.predicate != "state_deletion" and self._active_state_revalidation_due(entry, maintained_at):
                     action = "stale_preserved"
                     reason = "past_revalidate_at"
             else:
                 target_predicate = state_deletion_target(entry) or entry.predicate
-                deletion_after = any(
-                    entry_sort_key(deletion) > entry_sort_key(entry)
-                    for deletion in later_deletions_by_target.get((entry.subject, target_predicate), [])
+                deletion_replacement = next(
+                    (
+                        deletion
+                        for deletion in sorted(
+                            later_deletions_by_target.get((entry.subject, target_predicate), []),
+                            key=entry_sort_key,
+                        )
+                        if entry_sort_key(deletion) > entry_sort_key(entry)
+                    ),
+                    None,
                 )
-                if deletion_after:
+                if deletion_replacement is not None:
                     action = "archived"
                     reason = "deleted_by_later_state_deletion"
-                elif any(
-                    entry_sort_key(update) > entry_sort_key(entry)
-                    for update in later_updates_by_key.get(self._active_state_entry_key(entry), [])
-                ):
-                    action = "superseded"
-                    reason = "replaced_by_newer_current_state"
-                elif self._active_state_entry_key(entry) not in current_keys:
+                else:
+                    update_candidates = (
+                        later_updates_by_target.get((entry.subject, target_predicate), [])
+                        if entry.predicate == "state_deletion"
+                        else later_updates_by_key.get(self._active_state_entry_key(entry), [])
+                    )
+                    replacement = next(
+                        (
+                            update
+                            for update in sorted(
+                                update_candidates,
+                                key=entry_sort_key,
+                            )
+                            if entry_sort_key(update) > entry_sort_key(entry)
+                        ),
+                        None,
+                    )
+                if deletion_replacement is None and replacement is not None:
+                    if entry.predicate == "state_deletion":
+                        action = "resurrected"
+                        reason = "deleted_state_resurrected_by_newer_current_state"
+                    else:
+                        action = "superseded"
+                        reason = "replaced_by_newer_current_state"
+                elif deletion_replacement is None and self._active_state_entry_key(entry) not in current_keys:
                     action = "superseded"
                     reason = "compacted_out_of_current_snapshot"
             metadata = dict(entry.metadata)
             metadata["active_state_maintenance_action"] = action
             metadata["active_state_maintenance_at"] = maintained_at
             metadata["active_state_maintenance_reason"] = reason
+            if replacement is not None:
+                metadata["active_state_replacement_observation_id"] = replacement.observation_id
+                metadata["active_state_replacement_value"] = _normalize_scalar(
+                    replacement.metadata.get("value") or replacement.text
+                )
+                metadata["active_state_replacement_timestamp"] = replacement.timestamp
+            if deletion_replacement is not None:
+                metadata["active_state_deletion_observation_id"] = deletion_replacement.observation_id
+                metadata["active_state_deletion_timestamp"] = deletion_replacement.timestamp
+            if action == "stale_preserved":
+                lag_days = self._active_state_revalidation_lag_days(entry, maintained_at)
+                if lag_days is not None:
+                    metadata["active_state_revalidation_lag_days"] = lag_days
+                    metadata["active_state_decay_score_delta"] = self._active_state_decay_score_delta(lag_days)
             maintained.append(replace(entry, metadata=metadata))
         return maintained
 
@@ -1525,6 +2004,9 @@ class SparkMemorySDK:
         buckets = {
             "archived": [],
             "deleted": [],
+            "stale_preserved": [],
+            "superseded": [],
+            "resurrected": [],
             "still_current": [],
         }
         for entry in sorted(
@@ -1535,6 +2017,12 @@ class SparkMemorySDK:
             action = str(entry.metadata.get("active_state_maintenance_action") or "").strip()
             if action == "archived":
                 bucket = "archived"
+            elif action == "stale_preserved":
+                bucket = "stale_preserved"
+            elif action == "superseded":
+                bucket = "superseded"
+            elif action == "resurrected":
+                bucket = "resurrected"
             elif action == "still_current":
                 bucket = "deleted" if entry.predicate == "state_deletion" else "still_current"
             else:
@@ -1559,8 +2047,21 @@ class SparkMemorySDK:
             "predicate": target_predicate,
             "value": value,
             "timestamp": entry.timestamp,
-            "action": "deleted" if entry.predicate == "state_deletion" else action,
+            "action": "deleted" if entry.predicate == "state_deletion" and action == "still_current" else action,
             "reason": _normalize_scalar(entry.metadata.get("active_state_maintenance_reason")),
+            "salience_score": entry.metadata.get("salience_score"),
+            "confidence": entry.metadata.get("confidence"),
+            "revalidate_at": _normalize_scalar(entry.metadata.get("revalidate_at")),
+            "maintenance_at": _normalize_scalar(entry.metadata.get("active_state_maintenance_at")),
+            "revalidation_lag_days": entry.metadata.get("active_state_revalidation_lag_days"),
+            "decay_score_delta": entry.metadata.get("active_state_decay_score_delta"),
+            "replacement_observation_id": _normalize_scalar(
+                entry.metadata.get("active_state_replacement_observation_id")
+            ),
+            "replacement_value": _normalize_scalar(entry.metadata.get("active_state_replacement_value")),
+            "replacement_timestamp": _normalize_scalar(entry.metadata.get("active_state_replacement_timestamp")),
+            "deletion_observation_id": _normalize_scalar(entry.metadata.get("active_state_deletion_observation_id")),
+            "deletion_timestamp": _normalize_scalar(entry.metadata.get("active_state_deletion_timestamp")),
         }
 
     def _is_active_state_observation(self, entry: ObservationEntry) -> bool:
@@ -1610,6 +2111,27 @@ class SparkMemorySDK:
         if now.tzinfo is None:
             now = now.replace(tzinfo=timezone.utc)
         return due_at <= now
+
+    def _active_state_revalidation_lag_days(self, entry: ObservationEntry, maintained_at: str) -> int | None:
+        metadata = entry.metadata if isinstance(entry.metadata, dict) else {}
+        revalidate_at = str(metadata.get("revalidate_at") or "").strip()
+        if not revalidate_at:
+            return None
+        try:
+            due_at = datetime.fromisoformat(revalidate_at.replace("Z", "+00:00"))
+            now = datetime.fromisoformat(maintained_at.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if due_at.tzinfo is None:
+            due_at = due_at.replace(tzinfo=timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        return max(0, (now - due_at).days)
+
+    def _active_state_decay_score_delta(self, lag_days: int) -> float:
+        if lag_days <= 0:
+            return 0.0
+        return -round(min(lag_days / 180, 1.0), 4)
 
     def _write_has_supported_memory(
         self,
@@ -1694,6 +2216,445 @@ class SparkMemorySDK:
             provenance_roles=provenance_roles,
             items=provenance_items or [],
         )
+
+    def _select_task_recovery_active_goal(
+        self,
+        records: list[RetrievedMemoryRecord],
+        *,
+        query: str | None,
+    ) -> RetrievedMemoryRecord | None:
+        candidates = [
+            record
+            for record in records
+            if self._task_recovery_matches_bucket(record, bucket="active_goal")
+        ]
+        ranked = sorted(
+            candidates,
+            key=lambda record: self._task_recovery_rank_key(record, query=query, bucket="active_goal"),
+            reverse=True,
+        )
+        return ranked[0] if ranked else None
+
+    def _task_recovery_bucket(
+        self,
+        records: list[RetrievedMemoryRecord],
+        *,
+        bucket: str,
+        query: str | None,
+        limit: int,
+    ) -> list[RetrievedMemoryRecord]:
+        ranked = sorted(
+            [
+                record
+                for record in records
+                if self._task_recovery_matches_bucket(record, bucket=bucket)
+            ],
+            key=lambda record: self._task_recovery_rank_key(record, query=query, bucket=bucket),
+            reverse=True,
+        )
+        deduped: list[RetrievedMemoryRecord] = []
+        seen: set[str] = set()
+        for record in ranked:
+            record_id = self._record_movement_id(record)
+            if record_id in seen:
+                continue
+            seen.add(record_id)
+            deduped.append(record)
+            if len(deduped) >= limit:
+                break
+        return deduped
+
+    def _task_recovery_matches_bucket(self, record: RetrievedMemoryRecord, *, bucket: str) -> bool:
+        text = self._task_recovery_search_text(record)
+        tokens = _tokenize(text)
+        predicate = record.predicate.lower()
+        if bucket == "active_goal":
+            if record.memory_role != "current_state":
+                return False
+            return any(
+                marker in predicate
+                for marker in (
+                    "current_focus",
+                    "current_goal",
+                    "current_plan",
+                    "current_mission",
+                    "active_task",
+                    "active_goal",
+                    "active_work",
+                )
+            )
+        if bucket == "completed_steps":
+            return bool(
+                tokens.intersection({"complete", "completed", "done", "finished", "shipped", "verified", "passed"})
+                or any(marker in predicate for marker in ("completed", "done", "shipped", "verified"))
+            )
+        if bucket == "blockers":
+            return bool(
+                tokens.intersection({"blocker", "blocked", "blocking", "stuck", "risk", "waiting", "missing"})
+                or any(marker in predicate for marker in ("blocker", "blocked", "risk", "waiting"))
+            )
+        if bucket == "next_actions":
+            if self._task_recovery_matches_bucket(record, bucket="blockers"):
+                return False
+            return bool(
+                tokens.intersection({"next", "todo", "continue", "resume", "implement", "wire", "connect"})
+                or any(marker in predicate for marker in ("next_action", "todo", "plan", "resume"))
+            )
+        if bucket == "episodic_context":
+            return record.memory_role == "episodic" or record.predicate == "raw_turn"
+        return False
+
+    def _task_recovery_rank_key(
+        self,
+        record: RetrievedMemoryRecord,
+        *,
+        query: str | None,
+        bucket: str,
+    ) -> tuple[int, str, str]:
+        text = self._task_recovery_search_text(record)
+        query_tokens = _tokenize(query or "")
+        overlap = len(query_tokens.intersection(_tokenize(text))) if query_tokens else 0
+        role_boost = 0
+        if record.memory_role == "current_state":
+            role_boost += 30
+        elif record.memory_role == "event":
+            role_boost += 12
+        elif record.memory_role == "structured_evidence":
+            role_boost += 8
+        elif record.memory_role == "episodic":
+            role_boost += 4
+        bucket_boost = 0
+        if bucket == "active_goal":
+            bucket_boost += 20
+            if "focus" in record.predicate or "goal" in record.predicate:
+                bucket_boost += 8
+        if query_tokens and overlap == 0 and bucket == "episodic_context":
+            bucket_boost -= 20
+        return (
+            overlap * 10 + role_boost + bucket_boost,
+            _timestamp_key(record.timestamp),
+            self._record_movement_id(record),
+        )
+
+    def _task_recovery_search_text(self, record: RetrievedMemoryRecord) -> str:
+        metadata_text = " ".join(
+            str(value)
+            for key, value in record.metadata.items()
+            if key in {"value", "entity_key", "entity_label", "source_surface", "task_recovery_label"}
+        )
+        return " ".join(
+            part
+            for part in (
+                record.text,
+                record.subject,
+                record.predicate,
+                metadata_text,
+            )
+            if part
+        )
+
+    def _task_recovery_bucket_name(
+        self,
+        record: RetrievedMemoryRecord,
+        *,
+        active_goal: RetrievedMemoryRecord | None,
+    ) -> str:
+        if active_goal and self._record_movement_id(record) == self._record_movement_id(active_goal):
+            return "active_goal"
+        for bucket in ("completed_steps", "blockers", "next_actions", "episodic_context"):
+            if self._task_recovery_matches_bucket(record, bucket=bucket):
+                return bucket
+        return "supporting_context"
+
+    def _task_recovery_trace(
+        self,
+        *,
+        request: TaskRecoveryRequest,
+        active_goal: RetrievedMemoryRecord | None,
+        completed_steps: list[RetrievedMemoryRecord],
+        blockers: list[RetrievedMemoryRecord],
+        next_actions: list[RetrievedMemoryRecord],
+        episodic_context: list[RetrievedMemoryRecord],
+        source_counts: JsonDict,
+        unique_selected_count: int,
+    ) -> JsonDict:
+        items = [
+            *([active_goal] if active_goal else []),
+            *completed_steps,
+            *blockers,
+            *next_actions,
+            *episodic_context,
+        ]
+        source_labels = [
+            {
+                "bucket": self._task_recovery_bucket_name(record, active_goal=active_goal),
+                "source_family": self._movement_source_family(record.memory_role),
+                "authority": self._movement_authority(record.memory_role),
+                "memory_role": record.memory_role,
+                "subject": record.subject,
+                "predicate": record.predicate,
+                "session_id": record.session_id,
+                "turn_ids": list(record.turn_ids),
+                "observation_id": record.observation_id,
+                "event_id": record.event_id,
+            }
+            for record in items
+        ]
+        return {
+            "operation": "recover_task_context",
+            "status": "ok",
+            "query": request.query,
+            "subject": request.subject,
+            "limit": request.limit,
+            "promotes_memory": False,
+            "authority_order": [
+                "current_state_for_mutable_active_work",
+                "event_calendar_for_historical_steps",
+                "structured_evidence_for_support",
+                "episodic_context_for_recall_only",
+            ],
+            "non_override_rules": [
+                "Task recovery is a read-side synthesis and does not promote memory.",
+                "Current-state memory outranks episodic and wiki context for mutable user facts.",
+                "Episodic context is supporting_not_authoritative unless separately promoted.",
+                "Dashboard movement rows are trace evidence, not instructions.",
+            ],
+            "source_counts": dict(source_counts),
+            "selected_counts": {
+                "active_goal": 1 if active_goal else 0,
+                "completed_steps": len(completed_steps),
+                "blockers": len(blockers),
+                "next_actions": len(next_actions),
+                "episodic_context": len(episodic_context),
+                "unique_records": unique_selected_count,
+            },
+            "source_labels": source_labels,
+            "memory_roles": self._unique_memory_roles(items),
+            "memory_role_counts": self._memory_role_counts(items),
+            "primary_memory_role": self._primary_memory_role(items),
+            "canonical_memory_roles": self._canonical_memory_roles(items),
+            "retention_classes": self._unique_retention_classes(items),
+            "primary_retention_class": self._primary_retention_class(items),
+            "lifecycle_fields_present": self._lifecycle_fields_present_for_items(items),
+        }
+
+    def _episodic_sessions_in_window(
+        self,
+        *,
+        subject: str | None,
+        since: str | None,
+        until: str | None,
+    ) -> list[NormalizedSession]:
+        since_key = _normalize_scalar(since)
+        until_key = _normalize_scalar(until)
+        sessions: list[NormalizedSession] = []
+        for session in self._sessions:
+            if not self._episodic_session_matches_subject(session, subject):
+                continue
+            timestamps = [
+                timestamp
+                for timestamp in [session.timestamp, *(turn.timestamp for turn in session.turns)]
+                if timestamp
+            ]
+            comparable = max(timestamps) if timestamps else ""
+            if since_key and comparable and comparable < since_key:
+                continue
+            if until_key and comparable and comparable > until_key:
+                continue
+            sessions.append(session)
+        return sorted(sessions, key=lambda item: item.timestamp or "", reverse=True)
+
+    def _episodic_session_matches_subject(self, session: NormalizedSession, subject: str | None) -> bool:
+        if subject is None:
+            return True
+        session_subject = self._normalize_optional_subject(str(session.metadata.get("subject") or ""))
+        turn_subjects = [
+            self._normalize_optional_subject(str(turn.metadata.get("subject") or ""))
+            for turn in session.turns
+        ]
+        candidates = [item for item in [session_subject, *turn_subjects] if item]
+        if candidates:
+            return subject in candidates
+        if subject == "user":
+            return any(_normalize_scalar(turn.speaker).lower() in {"user", "speaker_a", "speaker_b"} for turn in session.turns)
+        return False
+
+    def _session_summary_record(self, session: NormalizedSession) -> RetrievedMemoryRecord:
+        first_turn = session.turns[0]
+        last_turn = session.turns[-1]
+        timestamp = session.timestamp or last_turn.timestamp or first_turn.timestamp
+        subject = (
+            self._normalize_optional_subject(str(session.metadata.get("subject") or ""))
+            or self._normalize_optional_subject(str(first_turn.metadata.get("subject") or ""))
+            or "session"
+        )
+        turn_fragments = [
+            f"{turn.speaker}: {_normalize_scalar(turn.text)[:180]}"
+            for turn in session.turns[:6]
+            if _normalize_scalar(turn.text)
+        ]
+        text = f"Session {session.session_id}: " + " | ".join(turn_fragments)
+        return RetrievedMemoryRecord(
+            memory_role="episodic",
+            subject=subject,
+            predicate="session.summary",
+            text=text[:900],
+            session_id=session.session_id,
+            turn_ids=[turn.turn_id for turn in session.turns],
+            timestamp=timestamp,
+            retention_class="episodic_archive",
+            lifecycle={
+                "created_at": first_turn.timestamp or session.timestamp,
+                "document_time": timestamp,
+            },
+            metadata={
+                **dict(session.metadata),
+                "source_class": "episodic_session_summary",
+                "summary_kind": "extractive_session_summary",
+                "turn_count": len(session.turns),
+            },
+        )
+
+    def _session_turn_record(self, session: NormalizedSession, turn: NormalizedTurn) -> RetrievedMemoryRecord:
+        speaker = _normalize_scalar(turn.speaker).lower() or "unknown"
+        subject = (
+            self._normalize_optional_subject(str(turn.metadata.get("subject") or ""))
+            or ("user" if speaker in {"user", "speaker_a", "speaker_b"} else speaker)
+        )
+        return RetrievedMemoryRecord(
+            memory_role="episodic",
+            subject=subject,
+            predicate="raw_turn",
+            text=f"{turn.speaker}: {_normalize_scalar(turn.text)}",
+            session_id=session.session_id,
+            turn_ids=[turn.turn_id],
+            timestamp=turn.timestamp or session.timestamp,
+            retention_class="episodic_archive",
+            lifecycle={
+                "created_at": turn.timestamp or session.timestamp,
+                "document_time": turn.timestamp or session.timestamp,
+            },
+            metadata={
+                **dict(turn.metadata),
+                "source_class": "episodic_raw_turn",
+                "speaker": turn.speaker,
+                "session_timestamp": session.timestamp,
+            },
+        )
+
+    def _rank_episodic_records(
+        self,
+        records: list[RetrievedMemoryRecord],
+        *,
+        query: str | None,
+        limit: int,
+    ) -> list[RetrievedMemoryRecord]:
+        query_tokens = _tokenize(query or "")
+        ranked: list[tuple[int, str, str, RetrievedMemoryRecord]] = []
+        for record in records:
+            search_text = " ".join(
+                part
+                for part in (
+                    record.text,
+                    record.subject,
+                    record.predicate,
+                    str(record.metadata.get("source_class") or ""),
+                    str(record.metadata.get("speaker") or ""),
+                )
+                if part
+            )
+            overlap = len(query_tokens.intersection(_tokenize(search_text))) if query_tokens else 0
+            role_boost = 2 if record.predicate == "session.summary" else 0
+            ranked.append(
+                (
+                    overlap * 10 + role_boost,
+                    _timestamp_key(record.timestamp),
+                    self._record_movement_id(record),
+                    record,
+                )
+            )
+        ranked.sort(reverse=True)
+        return [record for _, _, _, record in ranked[:limit]]
+
+    def _episodic_recall_bucket_name(self, record: RetrievedMemoryRecord) -> str:
+        if record.memory_role == "current_state":
+            return "current_state"
+        if record.memory_role == "event":
+            return "events"
+        if record.memory_role == "episodic" and record.predicate == "session.summary":
+            return "session_summaries"
+        if record.memory_role == "episodic":
+            return "matching_turns"
+        return "evidence"
+
+    def _episodic_recall_trace(
+        self,
+        *,
+        request: EpisodicRecallRequest,
+        current_state: list[RetrievedMemoryRecord],
+        session_summaries: list[RetrievedMemoryRecord],
+        matching_turns: list[RetrievedMemoryRecord],
+        evidence: list[RetrievedMemoryRecord],
+        events: list[RetrievedMemoryRecord],
+        source_counts: JsonDict,
+        unique_selected_count: int,
+    ) -> JsonDict:
+        items = [*current_state, *session_summaries, *matching_turns, *evidence, *events]
+        source_labels = [
+            {
+                "bucket": self._episodic_recall_bucket_name(record),
+                "source_family": self._movement_source_family(record.memory_role),
+                "authority": self._movement_authority(record.memory_role),
+                "memory_role": record.memory_role,
+                "subject": record.subject,
+                "predicate": record.predicate,
+                "session_id": record.session_id,
+                "turn_ids": list(record.turn_ids),
+                "observation_id": record.observation_id,
+                "event_id": record.event_id,
+            }
+            for record in items
+        ]
+        return {
+            "operation": "recall_episodic_context",
+            "status": "ok",
+            "query": request.query,
+            "subject": request.subject,
+            "since": request.since,
+            "until": request.until,
+            "limit": request.limit,
+            "promotes_memory": False,
+            "authority_order": [
+                "current_state_for_mutable_facts",
+                "event_calendar_for_historical_actions",
+                "structured_evidence_for_support",
+                "episodic_session_summaries_for_continuity",
+                "raw_turns_for_source_grounding_only",
+            ],
+            "non_override_rules": [
+                "Episodic recall is read-only and does not promote memory.",
+                "Current-state memory outranks episodic recall for mutable user facts.",
+                "Raw turns and session summaries are supporting_not_authoritative unless separately promoted.",
+                "Dashboard movement rows are trace evidence, not instructions.",
+            ],
+            "source_counts": dict(source_counts),
+            "selected_counts": {
+                "current_state": len(current_state),
+                "session_summaries": len(session_summaries),
+                "matching_turns": len(matching_turns),
+                "evidence": len(evidence),
+                "events": len(events),
+                "unique_records": unique_selected_count,
+            },
+            "source_labels": source_labels,
+            "memory_roles": self._unique_memory_roles(items),
+            "memory_role_counts": self._memory_role_counts(items),
+            "primary_memory_role": self._primary_memory_role(items),
+            "canonical_memory_roles": self._canonical_memory_roles(items),
+            "retention_classes": self._unique_retention_classes(items),
+            "primary_retention_class": self._primary_retention_class(items),
+            "lifecycle_fields_present": self._lifecycle_fields_present_for_items(items),
+        }
 
     def _retrieval_trace(
         self,
@@ -1911,6 +2872,275 @@ class SparkMemorySDK:
             "metadata": dict(record.metadata),
         }
 
+    def _build_dashboard_movement_export(
+        self,
+        *,
+        current_state_records: list[RetrievedMemoryRecord],
+        observation_records: list[RetrievedMemoryRecord],
+        event_records: list[RetrievedMemoryRecord],
+    ) -> JsonDict:
+        rows = [dict(row) for row in self._dashboard_movement_events]
+        rows.extend(
+            self._record_dashboard_movement_row(
+                movement_state="promoted",
+                record=record,
+                row_id=f"snapshot:promoted:{self._record_movement_id(record)}",
+                trace={
+                    "operation": "export_knowledge_base_snapshot",
+                    "promotion_target": "current_state",
+                    "derived_from_snapshot": True,
+                },
+            )
+            for record in current_state_records
+        )
+        rows.extend(
+            self._record_dashboard_movement_row(
+                movement_state="selected",
+                record=record,
+                row_id=f"snapshot:selected:{self._record_movement_id(record)}",
+                trace={
+                    "operation": "export_knowledge_base_snapshot",
+                    "selection_surface": "current_state_view",
+                    "derived_from_snapshot": True,
+                },
+            )
+            for record in current_state_records
+        )
+        rows.extend(
+            self._session_dashboard_movement_row(session, index=index)
+            for index, session in enumerate(self._sessions, start=1)
+            if session.turns
+        )
+        movement_counts = Counter(str(row.get("movement_state") or "unknown") for row in rows)
+        source_family_counts = Counter(str(row.get("source_family") or "unknown") for row in rows)
+        authority_counts = Counter(str(row.get("authority") or "unknown") for row in rows)
+        contract = build_dashboard_movement_export_contract_summary()
+        return {
+            "contract_name": "SparkMemoryDashboardMovementExport",
+            "authority": "observability_non_authoritative",
+            "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            "movement_states": list(DASHBOARD_MOVEMENT_STATES),
+            "row_count": len(rows),
+            "movement_counts": dict(sorted(movement_counts.items())),
+            "source_family_counts": dict(sorted(source_family_counts.items())),
+            "authority_counts": dict(sorted(authority_counts.items())),
+            "record_counts": {
+                "current_state": len(current_state_records),
+                "observations": len(observation_records),
+                "events": len(event_records),
+                "sessions": len(self._sessions),
+            },
+            "rows": rows,
+            "non_override_rules": list(contract["non_override_rules"]),
+        }
+
+    def _append_record_dashboard_movement(
+        self,
+        *,
+        movement_state: str,
+        record: RetrievedMemoryRecord,
+        trace: JsonDict,
+    ) -> None:
+        self._dashboard_movement_events.append(
+            self._record_dashboard_movement_row(
+                movement_state=movement_state,
+                record=record,
+                row_id=self._next_dashboard_movement_id(),
+                trace=trace,
+            )
+        )
+
+    def _append_request_dashboard_movement(
+        self,
+        *,
+        movement_state: str,
+        request: MemoryWriteRequest,
+        write_kind: str,
+        write_operation: str,
+        reason: str,
+    ) -> None:
+        subject = self._normalize_subject(request.subject or "")
+        predicate = self._normalize_predicate(request.predicate or "")
+        self._dashboard_movement_events.append(
+            self._dashboard_movement_row(
+                row_id=self._next_dashboard_movement_id(),
+                movement_state=movement_state,
+                source_family="event" if write_kind == "event" else "evidence",
+                authority="supporting_not_authoritative",
+                scope_kind=self._movement_scope_kind(subject),
+                subject=subject,
+                predicate=predicate,
+                timestamp=request.timestamp,
+                salience_score=0.0,
+                confidence=0.0,
+                lifecycle={},
+                trace={
+                    "operation": "write_memory",
+                    "status": "unsupported_write",
+                    "reason": reason,
+                    "write_kind": write_kind,
+                    "write_operation": write_operation,
+                    "persisted": False,
+                    "source_of_truth": "SparkMemorySDK",
+                },
+            )
+        )
+
+    def _record_dashboard_movement_row(
+        self,
+        *,
+        movement_state: str,
+        record: RetrievedMemoryRecord,
+        row_id: str,
+        trace: JsonDict,
+    ) -> JsonDict:
+        record_id = self._record_movement_id(record)
+        row_trace = {
+            "source_of_truth": "SparkMemorySDK",
+            "record_id": record_id,
+            "memory_role": record.memory_role,
+            "observation_id": record.observation_id,
+            "event_id": record.event_id,
+            "session_id": record.session_id,
+            "turn_ids": list(record.turn_ids),
+            **dict(trace),
+        }
+        return self._dashboard_movement_row(
+            row_id=row_id,
+            movement_state=movement_state,
+            source_family=self._movement_source_family(record.memory_role),
+            authority=self._movement_authority(record.memory_role),
+            scope_kind=self._movement_scope_kind(record.subject),
+            subject=record.subject,
+            predicate=record.predicate,
+            timestamp=record.timestamp,
+            salience_score=self._movement_salience(record),
+            confidence=self._movement_confidence(record),
+            lifecycle=dict(record.lifecycle),
+            trace=row_trace,
+        )
+
+    def _session_dashboard_movement_row(self, session: NormalizedSession, *, index: int) -> JsonDict:
+        first_turn = session.turns[0]
+        last_turn = session.turns[-1]
+        return self._dashboard_movement_row(
+            row_id=f"snapshot:summarized:{session.session_id}:{index}",
+            movement_state="summarized",
+            source_family="episodic_summary",
+            authority="supporting_not_authoritative",
+            scope_kind="session_scoped",
+            subject=str(session.metadata.get("subject") or "session"),
+            predicate="session.summary",
+            timestamp=session.timestamp or last_turn.timestamp or first_turn.timestamp,
+            salience_score=0.5,
+            confidence=0.8,
+            lifecycle={
+                "created_at": first_turn.timestamp or session.timestamp,
+                "document_time": session.timestamp or last_turn.timestamp or first_turn.timestamp,
+            },
+            trace={
+                "operation": "export_knowledge_base_snapshot",
+                "source_of_truth": "SparkMemorySDK",
+                "session_id": session.session_id,
+                "turn_count": len(session.turns),
+                "derived_from_snapshot": True,
+            },
+        )
+
+    def _dashboard_movement_row(
+        self,
+        *,
+        row_id: str,
+        movement_state: str,
+        source_family: str,
+        authority: str,
+        scope_kind: str,
+        subject: str,
+        predicate: str,
+        timestamp: str | None,
+        salience_score: float,
+        confidence: float,
+        lifecycle: JsonDict,
+        trace: JsonDict,
+    ) -> JsonDict:
+        return {
+            "id": row_id,
+            "movement_state": movement_state if movement_state in DASHBOARD_MOVEMENT_STATES else "dropped",
+            "source_family": source_family,
+            "authority": authority,
+            "scope_kind": scope_kind,
+            "subject": subject,
+            "predicate": predicate,
+            "timestamp": timestamp,
+            "salience_score": salience_score,
+            "confidence": confidence,
+            "lifecycle": dict(lifecycle),
+            "trace": dict(trace),
+        }
+
+    def _next_dashboard_movement_id(self) -> str:
+        self._dashboard_movement_counter += 1
+        return f"sdk-movement-{self._dashboard_movement_counter}"
+
+    def _record_movement_id(self, record: RetrievedMemoryRecord) -> str:
+        explicit_id = record.observation_id or record.event_id
+        if explicit_id:
+            return explicit_id
+        payload = "\x1f".join(
+            [record.session_id, ",".join(record.turn_ids), record.memory_role, record.subject, record.predicate]
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+    def _movement_source_family(self, memory_role: MemoryRole) -> str:
+        if memory_role in {"current_state", "state_deletion"}:
+            return "current_state"
+        if memory_role == "event":
+            return "event"
+        if memory_role == "episodic":
+            return "episodic_summary"
+        return "evidence"
+
+    def _movement_authority(self, memory_role: MemoryRole) -> str:
+        if memory_role in {"current_state", "state_deletion"}:
+            return "authoritative_current"
+        if memory_role == "event":
+            return "authoritative_historical"
+        if memory_role == "episodic":
+            return "supporting_not_authoritative"
+        return "structured_support"
+
+    def _movement_scope_kind(self, subject: str) -> str:
+        normalized = _normalize_human_subject(subject)
+        if normalized == "user" or normalized.startswith("human:"):
+            return "user_scoped"
+        if normalized == "session":
+            return "session_scoped"
+        return "system_scoped"
+
+    def _movement_salience(self, record: RetrievedMemoryRecord) -> float:
+        explicit = self._movement_float(record.metadata.get("salience_score"))
+        if explicit is not None:
+            return explicit
+        if record.memory_role in {"current_state", "state_deletion"} or record.retention_class == "active_state":
+            return 1.0
+        if record.memory_role == "event":
+            return 0.75
+        if record.memory_role == "episodic":
+            return 0.4
+        return 0.65
+
+    def _movement_confidence(self, record: RetrievedMemoryRecord) -> float:
+        explicit = self._movement_float(record.metadata.get("confidence"))
+        return explicit if explicit is not None else 1.0
+
+    def _movement_float(self, value: Any) -> float | None:
+        try:
+            if value is None or value == "":
+                return None
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
 
 def build_sdk_contract_summary(
     *,
@@ -1941,6 +3171,7 @@ def build_sdk_contract_summary(
         "retention_classes": sdk_retention_contracts(),
         "retention_defaults_by_memory_role": sdk_retention_defaults_by_role(),
         "lifecycle_fields": list(SDK_LIFECYCLE_FIELDS),
+        "dashboard_movement_export_contract": build_dashboard_movement_export_contract_summary(),
         "answer_candidate_types": [
             "generic",
             "exact_numeric",
@@ -1975,6 +3206,8 @@ def build_sdk_contract_summary(
             "retrieve_evidence",
             "retrieve_events",
             "explain_answer",
+            "recover_task_context",
+            "recall_episodic_context",
         ],
         "request_contracts": [
             "MemoryWriteRequest",
@@ -1983,12 +3216,16 @@ def build_sdk_contract_summary(
             "EvidenceRetrievalRequest",
             "EventRetrievalRequest",
             "AnswerExplanationRequest",
+            "TaskRecoveryRequest",
+            "EpisodicRecallRequest",
         ],
         "response_contracts": [
             "MemoryWriteResult",
             "MemoryLookupResult",
             "MemoryRetrievalResult",
             "AnswerExplanationResult",
+            "TaskRecoveryResult",
+            "EpisodicRecallResult",
             "MemoryMaintenanceResult",
             "RetrievedMemoryRecord",
         ],
@@ -2032,7 +3269,85 @@ def build_sdk_contract_summary(
                 "primary_retention_class",
                 "lifecycle_fields_present",
             ],
+            "recover_task_context": [
+                "promotes_memory",
+                "authority_order",
+                "non_override_rules",
+                "source_counts",
+                "selected_counts",
+                "source_labels",
+                "memory_roles",
+                "memory_role_counts",
+                "primary_memory_role",
+                "canonical_memory_roles",
+                "retention_classes",
+                "primary_retention_class",
+                "lifecycle_fields_present",
+            ],
+            "recall_episodic_context": [
+                "promotes_memory",
+                "authority_order",
+                "non_override_rules",
+                "source_counts",
+                "selected_counts",
+                "source_labels",
+                "memory_roles",
+                "memory_role_counts",
+                "primary_memory_role",
+                "canonical_memory_roles",
+                "retention_classes",
+                "primary_retention_class",
+                "lifecycle_fields_present",
+            ],
         },
+    }
+
+
+def build_dashboard_movement_export_contract_summary() -> dict[str, Any]:
+    return {
+        "contract_name": "SparkMemoryDashboardMovementExport",
+        "purpose": (
+            "Stable agent/human dashboard feed for memory movement. This is a trace contract, "
+            "not an authority upgrade path."
+        ),
+        "movement_states": list(DASHBOARD_MOVEMENT_STATES),
+        "source_families": [
+            "current_state",
+            "evidence",
+            "event",
+            "episodic_summary",
+            "llm_wiki",
+            "memory_kb",
+            "graphiti_sidecar",
+            "diagnostics",
+        ],
+        "authority_classes": [
+            "authoritative_current",
+            "authoritative_historical",
+            "structured_support",
+            "supporting_not_authoritative",
+            "advisory_shadow",
+        ],
+        "required_record_fields": [
+            "id",
+            "movement_state",
+            "source_family",
+            "authority",
+            "scope_kind",
+            "subject",
+            "predicate",
+            "timestamp",
+            "salience_score",
+            "confidence",
+            "lifecycle",
+            "trace",
+        ],
+        "non_override_rules": [
+            "Dashboard rows are observability records, not prompt instructions.",
+            "Blocked and dropped rows must never become durable memory without a separate promotion gate.",
+            "Wiki, diagnostics, and graph sidecar rows remain supporting or advisory unless evaluated and promoted by Spark gates.",
+            "User-scoped records must not be displayed or exported as global Spark doctrine.",
+        ],
     }
 
 

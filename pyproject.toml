@@ -10,6 +10,10 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
 
+[project.optional-dependencies]
+graphiti-kuzu = ["graphiti-core[kuzu]>=0.28.2"]
+graphiti-neo4j = ["graphiti-core>=0.28.2"]
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
@@ -18,4 +22,3 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-

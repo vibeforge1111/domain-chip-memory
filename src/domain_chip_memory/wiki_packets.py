@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,7 @@ from .contracts import JsonDict
 
 
 WIKI_PACKET_SOURCE_CLASS = "obsidian_llm_wiki_packets"
+DEFAULT_WIKI_PACKET_AUTHORITY = "supporting_not_authoritative"
 
 
 @dataclass(frozen=True)
@@ -47,12 +49,63 @@ def build_wiki_packet_reader_contract_summary() -> JsonDict:
         "authority": "supporting_not_authoritative",
         "runtime_role": "compiled_project_knowledge",
         "inputs": ["markdown_files", "obsidian_vault_dirs", "llm_wiki_packet_dirs"],
-        "outputs": ["WikiPacketHit"],
+        "outputs": ["WikiPacketHit", "MarkdownKnowledgePacketInventory"],
+        "normalized_metadata_fields": [
+            "wiki_family",
+            "owner_system",
+            "authority",
+            "scope_kind",
+            "source_of_truth",
+            "status",
+            "freshness",
+            "generated_at",
+            "last_verified_at",
+            "source_path",
+        ],
         "non_override_rules": [
             "Wiki packets cannot close user-level focus or plan.",
             "Wiki packets cannot override current_state for mutable user facts.",
             "Wiki packets are ignored when query overlap is zero.",
             "Every hit must carry source_path provenance.",
+        ],
+    }
+
+
+def discover_markdown_knowledge_packets(
+    paths: list[str | Path],
+    *,
+    max_file_bytes: int = 200_000,
+    page_limit: int = 200,
+) -> JsonDict:
+    packets = read_markdown_knowledge_packets(paths, max_file_bytes=max_file_bytes)
+    pages = [_packet_inventory_page(packet) for packet in packets]
+    pages.sort(key=lambda page: (str(page.get("wiki_family") or ""), str(page.get("source_path") or "")))
+    family_counts = Counter(str(page.get("wiki_family") or "unknown") for page in pages)
+    authority_counts = Counter(str(page.get("authority") or "unknown") for page in pages)
+    owner_counts = Counter(str(page.get("owner_system") or "unknown") for page in pages)
+    source_of_truth_counts = Counter(str(page.get("source_of_truth") or "unknown") for page in pages)
+    freshness_counts = Counter(str(page.get("freshness") or "unknown") for page in pages)
+    normalized_limit = max(0, int(page_limit or 0))
+    return {
+        "contract_name": "MarkdownKnowledgePacketInventory",
+        "operation": "discover_markdown_knowledge_packets",
+        "source_class": WIKI_PACKET_SOURCE_CLASS,
+        "authority": DEFAULT_WIKI_PACKET_AUTHORITY,
+        "roots": [_path_inventory(raw_path) for raw_path in paths],
+        "packet_count": len(pages),
+        "family_counts": dict(sorted(family_counts.items())),
+        "authority_counts": dict(sorted(authority_counts.items())),
+        "owner_system_counts": dict(sorted(owner_counts.items())),
+        "source_of_truth_counts": dict(sorted(source_of_truth_counts.items())),
+        "freshness_counts": dict(sorted(freshness_counts.items())),
+        "pages": pages[:normalized_limit],
+        "page_limit": normalized_limit,
+        "dropped_page_count": max(0, len(pages) - normalized_limit),
+        "non_override_rules": [
+            "Inventory rows are discovery metadata, not prompt instructions.",
+            "Memory KB pages are downstream of governed memory snapshots.",
+            "Builder LLM wiki pages remain supporting_not_authoritative.",
+            "Current-state memory must be queried directly for mutable user facts.",
         ],
     }
 
@@ -84,6 +137,7 @@ def read_markdown_knowledge_packets(
                 metadata={
                     "file_name": file_path.name,
                     "frontmatter": frontmatter,
+                    **_normalized_wiki_packet_metadata(file_path=file_path, frontmatter=frontmatter),
                     "word_count": len(text.split()),
                 },
             )
@@ -124,7 +178,7 @@ def retrieve_markdown_knowledge_packets(
             metadata={
                 **packet.metadata,
                 "tags": packet.tags,
-                "authority": "supporting_not_authoritative",
+                "authority": str(packet.metadata.get("authority") or DEFAULT_WIKI_PACKET_AUTHORITY),
             },
         )
         for score, packet, reasons in scored[: max(1, int(top_k or 1))]
@@ -140,6 +194,36 @@ def retrieve_markdown_knowledge_packets(
             "top_k": max(1, int(top_k or 1)),
         },
     )
+
+
+def _packet_inventory_page(packet: MarkdownKnowledgePacket) -> JsonDict:
+    metadata = dict(packet.metadata or {})
+    return {
+        "packet_id": packet.packet_id,
+        "title": packet.title,
+        "source_path": packet.source_path,
+        "source_class": packet.source_class,
+        "wiki_family": str(metadata.get("wiki_family") or "unknown"),
+        "owner_system": str(metadata.get("owner_system") or "unknown"),
+        "authority": str(metadata.get("authority") or DEFAULT_WIKI_PACKET_AUTHORITY),
+        "scope_kind": str(metadata.get("scope_kind") or "unknown"),
+        "source_of_truth": str(metadata.get("source_of_truth") or "unknown"),
+        "status": str(metadata.get("status") or "unknown"),
+        "freshness": str(metadata.get("freshness") or "unknown"),
+        "generated_at": str(metadata.get("generated_at") or ""),
+        "last_verified_at": str(metadata.get("last_verified_at") or ""),
+        "tags": list(packet.tags),
+        "word_count": int(metadata.get("word_count") or 0),
+    }
+
+
+def _path_inventory(raw_path: str | Path) -> JsonDict:
+    path = Path(raw_path).expanduser()
+    return {
+        "path": str(path),
+        "exists": path.exists(),
+        "kind": "file" if path.is_file() else ("directory" if path.is_dir() else "missing"),
+    }
 
 
 def _iter_markdown_files(paths: list[str | Path]) -> list[Path]:
@@ -179,6 +263,87 @@ def _parse_simple_frontmatter(text: str) -> JsonDict:
         key, value = line.split(":", 1)
         payload[key.strip()] = value.strip().strip('"').strip("'")
     return payload
+
+
+def _normalized_wiki_packet_metadata(*, file_path: Path, frontmatter: JsonDict) -> JsonDict:
+    family = _wiki_family_from_path(file_path=file_path, frontmatter=frontmatter)
+    owner_system = _frontmatter_string(frontmatter, "owner_system") or _default_owner_system(family)
+    source_of_truth = _frontmatter_string(frontmatter, "source_of_truth") or _default_source_of_truth(family)
+    authority = _frontmatter_string(frontmatter, "authority") or DEFAULT_WIKI_PACKET_AUTHORITY
+    return {
+        "source_path": str(file_path.resolve()),
+        "source_class": WIKI_PACKET_SOURCE_CLASS,
+        "wiki_family": family,
+        "owner_system": owner_system,
+        "authority": authority,
+        "scope_kind": _frontmatter_string(frontmatter, "scope_kind") or _default_scope_kind(family),
+        "source_of_truth": source_of_truth,
+        "status": _frontmatter_string(frontmatter, "status") or "unknown",
+        "freshness": _frontmatter_string(frontmatter, "freshness") or _default_freshness(frontmatter),
+        "generated_at": _frontmatter_string(frontmatter, "generated_at")
+        or _frontmatter_string(frontmatter, "date_modified")
+        or _frontmatter_string(frontmatter, "date_created"),
+        "last_verified_at": _frontmatter_string(frontmatter, "last_verified_at"),
+    }
+
+
+def _frontmatter_string(frontmatter: JsonDict, key: str) -> str:
+    value = str(frontmatter.get(key) or "").strip()
+    return value
+
+
+def _wiki_family_from_path(*, file_path: Path, frontmatter: JsonDict) -> str:
+    explicit = _frontmatter_string(frontmatter, "wiki_family") or _frontmatter_string(frontmatter, "family")
+    if explicit:
+        return explicit
+    parts = [part.casefold().replace("_", "-") for part in file_path.parts]
+    if "current-state" in parts:
+        return "memory_kb_current_state"
+    if "evidence" in parts:
+        return "memory_kb_evidence"
+    if "events" in parts:
+        return "memory_kb_event"
+    if "syntheses" in parts:
+        return "memory_kb_synthesis"
+    if "outputs" in parts:
+        return "memory_kb_output"
+    if "sources" in parts:
+        return "memory_kb_source"
+    if "diagnostics" in parts:
+        return "diagnostics"
+    return "builder_llm_wiki"
+
+
+def _default_owner_system(wiki_family: str) -> str:
+    if wiki_family.startswith("memory_kb_"):
+        return "domain-chip-memory"
+    if wiki_family == "diagnostics":
+        return "spark-intelligence-builder"
+    return "spark-intelligence-builder"
+
+
+def _default_source_of_truth(wiki_family: str) -> str:
+    if wiki_family.startswith("memory_kb_"):
+        return "SparkMemorySDK"
+    if wiki_family == "diagnostics":
+        return "diagnostics"
+    return "builder_llm_wiki"
+
+
+def _default_scope_kind(wiki_family: str) -> str:
+    if wiki_family.startswith("memory_kb_"):
+        return "governed_memory"
+    if wiki_family == "diagnostics":
+        return "diagnostics"
+    return "project_or_system"
+
+
+def _default_freshness(frontmatter: JsonDict) -> str:
+    if _frontmatter_string(frontmatter, "last_verified_at"):
+        return "verified"
+    if _frontmatter_string(frontmatter, "generated_at") or _frontmatter_string(frontmatter, "date_modified"):
+        return "generated"
+    return "unknown"
 
 
 def _extract_tags(*, raw_text: str, frontmatter: JsonDict) -> list[str]:
