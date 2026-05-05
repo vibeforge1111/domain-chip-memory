@@ -1,11 +1,13 @@
 from domain_chip_memory import (
     AnswerExplanationRequest,
     CurrentStateRequest,
+    EpisodicRecallRequest,
     EventRetrievalRequest,
     EvidenceRetrievalRequest,
     HistoricalStateRequest,
     MemoryWriteRequest,
     SparkMemorySDK,
+    TaskRecoveryRequest,
     build_sdk_contract_summary,
 )
 
@@ -18,6 +20,14 @@ def test_sdk_contract_summary_exposes_runtime_surface():
     assert payload["write_operations"]["write_observation"] == ["auto", "create", "update", "delete", "purge"]
     assert payload["maintenance_methods"] == ["reconsolidate_manual_memory"]
     assert "get_current_state" in payload["read_methods"]
+    assert "recover_task_context" in payload["read_methods"]
+    assert "recall_episodic_context" in payload["read_methods"]
+    assert "TaskRecoveryRequest" in payload["request_contracts"]
+    assert "EpisodicRecallRequest" in payload["request_contracts"]
+    assert "TaskRecoveryResult" in payload["response_contracts"]
+    assert "EpisodicRecallResult" in payload["response_contracts"]
+    assert "recover_task_context" in payload["trace_contracts"]
+    assert "recall_episodic_context" in payload["trace_contracts"]
 
 
 def test_sdk_instance_stores_request_scoped_runtime_configuration():
@@ -588,9 +598,340 @@ def test_sdk_reconsolidate_marks_stale_active_state_as_preserved():
 
     assert maintenance.active_state_stale_preserved_count == 1
     assert maintenance.trace["active_state_maintenance"]["stale_preserved"] == 1
+    assert maintenance.audit_samples["stale_preserved"][0]["predicate"] == "current_plan"
+    assert maintenance.audit_samples["stale_preserved"][0]["revalidate_at"] == "2025-01-31T09:00:00Z"
+    assert maintenance.audit_samples["stale_preserved"][0]["revalidation_lag_days"] == 60
+    assert maintenance.audit_samples["stale_preserved"][0]["decay_score_delta"] == -0.3333
     assert current_state.found is True
     assert current_state.provenance[0].metadata["active_state_maintenance_action"] == "stale_preserved"
     assert current_state.provenance[0].metadata["active_state_maintenance_reason"] == "past_revalidate_at"
+
+
+def test_sdk_exports_dashboard_movement_feed_for_writes_reads_and_maintenance():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="London",
+            timestamp="2025-01-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "entity_key": "primary"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "entity_key": "primary"},
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="move",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="nickname",
+            timestamp="2025-04-01T09:00:00Z",
+        )
+    )
+    sdk.retrieve_evidence(EvidenceRetrievalRequest(subject="user", predicate="location", limit=2))
+    sdk.retrieve_events(EventRetrievalRequest(subject="user", predicate="move", limit=1))
+    sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location", entity_key="primary"))
+    sdk.reconsolidate_manual_memory(now="2025-04-02T09:00:00Z")
+
+    movement = sdk.export_knowledge_base_snapshot()["dashboard_movement"]
+    rows = movement["rows"]
+    states = set(movement["movement_counts"])
+    required_fields = {
+        "id",
+        "movement_state",
+        "source_family",
+        "authority",
+        "scope_kind",
+        "subject",
+        "predicate",
+        "timestamp",
+        "salience_score",
+        "confidence",
+        "lifecycle",
+        "trace",
+    }
+
+    assert movement["contract_name"] == "SparkMemoryDashboardMovementExport"
+    assert movement["authority"] == "observability_non_authoritative"
+    assert {
+        "captured",
+        "saved",
+        "blocked",
+        "dropped",
+        "retrieved",
+        "promoted",
+        "selected",
+        "summarized",
+        "decayed",
+    }.issubset(states)
+    assert all(required_fields.issubset(row) for row in rows)
+    assert any(
+        row["movement_state"] == "blocked"
+        and row["trace"]["reason"] == "value_required"
+        and row["trace"]["persisted"] is False
+        for row in rows
+    )
+    assert any(
+        row["movement_state"] == "decayed"
+        and row["trace"]["maintenance_action"] == "superseded"
+        and row["trace"]["maintenance_reason"] == "replaced_by_newer_current_state"
+        for row in rows
+    )
+    assert any(
+        row["movement_state"] == "selected"
+        and row["source_family"] == "current_state"
+        and row["authority"] == "authoritative_current"
+        for row in rows
+    )
+    assert any(
+        row["movement_state"] == "retrieved"
+        and row["source_family"] == "current_state"
+        and row["authority"] == "authoritative_current"
+        and row["trace"]["operation"] == "get_current_state"
+        for row in rows
+    )
+    assert "Dashboard rows are observability records, not prompt instructions." in movement["non_override_rules"]
+
+
+def test_sdk_recovers_task_context_with_current_state_authority_and_traceable_episodic_support():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="current_focus",
+            value="ship the memory dashboard movement export before episodic recall",
+            timestamp="2026-05-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="raw_turn",
+            value="Earlier we were mainly cleaning the LLM wiki metadata.",
+            timestamp="2026-05-01T08:00:00Z",
+            retention_class="episodic_archive",
+            metadata={"memory_role": "episodic"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="other-user",
+            predicate="raw_turn",
+            value="Other user also discussed episodic recall, but this should stay separate.",
+            speaker="user",
+            timestamp="2026-05-01T08:45:00Z",
+            session_id="other-day",
+            turn_id="other-day:u1",
+            retention_class="episodic_archive",
+            metadata={"memory_role": "episodic"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="task.blocker",
+            value="Builder needs a task recovery API before it can resume memory dashboard work cleanly.",
+            timestamp="2026-05-01T09:10:00Z",
+            metadata={"memory_role": "structured_evidence"},
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="task.completed",
+            value="domain movement dashboard export shipped and tests passed",
+            timestamp="2026-05-01T09:20:00Z",
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="task.next_action",
+            value="wire task recovery into Builder memory cognition",
+            timestamp="2026-05-01T09:30:00Z",
+            metadata={"memory_role": "structured_evidence"},
+        )
+    )
+
+    result = sdk.recover_task_context(
+        TaskRecoveryRequest(
+            subject="user",
+            query="memory dashboard",
+            limit=3,
+        )
+    )
+
+    assert result.status == "ok"
+    assert result.active_goal is not None
+    assert result.active_goal.memory_role == "current_state"
+    assert result.active_goal.predicate == "current_focus"
+    assert "memory dashboard movement export" in result.active_goal.text
+    assert result.blockers[0].predicate == "task.blocker"
+    assert result.completed_steps[0].memory_role == "event"
+    assert result.next_actions[0].predicate == "task.next_action"
+    assert result.episodic_context[0].memory_role == "episodic"
+    assert result.trace["promotes_memory"] is False
+    assert "current_state_for_mutable_active_work" in result.trace["authority_order"]
+    assert any(
+        label["bucket"] == "active_goal"
+        and label["authority"] == "authoritative_current"
+        and label["source_family"] == "current_state"
+        for label in result.trace["source_labels"]
+    )
+    assert any(
+        label["bucket"] == "episodic_context"
+        and label["authority"] == "supporting_not_authoritative"
+        for label in result.trace["source_labels"]
+    )
+
+    movement = sdk.export_knowledge_base_snapshot()["dashboard_movement"]
+    assert any(
+        row["movement_state"] == "retrieved"
+        and row["trace"]["operation"] == "recover_task_context"
+        and row["trace"]["selection_bucket"] == "active_goal"
+        for row in movement["rows"]
+    )
+    assert any(
+        row["movement_state"] == "selected"
+        and row["trace"]["operation"] == "recover_task_context"
+        and row["authority"] == "authoritative_current"
+        for row in movement["rows"]
+    )
+
+
+def test_sdk_recalls_episodic_context_as_source_labeled_read_only_memory():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="current_focus",
+            value="ship the Spark memory dashboard movement export",
+            timestamp="2026-05-01T08:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="raw_turn",
+            value="Today we reviewed the memory dashboard, fixed movement trace rows, and planned episodic recall.",
+            speaker="user",
+            timestamp="2026-05-01T08:30:00Z",
+            session_id="spark-day",
+            turn_id="spark-day:u1",
+            retention_class="episodic_archive",
+            metadata={"memory_role": "episodic"},
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="task.note",
+            value="dashboard movement export now shows captured, blocked, promoted, saved, decayed, summarized, and retrieved rows",
+            timestamp="2026-05-01T09:00:00Z",
+            metadata={"memory_role": "structured_evidence"},
+        )
+    )
+    sdk.write_event(
+        MemoryWriteRequest(
+            text="",
+            operation="event",
+            subject="user",
+            predicate="task.completed",
+            value="Builder task recovery context was wired into self-awareness",
+            timestamp="2026-05-01T10:00:00Z",
+        )
+    )
+
+    result = sdk.recall_episodic_context(
+        EpisodicRecallRequest(
+            subject="user",
+            query="what did we do today for memory dashboard movement and episodic recall?",
+            since="2026-05-01T00:00:00Z",
+            limit=3,
+        )
+    )
+
+    assert result.status == "ok"
+    assert result.current_state[0].memory_role == "current_state"
+    assert result.session_summaries[0].predicate == "session.summary"
+    assert result.matching_turns[0].predicate == "raw_turn"
+    assert any("episodic recall" in record.text for record in result.matching_turns)
+    assert not any("Other user" in record.text for record in result.matching_turns)
+    assert any(record.memory_role == "structured_evidence" for record in result.evidence)
+    assert result.events[0].memory_role == "event"
+    assert result.trace["promotes_memory"] is False
+    assert "current_state_for_mutable_facts" in result.trace["authority_order"]
+    assert any(
+        label["bucket"] == "matching_turns"
+        and label["authority"] == "supporting_not_authoritative"
+        and label["source_family"] == "episodic_summary"
+        for label in result.trace["source_labels"]
+    )
+    assert any(
+        label["bucket"] == "events"
+        and label["authority"] == "authoritative_historical"
+        for label in result.trace["source_labels"]
+    )
+
+    movement = sdk.export_knowledge_base_snapshot()["dashboard_movement"]
+    assert any(
+        row["movement_state"] == "summarized"
+        and row["trace"]["operation"] == "recall_episodic_context"
+        and row["trace"]["selection_bucket"] == "session_summaries"
+        for row in movement["rows"]
+    )
+    assert any(
+        row["movement_state"] == "selected"
+        and row["trace"]["operation"] == "recall_episodic_context"
+        and row["authority"] == "supporting_not_authoritative"
+        for row in movement["rows"]
+    )
 
 
 def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():
@@ -650,6 +991,11 @@ def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():
     assert maintenance.active_state_still_current_count == 2
     assert maintenance.audit_samples["archived"][0]["predicate"] == "current_focus"
     assert maintenance.audit_samples["archived"][0]["value"] == "SDK bridge"
+    assert maintenance.audit_samples["archived"][0]["deletion_observation_id"] == delete_focus.observations[0].observation_id
+    assert maintenance.audit_samples["superseded"][0]["predicate"] == "location"
+    assert maintenance.audit_samples["superseded"][0]["value"] == "London"
+    assert maintenance.audit_samples["superseded"][0]["replacement_value"] == "Dubai"
+    assert maintenance.audit_samples["superseded"][0]["replacement_observation_id"] == current_location.observations[0].observation_id
     assert maintenance.audit_samples["deleted"][0]["predicate"] == "current_focus"
     assert maintenance.audit_samples["deleted"][0]["action"] == "deleted"
     assert maintenance.audit_samples["still_current"][0]["predicate"] in {"current_focus", "location"}
@@ -709,6 +1055,54 @@ def test_sdk_reconsolidate_treats_profile_current_predicate_as_single_slot_witho
         "active_state_maintenance_action"
     ] == "still_current"
     assert latest_focus.observations[0].metadata["entity_key"] == "profile.current_focus"
+
+
+def test_sdk_reconsolidate_marks_deleted_state_resurrected_by_newer_current_state():
+    sdk = SparkMemorySDK()
+    deleted_location = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="delete",
+            subject="user",
+            predicate="location",
+            timestamp="2025-02-01T09:00:00Z",
+            retention_class="active_state",
+        )
+    )
+    current_location = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="location",
+            value="Tokyo",
+            timestamp="2025-03-01T09:00:00Z",
+            retention_class="active_state",
+            metadata={"memory_role": "current_state", "entity_key": "primary"},
+        )
+    )
+
+    maintenance = sdk.reconsolidate_manual_memory(now="2025-04-02T09:00:00Z")
+    current_state = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+    observations_by_id = {entry.observation_id: entry for entry in sdk._manual_observations}
+
+    assert current_state.found is True
+    assert current_state.value == "Tokyo"
+    assert maintenance.active_state_resurrected_count == 1
+    assert maintenance.trace["active_state_maintenance"]["resurrected"] == 1
+    assert maintenance.audit_samples["resurrected"][0]["predicate"] == "location"
+    assert maintenance.audit_samples["resurrected"][0]["action"] == "resurrected"
+    assert maintenance.audit_samples["resurrected"][0]["replacement_value"] == "Tokyo"
+    assert (
+        maintenance.audit_samples["resurrected"][0]["replacement_observation_id"]
+        == current_location.observations[0].observation_id
+    )
+    assert observations_by_id[deleted_location.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "resurrected"
+    assert observations_by_id[current_location.observations[0].observation_id].metadata[
+        "active_state_maintenance_action"
+    ] == "still_current"
 
 
 def test_sdk_explain_answer_returns_trace_and_support():

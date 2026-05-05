@@ -5382,6 +5382,10 @@ def _choose_summary_synthesis_answer_candidate(
     contradiction_answer = _infer_question_aligned_contradiction_clarification(question, aggregate_candidate_entries)
     if contradiction_answer:
         return contradiction_answer
+    if question.question.lower().startswith("when does"):
+        date_surface = _extract_focus_aligned_date_surface(question, aggregate_candidate_entries)
+        if date_surface:
+            return _render_when_does_answer(question.question, date_surface)
     typed_temporal_entries = _typed_temporal_evidence_entries(question, evidence_entries)
     if typed_temporal_entries:
         direct_temporal_answer = _infer_temporal_answer(question, typed_temporal_entries)

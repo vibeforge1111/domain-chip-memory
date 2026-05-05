@@ -1,6 +1,6 @@
 # Spark Persistent Memory Integration Tasks
 
-Last updated: 2026-04-29
+Last updated: 2026-05-01
 
 This file is the build checklist for turning `domain-chip-memory` into Spark's live persistent memory system. It decides the architecture, names the remaining integration work, and defines the acceptance gates before we go back to heavy Telegram testing.
 
@@ -17,7 +17,8 @@ Rules:
    - `spark-intelligence-builder`: memory write/read logic, capsule, ledgers, diagnostics.
    - `domain-chip-memory`: chip contracts, sidecar adapters, eval harnesses, docs.
    - `spark-cli`: installer and local dependency profiles.
-   - `spawner-ui`: memory-quality dashboard and operator UI.
+   - `spark-memory-quality-dashboard`: standalone memory-quality and architecture-readiness operator UI.
+   - `spawner-ui`: Mission Control, Kanban, Canvas, and Spawner operator surfaces.
    - `spark-telegram-bot`: Telegram ingress/restart/runtime wiring only.
 5. Do not add an external dependency, copied source, or sidecar without the pre-implementation license checklist and adoption record.
 6. Tests should be contract-first, then Telegram acceptance. Telegram is a final human-facing gate, not the discovery loop.
@@ -38,7 +39,7 @@ Spark persistent memory is "great working memory" only when all of these are tru
 - Repo resolution knows what project/component Spark is touching before build missions.
 - Graphiti/Hindsight/Mem0 are optional, licensed, observable sidecars or comparators; they never replace Spark's authority order.
 - Maintenance compresses active memory without destroying historical recall.
-- The memory-quality dashboard is inside `spawner-ui` and wired to real ledgers.
+- The standalone `spark-memory-quality-dashboard` is wired to real Builder/domain-chip ledgers and linked from operator surfaces where useful.
 - Diagnostics show active architecture, sidecars, source mix, context budget, quality gates, and stale/advisory source drift.
 
 ## Active Execution Queue
@@ -61,6 +62,7 @@ Work in this order unless a production break interrupts it:
 - [x] Entity summary recall answers broad questions like "what do you know about the GTM launch?".
 - [x] Preferred-name corrections are entity-keyed current identity writes.
 - [ ] Add current-state supersession metadata for target repo, active project, current task, runtime capability, and user identity.
+  - 2026-05-01: user identity correction parsing and salience are fixed in Builder (`ad3e264`); remaining work is broader supersession metadata and deployed Telegram acceptance.
 - [ ] Preserve superseded values for historical questions without letting them answer current questions.
 - [ ] Add explicit closure markers for focus/plan so clean diagnostics never imply user-level closure.
 
@@ -71,7 +73,11 @@ Work in this order unless a production break interrupts it:
 - [ ] Add semantic consolidation beyond archive/delete/supersede.
 - [ ] Increase same-session continuity beyond 3 turn pairs / 260-char compaction.
 - [ ] Add large-context reservoir targeting 200k+ reconstructable context, separate from compact Telegram packet.
-- [ ] Add "what did we build today?" and "what else do you remember?" source-aware routes.
+- [x] Add "what did we build today?" and "what else do you remember?" source-aware routes.
+  - 2026-05-01: Builder daily episodic recall route landed (`cb6ddd1`) for "what changed today?", "what did we build/work on today?", "what is still open today?", "what did we promise today?", and "what else do you remember today?".
+  - 2026-05-01: Builder project episodic recall route landed (`68664b0`) for "what changed in/for <project> today?", "what happened with <project> today?", and project-scoped open/build recall.
+- [x] Add session-scoped episodic recall for the current Telegram conversation.
+  - 2026-05-01: Builder now answers "what happened/worked/changed in this chat/conversation/session?" from the current session event ledger and explains the session episodic route on "why did you answer that?".
 
 ### Track D: Timeout, Task, And Workflow Recovery
 
@@ -92,6 +98,8 @@ Work in this order unless a production break interrupts it:
 - [x] Hybrid retrieval uses current state, historical state, evidence, events, recent conversation, wiki packets, and shadow graph lane.
 - [x] Capsule source-mix promotion gates exist.
 - [ ] Make source-aware recall universal for all memory answers.
+  - 2026-05-01: Builder now explains `memory_current_focus_plan_query` as a first-class current-state focus/plan route instead of falling back to generic context-capsule source copy (`e0d5139`).
+  - 2026-05-01: Builder now recalls broad onboarding-direction questions from current entity decisions, so "What onboarding direction were we leaning toward?" can resolve to the saved GTM launch decision (`6b0e433`).
 - [ ] Add graph sidecar hits with validity windows and provenance as advisory candidates.
 - [ ] Add explicit context packet sections for episodic summary, procedural lesson, pending task, repo capability, and graph sidecar.
 - [ ] Add operator command to inspect context reservoir budget and selected packet contents.
@@ -100,10 +108,10 @@ Work in this order unless a production break interrupts it:
 
 - [x] Decide hybrid OSS stack: Graphiti first, Mem0 shadow, Hindsight procedural, Cognee deferred.
 - [x] Add third-party notice scaffold and adoption checklist.
-- [ ] Add optional dependency groups in `domain-chip-memory`, default install light.
-- [ ] Add Graphiti adoption record before dependency/import.
-- [ ] Add Graphiti live adapter behind disabled feature flag.
-- [ ] Add Spark CLI memory-sidecar installer profile for Graphiti.
+- [x] Add optional dependency groups in `domain-chip-memory`, default install light.
+- [x] Add Graphiti adoption record before dependency/import.
+- [x] Add Graphiti live adapter behind disabled feature flag.
+- [x] Add Spark CLI memory-sidecar installer profile for Graphiti.
 - [ ] Add Mem0 shadow comparator only after salience/retrieval contracts are stable.
 - [ ] Add Hindsight/procedural sidecar prototype for corrections, failed tools, timeouts, and repeated mistakes.
 - [ ] Add status/verify/diagnostics visibility for each sidecar and its fallback mode.
@@ -114,8 +122,32 @@ Work in this order unless a production break interrupts it:
 - [ ] Populate policy gate, quarantine, delivery registry, and memory lane records from real memory decisions.
 - [ ] Make memory lanes human-readable.
 - [ ] Add operator inspect commands for lane decisions, blocked candidates, salience reasons, and promotion outcomes.
-- [ ] Migrate memory-quality dashboard into `spawner-ui`.
-- [ ] Wire dashboard to actual ledgers, not standalone mock state.
+- [x] Keep memory-quality dashboard in standalone `spark-memory-quality-dashboard` repo.
+- [x] Add first architecture-readiness dashboard slice and route/test/demo evidence.
+- [x] Align dashboard visual language with Spark Swarm/spawner-ui operator artstyle.
+- [x] Add local Builder state export feeding dashboard recall events, memory lanes, policy gates, quarantine, delivery, and pending-task counts.
+- [x] Add route/source trace map export for routing decisions, source-aware coverage, source-explanation links, and remaining integration gaps.
+- [x] Add watch-mode dashboard exporter and polling refresh for local live-feed operation.
+- [x] Add context packet budget and memory read feed into dashboard tracing.
+- [x] Add salience, policy-gate, lane-decision, and promotion-reason feed from Builder ledgers.
+- [x] Add sampled salience lane audits showing promoted, blocked, raw-episode, and policy-block rows.
+- [x] Wire dashboard to domain-chip health history and benchmark scorecard summaries.
+- [x] Export typed archive lifecycle transition records from Builder and render them in dashboard lifecycle trace cards.
+  - 2026-05-01: Builder emits `memory_lifecycle_transition` for structured evidence, raw episodes, and beliefs when archive tombstones are accepted; dashboard exports `lifecycleTransitions` and renders recent source text, role, reason, destination, and trace id.
+- [x] Export typed belief supersession and SDK-maintenance lifecycle transitions.
+  - 2026-05-01: Builder emits belief supersession transitions with old/new values and maintenance aggregate transitions for deletion, stale-preserved, superseded, and archived counts; dashboard carries old value, new value, and transition count fields.
+- [x] Export typed episodic compaction transitions for session, day, and project summaries.
+  - 2026-05-01: session/day/project summary writers emit `memory_lifecycle_transition` rows with source event counts, source session counts, destination predicates, and source event ids so the dashboard can show what raw work was compacted into durable episodic summaries.
+- [x] Export typed salience keep/block transitions with scores and reasons.
+  - 2026-05-01: Builder emits salience lifecycle transitions when memory candidates are promoted, captured, or blocked; dashboard lifecycle cards now show salience score, promotion stage, keepability, why-saved, and reason tags.
+- [x] Export reviewable maintenance audit samples for stale-preserved, superseded, archived, deleted, and still-current memory movement.
+  - 2026-05-01: SDK maintenance now returns typed audit samples with revalidation lag, replacement pointers, deletion pointers, salience, and confidence; Builder carries sample buckets/counts into lifecycle transitions; dashboard lifecycle cards render reviewable examples in plain language.
+- [x] Add resurrection transitions and decay score deltas to lifecycle maintenance traces.
+  - 2026-05-01: deletion tombstones superseded by newer current-state writes are classified as `resurrected`; stale-preserved rows now carry `decay_score_delta`; Builder emits `resurrection` lifecycle transitions and dashboard audit examples render decay deltas.
+- [x] Add non-mutating lifecycle replay export for dashboard QA.
+  - 2026-05-01: `spark-memory-quality-dashboard` can run `npm run export:spark:lifecycle-replay` to inject clearly marked promotion, supersession, stale-preserved, blocked, and resurrection examples into dashboard JSON without mutating live Spark memory.
+- [ ] Wire dashboard to richer Builder ledgers beyond exported local snapshots.
+- [x] Add operator link/launch path from Spark surfaces without moving dashboard into `spawner-ui`.
 
 ### Track I: Evaluation Harness
 
@@ -138,9 +170,25 @@ Work in this order unless a production break interrupts it:
 
 ## Current Commit Checkpoints
 
-- `domain-chip-memory`: this task tracker records the grounded build-quality review checkpoint.
-- `spark-intelligence-builder`: `d94abe1` routes build-quality review questions through target repo, git diff/status, test, route, and demo evidence before allowing a rating.
-- Next commit target: make source-aware recall universal for memory answers and add explicit context packet sections for episodic summary, procedural lesson, pending task, repo capability, and graph sidecar.
+- `domain-chip-memory`: `9a78f4b` clarifies third-party memory notices.
+- `domain-chip-memory`: `659b7b5` documents the memory readiness checkpoint.
+- `spark-cli`: `a1fbcbb` adds the Graphiti/Kuzu setup profile, installs the optional chip extra on opt-in, and pins the fixed memory chip.
+- `spark-intelligence-builder`: `ad3e264` promotes identity name corrections authoritatively.
+- `spark-intelligence-builder`: `68664b0` adds source-aware project episodic memory recall.
+- `spark-intelligence-builder`: `cb6ddd1` adds source-aware daily episodic memory recall.
+- `spark-intelligence-builder`: `85d9110` separates gateway readiness from advisory doctor checks.
+- `spark-intelligence-builder`: `e80cd62` wires Graphiti live sidecar config into hybrid retrieval as non-authoritative supporting evidence.
+- `domain-chip-memory`: `5e902e3` directly upserts structured Graphiti/Kuzu facts without relying on LLM extraction.
+- `spark-intelligence-builder`: `ca8be57` prioritizes entity state for Graphiti shadow exports.
+- `spark-intelligence-builder`: `d9ad5d0` gates Telegram memory writes with salience metadata.
+- `spark-memory-quality-dashboard`: `57ce4a1` paginates human memory dashboard traces.
+- `spark-memory-quality-dashboard`: `2e4d32c` adds a human-readable memory lifecycle trace panel for accepted, episodic, blocked, context packet, and decay/export gaps.
+- `spark-memory-quality-dashboard`: `37eb279` clarifies memory flow outcomes.
+- `spark-memory-quality-dashboard`: `7b6d0f7` exposes salience lane audits from live Builder ledgers.
+- `spark-memory-quality-dashboard`: pending commit adds a non-mutating lifecycle replay export for dashboard QA.
+- `spark-intelligence-builder`: `e0d5139` explains the current focus/plan memory route in source-debug replies.
+- `spark-intelligence-builder`: `6b0e433` recalls broad onboarding-direction decisions from entity state.
+- Next commit target: expand source-aware recall coverage beyond the currently routed memory answers and generate live lifecycle rows for dashboard review.
 - Current fast validation command: `python -m spark_intelligence.memory.test_batch_runner --batch fast-contract -- --maxfail=1`.
 
 ## Architecture Decision
@@ -210,7 +258,7 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [x] Wrong build target: `/memory-quality` was requested inside `spawner-ui`, but a standalone `spark-memory-quality-dashboard` was built instead; target confirmation and build-review evidence now force repo binding before build/review work.
 - [x] Stale target context: Spawner payloads can point at old repos such as `vibeship-spark-intelligence`; Mission Control now detects stale payload drift and build plans require target-repo confirmation.
 - [ ] Episodic memory too thin: the live capsule keeps too little same-session flow, so Spark recalls isolated facts but loses the actual work narrative.
-- [ ] Identity corrections are not authoritative enough: name corrections must become high-priority identity supersessions, not raw episodic text.
+- [x] Identity corrections are not authoritative enough: name corrections now become high-priority identity supersessions instead of raw episodic text in Builder (`ad3e264`); deploy/restart acceptance remains tracked under Telegram tests.
 - [ ] Quality gates exist but are empty: policy gates, quarantine records, and delivery registry need live writes.
 - [ ] Memory lane is mostly blocked/not-promotable: observations are accumulating without enough useful promotion into durable memory.
 - [ ] No semantic daily consolidation: maintenance compresses lifecycle state, but does not yet produce rich daily/project summaries.
@@ -218,8 +266,17 @@ These are the current production-quality gaps surfaced through Telegram, Spawner
 - [ ] Runtime capability state is inconsistent: Spark should know whether it can inspect local files, Spawner, Codex, and repos before answering.
 - [x] Self-review is not grounded: build quality ratings now route through local target repo, git status/diff, test evidence, route evidence, and demo evidence before answering.
 - [ ] Source attribution is still uneven: answers must distinguish current capsule, older memory, raw episode, inference, and unverified claims.
-- [ ] Memory-quality dashboard is standalone: migrate useful pieces into `spawner-ui` and wire them to real ledgers.
-- [ ] Episodic recall is missing: Spark needs session/day/project summaries for "what did we build today?" and "what else do you remember?".
+- [x] Memory-quality dashboard target corrected: standalone repo is now explicit and Builder discovers it.
+- [x] Memory-quality dashboard can load exported Builder ledger counts and live recall events from the local Spark state DB.
+- [x] Memory-quality dashboard can map operator traces, source classes, route decisions, and source-explanation links from exported Builder state.
+- [x] Memory-quality dashboard can show context capsule packet budget and memory read role/method feed.
+- [x] Memory-quality dashboard can show salience scores, policy gate reasons, lane decisions, and promotion dispositions.
+- [x] Memory-quality dashboard can show a readable lifecycle trace panel for what is traceable now, context compaction, decay/archive visibility, and missing instrumentation.
+- [x] Memory-quality dashboard supports local watch-mode export plus browser polling/refresh.
+- [x] Memory-quality dashboard can load domain-chip score history and benchmark scorecard summaries.
+- [ ] Memory-quality dashboard still needs richer live Builder ledger feeds beyond exported snapshots.
+- [x] Memory-quality dashboard has operator launch wiring from Spark/Telegram with URL, refresh command, test/demo evidence, and source explanation.
+- [ ] Episodic recall is incomplete: Builder now answers daily and project narrative questions from the event ledger (`cb6ddd1`, `68664b0`), but session-specific summaries and richer semantic consolidation still need to be wired into natural recall.
 - [ ] Source-aware recall needs to be universal: answers should say whether memory came from current state, older memory, raw episode, graph sidecar, inference, diagnostics, or workflow residue.
 - [ ] Context memory is too small for real work: live Builder capsule code currently defaults to a 5,000-character rendered capsule, 3 recent same-session turn pairs, and 260-character compacted turns in `src/spark_intelligence/context/capsule.py`.
 - [ ] Context reservoir target should support 200k+ available memory context through retrieval and packet assembly, while keeping per-answer Telegram packets compact.
@@ -252,6 +309,8 @@ Current system inspection and installer plan: `docs/SPARK_MEMORY_SYSTEM_INSPECTI
 Current memory lanes and quality gates map: `docs/MEMORY_LANES_AND_QUALITY_GATES_2026-04-28.md`.
 
 Current pre-implementation docs/license checklist: `docs/PRE_IMPLEMENTATION_DOCS_AND_LICENSE_CHECKLIST_2026-04-28.md`.
+
+Current good/bad improvement ledger: `docs/TODAY_MEMORY_IMPROVEMENT_LEDGER_2026-05-01.md`.
 
 Runtime decision:
 
@@ -516,27 +575,27 @@ Acceptance:
 
 Goal: stop leaving the graph layer in eval-only mode and use Graphiti for the real temporal graph sidecar.
 
-- [ ] Define graph sidecar runtime contract:
+- [x] Define graph sidecar runtime contract:
   - input: evidence/event records
   - output: ranked graph hits with provenance
   - no direct final answer generation
-- [ ] Add Graphiti as a runtime sidecar behind `domain-chip-memory`, not as the primary memory authority.
-- [ ] Choose local backend path:
-  - [ ] Kuzu for simplest embedded/local dev path if compatible with current Graphiti support.
+- [x] Add Graphiti as a runtime sidecar behind `domain-chip-memory`, not as the primary memory authority.
+- [x] Choose local backend path:
+  - [x] Kuzu for simplest embedded/local dev path if compatible with current Graphiti support.
   - [ ] FalkorDB or Neo4j for richer graph operations if local service management is acceptable.
-- [ ] Disable Graphiti telemetry by default in Spark-managed launches.
+- [x] Disable Graphiti telemetry by default in Spark-managed launches.
 - [ ] Map Spark memory records to Graphiti episodes:
   - [ ] raw Telegram turn
-  - [ ] structured evidence
-  - [ ] entity-state change
-  - [ ] decision/action/owner/blocker events
+  - [x] structured evidence
+  - [x] entity-state change
+  - [x] decision/action/owner/blocker events
   - [ ] tool/build/mission events
 - [ ] Map Graphiti outputs back to Spark candidates:
-  - [ ] entity
+  - [x] entity
   - [ ] relationship
   - [ ] temporal fact
   - [ ] validity window
-  - [ ] episode provenance
+  - [x] episode provenance
   - [ ] confidence/source score
 - [ ] Promote existing graph capabilities:
   - alias binding
@@ -547,7 +606,9 @@ Goal: stop leaving the graph layer in eval-only mode and use Graphiti for the re
   - temporal events
   - unknown records
 - [x] Add Builder shadow bridge for graph sidecar retrieval.
-- [ ] Add Builder live backend bridge for graph sidecar retrieval.
+- [x] Emit live Builder memory-route shadow telemetry for the Graphiti/typed-temporal lane.
+- [x] Add dashboard operator visibility for Graphiti/typed-temporal shadow lane contract, artifacts, live lane events, and missing instrumentation.
+- [x] Add Builder live backend bridge for graph sidecar retrieval.
 - [ ] Add source explanation labels for graph hits.
 - [ ] Keep graph sidecar additive until live eval beats or ties current path.
 - [ ] Add graph-sidecar acceptance probes for:
