@@ -611,6 +611,12 @@ def render_spark_kb_html_artifact(
     artifact_trace_file = Path(trace_file) if trace_file else artifact_file.with_suffix(".trace.json")
     artifact_canvas_file = Path(canvas_board_file) if canvas_board_file else artifact_file.parent / "spark-kb-canvas-board.json"
     model = _build_model(kb_path, artifact_file)
+    model["artifact_outputs"] = {
+        "html_href": _safe_html_rel(artifact_file, artifact_file),
+        "trace_href": _safe_html_rel(artifact_trace_file, artifact_file),
+        "canvas_board_href": _safe_html_rel(artifact_canvas_file, artifact_file),
+    }
+    model["trace"]["artifact_outputs"] = model["artifact_outputs"]
     artifact_file.parent.mkdir(parents=True, exist_ok=True)
     artifact_trace_file.parent.mkdir(parents=True, exist_ok=True)
     artifact_canvas_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1131,7 +1137,10 @@ def _render_html(model: dict[str, Any]) -> str:
         </div>
         <aside class="inspector">
           <div class="section-band diagram" id="flow">
-            <div class="section-header"><h2>Spark Memory Flow</h2><span class="pill">diagram</span></div>
+            <div class="section-header">
+              <h2>Spark Memory Flow</h2>
+              <a class="pill" href="{escape(model["artifact_outputs"]["canvas_board_href"])}">Canvas JSON</a>
+            </div>
             {_render_canvas_board(model["canvas_board"])}
           </div>
           <div class="section-band" id="selected">
@@ -1344,6 +1353,7 @@ def _render_html(model: dict[str, Any]) -> str:
           configured_base_url: canvasApiBaseUrl || null,
           default_base_url: model.canvas_board?.canvas_api?.default_base_url
         }},
+        artifact_outputs: model.artifact_outputs || {{}},
         canvas_instruction:
           action === 'generate_diagram'
             ? `Create a technical Spark Canvas diagram for: ${{item?.title || 'selected wiki item'}}. Preserve provenance from source paths: ${{(item?.source_paths || []).join(', ')}}.`
