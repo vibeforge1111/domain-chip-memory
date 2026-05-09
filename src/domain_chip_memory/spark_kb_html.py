@@ -988,6 +988,42 @@ def _render_html(model: dict[str, Any]) -> str:
       text-transform: uppercase;
     }}
     .bridge-save:hover {{ border-color: var(--spark-accent); background: var(--spark-accent-subtle); }}
+    .selected-inspector {{
+      display: grid;
+      gap: 0.75rem;
+      padding: 1rem;
+    }}
+    .selected-title {{
+      margin: 0;
+      color: var(--spark-bright);
+      font-size: 1rem;
+      line-height: 1.25;
+    }}
+    .selected-detail {{
+      margin: 0;
+      color: var(--spark-muted);
+      line-height: 1.5;
+    }}
+    .selected-grid {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }}
+    .selected-cell {{
+      min-width: 0;
+      border: 1px solid var(--spark-line);
+      border-radius: 5px;
+      padding: 0.55rem;
+      background: var(--spark-bg-subtle);
+    }}
+    .selected-cell .metric-label {{ font-size: 0.64rem; }}
+    .selected-cell div:last-child {{
+      margin-top: 0.25rem;
+      overflow-wrap: anywhere;
+      color: var(--spark-text);
+      font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.72rem;
+    }}
     .trace-pre {{
       white-space: pre-wrap;
       overflow-wrap: anywhere;
@@ -1081,6 +1117,12 @@ def _render_html(model: dict[str, Any]) -> str:
             <div class="section-header"><h2>Spark Memory Flow</h2><span class="pill">diagram</span></div>
             {_render_canvas_board(model["canvas_board"])}
           </div>
+          <div class="section-band" id="selected">
+            <div class="section-header"><h2>Selected Memory</h2><span class="pill">provenance</span></div>
+            <div class="selected-inspector" id="selected-inspector">
+              <p class="selected-detail">Select a timeline item to inspect its source paths, authority lane, and Spark Canvas object.</p>
+            </div>
+          </div>
           <div class="section-band" id="trace">
             <div class="section-header"><h2>Action Payload</h2><span class="pill">Builder-ready</span></div>
             <div class="bridge-status" id="bridge-status">Local preview. Add <code>?bridge=http://...</code> or <code>?canvas=http://localhost:3000/api/canvas</code> to send actions.</div>
@@ -1117,6 +1159,7 @@ def _render_html(model: dict[str, Any]) -> str:
     const resultCount = document.getElementById('result-count');
     const actionPayload = document.getElementById('action-payload');
     const bridgeStatus = document.getElementById('bridge-status');
+    const selectedInspector = document.getElementById('selected-inspector');
     const builderBridgeInput = document.getElementById('builder-bridge-input');
     const canvasBridgeInput = document.getElementById('canvas-bridge-input');
     const saveBridgeSettings = document.getElementById('save-bridge-settings');
@@ -1174,6 +1217,16 @@ def _render_html(model: dict[str, Any]) -> str:
       return element.textContent.toLowerCase().includes(term);
     }}
 
+    function escapeHtml(value) {{
+      return String(value ?? '').replace(/[&<>"']/g, (char) => ({{
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      }}[char]));
+    }}
+
     function applyFilters() {{
       const term = search.value.trim().toLowerCase();
       let visibleTimeline = 0;
@@ -1216,8 +1269,32 @@ def _render_html(model: dict[str, Any]) -> str:
       }});
       highlightCanvasObject(item?.canvas_object_id || '');
       if (item) {{
+        renderSelectedItem(item);
         actionPayload.textContent = JSON.stringify(buildActionPayload('inspect', item), null, 2);
       }}
+    }}
+
+    function renderSelectedItem(item) {{
+      const sourcePills = (item.source_paths || [])
+        .map((source) => `<span class="pill">${{escapeHtml(source)}}</span>`)
+        .join('');
+      const turnPills = (item.turn_ids || [])
+        .map((turn) => `<span class="pill">${{escapeHtml(turn)}}</span>`)
+        .join('');
+      selectedInspector.innerHTML = `
+        <div>
+          <div class="timeline-kind">${{escapeHtml(item.kind)}} <span>${{escapeHtml(item.timestamp || 'snapshot order')}}</span></div>
+          <h3 class="selected-title">${{escapeHtml(item.title)}}</h3>
+          <p class="selected-detail">${{escapeHtml(item.detail || 'No detail captured.')}}</p>
+        </div>
+        <div class="selected-grid">
+          <div class="selected-cell"><div class="metric-label">Family</div><div>${{escapeHtml(item.family)}}</div></div>
+          <div class="selected-cell"><div class="metric-label">Authority</div><div>${{escapeHtml(item.authority)}}</div></div>
+          <div class="selected-cell"><div class="metric-label">Canvas Object</div><div>${{escapeHtml(item.canvas_object_id || '')}}</div></div>
+          <div class="selected-cell"><div class="metric-label">Session</div><div>${{escapeHtml(item.session_id || '')}}</div></div>
+        </div>
+        <div class="timeline-meta">${{turnPills}}${{sourcePills}}</div>
+      `;
     }}
 
     function buildActionPayload(action, item) {{

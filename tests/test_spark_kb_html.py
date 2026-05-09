@@ -97,6 +97,7 @@ def test_render_spark_kb_html_artifact_builds_timeline_dashboard(tmp_path: Path)
     assert "data-canvas-object-id" in html
     assert "http://localhost:3000/api/canvas" in html
     assert "builder-bridge-input" in html
+    assert "selected-inspector" in html
     assert "sparkCanvasApiBaseUrl" in html
     assert "data-action=\"generate_diagram\"" in html
     assert "--spark-accent" in html
