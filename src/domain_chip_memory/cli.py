@@ -87,7 +87,8 @@ def _add_spark_kb_html_artifact_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--html-artifact", action="store_true", help="Also render the Spark KB HTML artifact.")
     parser.add_argument("--html-output", help="HTML artifact output path.")
     parser.add_argument("--html-trace", help="HTML artifact trace JSON path.")
-    parser.add_argument("--canvas-board", help="Spark Canvas board JSON output path.")
+    parser.add_argument("--visionboard-board", dest="canvas_board", help="Spark Visionboard board JSON output path.")
+    parser.add_argument("--canvas-board", dest="canvas_board", help=argparse.SUPPRESS)
 
 
 def _write_hook_output(args: argparse.Namespace, payload: dict | list[dict]) -> None:
@@ -7086,7 +7087,7 @@ def _build_spark_wiki_dashboard(
     payload["dashboard_command"] = {
         "source_mode": source_mode,
         "html_artifact": True,
-        "spark_canvas_schema": "spark-canvas-board.v1",
+        "spark_visionboard_schema": "spark-visionboard-board.v1",
     }
     return payload
 
@@ -10724,11 +10725,12 @@ def main() -> None:
     render_spark_kb_html.add_argument("output_dir")
     render_spark_kb_html.add_argument("--output")
     render_spark_kb_html.add_argument("--trace")
-    render_spark_kb_html.add_argument("--canvas-board")
+    render_spark_kb_html.add_argument("--visionboard-board", dest="canvas_board")
+    render_spark_kb_html.add_argument("--canvas-board", dest="canvas_board", help=argparse.SUPPRESS)
     render_spark_kb_html.add_argument("--write")
     build_spark_wiki_dashboard = subparsers.add_parser(
         "build-spark-wiki-dashboard",
-        help="Compile Spark memory/wiki input and render the HTML artifact plus Spark Canvas board.",
+        help="Compile Spark memory/wiki input and render the HTML artifact plus Spark Visionboard board.",
     )
     build_spark_wiki_dashboard.add_argument("data_file")
     build_spark_wiki_dashboard.add_argument("output_dir")
@@ -10737,7 +10739,8 @@ def main() -> None:
     build_spark_wiki_dashboard.add_argument("--repo-source-manifest", action="append", default=[])
     build_spark_wiki_dashboard.add_argument("--html-output")
     build_spark_wiki_dashboard.add_argument("--html-trace")
-    build_spark_wiki_dashboard.add_argument("--canvas-board")
+    build_spark_wiki_dashboard.add_argument("--visionboard-board", dest="canvas_board")
+    build_spark_wiki_dashboard.add_argument("--canvas-board", dest="canvas_board", help=argparse.SUPPRESS)
     build_spark_wiki_dashboard.add_argument("--write")
     discover_markdown_packets = subparsers.add_parser(
         "discover-markdown-knowledge-packets",

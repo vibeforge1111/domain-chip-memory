@@ -79,7 +79,7 @@ def test_render_spark_kb_html_artifact_builds_timeline_dashboard(tmp_path: Path)
 
     html_file = Path(payload["artifact_file"])
     trace_file = Path(payload["trace_file"])
-    canvas_board_file = Path(payload["canvas_board_file"])
+    canvas_board_file = Path(payload["visionboard_board_file"])
     html = html_file.read_text(encoding="utf-8")
     trace = json.loads(trace_file.read_text(encoding="utf-8"))
     canvas_board = json.loads(canvas_board_file.read_text(encoding="utf-8"))
@@ -93,18 +93,18 @@ def test_render_spark_kb_html_artifact_builds_timeline_dashboard(tmp_path: Path)
     assert "timeline-spine" in html
     assert "Spark Memory Flow" in html
     assert "Visionboard JSON" in html
-    assert "spark-kb-canvas-board.json" in html
+    assert "spark-kb-visionboard-board.json" in html
     assert "Artifact Manifest" in html
     assert "Spark Visionboard" in html
     assert "Create Visionboard" in html
     assert "Spark Visionboard projection" in html
     assert ".main { order: 1; }" in html
-    assert "spark-canvas-board.v1" in html
+    assert "spark-visionboard-board.v1" in html
     assert "data-canvas-object-id" in html
-    assert "http://localhost:3000/api/canvas" in html
+    assert "http://localhost:3000/api/visionboard" in html
     assert "builder-bridge-input" in html
     assert "selected-inspector" in html
-    assert "sparkCanvasApiBaseUrl" in html
+    assert "sparkVisionboardApiBaseUrl" in html
     assert "source_links" in html
     assert "data-action=\"generate_diagram\"" in html
     assert "--spark-accent" in html
@@ -115,12 +115,12 @@ def test_render_spark_kb_html_artifact_builds_timeline_dashboard(tmp_path: Path)
     assert payload["timeline_item_count"] == 4
     assert payload["kind_counts"]["current_state"] == 1
     assert payload["family_counts"]["memory_kb_current_state"] == 1
-    assert payload["canvas_board"]["schema"] == "spark-canvas-board.v1"
-    assert payload["canvas_board"]["object_type_counts"]["connector"] >= 1
-    assert canvas_board["schema"] == "spark-canvas-board.v1"
+    assert payload["visionboard_board"]["schema"] == "spark-visionboard-board.v1"
+    assert payload["visionboard_board"]["object_type_counts"]["connector"] >= 1
+    assert canvas_board["schema"] == "spark-visionboard-board.v1"
     assert canvas_board["board"]["objects"]["kb-vault"]["type"] == "shape"
     assert trace["operation"] == "render_spark_kb_html_artifact"
-    assert trace["artifact_outputs"]["canvas_board_href"] == "spark-kb-canvas-board.json"
+    assert trace["artifact_outputs"]["visionboard_board_href"] == "spark-kb-visionboard-board.json"
     assert trace["timeline_item_count"] == 4
     assert trace["source_snapshot_file"].endswith("raw\\memory-snapshots\\latest.json") or trace["source_snapshot_file"].endswith(
         "raw/memory-snapshots/latest.json"
@@ -133,7 +133,7 @@ def test_render_spark_kb_html_artifact_command_writes_summary(tmp_path: Path, mo
     vault_dir = tmp_path / "spark_kb_vault"
     html_file = tmp_path / "artifact" / "dashboard.html"
     trace_file = tmp_path / "artifact" / "dashboard.trace.json"
-    canvas_board_file = tmp_path / "artifact" / "dashboard.canvas.json"
+    canvas_board_file = tmp_path / "artifact" / "dashboard.visionboard.json"
     summary_file = tmp_path / "artifact" / "summary.json"
     scaffold_spark_knowledge_base(vault_dir, _snapshot())
 
@@ -149,7 +149,7 @@ def test_render_spark_kb_html_artifact_command_writes_summary(tmp_path: Path, mo
             str(html_file),
             "--trace",
             str(trace_file),
-            "--canvas-board",
+            "--visionboard-board",
             str(canvas_board_file),
             "--write",
             str(summary_file),
@@ -165,7 +165,7 @@ def test_render_spark_kb_html_artifact_command_writes_summary(tmp_path: Path, mo
     assert trace_file.exists()
     assert canvas_board_file.exists()
     assert payload["artifact_file"] == str(html_file)
-    assert payload["canvas_board_file"] == str(canvas_board_file)
+    assert payload["visionboard_board_file"] == str(canvas_board_file)
     assert payload["trace"]["operation"] == "render_spark_kb_html_artifact"
 
 
@@ -175,7 +175,7 @@ def test_build_spark_kb_command_can_render_html_artifact(tmp_path: Path, monkeyp
     vault_dir = tmp_path / "spark_kb_vault"
     html_file = tmp_path / "artifact" / "dashboard.html"
     trace_file = tmp_path / "artifact" / "dashboard.trace.json"
-    canvas_board_file = tmp_path / "artifact" / "dashboard.canvas.json"
+    canvas_board_file = tmp_path / "artifact" / "dashboard.visionboard.json"
     snapshot_file.write_text(json.dumps(_snapshot()), encoding="utf-8")
 
     monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
@@ -192,7 +192,7 @@ def test_build_spark_kb_command_can_render_html_artifact(tmp_path: Path, monkeyp
             str(html_file),
             "--html-trace",
             str(trace_file),
-            "--canvas-board",
+            "--visionboard-board",
             str(canvas_board_file),
         ],
     )
@@ -202,7 +202,7 @@ def test_build_spark_kb_command_can_render_html_artifact(tmp_path: Path, monkeyp
     payload = captured["payload"]
     assert payload["compile_result"]["output_dir"] == str(vault_dir)
     assert payload["html_artifact_result"]["artifact_file"] == str(html_file)
-    assert payload["html_artifact_result"]["canvas_board"]["schema"] == "spark-canvas-board.v1"
+    assert payload["html_artifact_result"]["visionboard_board"]["schema"] == "spark-visionboard-board.v1"
     assert html_file.exists()
     assert trace_file.exists()
     assert canvas_board_file.exists()
@@ -214,7 +214,7 @@ def test_build_spark_wiki_dashboard_command_compiles_and_renders_snapshot(tmp_pa
     vault_dir = tmp_path / "spark_kb_vault"
     html_file = tmp_path / "artifact" / "dashboard.html"
     trace_file = tmp_path / "artifact" / "dashboard.trace.json"
-    canvas_board_file = tmp_path / "artifact" / "dashboard.canvas.json"
+    canvas_board_file = tmp_path / "artifact" / "dashboard.visionboard.json"
     snapshot_file.write_text(json.dumps(_snapshot()), encoding="utf-8")
 
     monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
@@ -232,7 +232,7 @@ def test_build_spark_wiki_dashboard_command_compiles_and_renders_snapshot(tmp_pa
             str(html_file),
             "--html-trace",
             str(trace_file),
-            "--canvas-board",
+            "--visionboard-board",
             str(canvas_board_file),
         ],
     )
@@ -242,7 +242,7 @@ def test_build_spark_wiki_dashboard_command_compiles_and_renders_snapshot(tmp_pa
     payload = captured["payload"]
     assert payload["dashboard_command"]["source_mode"] == "snapshot"
     assert payload["html_artifact_result"]["artifact_file"] == str(html_file)
-    assert payload["html_artifact_result"]["canvas_board"]["schema"] == "spark-canvas-board.v1"
+    assert payload["html_artifact_result"]["visionboard_board"]["schema"] == "spark-visionboard-board.v1"
     assert html_file.exists()
     assert trace_file.exists()
     assert canvas_board_file.exists()
