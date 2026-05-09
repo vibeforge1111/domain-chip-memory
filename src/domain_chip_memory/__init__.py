@@ -60,6 +60,16 @@ from .wiki_packets import (
     read_markdown_knowledge_packets,
     retrieve_markdown_knowledge_packets,
 )
+from .promotion_gates import (
+    PromotionGateDecision,
+    PromotionGateError,
+    assert_promotion_gate,
+    build_promotion_gate_contract_summary,
+    evaluate_promotion_gate,
+    is_protected_mutation_target,
+    normalize_mutation_target,
+    normalize_promotion_lane,
+)
 
 __all__ = [
     "__version__",
@@ -117,5 +127,13 @@ __all__ = [
     "discover_markdown_knowledge_packets",
     "read_markdown_knowledge_packets",
     "retrieve_markdown_knowledge_packets",
+    "PromotionGateDecision",
+    "PromotionGateError",
+    "assert_promotion_gate",
+    "build_promotion_gate_contract_summary",
+    "evaluate_promotion_gate",
+    "is_protected_mutation_target",
+    "normalize_mutation_target",
+    "normalize_promotion_lane",
 ]
 __version__ = "0.1.0"
