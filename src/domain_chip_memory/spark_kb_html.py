@@ -1011,6 +1011,7 @@ def _render_html(model: dict[str, Any]) -> str:
       text-transform: uppercase;
     }}
     .bridge-save:hover {{ border-color: var(--spark-accent); background: var(--spark-accent-subtle); }}
+    .bridge-save.is-wide {{ justify-self: stretch; }}
     .selected-inspector {{
       display: grid;
       gap: 0.75rem;
@@ -1175,6 +1176,7 @@ def _render_html(model: dict[str, Any]) -> str:
               <a class="manifest-link" href="{escape(model["artifact_outputs"]["html_href"])}"><span>Dashboard</span><span>html</span></a>
               <a class="manifest-link" href="{escape(model["artifact_outputs"]["trace_href"])}"><span>Trace</span><span>json</span></a>
               <a class="manifest-link" href="{escape(model["artifact_outputs"]["canvas_board_href"])}"><span>Spark Canvas Board</span><span>json</span></a>
+              <button class="bridge-save is-wide" id="create-canvas-board" type="button">Create Canvas Board</button>
             </div>
           </div>
           <div class="section-band" id="trace">
@@ -1263,8 +1265,33 @@ def _render_html(model: dict[str, Any]) -> str:
         refreshBridgeStatus();
       }});
     }}
+    document.getElementById('create-canvas-board')?.addEventListener('click', createCanvasBoard);
 
     refreshBridgeStatus();
+
+    async function createCanvasBoard() {{
+      if (!canvasApiBaseUrl) {{
+        setBridgeStatus('Set Spark Canvas API before creating a board.', 'error');
+        return;
+      }}
+      const board = model.canvas_board?.board || {{}};
+      const endpoint = `${{canvasApiBaseUrl.replace(/\\/$/, '')}}/boards`;
+      const request = {{
+        name: board.name || 'Spark Memory Wiki Canvas Projection',
+        objects: board.objects || {{}},
+        layers: board.layers || [],
+        viewport: board.viewport || {{ x: 0, y: 0, zoom: 1 }},
+      }};
+      actionPayload.textContent = JSON.stringify({{ action: 'create_canvas_board', endpoint, request }}, null, 2);
+      try {{
+        const result = await postJson(endpoint, request);
+        const boardId = result.board?.id || result.board_id || '';
+        actionPayload.textContent = JSON.stringify({{ action: 'create_canvas_board', endpoint, request, result }}, null, 2);
+        setBridgeStatus(`Spark Canvas board created${{boardId ? `: ${{boardId}}` : ''}}.`, 'live');
+      }} catch (error) {{
+        setBridgeStatus(`Spark Canvas board create failed: ${{error.message}}`, 'error');
+      }}
+    }}
 
     function matchesSearch(element, term) {{
       if (!term) return true;
