@@ -587,9 +587,10 @@ def build_spark_kb_html_artifact_contract_summary() -> dict[str, Any]:
             "compile_builder_export_and_render": "domain-chip-memory build-spark-kb-from-builder-export <export.json> <kb_dir> --html-artifact",
         },
         "spark_canvas": {
+            "display_name": "Spark Visionboard",
             "schema": "spark-canvas-board.v1",
             "default_api_base_url": "http://localhost:3000/api/canvas",
-            "diagram_source": "Spark Canvas board objects, frames, stickies, and connectors.",
+            "diagram_source": "Spark Visionboard board objects, frames, stickies, and connectors.",
         },
         "non_override_rules": [
             "The artifact can prepare actions but must not mutate memory directly.",
@@ -1163,14 +1164,14 @@ def _render_html(model: dict[str, Any]) -> str:
           <div class="section-band diagram" id="flow">
             <div class="section-header">
               <h2>Spark Memory Flow</h2>
-              <a class="pill" href="{escape(model["artifact_outputs"]["canvas_board_href"])}">Canvas JSON</a>
+              <a class="pill" href="{escape(model["artifact_outputs"]["canvas_board_href"])}">Visionboard JSON</a>
             </div>
             {_render_canvas_board(model["canvas_board"])}
           </div>
           <div class="section-band" id="selected">
             <div class="section-header"><h2>Selected Memory</h2><span class="pill">provenance</span></div>
             <div class="selected-inspector" id="selected-inspector">
-              <p class="selected-detail">Select a timeline item to inspect its source paths, authority lane, and Spark Canvas object.</p>
+              <p class="selected-detail">Select a timeline item to inspect its source paths, authority lane, and Visionboard object.</p>
             </div>
           </div>
           <div class="section-band" id="manifest">
@@ -1178,8 +1179,8 @@ def _render_html(model: dict[str, Any]) -> str:
             <div class="manifest-list">
               <a class="manifest-link" href="{escape(model["artifact_outputs"]["html_href"])}"><span>Dashboard</span><span>html</span></a>
               <a class="manifest-link" href="{escape(model["artifact_outputs"]["trace_href"])}"><span>Trace</span><span>json</span></a>
-              <a class="manifest-link" href="{escape(model["artifact_outputs"]["canvas_board_href"])}"><span>Spark Canvas Board</span><span>json</span></a>
-              <button class="bridge-save is-wide" id="create-canvas-board" type="button">Create Canvas Board</button>
+              <a class="manifest-link" href="{escape(model["artifact_outputs"]["canvas_board_href"])}"><span>Spark Visionboard</span><span>json</span></a>
+              <button class="bridge-save is-wide" id="create-canvas-board" type="button">Create Visionboard</button>
             </div>
           </div>
           <div class="section-band" id="trace">
@@ -1191,7 +1192,7 @@ def _render_html(model: dict[str, Any]) -> str:
                 <input class="bridge-input" id="builder-bridge-input" type="url" placeholder="http://localhost:8787/artifact-action">
               </div>
               <div class="bridge-field">
-                <label for="canvas-bridge-input">Spark Canvas API</label>
+                <label for="canvas-bridge-input">Spark Visionboard API</label>
                 <input class="bridge-input" id="canvas-bridge-input" type="url" placeholder="http://localhost:3000/api/canvas">
               </div>
               <button class="bridge-save" id="save-bridge-settings" type="button">Save Bridges</button>
@@ -1243,11 +1244,11 @@ def _render_html(model: dict[str, Any]) -> str:
       if (canvasBridgeInput) canvasBridgeInput.value = canvasApiBaseUrl;
       if (builderBridgeEndpoint || canvasApiBaseUrl) {{
         setBridgeStatus(
-          `Bridge enabled${{builderBridgeEndpoint ? ' / Builder' : ''}}${{canvasApiBaseUrl ? ' / Spark Canvas' : ''}}`,
+          `Bridge enabled${{builderBridgeEndpoint ? ' / Builder' : ''}}${{canvasApiBaseUrl ? ' / Spark Visionboard' : ''}}`,
           'live'
         );
       }} else {{
-        setBridgeStatus('Local preview only. Set Builder Bridge or Spark Canvas API to send actions.');
+        setBridgeStatus('Local preview only. Set Builder Bridge or Spark Visionboard API to send actions.');
       }}
     }}
 
@@ -1274,7 +1275,7 @@ def _render_html(model: dict[str, Any]) -> str:
 
     async function createCanvasBoard() {{
       if (!canvasApiBaseUrl) {{
-        setBridgeStatus('Set Spark Canvas API before creating a board.', 'error');
+        setBridgeStatus('Set Spark Visionboard API before creating a board.', 'error');
         return;
       }}
       const board = model.canvas_board?.board || {{}};
@@ -1290,9 +1291,9 @@ def _render_html(model: dict[str, Any]) -> str:
         const result = await postJson(endpoint, request);
         const boardId = result.board?.id || result.board_id || '';
         actionPayload.textContent = JSON.stringify({{ action: 'create_canvas_board', endpoint, request, result }}, null, 2);
-        setBridgeStatus(`Spark Canvas board created${{boardId ? `: ${{boardId}}` : ''}}.`, 'live');
+        setBridgeStatus(`Spark Visionboard created${{boardId ? `: ${{boardId}}` : ''}}.`, 'live');
       }} catch (error) {{
-        setBridgeStatus(`Spark Canvas board create failed: ${{error.message}}`, 'error');
+        setBridgeStatus(`Spark Visionboard create failed: ${{error.message}}`, 'error');
       }}
     }}
 
@@ -1414,9 +1415,9 @@ def _render_html(model: dict[str, Any]) -> str:
         artifact_outputs: model.artifact_outputs || {{}},
         canvas_instruction:
           action === 'generate_diagram'
-            ? `Create a technical Spark Canvas diagram for: ${{item?.title || 'selected wiki item'}}. Preserve provenance from source paths: ${{(item?.source_paths || []).join(', ')}}.`
+            ? `Create a technical Spark Visionboard diagram for: ${{item?.title || 'selected wiki item'}}. Preserve provenance from source paths: ${{(item?.source_paths || []).join(', ')}}.`
             : '',
-        note: 'Prepared for Spark Builder or Spark Canvas bridge; artifact does not mutate memory directly.'
+        note: 'Prepared for Spark Builder or Spark Visionboard bridge; artifact does not mutate memory directly.'
       }};
     }}
 
@@ -1448,10 +1449,10 @@ def _render_html(model: dict[str, Any]) -> str:
             board: model.canvas_board?.board
           }});
           actionPayload.textContent = JSON.stringify({{ request: payload, canvas_result: result }}, null, 2);
-          setBridgeStatus(`Spark Canvas generated ${{result.objects_created || 0}} objects on board ${{result.board_id || payload.spark_canvas.board_id}}.`, 'live');
+          setBridgeStatus(`Spark Visionboard generated ${{result.objects_created || 0}} objects on board ${{result.board_id || payload.spark_canvas.board_id}}.`, 'live');
           return;
         }} catch (error) {{
-          setBridgeStatus(`Spark Canvas bridge failed: ${{error.message}}`, 'error');
+          setBridgeStatus(`Spark Visionboard bridge failed: ${{error.message}}`, 'error');
           return;
         }}
       }}
@@ -1468,7 +1469,7 @@ def _render_html(model: dict[str, Any]) -> str:
         }}
       }}
 
-      setBridgeStatus('Local preview only. Set Builder Bridge or Spark Canvas API to send actions.');
+      setBridgeStatus('Local preview only. Set Builder Bridge or Spark Visionboard API to send actions.');
     }}
 
     document.querySelectorAll('.timeline-item').forEach((itemElement) => {{
@@ -1554,7 +1555,7 @@ def _render_canvas_board(canvas_board: dict[str, Any]) -> str:
     objects = board.get("objects") or {}
     visible_objects = [obj for obj in objects.values() if isinstance(obj, dict) and obj.get("visible", True)]
     if not visible_objects:
-        return '<div class="empty-state">No Spark Canvas board projection found.</div>'
+        return '<div class="empty-state">No Spark Visionboard projection found.</div>'
     min_x = min(int(obj.get("x") or 0) for obj in visible_objects)
     min_y = min(int(obj.get("y") or 0) for obj in visible_objects)
     max_x = max(int(obj.get("x") or 0) + int(obj.get("width") or 1) for obj in visible_objects)
@@ -1570,7 +1571,7 @@ def _render_canvas_board(canvas_board: dict[str, Any]) -> str:
             object_markup.append(_render_canvas_object(obj))
     return f"""
 <div class="canvas-preview-wrap">
-  <svg class="canvas-preview" viewBox="{escape(view_box)}" role="img" aria-label="Spark Canvas board projection">
+  <svg class="canvas-preview" viewBox="{escape(view_box)}" role="img" aria-label="Spark Visionboard projection">
     <defs>
       <marker id="canvasArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
         <path d="M 0 0 L 10 5 L 0 10 z" fill="#2FCA94"></path>
