@@ -374,6 +374,22 @@ def _assign_canvas_object_ids(timeline: list[dict[str, Any]]) -> None:
         item["canvas_object_id"] = f"kb-timeline-{_slug(item.get('id'))}"
 
 
+def _assign_source_links(timeline: list[dict[str, Any]], pages: list[dict[str, Any]]) -> None:
+    pages_by_path = {str(page.get("relative_path") or ""): page for page in pages}
+    for item in timeline:
+        source_links = []
+        for source_path in item.get("source_paths") or []:
+            page = pages_by_path.get(str(source_path))
+            source_links.append(
+                {
+                    "path": str(source_path),
+                    "href": str((page or {}).get("href") or ""),
+                    "title": str((page or {}).get("title") or source_path),
+                }
+            )
+        item["source_links"] = source_links
+
+
 def _build_spark_canvas_board(model_seed: dict[str, Any]) -> dict[str, Any]:
     timeline = list(model_seed.get("timeline") or [])
     generated_at = model_seed.get("generated_at") or _utc_timestamp()
@@ -488,6 +504,7 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
     pages = _read_pages(kb_dir, html_file)
     timeline = _snapshot_timeline(snapshot) if snapshot else _page_timeline_fallback(pages)
     _assign_canvas_object_ids(timeline)
+    _assign_source_links(timeline, pages)
     generated_at = _utc_timestamp()
     family_counts = _counter([page["wiki_family"] for page in pages])
     kind_counts = _counter([item["kind"] for item in timeline])
@@ -1275,8 +1292,10 @@ def _render_html(model: dict[str, Any]) -> str:
     }}
 
     function renderSelectedItem(item) {{
-      const sourcePills = (item.source_paths || [])
-        .map((source) => `<span class="pill">${{escapeHtml(source)}}</span>`)
+      const sourcePills = (item.source_links || [])
+        .map((source) => source.href
+          ? `<a class="pill" href="${{escapeHtml(source.href)}}">${{escapeHtml(source.path)}}</a>`
+          : `<span class="pill">${{escapeHtml(source.path)}}</span>`)
         .join('');
       const turnPills = (item.turn_ids || [])
         .map((turn) => `<span class="pill">${{escapeHtml(turn)}}</span>`)
@@ -1314,6 +1333,7 @@ def _render_html(model: dict[str, Any]) -> str:
         authority: item?.authority,
         wiki_family: item?.family,
         source_paths: item?.source_paths || [],
+        source_links: item?.source_links || [],
         session_id: item?.session_id || '',
         turn_ids: item?.turn_ids || [],
         spark_canvas: {{
@@ -1420,7 +1440,12 @@ def _render_stat(label: str, value: str, help_text: str) -> str:
 
 
 def _render_timeline_item(item: dict[str, Any]) -> str:
-    source_pills = "".join(f'<span class="pill">{escape(source)}</span>' for source in item["source_paths"])
+    source_pills = "".join(
+        f'<a class="pill" href="{escape(source["href"])}">{escape(source["path"])}</a>'
+        if source.get("href")
+        else f'<span class="pill">{escape(source["path"])}</span>'
+        for source in item.get("source_links", [])
+    )
     turn_pills = "".join(f'<span class="pill">{escape(turn)}</span>' for turn in item["turn_ids"])
     timestamp = escape(item["timestamp"] or "snapshot order")
     detail = escape(item["detail"] or "No detail captured.")
