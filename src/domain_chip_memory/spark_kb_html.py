@@ -401,7 +401,7 @@ def _build_spark_canvas_board(model_seed: dict[str, Any]) -> dict[str, Any]:
     add(
         {
             **_canvas_base("kb-frame-main", "frame", x=20, y=20, width=980, height=580, z_index=1),
-            "label": "Spark Memory Wiki / Canvas Projection",
+            "label": "Spark Memory Wiki / Visionboard Projection",
             "backgroundColor": "rgba(24,28,38,0.72)",
         }
     )
@@ -455,7 +455,7 @@ def _build_spark_canvas_board(model_seed: dict[str, Any]) -> dict[str, Any]:
         "generated_at": generated_at,
         "board": {
             "id": f"spark-memory-wiki-{_slug(generated_at)[:24]}",
-            "name": "Spark Memory Wiki Canvas Projection",
+            "name": "Spark Memory Wiki Visionboard Projection",
             "objects": objects,
             "layers": [{"id": "layer-main", "name": "Memory Wiki", "visible": True, "locked": False, "order": 0}],
             "viewport": {"x": 40, "y": 40, "zoom": 0.75},
@@ -1281,7 +1281,7 @@ def _render_html(model: dict[str, Any]) -> str:
       const board = model.canvas_board?.board || {{}};
       const endpoint = `${{canvasApiBaseUrl.replace(/\\/$/, '')}}/boards`;
       const request = {{
-        name: board.name || 'Spark Memory Wiki Canvas Projection',
+        name: board.name || 'Spark Memory Wiki Visionboard Projection',
         objects: board.objects || {{}},
         layers: board.layers || [],
         viewport: board.viewport || {{ x: 0, y: 0, zoom: 1 }},
