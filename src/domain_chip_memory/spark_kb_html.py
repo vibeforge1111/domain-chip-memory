@@ -537,7 +537,7 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
     }
     return {
         "title": "Spark Memory Wiki",
-        "subtitle": "Timeline dashboard over compiled LLM wiki packets and governed memory lanes.",
+        "subtitle": "Memory changes, sources, and next agent steps.",
         "generated_at": generated_at,
         "snapshot_counts": snapshot.get("counts") or {},
         "family_counts": family_counts,
@@ -1091,6 +1091,9 @@ def _render_html(model: dict[str, Any]) -> str:
     .is-hidden {{ display: none; }}
     @media (max-width: 1100px) {{
       .artifact-shell, .topbar, .workspace {{ grid-template-columns: 1fr; }}
+      .artifact-shell {{ display: flex; flex-direction: column; }}
+      .main {{ order: 1; }}
+      .side-nav {{ order: 2; }}
       .side-nav {{ position: relative; height: auto; }}
       .nav-inner {{ min-height: 0; }}
       .stats-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
