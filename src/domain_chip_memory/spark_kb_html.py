@@ -1047,6 +1047,26 @@ def _render_html(model: dict[str, Any]) -> str:
       font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
       font-size: 0.72rem;
     }}
+    .manifest-list {{
+      display: grid;
+      gap: 0.5rem;
+      padding: 1rem;
+    }}
+    .manifest-link {{
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border: 1px solid var(--spark-line);
+      border-radius: 5px;
+      padding: 0.6rem;
+      background: var(--spark-bg-subtle);
+      color: var(--spark-text);
+      text-decoration: none;
+      font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.72rem;
+    }}
+    .manifest-link:hover {{ border-color: var(--spark-accent); background: var(--spark-accent-subtle); }}
+    .manifest-link span:last-child {{ color: var(--spark-muted); }}
     .trace-pre {{
       white-space: pre-wrap;
       overflow-wrap: anywhere;
@@ -1147,6 +1167,14 @@ def _render_html(model: dict[str, Any]) -> str:
             <div class="section-header"><h2>Selected Memory</h2><span class="pill">provenance</span></div>
             <div class="selected-inspector" id="selected-inspector">
               <p class="selected-detail">Select a timeline item to inspect its source paths, authority lane, and Spark Canvas object.</p>
+            </div>
+          </div>
+          <div class="section-band" id="manifest">
+            <div class="section-header"><h2>Artifact Manifest</h2><span class="pill">outputs</span></div>
+            <div class="manifest-list">
+              <a class="manifest-link" href="{escape(model["artifact_outputs"]["html_href"])}"><span>Dashboard</span><span>html</span></a>
+              <a class="manifest-link" href="{escape(model["artifact_outputs"]["trace_href"])}"><span>Trace</span><span>json</span></a>
+              <a class="manifest-link" href="{escape(model["artifact_outputs"]["canvas_board_href"])}"><span>Spark Canvas Board</span><span>json</span></a>
             </div>
           </div>
           <div class="section-band" id="trace">

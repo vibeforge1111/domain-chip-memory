@@ -94,6 +94,8 @@ def test_render_spark_kb_html_artifact_builds_timeline_dashboard(tmp_path: Path)
     assert "Spark Memory Flow" in html
     assert "Canvas JSON" in html
     assert "spark-kb-canvas-board.json" in html
+    assert "Artifact Manifest" in html
+    assert "Spark Canvas Board" in html
     assert "Spark Canvas board projection" in html
     assert "spark-canvas-board.v1" in html
     assert "data-canvas-object-id" in html
