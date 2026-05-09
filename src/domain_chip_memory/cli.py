@@ -63,6 +63,7 @@ from .spark_shadow import (
 )
 from .spark_integration import build_spark_integration_contract_summary
 from .spark_kb import build_spark_kb_contract_summary, build_spark_kb_health_report, scaffold_spark_knowledge_base
+from .spark_kb_html import build_spark_kb_html_artifact_contract_summary, render_spark_kb_html_artifact
 from .watchtower import build_watchtower_summary
 from .contracts import NormalizedBenchmarkSample
 from .wiki_packets import discover_markdown_knowledge_packets
@@ -80,6 +81,13 @@ def _print(payload: dict | list[dict]) -> None:
 def _add_hook_io_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--input", help="Spark hook input JSON path.")
     parser.add_argument("--output", help="Spark hook output JSON path.")
+
+
+def _add_spark_kb_html_artifact_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--html-artifact", action="store_true", help="Also render the Spark KB HTML artifact.")
+    parser.add_argument("--html-output", help="HTML artifact output path.")
+    parser.add_argument("--html-trace", help="HTML artifact trace JSON path.")
+    parser.add_argument("--canvas-board", help="Spark Canvas board JSON output path.")
 
 
 def _write_hook_output(args: argparse.Namespace, payload: dict | list[dict]) -> None:
@@ -7014,6 +7022,75 @@ def _build_spark_kb_from_snapshot_file(
     }
 
 
+def _attach_spark_kb_html_artifact(
+    payload: dict,
+    output_dir: str,
+    *,
+    enabled: bool = False,
+    output_file: str | None = None,
+    trace_file: str | None = None,
+    canvas_board_file: str | None = None,
+) -> dict:
+    if not enabled and not output_file and not trace_file and not canvas_board_file:
+        return payload
+    enriched = dict(payload)
+    enriched["html_artifact_result"] = render_spark_kb_html_artifact(
+        output_dir,
+        output_file=output_file,
+        trace_file=trace_file,
+        canvas_board_file=canvas_board_file,
+    )
+    return enriched
+
+
+def _build_spark_wiki_dashboard(
+    data_file: str,
+    output_dir: str,
+    *,
+    source_mode: str = "builder-export",
+    repo_sources: list[str] | None = None,
+    repo_source_manifest_files: list[str] | None = None,
+    output_file: str | None = None,
+    trace_file: str | None = None,
+    canvas_board_file: str | None = None,
+) -> dict:
+    if source_mode == "snapshot":
+        payload = _build_spark_kb_from_snapshot_file(
+            data_file,
+            output_dir,
+            repo_sources=repo_sources,
+            repo_source_manifest_files=repo_source_manifest_files,
+        )
+    elif source_mode == "telegram-export":
+        payload = _build_spark_kb_from_telegram_export(
+            data_file,
+            output_dir,
+            repo_sources=repo_sources,
+            repo_source_manifest_files=repo_source_manifest_files,
+        )
+    else:
+        payload = _build_spark_kb_from_builder_export(
+            data_file,
+            output_dir,
+            repo_sources=repo_sources,
+            repo_source_manifest_files=repo_source_manifest_files,
+        )
+    payload = _attach_spark_kb_html_artifact(
+        payload,
+        output_dir,
+        enabled=True,
+        output_file=output_file,
+        trace_file=trace_file,
+        canvas_board_file=canvas_board_file,
+    )
+    payload["dashboard_command"] = {
+        "source_mode": source_mode,
+        "html_artifact": True,
+        "spark_canvas_schema": "spark-canvas-board.v1",
+    }
+    return payload
+
+
 def _build_beam_judged_cleanup_report(
     *,
     artifact_prefix: str,
@@ -10543,6 +10620,7 @@ def main() -> None:
     build_spark_kb.add_argument("--repo-source-manifest", action="append", default=[])
     build_spark_kb.add_argument("--filed-output-file", action="append", default=[])
     build_spark_kb.add_argument("--filed-output-manifest", action="append", default=[])
+    _add_spark_kb_html_artifact_args(build_spark_kb)
     build_spark_kb.add_argument("--write")
     build_spark_kb_from_shadow = subparsers.add_parser(
         "build-spark-kb-from-shadow-replay",
@@ -10639,6 +10717,28 @@ def main() -> None:
     spark_kb_health = subparsers.add_parser("spark-kb-health-check", help="Run health checks over a scaffolded Spark KB vault.")
     spark_kb_health.add_argument("output_dir")
     spark_kb_health.add_argument("--write")
+    render_spark_kb_html = subparsers.add_parser(
+        "render-spark-kb-html-artifact",
+        help="Render a timeline-first HTML dashboard over a compiled Spark KB vault.",
+    )
+    render_spark_kb_html.add_argument("output_dir")
+    render_spark_kb_html.add_argument("--output")
+    render_spark_kb_html.add_argument("--trace")
+    render_spark_kb_html.add_argument("--canvas-board")
+    render_spark_kb_html.add_argument("--write")
+    build_spark_wiki_dashboard = subparsers.add_parser(
+        "build-spark-wiki-dashboard",
+        help="Compile Spark memory/wiki input and render the HTML artifact plus Spark Canvas board.",
+    )
+    build_spark_wiki_dashboard.add_argument("data_file")
+    build_spark_wiki_dashboard.add_argument("output_dir")
+    build_spark_wiki_dashboard.add_argument("--source", choices=["builder-export", "telegram-export", "snapshot"], default="builder-export")
+    build_spark_wiki_dashboard.add_argument("--repo-source", action="append", default=[])
+    build_spark_wiki_dashboard.add_argument("--repo-source-manifest", action="append", default=[])
+    build_spark_wiki_dashboard.add_argument("--html-output")
+    build_spark_wiki_dashboard.add_argument("--html-trace")
+    build_spark_wiki_dashboard.add_argument("--canvas-board")
+    build_spark_wiki_dashboard.add_argument("--write")
     discover_markdown_packets = subparsers.add_parser(
         "discover-markdown-knowledge-packets",
         help="Inventory markdown wiki/KB packet families without returning page text.",
@@ -10743,6 +10843,7 @@ def main() -> None:
     build_spark_kb_from_builder.add_argument("output_dir")
     build_spark_kb_from_builder.add_argument("--repo-source", action="append", default=[])
     build_spark_kb_from_builder.add_argument("--repo-source-manifest", action="append", default=[])
+    _add_spark_kb_html_artifact_args(build_spark_kb_from_builder)
     build_spark_kb_from_builder.add_argument("--write")
     build_spark_kb_from_builder_batch = subparsers.add_parser(
         "build-spark-kb-from-builder-export-batch",
@@ -10753,6 +10854,7 @@ def main() -> None:
     build_spark_kb_from_builder_batch.add_argument("--glob", default="*.json")
     build_spark_kb_from_builder_batch.add_argument("--repo-source", action="append", default=[])
     build_spark_kb_from_builder_batch.add_argument("--repo-source-manifest", action="append", default=[])
+    _add_spark_kb_html_artifact_args(build_spark_kb_from_builder_batch)
     build_spark_kb_from_builder_batch.add_argument("--write")
     build_spark_kb_from_telegram = subparsers.add_parser(
         "build-spark-kb-from-telegram-export",
@@ -10762,6 +10864,7 @@ def main() -> None:
     build_spark_kb_from_telegram.add_argument("output_dir")
     build_spark_kb_from_telegram.add_argument("--repo-source", action="append", default=[])
     build_spark_kb_from_telegram.add_argument("--repo-source-manifest", action="append", default=[])
+    _add_spark_kb_html_artifact_args(build_spark_kb_from_telegram)
     build_spark_kb_from_telegram.add_argument("--write")
     build_spark_kb_from_telegram_batch = subparsers.add_parser(
         "build-spark-kb-from-telegram-export-batch",
@@ -10772,6 +10875,7 @@ def main() -> None:
     build_spark_kb_from_telegram_batch.add_argument("--glob", default="*.json")
     build_spark_kb_from_telegram_batch.add_argument("--repo-source", action="append", default=[])
     build_spark_kb_from_telegram_batch.add_argument("--repo-source-manifest", action="append", default=[])
+    _add_spark_kb_html_artifact_args(build_spark_kb_from_telegram_batch)
     build_spark_kb_from_telegram_batch.add_argument("--write")
     run_spark_builder_intake_batch = subparsers.add_parser(
         "run-spark-builder-intake-batch",
@@ -11391,6 +11495,14 @@ def main() -> None:
             filed_output_files=args.filed_output_file,
             filed_output_manifest_files=args.filed_output_manifest,
         )
+        payload = _attach_spark_kb_html_artifact(
+            payload,
+            args.output_dir,
+            enabled=args.html_artifact,
+            output_file=args.html_output,
+            trace_file=args.html_trace,
+            canvas_board_file=args.canvas_board,
+        )
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
@@ -11464,6 +11576,34 @@ def main() -> None:
 
     if args.command == "spark-kb-health-check":
         payload = build_spark_kb_health_report(args.output_dir)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "render-spark-kb-html-artifact":
+        payload = render_spark_kb_html_artifact(
+            args.output_dir,
+            output_file=args.output,
+            trace_file=args.trace,
+            canvas_board_file=args.canvas_board,
+        )
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
+    if args.command == "build-spark-wiki-dashboard":
+        payload = _build_spark_wiki_dashboard(
+            args.data_file,
+            args.output_dir,
+            source_mode=args.source,
+            repo_sources=args.repo_source,
+            repo_source_manifest_files=args.repo_source_manifest,
+            output_file=args.html_output,
+            trace_file=args.html_trace,
+            canvas_board_file=args.canvas_board,
+        )
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
@@ -11601,6 +11741,14 @@ def main() -> None:
             repo_sources=args.repo_source,
             repo_source_manifest_files=args.repo_source_manifest,
         )
+        payload = _attach_spark_kb_html_artifact(
+            payload,
+            args.output_dir,
+            enabled=args.html_artifact,
+            output_file=args.html_output,
+            trace_file=args.html_trace,
+            canvas_board_file=args.canvas_board,
+        )
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
@@ -11612,6 +11760,14 @@ def main() -> None:
             args.output_dir,
             repo_sources=args.repo_source,
             repo_source_manifest_files=args.repo_source_manifest,
+        )
+        payload = _attach_spark_kb_html_artifact(
+            payload,
+            args.output_dir,
+            enabled=args.html_artifact,
+            output_file=args.html_output,
+            trace_file=args.html_trace,
+            canvas_board_file=args.canvas_board,
         )
         if args.write:
             _write_json(Path(args.write), payload)
@@ -11626,6 +11782,14 @@ def main() -> None:
             repo_sources=args.repo_source,
             repo_source_manifest_files=args.repo_source_manifest,
         )
+        payload = _attach_spark_kb_html_artifact(
+            payload,
+            args.output_dir,
+            enabled=args.html_artifact,
+            output_file=args.html_output,
+            trace_file=args.html_trace,
+            canvas_board_file=args.canvas_board,
+        )
         if args.write:
             _write_json(Path(args.write), payload)
         _print(payload)
@@ -11638,6 +11802,14 @@ def main() -> None:
             glob_pattern=args.glob,
             repo_sources=args.repo_source,
             repo_source_manifest_files=args.repo_source_manifest,
+        )
+        payload = _attach_spark_kb_html_artifact(
+            payload,
+            args.output_dir,
+            enabled=args.html_artifact,
+            output_file=args.html_output,
+            trace_file=args.html_trace,
+            canvas_board_file=args.canvas_board,
         )
         if args.write:
             _write_json(Path(args.write), payload)

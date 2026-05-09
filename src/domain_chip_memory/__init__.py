@@ -34,6 +34,7 @@ from .spark_shadow import (
 )
 from .spark_integration import build_spark_integration_contract_summary
 from .spark_kb import build_spark_kb_contract_summary, build_spark_kb_health_report, scaffold_spark_knowledge_base
+from .spark_kb_html import build_spark_kb_html_artifact_contract_summary, render_spark_kb_html_artifact
 from .memory_sidecars import (
     DisabledMemorySidecarAdapter,
     GraphitiCompatibleMemorySidecarAdapter,
@@ -95,6 +96,8 @@ __all__ = [
     "build_spark_kb_contract_summary",
     "build_spark_kb_health_report",
     "scaffold_spark_knowledge_base",
+    "build_spark_kb_html_artifact_contract_summary",
+    "render_spark_kb_html_artifact",
     "DisabledMemorySidecarAdapter",
     "GraphitiCompatibleMemorySidecarAdapter",
     "MemorySidecarEpisode",
