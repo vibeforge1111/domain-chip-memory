@@ -1192,8 +1192,10 @@ def _stringify_optional(value: Any) -> str | None:
 
 
 def build_memory_sidecar_contract_summary() -> JsonDict:
+    from .promotion_gates import build_promotion_gate_contract_summary
     from .wiki_packets import build_wiki_packet_reader_contract_summary
 
+    promotion_gate_contract = build_promotion_gate_contract_summary()
     return {
         "contract_name": "MemorySidecarAdapter",
         "authority_policy": {
@@ -1275,6 +1277,7 @@ def build_memory_sidecar_contract_summary() -> JsonDict:
             "reason_selected",
             "reason_discarded",
         ],
+        "promotion_gate_contract": promotion_gate_contract,
         "promotion_gates": [
             "current_vs_stale_conflict",
             "previous_value_recall",
@@ -1284,5 +1287,6 @@ def build_memory_sidecar_contract_summary() -> JsonDict:
             "temporal_event_ordering",
             "source_explanation",
             "telegram_acceptance",
+            "protected_self_improvement_surface",
         ],
     }

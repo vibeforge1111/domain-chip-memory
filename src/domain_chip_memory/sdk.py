@@ -13,6 +13,7 @@ from .memory_conversational_index import build_conversational_index
 from .memory_observation_runtime import build_event_calendar, build_observation_log
 from .memory_roles import canonical_memory_role, sdk_memory_role_contracts
 from .memory_retention import default_retention_class, sdk_retention_contracts, sdk_retention_defaults_by_role
+from .promotion_gates import build_promotion_gate_contract_summary
 from .memory_updates import (
     active_state_entity_key,
     build_current_state_view,
@@ -3199,6 +3200,7 @@ def build_sdk_contract_summary(
         },
         "maintenance_methods": ["reconsolidate_manual_memory"],
         "export_methods": ["export_knowledge_base_snapshot"],
+        "promotion_gate_contract": build_promotion_gate_contract_summary(),
         "sidecar_contract": {
             "contract_name": "MemorySidecarAdapter",
             "sidecar_authority": "supporting_or_shadow_until_promoted",

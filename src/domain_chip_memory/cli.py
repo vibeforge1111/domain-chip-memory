@@ -33,6 +33,7 @@ from .loaders import (
 from .memory_contract_summary import build_memory_system_contract_summary
 from .memory_conversational_shadow_eval import build_multi_shadow_answer_eval, question_uses_fused_conversational_shadow
 from .packets import build_strategy_packet
+from .promotion_gates import build_promotion_gate_contract_summary, evaluate_promotion_gate
 from .providers import build_provider_contract_summary, get_provider
 from .runner import build_runner_contract_summary, run_baseline
 from .sample_data import demo_samples, product_memory_samples
@@ -6472,6 +6473,42 @@ def _load_json_file(path: str | Path) -> object:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def _check_promotion_gate_file(promotion_record_file: str) -> dict:
+    payload = _load_json_file(promotion_record_file)
+    if isinstance(payload, dict):
+        records = [payload]
+    elif isinstance(payload, list):
+        records = [record for record in payload if isinstance(record, dict)]
+    else:
+        raise ValueError("Promotion gate input must be a JSON object or list of JSON objects.")
+
+    decisions = [evaluate_promotion_gate(record).to_dict() for record in records]
+    decision_counts: dict[str, int] = {}
+    protected_count = 0
+    allowed_count = 0
+    for decision in decisions:
+        decision_label = str(decision.get("decision") or "unknown")
+        decision_counts[decision_label] = decision_counts.get(decision_label, 0) + 1
+        if bool(decision.get("protected_target")):
+            protected_count += 1
+        if bool(decision.get("allowed")):
+            allowed_count += 1
+    return {
+        "input_promotion_record_file": str(Path(promotion_record_file)),
+        "summary": {
+            "record_count": len(decisions),
+            "allowed_count": allowed_count,
+            "blocked_or_deferred_count": len(decisions) - allowed_count,
+            "protected_target_count": protected_count,
+            "decision_counts": dict(sorted(decision_counts.items())),
+        },
+        "decisions": decisions,
+        "trace": {
+            "operation": "check_promotion_gate_file",
+        },
+    }
+
+
 def _load_spark_memory_kb_promotion_policy_rows(promotion_policy_file: str) -> list[dict[str, object]]:
     payload = _load_json_file(promotion_policy_file)
     if not isinstance(payload, dict):
@@ -11033,6 +11070,11 @@ def main() -> None:
     subparsers.add_parser("spark-shadow-contracts", help="Show the Spark shadow replay and ingest contract summary.")
     subparsers.add_parser("spark-integration-contracts", help="Show the Spark integration outlook and orchestration contract summary.")
     subparsers.add_parser("spark-kb-contracts", help="Show the Spark knowledge-base layer contract summary.")
+    subparsers.add_parser("promotion-gate-contracts", help="Show memory/self-improvement promotion gate lanes and protected targets.")
+    check_promotion_gate = subparsers.add_parser("check-promotion-gate", help="Evaluate memory-derived promotion records against protected-surface gates.")
+    check_promotion_gate.add_argument("promotion_record_file")
+    check_promotion_gate.add_argument("--assert-allowed", action="store_true")
+    check_promotion_gate.add_argument("--write")
     subparsers.add_parser("loader-contracts", help="Show benchmark file loader summary.")
     subparsers.add_parser("provider-contracts", help="Show model-provider interface summary.")
     subparsers.add_parser("runner-contracts", help="Show executable baseline runner summary.")
@@ -12023,6 +12065,19 @@ def main() -> None:
 
     if args.command == "spark-kb-contracts":
         _print(build_spark_kb_contract_summary())
+        return
+
+    if args.command == "promotion-gate-contracts":
+        _print(build_promotion_gate_contract_summary())
+        return
+
+    if args.command == "check-promotion-gate":
+        payload = _check_promotion_gate_file(args.promotion_record_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        if args.assert_allowed and int(payload["summary"]["blocked_or_deferred_count"]) > 0:
+            raise SystemExit("Spark promotion gate failed: blocked_or_deferred_count > 0")
+        _print(payload)
         return
 
     if args.command == "loader-contracts":
