@@ -156,6 +156,12 @@ python -m domain_chip_memory.cli spark-kb-health-check tmp/spark_kb_example
 
 ## License
 
-License file is pending. Do not treat this repository as open-source licensed until a `LICENSE` file is added.
+MIT. See [LICENSE](./LICENSE).
+
+Spark Swarm is AGPL-licensed. Other Spark repos are MIT unless their
+LICENSE file says otherwise. Spark Pro hosted services, private corpuses,
+brand assets, deployment secrets, and Pro drops are not included in
+open-source licenses. Pro drops do not grant redistribution rights unless
+a separate written license says so.
 
 Third-party borrowing, dependency, and attribution rules are tracked in [docs/OPEN_SOURCE_ATTRIBUTION_PLAN.md](./docs/OPEN_SOURCE_ATTRIBUTION_PLAN.md) and [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
