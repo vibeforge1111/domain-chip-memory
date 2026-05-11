@@ -69,6 +69,18 @@ candidate event
   -> recall-gate trace
 ```
 
+Promotion stage lanes are intentionally separate from content lanes:
+
+- `raw`: captured source material, never authority.
+- `candidate`: normalized evidence that still needs a promotion decision.
+- `promoted`: evaluated and approved memory-derived doctrine or behavior.
+- `current_state`: authoritative for mutable user/entity facts, not runtime policy.
+- `wiki`: compiled project knowledge, supporting until separately promoted.
+- `observer_eval`: shadow/comparison/eval output, evidence only.
+- `quarantined`: blocked records, inspectable only for debugging and policy evidence.
+
+Self-improvement targets are stricter than memory recall. Memory-derived output cannot change prompts, policies, skills, access levels, provider templates, MCP config, or installer behavior unless the record is in the `promoted` lane and carries provenance refs, eval refs, an approval ref, and a rollback ref. Use `python -m domain_chip_memory.cli promotion-gate-contracts` and `python -m domain_chip_memory.cli check-promotion-gate <file>` as the executable contract.
+
 ## Gate Map
 
 | Gate | Blocks | Allows | Record |

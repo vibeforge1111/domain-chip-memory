@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Benchmark-first Spark domain chip scaffold for agent memory systems."
 readme = "README.md"
 requires-python = ">=3.10"
+license = "AGPL-3.0-only"
 dependencies = []
 
 [project.optional-dependencies]
