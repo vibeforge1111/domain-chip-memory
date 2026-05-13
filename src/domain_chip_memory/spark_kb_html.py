@@ -517,6 +517,7 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
     }
     canvas_board = _build_spark_visionboard_board(model_seed)
     canvas_summary = _canvas_board_summary(canvas_board)
+    recursive_runs = _discover_recursive_run_links(html_file)
     trace = {
         "operation": "render_spark_kb_html_artifact",
         "generated_at": generated_at,
@@ -528,6 +529,7 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
         "authority_counts": authority_counts,
         "owner_system_counts": owner_system_counts,
         "visionboard_board": canvas_summary,
+        "recursive_run_links": recursive_runs,
         "non_override_rules": [
             "HTML artifacts visualize and route context; they do not become runtime truth.",
             "Current-state APIs outrank wiki summaries for mutable user facts.",
@@ -536,8 +538,8 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
         ],
     }
     return {
-        "title": "Spark Memory Wiki",
-        "subtitle": "Memory changes, sources, and next agent steps.",
+        "title": "Spark LLM Wiki",
+        "subtitle": "Source-backed memory, agent knowledge, and recursive learning history.",
         "generated_at": generated_at,
         "snapshot_counts": snapshot.get("counts") or {},
         "family_counts": family_counts,
@@ -547,10 +549,40 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
         "owner_system_counts": owner_system_counts,
         "pages": pages,
         "timeline": timeline,
+        "recursive_runs": recursive_runs,
         "canvas_board": canvas_board,
         "canvas_board_summary": canvas_summary,
         "trace": trace,
     }
+
+
+def _discover_recursive_run_links(html_file: Path) -> list[dict[str, str]]:
+    candidates: list[Path] = []
+    for env_name in ("SPARK_RECURSIVE_WIKI_ROOT", "SPARK_LLM_WIKI_ROOT"):
+        raw = os.environ.get(env_name)
+        if raw:
+            candidates.append(Path(raw))
+    candidates.extend(
+        [
+            Path.home() / ".spark-intelligence" / "wiki",
+            Path.home() / ".spark" / "state" / "spark-intelligence" / "wiki",
+        ]
+    )
+    links: list[dict[str, str]] = []
+    seen: set[Path] = set()
+    for root in candidates:
+        recursive_root = root / "recursive-runs"
+        index_file = recursive_root / "index.html"
+        if not index_file.exists() or index_file in seen:
+            continue
+        seen.add(index_file)
+        links.append(
+            {
+                "label": "Recursive Runs",
+                "href": _safe_html_rel(index_file, html_file),
+            }
+        )
+    return links
 
 
 def build_spark_kb_html_artifact_contract_summary() -> dict[str, Any]:
@@ -646,10 +678,16 @@ def _render_html(model: dict[str, Any]) -> str:
     data_json = json.dumps(model, ensure_ascii=False).replace("</", "<\\/")
     timeline_markup = "\n".join(_render_timeline_item(item) for item in model["timeline"])
     page_rows = "\n".join(_render_page_row(page) for page in model["pages"])
+    spark_logo = _spark_logo_markup()
     family_chips = "\n".join(
-        f'<button class="filter-chip" data-family="{escape(family)}"><span class="filter-label">{escape(family)}</span><span class="filter-count">{count}</span></button>'
+        f'<button class="filter-chip" data-family="{escape(family)}"><span class="filter-label">{escape(_family_label(family))}</span><span class="filter-count">{count}</span></button>'
         for family, count in model["family_counts"].items()
     )
+    recursive_links = "\n".join(
+        f'<a class="connection-card" href="{escape(link["href"])}"><span>{escape(link["label"])}</span><strong>Open</strong></a>'
+        for link in model.get("recursive_runs", [])
+    )
+    recursive_links = recursive_links or '<div class="connection-card is-muted"><span>Recursive Runs</span><strong>Not linked yet</strong></div>'
     stat_cards = "\n".join(
         [
             _render_stat("Timeline", str(len(model["timeline"])), "events, state movement, source turns"),
@@ -665,6 +703,7 @@ def _render_html(model: dict[str, Any]) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{escape(model["title"])}</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
     :root {{
       --spark-bg: #0E1018;
       --spark-bg-subtle: #141820;
@@ -679,12 +718,35 @@ def _render_html(model: dict[str, Any]) -> str:
       --spark-iris: #B8A8DC;
       --spark-iris-dim: #6E5CA0;
       --spark-gold: #D8C868;
+      --spark-logo: #1DDFA2;
       --spark-text: #F0F0F4;
       --spark-bright: #E0E2EC;
       --spark-muted: #8890B0;
       --spark-tertiary: #6A7080;
       --spark-ghost: #506070;
       color-scheme: dark;
+    }}
+    [data-theme="light"] {{
+      --spark-bg: #F5F5F3;
+      --spark-bg-subtle: #EDEDEB;
+      --spark-surface: #FFFFFF;
+      --spark-raised: #FFFFFF;
+      --spark-line: #E2E2E0;
+      --spark-line-strong: #D0D0CE;
+      --spark-accent: #0A6F4E;
+      --spark-accent-hover: #075B41;
+      --spark-accent-subtle: rgba(47, 202, 148, 0.10);
+      --spark-accent-mid: rgba(47, 202, 148, 0.16);
+      --spark-iris: #6E5CA0;
+      --spark-iris-dim: #6E5CA0;
+      --spark-gold: #8A7330;
+      --spark-logo: #0A6F4E;
+      --spark-text: #1A1A18;
+      --spark-bright: #1A1A18;
+      --spark-muted: #4A4A47;
+      --spark-tertiary: #6E6E69;
+      --spark-ghost: #A0A09C;
+      color-scheme: light;
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -701,6 +763,7 @@ def _render_html(model: dict[str, Any]) -> str:
       line-height: 1.55;
       letter-spacing: 0.01em;
     }}
+    [data-theme="light"] body {{ background: var(--spark-bg); }}
     a {{ color: inherit; }}
     button, input {{ font: inherit; }}
     .artifact-shell {{
@@ -715,7 +778,7 @@ def _render_html(model: dict[str, Any]) -> str:
       height: 100vh;
       padding: 0.75rem;
       border-right: 1px solid var(--spark-line);
-      background: rgba(14, 16, 24, 0.92);
+      background: var(--spark-bg);
       backdrop-filter: blur(16px);
       overflow: auto;
     }}
@@ -726,40 +789,56 @@ def _render_html(model: dict[str, Any]) -> str:
       background: var(--spark-surface);
       padding: 0.75rem;
     }}
-    .brand-kicker, .mono-label, .metric-label, .timeline-kind, .filter-chip, .nav-link, .action-button, .slash-tag {{
+    .brand-kicker, .mono-label, .metric-label, .timeline-kind, .filter-chip, .nav-link, .action-button, .theme-toggle {{
       font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
       text-transform: uppercase;
       letter-spacing: 0.14em;
     }}
-    .brand-kicker {{ color: var(--spark-accent); font-size: 0.68rem; }}
+    .brand-lockup {{
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+      padding: 0.45rem 0.35rem 0.65rem;
+    }}
+    .spark-mark {{ width: 32px; height: auto; color: var(--spark-logo); flex: 0 0 auto; }}
+    .spark-wordmark {{ width: 78px; height: auto; color: var(--spark-text); flex: 0 0 auto; }}
+    .spark-divider {{ width: 1px; height: 20px; background: var(--spark-line-strong); flex: 0 0 auto; }}
+    .spark-product {{
+      color: var(--spark-muted);
+      font-family: "DM Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      white-space: nowrap;
+    }}
+    .spark-product span {{ color: var(--spark-logo); }}
+    .hero-lockup {{ display: none; margin-bottom: 1.2rem; }}
+    .hero-lockup .brand-lockup {{ padding: 0; }}
+    .brand-kicker {{ color: var(--spark-accent); font-size: 0.68rem; margin-top: 0.5rem; }}
     .brand-title {{
-      margin: 0.45rem 0 0.35rem;
+      margin: 0.35rem 0 0.35rem;
       font-size: 1.35rem;
       line-height: 1.05;
       font-weight: 650;
     }}
     .brand-copy {{ margin: 0; color: var(--spark-muted); line-height: 1.5; }}
-    .slash-tag {{
-      display: inline-flex;
+    .theme-toggle {{
+      display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      width: 100%;
       border: 1px solid var(--spark-line);
-      border-radius: 3px;
-      background: var(--spark-raised);
-      color: var(--spark-accent);
-      padding: 0.32rem 0.55rem;
-      font-size: 0.68rem;
+      border-radius: 6px;
+      background: var(--spark-bg-subtle);
+      color: var(--spark-muted);
+      padding: 0.68rem 0.75rem;
+      cursor: pointer;
+      font-size: 0.72rem;
     }}
-    .cursor-blocks {{
-      display: inline-flex;
-      align-items: flex-end;
-      gap: 3px;
-      height: 14px;
-      margin-left: 0.45rem;
-    }}
-    .cursor-blocks span {{ display: block; width: 7px; background: var(--spark-accent); border-radius: 1px; }}
-    .cursor-blocks span:nth-child(1) {{ height: 14px; }}
-    .cursor-blocks span:nth-child(2) {{ height: 10px; }}
-    .cursor-blocks span:nth-child(3) {{ height: 7px; }}
+    .theme-toggle:hover {{ border-color: var(--spark-accent); background: var(--spark-accent-subtle); color: var(--spark-text); }}
     .nav-group {{ margin-top: 1.5rem; display: grid; gap: 0.5rem; }}
     .nav-link, .filter-chip {{
       width: 100%;
@@ -770,6 +849,7 @@ def _render_html(model: dict[str, Any]) -> str:
       padding: 0.68rem 0.75rem;
       text-align: left;
       cursor: pointer;
+      text-decoration: none;
       transition: border-color 200ms ease, background 200ms ease, color 200ms ease;
     }}
     .nav-link:hover, .filter-chip:hover, .action-button:hover {{
@@ -789,6 +869,61 @@ def _render_html(model: dict[str, Any]) -> str:
       border-color: var(--spark-accent);
       color: var(--spark-accent);
       background: var(--spark-accent-subtle);
+    }}
+    [data-theme="light"] .side-nav {{ background: var(--spark-bg); }}
+    [data-theme="light"] .nav-inner,
+    [data-theme="light"] .nav-link,
+    [data-theme="light"] .filter-chip,
+    [data-theme="light"] .theme-toggle {{
+      background: var(--spark-surface);
+      color: var(--spark-text);
+    }}
+    [data-theme="light"] .theme-toggle {{ color: var(--spark-muted); }}
+    [data-theme="light"] .filter-chip.is-active {{
+      color: var(--spark-accent);
+      background: var(--spark-accent-subtle);
+    }}
+    .connection-grid {{
+      display: grid;
+      gap: 0.5rem;
+      padding: 1rem;
+    }}
+    .connection-card {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border: 1px solid var(--spark-line);
+      border-radius: 6px;
+      background: var(--spark-bg-subtle);
+      color: var(--spark-text);
+      padding: 0.75rem 0.85rem;
+      text-decoration: none;
+    }}
+    .connection-card strong {{
+      color: var(--spark-accent);
+      font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      white-space: nowrap;
+    }}
+    .connection-card.is-muted strong {{ color: var(--spark-muted); }}
+    .prompt-list {{
+      display: grid;
+      gap: 0.5rem;
+      padding: 0 1rem 1rem;
+    }}
+    .prompt-chip {{
+      border: 1px solid var(--spark-line);
+      border-radius: 5px;
+      background: var(--spark-bg-subtle);
+      color: var(--spark-muted);
+      padding: 0.55rem 0.65rem;
+      font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.72rem;
+      overflow-wrap: anywhere;
     }}
     .main {{
       padding: clamp(1rem, 3vw, 2.5rem);
@@ -1097,6 +1232,7 @@ def _render_html(model: dict[str, Any]) -> str:
       .side-nav {{ order: 2; }}
       .side-nav {{ position: relative; height: auto; }}
       .nav-inner {{ min-height: 0; }}
+      .hero-lockup {{ display: flex; }}
       .stats-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .stat-card:nth-child(2) {{ border-right: 0; }}
       .inspector {{ position: relative; top: 0; }}
@@ -1116,18 +1252,22 @@ def _render_html(model: dict[str, Any]) -> str:
 <body>
   <script id="spark-kb-data" type="application/json">{data_json}</script>
   <div class="artifact-shell">
-    <aside class="side-nav" aria-label="Spark memory wiki navigation">
+    <aside class="side-nav" aria-label="Spark LLM wiki navigation">
       <div class="nav-inner">
-        <span class="slash-tag">/wiki <span class="cursor-blocks" aria-hidden="true"><span></span><span></span><span></span></span></span>
-        <div class="brand-kicker" style="margin-top: 1rem;">Spark Artifact</div>
-        <div class="brand-title">Memory Wiki</div>
-        <p class="brand-copy">Governed memory lanes, LLM wiki packets, and Builder-ready trace payloads.</p>
+        {spark_logo}
+        <div class="brand-kicker">Spark Artifact</div>
+        <div class="brand-title">LLM Wiki</div>
+        <p class="brand-copy">Governed memory, agent brain context, recursive learning notes, and Builder-ready trace payloads.</p>
         <div class="nav-group" aria-label="Sections">
           <a class="nav-link" href="#overview">Overview</a>
           <a class="nav-link" href="#timeline">Timeline</a>
           <a class="nav-link" href="#flow">Spark Flow</a>
+          <a class="nav-link" href="#connections">Agent Brain</a>
           <a class="nav-link" href="#packets">Wiki Packets</a>
           <a class="nav-link" href="#trace">Trace</a>
+        </div>
+        <div class="nav-group" aria-label="Theme">
+          <button class="theme-toggle" id="theme-toggle" type="button"><span>Theme</span><strong id="theme-label">Dark</strong></button>
         </div>
         <div class="nav-group" aria-label="Family filters">
           <div class="mono-label">Filter By Family</div>
@@ -1139,6 +1279,7 @@ def _render_html(model: dict[str, Any]) -> str:
     <main class="main">
       <section class="topbar" id="overview">
         <div class="hero">
+          <div class="hero-lockup">{spark_logo}</div>
           <div class="brand-kicker">// Compiled From Spark KB</div>
           <h1>{escape(model["title"])}</h1>
           <p>{escape(model["subtitle"])}</p>
@@ -1149,6 +1290,23 @@ def _render_html(model: dict[str, Any]) -> str:
         </div>
       </section>
       <section class="stats-grid" aria-label="Artifact metrics">{stat_cards}</section>
+      <section class="section-band" id="connections" style="margin-bottom: 1rem;">
+        <div class="section-header">
+          <h2>Spark Agent Brain</h2>
+          <span class="pill">local/private</span>
+        </div>
+        <div class="connection-grid">
+          <a class="connection-card" href="#packets"><span>LLM Wiki packets</span><strong>{len(model["pages"])} pages</strong></a>
+          <a class="connection-card" href="#trace"><span>Builder action payloads</span><strong>Ready</strong></a>
+          {recursive_links}
+        </div>
+        <div class="prompt-list" aria-label="Telegram natural-language prompts">
+          <div class="mono-label">Telegram prompts</div>
+          <div class="prompt-chip">/wiki</div>
+          <div class="prompt-chip">answer from your LLM wiki how should recursive loops work?</div>
+          <div class="prompt-chip">search your wiki for Spark QA Operator lessons</div>
+        </div>
+      </section>
       <section class="workspace">
         <div class="section-band" id="timeline">
           <div class="section-header">
@@ -1223,7 +1381,25 @@ def _render_html(model: dict[str, Any]) -> str:
     const builderBridgeInput = document.getElementById('builder-bridge-input');
     const visionboardBridgeInput = document.getElementById('visionboard-bridge-input');
     const saveBridgeSettings = document.getElementById('save-bridge-settings');
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeLabel = document.getElementById('theme-label');
     let activeFamily = 'all';
+
+    function applyTheme(theme) {{
+      const normalized = theme === 'light' ? 'light' : 'navy-dark';
+      document.documentElement.setAttribute('data-theme', normalized);
+      window.localStorage.setItem('sparkKbTheme', normalized);
+      if (themeLabel) themeLabel.textContent = normalized === 'light' ? 'Light' : 'Dark';
+    }}
+
+    applyTheme(window.localStorage.getItem('sparkKbTheme') || 'navy-dark');
+
+    if (themeToggle) {{
+      themeToggle.addEventListener('click', () => {{
+        const current = document.documentElement.getAttribute('data-theme') || 'navy-dark';
+        applyTheme(current === 'light' ? 'navy-dark' : 'light');
+      }});
+    }}
 
     function endpointFromQuery(name, storageKey) {{
       const params = new URLSearchParams(window.location.search);
@@ -1499,6 +1675,35 @@ def _render_html(model: dict[str, Any]) -> str:
 </body>
 </html>
 """
+
+
+def _spark_logo_markup() -> str:
+    return """
+<div class="brand-lockup" aria-label="Spark LLM Wiki">
+  <svg class="spark-mark" viewBox="0 0 264 113" preserveAspectRatio="xMidYMid meet" aria-hidden="true" fill="none">
+    <path fill="currentColor" d="M189.07 0.85c-24.3 4.4-39.5 14.7-80.5 54.5-35.2 34.2-37.3 35.9-49.8 39.7-18.4 5.6-39.1-3.2-47.4-20-6.5-13.2-2.6-32.5 8.4-42.1 8.7-7.7 14.1-9.6 27.3-9.6 14.7 0 19.4 2.1 37.4 16.5 12.8 10.3 12.8 10.3 15.4 7.6 2.7-2.7 2.7-2.7-1.3-6.2-25.2-21.9-34.3-26.7-51-26.8-14.7 0-25.7 4.6-35 14.6-30.7 33.2-.9 83.4 44.4 74.8 14-2.6 23.6-9.7 54.3-39.8 46.8-46 63.7-56.2 92.8-56.3 61.2-.1 73.1 80.1 14.2 95.2-24 6.1-50.2-3-81.4-28.3-10.1-8.2-11.3-8.6-14.6-4.5-2.7 3.3 25.8 25.1 43.3 33.2 31.9 14.8 63.1 11.8 82.9-8 31.2-31.2 15.8-83.8-27.5-94-6.8-1.6-24.1-1.8-31.9-.5Z" />
+  </svg>
+  <svg class="spark-wordmark" viewBox="0 0 218 59" preserveAspectRatio="xMidYMid meet" aria-hidden="true" fill="none">
+    <g transform="translate(-0.253195,59) scale(0.1,-0.1)" fill="currentColor">
+      <path d="M52 435c-38-16-56-56-47-101 9-50 42-65 153-69 100-3 122-13 122-55 0-40-31-50-153-50-112 0-117-1-117-21 0-20 4-20 129-17 155 4 181 17 181 94 0 66-30 84-136 84-101 0-130 10-137 45-9 52 18 65 143 65 103 0 110 1 110 20 0 26-192 29-248 5Z" />
+      <path d="M573 443c-31-6-70-48-77-84-14-72-7-349 9-356 24-9 28 1 31 74 1 38 3 69 3 71 1 1 14-4 31-13 73-38 229-11 257 45 17 34 16 163-1 204-23 56-134 82-253 59Zm180-44c63-29 64-209 2-233-53-20-187-2-207 28-10 14-10 168 0 182 22 33 151 48 205 23Z" />
+      <path d="M1152 443c-10-4-162-303-162-319 0-2 10-4 23-4 19 0 31 21 86 140 35 77 70 140 76 140 6 0 22-24 34-52 82-188 104-228 127-228h23l-18 43c-113 256-142 299-189 280Z" />
+      <path d="M1520 285c0-158 1-165 20-165 19 0 20 7 20 114 0 63 3 122 6 131 10 25 58 45 109 45 38 0 45 3 45 20 0 25-79 28-124 5-35-18-36-18-36 0 0 8-9 15-20 15-19 0-20-7-20-165Z" />
+      <path d="M1880 355c0-228 1-235 20-235 16 0 20 7 20 33 0 26 10 42 46 77l45 45 37-40c20-22 51-57 67-78 23-30 37-38 55-35 23 3 21 6-35 73-33 39-66 78-74 88-13 16-8 25 60 93 72 72 73 74 44 74-25 0-48-18-130-100-55-55-103-100-107-100-5 0-8 77-8 170 0 163-1 170-20 170-19 0-20-7-20-235Z" />
+    </g>
+  </svg>
+  <span class="spark-divider" aria-hidden="true"></span>
+  <span class="spark-product"><span>/</span>wiki</span>
+</div>"""
+
+
+def _family_label(family: str) -> str:
+    cleaned = str(family or "").strip()
+    for prefix in ("memory_kb_", "builder_llm_", "spark_"):
+        if cleaned.startswith(prefix):
+            cleaned = cleaned[len(prefix) :]
+            break
+    return cleaned.replace("_", " ").replace("-", " ").title() or "Wiki"
 
 
 def _render_stat(label: str, value: str, help_text: str) -> str:

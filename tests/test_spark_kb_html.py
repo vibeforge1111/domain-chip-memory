@@ -89,6 +89,16 @@ def test_render_spark_kb_html_artifact_builds_timeline_dashboard(tmp_path: Path)
     assert trace_file.exists()
     assert canvas_board_file.exists()
     assert "Memory Movement Timeline" in html
+    assert "Spark LLM Wiki" in html
+    assert "Spark Agent Brain" in html
+    assert "LLM Wiki" in html
+    assert "spark-mark" in html
+    assert "spark-wordmark" in html
+    assert "<span>/</span>wiki" in html
+    assert "hero-lockup" in html
+    assert "theme-toggle" in html
+    assert "data-theme=\"light\"" in html
+    assert "Telegram prompts" in html
     assert "timeline-shell" in html
     assert "timeline-spine" in html
     assert "Spark Memory Flow" in html
