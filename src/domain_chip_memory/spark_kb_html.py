@@ -557,6 +557,7 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
     recursive_records = _load_recursive_run_records(html_file)
     recursive_journal = _write_recursive_learning_projection(html_file, recursive_records)
     learning_journal = _build_learning_journal_summary(recursive_records, pages, timeline)
+    annotation_queue = _build_annotation_queue(recursive_records)
     family_counts = _counter([page["wiki_family"] for page in pages])
     kind_counts = _counter([item["kind"] for item in timeline])
     page_type_counts = _counter([page["type"] for page in pages])
@@ -583,6 +584,8 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
         "recursive_run_links": recursive_runs,
         "recursive_learning_projection": recursive_journal,
         "recursive_record_count": len(recursive_records),
+        "annotation_queue_count": len(annotation_queue),
+        "source_search_modes": ["all", "current", "evidence", "recursive", "private"],
         "non_override_rules": [
             "HTML artifacts visualize and route context; they do not become runtime truth.",
             "Current-state APIs outrank wiki summaries for mutable user facts.",
@@ -606,6 +609,7 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
         "recursive_records": recursive_records,
         "recursive_journal": recursive_journal,
         "learning_journal": learning_journal,
+        "annotation_queue": annotation_queue,
         "canvas_board": canvas_board,
         "canvas_board_summary": canvas_summary,
         "trace": trace,
@@ -830,6 +834,98 @@ def _build_learning_journal_summary(
     }
 
 
+def _unique_words(words: list[str]) -> str:
+    ordered: dict[str, None] = {}
+    for word in words:
+        cleaned = str(word or "").strip()
+        if cleaned:
+            ordered[cleaned] = None
+    return " ".join(ordered)
+
+
+def _search_scope_for_record(record: dict[str, Any]) -> str:
+    scopes = ["recursive", "historical", "evidence", "private", "supporting"]
+    if str(record.get("review_state") or "").lower() != "local/private":
+        scopes.append("review")
+    return _unique_words(scopes)
+
+
+def _search_scope_for_page(page: dict[str, Any]) -> str:
+    text = " ".join(
+        str(page.get(key) or "").lower()
+        for key in ("wiki_family", "type", "authority", "source_of_truth", "freshness")
+    )
+    scopes = ["supporting"]
+    if "current" in text:
+        scopes.append("current")
+    if any(token in text for token in ("evidence", "observation", "source", "trace", "benchmark", "report")):
+        scopes.append("evidence")
+    if any(token in text for token in ("event", "session", "timeline", "history", "historical", "wiki")):
+        scopes.append("historical")
+    return _unique_words(scopes)
+
+
+def _search_scope_for_item(item: dict[str, Any]) -> str:
+    text = " ".join(str(item.get(key) or "").lower() for key in ("kind", "family", "authority"))
+    scopes = ["supporting"]
+    if "current" in text:
+        scopes.append("current")
+    if any(token in text for token in ("evidence", "observation", "source", "trace", "benchmark")):
+        scopes.append("evidence")
+    if any(token in text for token in ("event", "session", "timeline")):
+        scopes.append("historical")
+    return _unique_words(scopes)
+
+
+def _annotation_state_for_record(record: dict[str, Any]) -> tuple[str, str, str]:
+    review_state = str(record.get("review_state") or "local/private").lower()
+    kept_rounds = int(record.get("kept_rounds") or 0)
+    if review_state != "local/private":
+        return (
+            "needs_evidence",
+            "Needs evidence",
+            "Add source-backed evidence or redaction notes before this becomes a lesson.",
+        )
+    if kept_rounds > 0:
+        return (
+            "ready_for_review",
+            "Ready for review",
+            "Review the kept lesson against held-out and trap checks before promotion.",
+        )
+    return (
+        "needs_evidence",
+        "Needs evidence",
+        "Add benchmark pressure, a mutation source, or a clearer target before another large loop.",
+    )
+
+
+def _build_annotation_queue(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    queue: list[dict[str, Any]] = []
+    for record in records[:12]:
+        state, state_label, suggested_action = _annotation_state_for_record(record)
+        target_label = str(record.get("path_label") or "Recursive path")
+        note = str(record.get("latest_lesson") or record.get("summary") or suggested_action)
+        annotation_id = f"annotation:{record.get('path_key')}:{record.get('day')}:{record.get('session_id')}"
+        queue.append(
+            {
+                "id": annotation_id,
+                "target_type": "recursive_run",
+                "target_id": f"{record.get('path_key')}:{record.get('day')}:{record.get('session_id')}",
+                "target_label": target_label,
+                "state": state,
+                "state_label": state_label,
+                "kind": "promote_to_lesson" if state == "ready_for_review" else "needs_evidence",
+                "note": _safe_human_line(note, 180),
+                "suggested_action": suggested_action,
+                "privacy_state": str(record.get("privacy_state") or "local/private"),
+                "authority": str(record.get("authority") or "supporting_not_authoritative"),
+                "journal_href": str(record.get("journal_href") or ""),
+                "search_scope": _search_scope_for_record(record),
+            }
+        )
+    return queue
+
+
 def _render_recursive_root_projection(records: list[dict[str, Any]]) -> str:
     grouped: dict[str, list[dict[str, Any]]] = {}
     for record in records:
@@ -980,7 +1076,7 @@ def _render_learning_journal_cards(learning: dict[str, Any], records: list[dict[
         )
         recent_cards.append(
             f"""
-<a class="learning-record" href="{escape(href)}" data-search="{escape(search_text.lower())}">
+<a class="learning-record" href="{escape(href)}" data-search="{escape(search_text.lower())}" data-search-scope="{escape(_search_scope_for_record(record))}">
   <span>{escape(str(record.get("path_label") or "Recursive path"))}</span>
   <strong>{escape(str(record.get("score_line") or "score not recorded"))}</strong>
   <p>{escape(str(record.get("latest_lesson") or "No lesson recorded yet."))}</p>
@@ -989,7 +1085,7 @@ def _render_learning_journal_cards(learning: dict[str, Any], records: list[dict[
     if not recent_cards:
         recent_cards.append(
             """
-<div class="learning-record is-muted" data-search="no recursive runs">
+<div class="learning-record is-muted" data-search="no recursive runs" data-search-scope="recursive private">
   <span>No recursive runs linked</span>
   <strong>Ready</strong>
   <p>Run or pair a specialization path to start the learning journal.</p>
@@ -1024,6 +1120,88 @@ def _render_learning_journal_cards(learning: dict[str, Any], records: list[dict[
 </section>"""
 
 
+def _render_annotation_workspace(queue: list[dict[str, Any]]) -> str:
+    annotation_cards: list[str] = []
+    annotation_options: list[str] = []
+    for item in queue[:6]:
+        annotation_id = str(item.get("id") or "")
+        target_label = str(item.get("target_label") or "Recursive run")
+        search_text = " ".join(
+            [
+                target_label,
+                str(item.get("state_label") or ""),
+                str(item.get("note") or ""),
+                str(item.get("suggested_action") or ""),
+                str(item.get("kind") or ""),
+            ]
+        )
+        href = str(item.get("journal_href") or "")
+        evidence_link = (
+            f'<a href="{escape(href)}">Open run note</a>'
+            if href
+            else '<span class="muted">Run note unavailable</span>'
+        )
+        annotation_cards.append(
+            f"""
+<article class="annotation-card" data-annotation-id="{escape(annotation_id)}" data-search="{escape(search_text.lower())}" data-search-scope="{escape(str(item.get("search_scope") or "recursive private supporting"))}">
+  <span>{escape(str(item.get("state_label") or "Needs review"))}</span>
+  <strong>{escape(target_label)}</strong>
+  <p>{escape(str(item.get("note") or "No note recorded yet."))}</p>
+  <div class="annotation-meta">
+    <span>{escape(str(item.get("privacy_state") or "local/private"))}</span>
+    {evidence_link}
+  </div>
+</article>"""
+        )
+        annotation_options.append(f'<option value="{escape(annotation_id)}">{escape(target_label)}</option>')
+
+    if not annotation_cards:
+        annotation_cards.append(
+            """
+<div class="annotation-card is-muted" data-search="no annotation targets" data-search-scope="private supporting">
+  <span>No annotation targets</span>
+  <strong>Ready</strong>
+  <p>Pair recursive runs or add Wiki notes before promoting lessons.</p>
+</div>"""
+        )
+        annotation_options.append('<option value="">No run target available</option>')
+
+    return f"""
+<section class="section-band annotation-workspace" id="annotations">
+  <div class="section-header">
+    <h2>Comments & Annotations</h2>
+    <span class="pill">local/private</span>
+  </div>
+  <div class="annotation-grid">
+    <div class="annotation-list">
+      <div class="mono-label">Suggested notes</div>
+      {''.join(annotation_cards)}
+    </div>
+    <div class="annotation-composer">
+      <div class="mono-label">Create local packet</div>
+      <label for="annotation-target">Target</label>
+      <select id="annotation-target">{''.join(annotation_options)}</select>
+      <label for="annotation-kind">Decision</label>
+      <select id="annotation-kind">
+        <option value="agent_note">Agent note</option>
+        <option value="user_comment">User comment</option>
+        <option value="promote_to_lesson">Promote to lesson</option>
+        <option value="reject_as_noise">Reject as noise</option>
+        <option value="needs_evidence">Needs evidence</option>
+        <option value="ready_for_review">Ready for review</option>
+      </select>
+      <label for="annotation-note">Note</label>
+      <textarea id="annotation-note" rows="4" placeholder="Write a short human note. Keep evidence claims source-backed."></textarea>
+      <div class="annotation-actions">
+        <button class="action-button" id="save-annotation-local" type="button">Save Locally</button>
+        <button class="action-button" id="copy-annotation-packet" type="button">Copy Packet</button>
+      </div>
+      <p class="annotation-status" id="annotation-status">Saved packets stay in this browser until a governed memory lane imports them.</p>
+    </div>
+  </div>
+</section>"""
+
+
 def build_spark_kb_html_artifact_contract_summary() -> dict[str, Any]:
     return {
         "contract_name": "SparkKbHtmlArtifact",
@@ -1042,6 +1220,7 @@ def build_spark_kb_html_artifact_contract_summary() -> dict[str, Any]:
                 "ask_agent",
                 "find_support",
                 "generate_diagram",
+                "annotation_packet",
             ],
             "required_fields": [
                 "source_paths",
@@ -1141,6 +1320,7 @@ def _render_html(model: dict[str, Any]) -> str:
         )
     learning = model.get("learning_journal") if isinstance(model.get("learning_journal"), dict) else {}
     learning_cards = _render_learning_journal_cards(learning, model.get("recursive_records") or [])
+    annotation_workspace = _render_annotation_workspace(model.get("annotation_queue") or [])
     stat_cards = "\n".join(
         [
             _render_stat("Timeline", str(len(model["timeline"])), "events, state movement, source turns"),
@@ -1462,6 +1642,89 @@ def _render_html(model: dict[str, Any]) -> str:
       font-size: 0.86rem;
       line-height: 1.45;
     }}
+    .annotation-workspace {{
+      margin: 1rem 0;
+    }}
+    .annotation-grid {{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+      gap: 1rem;
+      padding: 1rem;
+    }}
+    .annotation-list {{
+      display: grid;
+      gap: 0.65rem;
+      min-width: 0;
+    }}
+    .annotation-card {{
+      min-width: 0;
+      border: 1px solid var(--spark-line);
+      border-radius: 8px;
+      background: var(--spark-bg-subtle);
+      padding: 0.85rem;
+    }}
+    .annotation-card span,
+    .annotation-composer label {{
+      display: block;
+      color: var(--spark-accent);
+      font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }}
+    .annotation-card strong {{
+      display: block;
+      margin: 0.35rem 0;
+    }}
+    .annotation-card p {{
+      margin: 0;
+      color: var(--spark-muted);
+      line-height: 1.45;
+    }}
+    .annotation-meta {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.75rem;
+      color: var(--spark-muted);
+      font-size: 0.82rem;
+    }}
+    .annotation-meta a {{ color: var(--spark-accent); text-decoration: none; }}
+    .annotation-composer {{
+      display: grid;
+      gap: 0.55rem;
+      align-content: start;
+      border: 1px solid var(--spark-line);
+      border-radius: 8px;
+      background: var(--spark-bg-subtle);
+      padding: 1rem;
+    }}
+    .annotation-composer select,
+    .annotation-composer textarea {{
+      width: 100%;
+      border: 1px solid var(--spark-line);
+      border-radius: 5px;
+      background: var(--spark-surface);
+      color: var(--spark-text);
+      padding: 0.65rem 0.75rem;
+      outline: none;
+    }}
+    .annotation-composer textarea {{ resize: vertical; min-height: 6.5rem; }}
+    .annotation-composer select:focus,
+    .annotation-composer textarea:focus {{ border-color: var(--spark-accent); box-shadow: 0 0 0 3px var(--spark-accent-subtle); }}
+    .annotation-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }}
+    .annotation-status {{
+      margin: 0.25rem 0 0;
+      color: var(--spark-muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }}
     .main {{
       padding: clamp(1rem, 3vw, 2.5rem);
       overflow: hidden;
@@ -1503,6 +1766,36 @@ def _render_html(model: dict[str, Any]) -> str:
       outline: none;
     }}
     .search-input:focus {{ border-color: var(--spark-accent); box-shadow: 0 0 0 3px var(--spark-accent-subtle); }}
+    .search-help {{
+      margin: 0.5rem 0 0;
+      color: var(--spark-muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }}
+    .search-mode-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+    }}
+    .search-mode-chip {{
+      border: 1px solid var(--spark-line);
+      border-radius: 5px;
+      background: var(--spark-bg-subtle);
+      color: var(--spark-muted);
+      padding: 0.48rem 0.55rem;
+      cursor: pointer;
+      font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }}
+    .search-mode-chip:hover,
+    .search-mode-chip.is-active {{
+      border-color: var(--spark-accent);
+      background: var(--spark-accent-subtle);
+      color: var(--spark-accent);
+    }}
     .stats-grid {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1763,7 +2056,7 @@ def _render_html(model: dict[str, Any]) -> str:
     .empty-state {{ padding: 2rem; color: var(--spark-muted); }}
     .is-hidden {{ display: none; }}
     @media (max-width: 1100px) {{
-      .artifact-shell, .topbar, .workspace {{ grid-template-columns: 1fr; }}
+      .artifact-shell, .topbar, .workspace, .annotation-grid {{ grid-template-columns: 1fr; }}
       .artifact-shell {{ display: flex; flex-direction: column; }}
       .main {{ order: 1; }}
       .side-nav {{ order: 2; }}
@@ -1782,6 +2075,7 @@ def _render_html(model: dict[str, Any]) -> str:
       .journal-metrics, .recent-learning-grid {{ grid-template-columns: 1fr; }}
       .journal-metrics div {{ border-right: 0; border-bottom: 1px solid var(--spark-line); }}
       .journal-metrics div:last-child {{ border-bottom: 0; }}
+      .search-mode-grid {{ grid-template-columns: 1fr 1fr; }}
       .stats-grid {{ grid-template-columns: 1fr; }}
       .stat-card {{ border-right: 0; border-bottom: 1px solid var(--spark-line); }}
       .stat-card:last-child {{ border-bottom: 0; }}
@@ -1803,6 +2097,7 @@ def _render_html(model: dict[str, Any]) -> str:
         <div class="nav-group" aria-label="Sections">
           <a class="nav-link" href="#overview">Overview</a>
           <a class="nav-link" href="#learning-journal">Learning Journal</a>
+          <a class="nav-link" href="#annotations">Annotations</a>
           <a class="nav-link" href="#timeline">Timeline</a>
           <a class="nav-link" href="#flow">Spark Flow</a>
           <a class="nav-link" href="#connections">Agent Brain</a>
@@ -1828,11 +2123,20 @@ def _render_html(model: dict[str, Any]) -> str:
           <p>{escape(model["subtitle"])}</p>
         </div>
         <div class="search-panel">
-          <label class="mono-label" for="search">Search timeline and packets</label>
-          <input class="search-input" id="search" type="search" placeholder="Try current_state, evidence, Builder, session...">
+          <label class="mono-label" for="search">Source-aware search</label>
+          <input class="search-input" id="search" type="search" placeholder="Search Wiki...">
+          <p class="search-help">Separate current truth, historical context, evidence, recursive runs, and private notes.</p>
+          <div class="search-mode-grid" aria-label="Search source mode">
+            <button class="search-mode-chip is-active" type="button" data-search-mode="all">All</button>
+            <button class="search-mode-chip" type="button" data-search-mode="current">Current</button>
+            <button class="search-mode-chip" type="button" data-search-mode="evidence">Evidence</button>
+            <button class="search-mode-chip" type="button" data-search-mode="recursive">Recursive</button>
+            <button class="search-mode-chip" type="button" data-search-mode="private">Private</button>
+          </div>
         </div>
       </section>
       {learning_cards}
+      {annotation_workspace}
       <section class="stats-grid" aria-label="Artifact metrics">{stat_cards}</section>
       <section class="section-band" id="connections" style="margin-bottom: 1rem;">
         <div class="section-header">
@@ -1925,9 +2229,16 @@ def _render_html(model: dict[str, Any]) -> str:
     const builderBridgeInput = document.getElementById('builder-bridge-input');
     const visionboardBridgeInput = document.getElementById('visionboard-bridge-input');
     const saveBridgeSettings = document.getElementById('save-bridge-settings');
+    const annotationTarget = document.getElementById('annotation-target');
+    const annotationKind = document.getElementById('annotation-kind');
+    const annotationNote = document.getElementById('annotation-note');
+    const annotationStatus = document.getElementById('annotation-status');
+    const saveAnnotationLocal = document.getElementById('save-annotation-local');
+    const copyAnnotationPacket = document.getElementById('copy-annotation-packet');
     const themeToggle = document.getElementById('theme-toggle');
     const themeLabel = document.getElementById('theme-label');
     let activeFamily = 'all';
+    let activeSearchMode = 'all';
 
     function applyTheme(theme) {{
       const normalized = theme === 'light' ? 'light' : 'navy-dark';
@@ -2019,9 +2330,76 @@ def _render_html(model: dict[str, Any]) -> str:
       }}
     }}
 
+    function annotationRecordById(id) {{
+      return (model.annotation_queue || []).find((item) => item.id === id) || null;
+    }}
+
+    function setAnnotationStatus(message) {{
+      if (annotationStatus) annotationStatus.textContent = message;
+    }}
+
+    function buildAnnotationPacket() {{
+      const target = annotationRecordById(annotationTarget?.value || '');
+      return {{
+        schema: 'spark-kb-annotation.v1',
+        created_at: new Date().toISOString(),
+        origin: 'spark_llm_wiki_dashboard',
+        privacy_state: 'local/private',
+        authority: 'supporting_not_authoritative',
+        target_type: target?.target_type || 'recursive_run',
+        target_id: target?.target_id || '',
+        target_label: target?.target_label || '',
+        decision: annotationKind?.value || 'agent_note',
+        note: annotationNote?.value.trim() || target?.suggested_action || '',
+        source_href: target?.journal_href || '',
+        import_status: 'not_imported'
+      }};
+    }}
+
+    function saveAnnotationPacket() {{
+      const packet = buildAnnotationPacket();
+      const existing = JSON.parse(window.localStorage.getItem('sparkKbAnnotations') || '[]');
+      existing.unshift(packet);
+      window.localStorage.setItem('sparkKbAnnotations', JSON.stringify(existing.slice(0, 100)));
+      actionPayload.textContent = JSON.stringify({{ action: 'annotation_packet', packet }}, null, 2);
+      setAnnotationStatus('Saved locally in this browser. Import through a governed memory lane before promotion.');
+    }}
+
+    async function copyAnnotationPacketText() {{
+      const packet = buildAnnotationPacket();
+      const text = JSON.stringify(packet, null, 2);
+      actionPayload.textContent = JSON.stringify({{ action: 'annotation_packet', packet }}, null, 2);
+      if (navigator.clipboard?.writeText) {{
+        await navigator.clipboard.writeText(text);
+        setAnnotationStatus('Annotation packet copied.');
+      }} else {{
+        setAnnotationStatus('Packet prepared in the action payload panel.');
+      }}
+    }}
+
+    document.querySelectorAll('.annotation-card[data-annotation-id]').forEach((card) => {{
+      card.addEventListener('click', () => {{
+        if (annotationTarget) annotationTarget.value = card.dataset.annotationId || '';
+        const target = annotationRecordById(card.dataset.annotationId || '');
+        if (annotationKind && target?.kind) annotationKind.value = target.kind;
+        if (annotationNote && target?.suggested_action) annotationNote.value = target.suggested_action;
+        actionPayload.textContent = JSON.stringify({{ action: 'annotation_packet', packet: buildAnnotationPacket() }}, null, 2);
+      }});
+    }});
+    saveAnnotationLocal?.addEventListener('click', saveAnnotationPacket);
+    copyAnnotationPacket?.addEventListener('click', () => {{
+      copyAnnotationPacketText().catch((error) => setAnnotationStatus(`Copy failed: ${{error.message}}`));
+    }});
+
     function matchesSearch(element, term) {{
       if (!term) return true;
       return `${{element.textContent}} ${{element.dataset.search || ''}}`.toLowerCase().includes(term);
+    }}
+
+    function matchesSearchMode(element) {{
+      if (activeSearchMode === 'all') return true;
+      const scopes = (element.dataset.searchScope || 'supporting').split(/\\s+/);
+      return scopes.includes(activeSearchMode);
     }}
 
     function escapeHtml(value) {{
@@ -2039,21 +2417,27 @@ def _render_html(model: dict[str, Any]) -> str:
       let visibleTimeline = 0;
       document.querySelectorAll('.timeline-item').forEach((item) => {{
         const familyMatch = activeFamily === 'all' || item.dataset.family === activeFamily;
-        const visible = familyMatch && matchesSearch(item, term);
+        const visible = familyMatch && matchesSearchMode(item) && matchesSearch(item, term);
         item.classList.toggle('is-hidden', !visible);
         if (visible) visibleTimeline += 1;
       }});
       document.querySelectorAll('.page-row').forEach((row) => {{
         const familyMatch = activeFamily === 'all' || row.dataset.family === activeFamily;
-        row.classList.toggle('is-hidden', !(familyMatch && matchesSearch(row, term)));
+        row.classList.toggle('is-hidden', !(familyMatch && matchesSearchMode(row) && matchesSearch(row, term)));
       }});
       let visibleLearning = 0;
       document.querySelectorAll('.learning-record').forEach((row) => {{
-        const visible = matchesSearch(row, term);
+        const visible = matchesSearchMode(row) && matchesSearch(row, term);
         row.classList.toggle('is-hidden', !visible);
         if (visible) visibleLearning += 1;
       }});
-      resultCount.textContent = `${{visibleTimeline}} timeline / ${{visibleLearning}} learning`;
+      let visibleAnnotations = 0;
+      document.querySelectorAll('.annotation-card').forEach((row) => {{
+        const visible = matchesSearchMode(row) && matchesSearch(row, term);
+        row.classList.toggle('is-hidden', !visible);
+        if (visible) visibleAnnotations += 1;
+      }});
+      resultCount.textContent = `${{visibleTimeline}} timeline / ${{visibleLearning}} learning / ${{visibleAnnotations}} notes`;
     }}
 
     document.querySelectorAll('.filter-chip[data-family]').forEach((button) => {{
@@ -2065,6 +2449,14 @@ def _render_html(model: dict[str, Any]) -> str:
       }});
     }});
     search.addEventListener('input', applyFilters);
+    document.querySelectorAll('.search-mode-chip[data-search-mode]').forEach((button) => {{
+      button.addEventListener('click', () => {{
+        activeSearchMode = button.dataset.searchMode || 'all';
+        document.querySelectorAll('.search-mode-chip').forEach((chip) => chip.classList.remove('is-active'));
+        button.classList.add('is-active');
+        applyFilters();
+      }});
+    }});
 
     function highlightCanvasObject(canvasObjectId) {{
       document.querySelectorAll('.canvas-object').forEach((element) => {{
@@ -2221,6 +2613,7 @@ def _render_html(model: dict[str, Any]) -> str:
         await sendAction(button.dataset.action, item);
       }});
     }});
+    applyFilters();
   </script>
 </body>
 </html>
@@ -2275,8 +2668,18 @@ def _render_timeline_item(item: dict[str, Any]) -> str:
     turn_pills = "".join(f'<span class="pill">{escape(turn)}</span>' for turn in item["turn_ids"])
     timestamp = escape(item["timestamp"] or "snapshot order")
     detail = escape(item["detail"] or "No detail captured.")
+    search_scope = _search_scope_for_item(item)
+    search_text = " ".join(
+        [
+            str(item.get("title") or ""),
+            str(item.get("detail") or ""),
+            str(item.get("family") or ""),
+            str(item.get("kind") or ""),
+            str(item.get("authority") or ""),
+        ]
+    )
     return f"""
-<article class="timeline-item" tabindex="0" data-item-id="{escape(item["id"])}" data-canvas-object-id="{escape(item.get("canvas_object_id", ""))}" data-family="{escape(item["family"])}" data-kind="{escape(item["kind"])}">
+<article class="timeline-item" tabindex="0" data-item-id="{escape(item["id"])}" data-canvas-object-id="{escape(item.get("canvas_object_id", ""))}" data-family="{escape(item["family"])}" data-kind="{escape(item["kind"])}" data-search="{escape(search_text.lower())}" data-search-scope="{escape(search_scope)}">
   <div class="timeline-kind">{escape(item["kind"])} <span>{timestamp}</span></div>
   <h3 class="timeline-title">{escape(item["title"])}</h3>
   <p class="timeline-detail">{detail}</p>
@@ -2295,8 +2698,18 @@ def _render_timeline_item(item: dict[str, Any]) -> str:
 
 
 def _render_page_row(page: dict[str, Any]) -> str:
+    search_text = " ".join(
+        [
+            str(page.get("title") or ""),
+            str(page.get("summary") or ""),
+            str(page.get("excerpt") or ""),
+            str(page.get("wiki_family") or ""),
+            str(page.get("authority") or ""),
+            str(page.get("source_of_truth") or ""),
+        ]
+    )
     return f"""
-<tr class="page-row" data-family="{escape(page["wiki_family"])}">
+<tr class="page-row" data-family="{escape(page["wiki_family"])}" data-search="{escape(search_text.lower())}" data-search-scope="{escape(_search_scope_for_page(page))}">
   <td>
     <a href="{escape(page["href"])}">{escape(page["title"])}</a>
     <div class="page-summary">{escape(page["summary"] or page["excerpt"])}</div>

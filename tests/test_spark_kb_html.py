@@ -99,6 +99,14 @@ def test_render_spark_kb_html_artifact_builds_timeline_dashboard(tmp_path: Path)
     assert "theme-toggle" in html
     assert "data-theme=\"light\"" in html
     assert "Telegram prompts" in html
+    assert "Source-aware search" in html
+    assert "data-search-mode=\"current\"" in html
+    assert "data-search-mode=\"evidence\"" in html
+    assert "data-search-scope=\"supporting current\"" in html
+    assert "Comments & Annotations" in html
+    assert "sparkKbAnnotations" in html
+    assert "copy-annotation-packet" in html
+    assert "spark-kb-annotation.v1" in html
     assert "timeline-shell" in html
     assert "timeline-spine" in html
     assert "Spark Memory Flow" in html
@@ -170,6 +178,12 @@ def test_render_spark_kb_html_artifact_builds_recursive_learning_journal(tmp_pat
     assert "Spark QA Operator updated the learning journal." in html
     assert "Recursive Learning Journal" in html
     assert "recursive-learning/index.html" in html
+    assert "Comments & Annotations" in html
+    assert "Promote to lesson" in html
+    assert "Ready for review" in html
+    assert "annotation_queue_count" in html
+    assert payload["trace"]["annotation_queue_count"] >= 1
+    assert "data-search-scope=\"recursive historical evidence private supporting\"" in html
     assert "What Spark learned" in run_html
     assert "[redacted workspace token]" in html
     assert "[redacted]" in html
