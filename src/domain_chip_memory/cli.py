@@ -64,6 +64,7 @@ from .spark_shadow import (
 )
 from .spark_integration import build_spark_integration_contract_summary
 from .spark_kb import build_spark_kb_contract_summary, build_spark_kb_health_report, scaffold_spark_knowledge_base
+from .spark_kb_annotations import build_spark_kb_annotation_contract_summary, import_spark_kb_annotation
 from .spark_kb_html import build_spark_kb_html_artifact_contract_summary, render_spark_kb_html_artifact
 from .watchtower import build_watchtower_summary
 from .contracts import NormalizedBenchmarkSample
@@ -10779,6 +10780,13 @@ def main() -> None:
     build_spark_wiki_dashboard.add_argument("--visionboard-board", dest="canvas_board")
     build_spark_wiki_dashboard.add_argument("--canvas-board", dest="canvas_board", help=argparse.SUPPRESS)
     build_spark_wiki_dashboard.add_argument("--write")
+    import_spark_kb_annotation_parser = subparsers.add_parser(
+        "import-spark-kb-annotation",
+        help="Import a local/private Spark LLM Wiki annotation packet into a compiled KB vault.",
+    )
+    import_spark_kb_annotation_parser.add_argument("packet_file")
+    import_spark_kb_annotation_parser.add_argument("output_dir")
+    import_spark_kb_annotation_parser.add_argument("--write")
     discover_markdown_packets = subparsers.add_parser(
         "discover-markdown-knowledge-packets",
         help="Inventory markdown wiki/KB packet families without returning page text.",
@@ -10791,6 +10799,7 @@ def main() -> None:
     run_sdk_maintenance.add_argument("data_file")
     run_sdk_maintenance.add_argument("--write")
     subparsers.add_parser("sdk-maintenance-contracts", help="Show the SDK runtime and maintenance replay contract summary.")
+    subparsers.add_parser("spark-kb-annotation-contracts", help="Show the Spark KB annotation import contract summary.")
     run_spark_shadow = subparsers.add_parser("run-spark-shadow-report", help="Replay Builder-style shadow traffic from JSON and emit a shadow report.")
     run_spark_shadow.add_argument("data_file")
     run_spark_shadow.add_argument("--write")
@@ -11655,6 +11664,13 @@ def main() -> None:
         _print(payload)
         return
 
+    if args.command == "import-spark-kb-annotation":
+        payload = import_spark_kb_annotation(args.output_dir, args.packet_file)
+        if args.write:
+            _write_json(Path(args.write), payload)
+        _print(payload)
+        return
+
     if args.command == "discover-markdown-knowledge-packets":
         payload = discover_markdown_knowledge_packets(
             args.paths,
@@ -11680,6 +11696,10 @@ def main() -> None:
                 "replay": build_sdk_maintenance_replay_contract_summary(),
             }
         )
+        return
+
+    if args.command == "spark-kb-annotation-contracts":
+        _print(build_spark_kb_annotation_contract_summary())
         return
 
     if args.command == "run-spark-shadow-report":

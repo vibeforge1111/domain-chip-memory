@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from domain_chip_memory import cli
+from domain_chip_memory.spark_kb_annotations import import_spark_kb_annotation
 from domain_chip_memory.spark_kb import scaffold_spark_knowledge_base
 from domain_chip_memory.spark_kb_html import render_spark_kb_html_artifact
 
@@ -193,6 +194,96 @@ def test_render_spark_kb_html_artifact_builds_recursive_learning_journal(tmp_pat
     assert "python -m unsafe" not in html
     assert "C:\\Users\\USER\\Desktop\\private" not in html
     assert "sscli_v1.secretpayload" not in run_html
+
+
+def test_import_spark_kb_annotation_writes_redacted_local_private_note(tmp_path: Path):
+    vault_dir = tmp_path / "spark_kb_vault"
+    scaffold_spark_knowledge_base(vault_dir, _snapshot())
+    packet = {
+        "schema": "spark-kb-annotation.v1",
+        "created_at": "2026-05-13T12:00:00Z",
+        "origin": "spark_llm_wiki_dashboard",
+        "privacy_state": "local/private",
+        "authority": "supporting_not_authoritative",
+        "target_type": "recursive_run",
+        "target_id": "spark-qa-operator:2026-05-13:s1",
+        "target_label": "Spark QA Operator",
+        "decision": "promote_to_lesson",
+        "note": (
+            "Keep the QA lesson, but redact sscli_v1.secretpayload and access_token=abc123456789secret. "
+            "Do not expose C:\\Users\\USER\\Desktop\\private\\trace.json or Command failed: python -m unsafe."
+        ),
+        "source_href": "recursive-learning/spark-qa-operator/2026-05-13/s1.html",
+        "import_status": "not_imported",
+    }
+
+    payload = import_spark_kb_annotation(vault_dir, packet)
+
+    markdown = Path(payload["files"]["markdown_page"]).read_text(encoding="utf-8")
+    raw_packet = json.loads(Path(payload["files"]["raw_packet"]).read_text(encoding="utf-8"))
+    index = Path(payload["files"]["index"]).read_text(encoding="utf-8")
+
+    assert payload["imported"] is True
+    assert payload["claim_boundary"] == "supporting_context_only"
+    assert "Spark QA Operator" in markdown
+    assert "local/private" in markdown
+    assert "supporting_not_authoritative" in markdown
+    assert "[redacted workspace token]" in markdown
+    assert "[redacted]" in markdown
+    assert "[local path]" in markdown
+    assert "[debug detail omitted]" in markdown
+    assert "recursive-learning/spark-qa-operator/2026-05-13/s1.html" in markdown
+    assert "sscli_v1.secretpayload" not in markdown
+    assert "abc123456789secret" not in markdown
+    assert "python -m unsafe" not in markdown
+    assert "C:\\Users\\USER\\Desktop\\private" not in markdown
+    assert raw_packet["packet"]["import_status"] == "imported_local_review"
+    assert "sscli_v1.secretpayload" not in json.dumps(raw_packet)
+    assert "[[annotations/" in index
+
+
+def test_import_spark_kb_annotation_command_writes_summary(tmp_path: Path, monkeypatch):
+    captured: dict[str, object] = {}
+    vault_dir = tmp_path / "spark_kb_vault"
+    packet_file = tmp_path / "annotation.json"
+    summary_file = tmp_path / "summary.json"
+    scaffold_spark_knowledge_base(vault_dir, _snapshot())
+    packet_file.write_text(
+        json.dumps(
+            {
+                "schema": "spark-kb-annotation.v1",
+                "target_type": "recursive_run",
+                "target_id": "startup-yc:2026-05-13:s1",
+                "target_label": "Startup YC",
+                "decision": "needs_evidence",
+                "note": "Add held-out evidence before treating this as a lesson.",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "_print", lambda payload: captured.setdefault("payload", payload))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "domain-chip-memory",
+            "import-spark-kb-annotation",
+            str(packet_file),
+            str(vault_dir),
+            "--write",
+            str(summary_file),
+        ],
+    )
+
+    cli.main()
+
+    payload = captured["payload"]
+    assert isinstance(payload, dict)
+    assert payload["imported"] is True
+    assert payload["decision"] == "needs_evidence"
+    assert summary_file.exists()
+    assert (vault_dir / "wiki" / "annotations" / "_index.md").exists()
 
 
 def test_render_spark_kb_html_artifact_command_writes_summary(tmp_path: Path, monkeypatch):
