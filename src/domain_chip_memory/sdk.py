@@ -2978,7 +2978,7 @@ class SparkMemorySDK:
                 source_family="event" if write_kind == "event" else "evidence",
                 authority="supporting_not_authoritative",
                 scope_kind=self._movement_scope_kind(subject),
-                subject=subject,
+                subject=self._movement_ref("subject", subject),
                 predicate=predicate,
                 timestamp=request.timestamp,
                 salience_score=0.0,
@@ -3007,12 +3007,12 @@ class SparkMemorySDK:
         record_id = self._record_movement_id(record)
         row_trace = {
             "source_of_truth": "SparkMemorySDK",
-            "record_id": record_id,
+            "record_ref": self._movement_ref("record", record_id),
             "memory_role": record.memory_role,
-            "observation_id": record.observation_id,
-            "event_id": record.event_id,
-            "session_id": record.session_id,
-            "turn_ids": list(record.turn_ids),
+            "observation_ref": self._movement_ref("observation", record.observation_id),
+            "event_ref": self._movement_ref("event", record.event_id),
+            "session_ref": self._movement_ref("session", record.session_id),
+            "turn_refs": [self._movement_ref("turn", turn_id) for turn_id in record.turn_ids],
             **dict(trace),
         }
         return self._dashboard_movement_row(
@@ -3021,7 +3021,7 @@ class SparkMemorySDK:
             source_family=self._movement_source_family(record.memory_role),
             authority=self._movement_authority(record.memory_role),
             scope_kind=self._movement_scope_kind(record.subject),
-            subject=record.subject,
+            subject=self._movement_ref("subject", record.subject),
             predicate=record.predicate,
             timestamp=record.timestamp,
             salience_score=self._movement_salience(record),
@@ -3033,13 +3033,14 @@ class SparkMemorySDK:
     def _session_dashboard_movement_row(self, session: NormalizedSession, *, index: int) -> JsonDict:
         first_turn = session.turns[0]
         last_turn = session.turns[-1]
+        session_ref = self._movement_ref("session", session.session_id)
         return self._dashboard_movement_row(
-            row_id=f"snapshot:summarized:{session.session_id}:{index}",
+            row_id=f"snapshot:summarized:{session_ref}:{index}",
             movement_state="summarized",
             source_family="episodic_summary",
             authority="supporting_not_authoritative",
             scope_kind="session_scoped",
-            subject=str(session.metadata.get("subject") or "session"),
+            subject=self._movement_ref("subject", str(session.metadata.get("subject") or "session")),
             predicate="session.summary",
             timestamp=session.timestamp or last_turn.timestamp or first_turn.timestamp,
             salience_score=0.5,
@@ -3051,7 +3052,7 @@ class SparkMemorySDK:
             trace={
                 "operation": "export_knowledge_base_snapshot",
                 "source_of_truth": "SparkMemorySDK",
-                "session_id": session.session_id,
+                "session_ref": session_ref,
                 "turn_count": len(session.turns),
                 "derived_from_snapshot": True,
             },
@@ -3095,11 +3096,18 @@ class SparkMemorySDK:
     def _record_movement_id(self, record: RetrievedMemoryRecord) -> str:
         explicit_id = record.observation_id or record.event_id
         if explicit_id:
-            return explicit_id
+            return hashlib.sha256(str(explicit_id).encode("utf-8")).hexdigest()[:16]
         payload = "\x1f".join(
             [record.session_id, ",".join(record.turn_ids), record.memory_role, record.subject, record.predicate]
         )
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+    def _movement_ref(self, kind: str, value: object | None) -> str | None:
+        text = str(value or "").strip()
+        if not text:
+            return None
+        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
+        return f"{kind}:sha256:{digest}"
 
     def _movement_source_family(self, memory_role: MemoryRole) -> str:
         if memory_role in {"current_state", "state_deletion"}:
