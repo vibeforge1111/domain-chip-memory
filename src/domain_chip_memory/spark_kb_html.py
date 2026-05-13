@@ -99,6 +99,54 @@ def _plain_excerpt(body: str, max_chars: int = 220) -> str:
     return excerpt
 
 
+def _redact_human_text(value: object) -> str:
+    redacted = str(value or "")
+    replacements = [
+        (r"sscli_[A-Za-z0-9._-]+", "[redacted workspace token]"),
+        (r"(?i)\bbearer\s+[A-Za-z0-9._-]{16,}", "Bearer [redacted token]"),
+        (r"(?i)\b(api[_-]?key|access[_-]?token|refresh[_-]?token|secret|session[_-]?token)\s*[:=]\s*[A-Za-z0-9._:/+=-]{12,}", r"\1=[redacted]"),
+        (r"\bsk-[A-Za-z0-9]{20,}\b", "[redacted api key]"),
+        (r"\b[A-Za-z]:\\[^\n\r]*", "[local path]"),
+        (r"\b[A-Za-z0-9_-]{64,}\b", "[redacted opaque value]"),
+    ]
+    for pattern, replacement in replacements:
+        redacted = re.sub(pattern, replacement, redacted)
+    sanitized_lines: list[str] = []
+    for line in redacted.splitlines():
+        if re.search(r"(?i)\b(traceback|stack trace|exception in thread|command failed:)\b", line):
+            sanitized_lines.append("[debug detail omitted]")
+        elif re.search(r"(?i)\b(python\s+-m|pnpm\s+|npm\s+|curl\s+|powershell\s+|cmd\.exe)\b", line):
+            sanitized_lines.append("[command detail omitted]")
+        else:
+            sanitized_lines.append(line)
+    return "\n".join(sanitized_lines)
+
+
+def _safe_human_line(value: object, max_chars: int = 220) -> str:
+    cleaned = re.sub(r"\s+", " ", _redact_human_text(value)).strip()
+    cleaned = cleaned.replace("candidate(s)", "candidates").replace("item(s)", "items").replace("run(s)", "runs")
+    if len(cleaned) > max_chars:
+        return cleaned[: max_chars - 1].rstrip() + "..."
+    return cleaned
+
+
+def _redact_display_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): _redact_display_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_redact_display_value(item) for item in value]
+    if isinstance(value, str):
+        return _redact_human_text(value)
+    return value
+
+
+def _format_score(raw: object) -> str:
+    if isinstance(raw, (int, float)):
+        return f"{float(raw):.4f}".rstrip("0").rstrip(".")
+    text = str(raw or "").strip()
+    return text if text else "unknown"
+
+
 def _load_snapshot(kb_dir: Path) -> tuple[dict[str, Any], Path | None]:
     snapshot_file = kb_dir / "raw" / "memory-snapshots" / "latest.json"
     if not snapshot_file.exists():
@@ -506,6 +554,9 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
     _assign_canvas_object_ids(timeline)
     _assign_source_links(timeline, pages)
     generated_at = _utc_timestamp()
+    recursive_records = _load_recursive_run_records(html_file)
+    recursive_journal = _write_recursive_learning_projection(html_file, recursive_records)
+    learning_journal = _build_learning_journal_summary(recursive_records, pages, timeline)
     family_counts = _counter([page["wiki_family"] for page in pages])
     kind_counts = _counter([item["kind"] for item in timeline])
     page_type_counts = _counter([page["type"] for page in pages])
@@ -530,6 +581,8 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
         "owner_system_counts": owner_system_counts,
         "visionboard_board": canvas_summary,
         "recursive_run_links": recursive_runs,
+        "recursive_learning_projection": recursive_journal,
+        "recursive_record_count": len(recursive_records),
         "non_override_rules": [
             "HTML artifacts visualize and route context; they do not become runtime truth.",
             "Current-state APIs outrank wiki summaries for mutable user facts.",
@@ -550,6 +603,9 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
         "pages": pages,
         "timeline": timeline,
         "recursive_runs": recursive_runs,
+        "recursive_records": recursive_records,
+        "recursive_journal": recursive_journal,
+        "learning_journal": learning_journal,
         "canvas_board": canvas_board,
         "canvas_board_summary": canvas_summary,
         "trace": trace,
@@ -557,20 +613,9 @@ def _build_model(kb_dir: Path, html_file: Path) -> dict[str, Any]:
 
 
 def _discover_recursive_run_links(html_file: Path) -> list[dict[str, str]]:
-    candidates: list[Path] = []
-    for env_name in ("SPARK_RECURSIVE_WIKI_ROOT", "SPARK_LLM_WIKI_ROOT"):
-        raw = os.environ.get(env_name)
-        if raw:
-            candidates.append(Path(raw))
-    candidates.extend(
-        [
-            Path.home() / ".spark-intelligence" / "wiki",
-            Path.home() / ".spark" / "state" / "spark-intelligence" / "wiki",
-        ]
-    )
     links: list[dict[str, str]] = []
     seen: set[Path] = set()
-    for root in candidates:
+    for root in _recursive_wiki_roots():
         recursive_root = root / "recursive-runs"
         index_file = recursive_root / "index.html"
         if not index_file.exists() or index_file in seen:
@@ -585,6 +630,400 @@ def _discover_recursive_run_links(html_file: Path) -> list[dict[str, str]]:
     return links
 
 
+def _recursive_wiki_roots() -> list[Path]:
+    candidates: list[Path] = []
+    for env_name in ("SPARK_RECURSIVE_WIKI_ROOT", "SPARK_LLM_WIKI_ROOT"):
+        raw = os.environ.get(env_name)
+        if raw:
+            candidates.append(Path(raw))
+    candidates.extend(
+        [
+            Path.home() / ".spark-intelligence" / "wiki",
+            Path.home() / ".spark" / "state" / "spark-intelligence" / "wiki",
+        ]
+    )
+    seen: set[Path] = set()
+    roots: list[Path] = []
+    for root in candidates:
+        try:
+            resolved = root.expanduser().resolve()
+        except OSError:
+            continue
+        if resolved in seen or not resolved.exists():
+            continue
+        seen.add(resolved)
+        roots.append(resolved)
+    return roots
+
+
+def _load_recursive_run_records(html_file: Path) -> list[dict[str, Any]]:
+    records_by_key: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for root in _recursive_wiki_roots():
+        recursive_root = root / "recursive-runs"
+        if not recursive_root.exists():
+            continue
+        for metadata_path in recursive_root.glob("*/*/*.json"):
+            record = _recursive_record_from_metadata(metadata_path, html_file)
+            if record is None:
+                continue
+            key = (record["path_key"], record["day"], record["session_id"])
+            current = records_by_key.get(key)
+            if current is None or record["generated_at"] >= current["generated_at"]:
+                records_by_key[key] = record
+    records = list(records_by_key.values())
+    records.sort(key=lambda item: (item["generated_at"], item["session_id"]), reverse=True)
+    return records
+
+
+def _recursive_record_from_metadata(metadata_path: Path, html_file: Path) -> dict[str, Any] | None:
+    try:
+        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict) or payload.get("schemaVersion") != "spark-recursive-wiki-pairing.v1":
+        return None
+    path_key = _slug(payload.get("pathKey") or "recursive-path")
+    day = str(payload.get("day") or "").strip()
+    session_id = _slug(payload.get("sessionId") or metadata_path.stem)
+    if not path_key or not day or not session_id:
+        return None
+    result = payload.get("result") if isinstance(payload.get("result"), dict) else {}
+    raw_html_path = str(payload.get("htmlPath") or "").strip()
+    html_path = Path(raw_html_path) if raw_html_path else Path("__missing_recursive_capsule__.html")
+    if not html_path.exists():
+        adjacent_html = metadata_path.with_suffix(".html")
+        html_path = adjacent_html if adjacent_html.exists() else Path()
+    current_score = result.get("currentScore")
+    best_score = result.get("bestScore")
+    kept = int(result.get("keptRounds") or 0)
+    reverted = int(result.get("revertedRounds") or 0)
+    completed = int(result.get("completedRounds") or 0)
+    requested = int(result.get("requestedRounds") or completed)
+    latest_lesson = _safe_human_line(result.get("latestMutationIntentSummary") or "", 260)
+    summary = _safe_human_line(payload.get("userFacingSummary") or "", 300)
+    path_label = _safe_human_line(payload.get("pathLabel") or payload.get("pathKey") or "Recursive path", 120)
+    generated_at = _parse_timestamp(payload.get("generatedAt"))
+    if not generated_at:
+        generated_at = datetime.fromtimestamp(metadata_path.stat().st_mtime, timezone.utc).isoformat()
+    return {
+        "path_key": path_key,
+        "path_label": path_label,
+        "day": day,
+        "session_id": session_id,
+        "generated_at": generated_at,
+        "authority": str(payload.get("authority") or "supporting_not_authoritative"),
+        "category": str(payload.get("category") or "recursive_self_improvement_loop"),
+        "summary": summary,
+        "latest_lesson": latest_lesson or "No lesson recorded yet.",
+        "stop_reason": _safe_human_line(result.get("stopReason") or "unknown", 80),
+        "completed_rounds": completed,
+        "requested_rounds": requested,
+        "kept_rounds": kept,
+        "reverted_rounds": reverted,
+        "current_score": _format_score(current_score),
+        "best_score": _format_score(best_score),
+        "score_line": _recursive_score_line(current_score, best_score),
+        "next_move": _recursive_next_move(completed=completed, kept=kept, latest_lesson=latest_lesson),
+        "review_state": _recursive_review_state(payload, result),
+        "privacy_state": "local/private",
+        "source_href": _safe_html_rel(html_path, html_file) if html_path.exists() else "",
+        "source_available": html_path.exists(),
+        "journal_href": "",
+        "path_journal_href": "",
+    }
+
+
+def _recursive_score_line(current_score: object, best_score: object) -> str:
+    current = _format_score(current_score)
+    best = _format_score(best_score)
+    if current == "unknown" and best == "unknown":
+        return "score not recorded"
+    if best != "unknown" and current != best:
+        return f"current {current}, best {best}"
+    return f"current {current}"
+
+
+def _recursive_next_move(*, completed: int, kept: int, latest_lesson: str) -> str:
+    if completed <= 0:
+        return "Fix setup or planner readiness before treating this as learning evidence."
+    if kept <= 0:
+        return "Add benchmark pressure, a mutation source, or a clearer target before another large loop."
+    if latest_lesson:
+        return "Validate the kept lesson against held-out and trap checks before promotion."
+    return "Review the kept candidate evidence before promotion."
+
+
+def _recursive_review_state(payload: dict[str, Any], result: dict[str, Any]) -> str:
+    boundaries = payload.get("boundaries") if isinstance(payload.get("boundaries"), list) else []
+    joined = " ".join(str(item).lower() for item in boundaries)
+    if "needs redaction" in joined or "review required" in joined:
+        return "review required"
+    if int(result.get("keptRounds") or 0) <= 0:
+        return "needs stronger evidence"
+    return "local/private"
+
+
+def _write_recursive_learning_projection(html_file: Path, records: list[dict[str, Any]]) -> dict[str, Any]:
+    projection_root = html_file.parent / "recursive-learning"
+    projection_root.mkdir(parents=True, exist_ok=True)
+    index_file = projection_root / "index.html"
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for record in records:
+        grouped.setdefault(record["path_key"], []).append(record)
+
+    for path_key, path_records in grouped.items():
+        path_dir = projection_root / path_key
+        path_dir.mkdir(parents=True, exist_ok=True)
+        path_file = path_dir / "index.html"
+        for record in path_records:
+            day_dir = path_dir / record["day"]
+            day_dir.mkdir(parents=True, exist_ok=True)
+            run_file = day_dir / f"{record['session_id']}.html"
+            record["journal_href"] = _safe_html_rel(run_file, html_file)
+            record["path_journal_href"] = _safe_html_rel(path_file, html_file)
+            run_file.write_text(_render_recursive_run_projection(record), encoding="utf-8")
+        path_file.write_text(_render_recursive_path_projection(path_records), encoding="utf-8")
+
+    index_file.write_text(_render_recursive_root_projection(records), encoding="utf-8")
+    return {
+        "index_href": _safe_html_rel(index_file, html_file),
+        "record_count": len(records),
+        "path_count": len(grouped),
+        "authority": "supporting_not_authoritative",
+    }
+
+
+def _build_learning_journal_summary(
+    records: list[dict[str, Any]],
+    pages: list[dict[str, Any]],
+    timeline: list[dict[str, Any]],
+) -> dict[str, Any]:
+    if records:
+        latest = records[0]
+        review_count = sum(1 for record in records if record["review_state"] != "local/private")
+        review_label = (
+            f"{review_count} item{'s' if review_count != 1 else ''} need review or stronger evidence"
+            if review_count
+            else "local/private evidence only"
+        )
+        return {
+            "headline": f"{latest['path_label']} updated the learning journal.",
+            "latest_insight": latest["latest_lesson"],
+            "latest_path": latest["path_label"],
+            "latest_benchmark_movement": latest["score_line"],
+            "review_state": review_label,
+            "next_move": latest["next_move"],
+            "changed_paths": len({record["path_key"] for record in records}),
+            "recent_record_count": len(records),
+        }
+    latest_timeline = timeline[0] if timeline else {}
+    latest_page = pages[0] if pages else {}
+    return {
+        "headline": "Spark KB is ready for learning journal entries.",
+        "latest_insight": _safe_human_line(latest_timeline.get("detail") or latest_page.get("summary") or "No recursive learning run has been linked yet."),
+        "latest_path": "No recursive path linked",
+        "latest_benchmark_movement": "no recursive score recorded",
+        "review_state": "local/private evidence only",
+        "next_move": "Run or pair a recursive specialization path to start a path journal.",
+        "changed_paths": 0,
+        "recent_record_count": 0,
+    }
+
+
+def _render_recursive_root_projection(records: list[dict[str, Any]]) -> str:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for record in records:
+        grouped.setdefault(record["path_key"], []).append(record)
+    cards: list[str] = []
+    for path_records in sorted(grouped.values(), key=lambda items: items[0]["generated_at"], reverse=True):
+        latest = path_records[0]
+        cards.append(
+            f"""
+<a class="journal-card" href="{escape(latest.get("path_journal_href") or "#")}">
+  <span>{escape(latest["path_label"])}</span>
+  <strong>{len(path_records)} run(s)</strong>
+  <p>{escape(latest["latest_lesson"])}</p>
+</a>"""
+        )
+    if not cards:
+        cards.append('<div class="journal-card"><span>No recursive runs yet</span><p>Pair a specialization path run to start the learning journal.</p></div>')
+    return _recursive_projection_page(
+        "Spark Recursive Learning Journal",
+        [
+            "<h1>Spark Recursive Learning Journal</h1>",
+            "<p>Historical self-improvement notes grouped by specialization path. This is supporting context, not live runtime truth.</p>",
+            '<section class="card-grid">',
+            *cards,
+            "</section>",
+        ],
+    )
+
+
+def _render_recursive_path_projection(records: list[dict[str, Any]]) -> str:
+    label = records[0]["path_label"] if records else "Recursive path"
+    kept = sum(int(record["kept_rounds"]) for record in records)
+    reverted = sum(int(record["reverted_rounds"]) for record in records)
+    latest = records[0] if records else {}
+    rows = [
+        f"""
+<a class="run-row" href="{escape(record.get("journal_href") or "#")}">
+  <span>{escape(record["day"])}</span>
+  <strong>{escape(record["score_line"])}</strong>
+  <p>{escape(record["latest_lesson"])}</p>
+</a>"""
+        for record in records[:40]
+    ]
+    if not rows:
+        rows.append('<div class="run-row"><span>No runs recorded.</span></div>')
+    return _recursive_projection_page(
+        f"{label} Learning Journal",
+        [
+            f"<h1>{escape(label)} Learning Journal</h1>",
+            f"<p>{escape(_safe_human_line(latest.get('summary') or 'Daily recursive self-improvement notes for this specialization path.', 320))}</p>",
+            '<section class="summary-grid">',
+            f"<div><span>Runs</span><strong>{len(records)}</strong></div>",
+            f"<div><span>Kept / reverted</span><strong>{kept} / {reverted}</strong></div>",
+            f"<div><span>Latest score</span><strong>{escape(str(latest.get('score_line') or 'unknown'))}</strong></div>",
+            f"<div><span>Boundary</span><strong>{escape(str(latest.get('privacy_state') or 'local/private'))}</strong></div>",
+            "</section>",
+            "<h2>Recent Runs</h2>",
+            '<section class="run-list">',
+            *rows,
+            "</section>",
+        ],
+    )
+
+
+def _render_recursive_run_projection(record: dict[str, Any]) -> str:
+    source_href = _offset_relative_href(record.get("source_href") or "", 3)
+    source_link = (
+        f'<a class="button-link" href="{escape(source_href)}">Open source capsule</a>'
+        if record.get("source_available") and source_href
+        else '<span class="muted">Source capsule unavailable</span>'
+    )
+    return _recursive_projection_page(
+        f"{record['path_label']} Run",
+        [
+            f"<nav>Recursive Runs &gt; {escape(record['path_label'])} &gt; {escape(record['day'])}</nav>",
+            f"<h1>{escape(record['path_label'])} Run</h1>",
+            f"<p>{escape(record['summary'] or record['latest_lesson'])}</p>",
+            "<h2>What Spark learned</h2>",
+            f"<p>{escape(record['latest_lesson'])}</p>",
+            '<section class="summary-grid">',
+            f"<div><span>Score</span><strong>{escape(record['score_line'])}</strong></div>",
+            f"<div><span>Rounds</span><strong>{int(record['completed_rounds'])}/{int(record['requested_rounds'])}</strong></div>",
+            f"<div><span>Kept / reverted</span><strong>{int(record['kept_rounds'])} / {int(record['reverted_rounds'])}</strong></div>",
+            f"<div><span>Boundary</span><strong>{escape(record['privacy_state'])}</strong></div>",
+            "</section>",
+            "<h2>Next useful move</h2>",
+            f"<p>{escape(record['next_move'])}</p>",
+            "<h2>Evidence</h2>",
+            f"<p>{source_link}</p>",
+            "<p class=\"muted\">Detailed audit paths remain in safe JSON metadata, not in this human-facing page.</p>",
+        ],
+    )
+
+
+def _recursive_projection_page(title: str, body: list[str]) -> str:
+    return "\n".join(
+        [
+            "<!doctype html>",
+            '<html lang="en" data-theme="navy-dark">',
+            "<head>",
+            '<meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"<title>{escape(title)}</title>",
+            "<style>",
+            "@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');",
+            ":root{--bg:#0E1018;--surface:#181C26;--line:#2A2E40;--text:#F0F0F4;--muted:#AAB2D4;--accent:#2FCA94}",
+            "body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',Inter,system-ui,sans-serif;line-height:1.55}",
+            "main{max-width:1080px;margin:0 auto;padding:48px 24px}",
+            "h1{font-size:clamp(2rem,5vw,4rem);line-height:1;margin:.35rem 0 1rem}",
+            "h2{font-size:1rem;margin:2rem 0 .75rem}",
+            "p{color:var(--muted);max-width:780px}",
+            "nav,.kicker{font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);font-size:.72rem}",
+            ".brand-lockup{display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem}.spark-mark{width:32px;color:var(--accent)}.spark-wordmark{width:78px;color:var(--text)}.spark-divider{width:1px;height:20px;background:var(--line)}.spark-product{color:var(--muted);font-size:.8rem;font-weight:600;letter-spacing:.02em}.spark-product span{color:var(--accent)}",
+            ".card-grid,.run-list{display:grid;gap:.75rem;margin-top:1.5rem}.journal-card,.run-row{display:block;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:1rem;text-decoration:none;color:inherit}",
+            ".journal-card span,.run-row span,.summary-grid span{font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;color:var(--accent)}",
+            ".journal-card strong,.run-row strong,.summary-grid strong{display:block;margin:.35rem 0;font-size:1.1rem}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;margin:1.25rem 0}.summary-grid div{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:1rem}",
+            ".button-link{display:inline-flex;border:1px solid var(--line);border-radius:6px;padding:.6rem .8rem;color:var(--accent);text-decoration:none}.muted{color:var(--muted)}",
+            "@media(max-width:720px){main{padding:24px 16px}.summary-grid{grid-template-columns:1fr}.card-grid{grid-template-columns:1fr}}",
+            "</style>",
+            "</head>",
+            "<body><main>",
+            _spark_logo_markup(),
+            *body,
+            "</main></body></html>",
+            "",
+        ]
+    )
+
+
+def _offset_relative_href(href: str, levels: int) -> str:
+    if not href or "://" in href or href.startswith("/") or href.startswith("#"):
+        return href
+    return ("../" * levels) + href
+
+
+def _render_learning_journal_cards(learning: dict[str, Any], records: list[dict[str, Any]]) -> str:
+    recent_cards: list[str] = []
+    for record in records[:4]:
+        href = str(record.get("journal_href") or record.get("source_href") or "#")
+        search_text = " ".join(
+            [
+                str(record.get("path_label") or ""),
+                str(record.get("latest_lesson") or ""),
+                str(record.get("summary") or ""),
+                str(record.get("score_line") or ""),
+                str(record.get("review_state") or ""),
+            ]
+        )
+        recent_cards.append(
+            f"""
+<a class="learning-record" href="{escape(href)}" data-search="{escape(search_text.lower())}">
+  <span>{escape(str(record.get("path_label") or "Recursive path"))}</span>
+  <strong>{escape(str(record.get("score_line") or "score not recorded"))}</strong>
+  <p>{escape(str(record.get("latest_lesson") or "No lesson recorded yet."))}</p>
+</a>"""
+        )
+    if not recent_cards:
+        recent_cards.append(
+            """
+<div class="learning-record is-muted" data-search="no recursive runs">
+  <span>No recursive runs linked</span>
+  <strong>Ready</strong>
+  <p>Run or pair a specialization path to start the learning journal.</p>
+</div>"""
+        )
+    return f"""
+<section class="section-band learning-journal" id="learning-journal">
+  <div class="section-header">
+    <h2>What Spark Learned Recently</h2>
+    <span class="pill">local/private</span>
+  </div>
+  <div class="journal-lead">
+    <div>
+      <div class="mono-label">Latest learning signal</div>
+      <h3>{escape(str(learning.get("headline") or "Spark KB is ready."))}</h3>
+      <p>{escape(str(learning.get("latest_insight") or "No learning insight has been linked yet."))}</p>
+    </div>
+    <div class="next-move">
+      <span>Next useful move</span>
+      <strong>{escape(str(learning.get("next_move") or "Open the Wiki and inspect the latest evidence."))}</strong>
+    </div>
+  </div>
+  <div class="journal-metrics">
+    <div><span>Path</span><strong>{escape(str(learning.get("latest_path") or "none"))}</strong></div>
+    <div><span>Benchmark</span><strong>{escape(str(learning.get("latest_benchmark_movement") or "none"))}</strong></div>
+    <div><span>Review</span><strong>{escape(str(learning.get("review_state") or "local/private"))}</strong></div>
+    <div><span>Changed paths</span><strong>{int(learning.get("changed_paths") or 0)}</strong></div>
+  </div>
+  <div class="recent-learning-grid">
+    {''.join(recent_cards)}
+  </div>
+</section>"""
+
+
 def build_spark_kb_html_artifact_contract_summary() -> dict[str, Any]:
     return {
         "contract_name": "SparkKbHtmlArtifact",
@@ -593,6 +1032,7 @@ def build_spark_kb_html_artifact_contract_summary() -> dict[str, Any]:
             "artifacts/spark-kb-dashboard.html",
             "artifacts/spark-kb-dashboard.trace.json",
             "artifacts/spark-kb-visionboard-board.json",
+            "artifacts/recursive-learning/index.html",
         ],
         "runtime_role": "human-readable visual dashboard over LLM wiki packets",
         "authority": "visualization_only",
@@ -670,12 +1110,17 @@ def render_spark_kb_html_artifact(
         "authority_counts": model["authority_counts"],
         "owner_system_counts": model["owner_system_counts"],
         "visionboard_board": model["canvas_board_summary"],
+        "recursive_journal": model["recursive_journal"],
+        "recursive_record_count": len(model["recursive_records"]),
         "trace": model["trace"],
     }
 
 
 def _render_html(model: dict[str, Any]) -> str:
-    data_json = json.dumps(model, ensure_ascii=False).replace("</", "<\\/")
+    display_trace = _redact_display_value(model["trace"])
+    browser_model = dict(model)
+    browser_model["trace"] = display_trace
+    data_json = json.dumps(browser_model, ensure_ascii=False).replace("</", "<\\/")
     timeline_markup = "\n".join(_render_timeline_item(item) for item in model["timeline"])
     page_rows = "\n".join(_render_page_row(page) for page in model["pages"])
     spark_logo = _spark_logo_markup()
@@ -688,6 +1133,14 @@ def _render_html(model: dict[str, Any]) -> str:
         for link in model.get("recursive_runs", [])
     )
     recursive_links = recursive_links or '<div class="connection-card is-muted"><span>Recursive Runs</span><strong>Not linked yet</strong></div>'
+    recursive_journal = model.get("recursive_journal") if isinstance(model.get("recursive_journal"), dict) else {}
+    if recursive_journal.get("index_href"):
+        recursive_links = (
+            f'<a class="connection-card" href="{escape(str(recursive_journal["index_href"]))}">'
+            f'<span>Recursive Learning Journal</span><strong>{int(recursive_journal.get("record_count") or 0)} runs</strong></a>'
+        )
+    learning = model.get("learning_journal") if isinstance(model.get("learning_journal"), dict) else {}
+    learning_cards = _render_learning_journal_cards(learning, model.get("recursive_records") or [])
     stat_cards = "\n".join(
         [
             _render_stat("Timeline", str(len(model["timeline"])), "events, state movement, source turns"),
@@ -924,6 +1377,90 @@ def _render_html(model: dict[str, Any]) -> str:
       font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
       font-size: 0.72rem;
       overflow-wrap: anywhere;
+    }}
+    .learning-journal {{
+      margin-bottom: 1rem;
+    }}
+    .journal-lead {{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
+      gap: 1rem;
+      padding: 1rem;
+      border-bottom: 1px solid var(--spark-line);
+    }}
+    .journal-lead h3 {{
+      margin: 0.35rem 0 0.5rem;
+      font-size: clamp(1.4rem, 3vw, 2.35rem);
+      line-height: 1.05;
+      max-width: 16ch;
+    }}
+    .journal-lead p {{
+      margin: 0;
+      color: var(--spark-muted);
+      max-width: 70ch;
+    }}
+    .next-move {{
+      border: 1px solid var(--spark-line);
+      border-radius: 8px;
+      background: var(--spark-bg-subtle);
+      padding: 1rem;
+      align-self: stretch;
+    }}
+    .next-move span,
+    .journal-metrics span,
+    .learning-record span {{
+      display: block;
+      color: var(--spark-accent);
+      font-family: "DM Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }}
+    .next-move strong {{
+      display: block;
+      margin-top: 0.6rem;
+      line-height: 1.3;
+    }}
+    .journal-metrics {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-bottom: 1px solid var(--spark-line);
+    }}
+    .journal-metrics div {{
+      padding: 0.85rem 1rem;
+      border-right: 1px solid var(--spark-line);
+      min-width: 0;
+    }}
+    .journal-metrics div:last-child {{ border-right: 0; }}
+    .journal-metrics strong {{
+      display: block;
+      margin-top: 0.35rem;
+      overflow-wrap: anywhere;
+    }}
+    .recent-learning-grid {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.65rem;
+      padding: 1rem;
+    }}
+    .learning-record {{
+      min-width: 0;
+      border: 1px solid var(--spark-line);
+      border-radius: 8px;
+      background: var(--spark-bg-subtle);
+      color: var(--spark-text);
+      padding: 0.85rem;
+      text-decoration: none;
+    }}
+    .learning-record strong {{
+      display: block;
+      margin: 0.45rem 0;
+    }}
+    .learning-record p {{
+      margin: 0;
+      color: var(--spark-muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
     }}
     .main {{
       padding: clamp(1rem, 3vw, 2.5rem);
@@ -1233,6 +1770,8 @@ def _render_html(model: dict[str, Any]) -> str:
       .side-nav {{ position: relative; height: auto; }}
       .nav-inner {{ min-height: 0; }}
       .hero-lockup {{ display: flex; }}
+      .journal-lead {{ grid-template-columns: 1fr; }}
+      .journal-metrics, .recent-learning-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .stats-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .stat-card:nth-child(2) {{ border-right: 0; }}
       .inspector {{ position: relative; top: 0; }}
@@ -1240,6 +1779,9 @@ def _render_html(model: dict[str, Any]) -> str:
     @media (max-width: 640px) {{
       .main {{ padding: 0.75rem; }}
       .hero h1 {{ font-size: 1.75rem; }}
+      .journal-metrics, .recent-learning-grid {{ grid-template-columns: 1fr; }}
+      .journal-metrics div {{ border-right: 0; border-bottom: 1px solid var(--spark-line); }}
+      .journal-metrics div:last-child {{ border-bottom: 0; }}
       .stats-grid {{ grid-template-columns: 1fr; }}
       .stat-card {{ border-right: 0; border-bottom: 1px solid var(--spark-line); }}
       .stat-card:last-child {{ border-bottom: 0; }}
@@ -1260,6 +1802,7 @@ def _render_html(model: dict[str, Any]) -> str:
         <p class="brand-copy">Governed memory, agent brain context, recursive learning notes, and Builder-ready trace payloads.</p>
         <div class="nav-group" aria-label="Sections">
           <a class="nav-link" href="#overview">Overview</a>
+          <a class="nav-link" href="#learning-journal">Learning Journal</a>
           <a class="nav-link" href="#timeline">Timeline</a>
           <a class="nav-link" href="#flow">Spark Flow</a>
           <a class="nav-link" href="#connections">Agent Brain</a>
@@ -1289,6 +1832,7 @@ def _render_html(model: dict[str, Any]) -> str:
           <input class="search-input" id="search" type="search" placeholder="Try current_state, evidence, Builder, session...">
         </div>
       </section>
+      {learning_cards}
       <section class="stats-grid" aria-label="Artifact metrics">{stat_cards}</section>
       <section class="section-band" id="connections" style="margin-bottom: 1rem;">
         <div class="section-header">
@@ -1355,7 +1899,7 @@ def _render_html(model: dict[str, Any]) -> str:
               </div>
               <button class="bridge-save" id="save-bridge-settings" type="button">Save Bridges</button>
             </div>
-            <pre class="trace-pre" id="action-payload">{escape(json.dumps(model["trace"], indent=2))}</pre>
+            <pre class="trace-pre" id="action-payload">{escape(json.dumps(display_trace, indent=2))}</pre>
           </div>
         </aside>
       </section>
@@ -1477,7 +2021,7 @@ def _render_html(model: dict[str, Any]) -> str:
 
     function matchesSearch(element, term) {{
       if (!term) return true;
-      return element.textContent.toLowerCase().includes(term);
+      return `${{element.textContent}} ${{element.dataset.search || ''}}`.toLowerCase().includes(term);
     }}
 
     function escapeHtml(value) {{
@@ -1503,7 +2047,13 @@ def _render_html(model: dict[str, Any]) -> str:
         const familyMatch = activeFamily === 'all' || row.dataset.family === activeFamily;
         row.classList.toggle('is-hidden', !(familyMatch && matchesSearch(row, term)));
       }});
-      resultCount.textContent = `${{visibleTimeline}} visible`;
+      let visibleLearning = 0;
+      document.querySelectorAll('.learning-record').forEach((row) => {{
+        const visible = matchesSearch(row, term);
+        row.classList.toggle('is-hidden', !visible);
+        if (visible) visibleLearning += 1;
+      }});
+      resultCount.textContent = `${{visibleTimeline}} timeline / ${{visibleLearning}} learning`;
     }}
 
     document.querySelectorAll('.filter-chip[data-family]').forEach((button) => {{

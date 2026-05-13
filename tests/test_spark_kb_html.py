@@ -138,6 +138,49 @@ def test_render_spark_kb_html_artifact_builds_timeline_dashboard(tmp_path: Path)
     assert "Current-state APIs outrank wiki summaries for mutable user facts." in trace["non_override_rules"]
 
 
+def test_render_spark_kb_html_artifact_builds_recursive_learning_journal(tmp_path: Path, monkeypatch):
+    vault_dir = tmp_path / "spark_kb_vault"
+    wiki_root = tmp_path / "llm_wiki"
+    scaffold_spark_knowledge_base(vault_dir, _snapshot())
+    _write_recursive_record(
+        wiki_root,
+        latest_lesson=(
+            "Use sscli_v1.secretpayload and access_token=abc123456789secret from "
+            "C:\\Users\\USER\\Desktop\\private\\trace.json after Command failed: python -m unsafe"
+        ),
+    )
+    monkeypatch.setenv("SPARK_RECURSIVE_WIKI_ROOT", str(wiki_root))
+    monkeypatch.setenv("SPARK_LLM_WIKI_ROOT", str(wiki_root))
+
+    payload = render_spark_kb_html_artifact(vault_dir)
+
+    html_file = Path(payload["artifact_file"])
+    html = html_file.read_text(encoding="utf-8")
+    journal_index = html_file.parent / "recursive-learning" / "index.html"
+    path_page = html_file.parent / "recursive-learning" / "spark-qa-operator" / "index.html"
+    run_page = html_file.parent / "recursive-learning" / "spark-qa-operator" / "2026-05-13" / "s1.html"
+    run_html = run_page.read_text(encoding="utf-8")
+
+    assert payload["recursive_record_count"] >= 1
+    assert payload["recursive_journal"]["record_count"] >= 1
+    assert journal_index.exists()
+    assert path_page.exists()
+    assert run_page.exists()
+    assert "What Spark Learned Recently" in html
+    assert "Spark QA Operator updated the learning journal." in html
+    assert "Recursive Learning Journal" in html
+    assert "recursive-learning/index.html" in html
+    assert "What Spark learned" in run_html
+    assert "[redacted workspace token]" in html
+    assert "[redacted]" in html
+    assert "[local path]" in html
+    assert "sscli_v1.secretpayload" not in html
+    assert "abc123456789secret" not in html
+    assert "python -m unsafe" not in html
+    assert "C:\\Users\\USER\\Desktop\\private" not in html
+    assert "sscli_v1.secretpayload" not in run_html
+
+
 def test_render_spark_kb_html_artifact_command_writes_summary(tmp_path: Path, monkeypatch):
     captured: dict[str, object] = {}
     vault_dir = tmp_path / "spark_kb_vault"
@@ -175,6 +218,7 @@ def test_render_spark_kb_html_artifact_command_writes_summary(tmp_path: Path, mo
     assert trace_file.exists()
     assert canvas_board_file.exists()
     assert payload["artifact_file"] == str(html_file)
+    assert payload["recursive_journal"]["record_count"] >= 0
     assert payload["visionboard_board_file"] == str(canvas_board_file)
     assert payload["trace"]["operation"] == "render_spark_kb_html_artifact"
 
@@ -216,6 +260,44 @@ def test_build_spark_kb_command_can_render_html_artifact(tmp_path: Path, monkeyp
     assert html_file.exists()
     assert trace_file.exists()
     assert canvas_board_file.exists()
+    assert (html_file.parent / "recursive-learning" / "index.html").exists()
+
+
+def _write_recursive_record(root: Path, *, latest_lesson: str) -> Path:
+    run_dir = root / "recursive-runs" / "spark-qa-operator" / "2026-05-13"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    source_html = run_dir / "s1-source.html"
+    source_html.write_text("<html><body>source capsule</body></html>", encoding="utf-8")
+    metadata = {
+        "schemaVersion": "spark-recursive-wiki-pairing.v1",
+        "authority": "supporting_not_authoritative",
+        "category": "recursive_self_improvement_loop",
+        "pathKey": "spark-qa-operator",
+        "pathLabel": "Spark QA Operator",
+        "day": "2026-05-13",
+        "sessionId": "s1",
+        "generatedAt": "2026-05-13T10:00:00+00:00",
+        "htmlPath": str(source_html),
+        "result": {
+            "stopReason": "completed_requested_rounds",
+            "completedRounds": 2,
+            "requestedRounds": 2,
+            "keptRounds": 1,
+            "revertedRounds": 1,
+            "currentScore": 0.91,
+            "bestScore": 0.94,
+            "latestMutationIntentSummary": latest_lesson,
+        },
+        "userFacingSummary": "Spark QA Operator kept a source-backed candidate.",
+        "boundaries": [
+            "Wiki capsules are historical learning notes, not live runtime truth.",
+            "Promotion still requires benchmark evidence, held-out/trap checks, privacy review, and human/system review gates.",
+        ],
+    }
+    metadata_path = run_dir / "s1.json"
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    (root / "recursive-runs" / "index.html").write_text("<html><body>recursive index</body></html>", encoding="utf-8")
+    return metadata_path
 
 
 def test_build_spark_wiki_dashboard_command_compiles_and_renders_snapshot(tmp_path: Path, monkeypatch):
