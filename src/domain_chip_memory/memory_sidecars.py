@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
 import math
 import os
 import re
@@ -11,6 +12,8 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 
 from .contracts import JsonDict
+
+logger = logging.getLogger(__name__)
 
 
 SIDECAR_AUTHORITY_ORDER: tuple[str, ...] = (
@@ -523,13 +526,14 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
             try:
                 _run_maybe_async(driver.execute_query(query), timeout_seconds=self.call_timeout_seconds)
             except Exception:
+                logger.warning("fulltext index: failed to build fulltext index for query: %s", query)
                 continue
         if marker_path is not None:
             try:
                 marker_path.parent.mkdir(parents=True, exist_ok=True)
                 marker_path.write_text("built\n", encoding="utf-8")
             except Exception:
-                pass
+                logger.warning("fulltext index: failed to write marker file at %s", marker_path)
 
     def _kuzu_fulltext_index_marker_path(self) -> Path | None:
         if str(self.backend or "").strip().lower() != "kuzu":
