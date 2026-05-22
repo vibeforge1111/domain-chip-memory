@@ -4562,16 +4562,33 @@ def _build_spark_memory_kb_sourcing_slice(
 ) -> dict:
     ablation_payload = _load_json_file(ablation_file)
     if not isinstance(ablation_payload, dict):
-        raise ValueError("Spark ablation payload must be a JSON object.")
+        raise ValueError(
+            f"Spark ablation payload at {ablation_file!r} must be a JSON object "
+            f"(got {type(ablation_payload).__name__}). Regenerate it with "
+            f"`spark ablation run` — that command always writes a top-level object."
+        )
     summary = ablation_payload.get("summary")
     if not isinstance(summary, dict):
-        raise ValueError("Spark ablation payload must contain a summary object.")
+        raise ValueError(
+            f"Spark ablation payload at {ablation_file!r} must contain a 'summary' object "
+            f"(found keys: {sorted(ablation_payload.keys())!r}). The file may be from an "
+            f"older schema — regenerate with the current `spark ablation run`."
+        )
     missing_fact_examples_by_predicate = summary.get("missing_fact_examples_by_predicate")
     if not isinstance(missing_fact_examples_by_predicate, dict):
-        raise ValueError("Spark ablation summary must contain missing_fact_examples_by_predicate.")
+        raise ValueError(
+            f"Spark ablation summary in {ablation_file!r} must contain "
+            f"'missing_fact_examples_by_predicate'. This key is produced by "
+            f"`spark ablation run` since the v3 schema — older payloads are not supported. "
+            f"Regenerate the ablation file."
+        )
     source_backed_examples_by_missing_predicate = summary.get("source_backed_examples_by_missing_predicate")
     if not isinstance(source_backed_examples_by_missing_predicate, dict):
-        raise ValueError("Spark ablation summary must contain source_backed_examples_by_missing_predicate.")
+        raise ValueError(
+            f"Spark ablation summary in {ablation_file!r} must contain "
+            f"'source_backed_examples_by_missing_predicate'. Regenerate the ablation "
+            f"file with the current `spark ablation run` — this key was added in v3."
+        )
 
     resolved_data_file = str(data_file or ablation_payload.get("input_file") or "").strip()
     if not resolved_data_file:
