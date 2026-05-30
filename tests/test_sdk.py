@@ -136,6 +136,88 @@ def test_sdk_get_current_state_respects_deletion():
     assert result.provenance[0].memory_role == "state_deletion"
 
 
+def test_sdk_auto_memory_ignores_quoted_or_meta_deletion_phrases():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="I live in Dubai.",
+            timestamp="2025-01-01T09:00:00Z",
+        )
+    )
+    quoted = sdk.write_observation(
+        MemoryWriteRequest(
+            text="I am saying 'forget where I live' as a test phrase; do not delete memory.",
+            timestamp="2025-01-02T09:00:00Z",
+        )
+    )
+    negated = sdk.write_observation(
+        MemoryWriteRequest(
+            text="Do not forget where I live; I am only testing the phrase.",
+            timestamp="2025-01-03T09:00:00Z",
+        )
+    )
+
+    result = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert result.found is True
+    assert result.value == "Dubai"
+    assert not any(observation.memory_role == "state_deletion" for observation in quoted.observations)
+    assert not any(observation.memory_role == "state_deletion" for observation in negated.observations)
+
+
+def test_sdk_auto_memory_preserves_explicit_deletion_intent():
+    sdk = SparkMemorySDK()
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="I live in Dubai.",
+            timestamp="2025-01-01T09:00:00Z",
+        )
+    )
+    deletion = sdk.write_observation(
+        MemoryWriteRequest(
+            text="Please forget where I live.",
+            timestamp="2025-01-02T09:00:00Z",
+        )
+    )
+
+    result = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location"))
+
+    assert any(observation.memory_role == "state_deletion" for observation in deletion.observations)
+    assert result.found is False
+    assert result.memory_role == "state_deletion"
+
+
+def test_sdk_auto_memory_ignores_quoted_or_meta_mission_phrases():
+    sdk = SparkMemorySDK()
+    quoted = sdk.write_observation(
+        MemoryWriteRequest(
+            text="The phrase I'm building you is quoted here, not a mission update.",
+            timestamp="2025-01-01T09:00:00Z",
+        )
+    )
+
+    result = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="current_mission"))
+
+    assert result.found is False
+    assert not any(observation.predicate == "current_mission" for observation in quoted.observations)
+
+
+def test_sdk_auto_memory_preserves_explicit_mission_intent():
+    sdk = SparkMemorySDK()
+    write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="I've been building Spark Intelligence systems and domain chips.",
+            timestamp="2025-01-01T09:00:00Z",
+        )
+    )
+
+    result = sdk.get_current_state(CurrentStateRequest(subject="user", predicate="current_mission"))
+
+    assert any(observation.predicate == "current_mission" for observation in write.observations)
+    assert result.found is True
+    assert result.value == "build Spark Intelligence systems and domain chips"
+
+
 def test_sdk_entity_scoped_deletion_does_not_delete_unrelated_entity_state():
     sdk = SparkMemorySDK()
     sdk.write_observation(
