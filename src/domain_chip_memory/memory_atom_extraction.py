@@ -66,6 +66,43 @@ _CONVERSATIONAL_TIME_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_NO_ACTION_MEMORY_CUES = (
+    "do not",
+    "don't",
+    "dont",
+    "not a command",
+    "not an instruction",
+    "not a request",
+    "not asking",
+    "not telling you",
+    "no action",
+    "should not",
+    "just explain",
+    "just explaining",
+    "just mention",
+    "just mentioning",
+    "example",
+    "quoted",
+    "quote",
+    "phrase",
+    "test phrase",
+    "as text",
+    "meta-language",
+    "meta language",
+    "bug report",
+)
+
+_QUOTE_CHARS = "\"'`“”‘’"
+
+
+def _is_non_action_memory_text(text: str, lower: str, action_terms: tuple[str, ...]) -> bool:
+    if not any(term in lower for term in action_terms):
+        return False
+    if any(cue in lower for cue in _NO_ACTION_MEMORY_CUES):
+        return True
+    quoted_span_pattern = rf"[{re.escape(_QUOTE_CHARS)}][^{re.escape(_QUOTE_CHARS)}]*({'|'.join(re.escape(term) for term in action_terms)})[^{re.escape(_QUOTE_CHARS)}]*[{re.escape(_QUOTE_CHARS)}]"
+    return bool(re.search(quoted_span_pattern, text, re.IGNORECASE))
+
 _PROFILE_COUNTRY_VALUES = {
     "uae",
     "united arab emirates",
@@ -475,6 +512,7 @@ def _extract_atoms_from_turn(
                 _append_referential_ambiguity(sorted(clause_target_predicates), sorted(clause_operations))
             return clause_atoms + atoms
 
+    block_memory_deletion = _is_non_action_memory_text(text, lower, ("forget", "delete", "remove"))
     deletion_patterns = [
         (r"\b(?:please\s+)?(?:forget|delete|remove)\s+where\s+(?:i|we)\s+live\b", "location"),
         (r"\b(?:please\s+)?(?:forget|delete|remove)\s+(?:that\s+)?(?:i|we)\s+live in\s+([A-Za-z0-9 _-]+)", "location"),
@@ -490,16 +528,19 @@ def _extract_atoms_from_turn(
             "favorite_color",
         ),
     ]
-    for pattern, target_predicate in deletion_patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if not match:
-            continue
-        deleted_value = _normalize_value(match.group(1)) if match.lastindex else ""
-        _append_state_deletion(target_predicate, deleted_value)
+    if not block_memory_deletion:
+        for pattern, target_predicate in deletion_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if not match:
+                continue
+            deleted_value = _normalize_value(match.group(1)) if match.lastindex else ""
+            _append_state_deletion(target_predicate, deleted_value)
 
     discourse_scoped_pronoun_predicates = _scoped_pronoun_predicates(lower)
 
-    has_pronoun_deletion = bool(re.search(r"\b(?:please\s+)?(?:forget|delete|remove)\s+it\b", lower))
+    has_pronoun_deletion = not block_memory_deletion and bool(
+        re.search(r"\b(?:please\s+)?(?:forget|delete|remove)\s+it\b", lower)
+    )
 
     scoped_change_match = re.search(
         r"\b(?:change|update|correct|restore)\s+it\s+to\s+([A-Za-z0-9 _-]+?)(?:\s+now|\s+again)?(?:[.!?,]|$)",
@@ -796,28 +837,34 @@ def _extract_atoms_from_turn(
             "her own journey and the support she received, and how counseling improved her life",
             entity_key="own-journey-support-counseling",
         )
-    if "i'm building you" in lower or "im building you" in lower:
-        _append_current_mission("build Spark", entity_key="build-spark")
-    if ("i've been building" in lower or "i have been building" in lower) and "spark intelligence systems" in lower and "domain chips" in lower:
-        _append_current_mission(
-            "build Spark Intelligence systems and domain chips",
-            entity_key="build-spark-intelligence-systems-domain-chips",
-        )
-    if "memory domain chip for you" in lower and ("shadow test" in lower or "shadow tests" in lower):
-        _append_current_mission(
-            "build a memory domain chip for Spark",
-            entity_key="build-memory-domain-chip-for-spark",
-        )
-    if "give life to you" in lower and "domain chips" in lower:
-        _append_current_mission(
-            "give Spark life through conversations, work, and domain chips",
-            entity_key="give-spark-life-through-conversations-work-domain-chips",
-        )
-    if "trying to get you to be great at many things" in lower and "domain chips" in lower:
-        _append_current_mission(
-            "make Spark great at many things through domain chips",
-            entity_key="make-spark-great-at-many-things-through-domain-chips",
-        )
+    block_mission_update = _is_non_action_memory_text(
+        text,
+        lower,
+        ("build", "building", "mission", "domain chip", "domain chips"),
+    )
+    if not block_mission_update:
+        if "i'm building you" in lower or "im building you" in lower:
+            _append_current_mission("build Spark", entity_key="build-spark")
+        if ("i've been building" in lower or "i have been building" in lower) and "spark intelligence systems" in lower and "domain chips" in lower:
+            _append_current_mission(
+                "build Spark Intelligence systems and domain chips",
+                entity_key="build-spark-intelligence-systems-domain-chips",
+            )
+        if "memory domain chip for you" in lower and ("shadow test" in lower or "shadow tests" in lower):
+            _append_current_mission(
+                "build a memory domain chip for Spark",
+                entity_key="build-memory-domain-chip-for-spark",
+            )
+        if "give life to you" in lower and "domain chips" in lower:
+            _append_current_mission(
+                "give Spark life through conversations, work, and domain chips",
+                entity_key="give-spark-life-through-conversations-work-domain-chips",
+            )
+        if "trying to get you to be great at many things" in lower and "domain chips" in lower:
+            _append_current_mission(
+                "make Spark great at many things through domain chips",
+                entity_key="make-spark-great-at-many-things-through-domain-chips",
+            )
 
     patterns = [
         (
