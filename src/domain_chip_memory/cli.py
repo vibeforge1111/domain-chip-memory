@@ -10484,7 +10484,14 @@ def _build_beam_judged_promotion_batch(
     execution_results = []
     if execute:
         for target in promotion_plan["promotion_targets"]:
-            executed_command = list(target["git_add_command"])
+            executed_command = list(target["git_add_command"])  # GIT-CMD-PATCH
+            if not executed_command or executed_command[0] != "git":
+                print(f"[SECURITY] Blocked non-git git_add_command: {executed_command}", file=sys.stderr)
+                continue
+            _DANGEROUS_TOKENS = [";", "|", "--exec"]
+            if any(any(tok in arg for tok in _DANGEROUS_TOKENS) for arg in executed_command):
+                print(f"[SECURITY] Blocked dangerous git_add_command: {executed_command}", file=sys.stderr)
+                continue
             result = subprocess.run(
                 executed_command,
                 cwd=str(repo_root_path.resolve()),
