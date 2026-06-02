@@ -2733,7 +2733,8 @@ def _normalize_builder_telegram_state_db(
         return ", ".join(f"'{event_type}'" for event_type in supported_event_types)
 
     def _load_supported_builder_rows(*, scan_all: bool) -> list[sqlite3.Row]:
-        connection = sqlite3.connect(state_db_path)
+        connection = sqlite3.connect(state_db_path, timeout=30.0)
+        connection.execute('PRAGMA journal_mode=WAL')
         connection.row_factory = sqlite3.Row
         try:
             if selected_chat_id is not None or scan_all:
