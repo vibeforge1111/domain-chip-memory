@@ -71,6 +71,12 @@ from .contracts import NormalizedBenchmarkSample
 from .wiki_packets import discover_markdown_knowledge_packets
 
 
+MEMORY_PROMOTION_PUBLISH_TOOL_NAME = "domain-chip-memory.memory_promotion.publish"
+MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID = "capability:domain-chip-memory:memory.promotion.publish"
+MEMORY_PROMOTION_SHIP_TOOL_NAME = "domain-chip-memory.memory_promotion.ship"
+MEMORY_PROMOTION_SHIP_CAPABILITY_ID = "capability:domain-chip-memory:memory.promotion.ship"
+
+
 def _write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -115,6 +121,139 @@ def _load_beam_official_eval_exports() -> dict[str, object]:
         "summarize_beam_official_evaluation": summarize_beam_official_evaluation,
         "summarize_beam_official_evaluation_files": summarize_beam_official_evaluation_files,
     }
+
+
+def _contains_string(value: object, needle: str) -> bool:
+    if isinstance(value, str):
+        return needle in value
+    if isinstance(value, dict):
+        return any(_contains_string(item, needle) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_string(item, needle) for item in value)
+    return False
+
+
+def _matching_governor_authorization(decision: dict, *, capability_id: str) -> dict | None:
+    for authorization in decision.get("authorizations", []):
+        if (
+            isinstance(authorization, dict)
+            and authorization.get("schema_version") == "authorization-decision-v1"
+            and authorization.get("capability_id") == capability_id
+            and authorization.get("verdict") == "allow"
+        ):
+            return authorization
+    return None
+
+
+def _matching_governor_ledger(decision: dict, *, tool_name: str, capability_id: str) -> dict | None:
+    for ledger in decision.get("tool_ledgers", []):
+        if not isinstance(ledger, dict):
+            continue
+        result = ledger.get("result") if isinstance(ledger.get("result"), dict) else {}
+        authorization = ledger.get("authorization") if isinstance(ledger.get("authorization"), dict) else {}
+        if (
+            ledger.get("schema_version") == "tool-call-ledger-v1"
+            and ledger.get("tool_name") == tool_name
+            and ledger.get("capability_id") == capability_id
+            and authorization.get("verdict") == "allow"
+            and result.get("status") in {"not_started", "partial"}
+        ):
+            return ledger
+    return None
+
+
+def _validate_memory_promotion_governor(
+    decision: dict | None,
+    *,
+    tool_name: str,
+    capability_id: str,
+    binding_refs: tuple[str, ...],
+) -> tuple[dict, dict]:
+    if not isinstance(decision, dict):
+        raise RuntimeError("Memory promotion publish/ship requires GovernorDecisionV1 authority: governor_decision_missing")
+
+    errors: list[str] = []
+    boundary = decision.get("execution_boundary") if isinstance(decision.get("execution_boundary"), dict) else {}
+    envelope = decision.get("envelope") if isinstance(decision.get("envelope"), dict) else {}
+    action_authority = envelope.get("action_authority") if isinstance(envelope.get("action_authority"), dict) else {}
+    proposed_actions = envelope.get("proposed_actions") if isinstance(envelope.get("proposed_actions"), list) else []
+
+    if decision.get("schema_version") != "governor-decision-v1":
+        errors.append("schema_version_not_governor_decision_v1")
+    if decision.get("outcome") != "execute":
+        errors.append("outcome_not_execute")
+    if decision.get("authority_state") != "executable":
+        errors.append("authority_state_not_executable")
+    if boundary.get("action_authorized") is not True:
+        errors.append("execution_boundary_not_authorized")
+    if boundary.get("legacy_authority_demoted") is not True:
+        errors.append("legacy_authority_not_demoted")
+    if boundary.get("requires_human_confirmation") is not True:
+        errors.append("human_confirmation_not_required")
+    if envelope.get("schema_version") != "turn-intent-envelope-vnext":
+        errors.append("envelope_not_vnext")
+    if action_authority.get("state") != "executable":
+        errors.append("envelope_authority_not_executable")
+    if not any(isinstance(action, dict) and action.get("capability_id") == capability_id for action in proposed_actions):
+        errors.append("memory_promotion_action_missing")
+
+    missing_refs = [ref for ref in binding_refs if ref and not _contains_string(decision, ref)]
+    if missing_refs:
+        errors.append("memory_promotion_binding_missing")
+
+    authorization = _matching_governor_authorization(decision, capability_id=capability_id)
+    if not authorization:
+        errors.append("allow_authorization_missing")
+    else:
+        approval = authorization.get("approval") if isinstance(authorization.get("approval"), dict) else {}
+        if approval.get("required") is not True or approval.get("status") != "approved":
+            errors.append("approved_human_confirmation_missing")
+
+    ledger = _matching_governor_ledger(decision, tool_name=tool_name, capability_id=capability_id)
+    if not ledger:
+        errors.append("pre_execution_tool_ledger_missing")
+
+    if errors:
+        raise RuntimeError("Memory promotion publish/ship requires GovernorDecisionV1 authority: " + ", ".join(errors))
+    return authorization or {}, ledger or {}
+
+
+def _finalize_memory_promotion_ledger(
+    source_ledger: dict,
+    *,
+    status: str,
+    output_path: Path,
+    summary: str,
+) -> dict:
+    ledger = copy.deepcopy(source_ledger)
+    lifecycle = [dict(item) for item in ledger.get("lifecycle", []) if isinstance(item, dict)]
+    verdict = "passed" if status == "success" else "failed"
+    execute_stage = {
+        "stage": "execute",
+        "at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "verdict": verdict,
+    }
+    if lifecycle and lifecycle[-1].get("stage") == "execute":
+        lifecycle[-1] = execute_stage
+    else:
+        lifecycle.append(execute_stage)
+    ledger["lifecycle"] = lifecycle
+    ledger["result"] = {
+        "status": status,
+        "summary": summary,
+        "sanitized_output_ref": {
+            "id": f"artifact:memory-promotion-{hashlib.sha1(str(output_path).encode('utf-8')).hexdigest()[:12]}",
+            "kind": "tool_output",
+            "path_or_uri": str(output_path),
+            "redaction_class": "metadata_only",
+        },
+    }
+    ledger["trace"] = {
+        "id": f"trace:memory-promotion-{hashlib.sha1((str(output_path) + status).encode('utf-8')).hexdigest()[:12]}",
+        "redaction_class": "metadata_only",
+        "summary": summary,
+    }
+    return ledger
 
 
 def _limit_questions(
@@ -5584,7 +5723,20 @@ def _materialize_spark_memory_kb_refresh_manifest(
 def _publish_spark_memory_kb_refresh_manifest(
     refresh_manifest_file: str,
     publish_root_dir: str,
+    *,
+    governor_decision: dict | None = None,
+    require_governor: bool = True,
 ) -> dict:
+    authorization: dict = {}
+    pre_execution_ledger: dict = {}
+    if require_governor:
+        authorization, pre_execution_ledger = _validate_memory_promotion_governor(
+            governor_decision,
+            tool_name=MEMORY_PROMOTION_PUBLISH_TOOL_NAME,
+            capability_id=MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID,
+            binding_refs=(str(Path(refresh_manifest_file)), str(Path(publish_root_dir))),
+        )
+
     manifest_payload = _load_json_file(refresh_manifest_file)
     if not isinstance(manifest_payload, dict):
         raise ValueError("Refresh manifest payload must be a JSON object.")
@@ -5618,6 +5770,7 @@ def _publish_spark_memory_kb_refresh_manifest(
         str(release_output_dir),
     )
     active_refresh_file = publish_root_path / "active-refresh.json"
+    publish_result_ledger_file = publish_root_path / "publish-result-ledger.json"
     active_payload = {
         "refresh_manifest_file": str(Path(refresh_manifest_file)),
         "published_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
@@ -5627,14 +5780,37 @@ def _publish_spark_memory_kb_refresh_manifest(
         },
     }
     _write_json(active_refresh_file, active_payload)
+    final_ledger: dict = {}
+    if require_governor:
+        final_ledger = _finalize_memory_promotion_ledger(
+            pre_execution_ledger,
+            status="success",
+            output_path=active_refresh_file,
+            summary="Published governed Spark memory KB refresh manifest.",
+        )
+        _write_json(publish_result_ledger_file, final_ledger)
 
     return {
         "input_refresh_manifest_file": str(Path(refresh_manifest_file)),
         "publish_root_dir": str(publish_root_path),
         "release_output_dir": str(release_output_dir),
         "active_refresh_file": str(active_refresh_file),
+        "publish_result_ledger_file": str(publish_result_ledger_file) if require_governor else None,
         "materialized_payload": materialized_payload,
         "active_refresh": active_payload,
+        "authority": {
+            "schema_version": "governor-decision-v1",
+            "capability_id": MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID,
+            "tool_name": MEMORY_PROMOTION_PUBLISH_TOOL_NAME,
+            "authorization": authorization,
+            "tool_call_ledger": final_ledger,
+        }
+        if require_governor
+        else {
+            "schema_version": "governor-decision-v1",
+            "delegated_by": MEMORY_PROMOTION_SHIP_TOOL_NAME,
+            "publish_gate": "covered_by_parent_ship_governor_decision",
+        },
         "trace": {
             "operation": "publish_spark_memory_kb_refresh_manifest",
         },
@@ -6304,10 +6480,24 @@ def _ship_spark_memory_kb_governed_release(
     refresh_manifest_file: str,
     policy_aligned_slice_file: str,
     publish_root_dir: str,
+    *,
+    governor_decision: dict | None = None,
 ) -> dict:
+    authorization, pre_execution_ledger = _validate_memory_promotion_governor(
+        governor_decision,
+        tool_name=MEMORY_PROMOTION_SHIP_TOOL_NAME,
+        capability_id=MEMORY_PROMOTION_SHIP_CAPABILITY_ID,
+        binding_refs=(
+            str(Path(refresh_manifest_file)),
+            str(Path(policy_aligned_slice_file)),
+            str(Path(publish_root_dir)),
+        ),
+    )
     publish_payload = _publish_spark_memory_kb_refresh_manifest(
         refresh_manifest_file,
         publish_root_dir,
+        governor_decision=governor_decision,
+        require_governor=False,
     )
     active_refresh = publish_payload.get("active_refresh")
     active_refresh_file = publish_payload.get("active_refresh_file")
@@ -6346,6 +6536,7 @@ def _ship_spark_memory_kb_governed_release(
         },
     }
     governed_release_file = publish_root_path / "governed-release.json"
+    governed_release_result_ledger_file = publish_root_path / "governed-release-result-ledger.json"
     governed_release_payload["governed_release_file"] = str(governed_release_file)
     _write_json(governed_release_file, governed_release_payload)
     governed_release_read_report = _run_spark_memory_kb_governed_release_read_report(str(governed_release_file))
@@ -6366,6 +6557,23 @@ def _ship_spark_memory_kb_governed_release(
     governed_release_payload["summary"]["governed_release_read_report_file"] = str(governed_release_read_report_file)
     governed_release_payload["summary"]["governed_release_summary_file"] = str(governed_release_summary_file)
     governed_release_payload["summary"]["governed_release_gate_file"] = str(governed_release_gate_file)
+    final_ledger = _finalize_memory_promotion_ledger(
+        pre_execution_ledger,
+        status="success",
+        output_path=governed_release_file,
+        summary="Shipped governed Spark memory KB release.",
+    )
+    _write_json(governed_release_result_ledger_file, final_ledger)
+    governed_release_payload["governed_release_result_ledger_file"] = str(governed_release_result_ledger_file)
+    governed_release_payload["governed_release_result_ledger"] = final_ledger
+    governed_release_payload["summary"]["governed_release_result_ledger_file"] = str(governed_release_result_ledger_file)
+    governed_release_payload["authority"] = {
+        "schema_version": "governor-decision-v1",
+        "capability_id": MEMORY_PROMOTION_SHIP_CAPABILITY_ID,
+        "tool_name": MEMORY_PROMOTION_SHIP_TOOL_NAME,
+        "authorization": authorization,
+        "tool_call_ledger": final_ledger,
+    }
     _write_json(governed_release_file, governed_release_payload)
     return governed_release_payload
 
@@ -11054,6 +11262,7 @@ def main() -> None:
     )
     publish_spark_memory_kb_refresh_manifest.add_argument("refresh_manifest_file")
     publish_spark_memory_kb_refresh_manifest.add_argument("publish_root_dir")
+    publish_spark_memory_kb_refresh_manifest.add_argument("--governor-decision")
     publish_spark_memory_kb_refresh_manifest.add_argument("--write")
     resolve_spark_memory_kb_active_refresh = subparsers.add_parser(
         "resolve-spark-memory-kb-active-refresh",
@@ -11167,6 +11376,7 @@ def main() -> None:
     ship_spark_memory_kb_governed_release.add_argument("refresh_manifest_file")
     ship_spark_memory_kb_governed_release.add_argument("policy_aligned_slice_file")
     ship_spark_memory_kb_governed_release.add_argument("publish_root_dir")
+    ship_spark_memory_kb_governed_release.add_argument("--governor-decision")
     ship_spark_memory_kb_governed_release.add_argument("--write")
     verify_spark_memory_kb_active_refresh_policy = subparsers.add_parser(
         "verify-spark-memory-kb-active-refresh-policy",
@@ -12053,6 +12263,7 @@ def main() -> None:
         payload = _publish_spark_memory_kb_refresh_manifest(
             args.refresh_manifest_file,
             args.publish_root_dir,
+            governor_decision=_load_json_file(args.governor_decision) if args.governor_decision else None,
         )
         if args.write:
             _write_json(Path(args.write), payload)
@@ -12214,6 +12425,7 @@ def main() -> None:
             args.refresh_manifest_file,
             args.policy_aligned_slice_file,
             args.publish_root_dir,
+            governor_decision=_load_json_file(args.governor_decision) if args.governor_decision else None,
         )
         if args.write:
             _write_json(Path(args.write), payload)

@@ -4,8 +4,146 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 from domain_chip_memory import cli
 from domain_chip_memory.spark_kb import scaffold_spark_knowledge_base
+
+
+def _memory_governor_decision(
+    *,
+    tool_name: str,
+    capability_id: str,
+    binding_refs: tuple[str, ...],
+) -> dict:
+    action = {
+        "action_id": "action:memory-promotion",
+        "capability_id": capability_id,
+        "action_type": "memory_promotion_activation",
+    }
+    authorization = {
+        "schema_version": "authorization-decision-v1",
+        "decision_id": "decision:memory-promotion",
+        "created_at": "2026-06-02T00:00:00+00:00",
+        "turn_id": "turn:memory-promotion",
+        "action_id": action["action_id"],
+        "capability_id": capability_id,
+        "verdict": "allow",
+        "risk_tier": "high",
+        "reasons": ["Explicit owner approval for governed memory promotion."],
+        "evidence": [
+            {
+                "id": "evidence:memory-promotion-approval",
+                "kind": "human_confirmation",
+                "source": "test",
+                "summary": "Owner approved governed memory promotion activation.",
+                "confidence": 1.0,
+            },
+            *[
+                {
+                    "id": f"evidence:memory-promotion-binding-{index}",
+                    "kind": "artifact_ref",
+                    "source": "test",
+                    "summary": ref,
+                    "confidence": 1.0,
+                }
+                for index, ref in enumerate(binding_refs)
+            ],
+        ],
+        "approval": {
+            "required": True,
+            "status": "approved",
+            "approval_ref": {
+                "id": "evidence:memory-promotion-human-approval",
+                "kind": "human_confirmation",
+                "source": "test",
+                "summary": "Approved governed memory promotion activation.",
+                "confidence": 1.0,
+            },
+        },
+        "restrictions": [],
+        "trace": {"id": "trace:memory-promotion-authorization", "redaction_class": "metadata_only"},
+    }
+    ledger = {
+        "schema_version": "tool-call-ledger-v1",
+        "ledger_id": "ledger:memory-promotion",
+        "created_at": "2026-06-02T00:00:00+00:00",
+        "turn_id": "turn:memory-promotion",
+        "action_id": action["action_id"],
+        "capability_id": capability_id,
+        "tool_name": tool_name,
+        "lifecycle": [
+            {"stage": "propose", "at": "2026-06-02T00:00:00+00:00", "verdict": "passed"},
+            {"stage": "authorize", "at": "2026-06-02T00:00:00+00:00", "verdict": "passed"},
+            {"stage": "execute", "at": "2026-06-02T00:00:00+00:00", "verdict": "pending"},
+        ],
+        "authorization": authorization,
+        "arguments": {
+            "schema_valid": True,
+            "raw_ref": {
+                "id": "artifact:memory-promotion-raw-args",
+                "kind": "memory_promotion_inputs",
+                "path_or_uri": " | ".join(binding_refs),
+                "redaction_class": "metadata_only",
+            },
+            "sanitized_ref": {
+                "id": "artifact:memory-promotion-sanitized-args",
+                "kind": "memory_promotion_inputs",
+                "path_or_uri": " | ".join(binding_refs),
+                "redaction_class": "metadata_only",
+            },
+        },
+        "result": {
+            "status": "not_started",
+            "summary": "Governed memory promotion is authorized but not executed yet.",
+            "sanitized_output_ref": {
+                "id": "artifact:memory-promotion-not-started",
+                "kind": "tool_output",
+                "path_or_uri": " | ".join(binding_refs),
+                "redaction_class": "metadata_only",
+            },
+        },
+        "trace": {"id": "trace:memory-promotion-pre-ledger", "redaction_class": "metadata_only"},
+    }
+    return {
+        "schema_version": "governor-decision-v1",
+        "decision_id": "governor-decision:memory-promotion",
+        "created_at": "2026-06-02T00:00:00+00:00",
+        "surface": "cli",
+        "turn_id": "turn:memory-promotion",
+        "selected_move": "execute_action",
+        "authority_state": "executable",
+        "risk_tier": "high",
+        "outcome": "execute",
+        "envelope": {
+            "schema_version": "turn-intent-envelope-vnext",
+            "turn_id": "turn:memory-promotion",
+            "surface": "cli",
+            "selected_move": "execute_action",
+            "action_authority": {"state": "executable"},
+            "proposed_actions": [action],
+        },
+        "authorizations": [authorization],
+        "tool_ledgers": [ledger],
+        "execution_boundary": {
+            "action_authorized": True,
+            "action_count": 1,
+            "authorized_action_count": 1,
+            "requires_human_confirmation": True,
+            "legacy_authority_demoted": True,
+            "reasons": ["Governor authorized governed memory promotion."],
+        },
+        "evidence": [
+            {
+                "id": "evidence:memory-promotion-bindings",
+                "kind": "artifact_ref",
+                "source": "test",
+                "summary": " | ".join(binding_refs),
+                "confidence": 1.0,
+            }
+        ],
+        "trace": {"id": "trace:memory-promotion-governor", "redaction_class": "metadata_only"},
+    }
 
 
 def test_run_spark_memory_kb_ablation_reports_matching_answer_and_kb_support(tmp_path: Path, monkeypatch):
@@ -1460,23 +1598,69 @@ def test_publish_spark_memory_kb_refresh_manifest_writes_active_refresh_file(tmp
         encoding="utf-8",
     )
     publish_root = tmp_path / "published"
+    governor_decision = _memory_governor_decision(
+        tool_name=cli.MEMORY_PROMOTION_PUBLISH_TOOL_NAME,
+        capability_id=cli.MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID,
+        binding_refs=(str(manifest_file), str(publish_root)),
+    )
 
     payload = cli._publish_spark_memory_kb_refresh_manifest(
         str(manifest_file),
         str(publish_root),
+        governor_decision=governor_decision,
     )
 
     release_dir = Path(payload["release_output_dir"])
     active_refresh_file = publish_root / "active-refresh.json"
+    result_ledger_file = publish_root / "publish-result-ledger.json"
     assert release_dir.parent == publish_root / "releases"
     assert release_dir.name.startswith("spark-kb-")
     assert payload["active_refresh_file"] == str(active_refresh_file)
+    assert payload["publish_result_ledger_file"] == str(result_ledger_file)
     assert release_dir.exists()
     assert active_refresh_file.exists()
+    assert result_ledger_file.exists()
     active_payload = json.loads(active_refresh_file.read_text(encoding="utf-8"))
+    result_ledger = json.loads(result_ledger_file.read_text(encoding="utf-8"))
     assert active_payload["refresh_manifest_file"] == str(manifest_file)
     assert active_payload["summary"]["materialized_kb_output_dir"] == str(release_dir)
     assert active_payload["summary"]["decision_counts"] == {"allow": 4, "block": 2, "defer": 1}
+    assert result_ledger["schema_version"] == "tool-call-ledger-v1"
+    assert result_ledger["result"]["status"] == "success"
+
+
+def test_publish_spark_memory_kb_refresh_manifest_requires_governor_before_write(tmp_path: Path):
+    manifest_file = tmp_path / "refresh-manifest.json"
+    manifest_file.write_text("{}", encoding="utf-8")
+    publish_root = tmp_path / "published"
+
+    with pytest.raises(RuntimeError, match="GovernorDecisionV1"):
+        cli._publish_spark_memory_kb_refresh_manifest(
+            str(manifest_file),
+            str(publish_root),
+        )
+
+    assert not publish_root.exists()
+
+
+def test_publish_spark_memory_kb_refresh_manifest_rejects_stale_governor(tmp_path: Path):
+    manifest_file = tmp_path / "refresh-manifest.json"
+    manifest_file.write_text("{}", encoding="utf-8")
+    publish_root = tmp_path / "published"
+    stale_decision = _memory_governor_decision(
+        tool_name=cli.MEMORY_PROMOTION_PUBLISH_TOOL_NAME,
+        capability_id=cli.MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID,
+        binding_refs=(str(tmp_path / "other-manifest.json"), str(publish_root)),
+    )
+
+    with pytest.raises(RuntimeError, match="memory_promotion_binding_missing"):
+        cli._publish_spark_memory_kb_refresh_manifest(
+            str(manifest_file),
+            str(publish_root),
+            governor_decision=stale_decision,
+        )
+
+    assert not publish_root.exists()
 
 
 def test_publish_spark_memory_kb_refresh_manifest_replaces_existing_release_dir(tmp_path: Path):
@@ -1506,18 +1690,30 @@ def test_publish_spark_memory_kb_refresh_manifest_replaces_existing_release_dir(
         encoding="utf-8",
     )
     publish_root = tmp_path / "published"
+    first_governor_decision = _memory_governor_decision(
+        tool_name=cli.MEMORY_PROMOTION_PUBLISH_TOOL_NAME,
+        capability_id=cli.MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID,
+        binding_refs=(str(manifest_file), str(publish_root)),
+    )
 
     first_payload = cli._publish_spark_memory_kb_refresh_manifest(
         str(manifest_file),
         str(publish_root),
+        governor_decision=first_governor_decision,
     )
     release_dir = Path(first_payload["release_output_dir"])
     stale_file = release_dir / "stale.txt"
     stale_file.write_text("stale", encoding="utf-8")
+    second_governor_decision = _memory_governor_decision(
+        tool_name=cli.MEMORY_PROMOTION_PUBLISH_TOOL_NAME,
+        capability_id=cli.MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID,
+        binding_refs=(str(manifest_file), str(publish_root)),
+    )
 
     second_payload = cli._publish_spark_memory_kb_refresh_manifest(
         str(manifest_file),
         str(publish_root),
+        governor_decision=second_governor_decision,
     )
 
     assert second_payload["release_output_dir"] == str(release_dir)
@@ -2474,7 +2670,7 @@ def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(t
     monkeypatch.setattr(
         cli,
         "_publish_spark_memory_kb_refresh_manifest",
-        lambda refresh_manifest, publish_root_dir: {
+        lambda refresh_manifest, publish_root_dir, **kwargs: {
             "active_refresh": {"summary": {"materialized_kb_output_dir": "tmp/release"}},
             "active_refresh_file": str(active_refresh_file),
             "release_output_dir": str(publish_root / "releases" / "spark-kb-test"),
@@ -2529,11 +2725,17 @@ def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(t
             }
         },
     )
+    governor_decision = _memory_governor_decision(
+        tool_name=cli.MEMORY_PROMOTION_SHIP_TOOL_NAME,
+        capability_id=cli.MEMORY_PROMOTION_SHIP_CAPABILITY_ID,
+        binding_refs=(str(refresh_manifest_file), str(policy_aligned_slice_file), str(publish_root)),
+    )
 
     payload = cli._ship_spark_memory_kb_governed_release(
         str(refresh_manifest_file),
         str(policy_aligned_slice_file),
         str(publish_root),
+        governor_decision=governor_decision,
     )
 
     assert Path(payload["active_refresh_file"]).exists()
@@ -2543,7 +2745,34 @@ def test_ship_spark_memory_kb_governed_release_writes_publish_summary_and_gate(t
     assert Path(payload["governed_release_read_report_file"]).exists()
     assert Path(payload["governed_release_summary_file"]).exists()
     assert Path(payload["governed_release_gate_file"]).exists()
+    assert Path(payload["governed_release_result_ledger_file"]).exists()
     assert payload["summary"]["ready"] is True
+    assert payload["governed_release_result_ledger"]["result"]["status"] == "success"
+
+
+def test_ship_spark_memory_kb_governed_release_requires_governor_before_publish(tmp_path: Path, monkeypatch):
+    refresh_manifest_file = tmp_path / "refresh-manifest.json"
+    policy_aligned_slice_file = tmp_path / "policy-aligned-slice.json"
+    refresh_manifest_file.write_text("{}", encoding="utf-8")
+    policy_aligned_slice_file.write_text("{}", encoding="utf-8")
+    publish_root = tmp_path / "published"
+    calls: list[str] = []
+
+    def _unexpected_publish(*args, **kwargs):
+        calls.append("publish")
+        return {}
+
+    monkeypatch.setattr(cli, "_publish_spark_memory_kb_refresh_manifest", _unexpected_publish)
+
+    with pytest.raises(RuntimeError, match="GovernorDecisionV1"):
+        cli._ship_spark_memory_kb_governed_release(
+            str(refresh_manifest_file),
+            str(policy_aligned_slice_file),
+            str(publish_root),
+        )
+
+    assert calls == []
+    assert not publish_root.exists()
 
 
 def test_compare_spark_memory_kb_ablation_tracks_resolved_missing_queries(tmp_path: Path):
