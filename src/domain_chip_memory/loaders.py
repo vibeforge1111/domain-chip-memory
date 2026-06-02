@@ -6,12 +6,19 @@ import json
 import re
 from pathlib import Path
 
+
+def _loads_json_text(text: str, *, label: str) -> object:
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON ({label})") from exc
+
 from .adapters import BEAMAdapter, GoodAILTMBenchmarkAdapter, LoCoMoAdapter, LongMemEvalAdapter
 from .contracts import NormalizedBenchmarkConfig, NormalizedBenchmarkSample
 
 
 def _load_json(path: Path) -> object:
-    return json.loads(path.read_text(encoding="utf-8"))
+    return _loads_json_text(path.read_text(encoding="utf-8"), label=str(path))
 
 
 def chip_manifest_sha256(path: str | Path) -> str:
