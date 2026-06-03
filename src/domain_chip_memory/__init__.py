@@ -33,6 +33,7 @@ from .spark_shadow import (
     validate_shadow_replay_payload,
 )
 from .spark_integration import build_spark_integration_contract_summary
+from .legacy_authority_inventory import build_memory_legacy_authority_inventory, build_memory_legacy_authority_planes
 from .spark_kb import build_spark_kb_contract_summary, build_spark_kb_health_report, scaffold_spark_knowledge_base
 from .spark_kb_html import build_spark_kb_html_artifact_contract_summary, render_spark_kb_html_artifact
 from .memory_sidecars import (
@@ -103,6 +104,8 @@ __all__ = [
     "build_shadow_replay_contract_summary",
     "validate_shadow_replay_payload",
     "build_spark_integration_contract_summary",
+    "build_memory_legacy_authority_inventory",
+    "build_memory_legacy_authority_planes",
     "build_spark_kb_contract_summary",
     "build_spark_kb_health_report",
     "scaffold_spark_knowledge_base",

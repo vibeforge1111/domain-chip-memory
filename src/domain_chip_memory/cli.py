@@ -30,6 +30,7 @@ from .loaders import (
     load_locomo_json,
     load_longmemeval_json,
 )
+from .legacy_authority_inventory import build_memory_legacy_authority_inventory
 from .memory_contract_summary import build_memory_system_contract_summary
 from .memory_conversational_shadow_eval import build_multi_shadow_answer_eval, question_uses_fused_conversational_shadow
 from .packets import build_strategy_packet
@@ -11398,6 +11399,7 @@ def main() -> None:
     subparsers.add_parser("spark-kb-contracts", help="Show the Spark knowledge-base layer contract summary.")
     subparsers.add_parser("spark-kb-html-artifact-contracts", help="Show the Spark KB HTML artifact contract summary.")
     subparsers.add_parser("promotion-gate-contracts", help="Show memory/self-improvement promotion gate lanes and protected targets.")
+    subparsers.add_parser("legacy-authority-inventory", help="Show memory legacy authority plane dispositions.")
     check_promotion_gate = subparsers.add_parser("check-promotion-gate", help="Evaluate memory-derived promotion records against protected-surface gates.")
     check_promotion_gate.add_argument("promotion_record_file")
     check_promotion_gate.add_argument("--assert-allowed", action="store_true")
@@ -12469,6 +12471,10 @@ def main() -> None:
 
     if args.command == "spark-integration-contracts":
         _print(build_spark_integration_contract_summary())
+        return
+
+    if args.command == "legacy-authority-inventory":
+        _print(build_memory_legacy_authority_inventory())
         return
 
     if args.command == "spark-kb-contracts":
