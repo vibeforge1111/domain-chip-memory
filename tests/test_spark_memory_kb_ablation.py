@@ -6,6 +6,11 @@ from pathlib import Path
 
 import pytest
 
+HARNESS_CORE_SRC = Path.home() / ".spark" / "modules" / "spark-harness-core" / "source" / "src"
+if HARNESS_CORE_SRC.exists() and str(HARNESS_CORE_SRC) not in sys.path:
+    sys.path.insert(0, str(HARNESS_CORE_SRC))
+
+from spark_harness_core import HarnessKernel, evidence_ref
 from domain_chip_memory import cli
 from domain_chip_memory.spark_kb import scaffold_spark_knowledge_base
 
@@ -16,134 +21,69 @@ def _memory_governor_decision(
     capability_id: str,
     binding_refs: tuple[str, ...],
 ) -> dict:
-    action = {
-        "action_id": "action:memory-promotion",
-        "capability_id": capability_id,
-        "action_type": "memory_promotion_activation",
-    }
-    authorization = {
-        "schema_version": "authorization-decision-v1",
-        "decision_id": "decision:memory-promotion",
-        "created_at": "2026-06-02T00:00:00+00:00",
-        "turn_id": "turn:memory-promotion",
-        "action_id": action["action_id"],
-        "capability_id": capability_id,
-        "verdict": "allow",
-        "risk_tier": "high",
-        "reasons": ["Explicit owner approval for governed memory promotion."],
-        "evidence": [
-            {
-                "id": "evidence:memory-promotion-approval",
-                "kind": "human_confirmation",
-                "source": "test",
-                "summary": "Owner approved governed memory promotion activation.",
-                "confidence": 1.0,
-            },
-            *[
-                {
-                    "id": f"evidence:memory-promotion-binding-{index}",
-                    "kind": "artifact_ref",
-                    "source": "test",
-                    "summary": ref,
-                    "confidence": 1.0,
-                }
-                for index, ref in enumerate(binding_refs)
-            ],
+    kernel = HarnessKernel(surface="cli")
+    binding_summary = " | ".join(binding_refs)
+    evidence = [
+        evidence_ref(
+            "human_confirmation",
+            "test",
+            "Owner approved governed memory promotion.",
+            confidence=1.0,
+        ),
+        *[
+            evidence_ref(
+                "runtime_state",
+                "test",
+                ref,
+                confidence=1.0,
+            )
+            for ref in binding_refs
         ],
-        "approval": {
-            "required": True,
-            "status": "approved",
-            "approval_ref": {
-                "id": "evidence:memory-promotion-human-approval",
-                "kind": "human_confirmation",
-                "source": "test",
-                "summary": "Approved governed memory promotion activation.",
-                "confidence": 1.0,
-            },
-        },
-        "restrictions": [],
-        "trace": {"id": "trace:memory-promotion-authorization", "redaction_class": "metadata_only"},
-    }
-    ledger = {
-        "schema_version": "tool-call-ledger-v1",
-        "ledger_id": "ledger:memory-promotion",
-        "created_at": "2026-06-02T00:00:00+00:00",
-        "turn_id": "turn:memory-promotion",
-        "action_id": action["action_id"],
-        "capability_id": capability_id,
-        "tool_name": tool_name,
-        "lifecycle": [
-            {"stage": "propose", "at": "2026-06-02T00:00:00+00:00", "verdict": "passed"},
-            {"stage": "authorize", "at": "2026-06-02T00:00:00+00:00", "verdict": "passed"},
-            {"stage": "execute", "at": "2026-06-02T00:00:00+00:00", "verdict": "pending"},
-        ],
-        "authorization": authorization,
-        "arguments": {
-            "schema_valid": True,
-            "raw_ref": {
-                "id": "artifact:memory-promotion-raw-args",
-                "kind": "memory_promotion_inputs",
-                "path_or_uri": " | ".join(binding_refs),
-                "redaction_class": "metadata_only",
-            },
-            "sanitized_ref": {
-                "id": "artifact:memory-promotion-sanitized-args",
-                "kind": "memory_promotion_inputs",
-                "path_or_uri": " | ".join(binding_refs),
-                "redaction_class": "metadata_only",
-            },
-        },
-        "result": {
-            "status": "not_started",
-            "summary": "Governed memory promotion is authorized but not executed yet.",
-            "sanitized_output_ref": {
-                "id": "artifact:memory-promotion-not-started",
-                "kind": "tool_output",
-                "path_or_uri": " | ".join(binding_refs),
-                "redaction_class": "metadata_only",
-            },
-        },
-        "trace": {"id": "trace:memory-promotion-pre-ledger", "redaction_class": "metadata_only"},
-    }
-    return {
-        "schema_version": "governor-decision-v1",
-        "decision_id": "governor-decision:memory-promotion",
-        "created_at": "2026-06-02T00:00:00+00:00",
-        "surface": "cli",
-        "turn_id": "turn:memory-promotion",
-        "selected_move": "execute_action",
-        "authority_state": "executable",
-        "risk_tier": "high",
-        "outcome": "execute",
-        "envelope": {
-            "schema_version": "turn-intent-envelope-vnext",
-            "turn_id": "turn:memory-promotion",
-            "surface": "cli",
-            "selected_move": "execute_action",
-            "action_authority": {"state": "executable"},
-            "proposed_actions": [action],
-        },
-        "authorizations": [authorization],
-        "tool_ledgers": [ledger],
-        "execution_boundary": {
-            "action_authorized": True,
-            "action_count": 1,
-            "authorized_action_count": 1,
-            "requires_human_confirmation": True,
-            "legacy_authority_demoted": True,
-            "reasons": ["Governor authorized governed memory promotion."],
-        },
-        "evidence": [
-            {
-                "id": "evidence:memory-promotion-bindings",
-                "kind": "artifact_ref",
-                "source": "test",
-                "summary": " | ".join(binding_refs),
-                "confidence": 1.0,
-            }
-        ],
-        "trace": {"id": "trace:memory-promotion-governor", "redaction_class": "metadata_only"},
-    }
+    ]
+    action = kernel.proposed_action(
+        capability_id=capability_id,
+        action_type=cli.MEMORY_PROMOTION_ACTION_TYPE,
+        risk_tier="high",
+        summary="Publish governed memory promotion artifacts.",
+        args_path=binding_summary,
+        requires_confirmation=True,
+    )
+    envelope = kernel.create_envelope(
+        selected_move="execute_action",
+        intent_summary="Publish governed memory promotion artifacts.",
+        raw_turn_summary="Owner explicitly approved governed memory promotion.",
+        evidence=evidence,
+        proposed_actions=[action],
+        authority_state="executable",
+        risk_tier="high",
+        confidence=1.0,
+    )
+    authorization = kernel.authorize(
+        envelope,
+        action,
+        approval_ref=evidence_ref(
+            "human_confirmation",
+            "test",
+            "Approved governed memory promotion.",
+            confidence=1.0,
+        ),
+    )
+    ledger = kernel.record_tool_call(
+        envelope=envelope,
+        action=action,
+        authorization=authorization,
+        tool_name=tool_name,
+        status="not_started",
+        output_path=binding_summary,
+        summary="Governed memory promotion is authorized but not executed yet.",
+    )
+    return kernel.governor_decision(
+        envelope,
+        authorizations=[authorization],
+        tool_ledgers=[ledger],
+        reply_style="compact_status",
+        reply_instruction="Publish the governed memory promotion artifacts.",
+    )
 
 
 def test_run_spark_memory_kb_ablation_reports_matching_answer_and_kb_support(tmp_path: Path, monkeypatch):
@@ -1654,6 +1594,27 @@ def test_publish_spark_memory_kb_refresh_manifest_rejects_stale_governor(tmp_pat
     )
 
     with pytest.raises(RuntimeError, match="memory_promotion_binding_missing"):
+        cli._publish_spark_memory_kb_refresh_manifest(
+            str(manifest_file),
+            str(publish_root),
+            governor_decision=stale_decision,
+        )
+
+    assert not publish_root.exists()
+
+
+def test_publish_spark_memory_kb_refresh_manifest_rejects_copied_governor_ledger(tmp_path: Path):
+    manifest_file = tmp_path / "refresh-manifest.json"
+    manifest_file.write_text("{}", encoding="utf-8")
+    publish_root = tmp_path / "published"
+    stale_decision = _memory_governor_decision(
+        tool_name=cli.MEMORY_PROMOTION_PUBLISH_TOOL_NAME,
+        capability_id=cli.MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID,
+        binding_refs=(str(manifest_file), str(publish_root)),
+    )
+    stale_decision["tool_ledgers"][0]["action_id"] = "action:copied-stale-ledger"
+
+    with pytest.raises(RuntimeError, match="pre_execution_tool_ledger_missing"):
         cli._publish_spark_memory_kb_refresh_manifest(
             str(manifest_file),
             str(publish_root),

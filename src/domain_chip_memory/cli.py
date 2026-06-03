@@ -76,6 +76,7 @@ MEMORY_PROMOTION_PUBLISH_TOOL_NAME = "domain-chip-memory.memory_promotion.publis
 MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID = "capability:domain-chip-memory:memory.promotion.publish"
 MEMORY_PROMOTION_SHIP_TOOL_NAME = "domain-chip-memory.memory_promotion.ship"
 MEMORY_PROMOTION_SHIP_CAPABILITY_ID = "capability:domain-chip-memory:memory.promotion.ship"
+MEMORY_PROMOTION_ACTION_TYPE = "publish"
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -134,19 +135,102 @@ def _contains_string(value: object, needle: str) -> bool:
     return False
 
 
-def _matching_governor_authorization(decision: dict, *, capability_id: str) -> dict | None:
+def _harness_core_source_candidates() -> list[Path]:
+    candidates: list[Path] = []
+    spark_home = os.environ.get("SPARK_HOME")
+    if spark_home:
+        candidates.append(Path(spark_home).expanduser() / "modules" / "spark-harness-core" / "source" / "src")
+    candidates.append(Path.home() / ".spark" / "modules" / "spark-harness-core" / "source" / "src")
+    return candidates
+
+
+def _load_harness_kernel_class() -> type[object]:
+    try:
+        from spark_harness_core import HarnessKernel
+
+        return HarnessKernel
+    except ModuleNotFoundError:
+        pass
+
+    for candidate in _harness_core_source_candidates():
+        if not (candidate / "spark_harness_core" / "__init__.py").exists():
+            continue
+        candidate_text = str(candidate)
+        if candidate_text not in sys.path:
+            sys.path.insert(0, candidate_text)
+        try:
+            from spark_harness_core import HarnessKernel
+
+            return HarnessKernel
+        except ModuleNotFoundError:
+            continue
+    raise RuntimeError("spark_harness_core_unavailable")
+
+
+def _matching_governor_action(decision: dict, *, capability_id: str) -> dict | None:
+    envelope = decision.get("envelope") if isinstance(decision.get("envelope"), dict) else {}
+    proposed_actions = envelope.get("proposed_actions") if isinstance(envelope.get("proposed_actions"), list) else []
+    for action in proposed_actions:
+        if (
+            isinstance(action, dict)
+            and action.get("capability_id") == capability_id
+            and str(action.get("action_id") or "").strip()
+        ):
+            return action
+    return None
+
+
+def _verify_memory_promotion_governor(
+    decision: dict,
+    *,
+    tool_name: str,
+    capability_id: str,
+    action_id: str | None,
+) -> dict:
+    HarnessKernel = _load_harness_kernel_class()
+    kernel = HarnessKernel(surface=str(decision.get("surface") or "cli"))
+    verifier = getattr(kernel, "verify_governor_execution_authority", None)
+    if not callable(verifier):
+        return {"allowed": False, "reason_codes": ["harness_core_governor_verifier_unavailable"]}
+    return verifier(
+        decision,
+        expected_capability_id=capability_id,
+        expected_action_type=MEMORY_PROMOTION_ACTION_TYPE,
+        tool_name=tool_name,
+        action_id=action_id,
+    )
+
+
+def _matching_governor_authorization(
+    decision: dict,
+    *,
+    capability_id: str,
+    action_id: str,
+    turn_id: str,
+) -> dict | None:
     for authorization in decision.get("authorizations", []):
         if (
             isinstance(authorization, dict)
             and authorization.get("schema_version") == "authorization-decision-v1"
             and authorization.get("capability_id") == capability_id
+            and authorization.get("action_id") == action_id
+            and authorization.get("turn_id") == turn_id
             and authorization.get("verdict") == "allow"
+            and str(authorization.get("decision_id") or "").strip()
         ):
             return authorization
     return None
 
 
-def _matching_governor_ledger(decision: dict, *, tool_name: str, capability_id: str) -> dict | None:
+def _matching_governor_ledger(
+    decision: dict,
+    *,
+    tool_name: str,
+    capability_id: str,
+    action_id: str,
+    turn_id: str,
+    authorization_decision_id: str,
+) -> dict | None:
     for ledger in decision.get("tool_ledgers", []):
         if not isinstance(ledger, dict):
             continue
@@ -156,8 +240,14 @@ def _matching_governor_ledger(decision: dict, *, tool_name: str, capability_id: 
             ledger.get("schema_version") == "tool-call-ledger-v1"
             and ledger.get("tool_name") == tool_name
             and ledger.get("capability_id") == capability_id
+            and ledger.get("action_id") == action_id
+            and ledger.get("turn_id") == turn_id
             and authorization.get("verdict") == "allow"
-            and result.get("status") in {"not_started", "partial"}
+            and authorization.get("decision_id") == authorization_decision_id
+            and authorization.get("action_id") == action_id
+            and authorization.get("capability_id") == capability_id
+            and authorization.get("turn_id") == turn_id
+            and result.get("status") == "not_started"
         ):
             return ledger
     return None
@@ -177,7 +267,7 @@ def _validate_memory_promotion_governor(
     boundary = decision.get("execution_boundary") if isinstance(decision.get("execution_boundary"), dict) else {}
     envelope = decision.get("envelope") if isinstance(decision.get("envelope"), dict) else {}
     action_authority = envelope.get("action_authority") if isinstance(envelope.get("action_authority"), dict) else {}
-    proposed_actions = envelope.get("proposed_actions") if isinstance(envelope.get("proposed_actions"), list) else []
+    envelope_turn_id = str(envelope.get("turn_id") or decision.get("turn_id") or "").strip()
 
     if decision.get("schema_version") != "governor-decision-v1":
         errors.append("schema_version_not_governor_decision_v1")
@@ -195,14 +285,35 @@ def _validate_memory_promotion_governor(
         errors.append("envelope_not_vnext")
     if action_authority.get("state") != "executable":
         errors.append("envelope_authority_not_executable")
-    if not any(isinstance(action, dict) and action.get("capability_id") == capability_id for action in proposed_actions):
+    matching_action = _matching_governor_action(decision, capability_id=capability_id)
+    if not matching_action:
         errors.append("memory_promotion_action_missing")
+    action_id = str((matching_action or {}).get("action_id") or "").strip()
+
+    try:
+        verification = _verify_memory_promotion_governor(
+            decision,
+            tool_name=tool_name,
+            capability_id=capability_id,
+            action_id=action_id or None,
+        )
+    except RuntimeError as exc:
+        verification = {"allowed": False, "reason_codes": [str(exc) or "harness_core_governor_verifier_failed"]}
+    for reason in verification.get("reason_codes", []):
+        reason_text = str(reason)
+        if reason_text and reason_text not in errors:
+            errors.append(reason_text)
 
     missing_refs = [ref for ref in binding_refs if ref and not _contains_string(decision, ref)]
     if missing_refs:
         errors.append("memory_promotion_binding_missing")
 
-    authorization = _matching_governor_authorization(decision, capability_id=capability_id)
+    authorization = _matching_governor_authorization(
+        decision,
+        capability_id=capability_id,
+        action_id=action_id,
+        turn_id=envelope_turn_id,
+    )
     if not authorization:
         errors.append("allow_authorization_missing")
     else:
@@ -210,7 +321,14 @@ def _validate_memory_promotion_governor(
         if approval.get("required") is not True or approval.get("status") != "approved":
             errors.append("approved_human_confirmation_missing")
 
-    ledger = _matching_governor_ledger(decision, tool_name=tool_name, capability_id=capability_id)
+    ledger = _matching_governor_ledger(
+        decision,
+        tool_name=tool_name,
+        capability_id=capability_id,
+        action_id=action_id,
+        turn_id=envelope_turn_id,
+        authorization_decision_id=str((authorization or {}).get("decision_id") or ""),
+    )
     if not ledger:
         errors.append("pre_execution_tool_ledger_missing")
 
