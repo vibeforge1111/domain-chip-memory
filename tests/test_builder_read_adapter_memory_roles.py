@@ -3,7 +3,7 @@ from domain_chip_memory.sdk import MemoryWriteRequest, SparkMemorySDK
 
 
 def test_builder_read_adapter_surfaces_lookup_role_inventory() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -32,7 +32,7 @@ def test_builder_read_adapter_surfaces_lookup_role_inventory() -> None:
 
 
 def test_builder_read_adapter_surfaces_retrieval_role_inventory() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -82,7 +82,7 @@ def test_builder_read_adapter_surfaces_retrieval_role_inventory() -> None:
 
 
 def test_builder_read_adapter_surfaces_explanation_role_inventory() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",

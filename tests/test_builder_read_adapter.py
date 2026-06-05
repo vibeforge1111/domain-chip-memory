@@ -3,7 +3,7 @@ from domain_chip_memory.sdk import MemoryWriteRequest, SparkMemorySDK
 
 
 def test_builder_read_adapter_materializes_explanation_success_for_bare_telegram_subject():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -38,7 +38,7 @@ def test_builder_read_adapter_materializes_explanation_success_for_bare_telegram
 
 
 def test_builder_read_adapter_materializes_identity_evidence_success():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -76,7 +76,7 @@ def test_builder_read_adapter_materializes_identity_evidence_success():
 
 
 def test_builder_read_adapter_materializes_source_aware_episodic_recall():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -161,7 +161,7 @@ def test_builder_read_adapter_materializes_source_aware_episodic_recall():
 
 
 def test_builder_read_adapter_preserves_invalid_lookup_abstention():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     payload = execute_builder_memory_read(
         sdk,
@@ -177,7 +177,7 @@ def test_builder_read_adapter_preserves_invalid_lookup_abstention():
 
 
 def test_builder_read_adapter_passes_entity_key_to_temporal_state_reads():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="The tiny desk plant is named Mira.",

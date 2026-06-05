@@ -21,7 +21,7 @@ def test_sdk_contract_summary_exposes_retention_classes_and_lifecycle_fields() -
 
 
 def test_sdk_write_and_read_surface_retention_and_lifecycle_metadata() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     write_result = sdk.write_observation(
         MemoryWriteRequest(
@@ -51,7 +51,7 @@ def test_sdk_write_and_read_surface_retention_and_lifecycle_metadata() -> None:
 
 
 def test_sdk_event_and_explanation_traces_surface_default_retention_classes() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I moved to Dubai.",

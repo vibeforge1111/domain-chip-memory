@@ -22,7 +22,7 @@ def test_sdk_contract_summary_exposes_memory_role_catalog_and_answer_candidate_t
 
 
 def test_sdk_write_trace_reports_memory_roles_for_observations_and_events() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     observation_write = sdk.write_observation(
         MemoryWriteRequest(
@@ -49,7 +49,7 @@ def test_sdk_write_trace_reports_memory_roles_for_observations_and_events() -> N
 
 
 def test_sdk_read_and_explanation_traces_report_role_mix() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I moved to Dubai.",
@@ -91,7 +91,7 @@ def test_sdk_read_and_explanation_traces_report_role_mix() -> None:
 
 
 def test_sdk_snapshot_exports_memory_role_contract() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I moved to Dubai.",

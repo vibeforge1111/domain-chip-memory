@@ -243,7 +243,7 @@ def test_normalize_telegram_bot_export_payload_accepts_bot_api_updates():
 
 
 def test_shadow_ingest_writes_user_turns_and_skips_assistant_turns():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -284,7 +284,7 @@ def test_shadow_ingest_writes_user_turns_and_skips_assistant_turns():
 
 
 def test_shadow_ingest_counts_rejected_unsupported_writes():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -320,7 +320,7 @@ def test_shadow_ingest_counts_rejected_unsupported_writes():
 
 
 def test_shadow_ingest_skips_metadata_backed_ephemeral_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -361,7 +361,7 @@ def test_shadow_ingest_skips_metadata_backed_ephemeral_residue():
 
 
 def test_shadow_ingest_reclassifies_non_memory_questions_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -396,7 +396,7 @@ def test_shadow_ingest_reclassifies_non_memory_questions_as_residue():
 
 
 def test_shadow_ingest_reclassifies_unicode_question_chat_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -431,7 +431,7 @@ def test_shadow_ingest_reclassifies_unicode_question_chat_as_residue():
 
 
 def test_shadow_ingest_reclassifies_onboarding_turns_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -471,7 +471,7 @@ def test_shadow_ingest_reclassifies_onboarding_turns_as_residue():
 
 
 def test_shadow_ingest_reclassifies_filler_prefixed_questions_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -506,7 +506,7 @@ def test_shadow_ingest_reclassifies_filler_prefixed_questions_as_residue():
 
 
 def test_shadow_ingest_reclassifies_search_directives_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -541,7 +541,7 @@ def test_shadow_ingest_reclassifies_search_directives_as_residue():
 
 
 def test_shadow_ingest_reclassifies_execution_confirmations_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -576,7 +576,7 @@ def test_shadow_ingest_reclassifies_execution_confirmations_as_residue():
 
 
 def test_shadow_ingest_reclassifies_meta_collaboration_prompts_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -611,7 +611,7 @@ def test_shadow_ingest_reclassifies_meta_collaboration_prompts_as_residue():
 
 
 def test_shadow_ingest_reclassifies_reflective_meta_chat_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -646,7 +646,7 @@ def test_shadow_ingest_reclassifies_reflective_meta_chat_as_residue():
 
 
 def test_shadow_ingest_reclassifies_topic_fragments_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -681,7 +681,7 @@ def test_shadow_ingest_reclassifies_topic_fragments_as_residue():
 
 
 def test_shadow_ingest_reclassifies_name_yourself_meta_chat_as_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -716,7 +716,7 @@ def test_shadow_ingest_reclassifies_name_yourself_meta_chat_as_residue():
 
 
 def test_shadow_ingest_accepts_builder_project_history_as_current_mission():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -743,7 +743,7 @@ def test_shadow_ingest_accepts_builder_project_history_as_current_mission():
 
 
 def test_shadow_ingest_accepts_building_spark_statement_as_current_mission():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -770,7 +770,7 @@ def test_shadow_ingest_accepts_building_spark_statement_as_current_mission():
 
 
 def test_shadow_ingest_skips_unchanged_explicit_current_state_writes():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -823,7 +823,7 @@ def test_shadow_ingest_skips_unchanged_explicit_current_state_writes():
 
 
 def test_shadow_ingest_same_timestamp_later_turn_wins_current_state():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     filler_turns = [
@@ -876,7 +876,7 @@ def test_shadow_ingest_same_timestamp_later_turn_wins_current_state():
 
 
 def test_shadow_ingest_accepts_founder_startup_and_hack_facts():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -933,7 +933,7 @@ def test_shadow_ingest_accepts_founder_startup_and_hack_facts():
 
 
 def test_shadow_ingest_can_route_turn_to_event_write():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -958,7 +958,7 @@ def test_shadow_ingest_can_route_turn_to_event_write():
 
 
 def test_shadow_ingest_consolidates_telegram_event_write_into_latest_current_state():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -1005,7 +1005,7 @@ def test_shadow_ingest_consolidates_telegram_event_write_into_latest_current_sta
 
 
 def test_shadow_ingest_uses_explicit_structured_metadata_when_present():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -1039,7 +1039,7 @@ def test_shadow_ingest_uses_explicit_structured_metadata_when_present():
 
 
 def test_shadow_ingest_treats_bridge_queries_and_bridge_replies_as_reference_turns():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     result = adapter.ingest_conversation(
@@ -1091,7 +1091,7 @@ def test_shadow_ingest_treats_bridge_queries_and_bridge_replies_as_reference_tur
 
 
 def test_shadow_ingest_applies_promotion_policy_to_source_backed_clone_writes():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(
         sdk=sdk,
         promotion_policy_rows=(
@@ -1186,7 +1186,7 @@ def test_shadow_ingest_applies_promotion_policy_to_source_backed_clone_writes():
 
 
 def test_shadow_ingest_default_denies_source_backed_clone_without_policy_row():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(
         sdk=sdk,
         promotion_policy_rows=(
@@ -1239,7 +1239,7 @@ def test_shadow_ingest_default_denies_source_backed_clone_without_policy_row():
 
 
 def test_shadow_ingest_evaluation_summarizes_write_and_readback_quality():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     ingest_result = adapter.ingest_conversation(
@@ -1307,7 +1307,7 @@ def test_shadow_ingest_evaluation_summarizes_write_and_readback_quality():
 
 
 def test_shadow_ingest_evaluation_supports_historical_state_probes():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     ingest_result = adapter.ingest_conversation(
@@ -1355,7 +1355,7 @@ def test_shadow_ingest_evaluation_supports_historical_state_probes():
 
 
 def test_shadow_ingest_evaluation_supports_alias_and_commitment_probes():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     ingest_result = adapter.ingest_conversation(
@@ -1407,7 +1407,7 @@ def test_shadow_ingest_evaluation_supports_alias_and_commitment_probes():
 
 
 def test_shadow_ingest_evaluation_supports_negation_unknown_reported_speech_and_relationship_probes():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     ingest_result = adapter.ingest_conversation(
@@ -1498,7 +1498,7 @@ def test_shadow_ingest_evaluation_supports_negation_unknown_reported_speech_and_
 
 
 def test_shadow_ingest_evaluation_supports_relative_time_mail_and_clean_location_surface():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     ingest_result = adapter.ingest_conversation(
@@ -1554,7 +1554,7 @@ def test_shadow_ingest_evaluation_supports_relative_time_mail_and_clean_location
 
 
 def test_shadow_ingest_evaluation_supports_family_visit_events_with_iso_relative_dates():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     ingest_result = adapter.ingest_conversation(
@@ -1606,7 +1606,7 @@ def test_shadow_ingest_evaluation_supports_family_visit_events_with_iso_relative
 
 
 def test_shadow_ingest_supports_followup_grief_and_planned_group_activity_turns():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     ingest_result = adapter.ingest_conversation(
@@ -1634,7 +1634,7 @@ def test_shadow_ingest_supports_followup_grief_and_planned_group_activity_turns(
 
 
 def test_shadow_report_aggregates_multiple_evaluations():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     adapter = SparkShadowIngestAdapter(sdk=sdk)
 
     first_ingest = adapter.ingest_conversation(

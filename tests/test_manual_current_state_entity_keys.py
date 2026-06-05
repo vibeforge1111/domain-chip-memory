@@ -2,7 +2,7 @@ from domain_chip_memory import CurrentStateRequest, HistoricalStateRequest, Memo
 
 
 def test_explicit_update_respects_custom_entity_key_for_mutable_current_state_slot() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     sdk.write_observation(
         MemoryWriteRequest(
@@ -46,7 +46,7 @@ def test_explicit_update_respects_custom_entity_key_for_mutable_current_state_sl
 
 
 def test_entity_key_scopes_current_and_historical_state_reads() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     sdk.write_observation(
         MemoryWriteRequest(

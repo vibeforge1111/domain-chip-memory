@@ -392,7 +392,7 @@ class SparkMemorySDK:
         *,
         runtime_memory_architecture: str | None = None,
         runtime_memory_provider: str | None = None,
-        require_upstream_authority: bool = False,
+        require_upstream_authority: bool = True,
     ) -> None:
         self.runtime_memory_architecture = _runtime_memory_architecture(runtime_memory_architecture)
         self.runtime_memory_provider = _runtime_memory_provider(runtime_memory_provider)
@@ -3399,7 +3399,9 @@ def build_sdk_contract_summary(
             "write_event": ["auto", "event"],
         },
         "write_authority_contract": {
+            "default_mode": "SparkMemorySDK()",
             "strict_mode": "SparkMemorySDK(require_upstream_authority=True)",
+            "shadow_mode": "SparkMemorySDK(require_upstream_authority=False)",
             "required_request_fields": ["governor_decision", "authority_binding_refs"],
             "governor_schema": "governor-decision-v1",
             "tool_name": MEMORY_WRITE_TOOL_NAME,

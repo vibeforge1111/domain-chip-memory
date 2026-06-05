@@ -4076,7 +4076,7 @@ def _load_shadow_report_batch_payload(data_dir: str, *, glob_pattern: str = "*.j
 
 
 def _build_demo_sdk_maintenance_payload() -> dict:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -4141,7 +4141,7 @@ def _build_demo_sdk_maintenance_payload() -> dict:
 
 
 def _build_demo_spark_kb_payload(output_dir: str, repo_sources: list[str] | None = None) -> dict:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -10903,7 +10903,7 @@ def _load_sdk_maintenance_payload(data_file: str) -> dict:
     if not isinstance(raw_writes, list):
         raise ValueError("SDK maintenance replay file must contain a writes list.")
 
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     write_results = []
     for index, item in enumerate(raw_writes):
         if not isinstance(item, dict):

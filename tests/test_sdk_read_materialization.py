@@ -8,7 +8,7 @@ from domain_chip_memory import (
 
 
 def test_sdk_retrieve_evidence_supports_identity_summary_queries():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -44,7 +44,7 @@ def test_sdk_retrieve_evidence_supports_identity_summary_queries():
 
 
 def test_sdk_normalizes_bare_telegram_subjects_for_current_state_and_explanations():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",

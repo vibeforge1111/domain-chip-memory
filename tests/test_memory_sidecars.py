@@ -359,7 +359,7 @@ def test_mem0_shadow_adapter_prepares_memory_payload_without_persisting() -> Non
 
 
 def test_memory_record_to_sidecar_episode_preserves_evidence_provenance() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -391,7 +391,7 @@ def test_memory_record_to_sidecar_episode_preserves_evidence_provenance() -> Non
 
 
 def test_memory_record_to_sidecar_episode_maps_event_records() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_event(
         MemoryWriteRequest(
             text="",
@@ -414,7 +414,7 @@ def test_memory_record_to_sidecar_episode_maps_event_records() -> None:
 
 
 def test_memory_records_to_sidecar_episodes_batch_exports_records() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",

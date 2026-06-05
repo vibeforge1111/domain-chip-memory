@@ -82,8 +82,35 @@ def test_sdk_contract_summary_exposes_runtime_surface():
     assert "recover_task_context" in payload["trace_contracts"]
     assert "recall_episodic_context" in payload["trace_contracts"]
     assert payload["write_authority_contract"]["strict_mode"] == "SparkMemorySDK(require_upstream_authority=True)"
+    assert payload["write_authority_contract"]["default_mode"] == "SparkMemorySDK()"
+    assert payload["write_authority_contract"]["shadow_mode"] == "SparkMemorySDK(require_upstream_authority=False)"
     assert payload["write_authority_contract"]["tool_name"] == MEMORY_WRITE_TOOL_NAME
     assert "authority" in payload["trace_contracts"]["write_memory"]
+
+
+def test_sdk_default_write_requires_upstream_governor_before_mutating_state():
+    sdk = SparkMemorySDK()
+
+    write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="I live in Dubai.",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            authority_binding_refs=("session:s1", "turn:t1"),
+        )
+    )
+
+    assert write.accepted is False
+    assert write.unsupported_reason is not None
+    assert "governor_decision_missing" in write.unsupported_reason
+    assert write.trace["status"] == "authority_blocked"
+    assert write.trace["authority"]["required"] is True
+    assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).found is False
+    assert sdk.export_knowledge_base_snapshot()["counts"]["session_count"] == 0
 
 
 def test_sdk_strict_write_requires_upstream_governor_before_mutating_state():
@@ -173,7 +200,7 @@ def test_sdk_instance_stores_request_scoped_runtime_configuration():
 
 
 def test_sdk_write_and_get_current_state():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     first_write = sdk.write_observation(
         MemoryWriteRequest(
             text="I live in London.",
@@ -199,7 +226,7 @@ def test_sdk_write_and_get_current_state():
 
 
 def test_sdk_write_and_get_current_state_for_founder_startup_and_hack_facts():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I am an entrepreneur.",
@@ -247,7 +274,7 @@ def test_sdk_write_and_get_current_state_for_founder_startup_and_hack_facts():
 
 
 def test_sdk_get_current_state_respects_deletion():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I live in Dubai.",
@@ -269,7 +296,7 @@ def test_sdk_get_current_state_respects_deletion():
 
 
 def test_sdk_auto_memory_ignores_quoted_or_meta_deletion_phrases():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I live in Dubai.",
@@ -298,7 +325,7 @@ def test_sdk_auto_memory_ignores_quoted_or_meta_deletion_phrases():
 
 
 def test_sdk_auto_memory_preserves_explicit_deletion_intent():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I live in Dubai.",
@@ -320,7 +347,7 @@ def test_sdk_auto_memory_preserves_explicit_deletion_intent():
 
 
 def test_sdk_auto_memory_ignores_quoted_or_meta_mission_phrases():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     quoted = sdk.write_observation(
         MemoryWriteRequest(
             text="The phrase I'm building you is quoted here, not a mission update.",
@@ -335,7 +362,7 @@ def test_sdk_auto_memory_ignores_quoted_or_meta_mission_phrases():
 
 
 def test_sdk_auto_memory_preserves_explicit_mission_intent():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     write = sdk.write_observation(
         MemoryWriteRequest(
             text="I've been building Spark Intelligence systems and domain chips.",
@@ -351,7 +378,7 @@ def test_sdk_auto_memory_preserves_explicit_mission_intent():
 
 
 def test_sdk_entity_scoped_deletion_does_not_delete_unrelated_entity_state():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="the tiny desk plant is on the kitchen shelf",
@@ -426,7 +453,7 @@ def test_sdk_entity_scoped_deletion_does_not_delete_unrelated_entity_state():
 
 
 def test_sdk_get_historical_state_uses_as_of_cutoff():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I live in London.",
@@ -460,7 +487,7 @@ def test_sdk_get_historical_state_uses_as_of_cutoff():
 
 
 def test_sdk_explicit_current_state_observation_preserves_runtime_role() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     result = sdk.write_observation(
         MemoryWriteRequest(
@@ -484,7 +511,7 @@ def test_sdk_explicit_current_state_observation_preserves_runtime_role() -> None
 
 
 def test_sdk_explicit_delete_observation_preserves_state_deletion_role() -> None:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     result = sdk.write_observation(
         MemoryWriteRequest(
@@ -513,7 +540,7 @@ def test_sdk_explicit_delete_observation_preserves_state_deletion_role() -> None
 
 
 def test_sdk_retrieve_evidence_and_events_return_typed_roles():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I moved to Dubai.",
@@ -535,7 +562,7 @@ def test_sdk_retrieve_evidence_and_events_return_typed_roles():
 
 
 def test_sdk_rejects_unsupported_write_without_persisting_raw_residue():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     write_result = sdk.write_observation(
         MemoryWriteRequest(
@@ -552,7 +579,7 @@ def test_sdk_rejects_unsupported_write_without_persisting_raw_residue():
 
 
 def test_sdk_accepts_explicit_episodic_raw_turn_write_and_retrieves_it():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     write_result = sdk.write_observation(
         MemoryWriteRequest(
@@ -587,7 +614,7 @@ def test_sdk_accepts_explicit_episodic_raw_turn_write_and_retrieves_it():
 
 
 def test_sdk_rejects_empty_write_request():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     write_result = sdk.write_observation(MemoryWriteRequest(text="   "))
 
@@ -597,7 +624,7 @@ def test_sdk_rejects_empty_write_request():
 
 
 def test_sdk_returns_invalid_request_trace_for_bad_lookup_and_limit():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     lookup = sdk.get_current_state(CurrentStateRequest(subject="user", predicate=""))
     retrieval = sdk.retrieve_evidence(EvidenceRetrievalRequest(limit=0))
@@ -611,7 +638,7 @@ def test_sdk_returns_invalid_request_trace_for_bad_lookup_and_limit():
 
 
 def test_sdk_supports_explicit_update_and_delete_operations():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     create_result = sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -659,7 +686,7 @@ def test_sdk_supports_explicit_update_and_delete_operations():
 
 
 def test_sdk_purge_removes_matching_plaintext_and_keeps_redacted_tombstone():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I live in Dubai.",
@@ -694,7 +721,7 @@ def test_sdk_purge_removes_matching_plaintext_and_keeps_redacted_tombstone():
 
 
 def test_sdk_supports_explicit_event_write_operation():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     write_result = sdk.write_event(
         MemoryWriteRequest(
@@ -715,7 +742,7 @@ def test_sdk_supports_explicit_event_write_operation():
 
 
 def test_sdk_rejects_unsupported_explicit_operation():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
 
     write_result = sdk.write_observation(
         MemoryWriteRequest(
@@ -733,7 +760,7 @@ def test_sdk_rejects_unsupported_explicit_operation():
 
 
 def test_sdk_reconsolidates_manual_memory_into_current_state_snapshot():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -793,7 +820,7 @@ def test_sdk_reconsolidates_manual_memory_into_current_state_snapshot():
 
 
 def test_sdk_reconsolidate_marks_stale_active_state_as_preserved():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -822,7 +849,7 @@ def test_sdk_reconsolidate_marks_stale_active_state_as_preserved():
 
 
 def test_sdk_exports_dashboard_movement_feed_for_writes_reads_and_maintenance():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -932,7 +959,7 @@ def test_sdk_exports_dashboard_movement_feed_for_writes_reads_and_maintenance():
 
 
 def test_sdk_recovers_task_context_with_current_state_authority_and_traceable_episodic_support():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -1052,7 +1079,7 @@ def test_sdk_recovers_task_context_with_current_state_authority_and_traceable_ep
 
 
 def test_sdk_recalls_episodic_context_as_source_labeled_read_only_memory():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -1149,7 +1176,7 @@ def test_sdk_recalls_episodic_context_as_source_labeled_read_only_memory():
 
 
 def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     first_location = sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -1228,7 +1255,7 @@ def test_sdk_reconsolidate_marks_superseded_and_archived_active_state_entries():
 
 
 def test_sdk_reconsolidate_treats_profile_current_predicate_as_single_slot_without_entity_key():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     first_focus = sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -1272,7 +1299,7 @@ def test_sdk_reconsolidate_treats_profile_current_predicate_as_single_slot_witho
 
 
 def test_sdk_reconsolidate_marks_deleted_state_resurrected_by_newer_current_state():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     deleted_location = sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -1320,7 +1347,7 @@ def test_sdk_reconsolidate_marks_deleted_state_resurrected_by_newer_current_stat
 
 
 def test_sdk_explain_answer_returns_trace_and_support():
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="I moved to Dubai.",

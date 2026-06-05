@@ -108,7 +108,7 @@ class SparkShadowIngestAdapter:
         writable_roles: tuple[str, ...] = ("user",),
         promotion_policy_rows: tuple[JsonDict, ...] = (),
     ) -> None:
-        self.sdk = sdk or SparkMemorySDK()
+        self.sdk = sdk or SparkMemorySDK(require_upstream_authority=False)
         self.writable_roles = tuple(role.strip().lower() for role in writable_roles if role.strip())
         self.promotion_policy_rows = tuple(dict(row) for row in promotion_policy_rows if isinstance(row, dict))
         self.promotion_policy_index: dict[tuple[str, str, str, str], JsonDict] = {}
