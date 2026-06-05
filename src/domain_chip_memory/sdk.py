@@ -73,6 +73,9 @@ DASHBOARD_MOVEMENT_STATES: tuple[str, ...] = (
     "selected",
     "dropped",
 )
+MEMORY_WRITE_TOOL_NAME = "domain-chip-memory.memory.write"
+MEMORY_WRITE_CAPABILITY_ID = "capability:domain-chip-memory:memory.write"
+MEMORY_WRITE_ACTION_TYPE = "memory.write"
 
 
 def _runtime_memory_architecture(value: str | None = None) -> str:
@@ -81,6 +84,130 @@ def _runtime_memory_architecture(value: str | None = None) -> str:
 
 def _runtime_memory_provider(value: str | None = None) -> str:
     return _normalize_scalar(value) or DEFAULT_RUNTIME_MEMORY_PROVIDER
+
+
+def _contains_string(payload: Any, needle: str) -> bool:
+    if not needle:
+        return True
+    if isinstance(payload, dict):
+        return any(_contains_string(key, needle) or _contains_string(value, needle) for key, value in payload.items())
+    if isinstance(payload, (list, tuple, set)):
+        return any(_contains_string(item, needle) for item in payload)
+    return str(payload) == needle
+
+
+def _matching_write_governor_action(decision: JsonDict) -> JsonDict | None:
+    envelope = decision.get("envelope") if isinstance(decision.get("envelope"), dict) else {}
+    proposed_actions = envelope.get("proposed_actions") if isinstance(envelope.get("proposed_actions"), list) else []
+    for action in proposed_actions:
+        if (
+            isinstance(action, dict)
+            and action.get("capability_id") == MEMORY_WRITE_CAPABILITY_ID
+            and action.get("action_type") == MEMORY_WRITE_ACTION_TYPE
+            and str(action.get("action_id") or "").strip()
+        ):
+            return action
+    return None
+
+
+def _matching_write_governor_authorization(
+    decision: JsonDict,
+    *,
+    action_id: str,
+    turn_id: str,
+) -> JsonDict | None:
+    for authorization in decision.get("authorizations", []):
+        if (
+            isinstance(authorization, dict)
+            and authorization.get("schema_version") == "authorization-decision-v1"
+            and authorization.get("capability_id") == MEMORY_WRITE_CAPABILITY_ID
+            and authorization.get("action_id") == action_id
+            and authorization.get("turn_id") == turn_id
+            and authorization.get("verdict") == "allow"
+            and str(authorization.get("decision_id") or "").strip()
+        ):
+            return authorization
+    return None
+
+
+def _matching_write_governor_ledger(
+    decision: JsonDict,
+    *,
+    action_id: str,
+    turn_id: str,
+    authorization_decision_id: str,
+) -> JsonDict | None:
+    for ledger in decision.get("tool_ledgers", []):
+        if not isinstance(ledger, dict):
+            continue
+        result = ledger.get("result") if isinstance(ledger.get("result"), dict) else {}
+        authorization = ledger.get("authorization") if isinstance(ledger.get("authorization"), dict) else {}
+        if (
+            ledger.get("schema_version") == "tool-call-ledger-v1"
+            and ledger.get("tool_name") == MEMORY_WRITE_TOOL_NAME
+            and ledger.get("capability_id") == MEMORY_WRITE_CAPABILITY_ID
+            and ledger.get("action_id") == action_id
+            and ledger.get("turn_id") == turn_id
+            and authorization.get("verdict") == "allow"
+            and authorization.get("decision_id") == authorization_decision_id
+            and authorization.get("action_id") == action_id
+            and authorization.get("capability_id") == MEMORY_WRITE_CAPABILITY_ID
+            and authorization.get("turn_id") == turn_id
+            and result.get("status") == "not_started"
+        ):
+            return ledger
+    return None
+
+
+def memory_write_governor_errors(decision: JsonDict | None, *, binding_refs: tuple[str, ...]) -> list[str]:
+    if not isinstance(decision, dict):
+        return ["governor_decision_missing"]
+
+    errors: list[str] = []
+    boundary = decision.get("execution_boundary") if isinstance(decision.get("execution_boundary"), dict) else {}
+    envelope = decision.get("envelope") if isinstance(decision.get("envelope"), dict) else {}
+    action_authority = envelope.get("action_authority") if isinstance(envelope.get("action_authority"), dict) else {}
+    envelope_turn_id = str(envelope.get("turn_id") or decision.get("turn_id") or "").strip()
+
+    if decision.get("schema_version") != "governor-decision-v1":
+        errors.append("schema_version_not_governor_decision_v1")
+    if decision.get("outcome") != "execute":
+        errors.append("outcome_not_execute")
+    if decision.get("authority_state") != "executable":
+        errors.append("authority_state_not_executable")
+    if boundary.get("action_authorized") is not True:
+        errors.append("execution_boundary_not_authorized")
+    if boundary.get("legacy_authority_demoted") is not True:
+        errors.append("legacy_authority_not_demoted")
+    if envelope.get("schema_version") != "turn-intent-envelope-vnext":
+        errors.append("envelope_not_vnext")
+    if action_authority.get("state") != "executable":
+        errors.append("envelope_authority_not_executable")
+
+    matching_action = _matching_write_governor_action(decision)
+    if not matching_action:
+        errors.append("memory_write_action_missing")
+    action_id = str((matching_action or {}).get("action_id") or "").strip()
+
+    refs = tuple(ref for ref in binding_refs if ref)
+    if not refs:
+        errors.append("authority_binding_refs_missing")
+    elif any(not _contains_string(decision, ref) for ref in refs):
+        errors.append("authority_binding_missing")
+
+    authorization = _matching_write_governor_authorization(decision, action_id=action_id, turn_id=envelope_turn_id)
+    if not authorization:
+        errors.append("allow_authorization_missing")
+
+    ledger = _matching_write_governor_ledger(
+        decision,
+        action_id=action_id,
+        turn_id=envelope_turn_id,
+        authorization_decision_id=str((authorization or {}).get("decision_id") or ""),
+    )
+    if not ledger:
+        errors.append("pre_execution_tool_ledger_missing")
+    return errors
 
 
 @dataclass(frozen=True)
@@ -103,6 +230,8 @@ class MemoryWriteRequest:
     conflicts_with: list[str] = field(default_factory=list)
     deleted_at: str | None = None
     metadata: JsonDict = field(default_factory=dict)
+    governor_decision: JsonDict | None = None
+    authority_binding_refs: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -263,9 +392,11 @@ class SparkMemorySDK:
         *,
         runtime_memory_architecture: str | None = None,
         runtime_memory_provider: str | None = None,
+        require_upstream_authority: bool = False,
     ) -> None:
         self.runtime_memory_architecture = _runtime_memory_architecture(runtime_memory_architecture)
         self.runtime_memory_provider = _runtime_memory_provider(runtime_memory_provider)
+        self.require_upstream_authority = require_upstream_authority
         self._sessions: list[NormalizedSession] = []
         self._session_counter = 0
         self._manual_observations: list[ObservationEntry] = []
@@ -991,6 +1122,26 @@ class SparkMemorySDK:
             },
         }
 
+    def _write_authority_errors(self, request: MemoryWriteRequest) -> list[str]:
+        if not self.require_upstream_authority:
+            return []
+        binding_refs = tuple(str(ref).strip() for ref in request.authority_binding_refs if str(ref).strip())
+        return memory_write_governor_errors(request.governor_decision, binding_refs=binding_refs)
+
+    def _write_authority_trace(self, request: MemoryWriteRequest, *, errors: list[str] | None = None) -> JsonDict:
+        decision = request.governor_decision if isinstance(request.governor_decision, dict) else {}
+        errors = list(errors or [])
+        return {
+            "required": self.require_upstream_authority,
+            "state": "blocked" if errors else "governor_verified" if self.require_upstream_authority else "advisory_shadow",
+            "tool_name": MEMORY_WRITE_TOOL_NAME,
+            "capability_id": MEMORY_WRITE_CAPABILITY_ID,
+            "action_type": MEMORY_WRITE_ACTION_TYPE,
+            "governor_decision_id": decision.get("decision_id"),
+            "binding_refs": [str(ref).strip() for ref in request.authority_binding_refs if str(ref).strip()],
+            "errors": errors,
+        }
+
     def _write(self, request: MemoryWriteRequest, *, write_kind: str) -> MemoryWriteResult:
         operation = _normalize_scalar(request.operation).lower() or "auto"
         cleaned_text = str(request.text or "").strip()
@@ -1028,6 +1179,7 @@ class SparkMemorySDK:
                     "write_kind": write_kind,
                     "write_operation": operation,
                     "persisted": False,
+                    "authority": self._write_authority_trace(request),
                 },
             )
 
@@ -1063,6 +1215,44 @@ class SparkMemorySDK:
                     "write_kind": write_kind,
                     "write_operation": operation,
                     "persisted": False,
+                    "authority": self._write_authority_trace(request),
+                },
+            )
+
+        authority_errors = self._write_authority_errors(request)
+        if authority_errors:
+            reason = "authority_required:" + ",".join(authority_errors)
+            self._append_request_dashboard_movement(
+                movement_state="blocked",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason=reason,
+            )
+            self._append_request_dashboard_movement(
+                movement_state="dropped",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason=reason,
+            )
+            return MemoryWriteResult(
+                session_id=session_id,
+                turn_id=turn_id,
+                accepted=False,
+                observations_written=0,
+                events_written=0,
+                observations=[],
+                events=[],
+                unsupported_reason=reason,
+                trace={
+                    "operation": "write_memory",
+                    "status": "authority_blocked",
+                    "reason": reason,
+                    "write_kind": write_kind,
+                    "write_operation": operation,
+                    "persisted": False,
+                    "authority": self._write_authority_trace(request, errors=authority_errors),
                 },
             )
 
@@ -1112,6 +1302,7 @@ class SparkMemorySDK:
                         "write_kind": write_kind,
                         "write_operation": operation,
                         "persisted": False,
+                        "authority": self._write_authority_trace(request),
                     },
                 )
             observations = list(explicit_memory["observations"])
@@ -1262,6 +1453,7 @@ class SparkMemorySDK:
                 "retention_classes": self._unique_retention_classes([*observation_records, *event_records]),
                 "primary_retention_class": self._primary_retention_class([*observation_records, *event_records]),
                 "lifecycle_fields_present": self._lifecycle_fields_present_for_items([*observation_records, *event_records]),
+                "authority": self._write_authority_trace(request),
                 **purge_result,
             },
         )
@@ -3206,6 +3398,16 @@ def build_sdk_contract_summary(
             "write_observation": ["auto", "create", "update", "delete", "purge"],
             "write_event": ["auto", "event"],
         },
+        "write_authority_contract": {
+            "strict_mode": "SparkMemorySDK(require_upstream_authority=True)",
+            "required_request_fields": ["governor_decision", "authority_binding_refs"],
+            "governor_schema": "governor-decision-v1",
+            "tool_name": MEMORY_WRITE_TOOL_NAME,
+            "capability_id": MEMORY_WRITE_CAPABILITY_ID,
+            "action_type": MEMORY_WRITE_ACTION_TYPE,
+            "non_strict_state": "advisory_shadow",
+            "strict_without_authority": "blocked_before_session_or_memory_mutation",
+        },
         "maintenance_methods": ["reconsolidate_manual_memory"],
         "export_methods": ["export_knowledge_base_snapshot"],
         "promotion_gate_contract": build_promotion_gate_contract_summary(),
@@ -3257,6 +3459,7 @@ def build_sdk_contract_summary(
                 "retention_classes",
                 "primary_retention_class",
                 "lifecycle_fields_present",
+                "authority",
             ],
             "read_memory": [
                 "memory_role",

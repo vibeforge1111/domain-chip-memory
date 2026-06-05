@@ -10,6 +10,59 @@ from domain_chip_memory import (
     TaskRecoveryRequest,
     build_sdk_contract_summary,
 )
+from domain_chip_memory.sdk import MEMORY_WRITE_ACTION_TYPE, MEMORY_WRITE_CAPABILITY_ID, MEMORY_WRITE_TOOL_NAME
+
+
+def _memory_write_governor_decision(binding_refs: tuple[str, ...]) -> dict:
+    action_id = "action-memory-write"
+    turn_id = "turn-intent-memory-write"
+    decision_id = "auth-memory-write"
+    authorization = {
+        "schema_version": "authorization-decision-v1",
+        "decision_id": decision_id,
+        "verdict": "allow",
+        "capability_id": MEMORY_WRITE_CAPABILITY_ID,
+        "action_id": action_id,
+        "turn_id": turn_id,
+    }
+    return {
+        "schema_version": "governor-decision-v1",
+        "decision_id": "governor-memory-write",
+        "turn_id": turn_id,
+        "surface": "cli",
+        "outcome": "execute",
+        "authority_state": "executable",
+        "binding_refs": list(binding_refs),
+        "execution_boundary": {
+            "action_authorized": True,
+            "legacy_authority_demoted": True,
+        },
+        "envelope": {
+            "schema_version": "turn-intent-envelope-vnext",
+            "turn_id": turn_id,
+            "action_authority": {"state": "executable"},
+            "proposed_actions": [
+                {
+                    "action_id": action_id,
+                    "capability_id": MEMORY_WRITE_CAPABILITY_ID,
+                    "action_type": MEMORY_WRITE_ACTION_TYPE,
+                }
+            ],
+        },
+        "authorizations": [authorization],
+        "tool_ledgers": [
+            {
+                "schema_version": "tool-call-ledger-v1",
+                "ledger_id": "ledger-memory-write",
+                "tool_name": MEMORY_WRITE_TOOL_NAME,
+                "capability_id": MEMORY_WRITE_CAPABILITY_ID,
+                "action_id": action_id,
+                "turn_id": turn_id,
+                "authorization": dict(authorization),
+                "result": {"status": "not_started"},
+            }
+        ],
+    }
 
 
 def test_sdk_contract_summary_exposes_runtime_surface():
@@ -28,6 +81,85 @@ def test_sdk_contract_summary_exposes_runtime_surface():
     assert "EpisodicRecallResult" in payload["response_contracts"]
     assert "recover_task_context" in payload["trace_contracts"]
     assert "recall_episodic_context" in payload["trace_contracts"]
+    assert payload["write_authority_contract"]["strict_mode"] == "SparkMemorySDK(require_upstream_authority=True)"
+    assert payload["write_authority_contract"]["tool_name"] == MEMORY_WRITE_TOOL_NAME
+    assert "authority" in payload["trace_contracts"]["write_memory"]
+
+
+def test_sdk_strict_write_requires_upstream_governor_before_mutating_state():
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+
+    write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="I live in Dubai.",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            authority_binding_refs=("session:s1", "turn:t1"),
+        )
+    )
+
+    assert write.accepted is False
+    assert write.unsupported_reason is not None
+    assert "governor_decision_missing" in write.unsupported_reason
+    assert write.trace["status"] == "authority_blocked"
+    assert write.trace["authority"]["state"] == "blocked"
+    assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).found is False
+    assert sdk.export_knowledge_base_snapshot()["counts"]["session_count"] == 0
+
+
+def test_sdk_strict_write_accepts_verified_governor_binding():
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+    binding_refs = ("session:s1", "turn:t1", "memory-write:location")
+    governor = _memory_write_governor_decision(binding_refs)
+
+    write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="I live in Dubai.",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+
+    assert write.accepted is True
+    assert write.trace["authority"]["state"] == "governor_verified"
+    assert write.trace["authority"]["governor_decision_id"] == "governor-memory-write"
+    assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).value == "Dubai"
+
+
+def test_sdk_strict_write_rejects_copied_governor_ledger():
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+    binding_refs = ("session:s1", "turn:t1", "memory-write:location")
+    governor = _memory_write_governor_decision(binding_refs)
+    governor["tool_ledgers"][0]["action_id"] = "copied-action"
+
+    write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="I live in Dubai.",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+
+    assert write.accepted is False
+    assert write.unsupported_reason is not None
+    assert "pre_execution_tool_ledger_missing" in write.unsupported_reason
+    assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).found is False
 
 
 def test_sdk_instance_stores_request_scoped_runtime_configuration():
