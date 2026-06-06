@@ -72,6 +72,28 @@ def test_memory_old_replay_kb_and_benchmark_planes_are_evidence_only_or_quaranti
             assert plane["harness_binding"]["evidence_only"] is True
 
 
+def test_shadow_and_kb_inventory_planes_have_advisory_claim_boundaries() -> None:
+    planes = {plane["plane_id"]: plane for plane in build_memory_legacy_authority_planes()}
+
+    for plane_id in (
+        "legacy-plane:memory-shadow-replay-adapters",
+        "legacy-plane:memory-kb-compiler-read-surface",
+    ):
+        plane = planes[plane_id]
+        rendered = " ".join(
+            [
+                str(plane.get("summary") or ""),
+                str(plane.get("claim_boundary") or ""),
+            ]
+        ).lower()
+
+        assert plane["harness_binding"]["evidence_only"] is True
+        assert "advisory/evidence-only" in rendered
+        assert "governed memory" not in rendered
+        assert "governed snapshots" not in rendered
+        assert "authoritative" not in rendered
+
+
 def test_legacy_authority_inventory_cli_command_runs(monkeypatch, capsys) -> None:
     monkeypatch.setattr(sys, "argv", ["domain_chip_memory.cli", "legacy-authority-inventory"])
 

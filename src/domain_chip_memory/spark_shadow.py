@@ -18,6 +18,24 @@ from .sdk import (
 )
 
 
+SHADOW_REPLAY_AUTHORITY_BOUNDARY: JsonDict = {
+    "mode": "advisory_evidence_only",
+    "evidence_only": True,
+    "live_memory_authority": False,
+    "writes_live_memory": False,
+    "routes_live_turns": False,
+    "requires_harness_core_governor_promotion": True,
+    "claim_boundary": (
+        "Shadow replay output is diagnostic evidence for operators. It cannot promote, publish, "
+        "or route live turns without explicit Harness Core/Governor authority."
+    ),
+}
+
+
+def build_shadow_replay_authority_boundary() -> JsonDict:
+    return dict(SHADOW_REPLAY_AUTHORITY_BOUNDARY)
+
+
 @dataclass(frozen=True)
 class SparkShadowTurn:
     message_id: str
@@ -1014,6 +1032,7 @@ def build_shadow_report(evaluations: list[SparkShadowEvaluationResult]) -> Spark
             {"memory_role": role, "count": memory_role_counts[role]}
             for role in sorted(memory_role_counts)
         ],
+        "authority_boundary": build_shadow_replay_authority_boundary(),
     }
     return SparkShadowReport(
         run_count=len(evaluations),
@@ -1022,6 +1041,7 @@ def build_shadow_report(evaluations: list[SparkShadowEvaluationResult]) -> Spark
         trace={
             "operation": "build_shadow_report",
             "run_count": len(evaluations),
+            "authority_boundary": build_shadow_replay_authority_boundary(),
         },
     )
 
@@ -1039,12 +1059,14 @@ def build_shadow_ingest_contract_summary() -> dict[str, Any]:
         ],
         "behavior": [
             "accept Builder-style conversation turns",
-            "write only configured roles into SparkMemorySDK",
+            "write only configured roles into a local replay SparkMemorySDK",
             "optionally apply promotion-policy gating to source-backed clone writes before persistence",
             "report accepted, rejected, skipped, and reference turns with replayable traces",
             "evaluate post-ingest current-state, historical-state, and evidence probes",
-            "aggregate multiple shadow evaluations into a Spark-facing quality report",
+            "aggregate multiple shadow evaluations into an advisory Spark-facing quality report",
+            "emit evidence-only diagnostics with no live memory authority",
         ],
+        "authority_boundary": build_shadow_replay_authority_boundary(),
     }
 
 
@@ -1348,6 +1370,7 @@ def build_builder_shadow_adapter_contract_summary() -> dict[str, Any]:
             "min_results": ["min_results", "minResults"],
         },
         "output_shape": "Spark shadow replay JSON compatible with validate-spark-shadow-replay and run-spark-shadow-report",
+        "authority_boundary": build_shadow_replay_authority_boundary(),
     }
 
 
@@ -1369,6 +1392,7 @@ def build_telegram_shadow_adapter_contract_summary() -> dict[str, Any]:
             "telegram from.is_bot = false": "user",
         },
         "output_shape": "Spark shadow replay JSON compatible with validate-spark-shadow-replay and run-spark-shadow-report",
+        "authority_boundary": build_shadow_replay_authority_boundary(),
     }
 
 
@@ -1549,9 +1573,10 @@ def build_shadow_replay_contract_summary() -> dict[str, Any]:
             "python -m domain_chip_memory.cli validate-spark-shadow-replay <file>",
             "python -m domain_chip_memory.cli validate-spark-shadow-replay-batch <dir>",
         ],
+        "authority_boundary": build_shadow_replay_authority_boundary(),
         "notes": [
             "Single-file replay emits evaluations and one aggregate report.",
-            "Batch replay adds source_files and source_reports on top of the same aggregate report format.",
+            "Batch replay adds source_files and source_reports on top of the same aggregate advisory report format.",
         ],
     }
 

@@ -22,6 +22,8 @@ def test_shadow_ingest_contract_summary_exposes_runtime_surface():
     assert "SparkShadowIngestRequest" in payload["request_contracts"]
     assert "SparkShadowProbe" in payload["request_contracts"]
     assert "SparkShadowReport" in payload["response_contracts"]
+    assert payload["authority_boundary"]["mode"] == "advisory_evidence_only"
+    assert payload["authority_boundary"]["live_memory_authority"] is False
 
 
 def test_shadow_replay_contract_summary_exposes_file_shapes():
@@ -34,6 +36,8 @@ def test_shadow_replay_contract_summary_exposes_file_shapes():
     assert payload["supported_probe_types"] == ["current_state", "historical_state", "evidence"]
     assert "validate-spark-shadow-replay <file>" in payload["validation_entrypoints"][1]
     assert "validate-spark-shadow-replay-batch <dir>" in payload["validation_entrypoints"][2]
+    assert payload["authority_boundary"]["evidence_only"] is True
+    assert payload["authority_boundary"]["requires_harness_core_governor_promotion"] is True
 
 
 def test_validate_shadow_replay_payload_reports_good_file_shape():
@@ -1757,6 +1761,19 @@ def test_shadow_report_aggregates_multiple_evaluations():
         {"memory_role": "current_state", "count": 1},
         {"memory_role": "structured_evidence", "count": 2},
     ]
+    assert report.summary["authority_boundary"] == {
+        "mode": "advisory_evidence_only",
+        "evidence_only": True,
+        "live_memory_authority": False,
+        "writes_live_memory": False,
+        "routes_live_turns": False,
+        "requires_harness_core_governor_promotion": True,
+        "claim_boundary": (
+            "Shadow replay output is diagnostic evidence for operators. It cannot promote, publish, "
+            "or route live turns without explicit Harness Core/Governor authority."
+        ),
+    }
+    assert report.trace["authority_boundary"]["mode"] == "advisory_evidence_only"
     assert report.conversation_rows == [
         {
             "conversation_id": "builder-conv-6",

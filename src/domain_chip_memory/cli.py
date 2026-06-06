@@ -57,6 +57,7 @@ from .spark_shadow import (
     build_builder_shadow_adapter_contract_summary,
     build_shadow_ingest_contract_summary,
     build_shadow_report,
+    build_shadow_replay_authority_boundary,
     build_shadow_replay_contract_summary,
     normalize_builder_shadow_export_payload,
     normalize_telegram_bot_export_payload,
@@ -684,6 +685,13 @@ def _build_shadow_report_payload_from_evaluations(evaluations: list) -> dict:
     }
 
 
+def _shadow_replay_authority_provenance_line() -> str:
+    return (
+        "Authority boundary: advisory/evidence-only replay output; requires explicit "
+        "Harness Core/Governor promotion before live use."
+    )
+
+
 def _load_shadow_report_payload(data_file: str) -> dict:
     return _build_shadow_report_payload_from_evaluations(_load_shadow_evaluations(data_file))
 
@@ -729,11 +737,13 @@ def _build_shadow_report_filed_outputs(shadow_payload: dict) -> list[dict]:
                 f"{summary.get('reference_turns', 0)} reference turns."
             ),
             "explanation": (
-                "This filed output summarizes the governed Spark shadow replay so the KB can expose "
-                "write acceptance, rejection, and probe coverage alongside the runtime snapshot."
+                "This filed output summarizes an advisory/evidence-only Spark shadow replay so the KB can expose "
+                "write acceptance, rejection, and probe coverage alongside the local replay snapshot."
             ),
             "memory_role": "shadow_report",
+            "authority_boundary": build_shadow_replay_authority_boundary(),
             "provenance": [
+                _shadow_replay_authority_provenance_line(),
                 *conversation_lines,
                 *([f"Probe coverage: {line}" for line in probe_lines] or ["Probe coverage: none recorded."]),
                 *([f"Unsupported reasons: {line}" for line in unsupported_lines] or ["Unsupported reasons: none recorded."]),
@@ -755,10 +765,12 @@ def _build_shadow_report_filed_outputs(shadow_payload: dict) -> list[dict]:
                 ),
                 "explanation": (
                     "This filed output preserves one Spark-facing conversation summary inside the KB so replay results "
-                    "and governed memory pages can be inspected together."
+                    "and local replay memory pages can be inspected together as advisory evidence."
                 ),
                 "memory_role": "shadow_report",
+                "authority_boundary": build_shadow_replay_authority_boundary(),
                 "provenance": [
+                    _shadow_replay_authority_provenance_line(),
                     f"`{conversation_id}`",
                     f"Accepted writes: `{row.get('accepted_writes', 0)}`",
                     f"Rejected writes: `{row.get('rejected_writes', 0)}`",
@@ -807,10 +819,12 @@ def _build_shadow_failure_taxonomy_filed_outputs(shadow_payload: dict) -> list[d
             ),
             "explanation": (
                 "This filed output turns the replay diagnostics into a compact operator-facing failure dossier "
-                "inside the KB so the visible vault carries both the memory state and the current integration gaps."
+                "inside the KB so the visible vault carries local replay state and current integration gaps as advisory evidence."
             ),
             "memory_role": "shadow_report",
+            "authority_boundary": build_shadow_replay_authority_boundary(),
             "provenance": [
+                _shadow_replay_authority_provenance_line(),
                 *([f"Issue bucket: {line}" for line in issue_lines] or ["Issue bucket: none recorded."]),
                 *([f"Conversation hotspot: {line}" for line in hotspot_lines] or ["Conversation hotspot: none recorded."]),
                 *([f"Next action: {line}" for line in next_action_lines] or ["Next action: none recorded."]),
@@ -1226,7 +1240,7 @@ def _build_shadow_failure_taxonomy_payload(
                 "label": "write_rejection",
                 "count": rejected_writes,
                 "severity": "high",
-                "summary": f"{rejected_writes} turns were rejected by governed memory writes.",
+                "summary": f"{rejected_writes} turns were rejected by local replay memory writes.",
             }
         )
     if gate_skip_total:
@@ -1260,7 +1274,7 @@ def _build_shadow_failure_taxonomy_payload(
                 "count": duplicate_churn_total,
                 "severity": "medium",
                 "summary": (
-                    f"{duplicate_churn_total} writes were skipped because the governed current-state value already "
+                    f"{duplicate_churn_total} writes were skipped because the local replay current-state value already "
                     "matched the incoming value."
                 ),
             }
@@ -1431,7 +1445,7 @@ def _build_shadow_failure_taxonomy_payload(
                     "label": "fix_supported_read_answer_materialization",
                     "priority": 2,
                     "rationale": (
-                        "Builder reported no supported answer even though replay already has governed memory for "
+                        "Builder reported no supported answer even though replay already has advisory evidence for "
                         "the requested fact. Trace the read contract and answer-materialization path before calling "
                         "this a memory coverage issue."
                     ),
@@ -10990,7 +11004,7 @@ def main() -> None:
     build_spark_kb.add_argument("--write")
     build_spark_kb_from_shadow = subparsers.add_parser(
         "build-spark-kb-from-shadow-replay",
-        help="Replay Spark shadow traffic, export governed memory, and compile a Spark KB vault from that run.",
+        help="Replay Spark shadow traffic, export advisory replay evidence, and compile a Spark KB vault from that run.",
     )
     build_spark_kb_from_shadow.add_argument("data_file")
     build_spark_kb_from_shadow.add_argument("output_dir")
@@ -10999,7 +11013,7 @@ def main() -> None:
     build_spark_kb_from_shadow.add_argument("--write")
     build_spark_kb_from_shadow_batch = subparsers.add_parser(
         "build-spark-kb-from-shadow-replay-batch",
-        help="Replay a directory of Spark shadow traffic, export governed memory, and compile one Spark KB vault from the batch.",
+        help="Replay a directory of Spark shadow traffic, export advisory replay evidence, and compile one Spark KB vault from the batch.",
     )
     build_spark_kb_from_shadow_batch.add_argument("data_dir")
     build_spark_kb_from_shadow_batch.add_argument("output_dir")
@@ -11213,7 +11227,7 @@ def main() -> None:
     taxonomy_telegram_shadow_batch.add_argument("--write")
     build_spark_kb_from_builder = subparsers.add_parser(
         "build-spark-kb-from-builder-export",
-        help="Normalize a Spark Builder export, replay it through governed memory, and compile a Spark KB vault.",
+        help="Normalize a Spark Builder export, replay it through a local advisory memory runtime, and compile a Spark KB vault.",
     )
     build_spark_kb_from_builder.add_argument("data_file")
     build_spark_kb_from_builder.add_argument("output_dir")
@@ -11223,7 +11237,7 @@ def main() -> None:
     build_spark_kb_from_builder.add_argument("--write")
     build_spark_kb_from_builder_batch = subparsers.add_parser(
         "build-spark-kb-from-builder-export-batch",
-        help="Normalize a directory of Spark Builder exports, replay them through one governed memory runtime, and compile one Spark KB vault.",
+        help="Normalize a directory of Spark Builder exports, replay them through one local advisory memory runtime, and compile one Spark KB vault.",
     )
     build_spark_kb_from_builder_batch.add_argument("data_dir")
     build_spark_kb_from_builder_batch.add_argument("output_dir")
@@ -11234,7 +11248,7 @@ def main() -> None:
     build_spark_kb_from_builder_batch.add_argument("--write")
     build_spark_kb_from_telegram = subparsers.add_parser(
         "build-spark-kb-from-telegram-export",
-        help="Normalize a Telegram bot export, replay it through governed memory, and compile a Spark KB vault.",
+        help="Normalize a Telegram bot export, replay it through a local advisory memory runtime, and compile a Spark KB vault.",
     )
     build_spark_kb_from_telegram.add_argument("data_file")
     build_spark_kb_from_telegram.add_argument("output_dir")
@@ -11244,7 +11258,7 @@ def main() -> None:
     build_spark_kb_from_telegram.add_argument("--write")
     build_spark_kb_from_telegram_batch = subparsers.add_parser(
         "build-spark-kb-from-telegram-export-batch",
-        help="Normalize a directory of Telegram bot exports, replay them through one governed memory runtime, and compile one Spark KB vault.",
+        help="Normalize a directory of Telegram bot exports, replay them through one local advisory memory runtime, and compile one Spark KB vault.",
     )
     build_spark_kb_from_telegram_batch.add_argument("data_dir")
     build_spark_kb_from_telegram_batch.add_argument("output_dir")
@@ -11285,7 +11299,7 @@ def main() -> None:
     run_spark_builder_telegram_intake.add_argument("--write")
     run_spark_builder_state_telegram_intake = subparsers.add_parser(
         "run-spark-builder-state-telegram-intake",
-        help="Read Spark Intelligence Builder telegram_runtime events from state.db, replay them through governed memory, and compile one Spark KB vault in one run.",
+        help="Read Spark Intelligence Builder telegram_runtime events from state.db, replay them through local advisory memory, and compile one Spark KB vault in one run.",
     )
     run_spark_builder_state_telegram_intake.add_argument("builder_home")
     run_spark_builder_state_telegram_intake.add_argument("output_dir")

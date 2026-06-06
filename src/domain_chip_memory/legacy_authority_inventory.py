@@ -21,6 +21,7 @@ def _plane(
     consumer_of_governor: bool = False,
     ledger_required: bool = False,
     upstream_authority_required: bool = False,
+    claim_boundary: str | None = None,
 ) -> dict[str, Any]:
     if disposition not in CANONICAL_DISPOSITIONS:
         raise ValueError(f"Unsupported legacy authority disposition: {disposition}")
@@ -32,6 +33,7 @@ def _plane(
         "plane_type": plane_type,
         "source_path": source_path,
         "summary": summary,
+        "claim_boundary": claim_boundary or "",
         "authority_risk": dict(authority_risk or {}),
         "disposition": disposition,
         "harness_binding": {
@@ -123,10 +125,14 @@ def build_memory_legacy_authority_planes() -> list[dict[str, Any]]:
             source_path="src/domain_chip_memory/spark_shadow.py,src/domain_chip_memory/cli.py",
             summary=(
                 "Builder and Telegram shadow adapters normalize offline exports for replay and failure taxonomy; "
-                "they do not write live memory or route live turns."
+                "they do not write live memory, promote memory, or route live turns."
             ),
             disposition="evidence_adapter",
             evidence_only=True,
+            claim_boundary=(
+                "Advisory/evidence-only replay diagnostics; explicit Harness Core/Governor authority is required "
+                "before any live promotion, publish, or routing use."
+            ),
         ),
         _plane(
             plane_id="memory-kb-compiler-read-surface",
@@ -134,11 +140,15 @@ def build_memory_legacy_authority_planes() -> list[dict[str, Any]]:
             plane_type="artifact_compiler",
             source_path="src/domain_chip_memory/spark_kb.py,src/domain_chip_memory/spark_kb_html.py,src/domain_chip_memory/cli.py",
             summary=(
-                "Spark KB compilers and read reports materialize governed snapshots and metadata; published release "
-                "writes remain behind the memory promotion Governor checks."
+                "Spark KB compilers and read reports materialize advisory snapshots and metadata; published release "
+                "writes remain behind the memory promotion Harness Core/Governor checks."
             ),
             disposition="evidence_adapter",
             evidence_only=True,
+            claim_boundary=(
+                "Advisory/evidence-only read surface unless a published release path supplies explicit "
+                "Harness Core/Governor authority."
+            ),
         ),
         _plane(
             plane_id="memory-sidecar-candidates",

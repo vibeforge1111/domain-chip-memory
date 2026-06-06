@@ -1398,6 +1398,47 @@ def test_build_spark_kb_from_shadow_replay_cli_compiles_kb_from_spark_flow(tmp_p
     assert (output_dir / "wiki" / "sources" / "repo-spark-notes.md").exists()
 
 
+def test_shadow_kb_filed_outputs_are_advisory_evidence_only():
+    shadow_payload = {
+        "report": {
+            "run_count": 1,
+            "summary": {
+                "accepted_writes": 1,
+                "rejected_writes": 1,
+                "skipped_turns": 1,
+                "reference_turns": 0,
+                "total_turns": 3,
+                "unsupported_reasons": [
+                    {"reason": "no_structured_memory_extracted", "count": 1},
+                    {"reason": "unchanged_current_state", "count": 1},
+                ],
+                "probe_rows": [],
+            },
+            "conversation_rows": [
+                {
+                    "conversation_id": "shadow-kb-1",
+                    "accepted_writes": 1,
+                    "rejected_writes": 1,
+                    "skipped_turns": 1,
+                    "reference_turns": 0,
+                }
+            ],
+        }
+    }
+
+    filed_outputs = (
+        cli._build_shadow_report_filed_outputs(shadow_payload)
+        + cli._build_shadow_failure_taxonomy_filed_outputs(shadow_payload)
+    )
+    rendered = json.dumps(filed_outputs).lower()
+
+    assert all(item["authority_boundary"]["mode"] == "advisory_evidence_only" for item in filed_outputs)
+    assert "advisory/evidence-only" in rendered
+    assert "governed memory" not in rendered
+    assert "governed spark shadow" not in rendered
+    assert "authoritative" not in rendered
+
+
 def test_build_spark_kb_from_shadow_replay_batch_cli_compiles_one_vault_for_directory(tmp_path: Path, monkeypatch):
     data_dir = tmp_path / "shadow_batch"
     output_dir = tmp_path / "spark_shadow_batch_kb"
