@@ -16849,6 +16849,7 @@ def test_beam_judged_resume_batch_cli_writes_powershell_script(tmp_path: Path, m
         encoding="utf-8",
     )
 
+    monkeypatch.setenv("MINIMAX_API_KEY", "minimax-test-key")
     monkeypatch.setattr(
         sys,
         "argv",
@@ -16957,6 +16958,8 @@ def test_beam_judged_resume_batch_cli_can_execute_targets(tmp_path: Path, monkey
         ),
         encoding="utf-8",
     )
+
+    monkeypatch.setenv("MINIMAX_API_KEY", "minimax-test-key")
 
     class FakeCompletedProcess:
         def __init__(self):

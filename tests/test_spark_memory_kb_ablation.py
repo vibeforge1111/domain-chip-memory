@@ -25,6 +25,12 @@ def _memory_governor_decision(
     binding_summary = " | ".join(binding_refs)
     evidence = [
         evidence_ref(
+            "fresh_user_intent",
+            "test",
+            "Owner explicitly approved governed memory promotion in this test turn.",
+            confidence=1.0,
+        ),
+        evidence_ref(
             "human_confirmation",
             "test",
             "Owner approved governed memory promotion.",
