@@ -681,7 +681,10 @@ def _load_recursive_run_records(html_file: Path) -> list[dict[str, Any]]:
 
 def _recursive_record_from_metadata(metadata_path: Path, html_file: Path) -> dict[str, Any] | None:
     try:
-        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        try:
+            payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError("Invalid JSON (spark_kb_html.py)") from exc
     except (OSError, json.JSONDecodeError):
         return None
     if not isinstance(payload, dict) or payload.get("schemaVersion") != "spark-recursive-wiki-pairing.v1":
