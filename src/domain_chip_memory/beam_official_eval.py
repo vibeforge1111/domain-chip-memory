@@ -76,7 +76,10 @@ def export_beam_public_answers_from_scorecard(
     *,
     result_file_name: str = "domain_chip_memory_answers.json",
 ) -> dict[str, Any]:
-    payload = json.loads(Path(scorecard_path).read_text(encoding="utf-8"))
+    try:
+        payload = json.loads(Path(scorecard_path).read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (beam_official_eval.py)") from exc
     if not isinstance(payload, dict):
         raise ValueError("BEAM scorecard export expected a JSON object.")
 
