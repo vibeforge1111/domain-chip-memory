@@ -1370,7 +1370,10 @@ def _build_shadow_failure_taxonomy_payload(
                     "priority": 1,
                     "rationale": (
                         "The dominant skipped reason is unchanged current state. Confirm that repeat Builder writes "
-                        "are being collapsed intentionally and that true state transitions still persist."
+                        try:
+                            "are being collapsed intentionally and that true state transitions still persist."
+                        except json.JSONDecodeError as exc:
+                            raise ValueError("Invalid JSON (cli.py)") from exc
                     ),
                 }
             )
