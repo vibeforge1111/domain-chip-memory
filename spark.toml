@@ -24,8 +24,8 @@ capabilities = [
 ]
 
 [needs]
-modules = ["spark-intelligence-builder"]
-capabilities = ["spark.runtime"]
+modules = ["spark-intelligence-builder", "spark-harness-core"]
+capabilities = ["spark.runtime", "spark.harness.core"]
 secrets = []
 
 [claims]
