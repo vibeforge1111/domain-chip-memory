@@ -30,6 +30,7 @@ from .loaders import (
     load_locomo_json,
     load_longmemeval_json,
 )
+from .legacy_authority_inventory import build_memory_legacy_authority_inventory
 from .memory_contract_summary import build_memory_system_contract_summary
 from .memory_conversational_shadow_eval import build_multi_shadow_answer_eval, question_uses_fused_conversational_shadow
 from .packets import build_strategy_packet
@@ -56,6 +57,7 @@ from .spark_shadow import (
     build_builder_shadow_adapter_contract_summary,
     build_shadow_ingest_contract_summary,
     build_shadow_report,
+    build_shadow_replay_authority_boundary,
     build_shadow_replay_contract_summary,
     normalize_builder_shadow_export_payload,
     normalize_telegram_bot_export_payload,
@@ -69,6 +71,13 @@ from .spark_kb_html import build_spark_kb_html_artifact_contract_summary, render
 from .watchtower import build_watchtower_summary
 from .contracts import NormalizedBenchmarkSample
 from .wiki_packets import discover_markdown_knowledge_packets
+
+
+MEMORY_PROMOTION_PUBLISH_TOOL_NAME = "domain-chip-memory.memory_promotion.publish"
+MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID = "capability:domain-chip-memory:memory.promotion.publish"
+MEMORY_PROMOTION_SHIP_TOOL_NAME = "domain-chip-memory.memory_promotion.ship"
+MEMORY_PROMOTION_SHIP_CAPABILITY_ID = "capability:domain-chip-memory:memory.promotion.ship"
+MEMORY_PROMOTION_ACTION_TYPE = "publish"
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -115,6 +124,256 @@ def _load_beam_official_eval_exports() -> dict[str, object]:
         "summarize_beam_official_evaluation": summarize_beam_official_evaluation,
         "summarize_beam_official_evaluation_files": summarize_beam_official_evaluation_files,
     }
+
+
+def _contains_string(value: object, needle: str) -> bool:
+    if isinstance(value, str):
+        return needle in value
+    if isinstance(value, dict):
+        return any(_contains_string(item, needle) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_string(item, needle) for item in value)
+    return False
+
+
+def _harness_core_source_candidates() -> list[Path]:
+    candidates: list[Path] = []
+    spark_home = os.environ.get("SPARK_HOME")
+    if spark_home:
+        candidates.append(Path(spark_home).expanduser() / "modules" / "spark-harness-core" / "source" / "src")
+    candidates.append(Path.home() / ".spark" / "modules" / "spark-harness-core" / "source" / "src")
+    return candidates
+
+
+def _load_harness_kernel_class() -> type[object]:
+    try:
+        from spark_harness_core import HarnessKernel
+
+        return HarnessKernel
+    except ModuleNotFoundError:
+        pass
+
+    for candidate in _harness_core_source_candidates():
+        if not (candidate / "spark_harness_core" / "__init__.py").exists():
+            continue
+        candidate_text = str(candidate)
+        if candidate_text not in sys.path:
+            sys.path.insert(0, candidate_text)
+        try:
+            from spark_harness_core import HarnessKernel
+
+            return HarnessKernel
+        except ModuleNotFoundError:
+            continue
+    raise RuntimeError("spark_harness_core_unavailable")
+
+
+def _matching_governor_action(decision: dict, *, capability_id: str) -> dict | None:
+    envelope = decision.get("envelope") if isinstance(decision.get("envelope"), dict) else {}
+    proposed_actions = envelope.get("proposed_actions") if isinstance(envelope.get("proposed_actions"), list) else []
+    for action in proposed_actions:
+        if (
+            isinstance(action, dict)
+            and action.get("capability_id") == capability_id
+            and str(action.get("action_id") or "").strip()
+        ):
+            return action
+    return None
+
+
+def _verify_memory_promotion_governor(
+    decision: dict,
+    *,
+    tool_name: str,
+    capability_id: str,
+    action_id: str | None,
+) -> dict:
+    HarnessKernel = _load_harness_kernel_class()
+    kernel = HarnessKernel(surface=str(decision.get("surface") or "cli"))
+    verifier = getattr(kernel, "verify_governor_execution_authority", None)
+    if not callable(verifier):
+        return {"allowed": False, "reason_codes": ["harness_core_governor_verifier_unavailable"]}
+    return verifier(
+        decision,
+        expected_capability_id=capability_id,
+        expected_action_type=MEMORY_PROMOTION_ACTION_TYPE,
+        tool_name=tool_name,
+        action_id=action_id,
+    )
+
+
+def _matching_governor_authorization(
+    decision: dict,
+    *,
+    capability_id: str,
+    action_id: str,
+    turn_id: str,
+) -> dict | None:
+    for authorization in decision.get("authorizations", []):
+        if (
+            isinstance(authorization, dict)
+            and authorization.get("schema_version") == "authorization-decision-v1"
+            and authorization.get("capability_id") == capability_id
+            and authorization.get("action_id") == action_id
+            and authorization.get("turn_id") == turn_id
+            and authorization.get("verdict") == "allow"
+            and str(authorization.get("decision_id") or "").strip()
+        ):
+            return authorization
+    return None
+
+
+def _matching_governor_ledger(
+    decision: dict,
+    *,
+    tool_name: str,
+    capability_id: str,
+    action_id: str,
+    turn_id: str,
+    authorization_decision_id: str,
+) -> dict | None:
+    for ledger in decision.get("tool_ledgers", []):
+        if not isinstance(ledger, dict):
+            continue
+        result = ledger.get("result") if isinstance(ledger.get("result"), dict) else {}
+        authorization = ledger.get("authorization") if isinstance(ledger.get("authorization"), dict) else {}
+        if (
+            ledger.get("schema_version") == "tool-call-ledger-v1"
+            and ledger.get("tool_name") == tool_name
+            and ledger.get("capability_id") == capability_id
+            and ledger.get("action_id") == action_id
+            and ledger.get("turn_id") == turn_id
+            and authorization.get("verdict") == "allow"
+            and authorization.get("decision_id") == authorization_decision_id
+            and authorization.get("action_id") == action_id
+            and authorization.get("capability_id") == capability_id
+            and authorization.get("turn_id") == turn_id
+            and result.get("status") == "not_started"
+        ):
+            return ledger
+    return None
+
+
+def _validate_memory_promotion_governor(
+    decision: dict | None,
+    *,
+    tool_name: str,
+    capability_id: str,
+    binding_refs: tuple[str, ...],
+) -> tuple[dict, dict]:
+    if not isinstance(decision, dict):
+        raise RuntimeError("Memory promotion publish/ship requires GovernorDecisionV1 authority: governor_decision_missing")
+
+    errors: list[str] = []
+    boundary = decision.get("execution_boundary") if isinstance(decision.get("execution_boundary"), dict) else {}
+    envelope = decision.get("envelope") if isinstance(decision.get("envelope"), dict) else {}
+    action_authority = envelope.get("action_authority") if isinstance(envelope.get("action_authority"), dict) else {}
+    envelope_turn_id = str(envelope.get("turn_id") or decision.get("turn_id") or "").strip()
+
+    if decision.get("schema_version") != "governor-decision-v1":
+        errors.append("schema_version_not_governor_decision_v1")
+    if decision.get("outcome") != "execute":
+        errors.append("outcome_not_execute")
+    if decision.get("authority_state") != "executable":
+        errors.append("authority_state_not_executable")
+    if boundary.get("action_authorized") is not True:
+        errors.append("execution_boundary_not_authorized")
+    if boundary.get("legacy_authority_demoted") is not True:
+        errors.append("legacy_authority_not_demoted")
+    if boundary.get("requires_human_confirmation") is not True:
+        errors.append("human_confirmation_not_required")
+    if envelope.get("schema_version") != "turn-intent-envelope-vnext":
+        errors.append("envelope_not_vnext")
+    if action_authority.get("state") != "executable":
+        errors.append("envelope_authority_not_executable")
+    matching_action = _matching_governor_action(decision, capability_id=capability_id)
+    if not matching_action:
+        errors.append("memory_promotion_action_missing")
+    action_id = str((matching_action or {}).get("action_id") or "").strip()
+
+    try:
+        verification = _verify_memory_promotion_governor(
+            decision,
+            tool_name=tool_name,
+            capability_id=capability_id,
+            action_id=action_id or None,
+        )
+    except RuntimeError as exc:
+        verification = {"allowed": False, "reason_codes": [str(exc) or "harness_core_governor_verifier_failed"]}
+    for reason in verification.get("reason_codes", []):
+        reason_text = str(reason)
+        if reason_text and reason_text not in errors:
+            errors.append(reason_text)
+
+    missing_refs = [ref for ref in binding_refs if ref and not _contains_string(decision, ref)]
+    if missing_refs:
+        errors.append("memory_promotion_binding_missing")
+
+    authorization = _matching_governor_authorization(
+        decision,
+        capability_id=capability_id,
+        action_id=action_id,
+        turn_id=envelope_turn_id,
+    )
+    if not authorization:
+        errors.append("allow_authorization_missing")
+    else:
+        approval = authorization.get("approval") if isinstance(authorization.get("approval"), dict) else {}
+        if approval.get("required") is not True or approval.get("status") != "approved":
+            errors.append("approved_human_confirmation_missing")
+
+    ledger = _matching_governor_ledger(
+        decision,
+        tool_name=tool_name,
+        capability_id=capability_id,
+        action_id=action_id,
+        turn_id=envelope_turn_id,
+        authorization_decision_id=str((authorization or {}).get("decision_id") or ""),
+    )
+    if not ledger:
+        errors.append("pre_execution_tool_ledger_missing")
+
+    if errors:
+        raise RuntimeError("Memory promotion publish/ship requires GovernorDecisionV1 authority: " + ", ".join(errors))
+    return authorization or {}, ledger or {}
+
+
+def _finalize_memory_promotion_ledger(
+    source_ledger: dict,
+    *,
+    status: str,
+    output_path: Path,
+    summary: str,
+) -> dict:
+    ledger = copy.deepcopy(source_ledger)
+    lifecycle = [dict(item) for item in ledger.get("lifecycle", []) if isinstance(item, dict)]
+    verdict = "passed" if status == "success" else "failed"
+    execute_stage = {
+        "stage": "execute",
+        "at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "verdict": verdict,
+    }
+    if lifecycle and lifecycle[-1].get("stage") == "execute":
+        lifecycle[-1] = execute_stage
+    else:
+        lifecycle.append(execute_stage)
+    ledger["lifecycle"] = lifecycle
+    ledger["result"] = {
+        "status": status,
+        "summary": summary,
+        "sanitized_output_ref": {
+            "id": f"artifact:memory-promotion-{hashlib.sha1(str(output_path).encode('utf-8')).hexdigest()[:12]}",
+            "kind": "tool_output",
+            "path_or_uri": str(output_path),
+            "redaction_class": "metadata_only",
+        },
+    }
+    ledger["trace"] = {
+        "id": f"trace:memory-promotion-{hashlib.sha1((str(output_path) + status).encode('utf-8')).hexdigest()[:12]}",
+        "redaction_class": "metadata_only",
+        "summary": summary,
+    }
+    return ledger
 
 
 def _limit_questions(
@@ -426,6 +685,13 @@ def _build_shadow_report_payload_from_evaluations(evaluations: list) -> dict:
     }
 
 
+def _shadow_replay_authority_provenance_line() -> str:
+    return (
+        "Authority boundary: advisory/evidence-only replay output; requires explicit "
+        "Harness Core/Governor promotion before live use."
+    )
+
+
 def _load_shadow_report_payload(data_file: str) -> dict:
     return _build_shadow_report_payload_from_evaluations(_load_shadow_evaluations(data_file))
 
@@ -471,11 +737,13 @@ def _build_shadow_report_filed_outputs(shadow_payload: dict) -> list[dict]:
                 f"{summary.get('reference_turns', 0)} reference turns."
             ),
             "explanation": (
-                "This filed output summarizes the governed Spark shadow replay so the KB can expose "
-                "write acceptance, rejection, and probe coverage alongside the runtime snapshot."
+                "This filed output summarizes an advisory/evidence-only Spark shadow replay so the KB can expose "
+                "write acceptance, rejection, and probe coverage alongside the local replay snapshot."
             ),
             "memory_role": "shadow_report",
+            "authority_boundary": build_shadow_replay_authority_boundary(),
             "provenance": [
+                _shadow_replay_authority_provenance_line(),
                 *conversation_lines,
                 *([f"Probe coverage: {line}" for line in probe_lines] or ["Probe coverage: none recorded."]),
                 *([f"Unsupported reasons: {line}" for line in unsupported_lines] or ["Unsupported reasons: none recorded."]),
@@ -497,10 +765,12 @@ def _build_shadow_report_filed_outputs(shadow_payload: dict) -> list[dict]:
                 ),
                 "explanation": (
                     "This filed output preserves one Spark-facing conversation summary inside the KB so replay results "
-                    "and governed memory pages can be inspected together."
+                    "and local replay memory pages can be inspected together as advisory evidence."
                 ),
                 "memory_role": "shadow_report",
+                "authority_boundary": build_shadow_replay_authority_boundary(),
                 "provenance": [
+                    _shadow_replay_authority_provenance_line(),
                     f"`{conversation_id}`",
                     f"Accepted writes: `{row.get('accepted_writes', 0)}`",
                     f"Rejected writes: `{row.get('rejected_writes', 0)}`",
@@ -549,10 +819,12 @@ def _build_shadow_failure_taxonomy_filed_outputs(shadow_payload: dict) -> list[d
             ),
             "explanation": (
                 "This filed output turns the replay diagnostics into a compact operator-facing failure dossier "
-                "inside the KB so the visible vault carries both the memory state and the current integration gaps."
+                "inside the KB so the visible vault carries local replay state and current integration gaps as advisory evidence."
             ),
             "memory_role": "shadow_report",
+            "authority_boundary": build_shadow_replay_authority_boundary(),
             "provenance": [
+                _shadow_replay_authority_provenance_line(),
                 *([f"Issue bucket: {line}" for line in issue_lines] or ["Issue bucket: none recorded."]),
                 *([f"Conversation hotspot: {line}" for line in hotspot_lines] or ["Conversation hotspot: none recorded."]),
                 *([f"Next action: {line}" for line in next_action_lines] or ["Next action: none recorded."]),
@@ -968,7 +1240,7 @@ def _build_shadow_failure_taxonomy_payload(
                 "label": "write_rejection",
                 "count": rejected_writes,
                 "severity": "high",
-                "summary": f"{rejected_writes} turns were rejected by governed memory writes.",
+                "summary": f"{rejected_writes} turns were rejected by local replay memory writes.",
             }
         )
     if gate_skip_total:
@@ -1002,7 +1274,7 @@ def _build_shadow_failure_taxonomy_payload(
                 "count": duplicate_churn_total,
                 "severity": "medium",
                 "summary": (
-                    f"{duplicate_churn_total} writes were skipped because the governed current-state value already "
+                    f"{duplicate_churn_total} writes were skipped because the local replay current-state value already "
                     "matched the incoming value."
                 ),
             }
@@ -1173,7 +1445,7 @@ def _build_shadow_failure_taxonomy_payload(
                     "label": "fix_supported_read_answer_materialization",
                     "priority": 2,
                     "rationale": (
-                        "Builder reported no supported answer even though replay already has governed memory for "
+                        "Builder reported no supported answer even though replay already has advisory evidence for "
                         "the requested fact. Trace the read contract and answer-materialization path before calling "
                         "this a memory coverage issue."
                     ),
@@ -2733,7 +3005,7 @@ def _normalize_builder_telegram_state_db(
         return ", ".join(f"'{event_type}'" for event_type in supported_event_types)
 
     def _load_supported_builder_rows(*, scan_all: bool) -> list[sqlite3.Row]:
-        connection = sqlite3.connect(state_db_path)
+        connection = sqlite3.connect(state_db_path, timeout=30.0)
         connection.row_factory = sqlite3.Row
         try:
             if selected_chat_id is not None or scan_all:
@@ -3818,7 +4090,7 @@ def _load_shadow_report_batch_payload(data_dir: str, *, glob_pattern: str = "*.j
 
 
 def _build_demo_sdk_maintenance_payload() -> dict:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -3883,7 +4155,7 @@ def _build_demo_sdk_maintenance_payload() -> dict:
 
 
 def _build_demo_spark_kb_payload(output_dir: str, repo_sources: list[str] | None = None) -> dict:
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     sdk.write_observation(
         MemoryWriteRequest(
             text="",
@@ -5584,7 +5856,20 @@ def _materialize_spark_memory_kb_refresh_manifest(
 def _publish_spark_memory_kb_refresh_manifest(
     refresh_manifest_file: str,
     publish_root_dir: str,
+    *,
+    governor_decision: dict | None = None,
+    require_governor: bool = True,
 ) -> dict:
+    authorization: dict = {}
+    pre_execution_ledger: dict = {}
+    if require_governor:
+        authorization, pre_execution_ledger = _validate_memory_promotion_governor(
+            governor_decision,
+            tool_name=MEMORY_PROMOTION_PUBLISH_TOOL_NAME,
+            capability_id=MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID,
+            binding_refs=(str(Path(refresh_manifest_file)), str(Path(publish_root_dir))),
+        )
+
     manifest_payload = _load_json_file(refresh_manifest_file)
     if not isinstance(manifest_payload, dict):
         raise ValueError("Refresh manifest payload must be a JSON object.")
@@ -5618,6 +5903,7 @@ def _publish_spark_memory_kb_refresh_manifest(
         str(release_output_dir),
     )
     active_refresh_file = publish_root_path / "active-refresh.json"
+    publish_result_ledger_file = publish_root_path / "publish-result-ledger.json"
     active_payload = {
         "refresh_manifest_file": str(Path(refresh_manifest_file)),
         "published_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
@@ -5627,14 +5913,37 @@ def _publish_spark_memory_kb_refresh_manifest(
         },
     }
     _write_json(active_refresh_file, active_payload)
+    final_ledger: dict = {}
+    if require_governor:
+        final_ledger = _finalize_memory_promotion_ledger(
+            pre_execution_ledger,
+            status="success",
+            output_path=active_refresh_file,
+            summary="Published governed Spark memory KB refresh manifest.",
+        )
+        _write_json(publish_result_ledger_file, final_ledger)
 
     return {
         "input_refresh_manifest_file": str(Path(refresh_manifest_file)),
         "publish_root_dir": str(publish_root_path),
         "release_output_dir": str(release_output_dir),
         "active_refresh_file": str(active_refresh_file),
+        "publish_result_ledger_file": str(publish_result_ledger_file) if require_governor else None,
         "materialized_payload": materialized_payload,
         "active_refresh": active_payload,
+        "authority": {
+            "schema_version": "governor-decision-v1",
+            "capability_id": MEMORY_PROMOTION_PUBLISH_CAPABILITY_ID,
+            "tool_name": MEMORY_PROMOTION_PUBLISH_TOOL_NAME,
+            "authorization": authorization,
+            "tool_call_ledger": final_ledger,
+        }
+        if require_governor
+        else {
+            "schema_version": "governor-decision-v1",
+            "delegated_by": MEMORY_PROMOTION_SHIP_TOOL_NAME,
+            "publish_gate": "covered_by_parent_ship_governor_decision",
+        },
         "trace": {
             "operation": "publish_spark_memory_kb_refresh_manifest",
         },
@@ -6304,10 +6613,24 @@ def _ship_spark_memory_kb_governed_release(
     refresh_manifest_file: str,
     policy_aligned_slice_file: str,
     publish_root_dir: str,
+    *,
+    governor_decision: dict | None = None,
 ) -> dict:
+    authorization, pre_execution_ledger = _validate_memory_promotion_governor(
+        governor_decision,
+        tool_name=MEMORY_PROMOTION_SHIP_TOOL_NAME,
+        capability_id=MEMORY_PROMOTION_SHIP_CAPABILITY_ID,
+        binding_refs=(
+            str(Path(refresh_manifest_file)),
+            str(Path(policy_aligned_slice_file)),
+            str(Path(publish_root_dir)),
+        ),
+    )
     publish_payload = _publish_spark_memory_kb_refresh_manifest(
         refresh_manifest_file,
         publish_root_dir,
+        governor_decision=governor_decision,
+        require_governor=False,
     )
     active_refresh = publish_payload.get("active_refresh")
     active_refresh_file = publish_payload.get("active_refresh_file")
@@ -6346,6 +6669,7 @@ def _ship_spark_memory_kb_governed_release(
         },
     }
     governed_release_file = publish_root_path / "governed-release.json"
+    governed_release_result_ledger_file = publish_root_path / "governed-release-result-ledger.json"
     governed_release_payload["governed_release_file"] = str(governed_release_file)
     _write_json(governed_release_file, governed_release_payload)
     governed_release_read_report = _run_spark_memory_kb_governed_release_read_report(str(governed_release_file))
@@ -6366,6 +6690,23 @@ def _ship_spark_memory_kb_governed_release(
     governed_release_payload["summary"]["governed_release_read_report_file"] = str(governed_release_read_report_file)
     governed_release_payload["summary"]["governed_release_summary_file"] = str(governed_release_summary_file)
     governed_release_payload["summary"]["governed_release_gate_file"] = str(governed_release_gate_file)
+    final_ledger = _finalize_memory_promotion_ledger(
+        pre_execution_ledger,
+        status="success",
+        output_path=governed_release_file,
+        summary="Shipped governed Spark memory KB release.",
+    )
+    _write_json(governed_release_result_ledger_file, final_ledger)
+    governed_release_payload["governed_release_result_ledger_file"] = str(governed_release_result_ledger_file)
+    governed_release_payload["governed_release_result_ledger"] = final_ledger
+    governed_release_payload["summary"]["governed_release_result_ledger_file"] = str(governed_release_result_ledger_file)
+    governed_release_payload["authority"] = {
+        "schema_version": "governor-decision-v1",
+        "capability_id": MEMORY_PROMOTION_SHIP_CAPABILITY_ID,
+        "tool_name": MEMORY_PROMOTION_SHIP_TOOL_NAME,
+        "authorization": authorization,
+        "tool_call_ledger": final_ledger,
+    }
     _write_json(governed_release_file, governed_release_payload)
     return governed_release_payload
 
@@ -10576,7 +10917,7 @@ def _load_sdk_maintenance_payload(data_file: str) -> dict:
     if not isinstance(raw_writes, list):
         raise ValueError("SDK maintenance replay file must contain a writes list.")
 
-    sdk = SparkMemorySDK()
+    sdk = SparkMemorySDK(require_upstream_authority=False)
     write_results = []
     for index, item in enumerate(raw_writes):
         if not isinstance(item, dict):
@@ -10663,7 +11004,7 @@ def main() -> None:
     build_spark_kb.add_argument("--write")
     build_spark_kb_from_shadow = subparsers.add_parser(
         "build-spark-kb-from-shadow-replay",
-        help="Replay Spark shadow traffic, export governed memory, and compile a Spark KB vault from that run.",
+        help="Replay Spark shadow traffic, export advisory replay evidence, and compile a Spark KB vault from that run.",
     )
     build_spark_kb_from_shadow.add_argument("data_file")
     build_spark_kb_from_shadow.add_argument("output_dir")
@@ -10672,7 +11013,7 @@ def main() -> None:
     build_spark_kb_from_shadow.add_argument("--write")
     build_spark_kb_from_shadow_batch = subparsers.add_parser(
         "build-spark-kb-from-shadow-replay-batch",
-        help="Replay a directory of Spark shadow traffic, export governed memory, and compile one Spark KB vault from the batch.",
+        help="Replay a directory of Spark shadow traffic, export advisory replay evidence, and compile one Spark KB vault from the batch.",
     )
     build_spark_kb_from_shadow_batch.add_argument("data_dir")
     build_spark_kb_from_shadow_batch.add_argument("output_dir")
@@ -10886,7 +11227,7 @@ def main() -> None:
     taxonomy_telegram_shadow_batch.add_argument("--write")
     build_spark_kb_from_builder = subparsers.add_parser(
         "build-spark-kb-from-builder-export",
-        help="Normalize a Spark Builder export, replay it through governed memory, and compile a Spark KB vault.",
+        help="Normalize a Spark Builder export, replay it through a local advisory memory runtime, and compile a Spark KB vault.",
     )
     build_spark_kb_from_builder.add_argument("data_file")
     build_spark_kb_from_builder.add_argument("output_dir")
@@ -10896,7 +11237,7 @@ def main() -> None:
     build_spark_kb_from_builder.add_argument("--write")
     build_spark_kb_from_builder_batch = subparsers.add_parser(
         "build-spark-kb-from-builder-export-batch",
-        help="Normalize a directory of Spark Builder exports, replay them through one governed memory runtime, and compile one Spark KB vault.",
+        help="Normalize a directory of Spark Builder exports, replay them through one local advisory memory runtime, and compile one Spark KB vault.",
     )
     build_spark_kb_from_builder_batch.add_argument("data_dir")
     build_spark_kb_from_builder_batch.add_argument("output_dir")
@@ -10907,7 +11248,7 @@ def main() -> None:
     build_spark_kb_from_builder_batch.add_argument("--write")
     build_spark_kb_from_telegram = subparsers.add_parser(
         "build-spark-kb-from-telegram-export",
-        help="Normalize a Telegram bot export, replay it through governed memory, and compile a Spark KB vault.",
+        help="Normalize a Telegram bot export, replay it through a local advisory memory runtime, and compile a Spark KB vault.",
     )
     build_spark_kb_from_telegram.add_argument("data_file")
     build_spark_kb_from_telegram.add_argument("output_dir")
@@ -10917,7 +11258,7 @@ def main() -> None:
     build_spark_kb_from_telegram.add_argument("--write")
     build_spark_kb_from_telegram_batch = subparsers.add_parser(
         "build-spark-kb-from-telegram-export-batch",
-        help="Normalize a directory of Telegram bot exports, replay them through one governed memory runtime, and compile one Spark KB vault.",
+        help="Normalize a directory of Telegram bot exports, replay them through one local advisory memory runtime, and compile one Spark KB vault.",
     )
     build_spark_kb_from_telegram_batch.add_argument("data_dir")
     build_spark_kb_from_telegram_batch.add_argument("output_dir")
@@ -10958,7 +11299,7 @@ def main() -> None:
     run_spark_builder_telegram_intake.add_argument("--write")
     run_spark_builder_state_telegram_intake = subparsers.add_parser(
         "run-spark-builder-state-telegram-intake",
-        help="Read Spark Intelligence Builder telegram_runtime events from state.db, replay them through governed memory, and compile one Spark KB vault in one run.",
+        help="Read Spark Intelligence Builder telegram_runtime events from state.db, replay them through local advisory memory, and compile one Spark KB vault in one run.",
     )
     run_spark_builder_state_telegram_intake.add_argument("builder_home")
     run_spark_builder_state_telegram_intake.add_argument("output_dir")
@@ -11054,6 +11395,7 @@ def main() -> None:
     )
     publish_spark_memory_kb_refresh_manifest.add_argument("refresh_manifest_file")
     publish_spark_memory_kb_refresh_manifest.add_argument("publish_root_dir")
+    publish_spark_memory_kb_refresh_manifest.add_argument("--governor-decision")
     publish_spark_memory_kb_refresh_manifest.add_argument("--write")
     resolve_spark_memory_kb_active_refresh = subparsers.add_parser(
         "resolve-spark-memory-kb-active-refresh",
@@ -11167,6 +11509,7 @@ def main() -> None:
     ship_spark_memory_kb_governed_release.add_argument("refresh_manifest_file")
     ship_spark_memory_kb_governed_release.add_argument("policy_aligned_slice_file")
     ship_spark_memory_kb_governed_release.add_argument("publish_root_dir")
+    ship_spark_memory_kb_governed_release.add_argument("--governor-decision")
     ship_spark_memory_kb_governed_release.add_argument("--write")
     verify_spark_memory_kb_active_refresh_policy = subparsers.add_parser(
         "verify-spark-memory-kb-active-refresh-policy",
@@ -11188,6 +11531,7 @@ def main() -> None:
     subparsers.add_parser("spark-kb-contracts", help="Show the Spark knowledge-base layer contract summary.")
     subparsers.add_parser("spark-kb-html-artifact-contracts", help="Show the Spark KB HTML artifact contract summary.")
     subparsers.add_parser("promotion-gate-contracts", help="Show memory/self-improvement promotion gate lanes and protected targets.")
+    subparsers.add_parser("legacy-authority-inventory", help="Show memory legacy authority plane dispositions.")
     check_promotion_gate = subparsers.add_parser("check-promotion-gate", help="Evaluate memory-derived promotion records against protected-surface gates.")
     check_promotion_gate.add_argument("promotion_record_file")
     check_promotion_gate.add_argument("--assert-allowed", action="store_true")
@@ -12053,6 +12397,7 @@ def main() -> None:
         payload = _publish_spark_memory_kb_refresh_manifest(
             args.refresh_manifest_file,
             args.publish_root_dir,
+            governor_decision=_load_json_file(args.governor_decision) if args.governor_decision else None,
         )
         if args.write:
             _write_json(Path(args.write), payload)
@@ -12214,6 +12559,7 @@ def main() -> None:
             args.refresh_manifest_file,
             args.policy_aligned_slice_file,
             args.publish_root_dir,
+            governor_decision=_load_json_file(args.governor_decision) if args.governor_decision else None,
         )
         if args.write:
             _write_json(Path(args.write), payload)
@@ -12257,6 +12603,10 @@ def main() -> None:
 
     if args.command == "spark-integration-contracts":
         _print(build_spark_integration_contract_summary())
+        return
+
+    if args.command == "legacy-authority-inventory":
+        _print(build_memory_legacy_authority_inventory())
         return
 
     if args.command == "spark-kb-contracts":
