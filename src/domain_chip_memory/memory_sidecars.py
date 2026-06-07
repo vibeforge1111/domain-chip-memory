@@ -1151,7 +1151,8 @@ def _graphiti_episode_type() -> Any:
         from graphiti_core.nodes import EpisodeType
 
         return EpisodeType.text
-    except Exception:
+    except Exception as _e:
+        import logging as _log; _log.getLogger(__name__).warning("Suppressed: %s", _e, exc_info=True)
         return "text"
 
 
