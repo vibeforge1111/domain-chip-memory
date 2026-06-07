@@ -151,7 +151,10 @@ def _load_snapshot(kb_dir: Path) -> tuple[dict[str, Any], Path | None]:
     snapshot_file = kb_dir / "raw" / "memory-snapshots" / "latest.json"
     if not snapshot_file.exists():
         return {}, None
-    return json.loads(snapshot_file.read_text(encoding="utf-8")), snapshot_file
+    try:
+        return json.loads(snapshot_file.read_text(encoding="utf-8")), snapshot_file
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (spark_kb_html.py)") from exc
 
 
 def _read_pages(kb_dir: Path, html_file: Path) -> list[dict[str, Any]]:
