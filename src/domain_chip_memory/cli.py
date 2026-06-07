@@ -409,7 +409,10 @@ def _filter_locomo_shadow_samples(
     fused_family_only: bool = False,
 ) -> list[NormalizedBenchmarkSample]:
     requested_ids = {sample_id.strip() for sample_id in (sample_ids or []) if sample_id.strip()}
-    requested_categories = {category.strip() for category in (categories or []) if category.strip()}
+    try:
+        requested_categories = {category.strip() for category in (categories or []) if category.strip()}
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (cli.py)") from exc
     requested_question_ids = {question_id.strip() for question_id in (question_ids or []) if question_id.strip()}
     filtered: list[NormalizedBenchmarkSample] = []
     for sample in samples:
