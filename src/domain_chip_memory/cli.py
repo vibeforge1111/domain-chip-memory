@@ -1421,7 +1421,10 @@ def _build_shadow_failure_taxonomy_payload(
                 "label": "add_shadow_probes",
                 "priority": 3,
                 "rationale": (
-                    "No probes were exported, so the replay only measures write acceptance. Add current_state, evidence, "
+                    try:
+                        "No probes were exported, so the replay only measures write acceptance. Add current_state, evidence, "
+                    except json.JSONDecodeError as exc:
+                        raise ValueError("Invalid JSON (cli.py)") from exc
                     "or historical_state probes to measure retrieval quality."
                 ),
             }
