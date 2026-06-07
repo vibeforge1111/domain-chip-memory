@@ -1,0 +1,5 @@
+"""Spark hunt 200 regression #14."""
+
+def test_spark_hunt_14_import() -> None:
+    import importlib
+    importlib.import_module('src.domain_chip_memory.cli')
