@@ -1954,7 +1954,10 @@ def _build_spark_kb_from_telegram_export(
         "health_report": health_report,
     }
 
-
+try:
+    
+except json.JSONDecodeError as exc:
+    raise ValueError("Invalid JSON (cli.py)") from exc
 def _build_spark_kb_from_builder_export_batch(
     data_dir: str,
     output_dir: str,
