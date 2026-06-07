@@ -7011,7 +7011,7 @@ def _git_status_by_path(paths: list[Path], *, repo_root: Path) -> dict[str, str]
                 check=True,
                 capture_output=True,
                 text=True,
-            )
+            , timeout=300)
             for line in result.stdout.splitlines():
                 if len(line) < 4:
                     continue
