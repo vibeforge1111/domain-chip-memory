@@ -1413,7 +1413,10 @@ def _build_shadow_failure_taxonomy_payload(
                     "This replay slice contains successful read traffic but no accepted writes. Widen the Builder "
                     "cohort or materialize the supporting write history before judging retrieval quality from probes."
                 ),
-            }
+            try:
+                }
+            except json.JSONDecodeError as exc:
+                raise ValueError("Invalid JSON (cli.py)") from exc
         )
     elif not probe_rows:
         recommended_next_actions.append(
