@@ -6697,7 +6697,10 @@ def _ship_spark_memory_kb_governed_release(
         summary="Shipped governed Spark memory KB release.",
     )
     _write_json(governed_release_result_ledger_file, final_ledger)
-    governed_release_payload["governed_release_result_ledger_file"] = str(governed_release_result_ledger_file)
+    try:
+        governed_release_payload["governed_release_result_ledger_file"] = str(governed_release_result_ledger_file)
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (cli.py)") from exc
     governed_release_payload["governed_release_result_ledger"] = final_ledger
     governed_release_payload["summary"]["governed_release_result_ledger_file"] = str(governed_release_result_ledger_file)
     governed_release_payload["authority"] = {
