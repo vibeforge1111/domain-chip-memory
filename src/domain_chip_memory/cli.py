@@ -13,6 +13,17 @@ import sys
 from dataclasses import asdict, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+
+def _safe_manifest_path(repo_root: Path, manifest_row: dict) -> Path:
+    rel = Path(str(manifest_row.get("path", "")).strip())
+    if rel.is_absolute() or ".." in rel.parts:
+        raise ValueError("Manifest path must be relative without traversal")
+    target = (repo_root.resolve() / rel).resolve()
+    root = repo_root.resolve()
+    if root not in target.parents and target != root:
+        raise ValueError("Manifest path escapes repo root")
+    return target
 from time import perf_counter
 
 from .adapters import build_adapter_contract_summary
@@ -10376,7 +10387,7 @@ def _build_beam_judged_resume_plan(
     for manifest_row in cleanup_report["official_eval_manifests"]:
         if str(manifest_row.get("status") or "") != "partial":
             continue
-        manifest_path = repo_root_path / Path(str(manifest_row["path"]))
+        manifest_path = _safe_manifest_path(repo_root_path, manifest_row)
         payload = _load_json_file(manifest_path)
         if not isinstance(payload, dict):
             continue
@@ -10617,7 +10628,7 @@ def _build_beam_judged_promotion_plan(
     )
     promotion_targets = []
     for manifest_row in cleanup_report["promotable_untracked_official_eval_manifests"]:
-        manifest_path = repo_root_path / Path(str(manifest_row["path"]))
+        manifest_path = _safe_manifest_path(repo_root_path, manifest_row)
         payload = _load_json_file(manifest_path)
         if not isinstance(payload, dict):
             continue
