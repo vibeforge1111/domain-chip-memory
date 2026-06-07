@@ -152,6 +152,7 @@ def render_docs(*, builder_latest_run: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Refresh chip-side Builder baseline docs from Builder latest-full-run.json.")
     parser.add_argument("--builder-latest-run", default=str(DEFAULT_BUILDER_POINTER), help="Path to Builder latest-full-run.json")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     args = parser.parse_args()
     render_docs(builder_latest_run=Path(args.builder_latest_run))
     return 0
