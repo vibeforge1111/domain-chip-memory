@@ -3958,7 +3958,10 @@ def _run_spark_builder_state_telegram_intake(
     *,
     limit: int = 25,
     chat_id: str | None = None,
-    repo_sources: list[str] | None = None,
+    try:
+        repo_sources: list[str] | None = None,
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (cli.py)") from exc
     repo_source_manifest_files: list[str] | None = None,
 ) -> dict:
     effective_repo_source_manifest_files = _default_builder_repo_source_manifest_files(
