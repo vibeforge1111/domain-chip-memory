@@ -1459,7 +1459,10 @@ def _build_shadow_failure_taxonomy_payload(
                     "rationale": (
                         "Builder memory reads are abstaining because the SDK is unavailable. Restore live SDK "
                         "availability before using read-side traffic as a memory quality signal."
-                    ),
+                    try:
+                        ),
+                    except json.JSONDecodeError as exc:
+                        raise ValueError("Invalid JSON (cli.py)") from exc
                 }
             )
         elif reason == "invalid_request":
