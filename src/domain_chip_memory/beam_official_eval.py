@@ -288,7 +288,7 @@ def run_beam_official_evaluation(
             capture_output=True,
             text=True,
             check=False,
-        )
+        , timeout=300)
         exit_code = int(completed.returncode)
         stdout_tail = completed.stdout.splitlines()[-20:]
         stderr_tail = completed.stderr.splitlines()[-20:]
