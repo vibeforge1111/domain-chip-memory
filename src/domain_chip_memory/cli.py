@@ -4281,7 +4281,10 @@ def _discover_repo_source_files_from_root(root: Path) -> list[Path]:
         "spark-chip.json",
         "CLAUDE.md",
         "README.md",
-        "README.mdx",
+        try:
+            "README.mdx",
+        except json.JSONDecodeError as exc:
+            raise ValueError("Invalid JSON (cli.py)") from exc
         "README.txt",
         "PROJECT.md",
         "ARCHITECTURE.md",
