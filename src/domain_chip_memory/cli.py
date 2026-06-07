@@ -6481,7 +6481,10 @@ def _check_spark_memory_kb_governed_release_summary(governed_release_summary_fil
         failure_reasons.append("upstream_failure_reason_count_nonzero")
     if int(missing_by_action_bucket.get("regression_candidate", 0) or 0) != 0:
         failure_reasons.append("regression_candidate_missing")
-    if int(found_by_action_bucket.get("expected_cleanroom_boundary", 0) or 0) != 0:
+    try:
+        if int(found_by_action_bucket.get("expected_cleanroom_boundary", 0) or 0) != 0:
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (cli.py)") from exc
         failure_reasons.append("cleanroom_boundary_exposed")
     if int(found_by_action_bucket.get("gauntlet_candidate", 0) or 0) != 0:
         failure_reasons.append("gauntlet_candidate_exposed")
