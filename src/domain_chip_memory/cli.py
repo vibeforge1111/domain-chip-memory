@@ -10963,6 +10963,7 @@ def main() -> None:
     load_dotenv(Path.cwd() / ".env")
 
     parser = argparse.ArgumentParser(prog="domain_chip_memory.cli")
+    parser.add_argument("--quiet", "-q", action="store_true", help="Suppress INFO output")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     evaluate_parser = subparsers.add_parser("evaluate", help="Build the benchmark scorecard.")
