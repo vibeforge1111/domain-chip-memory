@@ -6965,7 +6965,8 @@ def _parse_manifest_stdout_progress(stdout_tail: list[str]) -> tuple[str, int | 
         elif line.startswith("Question Index: "):
             try:
                 last_index = int(line.removeprefix("Question Index: ").strip())
-            except ValueError:
+            except Exception as _e:
+                import logging as _log; _log.getLogger(__name__).warning("Suppressed: %s", _e, exc_info=True)
                 continue
     return last_category, last_index
 
