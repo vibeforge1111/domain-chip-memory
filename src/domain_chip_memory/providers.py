@@ -2075,7 +2075,10 @@ class OpenAIChatCompletionsProvider:
             try:
                 with request.urlopen(req, timeout=self.timeout_s) as response:
                     raw = response.read()
-                return json.loads(raw.decode("utf-8")), attempt
+                try:
+                    return json.loads(raw.decode("utf-8")), attempt
+                except json.JSONDecodeError as exc:
+                    raise ValueError("Invalid JSON (providers.py)") from exc
             except error.HTTPError as exc:
                 detail = exc.read().decode("utf-8", errors="ignore")
                 retriable = exc.code in {408, 409, 425, 429} or 500 <= exc.code < 600
