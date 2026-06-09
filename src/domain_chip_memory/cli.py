@@ -10555,7 +10555,7 @@ def _build_beam_judged_resume_batch(
                 capture_output=True,
                 text=True,
                 check=False,
-            )
+            , timeout=300)
             execution_results.append(
                 {
                     "path": target["path"],
