@@ -28,7 +28,7 @@ This repo does not own:
 - Do not let telemetry, black-box rows, model output, or conversational residue become durable doctrine without a source-owned promotion gate.
 - Memory bodies stay private; public and cross-system projections should use proof cards, redacted refs, counts, and decisions.
 - Builder owns runtime orchestration and AOC integration. This repo owns durable memory mechanics and benchmark discipline.
-- Cockpit and dashboards may render memory metadata, but they must not become memory mutation authorities without `AuthorityVerdictV1`.
+- Cockpit and dashboards may render memory metadata, but they must not become memory mutation authorities. Durable memory write/delete/materialization requires the current Harness Core chain: `GovernorDecisionV1`, `AuthorizationDecisionV1`, matching `ToolCallLedgerV1`, owner consumer verification, and memory side-effect proof. Older memory-specific verdict names are domain evidence only, not global execution authority.
 
 This repo should not invent memory doctrine in isolation. For non-trivial changes to memory lanes, salience, promotion, decay, recall, summarization, benchmarks, or dashboard traceability, do a short research pass before implementation.
 
