@@ -189,6 +189,130 @@ def test_sdk_strict_write_rejects_copied_governor_ledger():
     assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).found is False
 
 
+def test_sdk_strict_maintenance_requires_upstream_governor_before_mutating_manual_memory():
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+    binding_refs = ("session:s1", "turn:t1", "memory-write:location")
+    governor = _memory_write_governor_decision(binding_refs)
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+
+    maintenance = sdk.reconsolidate_manual_memory(now="2025-04-01T09:00:00Z")
+
+    assert maintenance.trace["status"] == "authority_blocked"
+    assert "governor_decision_missing" in maintenance.trace["reason"]
+    assert maintenance.trace["authority"]["required"] is True
+    assert maintenance.trace["authority"]["state"] == "blocked"
+    assert maintenance.manual_observations_before == maintenance.manual_observations_after
+    assert all(
+        not entry.metadata.get("active_state_maintenance_action")
+        for entry in sdk._manual_observations
+    )
+    assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).value == "Dubai"
+
+
+def test_sdk_strict_maintenance_accepts_verified_governor_binding():
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+    binding_refs = ("session:s1", "turn:t1", "memory-write:location")
+    governor = _memory_write_governor_decision(binding_refs)
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="London",
+            timestamp="2025-01-01T09:00:00Z",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="update",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+
+    maintenance = sdk.reconsolidate_manual_memory(
+        now="2025-04-01T09:00:00Z",
+        governor_decision=governor,
+        authority_binding_refs=binding_refs,
+    )
+
+    assert maintenance.trace["status"] == "ok"
+    assert maintenance.trace["authority"]["state"] == "governor_verified"
+    assert maintenance.trace["authority"]["governor_decision_id"] == "governor-memory-write"
+    assert maintenance.manual_observations_before == 2
+    assert maintenance.manual_observations_after == 2
+    assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).value == "Dubai"
+
+
+def test_sdk_shadow_maintenance_stays_advisory_without_governor():
+    sdk = SparkMemorySDK(require_upstream_authority=False)
+    sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            timestamp="2025-03-01T09:00:00Z",
+        )
+    )
+
+    maintenance = sdk.reconsolidate_manual_memory(now="2025-04-01T09:00:00Z")
+
+    assert maintenance.trace["status"] == "ok"
+    assert maintenance.trace["authority"]["required"] is False
+    assert maintenance.trace["authority"]["state"] == "advisory_shadow"
+
+
+def test_sdk_snapshot_authority_boundary_marks_shadow_exports_evidence_only():
+    shadow_boundary = SparkMemorySDK(require_upstream_authority=False).export_knowledge_base_snapshot()["authority_boundary"]
+    strict_boundary = SparkMemorySDK(require_upstream_authority=True).export_knowledge_base_snapshot()["authority_boundary"]
+
+    assert shadow_boundary["require_upstream_authority"] is False
+    assert shadow_boundary["mode"] == "advisory_shadow"
+    assert shadow_boundary["evidence_only"] is True
+    assert shadow_boundary["live_memory_authority"] is False
+    assert strict_boundary["require_upstream_authority"] is True
+    assert strict_boundary["mode"] == "governor_verified"
+    assert strict_boundary["evidence_only"] is False
+    assert strict_boundary["live_memory_authority"] is True
+
+
+def test_sdk_contract_summary_exposes_maintenance_and_shadow_mode_boundaries():
+    payload = build_sdk_contract_summary()
+    contract = payload["write_authority_contract"]
+
+    assert contract["maintenance_authority"]["method"] == "reconsolidate_manual_memory"
+    assert contract["maintenance_authority"]["required_request_fields"] == ["governor_decision", "authority_binding_refs"]
+    assert contract["shadow_mode_boundary"]["in_process_only"] is True
+    assert contract["shadow_mode_boundary"]["canonical_persistence_paths"] == []
+
+
 def test_sdk_instance_stores_request_scoped_runtime_configuration():
     sdk = SparkMemorySDK(
         runtime_memory_architecture="typed_temporal_graph",
