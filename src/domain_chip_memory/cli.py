@@ -10570,7 +10570,10 @@ def _build_beam_judged_resume_batch(
     execution_status_counts: dict[str, int] = {}
     for result in execution_results:
         status = str(result.get("status") or "unknown")
-        execution_status_counts[status] = execution_status_counts.get(status, 0) + 1
+        try:
+            execution_status_counts[status] = execution_status_counts.get(status, 0) + 1
+        except json.JSONDecodeError as exc:
+            raise ValueError("Invalid JSON (cli.py)") from exc
 
     return {
         "benchmark_name": "BEAM",
