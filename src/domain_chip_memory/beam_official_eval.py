@@ -766,7 +766,10 @@ def _coerce_openai_compatible_judge_score(raw_score: Any) -> float:
 
 
 def _load_beam_evaluation_payload(evaluation_path: str | Path) -> dict[str, Any]:
-    payload = json.loads(Path(evaluation_path).read_text(encoding="utf-8"))
+    try:
+        payload = json.loads(Path(evaluation_path).read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (beam_official_eval.py)") from exc
     if not isinstance(payload, dict):
         raise ValueError("BEAM official evaluation summary expected a JSON object.")
     return payload
