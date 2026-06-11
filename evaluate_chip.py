@@ -264,6 +264,9 @@ def run_evaluation() -> dict:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Evaluate domain-chip-memory scaffold readiness.")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
+    args = parser.parse_args()
     entry = run_evaluation()
     history_path = ROOT / "score_history.jsonl"
     with history_path.open("a", encoding="utf-8") as handle:
