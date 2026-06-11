@@ -902,7 +902,7 @@ def test_spark_kb_scaffold_truncates_overlong_evidence_slugs(tmp_path: Path):
     }
 
     result = scaffold_spark_knowledge_base(output_dir, snapshot)
-    evidence_files = [Path(path).name for path in result["files_written"] if path.startswith("wiki\\evidence\\")]
+    evidence_files = [Path(path).name for path in result["files_written"] if Path(path).parts[:2] == ("wiki", "evidence")]
 
     assert any(name.endswith(".md") and len(Path(name).stem) <= 80 for name in evidence_files)
     assert (output_dir / "wiki" / "evidence" / "_index.md").exists()

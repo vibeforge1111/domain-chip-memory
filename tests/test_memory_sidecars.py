@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+import pytest
+
 from domain_chip_memory import (
     DisabledMemorySidecarAdapter,
     GraphitiCompatibleMemorySidecarAdapter,
@@ -277,6 +279,7 @@ def test_graphiti_local_embedder_and_reranker_are_deterministic() -> None:
 
 
 def test_graphiti_kuzu_direct_structured_upsert_avoids_llm_extraction(tmp_path) -> None:
+    pytest.importorskip("graphiti_core", reason="graphiti-core is unavailable in this test environment")
     bootstrap_adapter = GraphitiCompatibleMemorySidecarAdapter(
         enabled=True,
         mode="shadow",
@@ -602,7 +605,9 @@ def test_spark_kb_frontmatter_exposes_memory_family_authority_metadata(tmp_path)
     result = scaffold_spark_knowledge_base(tmp_path / "kb", snapshot)
 
     current_page = next((tmp_path / "kb" / "wiki" / "current-state").glob("*.md"))
-    evidence_page = next((tmp_path / "kb" / "wiki" / "evidence").glob("*.md"))
+    evidence_page = next(
+        path for path in (tmp_path / "kb" / "wiki" / "evidence").glob("*.md") if path.name != "_index.md"
+    )
     current_text = current_page.read_text(encoding="utf-8")
     evidence_text = evidence_page.read_text(encoding="utf-8")
     assert result["current_state_page_count"] == 1
