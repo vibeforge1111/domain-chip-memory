@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import re
 
-from .answer_candidates import context_primary_answer_candidate_text, looks_like_current_state_question
+from .answer_candidates import context_primary_answer_candidate_text as context_primary_answer_candidate_text
+from .answer_candidates import looks_like_current_state_question
 
 
 QUESTION_STOPWORDS = {

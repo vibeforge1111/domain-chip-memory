@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import re
 from typing import Any
 
-from .contracts import JsonDict, MemoryRole, NormalizedBenchmarkSample, NormalizedQuestion, NormalizedSession, NormalizedTurn, RetentionClass
+from .contracts import JsonDict, MemoryRole, NormalizedBenchmarkSample, NormalizedQuestion as NormalizedQuestion, NormalizedSession, NormalizedTurn, RetentionClass
 from .memory_extraction import EventCalendarEntry, ObservationEntry
 from .memory_conversational_index import build_conversational_index
 from .memory_observation_runtime import build_event_calendar, build_observation_log

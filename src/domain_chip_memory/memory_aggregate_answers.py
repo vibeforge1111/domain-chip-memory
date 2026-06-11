@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable as Callable
 
 from .contracts import NormalizedQuestion
 from .memory_evidence import entry_source_corpus as _entry_source_corpus
 from .memory_extraction import ObservationEntry
-from .memory_factoid_answers import infer_factoid_answer
+from .memory_factoid_answers import infer_factoid_answer as infer_factoid_answer
 from .memory_numbers import extract_first_numeric_match as _extract_first_numeric_match
 from .memory_numbers import format_count_value as _format_count_value
 from .memory_numbers import parse_small_number as _parse_small_number
-from .memory_relational_answers import extract_place_candidates, infer_explanatory_answer, infer_shared_answer
+from .memory_relational_answers import extract_place_candidates as extract_place_candidates
+from .memory_relational_answers import infer_explanatory_answer as infer_explanatory_answer
+from .memory_relational_answers import infer_shared_answer as infer_shared_answer
 
 
 def infer_aggregate_answer(question: NormalizedQuestion, candidate_entries: list[ObservationEntry]) -> str:

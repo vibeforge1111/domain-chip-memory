@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any as Any
 
 from .contracts import AnswerCandidate, JsonDict, MemoryRole, NormalizedBenchmarkSample
 

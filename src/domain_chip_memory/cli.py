@@ -17,6 +17,8 @@ from time import perf_counter
 
 from .adapters import build_adapter_contract_summary
 from .baselines import build_baseline_contract_summary
+from .baselines import build_full_context_packets as build_full_context_packets
+from .baselines import build_lexical_packets as build_lexical_packets
 from .benchmark_registry import build_benchmark_scorecard, suggest_mutations
 from .canonical_configs import get_canonical_configs
 from .env import load_dotenv
@@ -48,7 +50,6 @@ from .sdk import (
     build_sdk_contract_summary,
     build_sdk_maintenance_replay_contract_summary,
 )
-from .baselines import build_full_context_packets, build_lexical_packets
 from .spark_shadow import (
     SparkShadowIngestAdapter,
     SparkShadowIngestRequest,

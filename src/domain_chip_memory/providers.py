@@ -19,7 +19,7 @@ from .contracts import JsonDict
 from .provider_candidate_payloads import candidate_payloads as _candidate_payloads_impl
 from .provider_context_ranking import compact_context as _compact_context_impl
 from .provider_context_ranking import rank_answer_candidate_entries as _rank_answer_candidate_entries_impl
-from .provider_context_text import QUESTION_STOPWORDS
+from .provider_context_text import QUESTION_STOPWORDS as QUESTION_STOPWORDS
 from .provider_context_text import question_tokens as _question_tokens_impl
 from .prompt_boundaries import fenced_memory_context
 from .provider_rescue_actions import did_action_yes_answer as _did_action_yes_answer
@@ -31,7 +31,8 @@ from .provider_rescue_navigation import ordered_sequence_labels as _ordered_sequ
 from .provider_rescue_numeric import numeric_rescue as _numeric_rescue
 from .provider_preference_guidance import looks_like_preference_guidance_question as _looks_like_preference_guidance_question_impl
 from .provider_rescue_profile import profile_and_object_rescue as _profile_and_object_rescue
-from .provider_temporal_rescue import COUNT_WORDS, COUNT_WORD_TO_INT
+from .provider_temporal_rescue import COUNT_WORDS as COUNT_WORDS
+from .provider_temporal_rescue import COUNT_WORD_TO_INT as COUNT_WORD_TO_INT
 from .provider_temporal_rescue import extract_count_answer as _extract_count_answer_impl
 from .provider_temporal_rescue import format_anchor_date as _format_anchor_date_impl
 from .provider_temporal_rescue import parse_context_anchor as _parse_context_anchor_impl
