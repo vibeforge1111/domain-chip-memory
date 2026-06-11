@@ -4,7 +4,8 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from .answer_candidates import looks_like_current_state_question
-from .memory_updates import build_current_state_view, has_active_state_deletion
+from .memory_updates import build_current_state_view as build_current_state_view
+from .memory_updates import has_active_state_deletion as has_active_state_deletion
 
 if TYPE_CHECKING:
     from .contracts import NormalizedQuestion

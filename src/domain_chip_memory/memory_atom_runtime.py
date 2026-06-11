@@ -3,7 +3,7 @@ from __future__ import annotations
 from .contracts import NormalizedBenchmarkSample, NormalizedQuestion
 from .memory_aggregate_support import raw_user_turn_entries as _raw_user_turn_entries_impl
 from .memory_aggregate_support import select_aggregate_support_entries as _select_aggregate_support_entries_impl
-from .memory_atom_extraction import extract_memory_atoms
+from .memory_atom_extraction import extract_memory_atoms as extract_memory_atoms
 from .memory_atom_routing import atom_score as _atom_score_impl
 from .memory_atom_routing import choose_atoms as _choose_atoms_impl
 from .memory_extraction import MemoryAtom, ObservationEntry, _token_bigrams, _tokenize

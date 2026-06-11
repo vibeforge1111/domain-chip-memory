@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from .memory_answer_rendering import answer_candidate_surface_text
-from .memory_observation_surface_rules import observation_surface_text
-from .memory_session_rendering import serialize_session
-
+from .memory_answer_rendering import answer_candidate_surface_text as answer_candidate_surface_text
+from .memory_observation_surface_rules import observation_surface_text as observation_surface_text
+from .memory_session_rendering import serialize_session as serialize_session
 

@@ -1,0 +1,14 @@
+rules:
+  - id: domain-chip-memory-python-eval
+    languages:
+      - python
+    severity: ERROR
+    message: Avoid eval in memory code. Use structured parsing instead.
+    pattern: eval(...)
+
+  - id: domain-chip-memory-python-exec
+    languages:
+      - python
+    severity: ERROR
+    message: Avoid exec in memory code. Keep memory authority logic inspectable.
+    pattern: exec(...)

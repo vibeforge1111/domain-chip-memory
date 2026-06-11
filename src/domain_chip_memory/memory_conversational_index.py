@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from .contracts import NormalizedBenchmarkSample, NormalizedSession, NormalizedTurn
+from .contracts import NormalizedBenchmarkSample, NormalizedSession as NormalizedSession, NormalizedTurn
 
 
 _CONVERSATIONAL_TIME_PATTERN = re.compile(

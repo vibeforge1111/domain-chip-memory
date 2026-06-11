@@ -5,7 +5,7 @@ from datetime import datetime
 
 from .contracts import NormalizedQuestion
 from .memory_extraction import EventCalendarEntry, ObservationEntry
-from .memory_state_anchor_inference import infer_event_anchored_state_time
+from .memory_state_anchor_inference import infer_event_anchored_state_time as infer_event_anchored_state_time
 
 
 def infer_dated_state_answer(

@@ -5,7 +5,7 @@ from datetime import datetime
 
 from .contracts import NormalizedQuestion
 from .memory_extraction import EventCalendarEntry, ObservationEntry
-from .memory_state_anchor_inference import infer_anchor_time_from_phrase
+from .memory_state_anchor_inference import infer_anchor_time_from_phrase as infer_anchor_time_from_phrase
 
 
 def infer_relative_state_answer(
