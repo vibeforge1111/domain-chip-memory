@@ -10,7 +10,12 @@ HARNESS_CORE_SRC = Path.home() / ".spark" / "modules" / "spark-harness-core" / "
 if HARNESS_CORE_SRC.exists() and str(HARNESS_CORE_SRC) not in sys.path:
     sys.path.insert(0, str(HARNESS_CORE_SRC))
 
-from spark_harness_core import HarnessKernel, evidence_ref
+spark_harness_core = pytest.importorskip(
+    "spark_harness_core",
+    reason="spark-harness-core is unavailable in this test environment",
+)
+HarnessKernel = spark_harness_core.HarnessKernel
+evidence_ref = spark_harness_core.evidence_ref
 from domain_chip_memory import cli
 from domain_chip_memory.spark_kb import scaffold_spark_knowledge_base
 
