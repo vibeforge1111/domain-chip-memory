@@ -10910,7 +10910,25 @@ def _run_sdk_maintenance_checks(sdk: SparkMemorySDK, checks: dict | None) -> dic
     }
 
 
-def _load_sdk_maintenance_payload(data_file: str) -> dict:
+def _normalize_cli_run_id(value: object) -> str | None:
+    text = str(value or "").strip()
+    return text or None
+
+
+def _safe_run_id_slug(run_id: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9_.-]+", "-", run_id).strip(".-")
+    return slug or "run"
+
+
+def _sdk_maintenance_write_path(write_path: str, *, run_id: str | None) -> Path:
+    path = Path(write_path)
+    normalized_run_id = _normalize_cli_run_id(run_id)
+    if normalized_run_id and path.is_dir():
+        return path / f"sdk-maintenance-report-{_safe_run_id_slug(normalized_run_id)}.json"
+    return path
+
+
+def _load_sdk_maintenance_payload(data_file: str, *, run_id: str | None = None) -> dict:
     payload = json.loads(Path(data_file).read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("SDK maintenance replay file must contain a JSON object.")
@@ -10920,16 +10938,22 @@ def _load_sdk_maintenance_payload(data_file: str) -> dict:
 
     sdk = SparkMemorySDK(require_upstream_authority=False)
     write_results = []
+    replay_run_id = _normalize_cli_run_id(run_id) or _normalize_cli_run_id(payload.get("run_id"))
     for index, item in enumerate(raw_writes):
         if not isinstance(item, dict):
             raise ValueError(f"Write at index {index} must be an object.")
         write_kind = str(item.get("write_kind", "observation")).strip().lower() or "observation"
+        write_run_id = _normalize_cli_run_id(item.get("run_id")) or replay_run_id
+        request_echo = dict(item)
+        if write_run_id and not _normalize_cli_run_id(request_echo.get("run_id")):
+            request_echo["run_id"] = write_run_id
         request = MemoryWriteRequest(
             text=str(item.get("text", "")),
             speaker=str(item.get("speaker", "user")),
             timestamp=str(item.get("timestamp")) if item.get("timestamp") is not None else None,
             session_id=str(item.get("session_id")) if item.get("session_id") is not None else None,
             turn_id=str(item.get("turn_id")) if item.get("turn_id") is not None else None,
+            run_id=write_run_id,
             operation=str(item.get("operation", "auto")),
             subject=str(item.get("subject")) if item.get("subject") is not None else None,
             predicate=str(item.get("predicate")) if item.get("predicate") is not None else None,
@@ -10943,7 +10967,7 @@ def _load_sdk_maintenance_payload(data_file: str) -> dict:
         write_results.append(
             {
                 "write_kind": write_kind,
-                "request": dict(item),
+                "request": request_echo,
                 "result": asdict(write_result),
             }
         )
@@ -10952,12 +10976,15 @@ def _load_sdk_maintenance_payload(data_file: str) -> dict:
     before = _run_sdk_maintenance_checks(sdk, checks if isinstance(checks, dict) else None)
     maintenance = sdk.reconsolidate_manual_memory()
     after = _run_sdk_maintenance_checks(sdk, checks if isinstance(checks, dict) else None)
-    return {
+    report = {
         "write_results": write_results,
         "maintenance": asdict(maintenance),
         "before": before,
         "after": after,
     }
+    if replay_run_id:
+        report["run_id"] = replay_run_id
+    return report
 
 
 def main() -> None:
@@ -11139,6 +11166,7 @@ def main() -> None:
     discover_markdown_packets.add_argument("--write")
     run_sdk_maintenance = subparsers.add_parser("run-sdk-maintenance-report", help="Replay explicit SDK writes from JSON and emit a maintenance report.")
     run_sdk_maintenance.add_argument("data_file")
+    run_sdk_maintenance.add_argument("--run-id")
     run_sdk_maintenance.add_argument("--write")
     subparsers.add_parser("sdk-maintenance-contracts", help="Show the SDK runtime and maintenance replay contract summary.")
     subparsers.add_parser("spark-kb-annotation-contracts", help="Show the Spark KB annotation import contract summary.")
@@ -12028,9 +12056,9 @@ def main() -> None:
         return
 
     if args.command == "run-sdk-maintenance-report":
-        payload = _load_sdk_maintenance_payload(args.data_file)
+        payload = _load_sdk_maintenance_payload(args.data_file, run_id=args.run_id)
         if args.write:
-            _write_json(Path(args.write), payload)
+            _write_json(_sdk_maintenance_write_path(args.write, run_id=payload.get("run_id")), payload)
         _print(payload)
         return
 

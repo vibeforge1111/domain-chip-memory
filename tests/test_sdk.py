@@ -1,3 +1,4 @@
+import domain_chip_memory.sdk as sdk_module
 from domain_chip_memory import (
     AnswerExplanationRequest,
     CurrentStateRequest,
@@ -9,6 +10,7 @@ from domain_chip_memory import (
     SparkMemorySDK,
     TaskRecoveryRequest,
     build_sdk_contract_summary,
+    build_sdk_maintenance_replay_contract_summary,
 )
 from domain_chip_memory.sdk import MEMORY_WRITE_ACTION_TYPE, MEMORY_WRITE_CAPABILITY_ID, MEMORY_WRITE_TOOL_NAME
 
@@ -138,7 +140,58 @@ def test_sdk_strict_write_requires_upstream_governor_before_mutating_state():
     assert sdk.export_knowledge_base_snapshot()["counts"]["session_count"] == 0
 
 
-def test_sdk_strict_write_accepts_verified_governor_binding():
+def test_sdk_strict_write_delegates_authority_to_kernel_verifier(monkeypatch):
+    calls: list[dict] = []
+
+    class FakeHarnessKernel:
+        def __init__(self, *, surface: str):
+            self.surface = surface
+
+        def verify_governor_execution_authority(self, governor_decision: dict, **kwargs: object) -> dict:
+            calls.append({"surface": self.surface, "decision": governor_decision, "kwargs": kwargs})
+            return {"allowed": True, "reason_codes": []}
+
+    def unexpected_structural_fallback(*args: object, **kwargs: object) -> list[str]:
+        raise AssertionError("structural fallback should not run when harness-core is importable")
+
+    monkeypatch.setattr(sdk_module, "_load_harness_kernel_class", lambda: FakeHarnessKernel)
+    monkeypatch.setattr(sdk_module, "_structural_memory_write_governor_errors", unexpected_structural_fallback)
+
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+    binding_refs = ("session:s1", "turn:t1", "memory-write:location")
+    governor = _memory_write_governor_decision(binding_refs)
+
+    write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="I live in Dubai.",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+
+    assert write.accepted is True
+    assert len(calls) == 1
+    assert calls[0]["surface"] == "cli"
+    assert calls[0]["decision"] is governor
+    assert calls[0]["kwargs"] == {
+        "expected_capability_id": MEMORY_WRITE_CAPABILITY_ID,
+        "expected_action_type": MEMORY_WRITE_ACTION_TYPE,
+        "tool_name": MEMORY_WRITE_TOOL_NAME,
+        "action_id": "action-memory-write",
+        "allow_read_only": False,
+        "require_pre_execution_ledger": True,
+    }
+    assert write.trace["authority"]["state"] == "governor_verified"
+
+
+def test_sdk_strict_write_accepts_verified_governor_binding(monkeypatch):
+    monkeypatch.setattr(sdk_module, "_load_harness_kernel_class", lambda: None)
     sdk = SparkMemorySDK(require_upstream_authority=True)
     binding_refs = ("session:s1", "turn:t1", "memory-write:location")
     governor = _memory_write_governor_decision(binding_refs)
@@ -163,7 +216,8 @@ def test_sdk_strict_write_accepts_verified_governor_binding():
     assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).value == "Dubai"
 
 
-def test_sdk_strict_write_rejects_copied_governor_ledger():
+def test_sdk_strict_write_rejects_copied_governor_ledger(monkeypatch):
+    monkeypatch.setattr(sdk_module, "_load_harness_kernel_class", lambda: None)
     sdk = SparkMemorySDK(require_upstream_authority=True)
     binding_refs = ("session:s1", "turn:t1", "memory-write:location")
     governor = _memory_write_governor_decision(binding_refs)
@@ -621,6 +675,67 @@ def test_sdk_rejects_empty_write_request():
     assert write_result.accepted is False
     assert write_result.unsupported_reason == "empty_text"
     assert write_result.trace["status"] == "unsupported_write"
+
+
+def test_sdk_write_run_id_joins_result_trace_and_dashboard_movement():
+    sdk = SparkMemorySDK(require_upstream_authority=False)
+    run_id = "sib-turn-2026-06-13-001"
+
+    write_result = sdk.write_observation(
+        MemoryWriteRequest(
+            text="",
+            operation="create",
+            subject="user",
+            predicate="current_task",
+            value="continue MEM-11",
+            timestamp="2026-06-13T10:00:00Z",
+            run_id=run_id,
+            retention_class="active_state",
+            metadata={"memory_role": "current_state"},
+        )
+    )
+    movement_rows = sdk.export_knowledge_base_snapshot()["dashboard_movement"]["rows"]
+    write_rows = [
+        row
+        for row in movement_rows
+        if row["trace"].get("operation") == "write_memory"
+        and row["trace"].get("write_operation") == "create"
+        and row["trace"].get("record_ref")
+    ]
+    summary_rows = [row for row in movement_rows if row["movement_state"] == "summarized"]
+
+    assert write_result.accepted is True
+    assert write_result.trace["run_id"] == run_id
+    assert {"captured", "saved", "promoted"}.issubset({row["movement_state"] for row in write_rows})
+    assert all(row["trace"]["run_id"] == run_id for row in write_rows)
+    assert any(run_id in row["trace"].get("run_ids", []) for row in summary_rows)
+
+
+def test_sdk_blocked_write_run_id_survives_trace_and_dashboard_movement():
+    sdk = SparkMemorySDK(require_upstream_authority=False)
+    run_id = "sib-turn-blocked-001"
+
+    write_result = sdk.write_observation(MemoryWriteRequest(text="   ", run_id=run_id))
+    movement_rows = sdk.export_knowledge_base_snapshot()["dashboard_movement"]["rows"]
+    blocked_rows = [
+        row
+        for row in movement_rows
+        if row["movement_state"] in {"blocked", "dropped"}
+        and row["trace"].get("reason") == "empty_text"
+    ]
+
+    assert write_result.accepted is False
+    assert write_result.trace["run_id"] == run_id
+    assert {row["movement_state"] for row in blocked_rows} == {"blocked", "dropped"}
+    assert all(row["trace"]["run_id"] == run_id for row in blocked_rows)
+
+
+def test_sdk_contracts_expose_run_id_for_write_traces_and_maintenance_replay():
+    sdk_contract = build_sdk_contract_summary()
+    replay_contract = build_sdk_maintenance_replay_contract_summary()
+
+    assert "run_id" in sdk_contract["trace_contracts"]["write_memory"]
+    assert "run_id" in replay_contract["single_file_shape"]["write_fields"]
 
 
 def test_sdk_returns_invalid_request_trace_for_bad_lookup_and_limit():

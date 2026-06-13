@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from collections import Counter
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 import re
+import sys
+from pathlib import Path
 from typing import Any
 
 from .contracts import JsonDict, MemoryRole, NormalizedBenchmarkSample, NormalizedQuestion as NormalizedQuestion, NormalizedSession, NormalizedTurn, RetentionClass
@@ -76,6 +79,38 @@ DASHBOARD_MOVEMENT_STATES: tuple[str, ...] = (
 MEMORY_WRITE_TOOL_NAME = "domain-chip-memory.memory.write"
 MEMORY_WRITE_CAPABILITY_ID = "capability:domain-chip-memory:memory.write"
 MEMORY_WRITE_ACTION_TYPE = "memory.write"
+
+
+def _harness_core_source_candidates() -> list[Path]:
+    candidates: list[Path] = []
+    spark_home = os.environ.get("SPARK_HOME")
+    if spark_home:
+        candidates.append(Path(spark_home).expanduser() / "modules" / "spark-harness-core" / "source" / "src")
+    candidates.append(Path.home() / ".spark" / "modules" / "spark-harness-core" / "source" / "src")
+    return candidates
+
+
+def _load_harness_kernel_class() -> type[object] | None:
+    try:
+        from spark_harness_core import HarnessKernel
+
+        return HarnessKernel
+    except ModuleNotFoundError:
+        pass
+
+    for candidate in _harness_core_source_candidates():
+        if not (candidate / "spark_harness_core" / "__init__.py").exists():
+            continue
+        candidate_text = str(candidate)
+        if candidate_text not in sys.path:
+            sys.path.insert(0, candidate_text)
+        try:
+            from spark_harness_core import HarnessKernel
+
+            return HarnessKernel
+        except ModuleNotFoundError:
+            continue
+    return None
 
 
 def _runtime_memory_architecture(value: str | None = None) -> str:
@@ -159,7 +194,49 @@ def _matching_write_governor_ledger(
     return None
 
 
-def memory_write_governor_errors(decision: JsonDict | None, *, binding_refs: tuple[str, ...]) -> list[str]:
+def _memory_write_binding_ref_errors(decision: JsonDict, *, binding_refs: tuple[str, ...]) -> list[str]:
+    refs = tuple(ref for ref in binding_refs if ref)
+    if not refs:
+        return ["authority_binding_refs_missing"]
+    if any(not _contains_string(decision, ref) for ref in refs):
+        return ["authority_binding_missing"]
+    return []
+
+
+def _kernel_memory_write_governor_errors(decision: JsonDict, *, binding_refs: tuple[str, ...]) -> list[str] | None:
+    HarnessKernel = _load_harness_kernel_class()
+    if HarnessKernel is None:
+        return None
+
+    surface = str(decision.get("surface") or "domain_chip_memory_sdk")
+    kernel = HarnessKernel(surface=surface)
+    verifier = getattr(kernel, "verify_governor_execution_authority", None)
+    if not callable(verifier):
+        return ["harness_core_governor_verifier_unavailable"]
+
+    matching_action = _matching_write_governor_action(decision)
+    action_id = str((matching_action or {}).get("action_id") or "").strip() or None
+    try:
+        verification = verifier(
+            decision,
+            expected_capability_id=MEMORY_WRITE_CAPABILITY_ID,
+            expected_action_type=MEMORY_WRITE_ACTION_TYPE,
+            tool_name=MEMORY_WRITE_TOOL_NAME,
+            action_id=action_id,
+            allow_read_only=False,
+            require_pre_execution_ledger=True,
+        )
+    except Exception:
+        return ["harness_core_governor_verifier_error"]
+
+    if not isinstance(verification, dict) or verification.get("allowed") is not True:
+        reason_codes = verification.get("reason_codes") if isinstance(verification, dict) else None
+        reasons = [str(reason).strip() for reason in reason_codes or [] if str(reason).strip()]
+        return reasons or ["governor_verification_failed"]
+    return _memory_write_binding_ref_errors(decision, binding_refs=binding_refs)
+
+
+def _structural_memory_write_governor_errors(decision: JsonDict | None, *, binding_refs: tuple[str, ...]) -> list[str]:
     if not isinstance(decision, dict):
         return ["governor_decision_missing"]
 
@@ -189,11 +266,7 @@ def memory_write_governor_errors(decision: JsonDict | None, *, binding_refs: tup
         errors.append("memory_write_action_missing")
     action_id = str((matching_action or {}).get("action_id") or "").strip()
 
-    refs = tuple(ref for ref in binding_refs if ref)
-    if not refs:
-        errors.append("authority_binding_refs_missing")
-    elif any(not _contains_string(decision, ref) for ref in refs):
-        errors.append("authority_binding_missing")
+    errors.extend(_memory_write_binding_ref_errors(decision, binding_refs=binding_refs))
 
     authorization = _matching_write_governor_authorization(decision, action_id=action_id, turn_id=envelope_turn_id)
     if not authorization:
@@ -210,6 +283,14 @@ def memory_write_governor_errors(decision: JsonDict | None, *, binding_refs: tup
     return errors
 
 
+def memory_write_governor_errors(decision: JsonDict | None, *, binding_refs: tuple[str, ...]) -> list[str]:
+    if isinstance(decision, dict):
+        kernel_errors = _kernel_memory_write_governor_errors(decision, binding_refs=binding_refs)
+        if kernel_errors is not None:
+            return kernel_errors
+    return _structural_memory_write_governor_errors(decision, binding_refs=binding_refs)
+
+
 @dataclass(frozen=True)
 class MemoryWriteRequest:
     text: str
@@ -217,6 +298,7 @@ class MemoryWriteRequest:
     timestamp: str | None = None
     session_id: str | None = None
     turn_id: str | None = None
+    run_id: str | None = None
     operation: str = "auto"
     subject: str | None = None
     predicate: str | None = None
@@ -1142,11 +1224,25 @@ class SparkMemorySDK:
             "errors": errors,
         }
 
+    def _write_run_id(self, request: MemoryWriteRequest) -> str | None:
+        metadata = request.metadata if isinstance(request.metadata, dict) else {}
+        return (
+            _normalize_scalar(request.run_id)
+            or _normalize_scalar(metadata.get("run_id"))
+            or _normalize_scalar(metadata.get("turn_ref"))
+            or None
+        )
+
+    def _write_run_trace(self, request: MemoryWriteRequest) -> JsonDict:
+        run_id = self._write_run_id(request)
+        return {"run_id": run_id} if run_id else {}
+
     def _write(self, request: MemoryWriteRequest, *, write_kind: str) -> MemoryWriteResult:
         operation = _normalize_scalar(request.operation).lower() or "auto"
         cleaned_text = str(request.text or "").strip()
         session_id = request.session_id or self._next_session_id()
         turn_id = request.turn_id or self._next_turn_id(session_id)
+        run_trace = self._write_run_trace(request)
 
         if operation == "auto" and not cleaned_text:
             self._append_request_dashboard_movement(
@@ -1180,6 +1276,7 @@ class SparkMemorySDK:
                     "write_operation": operation,
                     "persisted": False,
                     "authority": self._write_authority_trace(request),
+                    **run_trace,
                 },
             )
 
@@ -1216,6 +1313,7 @@ class SparkMemorySDK:
                     "write_operation": operation,
                     "persisted": False,
                     "authority": self._write_authority_trace(request),
+                    **run_trace,
                 },
             )
 
@@ -1253,6 +1351,7 @@ class SparkMemorySDK:
                     "write_operation": operation,
                     "persisted": False,
                     "authority": self._write_authority_trace(request, errors=authority_errors),
+                    **run_trace,
                 },
             )
 
@@ -1263,6 +1362,8 @@ class SparkMemorySDK:
         normalized_turn_subject = self._normalize_optional_subject(request.subject)
         if normalized_turn_subject:
             turn_metadata.setdefault("subject", normalized_turn_subject)
+        if run_trace:
+            turn_metadata.setdefault("run_id", run_trace["run_id"])
         if manual_write:
             explicit_memory = self._explicit_memory_entries(
                 request,
@@ -1303,6 +1404,7 @@ class SparkMemorySDK:
                         "write_operation": operation,
                         "persisted": False,
                         "authority": self._write_authority_trace(request),
+                        **run_trace,
                     },
                 )
             observations = list(explicit_memory["observations"])
@@ -1381,6 +1483,7 @@ class SparkMemorySDK:
                         "operation": "write_memory",
                         "write_kind": write_kind,
                         "write_operation": operation,
+                        **run_trace,
                     },
                 )
                 self._append_record_dashboard_movement(
@@ -1390,6 +1493,7 @@ class SparkMemorySDK:
                         "operation": "write_memory",
                         "write_kind": write_kind,
                         "write_operation": operation,
+                        **run_trace,
                     },
                 )
                 if record.memory_role in {"current_state", "state_deletion"} or record.retention_class == "active_state":
@@ -1401,6 +1505,7 @@ class SparkMemorySDK:
                             "write_kind": write_kind,
                             "write_operation": operation,
                             "promotion_target": "current_state",
+                            **run_trace,
                         },
                     )
                 if operation == "purge" and purge_result.get("purge"):
@@ -1412,6 +1517,7 @@ class SparkMemorySDK:
                             "write_kind": write_kind,
                             "write_operation": operation,
                             "purge": purge_result.get("purge"),
+                            **run_trace,
                         },
                     )
         else:
@@ -1454,6 +1560,7 @@ class SparkMemorySDK:
                 "primary_retention_class": self._primary_retention_class([*observation_records, *event_records]),
                 "lifecycle_fields_present": self._lifecycle_fields_present_for_items([*observation_records, *event_records]),
                 "authority": self._write_authority_trace(request),
+                **run_trace,
                 **purge_result,
             },
         )
@@ -3184,6 +3291,7 @@ class SparkMemorySDK:
                     "write_operation": write_operation,
                     "persisted": False,
                     "source_of_truth": "SparkMemorySDK",
+                    **self._write_run_trace(request),
                 },
             )
         )
@@ -3226,6 +3334,13 @@ class SparkMemorySDK:
         first_turn = session.turns[0]
         last_turn = session.turns[-1]
         session_ref = self._movement_ref("session", session.session_id)
+        run_ids = sorted(
+            {
+                run_id
+                for run_id in (_normalize_scalar(turn.metadata.get("run_id")) for turn in session.turns)
+                if run_id
+            }
+        )
         return self._dashboard_movement_row(
             row_id=f"snapshot:summarized:{session_ref}:{index}",
             movement_state="summarized",
@@ -3247,6 +3362,7 @@ class SparkMemorySDK:
                 "session_ref": session_ref,
                 "turn_count": len(session.turns),
                 "derived_from_snapshot": True,
+                **({"run_ids": run_ids} if run_ids else {}),
             },
         )
 
@@ -3454,6 +3570,7 @@ def build_sdk_contract_summary(
         ],
         "trace_contracts": {
             "write_memory": [
+                "run_id",
                 "memory_roles",
                 "memory_role_counts",
                 "primary_memory_role",
@@ -3588,6 +3705,7 @@ def build_sdk_maintenance_replay_contract_summary() -> dict[str, Any]:
                 "timestamp",
                 "session_id",
                 "turn_id",
+                "run_id",
                 "operation",
                 "subject",
                 "predicate",
