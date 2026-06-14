@@ -1,9 +1,13 @@
 {
-  "schema_version": "spark-chip.v1",
+  "manifest_version": 2,
+  "schema_version": "spark-chip.v2",
   "version": "0.1.0",
   "chip_name": "domain-chip-memory",
   "domain": "agent-memory",
   "description": "Benchmark-first Spark domain chip for building and evaluating agent memory systems against LongMemEval, LoCoMo, and ConvoMem.",
+  "requires_runtime": {
+    "spark-intelligence-builder": ">=0.1.0"
+  },
   "capabilities": [
     "evaluate",
     "suggest",

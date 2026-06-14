@@ -1,0 +1,31 @@
+name: Chip publish gates
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        description: Semver release tag to validate.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+  security-events: write
+
+jobs:
+  chip-publish:
+    uses: vibeforge1111/spark-cli/.github/workflows/reusable-chip-publish.yml@ap-22-chip-publish-v1
+    with:
+      schemafile: "https://raw.githubusercontent.com/vibeforge1111/spark-domain-chip-labs/ap-20-spark-chip-v2-schema-v1/docs/creator_system/schemas/spark-chip.v2.schema.json"
+      release-tag: ${{ inputs.release-tag || github.ref_name }}
+      install-command: "python -m pip install -e . pytest"
+      test-command: "python -m pytest tests/test_benchmark_registry.py tests/test_scorecards.py -q"
+      opengrep-command: "curl -fsSL https://raw.githubusercontent.com/opengrep/opengrep/main/install.sh | bash && opengrep scan -f security/opengrep-rules ."
+      build-command: "mkdir -p release-artifacts && cp spark-chip.json spark-chip.json.sha256 release-artifacts/"
+      artifact-path: "release-artifacts/*"
+      artifact-name: "domain-chip-memory-release"

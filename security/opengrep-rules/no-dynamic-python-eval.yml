@@ -1,0 +1,9 @@
+rules:
+  - id: no-dynamic-python-eval
+    message: Avoid dynamic eval or exec in chip code paths.
+    languages:
+      - python
+    severity: ERROR
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: exec(...)
