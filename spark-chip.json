@@ -1,5 +1,5 @@
 {
-  "schema_version": "spark-chip.v1",
+  "schema_version": "spark-chip.v2",
   "version": "0.1.0",
   "chip_name": "domain-chip-memory",
   "domain": "agent-memory",
@@ -11,16 +11,20 @@
     "watchtower"
   ],
   "task_topics": [
-    "agent_memory",
-    "memory_benchmarks",
-    "telegram_memory",
+    "agent",
+    "memory",
+    "benchmarks",
+    "telegram",
     "longmemeval",
     "locomo",
     "convomem",
-    "memory_retrieval",
-    "memory_evaluation",
-    "knowledge_updates",
-    "forgetting"
+    "retrieval",
+    "evaluation",
+    "knowledge",
+    "updates",
+    "forgetting",
+    "domain",
+    "chip"
   ],
   "task_keywords": [
     "memory",
@@ -28,17 +32,31 @@
     "forget",
     "recall",
     "benchmark",
-    "LongMemEval",
-    "LoCoMo",
-    "ConvoMem",
-    "Telegram memory",
-    "profile facts",
-    "current plan",
+    "longmemeval",
+    "locomo",
+    "convomem",
+    "telegram",
+    "profile",
+    "facts",
+    "current",
+    "plan",
     "commitment",
     "retrieval",
-    "temporal grounding",
+    "temporal",
+    "grounding",
     "supersession",
-    "deletion"
+    "deletion",
+    "first",
+    "spark",
+    "domain",
+    "chip",
+    "for",
+    "building",
+    "and",
+    "evaluating",
+    "agent",
+    "systems",
+    "against"
   ],
   "combine_with": [
     "spark-intelligence-builder",
@@ -169,5 +187,9 @@
       "Track open-source borrowing explicitly and preserve license boundaries."
     ],
     "web_search": true
+  },
+  "manifest_version": 2,
+  "requires_runtime": {
+    "spark-intelligence-builder": ">=0.1.0"
   }
 }
