@@ -522,7 +522,7 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
         for query in get_fulltext_indices(GraphProvider.KUZU):
             try:
                 _run_maybe_async(driver.execute_query(query), timeout_seconds=self.call_timeout_seconds)
-            except Exception:
+            except Exception as _e:
                 continue
         if marker_path is not None:
             try:
