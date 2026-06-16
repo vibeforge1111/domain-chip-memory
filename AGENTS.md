@@ -77,6 +77,7 @@ Prefer allowlisted memory proof metadata over broad object export.
 
 - Separate episodic, semantic/current-state, procedural, and working/session memory.
 - Raw turns are episodic evidence, not durable truth.
+- Privacy-withholding language is an owner-level write veto. If a request says no-store, answer without saving, or only for this answer, the SDK must refuse durable writes even when upstream supplied an apparently valid Governor decision. Delete and purge operations remain allowed through their own authority path.
 - Promotion requires salience, transfer value, source, scope, and a reason to survive decay.
 - Decay should be explicit and traceable, not silent deletion.
 - Recall should explain why an item was selected, which source it came from, and whether it is authoritative or supporting.

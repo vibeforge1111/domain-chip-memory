@@ -86,7 +86,7 @@ Self-improvement targets are stricter than memory recall. Memory-derived output 
 | Gate | Blocks | Allows | Record |
 | --- | --- | --- | --- |
 | Source/provenance gate | unlabeled claims, missing actor/source, unsupported memory writes | traceable observations and tool outputs | `policy_gate_records`, rejected reason |
-| Privacy/security gate | secrets, credentials, sensitive output leaks | redacted or safe summaries | `quarantine_records` |
+| Privacy/security gate | secrets, credentials, sensitive output leaks, and storage-withheld turns such as no-store or answer without saving | redacted or safe summaries, plus delete/purge operations through their own authority path | `quarantine_records` or blocked write trace |
 | Target-scope gate | wrong repo/build target assumptions, stale Spawner payloads | target-confirmed build/workflow facts | procedural memory + policy gate |
 | Salience/keepability gate | small talk, transient chatter, low-value residue | important facts, decisions, corrections, repeated signals | salience metadata |
 | Lane classifier | facts going to wrong lane | identity/current/entity/episode/procedural/etc. | `memory_lane`, `promotion_stage` |
@@ -126,6 +126,12 @@ Promotion bands:
 ## Human-Readable Recall Explanation
 
 Every memory answer should be explainable in plain language.
+
+## Storage-Withholding Rule
+
+If the source turn says the content is only for the current answer, should not be stored, or should be answered without saving/remembering, `domain-chip-memory` must block durable write operations before extraction or promotion. This applies even when a caller supplies a valid Harness/Governor decision, because the memory chip owns durable persistence truth.
+
+Builder and Telegram may preflight these turns to avoid proposing memory-write authority, but they are not the final memory privacy authority. Delete and purge requests are not blocked by this storage-withholding rule; they use the delete/purge authority path.
 
 Good explanation:
 

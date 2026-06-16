@@ -78,6 +78,41 @@ MEMORY_WRITE_CAPABILITY_ID = "capability:domain-chip-memory:memory.write"
 MEMORY_WRITE_ACTION_TYPE = "memory.write"
 
 
+def _memory_write_privacy_withholding_reason(text: str, *, operation: str) -> str | None:
+    if operation in {"delete", "purge"}:
+        return None
+    normalized = _normalize_scalar(text).casefold()
+    if not normalized:
+        return None
+    storage_object = (
+        r"(?:this|that|it|anything|something|memory|note|detail|context|phrase|"
+        r"private\s+(?:phrase|detail|context|note))"
+    )
+    if re.search(rf"\bno[-\s]+store\b(?=\s*(?:[:.;!?]|$|\b(?:{storage_object}|the|my|our|please)\b))", normalized):
+        return "privacy_withheld_no_store"
+    if re.search(r"\b(?:answer|reply|respond)\s+without\s+(?:saving|storing|remembering|recording|capturing|persisting|learning)\b", normalized):
+        return "privacy_withheld_no_store"
+    if re.search(
+        r"\b(?:do\s+not|don't|dont|please\s+don't|please\s+dont|no\s+need\s+to|without|never)\s+"
+        r"(?:save|store|remember|write|record|capture|persist|learn)\s+"
+        rf"{storage_object}\b",
+        normalized,
+    ):
+        return "privacy_withheld_no_store"
+    if re.search(
+        r"\b(?:do\s+not|don't|dont|please\s+don't|please\s+dont|no\s+need\s+to|without|never)\s+"
+        r"(?:save|store|remember|write|record|capture|persist|learn)\s*(?:[.!?;:]|$)",
+        normalized,
+    ):
+        return "privacy_withheld_no_store"
+    if re.search(r"\b(?:only|just)\s+for\s+this\s+(?:answer|reply|response|turn|message)\b", normalized) and re.search(
+        r"\b(?:private|phrase|detail|context|secret|do\s+not\s+store|don't\s+store|dont\s+store|no[-\s]+store)\b",
+        normalized,
+    ):
+        return "privacy_withheld_ephemeral_turn"
+    return None
+
+
 def _runtime_memory_architecture(value: str | None = None) -> str:
     return _normalize_scalar(value) or DEFAULT_RUNTIME_MEMORY_ARCHITECTURE
 
@@ -1176,6 +1211,42 @@ class SparkMemorySDK:
                     "operation": "write_memory",
                     "status": "unsupported_write",
                     "reason": "empty_text",
+                    "write_kind": write_kind,
+                    "write_operation": operation,
+                    "persisted": False,
+                    "authority": self._write_authority_trace(request),
+                },
+            )
+
+        privacy_withholding_reason = _memory_write_privacy_withholding_reason(cleaned_text, operation=operation)
+        if privacy_withholding_reason:
+            self._append_request_dashboard_movement(
+                movement_state="blocked",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason=privacy_withholding_reason,
+            )
+            self._append_request_dashboard_movement(
+                movement_state="dropped",
+                request=request,
+                write_kind=write_kind,
+                write_operation=operation,
+                reason=privacy_withholding_reason,
+            )
+            return MemoryWriteResult(
+                session_id=session_id,
+                turn_id=turn_id,
+                accepted=False,
+                observations_written=0,
+                events_written=0,
+                observations=[],
+                events=[],
+                unsupported_reason=privacy_withholding_reason,
+                trace={
+                    "operation": "write_memory",
+                    "status": "unsupported_write",
+                    "reason": privacy_withholding_reason,
                     "write_kind": write_kind,
                     "write_operation": operation,
                     "persisted": False,

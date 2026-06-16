@@ -163,6 +163,109 @@ def test_sdk_strict_write_accepts_verified_governor_binding():
     assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).value == "Dubai"
 
 
+def test_sdk_write_vetoes_no_store_even_with_verified_governor_binding():
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+    binding_refs = ("session:s1", "turn:t1", "memory-write:location")
+    governor = _memory_write_governor_decision(binding_refs)
+
+    write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="Do not store this: I live in Dubai.",
+            operation="create",
+            subject="user",
+            predicate="location",
+            value="Dubai",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+
+    assert write.accepted is False
+    assert write.unsupported_reason == "privacy_withheld_no_store"
+    assert write.trace["persisted"] is False
+    assert write.trace["authority"]["state"] == "governor_verified"
+    assert sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).found is False
+    snapshot = sdk.export_knowledge_base_snapshot()
+    assert snapshot["counts"]["session_count"] == 0
+    assert "Dubai" not in str(snapshot)
+
+
+def test_sdk_private_status_is_not_privacy_veto_without_storage_withholding():
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+    binding_refs = ("session:s1", "turn:t1", "memory-write:status")
+    governor = _memory_write_governor_decision(binding_refs)
+
+    write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="Status update: private beta is live with 14 design partners.",
+            operation="create",
+            subject="project",
+            predicate="private_beta_status",
+            value="live with 14 design partners",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+
+    assert write.accepted is True
+    assert write.trace["persisted"] is True
+    assert sdk.get_current_state(
+        CurrentStateRequest(subject="project", predicate="private_beta_status")
+    ).value == "live with 14 design partners"
+
+
+def test_sdk_storage_policy_content_is_not_privacy_veto():
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+    binding_refs = ("session:s1", "turn:t1", "memory-write:policy")
+    governor = _memory_write_governor_decision(binding_refs)
+
+    policy_write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="Remember this security policy: never store customer passwords in memory.",
+            operation="create",
+            subject="security",
+            predicate="storage_policy",
+            value="never store customer passwords in memory",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+
+    assert policy_write.accepted is True
+    assert sdk.get_current_state(
+        CurrentStateRequest(subject="security", predicate="storage_policy")
+    ).value == "never store customer passwords in memory"
+
+
+def test_sdk_nostore_codename_is_not_privacy_veto():
+    sdk = SparkMemorySDK(require_upstream_authority=True)
+    binding_refs = ("session:s1", "turn:t1", "memory-write:codename")
+    governor = _memory_write_governor_decision(binding_refs)
+
+    codename_write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="Remember this project codename: NoStore means the storage-policy refactor.",
+            operation="create",
+            subject="project",
+            predicate="codename",
+            value="NoStore",
+            session_id="session:s1",
+            turn_id="turn:t1",
+            governor_decision=governor,
+            authority_binding_refs=binding_refs,
+        )
+    )
+
+    assert codename_write.accepted is True
+    assert sdk.get_current_state(CurrentStateRequest(subject="project", predicate="codename")).value == "NoStore"
+
+
 def test_sdk_strict_write_rejects_copied_governor_ledger():
     sdk = SparkMemorySDK(require_upstream_authority=True)
     binding_refs = ("session:s1", "turn:t1", "memory-write:location")
