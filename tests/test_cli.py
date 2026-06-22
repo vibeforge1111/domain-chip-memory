@@ -2735,7 +2735,7 @@ def test_build_shadow_failure_taxonomy_treats_no_supported_answer_reads_as_cover
                                 "action": "reference_turn",
                                 "accepted": False,
                                 "trace": {
-                                    "content": "No supported answer for profile.city of human:telegram:8319079055; abstained with unknown.",
+                                    "content": "No supported answer for profile.city of human:telegram:1000000001; abstained with unknown.",
                                     "timestamp": "2026-04-10T00:00:01Z",
                                     "source_event_type": "memory_read_abstained",
                                     "method": "explain_answer",
@@ -2745,7 +2745,7 @@ def test_build_shadow_failure_taxonomy_treats_no_supported_answer_reads_as_cover
                                     "read_outcome": "no_supported_answer",
                                     "retrieval_operation": "explain_answer",
                                     "explanation_text": (
-                                        "No supported answer for profile.city of human:telegram:8319079055; "
+                                        "No supported answer for profile.city of human:telegram:1000000001; "
                                         "abstained with unknown."
                                     ),
                                 },
