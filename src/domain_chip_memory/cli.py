@@ -3005,9 +3005,16 @@ def _normalize_builder_telegram_state_db(
     def _supported_event_where_clause() -> str:
         return ", ".join(f"'{event_type}'" for event_type in supported_event_types)
 
-    def _load_supported_builder_rows(*, scan_all: bool) -> list[sqlite3.Row]:
-        connection = sqlite3.connect(state_db_path)
+    def _connect_state_db() -> sqlite3.Connection:
+        # timeout so a concurrently-locked builder state DB blocks briefly
+        # instead of raising "database is locked" immediately and hanging
+        # the caller on a busy DB.
+        connection = sqlite3.connect(state_db_path, timeout=30.0)
         connection.row_factory = sqlite3.Row
+        return connection
+
+    def _load_supported_builder_rows(*, scan_all: bool) -> list[sqlite3.Row]:
+        connection = _connect_state_db()
         try:
             if selected_chat_id is not None or scan_all:
                 return connection.execute(
@@ -3065,8 +3072,7 @@ def _normalize_builder_telegram_state_db(
         if not clean_human_ids:
             return []
         placeholders = ", ".join("?" for _ in clean_human_ids)
-        connection = sqlite3.connect(state_db_path)
-        connection.row_factory = sqlite3.Row
+        connection = _connect_state_db()
         try:
             return connection.execute(
                 f"""
