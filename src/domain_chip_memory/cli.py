@@ -3005,9 +3005,16 @@ def _normalize_builder_telegram_state_db(
     def _supported_event_where_clause() -> str:
         return ", ".join(f"'{event_type}'" for event_type in supported_event_types)
 
-    def _load_supported_builder_rows(*, scan_all: bool) -> list[sqlite3.Row]:
-        connection = sqlite3.connect(state_db_path)
+    def _connect_state_db() -> sqlite3.Connection:
+        # timeout so a concurrently-locked builder state DB blocks briefly
+        # instead of raising "database is locked" immediately and hanging
+        # the caller on a busy DB.
+        connection = sqlite3.connect(state_db_path, timeout=30.0)
         connection.row_factory = sqlite3.Row
+        return connection
+
+    def _load_supported_builder_rows(*, scan_all: bool) -> list[sqlite3.Row]:
+        connection = _connect_state_db()
         try:
             if selected_chat_id is not None or scan_all:
                 return connection.execute(
@@ -3065,8 +3072,7 @@ def _normalize_builder_telegram_state_db(
         if not clean_human_ids:
             return []
         placeholders = ", ".join("?" for _ in clean_human_ids)
-        connection = sqlite3.connect(state_db_path)
-        connection.row_factory = sqlite3.Row
+        connection = _connect_state_db()
         try:
             return connection.execute(
                 f"""
@@ -4835,16 +4841,33 @@ def _build_spark_memory_kb_sourcing_slice(
 ) -> dict:
     ablation_payload = _load_json_file(ablation_file)
     if not isinstance(ablation_payload, dict):
-        raise ValueError("Spark ablation payload must be a JSON object.")
+        raise ValueError(
+            f"Spark ablation payload at {ablation_file!r} must be a JSON object "
+            f"(got {type(ablation_payload).__name__}). Regenerate it with "
+            f"`spark ablation run` — that command always writes a top-level object."
+        )
     summary = ablation_payload.get("summary")
     if not isinstance(summary, dict):
-        raise ValueError("Spark ablation payload must contain a summary object.")
+        raise ValueError(
+            f"Spark ablation payload at {ablation_file!r} must contain a 'summary' object "
+            f"(found keys: {sorted(ablation_payload.keys())!r}). The file may be from an "
+            f"older schema — regenerate with the current `spark ablation run`."
+        )
     missing_fact_examples_by_predicate = summary.get("missing_fact_examples_by_predicate")
     if not isinstance(missing_fact_examples_by_predicate, dict):
-        raise ValueError("Spark ablation summary must contain missing_fact_examples_by_predicate.")
+        raise ValueError(
+            f"Spark ablation summary in {ablation_file!r} must contain "
+            f"'missing_fact_examples_by_predicate'. This key is produced by "
+            f"`spark ablation run` since the v3 schema — older payloads are not supported. "
+            f"Regenerate the ablation file."
+        )
     source_backed_examples_by_missing_predicate = summary.get("source_backed_examples_by_missing_predicate")
     if not isinstance(source_backed_examples_by_missing_predicate, dict):
-        raise ValueError("Spark ablation summary must contain source_backed_examples_by_missing_predicate.")
+        raise ValueError(
+            f"Spark ablation summary in {ablation_file!r} must contain "
+            f"'source_backed_examples_by_missing_predicate'. Regenerate the ablation "
+            f"file with the current `spark ablation run` — this key was added in v3."
+        )
 
     resolved_data_file = str(data_file or ablation_payload.get("input_file") or "").strip()
     if not resolved_data_file:

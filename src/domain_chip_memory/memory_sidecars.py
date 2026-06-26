@@ -519,17 +519,23 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
         marker_path = self._kuzu_fulltext_index_marker_path()
         if marker_path is not None and marker_path.exists():
             return
+        failed: list[str] = []
         for query in get_fulltext_indices(GraphProvider.KUZU):
             try:
                 _run_maybe_async(driver.execute_query(query), timeout_seconds=self.call_timeout_seconds)
-            except Exception:
+            except Exception as exc:
+                failed.append(str(exc))
                 continue
+        if failed:
+            import logging
+            logging.warning("domain-chip-memory: %d fulltext index queries failed: %s", len(failed), failed[:3])
         if marker_path is not None:
             try:
                 marker_path.parent.mkdir(parents=True, exist_ok=True)
                 marker_path.write_text("built\n", encoding="utf-8")
-            except Exception:
-                pass
+            except Exception as exc:
+                import logging
+                logging.warning("domain-chip-memory: could not write fulltext index marker %s: %s", marker_path, exc)
 
     def _kuzu_fulltext_index_marker_path(self) -> Path | None:
         if str(self.backend or "").strip().lower() != "kuzu":
