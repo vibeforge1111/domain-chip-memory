@@ -604,7 +604,9 @@ def test_spark_kb_frontmatter_exposes_memory_family_authority_metadata(tmp_path)
 
     result = scaffold_spark_knowledge_base(tmp_path / "kb", snapshot)
 
-    current_page = next((tmp_path / "kb" / "wiki" / "current-state").glob("*.md"))
+    current_page = next(
+        path for path in (tmp_path / "kb" / "wiki" / "current-state").glob("*.md") if path.name != "_index.md"
+    )
     evidence_page = next(
         path for path in (tmp_path / "kb" / "wiki" / "evidence").glob("*.md") if path.name != "_index.md"
     )
