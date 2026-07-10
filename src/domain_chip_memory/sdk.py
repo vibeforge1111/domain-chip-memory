@@ -74,8 +74,10 @@ DASHBOARD_MOVEMENT_STATES: tuple[str, ...] = (
     "dropped",
 )
 MEMORY_WRITE_TOOL_NAME = "domain-chip-memory.memory.write"
+MEMORY_WRITE_VNEXT_TOOL_NAME = "memory.write"
 MEMORY_WRITE_CAPABILITY_ID = "capability:domain-chip-memory:memory.write"
-MEMORY_WRITE_ACTION_TYPE = "memory.write"
+MEMORY_WRITE_ACTION_TYPE = "write_memory"
+MEMORY_WRITE_LEGACY_ACTION_TYPE = "memory.write"
 
 
 def _memory_write_privacy_withholding_reason(text: str, *, operation: str) -> str | None:
@@ -138,7 +140,7 @@ def _matching_write_governor_action(decision: JsonDict) -> JsonDict | None:
         if (
             isinstance(action, dict)
             and action.get("capability_id") == MEMORY_WRITE_CAPABILITY_ID
-            and action.get("action_type") == MEMORY_WRITE_ACTION_TYPE
+            and action.get("action_type") in {MEMORY_WRITE_ACTION_TYPE, MEMORY_WRITE_LEGACY_ACTION_TYPE}
             and str(action.get("action_id") or "").strip()
         ):
             return action
@@ -179,7 +181,7 @@ def _matching_write_governor_ledger(
         authorization = ledger.get("authorization") if isinstance(ledger.get("authorization"), dict) else {}
         if (
             ledger.get("schema_version") == "tool-call-ledger-v1"
-            and ledger.get("tool_name") == MEMORY_WRITE_TOOL_NAME
+            and ledger.get("tool_name") in {MEMORY_WRITE_TOOL_NAME, MEMORY_WRITE_VNEXT_TOOL_NAME}
             and ledger.get("capability_id") == MEMORY_WRITE_CAPABILITY_ID
             and ledger.get("action_id") == action_id
             and ledger.get("turn_id") == turn_id
@@ -1052,7 +1054,36 @@ class SparkMemorySDK:
             ),
         )
 
-    def reconsolidate_manual_memory(self, *, now: str | None = None) -> MemoryMaintenanceResult:
+    def reconsolidate_manual_memory(
+        self,
+        *,
+        now: str | None = None,
+        governor_decision: JsonDict | None = None,
+        authority_binding_refs: tuple[str, ...] = (),
+    ) -> MemoryMaintenanceResult:
+        authority_errors = self._maintenance_authority_errors(
+            governor_decision=governor_decision,
+            authority_binding_refs=authority_binding_refs,
+        )
+        if authority_errors:
+            reason = "authority_required:" + ",".join(authority_errors)
+            return MemoryMaintenanceResult(
+                manual_observations_before=len(self._manual_observations),
+                manual_observations_after=len(self._manual_observations),
+                current_state_snapshot_count=len(self._manual_current_state_snapshot),
+                active_deletion_count=0,
+                manual_events_count=len(self._manual_events),
+                trace={
+                    "operation": "reconsolidate_manual_memory",
+                    "status": "authority_blocked",
+                    "reason": reason,
+                    "authority": self._maintenance_authority_trace(
+                        governor_decision=governor_decision,
+                        authority_binding_refs=authority_binding_refs,
+                        errors=authority_errors,
+                    ),
+                },
+            )
         raw_snapshot = self._build_manual_current_state_snapshot(self._manual_observations)
         maintained_at = now or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         self._manual_observations = self._annotate_active_state_maintenance(
@@ -1096,6 +1127,10 @@ class SparkMemorySDK:
             trace={
                 "operation": "reconsolidate_manual_memory",
                 "status": "ok",
+                "authority": self._maintenance_authority_trace(
+                    governor_decision=governor_decision,
+                    authority_binding_refs=authority_binding_refs,
+                ),
                 "active_state_maintenance": {
                     "still_current": maintenance_counts.get("still_current", 0),
                     "stale_preserved": maintenance_counts.get("stale_preserved", 0),
@@ -1125,6 +1160,12 @@ class SparkMemorySDK:
         return {
             "runtime_class": "SparkMemorySDK",
             "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            "authority_boundary": {
+                "require_upstream_authority": self.require_upstream_authority,
+                "mode": "governor_verified" if self.require_upstream_authority else "advisory_shadow",
+                "evidence_only": not self.require_upstream_authority,
+                "live_memory_authority": self.require_upstream_authority,
+            },
             "memory_role_contract": {
                 "roles": role_contracts,
                 "canonical_aliases": {
@@ -1174,6 +1215,37 @@ class SparkMemorySDK:
             "action_type": MEMORY_WRITE_ACTION_TYPE,
             "governor_decision_id": decision.get("decision_id"),
             "binding_refs": [str(ref).strip() for ref in request.authority_binding_refs if str(ref).strip()],
+            "errors": errors,
+        }
+
+    def _maintenance_authority_errors(
+        self,
+        *,
+        governor_decision: JsonDict | None,
+        authority_binding_refs: tuple[str, ...],
+    ) -> list[str]:
+        if not self.require_upstream_authority:
+            return []
+        binding_refs = tuple(str(ref).strip() for ref in authority_binding_refs if str(ref).strip())
+        return memory_write_governor_errors(governor_decision, binding_refs=binding_refs)
+
+    def _maintenance_authority_trace(
+        self,
+        *,
+        governor_decision: JsonDict | None,
+        authority_binding_refs: tuple[str, ...],
+        errors: list[str] | None = None,
+    ) -> JsonDict:
+        decision = governor_decision if isinstance(governor_decision, dict) else {}
+        errors = list(errors or [])
+        return {
+            "required": self.require_upstream_authority,
+            "state": "blocked" if errors else "governor_verified" if self.require_upstream_authority else "advisory_shadow",
+            "tool_name": MEMORY_WRITE_TOOL_NAME,
+            "capability_id": MEMORY_WRITE_CAPABILITY_ID,
+            "action_type": MEMORY_WRITE_ACTION_TYPE,
+            "governor_decision_id": decision.get("decision_id"),
+            "binding_refs": [str(ref).strip() for ref in authority_binding_refs if str(ref).strip()],
             "errors": errors,
         }
 
@@ -3480,6 +3552,16 @@ def build_sdk_contract_summary(
             "action_type": MEMORY_WRITE_ACTION_TYPE,
             "non_strict_state": "advisory_shadow",
             "strict_without_authority": "blocked_before_session_or_memory_mutation",
+            "maintenance_authority": {
+                "method": "reconsolidate_manual_memory",
+                "required_request_fields": ["governor_decision", "authority_binding_refs"],
+                "strict_without_authority": "authority_blocked_before_manual_memory_mutation",
+            },
+            "shadow_mode_boundary": {
+                "in_process_only": True,
+                "canonical_persistence_paths": [],
+                "export_marking": "export_knowledge_base_snapshot.authority_boundary.evidence_only",
+            },
         },
         "maintenance_methods": ["reconsolidate_manual_memory"],
         "export_methods": ["export_knowledge_base_snapshot"],
