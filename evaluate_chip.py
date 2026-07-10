@@ -35,8 +35,12 @@ def check_schema_version() -> bool:
 
 
 def check_io_protocol() -> bool:
-    io = _chip().get("io_protocol", {})
-    return bool(io.get("input") and io.get("output") and io.get("schemas_dir"))
+    io = _chip().get("io_protocol")
+    if isinstance(io, str):
+        return io == "spark-hook-io.v1"
+    if isinstance(io, dict):
+        return bool(io.get("input") and io.get("output") and io.get("schemas_dir"))
+    return False
 
 
 def check_all_four_hooks() -> bool:
@@ -273,4 +277,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

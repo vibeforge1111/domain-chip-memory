@@ -26,6 +26,58 @@ def test_shadow_ingest_contract_summary_exposes_runtime_surface():
     assert payload["authority_boundary"]["live_memory_authority"] is False
 
 
+def test_shadow_ingest_default_sdk_is_advisory_and_exports_evidence_only():
+    adapter = SparkShadowIngestAdapter()
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="conv-shadow-boundary",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2025-01-01T00:00:00Z",
+                )
+            ],
+        )
+    )
+
+    assert adapter.sdk.require_upstream_authority is False
+    assert result.accepted_writes == 1
+    accepted_traces = [trace for trace in result.turn_traces if trace.action == "accepted_write"]
+    assert accepted_traces[0].trace["write_trace"]["authority"]["state"] == "advisory_shadow"
+    boundary = adapter.sdk.export_knowledge_base_snapshot()["authority_boundary"]
+    assert boundary["evidence_only"] is True
+    assert boundary["live_memory_authority"] is False
+    assert boundary["mode"] == "advisory_shadow"
+
+
+def test_shadow_ingest_into_authority_required_sdk_fails_closed_without_governor():
+    adapter = SparkShadowIngestAdapter(SparkMemorySDK(require_upstream_authority=True))
+
+    result = adapter.ingest_conversation(
+        SparkShadowIngestRequest(
+            conversation_id="conv-strict-boundary",
+            turns=[
+                SparkShadowTurn(
+                    message_id="m1",
+                    role="user",
+                    content="I live in Dubai.",
+                    timestamp="2025-01-01T00:00:00Z",
+                )
+            ],
+        )
+    )
+
+    assert result.accepted_writes == 0
+    assert result.rejected_writes == 1
+    rejected_traces = [trace for trace in result.turn_traces if trace.action == "rejected_write"]
+    assert "authority_required" in str(rejected_traces[0].unsupported_reason)
+    assert adapter.sdk.get_current_state(CurrentStateRequest(subject="user", predicate="location")).found is False
+    assert adapter.sdk.export_knowledge_base_snapshot()["counts"]["session_count"] == 0
+
+
 def test_shadow_replay_contract_summary_exposes_file_shapes():
     payload = build_shadow_replay_contract_summary()
 
