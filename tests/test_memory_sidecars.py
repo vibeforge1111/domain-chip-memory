@@ -1,4 +1,6 @@
-from types import SimpleNamespace
+import logging
+import sys
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -276,6 +278,69 @@ def test_graphiti_local_embedder_and_reranker_are_deterministic() -> None:
     assert first == second
     assert len(first) == embedder.dimensions
     assert ranked[0][0] == "creator approvals block the GTM launch"
+
+
+def _install_fake_graphiti_index_modules(monkeypatch, queries: list[str]) -> None:
+    graphiti_core = ModuleType("graphiti_core")
+    driver_package = ModuleType("graphiti_core.driver")
+    driver_module = ModuleType("graphiti_core.driver.driver")
+    graph_queries = ModuleType("graphiti_core.graph_queries")
+    driver_module.GraphProvider = SimpleNamespace(KUZU="kuzu")
+    graph_queries.get_fulltext_indices = lambda provider: list(queries)
+    monkeypatch.setitem(sys.modules, "graphiti_core", graphiti_core)
+    monkeypatch.setitem(sys.modules, "graphiti_core.driver", driver_package)
+    monkeypatch.setitem(sys.modules, "graphiti_core.driver.driver", driver_module)
+    monkeypatch.setitem(sys.modules, "graphiti_core.graph_queries", graph_queries)
+
+
+def test_graphiti_kuzu_index_failure_stays_retryable_without_leaking_details(
+    tmp_path, monkeypatch, caplog
+) -> None:
+    _install_fake_graphiti_index_modules(monkeypatch, ["secret query one", "secret query two"])
+
+    class FailingDriver:
+        def execute_query(self, query: str) -> None:
+            raise RuntimeError(f"sensitive failure for {query}")
+
+    adapter = GraphitiCompatibleMemorySidecarAdapter(
+        backend="kuzu",
+        db_path=str(tmp_path / "graphiti.kuzu"),
+    )
+    marker_path = adapter._kuzu_fulltext_index_marker_path()
+
+    with caplog.at_level(logging.WARNING):
+        adapter._build_kuzu_fulltext_indices(SimpleNamespace(driver=FailingDriver()))
+
+    assert marker_path is not None
+    assert not marker_path.exists()
+    assert "2 fulltext index queries failed" in caplog.text
+    assert "RuntimeError" in caplog.text
+    assert "sensitive failure" not in caplog.text
+    assert "secret query" not in caplog.text
+
+
+def test_graphiti_kuzu_index_success_writes_marker(tmp_path, monkeypatch) -> None:
+    _install_fake_graphiti_index_modules(monkeypatch, ["query one", "query two"])
+
+    class SuccessfulDriver:
+        def __init__(self) -> None:
+            self.queries: list[str] = []
+
+        def execute_query(self, query: str) -> None:
+            self.queries.append(query)
+
+    adapter = GraphitiCompatibleMemorySidecarAdapter(
+        backend="kuzu",
+        db_path=str(tmp_path / "graphiti.kuzu"),
+    )
+    driver = SuccessfulDriver()
+    marker_path = adapter._kuzu_fulltext_index_marker_path()
+
+    adapter._build_kuzu_fulltext_indices(SimpleNamespace(driver=driver))
+
+    assert driver.queries == ["query one", "query two"]
+    assert marker_path is not None
+    assert marker_path.read_text(encoding="utf-8") == "built\n"
 
 
 def test_graphiti_kuzu_direct_structured_upsert_avoids_llm_extraction(tmp_path) -> None:

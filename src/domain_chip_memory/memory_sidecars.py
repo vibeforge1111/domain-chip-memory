@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
 import math
 import os
 import re
@@ -524,17 +525,20 @@ class GraphitiCompatibleMemorySidecarAdapter(DisabledMemorySidecarAdapter):
             try:
                 _run_maybe_async(driver.execute_query(query), timeout_seconds=self.call_timeout_seconds)
             except Exception as exc:
-                failed.append(str(exc))
+                failed.append(type(exc).__name__)
                 continue
         if failed:
-            import logging
-            logging.warning("domain-chip-memory: %d fulltext index queries failed: %s", len(failed), failed[:3])
+            logging.warning(
+                "domain-chip-memory: %d fulltext index queries failed (%s); build will retry",
+                len(failed),
+                ", ".join(sorted(set(failed))[:3]),
+            )
+            return
         if marker_path is not None:
             try:
                 marker_path.parent.mkdir(parents=True, exist_ok=True)
                 marker_path.write_text("built\n", encoding="utf-8")
             except Exception as exc:
-                import logging
                 logging.warning("domain-chip-memory: could not write fulltext index marker %s: %s", marker_path, exc)
 
     def _kuzu_fulltext_index_marker_path(self) -> Path | None:
