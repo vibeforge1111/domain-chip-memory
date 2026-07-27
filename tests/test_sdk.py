@@ -782,6 +782,76 @@ def test_sdk_explicit_current_state_observation_preserves_runtime_role() -> None
     assert result.trace["primary_memory_role"] == "current_state"
 
 
+def test_sdk_explicit_structured_evidence_does_not_materialize_as_current_state_authority() -> None:
+    sdk = SparkMemorySDK(require_upstream_authority=False)
+
+    evidence_write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="User says Mirror Thread currently belongs to the Slate Orchard demo.",
+            operation="update",
+            subject="human:telegram:test",
+            predicate="evidence.telegram.telegram_runtime",
+            value="User says Mirror Thread currently belongs to the Slate Orchard demo.",
+            timestamp="2025-03-01T09:00:00Z",
+            retention_class="durable_profile",
+            metadata={
+                "memory_role": "structured_evidence",
+                "entity_key": "user says mirror thread currently belongs to the slate orchard demo.",
+                "source_surface": "builder_test",
+            },
+        )
+    )
+    state_write = sdk.write_observation(
+        MemoryWriteRequest(
+            text="human:telegram:test profile.current_owner Mirror Thread",
+            operation="update",
+            subject="human:telegram:test",
+            predicate="profile.current_owner",
+            value="Mirror Thread currently belongs to the Slate Orchard demo.",
+            timestamp="2025-03-01T09:01:00Z",
+            retention_class="active_state",
+            metadata={
+                "memory_role": "current_state",
+                "entity_key": "profile.current_owner",
+                "source_surface": "builder_test",
+            },
+        )
+    )
+
+    assert evidence_write.accepted is True
+    assert state_write.accepted is True
+
+    evidence_as_state = sdk.get_current_state(
+        CurrentStateRequest(
+            subject="human:telegram:test",
+            predicate="evidence.telegram.telegram_runtime",
+            entity_key="user says mirror thread currently belongs to the slate orchard demo.",
+        )
+    )
+    current_owner = sdk.get_current_state(
+        CurrentStateRequest(
+            subject="human:telegram:test",
+            predicate="profile.current_owner",
+            entity_key="profile.current_owner",
+        )
+    )
+    evidence = sdk.retrieve_evidence(
+        EvidenceRetrievalRequest(
+            subject="human:telegram:test",
+            predicate="evidence.telegram.telegram_runtime",
+            limit=3,
+        )
+    )
+    snapshot = sdk.export_knowledge_base_snapshot()
+
+    assert evidence_as_state.found is False
+    assert current_owner.found is True
+    assert current_owner.value == "Mirror Thread currently belongs to the Slate Orchard demo."
+    assert evidence.items
+    assert evidence.items[0].memory_role == "structured_evidence"
+    assert [item["predicate"] for item in snapshot["current_state"]] == ["profile.current_owner"]
+
+
 def test_sdk_explicit_delete_observation_preserves_state_deletion_role() -> None:
     sdk = SparkMemorySDK(require_upstream_authority=False)
 

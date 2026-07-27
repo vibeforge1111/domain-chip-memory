@@ -35,6 +35,18 @@ def active_state_entity_key(observation: "ObservationEntry", *, predicate: str |
     return str(observation.metadata.get("entity_key", "")).strip()
 
 
+def explicit_memory_role(observation: "ObservationEntry") -> str:
+    metadata = observation.metadata if isinstance(observation.metadata, dict) else {}
+    return str(metadata.get("memory_role") or "").strip()
+
+
+def participates_in_current_state_view(observation: "ObservationEntry") -> bool:
+    role = explicit_memory_role(observation)
+    if not role:
+        return True
+    return role in {"current_state", "state_deletion"}
+
+
 def build_current_state_view(observations: list["ObservationEntry"]) -> list["ObservationEntry"]:
     latest_by_key: dict[tuple[str, str, str], ObservationEntry] = {}
     deleted_after_by_predicate: dict[tuple[str, str], tuple[str, str]] = {}
@@ -62,6 +74,8 @@ def build_current_state_view(observations: list["ObservationEntry"]) -> list["Ob
                     and entry_sort_key(current) <= entry_sort_key(observation)
                 ):
                     del latest_by_key[key]
+            continue
+        if not participates_in_current_state_view(observation):
             continue
         key = (
             observation.subject,
