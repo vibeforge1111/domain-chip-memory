@@ -691,7 +691,10 @@ def _evaluate_openai_compatible_rubric_list_category(
         try:
             parsed_response = parse_json_response(response=response_text)
         except Exception:
-            parsed_response = json.loads(repair_json(response_text))
+            try:
+                parsed_response = json.loads(repair_json(response_text))
+            except json.JSONDecodeError as exc:
+                raise ValueError("Invalid JSON (beam_official_eval.py)") from exc
         normalized_response = _normalize_openai_compatible_judge_response(parsed_response)
         normalized_response = dict(normalized_response)
         normalized_response["score"] = _coerce_openai_compatible_judge_score(normalized_response.get("score"))
