@@ -11,7 +11,10 @@ from .contracts import NormalizedBenchmarkConfig, NormalizedBenchmarkSample
 
 
 def _load_json(path: Path) -> object:
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (loaders.py)") from exc
 
 
 def chip_manifest_sha256(path: str | Path) -> str:
