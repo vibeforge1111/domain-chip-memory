@@ -546,7 +546,10 @@ def _resume_openai_compatible_single_conversation_evaluation(
     existing_payload: dict[str, Any] = {}
     if output_file.exists():
         try:
-            loaded_existing_payload = json.loads(output_file.read_text(encoding="utf-8"))
+            try:
+                loaded_existing_payload = json.loads(output_file.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                raise ValueError("Invalid JSON (beam_official_eval.py)") from exc
             if isinstance(loaded_existing_payload, dict):
                 existing_payload = loaded_existing_payload
         except json.JSONDecodeError:
