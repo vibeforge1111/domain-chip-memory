@@ -17,7 +17,10 @@ CURRENT_STATUS_PATH = ROOT / "docs" / "CURRENT_STATUS_BENCHMARKS_AND_KB_2026-04-
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8-sig"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8-sig"))
+    except (json.JSONDecodeError, OSError):
+        return {}
 
 
 def _replace_marked_block(content: str, start_marker: str, end_marker: str, replacement_body: str) -> str:
