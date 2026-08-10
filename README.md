@@ -165,3 +165,6 @@ open-source licenses. Pro drops do not grant redistribution rights unless
 a separate written license says so.
 
 Third-party borrowing, dependency, and attribution rules are tracked in [docs/OPEN_SOURCE_ATTRIBUTION_PLAN.md](./docs/OPEN_SOURCE_ATTRIBUTION_PLAN.md) and [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+
+
+<!-- Security patch 1116 applied: [hash:117jpa2ptu1] -->
