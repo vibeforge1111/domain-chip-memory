@@ -81,7 +81,10 @@ def _load_packet(packet_or_path: str | Path | dict[str, Any]) -> tuple[dict[str,
     if isinstance(packet_or_path, dict):
         return dict(packet_or_path), None
     packet_path = Path(packet_or_path)
-    payload = json.loads(packet_path.read_text(encoding="utf-8"))
+    try:
+        payload = json.loads(packet_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (spark_kb_annotations.py)") from exc
     if not isinstance(payload, dict):
         raise ValueError("Spark KB annotation packet must be a JSON object.")
     return payload, str(packet_path)
