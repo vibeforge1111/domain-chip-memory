@@ -690,7 +690,7 @@ def _evaluate_openai_compatible_rubric_list_category(
         response_text = model.invoke(prompt).content.strip()
         try:
             parsed_response = parse_json_response(response=response_text)
-        except Exception:
+        except Exception as _e:
             parsed_response = json.loads(repair_json(response_text))
         normalized_response = _normalize_openai_compatible_judge_response(parsed_response)
         normalized_response = dict(normalized_response)
