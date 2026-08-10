@@ -539,7 +539,10 @@ def _resume_openai_compatible_single_conversation_evaluation(
     compute_metrics_module: Any,
     run_evaluation_module: Any,
 ) -> None:
-    answers_payload = json.loads(answers_file.read_text(encoding="utf-8"))
+    try:
+        answers_payload = json.loads(answers_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError("Invalid JSON (beam_official_eval.py)") from exc
     if not isinstance(answers_payload, dict):
         raise ValueError(f"Expected BEAM answers payload to be an object: {answers_file}")
 
